@@ -3,7 +3,6 @@
 ####################################################################################################################################
 package pgBackRest::Common::Log;
 
-use threads;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
@@ -433,6 +432,7 @@ sub log
     my $iCode = shift;
     my $bSuppressLog = shift;
     my $iIndent = shift;
+    my $iProcessId = shift;
 
     # Set defaults
     $bSuppressLog = defined($bSuppressLog) ? $bSuppressLog : false;
@@ -505,8 +505,9 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
-    $strMessageFormat = timestampFormat() . sprintf('.%03d T%02d', (gettimeofday() - int(gettimeofday())) * 1000,
-                        threads->tid()) .
+    $strMessageFormat =
+        timestampFormat() . sprintf('.%03d P%02d', (gettimeofday() - int(gettimeofday())) * 1000,
+        (defined($iProcessId) ? $iProcessId : 0)) .
         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to console depending on log level and test flag

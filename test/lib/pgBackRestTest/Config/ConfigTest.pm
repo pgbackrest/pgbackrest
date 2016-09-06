@@ -390,31 +390,41 @@ sub configTestRun
             optionTestExpect(OPTION_TARGET_TIMELINE);
         }
 
-        if (testRun(++$iRun, 'invalid string ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'invalid string ' . OPTION_PROCESS_MAX))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_THREAD_MAX, BOGUS);
+            optionSetTest($oOption, OPTION_PROCESS_MAX, BOGUS);
 
-            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_THREAD_MAX);
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_PROCESS_MAX);
         }
 
-        if (testRun(++$iRun, 'invalid float ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'invalid float ' . OPTION_PROCESS_MAX))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_THREAD_MAX, '0.0');
+            optionSetTest($oOption, OPTION_PROCESS_MAX, '0.0');
 
-            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, '0.0', OPTION_THREAD_MAX);
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, '0.0', OPTION_PROCESS_MAX);
         }
 
-        if (testRun(++$iRun, 'valid ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'valid ' . OPTION_PROCESS_MAX))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_THREAD_MAX, '2');
+            optionSetTest($oOption, OPTION_PROCESS_MAX, '2');
 
             configLoadExpect($oOption, CMD_BACKUP);
+        }
+
+        if (testRun(++$iRun, 'valid thread-max'))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, 'thread-max', '2');
+
+            configLoadExpect($oOption, CMD_BACKUP);
+            optionTestExpect(OPTION_PROCESS_MAX, 2);
         }
 
         if (testRun(++$iRun, 'valid float ' . OPTION_TEST_DELAY))
@@ -633,10 +643,10 @@ sub configTestRun
             configLoadExpect($oOption, CMD_BACKUP, ERROR_FILE_INVALID, $strTestPath);
         }
 
-        if (testRun(++$iRun, 'load from config stanza command section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config stanza command section - option ' . OPTION_PROCESS_MAX))
         {
             $oConfig = {};
-            $$oConfig{"${strStanza}:" . &CMD_BACKUP}{&OPTION_THREAD_MAX} = 2;
+            $$oConfig{"${strStanza}:" . &CMD_BACKUP}{&OPTION_PROCESS_MAX} = 2;
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
@@ -644,13 +654,13 @@ sub configTestRun
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_THREAD_MAX, 2);
+            optionTestExpect(OPTION_PROCESS_MAX, 2);
         }
 
-        if (testRun(++$iRun, 'load from config stanza section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config stanza section - option ' . OPTION_PROCESS_MAX))
         {
             $oConfig = {};
-            $$oConfig{$strStanza}{&OPTION_THREAD_MAX} = 3;
+            $$oConfig{$strStanza}{&OPTION_PROCESS_MAX} = 3;
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
@@ -658,13 +668,13 @@ sub configTestRun
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_THREAD_MAX, 3);
+            optionTestExpect(OPTION_PROCESS_MAX, 3);
         }
 
-        if (testRun(++$iRun, 'load from config global command section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config global command section - option thread-max'))
         {
             $oConfig = {};
-            $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_THREAD_MAX} = 2;
+            $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{'thread-max'} = 2;
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
@@ -672,13 +682,13 @@ sub configTestRun
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_THREAD_MAX, 2);
+            optionTestExpect(OPTION_PROCESS_MAX, 2);
         }
 
-        if (testRun(++$iRun, 'load from config global section - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'load from config global section - option ' . OPTION_PROCESS_MAX))
         {
             $oConfig = {};
-            $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = 5;
+            $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = 5;
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
@@ -686,10 +696,10 @@ sub configTestRun
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_THREAD_MAX, 5);
+            optionTestExpect(OPTION_PROCESS_MAX, 5);
         }
 
-        if (testRun(++$iRun, 'default - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'default - option ' . OPTION_PROCESS_MAX))
         {
             $oConfig = {};
             iniSave($strConfigFile, $oConfig, true);
@@ -699,22 +709,22 @@ sub configTestRun
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_THREAD_MAX, 1);
+            optionTestExpect(OPTION_PROCESS_MAX, 1);
         }
 
-        if (testRun(++$iRun, 'command-line override - option ' . OPTION_THREAD_MAX))
+        if (testRun(++$iRun, 'command-line override - option ' . OPTION_PROCESS_MAX))
         {
             $oConfig = {};
-            $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = 9;
+            $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = 9;
             iniSave($strConfigFile, $oConfig, true);
 
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_THREAD_MAX, 7);
+            optionSetTest($oOption, OPTION_PROCESS_MAX, 7);
             optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
 
             configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_THREAD_MAX, 7);
+            optionTestExpect(OPTION_PROCESS_MAX, 7);
         }
 
         if (testRun(++$iRun, 'invalid boolean - option ' . OPTION_HARDLINK))

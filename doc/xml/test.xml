@@ -46,14 +46,14 @@ vagrant ssh
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --run=1
         </code-block>
 
-        <code-block title="Run Tests for a Specific OS, Module, Test, and Thread Max">
-/backrest/test/test.pl --vm=co6 --module=backup --test=full --thread-max=4
+        <code-block title="Run Tests for a Specific OS, Module, Test, and Process Max">
+/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4
         </code-block>
 
-        <p>Note that thread-max is only applicable to the <id>synthetic</id> and <id>full</id> tests in the <id>backup</id> module.</p>
+        <p>Note that process-max is only applicable to the <id>synthetic</id> and <id>full</id> tests in the <id>backup</id> module.</p>
 
-        <code-block title="Run Tests for a Specific OS, Module, Test, Thread Max, and Database Version">
-/backrest/test/test.pl --vm=co6 --module=backup --test=full --thread-max=4 --db-version=9.4
+        <code-block title="Run Tests for a Specific OS, Module, Test, Process Max, and Database Version">
+/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --db-version=9.4
         </code-block>
 
         <p>Note that db-version is only applicable to the <id>full</id> test in the <id>backup</id> module.</p>

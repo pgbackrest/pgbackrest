@@ -50,8 +50,8 @@ use constant HOST_PARAM_REPO_PATH                                   => 'repo-pat
     push @EXPORT, qw(HOST_PARAM_REPO_PATH);
 use constant HOST_PARAM_STANZA                                      => 'stanza';
     push @EXPORT, qw(HOST_PARAM_STANZA);
-use constant HOST_PARAM_THREAD_MAX                                  => 'thread-max';
-    push @EXPORT, qw(HOST_PARAM_THREAD_MAX);
+use constant HOST_PARAM_PROCESS_MAX                                 => 'process-max';
+    push @EXPORT, qw(HOST_PARAM_PROCESS_MAX);
 
 ####################################################################################################################################
 # Host paths
@@ -133,7 +133,7 @@ sub new
     $self->paramSet(HOST_PARAM_BACKREST_CONFIG, $self->testPath() . '/' . BACKREST_CONF);
     $self->paramSet(HOST_PARAM_BACKREST_EXE, $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE));
     $self->paramSet(HOST_PARAM_STANZA, HOST_STANZA);
-    $self->paramSet(HOST_PARAM_THREAD_MAX, $oHostGroup->paramGet(HOST_PARAM_THREAD_MAX));
+    $self->paramSet(HOST_PARAM_PROCESS_MAX, $oHostGroup->paramGet(HOST_PARAM_PROCESS_MAX));
 
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};
@@ -194,11 +194,6 @@ sub backupBegin
     my $strTest = defined($$oParam{strTest}) ? $$oParam{strTest} : undef;
     my $fTestDelay = defined($$oParam{fTestDelay}) ? $$oParam{fTestDelay} : .2;
     my $oExpectedManifest = defined($$oParam{oExpectedManifest}) ? $$oParam{oExpectedManifest} : undef;
-
-    if (!defined($$oParam{iExpectedExitStatus}) && $self->threadMax() > 1)
-    {
-        $$oParam{iExpectedExitStatus} = -1;
-    }
 
     $strComment =
         "${strType} backup" . (defined($strComment) ? " - ${strComment}" : '') .
@@ -263,10 +258,7 @@ sub backupEnd
 
     my $iExitStatus = $oExecuteBackup->end();
 
-    if ($oExecuteBackup->{iExpectedExitStatus} != 0 && $oExecuteBackup->{iExpectedExitStatus} != -1)
-    {
-        return;
-    }
+    return if ($oExecuteBackup->{iExpectedExitStatus} != 0);
 
     my $strBackup = $self->backupLast();
 
@@ -719,9 +711,9 @@ sub configCreate
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
 
-    if ($self->threadMax() > 1)
+    if ($self->processMax() > 1)
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_THREAD_MAX} = $self->threadMax();
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = $self->processMax();
     }
 
     if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
@@ -1000,7 +992,7 @@ sub lockPath {return shift->paramGet(HOST_PARAM_LOCK_PATH);}
 sub logPath {return shift->paramGet(HOST_PARAM_LOG_PATH);}
 sub repoPath {return shift->paramGet(HOST_PARAM_REPO_PATH);}
 sub stanza {return shift->paramGet(HOST_PARAM_STANZA);}
-sub threadMax {return shift->paramGet(HOST_PARAM_THREAD_MAX);}
+sub processMax {return shift->paramGet(HOST_PARAM_PROCESS_MAX);}
 sub synthetic {return shift->{bSynthetic};}
 
 1;

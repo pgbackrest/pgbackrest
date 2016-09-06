@@ -6,7 +6,7 @@
     <intro>
         <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the interface, naming, or the repository format.
 
-        The notes for a release may also contain <quote>Additional Notes</quote> but changes in the this section are only to documentation and the test suite and have no impact the on the <backrest/> codebase.</text>
+        The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact the on the <backrest/> codebase.</text>
     </intro>
 
     <contributor-list>
@@ -118,7 +118,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Fixed a issue where tablespaces were copied from the master during standby backup.</p>
+                        <p>Fixed an issue where tablespaces were copied from the master during standby backup.</p>
                     </release-item>
 
                     <release-item>
@@ -131,6 +131,10 @@
                 </release-bug-list>
 
                 <release-feature-list>
+                    <release-item>
+                        <p>Converted Perl threads to processes to improve compatibility and performance.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the master do not become part of the backup.</p>
                     </release-item>

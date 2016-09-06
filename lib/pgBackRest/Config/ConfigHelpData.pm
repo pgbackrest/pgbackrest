@@ -175,7 +175,7 @@ my $oConfigHelpData =
                 "Buffer size for file operations.",
             description =>
                 "Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use " .
-                    "at a time per thread. An additional maximum of 256K per thread may be used for zlib buffers."
+                    "at a time per process. An additional maximum of 256K per process may be used for zlib buffers."
         },
 
         # COMPRESS Option Help
@@ -490,6 +490,18 @@ my $oConfigHelpData =
                     "archive-check is automatically disabled for the backup."
         },
 
+        # PROCESS-MAX Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'process-max' =>
+        {
+            section => 'general',
+            summary =>
+                "Max processes to use for compress/transfer.",
+            description =>
+                "Each process will perform compression and transfer to make the command run faster, but don't set process-max " .
+                    "so high that it impacts database performance."
+        },
+
         # PROTOCOL-TIMEOUT Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'protocol-timeout' =>
@@ -698,30 +710,6 @@ my $oConfigHelpData =
                     "layout as the original system where the backup was generated.\n" .
                 "\n" .
                 "The path specified will be the parent path used to create all the tablespaces in the backup."
-        },
-
-        # THREAD-MAX Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'thread-max' =>
-        {
-            section => 'general',
-            summary =>
-                "Max threads to use in process.",
-            description =>
-                "Each thread will perform compression and transfer to make the command run faster, but don't set thread-max so " .
-                    "high that it impacts database performance."
-        },
-
-        # THREAD-TIMEOUT Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'thread-timeout' =>
-        {
-            section => 'general',
-            summary =>
-                "Max time a thread can run.",
-            description =>
-                "This limits the amount of time (in seconds) that a thread might be stuck due to unforeseen issues executing " .
-                    "the command. Has no affect when thread-max=1."
         }
     },
 
@@ -855,6 +843,7 @@ my $oConfigHelpData =
                 'manifest-save-threshold' => 'section',
                 'neutral-umask' => 'section',
                 'online' => 'default',
+                'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'resume' => 'section',
@@ -865,8 +854,6 @@ my $oConfigHelpData =
                 'stanza' => 'default',
                 'start-fast' => 'section',
                 'stop-auto' => 'section',
-                'thread-max' => 'section',
-                'thread-timeout' => 'section',
 
                 # TYPE Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -1091,6 +1078,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'recovery-option' => 'section',
                 'repo-path' => 'section',
@@ -1158,9 +1146,6 @@ my $oConfigHelpData =
                     description =>
                         "See recovery_target_timeline in the PostgreSQL docs for more information."
                 },
-
-                'thread-max' => 'section',
-                'thread-timeout' => 'section',
 
                 # TYPE Option Help
                 #-------------------------------------------------------------------------------------------------------------------

@@ -112,7 +112,7 @@ sub logAdd
         # Do replacements on each line of the log
         foreach my $strLine (split("\n", $strLog))
         {
-            $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2} //;
+            $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} P[0-9]{2} //;
 
             if ($strLine !~ /^  TEST/)
             {
@@ -369,6 +369,8 @@ sub regExpReplaceAll
         "start\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
         "stop\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
+        "lCopyTimeStart = [0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'SIZE',
         "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = $self->regExpReplace($strLine, 'DELTA',

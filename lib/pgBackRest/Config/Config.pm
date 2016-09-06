@@ -48,6 +48,9 @@ use constant CMD_HELP                                               => 'help';
 use constant CMD_INFO                                               => 'info';
     push @EXPORT, qw(CMD_INFO);
     $oCommandHash{&CMD_INFO} = true;
+use constant CMD_LOCAL                                              => 'local';
+    push @EXPORT, qw(CMD_LOCAL);
+    $oCommandHash{&CMD_LOCAL} = true;
 use constant CMD_REMOTE                                             => 'remote';
     push @EXPORT, qw(CMD_REMOTE);
     $oCommandHash{&CMD_REMOTE} = true;
@@ -217,12 +220,14 @@ use constant OPTION_HELP                                            => 'help';
 use constant OPTION_VERSION                                         => 'version';
     push @EXPORT, qw(OPTION_VERSION);
 
-# Command-line only remote
+# Command-line only local/remote
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_COMMAND                                          => 'command';
     push @EXPORT, qw(OPTION_COMMAND);
 use constant OPTION_PROCESS                                          => 'process';
     push @EXPORT, qw(OPTION_PROCESS);
+use constant OPTION_HOST_ID                                          => 'host-id';
+    push @EXPORT, qw(OPTION_HOST_ID);
 
 # Command-line only test
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -253,10 +258,8 @@ use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-
     push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
 use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
     push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
-use constant OPTION_THREAD_MAX                                      => 'thread-max';
-    push @EXPORT, qw(OPTION_THREAD_MAX);
-use constant OPTION_THREAD_TIMEOUT                                  => 'thread-timeout';
-    push @EXPORT, qw(OPTION_THREAD_TIMEOUT);
+use constant OPTION_PROCESS_MAX                                     => 'process-max';
+    push @EXPORT, qw(OPTION_PROCESS_MAX);
 
 # Paths
 use constant OPTION_LOCK_PATH                                       => 'lock-path';
@@ -447,12 +450,12 @@ use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib
     push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
 use constant OPTION_DEFAULT_SPOOL_PATH                              => '/var/spool/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_SPOOL_PATH);
-use constant OPTION_DEFAULT_THREAD_MAX                              => 1;
-    push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX);
-use constant OPTION_DEFAULT_THREAD_MAX_MIN                          => 1;
-    push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX_MIN);
-use constant OPTION_DEFAULT_THREAD_MAX_MAX                          => 256;
-    push @EXPORT, qw(OPTION_DEFAULT_THREAD_MAX_MAX);
+use constant OPTION_DEFAULT_PROCESS_MAX                              => 1;
+    push @EXPORT, qw(OPTION_DEFAULT_PROCESS_MAX);
+use constant OPTION_DEFAULT_PROCESS_MAX_MIN                          => 1;
+    push @EXPORT, qw(OPTION_DEFAULT_PROCESS_MAX_MIN);
+use constant OPTION_DEFAULT_PROCESS_MAX_MAX                          => 96;
+    push @EXPORT, qw(OPTION_DEFAULT_PROCESS_MAX_MAX);
 
 # LOG Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -543,6 +546,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
@@ -652,6 +656,10 @@ my %oOptionRule =
             &CMD_INFO =>
             {
                 &OPTION_RULE_REQUIRED => false
+            },
+            &CMD_LOCAL =>
+            {
+                &OPTION_RULE_REQUIRED => true
             },
             &CMD_REMOTE =>
             {
@@ -775,6 +783,15 @@ my %oOptionRule =
                 }
             },
 
+            &CMD_LOCAL =>
+            {
+                &OPTION_RULE_ALLOW_LIST =>
+                {
+                    &DB                      => true,
+                    &BACKUP                  => true,
+                },
+            },
+
             &CMD_REMOTE =>
             {
                 &OPTION_RULE_ALLOW_LIST =>
@@ -818,26 +835,41 @@ my %oOptionRule =
         }
     },
 
-    # Command-line only remote
+    # Command-line only local/remote
     #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_COMMAND =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_REMOTE => true
+            &CMD_LOCAL => true,
+            &CMD_REMOTE => true,
         }
+    },
+
+    &OPTION_HOST_ID =>
+    {
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_LOCAL => true,
+        },
     },
 
     &OPTION_PROCESS =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_THREAD_MAX_MIN, OPTION_DEFAULT_THREAD_MAX_MAX],
         &OPTION_RULE_COMMAND =>
         {
-            &CMD_REMOTE => true
-        }
+            &CMD_LOCAL =>
+            {
+                &OPTION_RULE_REQUIRED => true,
+            },
+            &CMD_REMOTE =>
+            {
+                &OPTION_RULE_REQUIRED => false,
+            },
+        },
     },
 
     # Command-line only test
@@ -924,6 +956,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
         }
@@ -943,6 +976,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => false,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => false
         }
@@ -977,6 +1011,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
         }
@@ -996,6 +1031,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
         }
@@ -1014,6 +1050,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_INFO => false,
             &CMD_EXPIRE => false,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => false,
@@ -1032,6 +1069,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
@@ -1052,6 +1090,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
@@ -1074,6 +1113,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => false,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true
         }
@@ -1091,6 +1131,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
@@ -1115,24 +1156,13 @@ my %oOptionRule =
         },
     },
 
-    &OPTION_THREAD_MAX =>
+    &OPTION_PROCESS_MAX =>
     {
+        &OPTION_RULE_ALT_NAME => 'thread-max',
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_THREAD_MAX,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_THREAD_MAX_MIN, OPTION_DEFAULT_THREAD_MAX_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_RESTORE => true
-        }
-    },
-
-    &OPTION_THREAD_TIMEOUT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_PROCESS_MAX,
+        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_PROCESS_MAX_MIN, OPTION_DEFAULT_PROCESS_MAX_MAX],
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
@@ -1273,6 +1303,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
@@ -1295,6 +1326,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
@@ -1318,6 +1350,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
@@ -1348,6 +1381,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
+            &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
@@ -1571,6 +1605,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
+            &CMD_LOCAL => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1591,6 +1626,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
+            &CMD_LOCAL => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1611,6 +1647,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
+            &CMD_LOCAL => true,
             &CMD_START => true,
             &CMD_STOP => true,
         }
@@ -1663,7 +1700,8 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
-            &CMD_REMOTE => true
+            &CMD_LOCAL => true,
+            &CMD_REMOTE => true,
         }
     },
 
@@ -1677,6 +1715,7 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_LOCAL => true,
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>

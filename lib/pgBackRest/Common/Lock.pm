@@ -240,9 +240,9 @@ sub lockStop
 
             # Skip if this is a stop file
             next if ($strFile =~ /\.stop$/);
-            #
-            # # Skip if this is a thread lock file (we only send TERMs to the main process)
-            # next if ($strFile =~ /\-[0-9]+\.lock$/);
+
+            # Skip if this is a process lock file (only send TERMs to the main process)
+            next if ($strFile =~ /\-[0-9]+\.lock$/);
 
             # Open the lock file for read
             if (!sysopen($hLockHandle, $strLockFile, O_RDONLY))

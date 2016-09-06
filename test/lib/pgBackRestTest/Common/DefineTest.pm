@@ -31,8 +31,8 @@ use constant TESTDEF_TEST_TOTAL                                     => 'total';
     push @EXPORT, qw(TESTDEF_TEST_TOTAL);
 use constant TESTDEF_TEST_CONTAINER                                 => 'container';
     push @EXPORT, qw(TESTDEF_TEST_CONTAINER);
-use constant TESTDEF_TEST_THREAD                                    => 'thread';
-    push @EXPORT, qw(TESTDEF_TEST_THREAD);
+use constant TESTDEF_TEST_PROCESS                                   => 'process';
+    push @EXPORT, qw(TESTDEF_TEST_PROCESS);
 use constant TESTDEF_TEST_DB                                        => 'db';
     push @EXPORT, qw(TESTDEF_TEST_DB);
 
@@ -135,12 +135,12 @@ my $oTestDef =
                 {
                     &TESTDEF_TEST_NAME => 'synthetic',
                     &TESTDEF_TEST_TOTAL => 8,
-                    &TESTDEF_TEST_THREAD => true
+                    &TESTDEF_TEST_PROCESS => true
                 },
                 {
                     &TESTDEF_TEST_NAME => 'full',
                     &TESTDEF_TEST_TOTAL => 11,
-                    &TESTDEF_TEST_THREAD => true,
+                    &TESTDEF_TEST_PROCESS => true,
                     &TESTDEF_TEST_DB => true
                 }
             ]

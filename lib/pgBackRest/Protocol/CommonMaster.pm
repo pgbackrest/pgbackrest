@@ -388,7 +388,6 @@ sub keepAlive
     if (gettimeofday() - $self->{fKeepAliveTimeout} > $self->{fKeepAliveTime})
     {
         $self->noOp();
-        $self->{fKeepAliveTime} = gettimeofday();
 
         # Keep alive test point
         &log(TEST, TEST_KEEP_ALIVE);
@@ -405,6 +404,7 @@ sub noOp
     my $self = shift;
 
     $self->cmdExecute(OP_NOOP, undef, false);
+    $self->{fKeepAliveTime} = gettimeofday();
 }
 
 1;

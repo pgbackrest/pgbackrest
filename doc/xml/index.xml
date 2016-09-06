@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
-    <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and multi-threading.</description>
+    <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and multi-processing.</description>
 
     <variable-list>
         <!-- Variables used by the rest of the script -->
@@ -40,10 +40,10 @@
     <section id="features">
         <title>Features</title>
 
-        <section id="multi-threaded">
-            <title>Multithreaded Backup &amp; Restore</title>
+        <section id="multi-process">
+            <title>Multi-process Backup &amp; Restore</title>
 
-            <p>Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-threaded.  <backrest/> solves the compression bottleneck with multithreading.</p>
+            <p>Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process.  <backrest/> solves the compression bottleneck with multi-processing.</p>
 
             <p>Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link.  More cores and a larger pipe lead to even higher throughput.</p>
         </section>
@@ -93,7 +93,7 @@
         <section id="delta-restore">
             <title>Delta Restore</title>
 
-            <p>The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously.  On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files.  Files that match the backup are left in place and the rest of the files are restored as usual.  Since this process is multithreaded, it can lead to a dramatic reduction in restore times.</p>
+            <p>The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously.  On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files.  Files that match the backup are left in place and the rest of the files are restored as usual.  Multi-processing can lead to a dramatic reduction in restore times.</p>
         </section>
 
         <section id="advanced-archiving">

@@ -77,7 +77,7 @@ sub process
 
     foreach my $strCommand (sort(keys(%{commandHashGet()})))
     {
-        if ($strCommand eq CMD_REMOTE)
+        if ($strCommand eq CMD_REMOTE || $strCommand eq CMD_LOCAL)
         {
             next;
         }

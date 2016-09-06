@@ -37,6 +37,10 @@ use constant OP_NOOP                                                => 'noop';
 use constant OP_EXIT                                                => 'exit';
     push @EXPORT, qw(OP_EXIT);
 
+# Backup module
+use constant OP_BACKUP_FILE                                          => 'backupFile';
+    push @EXPORT, qw(OP_BACKUP_FILE);
+
 # Archive Module
 use constant OP_ARCHIVE_GET_ARCHIVE_ID                              => 'archiveId';
     push @EXPORT, qw(OP_ARCHIVE_GET_ARCHIVE_ID);
@@ -76,6 +80,48 @@ use constant OP_FILE_WAIT                                           => 'wait';
 # Info module
 use constant OP_INFO_STANZA_LIST                                    => 'infoStanzList';
     push @EXPORT, qw(OP_INFO_STANZA_LIST);
+
+# Restore module
+use constant OP_RESTORE_FILE                                         => 'restoreFile';
+    push @EXPORT, qw(OP_RESTORE_FILE);
+
+####################################################################################################################################
+# Parameter constants
+####################################################################################################################################
+use constant OP_PARAM_BACKUP_PATH                                   => 'strBackupPath';
+    push @EXPORT, qw(OP_PARAM_BACKUP_PATH);
+use constant OP_PARAM_CHECKSUM                                      => 'strChecksum';
+    push @EXPORT, qw(OP_PARAM_CHECKSUM);
+use constant OP_PARAM_COPY_TIME_START                               => 'lCopyTimeStart';
+    push @EXPORT, qw(OP_PARAM_COPY_TIME_START);
+use constant OP_PARAM_DB_FILE                                       => 'strDbFile';
+    push @EXPORT, qw(OP_PARAM_DB_FILE);
+use constant OP_PARAM_DELTA                                         => 'bDelta';
+    push @EXPORT, qw(OP_PARAM_DELTA);
+use constant OP_PARAM_DESTINATION_COMPRESS                          => 'bDestinationCompress';
+    push @EXPORT, qw(OP_PARAM_DESTINATION_COMPRESS);
+use constant OP_PARAM_FORCE                                         => 'bForce';
+    push @EXPORT, qw(OP_PARAM_FORCE);
+use constant OP_PARAM_GROUP                                         => 'strGroup';
+    push @EXPORT, qw(OP_PARAM_GROUP);
+use constant OP_PARAM_IGNORE_MISSING                                => 'bIgnoreMissing';
+    push @EXPORT, qw(OP_PARAM_IGNORE_MISSING);
+use constant OP_PARAM_MODE                                          => 'strMode';
+    push @EXPORT, qw(OP_PARAM_MODE);
+use constant OP_PARAM_MODIFICATION_TIME                             => 'lModificationTime';
+    push @EXPORT, qw(OP_PARAM_MODIFICATION_TIME);
+use constant OP_PARAM_REFERENCE                                     => 'strReference';
+    push @EXPORT, qw(OP_PARAM_REFERENCE);
+use constant OP_PARAM_REPO_FILE                                     => 'strRepoFile';
+    push @EXPORT, qw(OP_PARAM_REPO_FILE);
+use constant OP_PARAM_SIZE                                          => 'lSize';
+    push @EXPORT, qw(OP_PARAM_SIZE);
+use constant OP_PARAM_SOURCE_COMPRESSION                            => 'bSourceCompression';
+    push @EXPORT, qw(OP_PARAM_SOURCE_COMPRESSION);
+use constant OP_PARAM_USER                                          => 'strUser';
+    push @EXPORT, qw(OP_PARAM_USER);
+use constant OP_PARAM_ZERO                                          => 'bZero';
+    push @EXPORT, qw(OP_PARAM_ZERO);
 
 ####################################################################################################################################
 # CONSTRUCTOR

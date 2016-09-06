@@ -68,7 +68,7 @@
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for file operations.</summary>
 
-                        <text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per thread.  An additional maximum of 256K per thread may be used for zlib buffers.</text>
+                        <text>Set the buffer size used for copy, compress, and uncompress functions.  A maximum of 3 buffers will be in use at a time per process.  An additional maximum of 256K per process may be used for zlib buffers.</text>
 
                         <allow>16384 - 8388608</allow>
                         <example>32768</example>
@@ -152,6 +152,14 @@
                         <example>/backup/db/spool</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - PROCESS-MAX -->
+                    <config-key id="process-max" name="Process Maximum">
+                        <summary>Max processes to use for compress/transfer.</summary>
+                        <text>Each process will perform compression and transfer to make the command run faster, but don't set <setting>process-max</setting> so high that it impacts database performance.</text>
+
+                        <example>4</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - PROTOCOL-TIMEOUT KEY -->
                     <config-key id="protocol-timeout" name="Protocol Timeout">
                         <summary>Protocol timeout.</summary>
@@ -170,22 +178,6 @@
                         If you are new to backup then it will be difficult to estimate in advance how much space you'll need.  The best thing to do is take some backups then record the size of different types of backups (full/incr/diff) and measure the amount of WAL generated per day.  This will give you a general idea of how much space you'll need, though of course requirements will likely change over time as your database evolves.</text>
 
                         <example>/backup/db/backrest</example>
-                    </config-key>
-
-                    <!-- CONFIG - GENERAL SECTION - THEAD-MAX -->
-                    <config-key id="thread-max" name="Thread Maximum">
-                        <summary>Max threads to use in process.</summary>
-                        <text>Each thread will perform compression and transfer to make the command run faster, but don't set <setting>thread-max</setting> so high that it impacts database performance.</text>
-
-                        <example>4</example>
-                    </config-key>
-
-                    <!-- CONFIG - GENERAL SECTION - THEAD-TIMEOUT -->
-                    <config-key id="thread-timeout" name="Thread Timeout">
-                        <summary>Max time a thread can run.</summary>
-                        <text>This limits the amount of time (in seconds) that a thread might be stuck due to unforeseen issues executing the command.  Has no affect when <setting>thread-max=1</setting>.</text>
-
-                        <example>3600</example>
                     </config-key>
                 </config-key-list>
             </config-section>

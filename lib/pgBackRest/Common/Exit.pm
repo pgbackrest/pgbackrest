@@ -34,42 +34,9 @@ $SIG{&SIGNAL_INT} = sub {exitSafe(-1, SIGNAL_INT)};
 $SIG{&SIGNAL_TERM} = sub {exitSafe(-1, SIGNAL_TERM)};
 
 ####################################################################################################################################
-# Module variables
-####################################################################################################################################
-my $iThreadMax = 1;                                                 # Total threads that were started for processing
-my $bRemote = false;                                                # Is the process a remote?
-
-####################################################################################################################################
-# exitInit
-#
-# Initialize exit so it knows if threads need to be terminated.
-####################################################################################################################################
-sub exitInit
-{
-    my $iThreadMaxParam = shift;
-    my $bRemoteParam = shift;
-
-    if (defined($iThreadMaxParam) && $iThreadMaxParam > 1)
-    {
-        # Load module dynamically
-        require pgBackRest::Protocol::ThreadGroup;
-        pgBackRest::Protocol::ThreadGroup->import();
-
-        $iThreadMax = $iThreadMaxParam;
-    }
-
-    if (defined($bRemoteParam))
-    {
-        $bRemote = $bRemoteParam;
-    }
-}
-
-push @EXPORT, qw(exitInit);
-
-####################################################################################################################################
 # exitSafe
 #
-# Terminate all threads and SSH connections when the script is terminated.
+# Terminate all remotes and release locks.
 ####################################################################################################################################
 sub exitSafe
 {
@@ -89,25 +56,6 @@ sub exitSafe
 
     commandStop();
 
-    # Stop threads if threading is enabled
-    my $iThreadsStopped = 0;
-
-    if ($iThreadMax > 1)
-    {
-        &log(DEBUG, "stop ${iThreadMax} threads");
-
-        # Don't fail if the threads cannot be stopped
-        eval
-        {
-            $iThreadsStopped = threadGroupDestroy();
-        };
-
-        if ($@ && defined($iExitCode))
-        {
-            &log(WARN, "unable to stop threads: $@");
-        }
-    }
-
     # Close the remote
     protocolDestroy();
 
@@ -124,10 +72,11 @@ sub exitSafe
     }
 
     # Log error based on where the signal came from
-    &log(ERROR, 'process terminated ' .
-                (defined($strSignal) ? "on a ${strSignal} signal" :  'due to an unhandled exception') .
-                ($iThreadsStopped > 0 ? ", ${iThreadsStopped} threads stopped" : ''),
-                defined($strSignal) ? ERROR_TERM : ERROR_UNHANDLED_EXCEPTION);
+    &log(
+        ERROR,
+        'process terminated ' .
+            (defined($strSignal) ? "on a ${strSignal} signal" :  'due to an unhandled exception'),
+        defined($strSignal) ? ERROR_TERM : ERROR_UNHANDLED_EXCEPTION);
 
     # If terminated by a signal exit with ERROR_TERM
     exit ERROR_TERM if defined($strSignal);

@@ -3,9 +3,6 @@
 ####################################################################################################################################
 package pgBackRest::RestoreFile;
 
-use threads;
-use threads::shared;
-use Thread::Queue;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
@@ -24,6 +21,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
 
 ####################################################################################################################################
 # restoreFile
@@ -32,80 +30,77 @@ use pgBackRest::Manifest;
 ####################################################################################################################################
 sub restoreFile
 {
-    my $oFileHash = shift;          # File to restore
-
     # Assign function parameters, defaults, and log debug info
     my
     (
         $strOperation,
-        $lCopyTimeBegin,                            # Time that the backup begain - used for size/timestamp deltas
+        $oFile,                                     # File object
+        $strRepoFile,
+        $strDbFile,
+        $strReference,
+        $lSize,
+        $lModificationTime,
+        $strMode,
+        $strUser,
+        $strGroup,
+        $strChecksum,
+        $bZero,
+        $lCopyTimeStart,                            # Backup start time - used for size/timestamp deltas
         $bDelta,                                    # Is restore a delta?
         $bForce,                                    # Force flag
         $strBackupPath,                             # Backup path
         $bSourceCompression,                        # Is the source compressed?
-        $strCurrentUser,                            # Current OS user
-        $strCurrentGroup,                           # Current OS group
-        $oFile,                                     # File object
-        $lSizeTotal,                                # Total size of files to be restored
-        $lSizeCurrent                               # Current size of files restored
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->restoreFile', \@_,
-            {name => 'lCopyTimeBegin', trace => true},
-            {name => 'bDelta', trace => true},
-            {name => 'bForce', trace => true},
-            {name => 'strBackupPath', trace => true},
-            {name => 'bSourceCompression', trace => true},
-            {name => 'strCurrentUser', trace => true},
-            {name => 'strCurrentGroup', trace => true},
+            __PACKAGE__ . '::restoreFile', \@_,
             {name => 'oFile', trace => true},
-            {name => 'lSizeTotal', default => 0, trace => true},
-            {name => 'lSizeCurrent', required => false, trace => true}
+            {name => &OP_PARAM_REPO_FILE, trace => true},
+            {name => &OP_PARAM_DB_FILE, trace => true},
+            {name => &OP_PARAM_REFERENCE, required => false, trace => true},
+            {name => &OP_PARAM_SIZE, trace => true},
+            {name => &OP_PARAM_MODIFICATION_TIME, trace => true},
+            {name => &OP_PARAM_MODE, trace => true},
+            {name => &OP_PARAM_USER, trace => true},
+            {name => &OP_PARAM_GROUP, trace => true},
+            {name => &OP_PARAM_CHECKSUM, required => false, trace => true},
+            {name => &OP_PARAM_ZERO, required => false, default => false, trace => true},
+            {name => &OP_PARAM_COPY_TIME_START, trace => true},
+            {name => &OP_PARAM_DELTA, trace => true},
+            {name => &OP_PARAM_FORCE, trace => true},
+            {name => &OP_PARAM_BACKUP_PATH, trace => true},
+            {name => &OP_PARAM_SOURCE_COMPRESSION, trace => true},
         );
-
-    # Add the size of the current file to keep track of percent complete
-    if ($lSizeTotal > 0)
-    {
-        $lSizeCurrent += $$oFileHash{size};
-    }
 
     # Copy flag and log message
     my $bCopy = true;
-    my $bZero = false;
-    my $strLog;
 
-    if (defined($$oFileHash{zero}) && $$oFileHash{zero})
+    if ($bZero)
     {
         $bCopy = false;
-        $bZero = true;
 
         # Open the file truncating to zero bytes in case it already exists
-        my $hFile = fileOpen($$oFileHash{db_file}, O_WRONLY | O_CREAT | O_TRUNC, $$oFileHash{mode});
+        my $hFile = fileOpen($strDbFile, O_WRONLY | O_CREAT | O_TRUNC, $strMode);
 
         # Now truncate to the original size.  This will create a sparse file which is very efficient for this use case.
-        truncate($hFile, $$oFileHash{size});
+        truncate($hFile, $lSize);
 
         # Sync the file
         $hFile->sync()
-            or confess &log(ERROR, "unable to sync $$oFileHash{db_file}", ERROR_FILE_SYNC);
+            or confess &log(ERROR, "unable to sync ${strDbFile}", ERROR_FILE_SYNC);
 
         # Close the file
         close($hFile)
-            or confess &log(ERROR, "unable to close $$oFileHash{db_file}", ERROR_FILE_CLOSE);
+            or confess &log(ERROR, "unable to close ${strDbFile}", ERROR_FILE_CLOSE);
 
         # Fix the timestamp - not really needed in this case but good for testing
-        utime($$oFileHash{modification_time}, $$oFileHash{modification_time}, $$oFileHash{db_file})
-            or confess &log(ERROR, "unable to set time for $$oFileHash{db_file}");
-
-        # Set file mode
-        chmod(oct($$oFileHash{mode}), $$oFileHash{db_file})
-            or confess &log(ERROR, "unable to set mode for $$oFileHash{db_file}");
+        utime($lModificationTime, $lModificationTime, $strDbFile)
+            or confess &log(ERROR, "unable to set time for ${strDbFile}");
 
         # Set file ownership
-        $oFile->owner(PATH_DB_ABSOLUTE, $$oFileHash{db_file}, $$oFileHash{user}, $$oFileHash{group});
+        $oFile->owner(PATH_DB_ABSOLUTE, $strDbFile, $strUser, $strGroup);
     }
-    elsif ($oFile->exists(PATH_DB_ABSOLUTE, $$oFileHash{db_file}))
+    elsif ($oFile->exists(PATH_DB_ABSOLUTE, $strDbFile))
     {
         # Perform delta if requested
         if ($bDelta)
@@ -113,28 +108,25 @@ sub restoreFile
             # If force then use size/timestamp delta
             if ($bForce)
             {
-                my $oStat = lstat($$oFileHash{db_file});
+                my $oStat = lstat($strDbFile);
 
                 # Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
-                if (defined($oStat) && $oStat->size == $$oFileHash{size} &&
-                    $oStat->mtime == $$oFileHash{modification_time} && $oStat->mtime < $lCopyTimeBegin)
+                if (defined($oStat) && $oStat->size == $lSize &&
+                    $oStat->mtime == $lModificationTime && $oStat->mtime < $lCopyTimeStart)
                 {
-                    $strLog =  'exists and matches size ' . $oStat->size . ' and modification time ' . $oStat->mtime;
                     $bCopy = false;
                 }
             }
             else
             {
-                my ($strChecksum, $lSize) = $oFile->hashSize(PATH_DB_ABSOLUTE, $$oFileHash{db_file});
+                my ($strActualChecksum, $lActualSize) = $oFile->hashSize(PATH_DB_ABSOLUTE, $strDbFile);
 
-                if ($lSize == $$oFileHash{size} && ($lSize == 0 || $strChecksum eq $$oFileHash{checksum}))
+                if ($lActualSize == $lSize && ($lSize == 0 || $strActualChecksum eq $strChecksum))
                 {
-                    $strLog =  'exists and ' . ($lSize == 0 ? 'is zero size' : "matches backup");
-
                     # Even if hash is the same set the time back to backup time.  This helps with unit testing, but also
                     # presents a pristine version of the database after restore.
-                    utime($$oFileHash{modification_time}, $$oFileHash{modification_time}, $$oFileHash{db_file})
-                        or confess &log(ERROR, "unable to set time for $$oFileHash{db_file}");
+                    utime($lModificationTime, $lModificationTime, $strDbFile)
+                        or confess &log(ERROR, "unable to set time for ${strDbFile}");
 
                     $bCopy = false;
                 }
@@ -145,33 +137,92 @@ sub restoreFile
     # Copy the file from the backup to the database
     if ($bCopy)
     {
-        my ($bCopyResult, $strCopyChecksum, $lCopySize) =
-            $oFile->copy(PATH_BACKUP_CLUSTER, (defined($$oFileHash{reference}) ? $$oFileHash{reference} : $strBackupPath) .
-                         "/$$oFileHash{repo_file}" .
-                         ($bSourceCompression ? '.' . $oFile->{strCompressExtension} : ''),
-                         PATH_DB_ABSOLUTE, $$oFileHash{db_file},
-                         $bSourceCompression,   # Source is compressed based on backup settings
-                         undef, undef,
-                         $$oFileHash{modification_time},
-                         $$oFileHash{mode},
-                         undef,
-                         $$oFileHash{user},
-                         $$oFileHash{group});
+        my ($bCopyResult, $strCopyChecksum, $lCopySize) = $oFile->copy(
+            PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $strBackupPath) .
+                "/${strRepoFile}" . ($bSourceCompression ? '.' . $oFile->{strCompressExtension} : ''),
+            PATH_DB_ABSOLUTE, $strDbFile,
+            $bSourceCompression,
+            undef, undef,
+            $lModificationTime, $strMode,
+            undef,
+            $strUser, $strGroup);
 
-        if ($lCopySize != 0 && $strCopyChecksum ne $$oFileHash{checksum})
+        if ($lCopySize != 0 && $strCopyChecksum ne $strChecksum)
         {
-            confess &log(ERROR, "error restoring $$oFileHash{db_file}: actual checksum ${strCopyChecksum} " .
-                                "does not match expected checksum $$oFileHash{checksum}", ERROR_CHECKSUM);
+            confess &log(ERROR, "error restoring ${strDbFile}: actual checksum ${strCopyChecksum} " .
+                                "does not match expected checksum ${strChecksum}", ERROR_CHECKSUM);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bCopy', value => $bCopy, trace => true}
+    );
+}
+
+push @EXPORT, qw(restoreFile);
+
+####################################################################################################################################
+# restoreLog
+#
+# Log a restored file.
+####################################################################################################################################
+sub restoreLog
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbFile,
+        $bCopy,
+        $lSize,
+        $lModificationTime,
+        $strChecksum,
+        $bZero,
+        $bForce,
+        $lSizeTotal,
+        $lSizeCurrent,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::restoreLog', \@_,
+            {name => &OP_PARAM_DB_FILE},
+            {name => 'bCopy'},
+            {name => &OP_PARAM_SIZE},
+            {name => &OP_PARAM_MODIFICATION_TIME},
+            {name => &OP_PARAM_CHECKSUM, required => false},
+            {name => &OP_PARAM_ZERO, required => false, default => false},
+            {name => &OP_PARAM_FORCE},
+            {name => 'lSizeTotal'},
+            {name => 'lSizeCurrent'},
+        );
+
+    # If the file was not copied then create a log entry to explain why
+    my $strLog;
+
+    if (!$bCopy && !$bZero)
+    {
+        if ($bForce)
+        {
+            $strLog =  'exists and matches size ' . $lSize . ' and modification time ' . $lModificationTime;
+        }
+        else
+        {
+            $strLog =  'exists and ' . ($lSize == 0 ? 'is zero size' : 'matches backup');
         }
     }
 
     # Log the restore
+    $lSizeCurrent += $lSize;
+
     &log($bCopy ? INFO : DETAIL,
          'restore' . ($bZero ? ' zeroed' : '') .
-         " file $$oFileHash{db_file}" . (defined($strLog) ? " - ${strLog}" : '') .
-         ' (' . fileSizeFormat($$oFileHash{size}) .
+         " file ${strDbFile}" . (defined($strLog) ? " - ${strLog}" : '') .
+         ' (' . fileSizeFormat($lSize) .
          ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-         ($$oFileHash{size} != 0 && !$bZero ? " checksum $$oFileHash{checksum}" : ''));
+         ($lSize != 0 && !$bZero ? " checksum ${strChecksum}" : ''));
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -181,6 +232,6 @@ sub restoreFile
     );
 }
 
-push @EXPORT, qw(restoreFile);
+push @EXPORT, qw(restoreLog);
 
 1;

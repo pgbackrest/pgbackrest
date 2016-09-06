@@ -45,15 +45,15 @@ _Run Tests for a Specific OS, Module, Test, and Run_:
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --run=1
 ```
 
-_Run Tests for a Specific OS, Module, Test, and Thread Max_:
+_Run Tests for a Specific OS, Module, Test, and Process Max_:
 ```
-/backrest/test/test.pl --vm=co6 --module=backup --test=full --thread-max=4
+/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4
 ```
-Note that thread-max is only applicable to the `synthetic` and `full` tests in the `backup` module.
+Note that process-max is only applicable to the `synthetic` and `full` tests in the `backup` module.
 
-_Run Tests for a Specific OS, Module, Test, Thread Max, and Database Version_:
+_Run Tests for a Specific OS, Module, Test, Process Max, and Database Version_:
 ```
-/backrest/test/test.pl --vm=co6 --module=backup --test=full --thread-max=4 --db-version=9.4
+/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --db-version=9.4
 ```
 Note that db-version is only applicable to the `full` test in the `backup` module.
 

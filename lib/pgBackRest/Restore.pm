@@ -3,9 +3,6 @@
 ####################################################################################################################################
 package pgBackRest::Restore;
 
-use threads;
-use threads::shared;
-use Thread::Queue;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
@@ -24,6 +21,7 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
+use pgBackRest::RestoreProcess;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
@@ -708,6 +706,9 @@ sub clean
                             &log(DETAIL, "remove ${strType} ${strOsFile}");
                             fileRemove($strOsFile);
 
+                            # Removing a file can be expensive so send protocol keep alive
+                            $self->{oProtocol}->keepAlive();
+
                             $oRemoveHash{$strSection} += 1;
                         }
                     }
@@ -1104,7 +1105,7 @@ sub process
     $self->build($oManifest);
 
     # Get variables required for restore
-    my $lCopyTimeBegin = $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
+    my $lCopyTimeStart = $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
     my $bSourceCompression = $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
@@ -1192,12 +1193,18 @@ sub process
         &log(DETAIL, "database filter: $strDbFilter");
     }
 
-    # Create hash containing files to restore
-    my %oRestoreHash;
+    # Initialize the restore process
+    my $oRestoreProcess = new pgBackRest::RestoreProcess(optionGet(OPTION_PROCESS_MAX));
+
+    # Variables used for parallel copy
+    my $hFileControl = undef;
     my $lSizeTotal = 0;
     my $lSizeCurrent = 0;
 
-    foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+    foreach my $strFile (
+        sort {sprintf("%016d-${b}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE)) cmp
+              sprintf("%016d-${a}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE))}
+        ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE, 'none')))
     {
         # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in DB_PATH_PGTBLSPC.
         # The tablespace links have already been created by Restore::build().
@@ -1207,154 +1214,98 @@ sub process
             next;
         }
 
-        my $lSize = $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE);
-
         # By default put everything into a single queue
         my $strQueueKey = MANIFEST_TARGET_PGDATA;
 
-        # If multiple threads and the file belongs in a tablespace then put in a tablespace-specific queue
-        if (optionGet(OPTION_THREAD_MAX) > 1 && index($strFile, DB_PATH_PGTBLSPC . '/') == 0)
+        # If the file belongs in a tablespace then put in a tablespace-specific queue
+        if (index($strFile, DB_PATH_PGTBLSPC . '/') == 0)
         {
             $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strFile))[1];
         }
 
-        # Preface the file key with the size. This allows for sorting the files to restore by size.
-        my $strFileKey;
-
-        # Skip this for global/pg_control since it will be copied as the last step and needs to named in a way that it
-        # can be found for the copy.
-        if ($strFile eq MANIFEST_FILE_PGCONTROL)
+        # Get restore information
+        my $hFile =
         {
-            $strFileKey = $strFile;
-            $oRestoreHash{$strQueueKey}{$strFileKey}{skip} = true;
-        }
-        # Else continue normally
-        else
-        {
-            $strFileKey = sprintf("%016d-${strFile}", $lSize);
-            $oRestoreHash{$strQueueKey}{$strFileKey}{skip} = false;
-
-            $lSizeTotal += $lSize;
-        }
+            &OP_PARAM_REPO_FILE => $strFile,
+            &OP_PARAM_DB_FILE =>  $oManifest->dbPathGet($self->{strDbClusterPath}, $strFile),
+            &OP_PARAM_REFERENCE =>
+                $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false),
+            &OP_PARAM_SIZE => $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE),
+            &OP_PARAM_MODIFICATION_TIME =>
+                $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP),
+            &OP_PARAM_MODE => $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_MODE),
+            &OP_PARAM_USER => $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_USER),
+            &OP_PARAM_GROUP => $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_GROUP),
+        };
 
         # Zero files that should be filtered
         if (defined($strDbFilter) && $strFile =~ $strDbFilter && $strFile !~ /\/PG\_VERSION$/)
         {
-            $oRestoreHash{$strQueueKey}{$strFileKey}{zero} = true;
+            $hFile->{&OP_PARAM_ZERO} = true;
         }
-
-        # Get restore information
-        $oRestoreHash{$strQueueKey}{$strFileKey}{repo_file} = $strFile;
-        $oRestoreHash{$strQueueKey}{$strFileKey}{db_file} =  $oManifest->dbPathGet($self->{strDbClusterPath}, $strFile);
-        $oRestoreHash{$strQueueKey}{$strFileKey}{size} = $lSize;
-        $oRestoreHash{$strQueueKey}{$strFileKey}{reference} =
-            $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
-        $oRestoreHash{$strQueueKey}{$strFileKey}{modification_time} =
-            $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP);
-        $oRestoreHash{$strQueueKey}{$strFileKey}{mode} =
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_MODE);
-        $oRestoreHash{$strQueueKey}{$strFileKey}{user} =
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_USER);
-        $oRestoreHash{$strQueueKey}{$strFileKey}{group} =
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_GROUP);
-
         # Checksum is only stored if size > 0
-        if ($lSize > 0)
+        elsif ($hFile->{&OP_PARAM_SIZE} > 0)
         {
-            $oRestoreHash{$strQueueKey}{$strFileKey}{checksum} =
+            $hFile->{&OP_PARAM_CHECKSUM} =
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM);
         }
+
+        # Increment file size
+        $lSizeTotal += $hFile->{&OP_PARAM_SIZE};
+
+        # pg_control will be restored last so assign it to a special variable
+        if ($strFile eq MANIFEST_FILE_PGCONTROL)
+        {
+            $hFileControl = $hFile;
+        }
+        # Else queue for parallel restore
+        else
+        {
+            $oRestoreProcess->queueRestore(
+                $strQueueKey, $hFile->{&OP_PARAM_REPO_FILE}, $hFile->{&OP_PARAM_REPO_FILE}, $hFile->{&OP_PARAM_DB_FILE},
+                $hFile->{&OP_PARAM_REFERENCE}, $hFile->{&OP_PARAM_SIZE}, $hFile->{&OP_PARAM_MODIFICATION_TIME},
+                $hFile->{&OP_PARAM_MODE}, $hFile->{&OP_PARAM_USER}, $hFile->{&OP_PARAM_GROUP}, $hFile->{&OP_PARAM_CHECKSUM},
+                $hFile->{&OP_PARAM_ZERO}, $lCopyTimeStart, optionGet(OPTION_DELTA), optionGet(OPTION_FORCE), $self->{strBackupSet},
+                $bSourceCompression);
+        }
     }
 
-    # If multi-threaded then create threads to copy files
-    if (optionGet(OPTION_THREAD_MAX) > 1)
+    # Run the restore jobs and process results
+    while (my $hyResult = $oRestoreProcess->process())
     {
-        # Load module dynamically
-        require pgBackRest::Protocol::ThreadGroup;
-        pgBackRest::Protocol::ThreadGroup->import();
-
-        logDebugMisc
-        (
-            $strOperation, 'restore with threads',
-            {name => 'iThreadTotal', value => optionGet(OPTION_THREAD_MAX)}
-        );
-
-        # Initialize the thread queues
-        my @oyRestoreQueue;
-
-        foreach my $strQueueKey (sort (keys %oRestoreHash))
+        foreach my $hResult (@{$hyResult})
         {
-            push(@oyRestoreQueue, Thread::Queue->new());
+            my $hFile = $hResult->{hPayload};
 
-            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strQueueKey}})))
-            {
-                # Skip files marked to be copied later
-                next if ($oRestoreHash{$strQueueKey}{$strFileKey}{skip});
-
-                $oyRestoreQueue[@oyRestoreQueue - 1]->enqueue($oRestoreHash{$strQueueKey}{$strFileKey});
-            }
+            ($lSizeCurrent) = restoreLog(
+                $hFile->{&OP_PARAM_DB_FILE}, $hResult->{bCopy}, $hFile->{&OP_PARAM_SIZE}, $hFile->{&OP_PARAM_MODIFICATION_TIME},
+                $hFile->{&OP_PARAM_CHECKSUM}, $hFile->{&OP_PARAM_ZERO}, optionGet(OPTION_FORCE), $lSizeTotal, $lSizeCurrent);
         }
 
-        # Initialize the param hash
-        my %oParam;
-
-        $oParam{remote_type} = BACKUP;
-        $oParam{copy_time_begin} = $lCopyTimeBegin;
-        $oParam{size_total} = $lSizeTotal;
-        $oParam{delta} = optionGet(OPTION_DELTA);
-        $oParam{force} = optionGet(OPTION_FORCE);
-        $oParam{backup_path} = $self->{strBackupSet};
-        $oParam{source_compression} = $bSourceCompression;
-        $oParam{current_user} = $strCurrentUser;
-        $oParam{current_group} = $strCurrentGroup;
-        $oParam{queue} = \@oyRestoreQueue;
-
-        # Run the threads
-        for (my $iThreadIdx = 0; $iThreadIdx < optionGet(OPTION_THREAD_MAX); $iThreadIdx++)
-        {
-            threadGroupRun($iThreadIdx, 'restore', \%oParam);
-        }
-
-        # Complete thread queues
-        while (!threadGroupComplete())
-        {
-            # Keep the protocol layer from timing out
-            $self->{oProtocol}->keepAlive();
-        };
-    }
-    else
-    {
-        logDebugMisc($strOperation, 'restore in main process');
-
-        # Restore file in main process
-        foreach my $strQueueKey (sort (keys %oRestoreHash))
-        {
-            foreach my $strFileKey (sort {$b cmp $a} (keys(%{$oRestoreHash{$strQueueKey}})))
-            {
-                # Skip files marked to be copied later
-                next if ($oRestoreHash{$strQueueKey}{$strFileKey}{skip});
-
-                $lSizeCurrent = restoreFile($oRestoreHash{$strQueueKey}{$strFileKey}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
-                                            optionGet(OPTION_FORCE), $self->{strBackupSet}, $bSourceCompression, $strCurrentUser,
-                                            $strCurrentGroup, $self->{oFile}, $lSizeTotal, $lSizeCurrent);
-
-                # Keep the protocol layer from timing out while checksumming
-                $self->{oProtocol}->keepAlive();
-            }
-        }
+        # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
+        # then the remote might timeout while waiting for a command.
+        $self->{oProtocol}->keepAlive();
     }
 
     # Create recovery.conf file
     $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 
     # Copy pg_control last
-    &log(INFO, 'restore ' . $oManifest->dbPathGet(undef, MANIFEST_FILE_PGCONTROL) .
-         ' (copied last to ensure aborted restores cannot be started)');
+    &log(
+        INFO,
+        'restore ' . $oManifest->dbPathGet(undef, MANIFEST_FILE_PGCONTROL) .
+        ' (copied last to ensure aborted restores cannot be started)');
 
-    restoreFile($oRestoreHash{&MANIFEST_TARGET_PGDATA}{&MANIFEST_FILE_PGCONTROL}, $lCopyTimeBegin, optionGet(OPTION_DELTA),
-                optionGet(OPTION_FORCE), $self->{strBackupSet}, $bSourceCompression, $strCurrentUser, $strCurrentGroup,
-                $self->{oFile});
+    restoreFile(
+        $self->{oFile}, $hFileControl->{&OP_PARAM_REPO_FILE}, $hFileControl->{&OP_PARAM_DB_FILE},
+        $hFileControl->{&OP_PARAM_REFERENCE}, $hFileControl->{&OP_PARAM_SIZE}, $hFileControl->{&OP_PARAM_MODIFICATION_TIME},
+        $hFileControl->{&OP_PARAM_MODE}, $hFileControl->{&OP_PARAM_USER}, $hFileControl->{&OP_PARAM_GROUP},
+        $hFileControl->{&OP_PARAM_CHECKSUM}, false, false, false, false, $self->{strBackupSet}, $bSourceCompression);
+
+    restoreLog(
+        $hFileControl->{&OP_PARAM_DB_FILE}, true, $hFileControl->{&OP_PARAM_SIZE}, $hFileControl->{&OP_PARAM_MODIFICATION_TIME},
+        $hFileControl->{&OP_PARAM_CHECKSUM}, false, false, $lSizeTotal, $lSizeCurrent);
 
     # Finally remove the manifest to indicate the restore is complete
     $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST, undef, false);

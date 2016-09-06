@@ -10,9 +10,9 @@ pgBackRest [v1.06](https://github.com/pgbackrest/pgbackrest/releases/tag/release
 
 ## Features
 
-### Multithreaded Backup & Restore
+### Multi-process Backup & Restore
 
-Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-threaded. pgBackRest solves the compression bottleneck with multithreading.
+Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process. pgBackRest solves the compression bottleneck with multi-processing.
 
 Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link. More cores and a larger pipe lead to even higher throughput.
 
@@ -48,7 +48,7 @@ If the repository is on a backup server, compression is performed on the databas
 
 ### Delta Restore
 
-The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Since this process is multithreaded, it can lead to a dramatic reduction in restore times.
+The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Multi-processing can lead to a dramatic reduction in restore times.
 
 ### Advanced Archiving
 

@@ -260,7 +260,7 @@ sub perlInstall
     elsif ($strOS eq VM_CO7)
     {
         return $strImage .
-            "RUN yum install -y perl perl-Thread-Queue perl-JSON-PP perl-Digest-SHA perl-DBD-Pg";
+            "RUN yum install -y perl perl-JSON-PP perl-Digest-SHA perl-DBD-Pg";
     }
     elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
     {

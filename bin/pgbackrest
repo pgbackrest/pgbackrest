@@ -28,7 +28,7 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
-# START EVAL BLOCK TO CATCH ERRORS AND STOP THREADS
+# START EVAL BLOCK TO CATCH ERRORS AND STOP PROCESSES
 ####################################################################################################################################
 eval
 {
@@ -88,6 +88,28 @@ eval
 
         # Process remote requests
         exitSafe($oRemote->process());
+    }
+
+    ################################################################################################################################
+    # Process local commands
+    ################################################################################################################################
+    if (commandTest(CMD_LOCAL))
+    {
+        # Set log levels
+        logLevelSet(OFF, REMOTE);
+
+        # Load module dynamically
+        require pgBackRest::Protocol::LocalMinion;
+        pgBackRest::Protocol::LocalMinion->import();
+
+        # Create the local object
+        my $oLocal = new pgBackRest::Protocol::LocalMinion(optionGet(OPTION_COMMAND));
+
+        # Acquire a local lock
+        lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
+
+        # Process local requests
+        exitSafe($oLocal->process());
     }
 
     # Set the log levels
@@ -160,21 +182,6 @@ eval
     logFileSet(optionGet(OPTION_LOG_PATH) . '/' . optionGet(OPTION_STANZA) . '-' . lc(commandGet()));
 
     ################################################################################################################################
-    # Create the thread group that will be used for parallel processing
-    ################################################################################################################################
-    if (optionTest(OPTION_THREAD_MAX) && optionGet(OPTION_THREAD_MAX) > 1)
-    {
-        # Set local thread-max so exitSafe knows to stop them on exit
-        exitInit(optionGet(OPTION_THREAD_MAX));
-
-        # Load module dynamically
-        require pgBackRest::Protocol::ThreadGroup;
-        pgBackRest::Protocol::ThreadGroup->import();
-
-        threadGroupCreate();
-    }
-
-    ################################################################################################################################
     # RESTORE
     ################################################################################################################################
     if (commandTest(CMD_RESTORE))
@@ -238,7 +245,7 @@ eval
 };
 
 ####################################################################################################################################
-# CHECK FOR ERRORS AND STOP THREADS
+# CHECK FOR ERRORS AND STOP PROCESSES
 ####################################################################################################################################
 if ($@)
 {

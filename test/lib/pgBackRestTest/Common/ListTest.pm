@@ -33,8 +33,8 @@ use constant TEST_PGSQL_BIN                                         => 'pgsql-bi
     push @EXPORT, qw(TEST_PGSQL_BIN);
 use constant TEST_RUN                                               => 'run';
     push @EXPORT, qw(TEST_RUN);
-use constant TEST_THREAD                                            => 'thread';
-    push @EXPORT, qw(TEST_THREAD);
+use constant TEST_PROCESS                                           => 'process';
+    push @EXPORT, qw(TEST_PROCESS);
 use constant TEST_VM                                                => 'os';
     push @EXPORT, qw(TEST_VM);
 
@@ -48,7 +48,7 @@ sub testListGet
     my $strModuleTest = shift;
     my $iModuleTestRun = shift;
     my $strDbVersion = shift;
-    my $iThreadMax = shift;
+    my $iProcessMax = shift;
 
     my $oTestDef = testDefGet();
     my $oyVm = vmGet();
@@ -119,15 +119,15 @@ sub testListGet
 
                                 for (my $iTestRunIdx = $iTestRunMin; $iTestRunIdx <= $iTestRunMax; $iTestRunIdx++)
                                 {
-                                    my $iyThreadMax = [defined($iThreadMax) ? $iThreadMax : 1];
+                                    my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];
 
-                                    if (defined($$oTest{&TESTDEF_TEST_THREAD}) && $$oTest{&TESTDEF_TEST_THREAD} &&
-                                        !defined($iThreadMax) && $bFirstDbVersion)
+                                    if (defined($$oTest{&TESTDEF_TEST_PROCESS}) && $$oTest{&TESTDEF_TEST_PROCESS} &&
+                                        !defined($iProcessMax) && $bFirstDbVersion)
                                     {
-                                        $iyThreadMax = [1, 4];
+                                        $iyProcessMax = [1, 4];
                                     }
 
-                                    foreach my $iThreadTestMax (@{$iyThreadMax})
+                                    foreach my $iProcessTestMax (@{$iyProcessMax})
                                     {
                                         my $strDbVersion = $iDbVersionIdx == -1 ? undef :
                                                                ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx];
@@ -151,7 +151,7 @@ sub testListGet
                                             &TEST_MODULE => $$oModule{&TESTDEF_MODULE_NAME},
                                             &TEST_NAME => $$oTest{&TESTDEF_TEST_NAME},
                                             &TEST_RUN => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
-                                            &TEST_THREAD => $iThreadTestMax,
+                                            &TEST_PROCESS => $iProcessTestMax,
                                             &TEST_DB => $strDbVersion
                                         };
 

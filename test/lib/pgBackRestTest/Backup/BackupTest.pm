@@ -122,7 +122,7 @@ sub backupTestRun
     # Setup global variables
     my $oHostGroup = hostGroupGet();
     my $strTestPath = $oHostGroup->paramGet(HOST_PARAM_TEST_PATH);
-    my $iThreadMax = $oHostGroup->paramGet(HOST_PARAM_THREAD_MAX);
+    my $iProcessMax = $oHostGroup->paramGet(HOST_PARAM_PROCESS_MAX);
 
     # Setup test variables
     my $iRun;
@@ -143,7 +143,7 @@ sub backupTestRun
     if (!$bVmOut)
     {
         &log(INFO, 'BACKUP MODULE ******************************************************************');
-        &log(INFO, "THREAD-MAX: ${iThreadMax}\n");
+        &log(INFO, "PROCESS-MAX: ${iProcessMax}\n");
     }
 
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -168,11 +168,11 @@ sub backupTestRun
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!testRun(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, " .
-                                            "arc_async ${bArchiveAsync}",
-                                            $iThreadMax == 1 ? $strModule : undef,
-                                            $iThreadMax == 1 ? $strThisTest: undef,
-                                            \$oLogTest)) {next}
+                    "rmt ${bRemote}, cmp ${bCompress}, " .
+                    "arc_async ${bArchiveAsync}",
+                    $iProcessMax == 1 ? $strModule : undef,
+                    $iProcessMax == 1 ? $strThisTest: undef,
+                    \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
                 my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
@@ -396,11 +396,11 @@ sub backupTestRun
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!testRun(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}" .
-                                            ', error ' . ($iError ? 'connect' : 'version'),
-                                            $iThreadMax == 1 ? $strModule : undef,
-                                            $iThreadMax == 1 ? $strThisTest: undef,
-                                            \$oLogTest)) {next}
+                    "rmt ${bRemote}, cmp ${bCompress}" .
+                    ', error ' . ($iError ? 'connect' : 'version'),
+                    $iProcessMax == 1 ? $strModule : undef,
+                    $iProcessMax == 1 ? $strThisTest: undef,
+                    \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
                 my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
@@ -480,10 +480,10 @@ sub backupTestRun
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!testRun(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}",
-                                            $iThreadMax == 1 ? $strModule : undef,
-                                            $iThreadMax == 1 ? $strThisTest: undef,
-                                            \$oLogTest)) {next}
+                    "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}",
+                    $iProcessMax == 1 ? $strModule : undef,
+                    $iProcessMax == 1 ? $strThisTest: undef,
+                    \$oLogTest)) {next}
 
                 # Create hosts, file object, and config
                 my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
@@ -611,10 +611,10 @@ sub backupTestRun
         }
 
         if (testRun(++$iRun,
-                                    "local",
-                                    $iThreadMax == 1 ? $strModule : undef,
-                                    $iThreadMax == 1 ? $strThisTest: undef,
-                                    \$oLogTest))
+            "local",
+            $iProcessMax == 1 ? $strModule : undef,
+            $iProcessMax == 1 ? $strThisTest: undef,
+            \$oLogTest))
         {
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(true, $oLogTest);
@@ -695,10 +695,10 @@ sub backupTestRun
         {
             # Increment the run, log, and decide whether this unit test should be run
             if (!testRun(++$iRun,
-                                        "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardLink}",
-                                        $iThreadMax == 1 ? $strModule : undef,
-                                        $iThreadMax == 1 ? $strThisTest: undef,
-                                        \$oLogTest)) {next}
+                "rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardLink}",
+                $iProcessMax == 1 ? $strModule : undef,
+                $iProcessMax == 1 ? $strThisTest: undef,
+                \$oLogTest)) {next}
 
             # Create hosts, file object, and config
             my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
@@ -848,7 +848,7 @@ sub backupTestRun
             {
                 $strOptionalParam .= ' --protocol-timeout=2 --db-timeout=1';
 
-                if ($iThreadMax > 1)
+                if ($iProcessMax > 1)
                 {
                     $strTestPoint = TEST_KEEP_ALIVE;
                 }
@@ -921,7 +921,7 @@ sub backupTestRun
                 my $oExecuteBackup = $oHostBackup->backupBegin(
                     $strType, 'abort backup - local',
                     {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_START, fTestDelay => 5,
-                        iExpectedExitStatus => $bRemote && $iThreadMax > 1 ? ERROR_STOP : ERROR_TERM});
+                        iExpectedExitStatus => ERROR_TERM});
 
                 $oHostDbMaster->stop({bForce => true});
 
@@ -1064,10 +1064,11 @@ sub backupTestRun
                 $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
                 'add and delete files', undef, ' --link-all', undef, $bNeutralTest && !$bRemote ? 'root' : undef);
 
-            # Fix permissions on the restore log
+            # Fix permissions on the restore log & remove lock files
             if ($bNeutralTest && !$bRemote)
             {
                 executeTest('sudo chown -R vagrant:postgres ' . $oHostBackup->logPath());
+                executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
             }
 
             # Change an existing link to the wrong directory
@@ -1650,8 +1651,8 @@ sub backupTestRun
                 $oHostBackup->backup(
                     $strType, 'protocol shutdown timeout',
                     {oExpectedManifest => \%oManifest,
-                     strOptionalParam => '--protocol-timeout=1 --db-timeout=.5 --log-level-console=warn',
-                     strTest => TEST_PROCESS_EXIT, fTestDelay => 1, bSupplemental => false});
+                     strOptionalParam => '--protocol-timeout=2 --db-timeout=.5 --log-level-console=warn',
+                     strTest => TEST_PROCESS_EXIT, fTestDelay => 2, bSupplemental => false});
             }
         }
         }
@@ -1688,7 +1689,7 @@ sub backupTestRun
         foreach my $bCompress ($bHostStandby ? (false) : (false, true))
         {
             # Increment the run, log, and decide whether this unit test should be run
-            my $bLog = $iThreadMax == 1 && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) eq PG_VERSION_95;
+            my $bLog = $iProcessMax == 1 && $oHostGroup->paramGet(HOST_PARAM_DB_VERSION) eq PG_VERSION_95;
 
             next if (!testRun(
                 ++$iRun,

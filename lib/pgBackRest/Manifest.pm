@@ -1096,4 +1096,38 @@ sub buildDefault
     return logDebugReturn($strOperation);
 }
 
+####################################################################################################################################
+# validate
+#
+# Checks for any mising values or inconsistencies in the manifest.
+####################################################################################################################################
+sub validate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . 'validate');
+
+    # Make sure that all files have size and checksum (when size > 0).  Since these values are removed before the backup file copy
+    # starts this ensures that all files had results stored in the manifest during the file copy.
+    foreach my $strFile ($self->keys(MANIFEST_SECTION_TARGET_FILE))
+    {
+        # Ensure size is set
+        if (!$self->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE))
+        {
+            confess &log(ASSERT, "manifest subvalue 'size' not set for file '${strFile}'");
+        }
+
+        # If size > 0 then checksum must also be set
+        if ($self->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) > 0 &&
+            !$self->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM))
+        {
+            confess &log(ASSERT, "manifest subvalue 'checksum' not set for file '${strFile}'");
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
 1;

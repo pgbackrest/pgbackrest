@@ -369,9 +369,8 @@ sub get
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
-    # 2) There is a hole in the archive stream and a hard error should be returned.  However, holes are possible due to
-    #    async archiving and threading - so when to report a hole?  Since a hard error will cause PG to terminate, for now
-    #    treat as case #1.
+    # 2) There is a hole in the archive stream and a hard error should be returned.  However, holes are possible due to async
+    #    archiving - so when to report a hole?  Since a hard error will cause PG to terminate, for now treat as case #1.
     my $iResult = 0;
 
     if (!defined($strArchiveFile))

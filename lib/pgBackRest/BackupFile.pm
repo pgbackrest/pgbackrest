@@ -3,8 +3,6 @@
 ####################################################################################################################################
 package pgBackRest::BackupFile;
 
-use threads;
-use Thread::Queue;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
@@ -20,6 +18,19 @@ use pgBackRest::Common::String;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
+
+####################################################################################################################################
+# Result constants
+####################################################################################################################################
+use constant BACKUP_FILE_CHECKSUM                                   => 0;
+    push @EXPORT, qw(BACKUP_FILE_CHECKSUM);
+use constant BACKUP_FILE_COPY                                       => 1;
+    push @EXPORT, qw(BACKUP_FILE_COPY);
+use constant BACKUP_FILE_RECOPY                                     => 2;
+    push @EXPORT, qw(BACKUP_FILE_RECOPY);
+use constant BACKUP_FILE_SKIP                                       => 3;
+    push @EXPORT, qw(BACKUP_FILE_SKIP);
 
 ####################################################################################################################################
 # backupFile
@@ -37,38 +48,28 @@ sub backupFile
         $strChecksum,                               # File checksum to be checked
         $lModificationTime,                         # File modification time
         $lSizeFile,                                 # File size
-        $lSizeTotal,                                # Total size of the files to be copied
-        $lSizeCurrent,                              # Size of files copied so far
         $bIgnoreMissing,                            # Is it OK if the file is missing?
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::backupFile', \@_,
             {name => 'oFile', trace => true},
-            {name => 'strDbFile', trace => true},
-            {name => 'strRepoFile', trace => true},
-            {name => 'bDestinationCompress', trace => true},
-            {name => 'strChecksum', required => false, trace => true},
-            {name => 'lModificationTime', trace => true},
-            {name => 'lSizeFile', trace => true},
-            {name => 'lSizeTotal', default => 0, trace => true},
-            {name => 'lSizeCurrent', required => false, trace => true},
-            {name => 'bIgnoreMissing', default => true, trace => true},
+            {name => OP_PARAM_DB_FILE, trace => true},
+            {name => OP_PARAM_REPO_FILE, trace => true},
+            {name => OP_PARAM_DESTINATION_COMPRESS, trace => true},
+            {name => OP_PARAM_CHECKSUM, required => false, trace => true},
+            {name => OP_PARAM_MODIFICATION_TIME, trace => true},
+            {name => OP_PARAM_SIZE, trace => true},
+            {name => OP_PARAM_IGNORE_MISSING, default => true, trace => true},
         );
 
-    my $bCopyResult = true;                         # Copy result
+    my $iCopyResult = BACKUP_FILE_COPY;             # Copy result
     my $strCopyChecksum;                            # Copy checksum
     my $lCopySize;                                  # Copy Size
     my $lRepoSize;                                  # Repo size
 
-    # Add the size of the current file to keep track of percent complete
-    $lSizeCurrent += $lSizeFile;
-
     # If checksum is defined then the file already exists but needs to be checked
     my $bCopy = true;
-
-    # See if there is a host
-    my $strHost = $oFile->{oProtocol}->{strHost};
 
     # Add compression suffix if needed
     my $strFileOp = $strRepoFile . ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : '');
@@ -82,16 +83,18 @@ sub backupFile
 
         if ($bCopy)
         {
-            &log(WARN, "resumed backup file ${strRepoFile} should have checksum ${strChecksum} but " .
-                       "actually has checksum ${strCopyChecksum}.  The file will be recopied and backup will " .
-                       "continue but this may be an issue unless the backup temp path is known to be corrupted.");
+            $iCopyResult = BACKUP_FILE_RECOPY;
+        }
+        else
+        {
+            $iCopyResult = BACKUP_FILE_CHECKSUM;
         }
     }
 
     if ($bCopy)
     {
         # Copy the file from the database to the backup (will return false if the source file is missing)
-        ($bCopyResult, $strCopyChecksum, $lCopySize) =
+        (my $bCopyResult, $strCopyChecksum, $lCopySize) =
             $oFile->copy(PATH_DB_ABSOLUTE, $strDbFile,
                          PATH_BACKUP_TMP, $strFileOp,
                          false,                   # Source is not compressed since it is the db directory
@@ -104,34 +107,22 @@ sub backupFile
         # If source file is missing then assume the database removed it (else corruption and nothing we can do!)
         if (!$bCopyResult)
         {
-            &log(DETAIL, "skip file removed by database: " . $strDbFile);
+            $iCopyResult = BACKUP_FILE_SKIP;
         }
     }
 
     # If file was copied or checksum'd then get size in repo.  This has to be checked after the file is at rest because filesystem
     # compression may affect the actual repo size and this cannot be calculated in stream.
-    if ($bCopyResult)
+    if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
         $lRepoSize = (fileStat($oFile->pathGet(PATH_BACKUP_TMP, $strFileOp)))->size;
-    }
-
-    # Ouput log
-    if ($bCopyResult)
-    {
-        &log($bCopy ? INFO : DETAIL,
-             (defined($strChecksum) && !$bCopy ?
-                'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
-             "${strDbFile} (" . fileSizeFormat($lCopySize) .
-             ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-             ($lCopySize != 0 ? " checksum ${strCopyChecksum}" : ''));
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bCopyResult', value => $bCopyResult, trace => true},
-        {name => 'lSizeCurrent', value => $lSizeCurrent, trace => true},
+        {name => 'iCopyResult', value => $iCopyResult, trace => true},
         {name => 'lCopySize', value => $lCopySize, trace => true},
         {name => 'lRepoSize', value => $lRepoSize, trace => true},
         {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true}
@@ -150,11 +141,18 @@ sub backupManifestUpdate
     (
         $strOperation,
         $oManifest,
-        $strFile,
-        $bCopied,
+        $strHost,
+        $iProcessId,
+        $strRepoFile,
+        $strDbFile,
+        $iCopyResult,
         $lSize,
-        $lRepoSize,
+        $lSizeCopy,
+        $lSizeRepo,
+        $lSizeTotal,
+        $lSizeCurrent,
         $strChecksum,
+        $strChecksumCopy,
         $lManifestSaveSize,
         $lManifestSaveCurrent
     ) =
@@ -162,60 +160,87 @@ sub backupManifestUpdate
         (
             __PACKAGE__ . '::backupManifestUpdate', \@_,
             {name => 'oManifest', trace => true},
-            {name => 'strFile', trace => true},
-            {name => 'bCopied', trace => true},
+            {name => 'strHost', required => false, trace => true},
+            {name => 'iProcessId', required => false, trace => true},
+            {name => 'strRepoFile', trace => true},
+            {name => 'strDbFile', trace => true},
+            {name => 'iCopyResult', trace => true},
             {name => 'lSize', required => false, trace => true},
-            {name => 'lRepoSize', required => false, trace => true},
+            {name => 'lSizeCopy', required => false, trace => true},
+            {name => 'lSizeRepo', required => false, trace => true},
+            {name => 'lSizeTotal', trace => true},
+            {name => 'lSizeCurrent', trace => true},
             {name => 'strChecksum', required => false, trace => true},
-            {name => 'lManifestSaveSize', required => false, trace => true},
-            {name => 'lManifestSaveCurrent', required => false, trace => true}
+            {name => 'strChecksumCopy', required => false, trace => true},
+            {name => 'lManifestSaveSize', trace => true},
+            {name => 'lManifestSaveCurrent', trace => true}
         );
 
-    # If copy was successful store the checksum and size
-    if ($bCopied)
+    # Increment current backup progress
+    $lSizeCurrent += $lSize;
+
+    # Log invalid checksum
+    if ($iCopyResult == BACKUP_FILE_RECOPY)
     {
-        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE, $lSize);
+        &log(
+            WARN,
+            "resumed backup file ${strRepoFile} should have checksum ${strChecksum} but actually has checksum ${strChecksumCopy}." .
+            " The file will be recopied and backup will continue but this may be an issue unless the backup temp path is known to" .
+            " be corrupted.");
+    }
 
-        if ($lRepoSize != $lSize)
+    # If copy was successful store the checksum and size
+    if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
+    {
+        # Log copy or checksum
+        &log($iCopyResult == BACKUP_FILE_CHECKSUM ? DETAIL : INFO,
+             ($iCopyResult == BACKUP_FILE_CHECKSUM ?
+                'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
+             "${strDbFile} (" . fileSizeFormat($lSizeCopy) .
+             ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
+             ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iProcessId);
+
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
+
+        if ($lSizeRepo != $lSizeCopy)
         {
-            $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
+            $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REPO_SIZE, $lSizeRepo);
         }
 
-        if ($lSize > 0)
+        if ($lSizeCopy > 0)
         {
-            $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-        }
-
-        # Determine whether to save the manifest
-        if (defined($lManifestSaveSize))
-        {
-            $lManifestSaveCurrent += $lSize;
-
-            if ($lManifestSaveCurrent >= $lManifestSaveSize)
-            {
-                $oManifest->save();
-                logDebugMisc
-                (
-                    $strOperation, 'save manifest',
-                    {name => 'lManifestSaveSize', value => $lManifestSaveSize},
-                    {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
-                );
-
-                $lManifestSaveCurrent = 0;
-            }
+            $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
         }
     }
     # Else the file was removed during backup so remove from manifest
-    else
+    elsif ($iCopyResult == BACKUP_FILE_SKIP)
     {
-        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strFile);
+        &log(DETAIL, 'skip file removed by database ' . (defined($strHost) ? "${strHost}:" : '') . $strDbFile);
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile);
+    }
+
+    # Determine whether to save the manifest
+    $lManifestSaveCurrent += $lSize;
+
+    if ($lManifestSaveCurrent >= $lManifestSaveSize)
+    {
+        $oManifest->save();
+        logDebugMisc
+        (
+            $strOperation, 'save manifest',
+            {name => 'lManifestSaveSize', value => $lManifestSaveSize},
+            {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent}
+        );
+
+        $lManifestSaveCurrent = 0;
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent, trace => true}
+        {name => 'lSizeCurrent', value => $lSizeCurrent, trace => true},
+        {name => 'lManifestSaveCurrent', value => $lManifestSaveCurrent, trace => true},
     );
 }
 

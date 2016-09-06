@@ -580,20 +580,35 @@ sub keys
 {
     my $self = shift;
     my $strSection = shift;
-    my $strKey = shift;
+    my $strSortOrder = shift;
 
-    if (defined($strSection))
+    if (!defined($strSection))
     {
-        if ($self->test($strSection, $strKey))
-        {
-            return (sort(keys(%{$self->get($strSection, $strKey)})));
-        }
-
-        my @stryEmptyArray;
-        return @stryEmptyArray;
+        confess &log(ASSERT, 'strSection must be set');
     }
 
-    return (sort(keys(%{$self->{oContent}})));
+    if ($self->test($strSection))
+    {
+        if (!defined($strSortOrder) || $strSortOrder eq 'forward')
+        {
+            return (sort(keys(%{$self->get($strSection)})));
+        }
+        elsif ($strSortOrder eq 'reverse')
+        {
+            return (sort {$b cmp $a} (keys(%{$self->get($strSection)})));
+        }
+        elsif ($strSortOrder eq 'none')
+        {
+            return (keys(%{$self->get($strSection)}));
+        }
+        else
+        {
+            confess &log(ASSERT, "invalid strSortOrder '${strSortOrder}'");
+        }
+    }
+
+    my @stryEmptyArray;
+    return @stryEmptyArray;
 }
 
 ####################################################################################################################################

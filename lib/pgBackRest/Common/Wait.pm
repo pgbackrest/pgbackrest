@@ -3,7 +3,6 @@
 ####################################################################################################################################
 package pgBackRest::Common::Wait;
 
-use threads;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);

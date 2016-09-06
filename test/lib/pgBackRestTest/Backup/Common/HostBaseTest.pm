@@ -37,8 +37,8 @@ use constant HOST_BACKUP                                            => 'backup';
 ####################################################################################################################################
 # Host parameters
 ####################################################################################################################################
-use constant HOST_PARAM_PROCESS_ID                                  => 'process-id';
-    push @EXPORT, qw(HOST_PARAM_PROCESS_ID);
+use constant HOST_PARAM_VM_ID                                       => 'vm-id';
+    push @EXPORT, qw(HOST_PARAM_VM_ID);
 use constant HOST_PARAM_TEST_PATH                                   => 'test-path';
     push @EXPORT, qw(HOST_PARAM_TEST_PATH);
 use constant HOST_PARAM_VM                                          => 'vm';
@@ -72,7 +72,7 @@ sub new
 
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));
-    my $strContainer = 'test-' . $oHostGroup->paramGet(HOST_PARAM_PROCESS_ID) . "-$strName";
+    my $strContainer = 'test-' . $oHostGroup->paramGet(HOST_PARAM_VM_ID) . "-$strName";
 
     my $self = $class->SUPER::new(
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, $$oParam{strVm},

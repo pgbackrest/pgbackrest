@@ -26,6 +26,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
+use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
@@ -64,7 +65,7 @@ test.pl [options]
    --module             test module to execute
    --test               execute the specified test in a module
    --run                execute only the specified test run
-   --thread-max         max threads to run for backup/restore (default 4)
+   --process-max        max processes to run for compression/transfer (default 1)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --db-version         version of postgres to test (all, defaults to minimal)
@@ -82,7 +83,7 @@ test.pl [options]
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
-   --process-max        max VMs to run in parallel (default 1)
+   --vm-max             max VMs to run in parallel (default 1)
 
  General Options:
    --version            display version and exit
@@ -97,9 +98,9 @@ my $bVmOut = false;
 my $strModule = 'all';
 my $strModuleTest = 'all';
 my $iModuleTestRun = undef;
-my $iThreadMax = undef;
-my $iProcessMax = 1;
-my $iProcessId = undef;
+my $iProcessMax = undef;
+my $iVmMax = 1;
+my $iVmId = undef;
 my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
@@ -127,9 +128,9 @@ GetOptions ('q|quiet' => \$bQuiet,
             'module=s' => \$strModule,
             'test=s' => \$strModuleTest,
             'run=s' => \$iModuleTestRun,
-            'thread-max=s' => \$iThreadMax,
-            'process-id=s' => \$iProcessId,
             'process-max=s' => \$iProcessMax,
+            'vm-id=s' => \$iVmId,
+            'vm-max=s' => \$iProcessMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
             'db-version=s' => \$strDbVersion,
@@ -181,10 +182,10 @@ if (defined($iModuleTestRun) && $strModuleTest eq 'all')
     confess "--test must be provided for --run=\"${iModuleTestRun}\"";
 }
 
-# Check thread total
-if (defined($iThreadMax) && ($iThreadMax < 1 || $iThreadMax > 32))
+# Check process total
+if (defined($iProcessMax) && ($iProcessMax < 1 || $iProcessMax > OPTION_DEFAULT_PROCESS_MAX_MAX))
 {
-    confess 'thread-max must be between 1 and 32';
+    confess 'process-max must be between 1 and ' . OPTION_DEFAULT_PROCESS_MAX_MAX;
 }
 
 # Set test path if not expicitly set
@@ -210,7 +211,7 @@ eval
     ################################################################################################################################
     # Start VM and run
     ################################################################################################################################
-    if (!defined($iProcessId))
+    if (!defined($iVmId))
     {
         # Load the doc module dynamically since it is not supported on all systems
         use lib dirname(abs_path($0)) . '/../doc/lib';
@@ -266,7 +267,7 @@ eval
 
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
-        my $oyTestRun = testListGet($strVm, $strModule, $strModuleTest, $iModuleTestRun, $strDbVersion, $iThreadMax);
+        my $oyTestRun = testListGet($strVm, $strModule, $strModuleTest, $iModuleTestRun, $strDbVersion, $iProcessMax);
 
         if (@{$oyTestRun} == 0)
         {
@@ -289,7 +290,7 @@ eval
         {
             containerRemove('test-[0-9]+');
 
-            for (my $iProcessIdx = 0; $iProcessIdx < 8; $iProcessIdx++)
+            for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
             {
                 push(@{$oyProcess}, undef);
             }
@@ -300,30 +301,30 @@ eval
 
         if ($bDryRun)
         {
-            $iProcessMax = 1;
+            $iVmMax = 1;
         }
 
         my $iTestIdx = 0;
-        my $iProcessTotal;
+        my $iVmTotal;
         my $iTestMax = @{$oyTestRun};
         my $lStartTime = time();
-        my $bShowOutputAsync = $bVmOut && (@{$oyTestRun} == 1 || $iProcessMax == 1) && ! $bDryRun ? true : false;
+        my $bShowOutputAsync = $bVmOut && (@{$oyTestRun} == 1 || $iVmMax == 1) && ! $bDryRun ? true : false;
 
         do
         {
             do
             {
-                $iProcessTotal = 0;
+                $iVmTotal = 0;
 
-                for (my $iProcessIdx = 0; $iProcessIdx < $iProcessMax; $iProcessIdx++)
+                for (my $iVmIdx = 0; $iVmIdx < $iVmMax; $iVmIdx++)
                 {
-                    if (defined($$oyProcess[$iProcessIdx]))
+                    if (defined($$oyProcess[$iVmIdx]))
                     {
-                        my $oExecDone = $$oyProcess[$iProcessIdx]{exec};
-                        my $strTestDone = $$oyProcess[$iProcessIdx]{test};
-                        my $iTestDoneIdx = $$oyProcess[$iProcessIdx]{idx};
+                        my $oExecDone = $$oyProcess[$iVmIdx]{exec};
+                        my $strTestDone = $$oyProcess[$iVmIdx]{test};
+                        my $iTestDoneIdx = $$oyProcess[$iVmIdx]{idx};
 
-                        my $iExitStatus = $oExecDone->end(undef, $iProcessMax == 1);
+                        my $iExitStatus = $oExecDone->end(undef, $iVmMax == 1);
 
                         if (defined($iExitStatus))
                         {
@@ -332,7 +333,7 @@ eval
                                 syswrite(*STDOUT, "\n");
                             }
 
-                            my $fTestElapsedTime = ceil((gettimeofday() - $$oyProcess[$iProcessIdx]{start_time}) * 100) / 100;
+                            my $fTestElapsedTime = ceil((gettimeofday() - $$oyProcess[$iVmIdx]{start_time}) * 100) / 100;
 
                             if (!($iExitStatus == 0 || $iExitStatus == 255))
                             {
@@ -350,46 +351,46 @@ eval
 
                             if (!$bNoCleanup)
                             {
-                                my $strImage = 'test-' . $iProcessIdx;
+                                my $strImage = 'test-' . $iVmIdx;
                                 my $strHostTestPath = "${strTestPath}/${strImage}";
 
-                                containerRemove("test-${iProcessIdx}");
+                                containerRemove("test-${iVmIdx}");
                                 executeTest("sudo rm -rf ${strHostTestPath}");
                             }
 
-                            $$oyProcess[$iProcessIdx] = undef;
+                            $$oyProcess[$iVmIdx] = undef;
                         }
                         else
                         {
-                            $iProcessTotal++;
+                            $iVmTotal++;
                         }
                     }
                 }
 
-                if ($iProcessTotal == $iProcessMax)
+                if ($iVmTotal == $iVmMax)
                 {
                     waitHiRes(.1);
                 }
             }
-            while ($iProcessTotal == $iProcessMax);
+            while ($iVmTotal == $iVmMax);
 
-            for (my $iProcessIdx = 0; $iProcessIdx < $iProcessMax; $iProcessIdx++)
+            for (my $iVmIdx = 0; $iVmIdx < $iVmMax; $iVmIdx++)
             {
-                if (!defined($$oyProcess[$iProcessIdx]) && $iTestIdx < @{$oyTestRun})
+                if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
                     my $oTest = $$oyTestRun[$iTestIdx];
                     $iTestIdx++;
 
-                    my $strTest = sprintf('P%0' . length($iProcessMax) . 'd-T%0' . length($iTestMax) . 'd/%0' .
-                                          length($iTestMax) . "d - ", $iProcessIdx, $iTestIdx, $iTestMax) .
+                    my $strTest = sprintf('P%0' . length($iVmMax) . 'd-T%0' . length($iTestMax) . 'd/%0' .
+                                          length($iTestMax) . "d - ", $iVmIdx, $iTestIdx, $iTestMax) .
                                           'vm=' . $$oTest{&TEST_VM} .
                                           ', module=' . $$oTest{&TEST_MODULE} .
                                           ', test=' . $$oTest{&TEST_NAME} .
                                           (defined($$oTest{&TEST_RUN}) ? ', run=' . $$oTest{&TEST_RUN} : '') .
-                                          (defined($$oTest{&TEST_THREAD}) ? ', thread-max=' . $$oTest{&TEST_THREAD} : '') .
+                                          (defined($$oTest{&TEST_PROCESS}) ? ', process-max=' . $$oTest{&TEST_PROCESS} : '') .
                                           (defined($$oTest{&TEST_DB}) ? ', db=' . $$oTest{&TEST_DB} : '');
 
-                    my $strImage = 'test-' . $iProcessIdx;
+                    my $strImage = 'test-' . $iVmIdx;
                     my $strDbVersion = (defined($$oTest{&TEST_DB}) ? $$oTest{&TEST_DB} : PG_VERSION_94);
                     $strDbVersion =~ s/\.//;
 
@@ -419,12 +420,12 @@ eval
                         ($$oTest{&TEST_CONTAINER} ? "docker exec -i -u vagrant ${strImage} " : '') . abs_path($0) .
                         " --test-path=${strVmTestPath}" .
                         " --vm=$$oTest{&TEST_VM}" .
-                        " --process-id=${iProcessIdx}" .
+                        " --vm-id=${iVmIdx}" .
                         " --module=" . $$oTest{&TEST_MODULE} .
                         ' --test=' . $$oTest{&TEST_NAME} .
                         (defined($$oTest{&TEST_RUN}) ? ' --run=' . $$oTest{&TEST_RUN} : '') .
                         (defined($$oTest{&TEST_DB}) ? ' --db-version=' . $$oTest{&TEST_DB} : '') .
-                        (defined($$oTest{&TEST_THREAD}) ? ' --thread-max=' . $$oTest{&TEST_THREAD} : '') .
+                        (defined($$oTest{&TEST_PROCESS}) ? ' --process-max=' . $$oTest{&TEST_PROCESS} : '') .
                         ($strLogLevel ne lc(INFO) ? " --log-level=${strLogLevel}" : '') .
                         ' --pgsql-bin=' . $$oTest{&TEST_PGSQL_BIN} .
                         ($bLogForce ? ' --log-force' : '') .
@@ -462,14 +463,14 @@ eval
                             start_time => $fTestStartTime
                         };
 
-                        $$oyProcess[$iProcessIdx] = $oProcess;
+                        $$oyProcess[$iVmIdx] = $oProcess;
                     }
 
-                    $iProcessTotal++;
+                    $iVmTotal++;
                 }
             }
         }
-        while ($iProcessTotal > 0);
+        while ($iVmTotal > 0);
 
         # Print test info and exit
         #-----------------------------------------------------------------------------------------------------------------------
@@ -494,10 +495,10 @@ eval
     # Set parameters in host group
     my $oHostGroup = hostGroupGet();
     $oHostGroup->paramSet(HOST_PARAM_VM, $strVm);
-    $oHostGroup->paramSet(HOST_PARAM_PROCESS_ID, $iProcessId);
+    $oHostGroup->paramSet(HOST_PARAM_VM_ID, $iVmId);
     $oHostGroup->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
     $oHostGroup->paramSet(HOST_PARAM_BACKREST_EXE, "${strBackRestBase}/bin/pgbackrest");
-    $oHostGroup->paramSet(HOST_PARAM_THREAD_MAX, $iThreadMax);
+    $oHostGroup->paramSet(HOST_PARAM_PROCESS_MAX, $iProcessMax);
     $oHostGroup->paramSet(HOST_DB_USER, 'vagrant');
     $oHostGroup->paramSet(HOST_BACKUP_USER, 'backrest');
 
