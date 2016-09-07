@@ -391,10 +391,10 @@ sub process
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'strStanza'},
-            {name => 'iExpireFull'},
-            {name => 'iExpireDiff'},
+            {name => 'iExpireFull', required => false},
+            {name => 'iExpireDiff', required => false},
             {name => 'strExpireArchiveType'},
-            {name => 'iExpireArchive'},
+            {name => 'iExpireArchive', required => false},
             {name => 'strDescription'}
         );
 
@@ -422,8 +422,15 @@ sub process
 
     if (defined($strExpireArchiveType))
     {
-        $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType .
-                       ' --retention-archive=' . $iExpireArchive;
+        if (defined($iExpireArchive))
+        {
+            $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType .
+                           ' --retention-archive=' . $iExpireArchive;
+        }
+        else
+        {
+            $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType;
+        }
     }
 
     $strCommand .= ' expire';

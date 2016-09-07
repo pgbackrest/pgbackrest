@@ -112,9 +112,6 @@ local $EVAL_ERROR = undef; eval
         exitSafe($oLocal->process());
     }
 
-    # Set the log levels
-    logLevelSet(optionGet(OPTION_LOG_LEVEL_FILE), optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
     # Log the command start
     commandStart();
 

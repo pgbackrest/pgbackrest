@@ -523,11 +523,45 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 ####################################################################################################################################
 # Option Rule Hash
 #
-# pgbackrest will throw an error if:
-#   1) an option is provided when executing the command that is not listed in the OPTION_RULE_COMMAND section of the Option Rule Hash
-#   2) or an option is not provided when executing the command and it is listed in the OPTION_RULE_COMMAND section as "true"
-# If an OPTION_RULE_COMMAND is set to "false" then pgbackrest will not throw an error if the option is missing and also will not throw an
-# error if it exists.
+# Contains the rules for options: which commands the option can/cannot be specified, for which commands it is required, default
+# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
+# section meaning the rules defined there apply to all commands listed for the option.
+#
+# OPTION_RULE_COMMAND: List of commands the option can or cannot be specified.
+#   true - the option is valid and can be specified
+#         &OPTION_RULE_COMMAND =>
+#         {
+# 	        &CMD_CHECK => true,
+#   false - used in conjuntion with OPTION_RULE_DEFAULT so the user cannot override this option. If the option is provided for the
+#           command by the user, it will be ignored and the default will be used.
+#
+# OPTION_RULE_REQUIRED:
+#   In global section:
+#       true - if the option does not have a default, then setting OPTION_RULE_REQUIRED in the global section means all commands
+#              listed in OPTION_RULE_COMMAND require the user to set it.
+#       false - no commands listed require it as an option but it can be set. This can be overridden for individual commands by
+#               setting OPTION_RULE_REQUIRED in the OPTION_RULE_COMMAND section.
+#   In OPTION_RULE_COMMAND section:
+#       true - the option must be set somehow for the command, either by default (OPTION_RULE_DEFAULT) or by the user.
+# 	        &CMD_CHECK =>
+#             {
+#                 &OPTION_RULE_REQUIRED => true
+#             },
+#       false - mainly used for overriding the OPTION_RULE_REQUIRED in the global section.
+#
+# OPTION_RULE_DEFAULT:
+#   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
+#   OPTION_RULE_COMMAND section.
+#
+# OPTION_RULE_NEGATE:
+#   The option can be negated with "no" e.g. --no-lock.
+#
+# OPTION_RULE_DEPEND:
+#   Specify the dependencies this option has on another option.
+#   OPTION_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
+#
+# OPTION_RULE_ALLOW_LIST:
+#   Lists the allowable settings for the option.
 ####################################################################################################################################
 my %oOptionRule =
 (
@@ -1467,7 +1501,6 @@ my %oOptionRule =
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => true,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE,
         &OPTION_RULE_COMMAND =>
         {
@@ -1479,10 +1512,6 @@ my %oOptionRule =
             &BACKUP_TYPE_FULL => 1,
             &BACKUP_TYPE_DIFF => 1,
             &BACKUP_TYPE_INCR => 1
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_RETENTION_ARCHIVE
         }
     },
 
@@ -1734,10 +1763,15 @@ my $strCommand;             # Command (backup, archive-get, ...)
 ####################################################################################################################################
 # configLoad
 #
-# Load configuration.
+# Load configuration. Additional conditions that cannot be codified by the OptionRule hash are also tested here.
 ####################################################################################################################################
 sub configLoad
 {
+    my $bInitLogging = shift;
+
+    # Determine if logging should be initialized
+    $bInitLogging = (!defined($bInitLogging) ? true : $bInitLogging);
+
     # Clear option in case it was loaded before
     %oOption = ();
 
@@ -1860,6 +1894,15 @@ sub configLoad
         return true;
     }
 
+    # If this is not the remote and logging is allowed (to not overwrite log levels for tests) then set the log level so that
+    # INFO/WARN messages can be displayed (the user may still disable them).
+    if (!commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL) && $bInitLogging)
+    {
+        logLevelSet(
+            optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE): undef,
+            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE): undef);
+    }
+
     # Neutralize the umask to make the repository file/path modes more consistent
     if (optionTest(OPTION_NEUTRAL_UMASK) && optionGet(OPTION_NEUTRAL_UMASK))
     {
@@ -1888,6 +1931,72 @@ sub configLoad
     if (optionTest(OPTION_DB_HOST) && optionTest(OPTION_BACKUP_HOST))
     {
         confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
+    }
+
+    # Warn when retention-full is not set
+    if (optionValid(OPTION_RETENTION_FULL) && !optionTest(OPTION_RETENTION_FULL))
+    {
+        &log(WARN,
+            "option retention-full is not set, the repository may run out of space\n" .
+                "HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.");
+    }
+
+    # If archive retention is valid for the command, then set archive settings
+    if (optionValid(OPTION_RETENTION_ARCHIVE))
+    {
+        my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
+        my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
+        my $iFullRetention = optionGet(OPTION_RETENTION_FULL, false);
+        my $iDifferentialRetention = optionGet(OPTION_RETENTION_DIFF, false);
+
+        my $strMsgArchiveOff = "WAL segments will not be expired: option '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+             "=${strArchiveRetentionType}' but ";
+
+        # If the archive retention is not explicitly set then determine what it should be set to so the user does not have to.
+        if (!defined($iArchiveRetention))
+        {
+            # If retention-archive-type is default, then if retention-full is set, set the retention-archive to this value,
+            # else ignore archiving
+            if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
+            {
+                if (defined($iFullRetention))
+                {
+                    optionSet(OPTION_RETENTION_ARCHIVE, $iFullRetention);
+                }
+            }
+            elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
+            {
+                # if retention-diff is set then user must have set it
+                if (defined($iDifferentialRetention))
+                {
+                    optionSet(OPTION_RETENTION_ARCHIVE, $iDifferentialRetention);
+                }
+                else
+                {
+                    &log(WARN,
+                        $strMsgArchiveOff . "neither option '" . &OPTION_RETENTION_ARCHIVE .
+                            "' nor option '" .  &OPTION_RETENTION_DIFF . "' is set");
+                }
+            }
+            elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
+            {
+                &log(WARN, $strMsgArchiveOff . "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set");
+            }
+        }
+        else
+        {
+            # If retention-archive is set then check retention-archive-type and issue a warning if the corresponding setting is
+            # UNDEF since UNDEF means backups will not be expired but they should be in the practice of setting this
+            # value even though expiring the archive itself is OK and will be performed.
+            if ($strArchiveRetentionType eq BACKUP_TYPE_DIFF && !defined($iDifferentialRetention))
+            {
+                &log(WARN,
+                    "option '" . &OPTION_RETENTION_DIFF . "' is not set for '" . &OPTION_RETENTION_ARCHIVE_TYPE . "=" .
+                        &BACKUP_TYPE_DIFF . "' \n" .
+                        "HINT: to retain differential backups indefinitely (without warning), set option '" .
+                        &OPTION_RETENTION_DIFF . "' to the maximum.");
+            }
+        }
     }
 
     return true;
@@ -2606,7 +2715,7 @@ push @EXPORT, qw(optionGet);
 ####################################################################################################################################
 # optionSet
 #
-# Set option value.
+# Set option value and source if the option is valid for the command.
 ####################################################################################################################################
 sub optionSet
 {
@@ -2615,10 +2724,7 @@ sub optionSet
 
     optionValid($strOption, true);
 
-    if (!defined($oOption{$strOption}{value}))
-    {
-        confess &log(ASSERT, "option ${strOption} is not defined");
-    }
+    $oOption{$strOption}{source} = SOURCE_PARAM;
 
     $oOption{$strOption}{value} = $oValue;
 }

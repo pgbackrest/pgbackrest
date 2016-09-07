@@ -702,7 +702,7 @@
         <section id="full">
             <title>Full Backup Retention</title>
 
-            <p>Set <br-option>full-retention</br-option> to the number of full backups required.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired.</p>
+            <p>Set <br-option>retention-full</br-option> to the number of full backups required.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>retention-full</br-option></title>
@@ -742,7 +742,7 @@
         </section>
 
         <!-- SECTION => RETENTION - DIFF -->
-        <section id="diff">
+        <section id="diff" depend="full">
             <title>Differential Backup Retention</title>
 
             <p>Set <br-option>retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
@@ -782,6 +782,60 @@
                     <exe-highlight>expire diff backup set: {[backup-diff-second]}</exe-highlight>
                 </execute>
             </execute-list>
+        </section>
+
+        <!-- SECTION => RETENTION - ARCHIVE -->
+        <section id="archive" depend="diff">
+            <title>Archive Retention</title>
+
+            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
+
+            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process.</p>
+
+            <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
+                <title>Configure <br-option>retention-diff</br-option></title>
+
+                <backrest-config-option section="global" key="retention-diff">2</backrest-config-option>
+            </backrest-config>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Perform differential backup</title>
+
+                <execute show="n" variable-key="backup-diff-first">
+                    <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+                </execute>
+
+                <!-- Push a few xlogs to make the example below more interesting -->
+                <execute show="n">
+                    <exe-cmd>psql -c "
+                        select pg_create_restore_point('generate WAL'); select pg_switch_xlog();
+                        select pg_create_restore_point('generate WAL'); select pg_switch_xlog();"</exe-cmd>
+                </execute>
+
+                <execute output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff
+                        --log-level-console=info backup</exe-cmd>
+                    <exe-highlight>new backup label</exe-highlight>
+                </execute>
+
+                <execute show="n" variable-key="backup-diff-second">
+                    <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <execute-list host="{[host-db-master]}">
+                <title>Expire archive</title>
+
+                <execute output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail
+                        --retention-archive-type=diff --retention-archive=1 expire</exe-cmd>
+                    <exe-highlight>archive retention on backup {[backup-diff-first]}|remove archive</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>The <id>{[backup-diff-first]}</id> differential backup has archived WAL segments that must be retained to make the older backups consistent even though they cannot be played any further forward with PITR. WAL segments generated after <id>{[backup-diff-first]}</id> but before <id>{[backup-diff-second]}</id> are removed. WAL segments generated after the new backup <id>{[backup-diff-second]}</id> remain and can be used for PITR.</p>
+
+            <p>Since full backups are considered differential backups for the purpose of differential archive retention, if a full backup is now performed with the same settings, only the archive for that full backup is retained for PITR.</p>
         </section>
     </section>
 

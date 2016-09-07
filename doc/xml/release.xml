@@ -128,6 +128,14 @@
 
                         <p>Fixed the <cmd>check</cmd> command so backup info is checked remotely and not just locally.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where <br-option>retention-archive</br-option> was not automatically being set when <br-option>retention-archive-type=diff</br-option>, resulting in a less aggressive than intended expiration of archive.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -141,6 +149,14 @@
 
                     <release-item>
                         <p>The <setting>archive-start</setting> and <setting>archive-stop</setting> settings are now filled in <file>backup.manifest</file> even when <br-option>archive-check-n</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Additional warnings when archive retention settings may not have the intended effect or would allow indefinite retention.</p>
                     </release-item>
 
                     <release-item>
@@ -173,6 +189,16 @@
                         <p>Fixed minor documentation reproducibility issues related to binary paths.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Documentation for archive retention.</p>
+                    </release-item>
+                </release-feature-list>
 
                 <release-refactor-list>
                     <release-item>

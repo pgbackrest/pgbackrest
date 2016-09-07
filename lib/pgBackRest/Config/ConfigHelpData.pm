@@ -570,9 +570,19 @@ my $oConfigHelpData =
         {
             section => 'expire',
             summary =>
-                "Number of backups worth of WAL to retain.",
+                "Number of backups worth of continuous WAL to retain.",
             description =>
-                "Number of backups worth of archive log to keep."
+                "Note that the WAL segments required to make a backup consistent are always retained until the backup is " .
+                    "expired regardless of how this option is configured.\n" .
+                "\n" .
+                "If this value is not set, then the archive to expire will default to the retention-full (or retention-diff) " .
+                    "value corresponding to the retention-archive-type if set to full (or diff). This will ensure that WAL is " .
+                    "only expired for backups that are already expired.\n" .
+                "\n" .
+                "This option must be set if retention-archive-type is set to incr. If disk space is at a premium, then this " .
+                    "setting, in conjunction with retention-archive-type, can be used to aggressively expire WAL segments. " .
+                    "However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore " .
+                    "not recommended."
         },
 
         # RETENTION-ARCHIVE-TYPE Option Help
@@ -585,8 +595,11 @@ my $oConfigHelpData =
             description =>
                 "If set to full pgBackRest will keep archive logs for the number of full backups defined by retention-archive. " .
                     "If set to diff (differential) pgBackRest will keep archive logs for the number of full and differential " .
-                    "backups defined by retention-archive. If set to incr (incremental) pgBackRest will keep archive logs for " .
-                    "the number of full, differential, and incremental backups defined by retention-archive."
+                    "backups defined by retention-archive, meaning if the last backup taken was a full backup, it will be " .
+                    "counted as a differential for the purpose of retention. If set to incr (incremental) pgBackRest will keep " .
+                    "archive logs for the number of full, differential, and incremental backups defined by retention-archive. " .
+                    "It is recommended that this setting not be changed from the default which will only expire WAL in " .
+                    "conjunction with expiring full backups."
         },
 
         # RETENTION-DIFF Option Help
@@ -610,7 +623,8 @@ my $oConfigHelpData =
                 "Number of full backups to retain.",
             description =>
                 "When a full backup expires, all differential and incremental backups associated with the full backup will also " .
-                    "expire. When not defined then all full backups will be kept."
+                    "expire. When the option is not defined a warning will be issued. If indefinite retention is desired then " .
+                    "set the option to the max value."
         },
 
         # SPOOL-PATH Option Help

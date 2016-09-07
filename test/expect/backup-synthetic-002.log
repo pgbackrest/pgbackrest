@@ -14,6 +14,8 @@ info all stanzas - no stanzas exist (db-master host)
 full backup - error on identical link destinations (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
  ERROR: [145]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
   INFO: backup stop
@@ -21,6 +23,8 @@ full backup - error on identical link destinations (db-master host)
 full backup - error on link to a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
  ERROR: [145]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
   INFO: backup stop
@@ -28,6 +32,8 @@ full backup - error on link to a link (db-master host)
 full backup - create pg_stat link, pg_clog dir (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --manifest-save-threshold=3 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --manifest-save-threshold=3 --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -170,7 +176,7 @@ full backup - create pg_stat link, pg_clog dir (db-master host)
  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-1])
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -296,6 +302,8 @@ db-version="9.4"
 full backup - resume (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --force --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --force --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -446,7 +454,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8
  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-2])
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -832,6 +840,8 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - invalid database version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [126]: database version = 9.4, system-id 6317709442043514973 does not match backup version = 8.0, system-id = 6317709442043514973
@@ -841,6 +851,8 @@ incr backup - invalid database version (db-master host)
 incr backup - invalid system id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [126]: database version = 9.4, system-id 6317709442043514973 does not match backup version = 9.4, system-id = 6999999999999999999
@@ -850,6 +862,8 @@ incr backup - invalid system id (db-master host)
 incr backup - invalid control version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [126]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 842, catalog-version = 201409291
@@ -859,6 +873,8 @@ incr backup - invalid control version (db-master host)
 incr backup - invalid catalog version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [126]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 942, catalog-version = 197208141
@@ -868,6 +884,8 @@ incr backup - invalid catalog version (db-master host)
 incr backup - invalid path in pg_tblspc (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [144]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
@@ -876,6 +894,8 @@ incr backup - invalid path in pg_tblspc (db-master host)
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [146]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
@@ -884,6 +904,8 @@ incr backup - invalid relative tablespace in $PGDATA (db-master host)
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
  ERROR: [146]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
@@ -892,6 +914,8 @@ incr backup - invalid tablespace in $PGDATA (db-master host)
 incr backup - add tablespace 1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --test --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test
  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -1032,7 +1056,7 @@ incr backup - add tablespace 1 (db-master host)
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -1164,6 +1188,8 @@ db-version="9.4"
 incr backup - resume and add tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -1346,7 +1372,7 @@ DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH
  DEBUG:     BackupInfo->current=>: bTest = true
  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
  DEBUG:     BackupInfo->current=>: bTest = true
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
   INFO: expire stop
@@ -1484,6 +1510,8 @@ db-version="9.4"
 diff backup - cannot resume - new diff (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
   WARN: backup [BACKUP-INCR-2] missing in repository removed from backup.info
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1495,7 +1523,7 @@ diff backup - cannot resume - new diff (db-master host)
   INFO: new backup label = [BACKUP-DIFF-1]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -1627,6 +1655,8 @@ db-version="9.4"
 diff backup - cannot resume - disabled (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --no-resume --log-level-console=detail --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --no-resume --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
   WARN: backup [BACKUP-DIFF-1] missing in repository removed from backup.info
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1638,7 +1668,7 @@ diff backup - cannot resume - disabled (db-master host)
   INFO: new backup label = [BACKUP-DIFF-2]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -1863,6 +1893,8 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - add files and remove tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 61%) checksum e324463005236d83e6e54795dbddd20a74533bf3
@@ -1871,7 +1903,7 @@ incr backup - add files and remove tablespace 2 (db-master host)
   INFO: new backup label = [BACKUP-INCR-3]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2004,6 +2036,8 @@ db-version="9.4"
 incr backup - update files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 100%) checksum 9a53d532e27785e681766c98516a5e93f096a501
@@ -2011,7 +2045,7 @@ incr backup - update files (db-master host)
   INFO: new backup label = [BACKUP-INCR-4]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2145,6 +2179,8 @@ db-version="9.4"
 diff backup - updates since last full (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 28%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2156,7 +2192,7 @@ diff backup - updates since last full (db-master host)
   INFO: new backup label = [BACKUP-DIFF-3]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2291,13 +2327,15 @@ db-version="9.4"
 incr backup - remove files - but won't affect manifest (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
   INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
   INFO: incr backup size = 0B
   INFO: new backup label = [BACKUP-INCR-5]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2433,6 +2471,8 @@ db-version="9.4"
 diff backup - remove files during backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 35%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2443,7 +2483,7 @@ DETAIL: skip file removed by database [TEST_PATH]/db-master/db/base-2/base/base2
   INFO: new backup label = [BACKUP-DIFF-4]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2578,6 +2618,8 @@ db-version="9.4"
 full backup - update file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
   INFO: backup file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
   INFO: backup file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2596,7 +2638,7 @@ full backup - update file (db-master host)
   INFO: new backup label = [BACKUP-FULL-3]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -3054,7 +3096,7 @@ info db stanza - normal output (db-master host)
 expire full=1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --retention-full=1 --stanza=db
+  INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive=1 --retention-full=1 --stanza=db
   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
   INFO: remove expired backup [BACKUP-DIFF-4]
   INFO: remove expired backup [BACKUP-INCR-5]
@@ -3068,6 +3110,8 @@ expire full=1 (db-master host)
 diff backup - add file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
+  WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
   INFO: backup start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
@@ -3075,7 +3119,7 @@ diff backup - add file (db-master host)
   INFO: new backup label = [BACKUP-DIFF-5]
   INFO: backup stop
   INFO: expire start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: archive retention type not set - archive logs will not be expired
+  INFO: option 'retention-archive' is not set - archive logs will not be expired
   INFO: expire stop
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

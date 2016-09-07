@@ -417,14 +417,14 @@
 
             <!-- CONFIG - EXPIRE -->
             <config-section id="expire" name="Expire">
-                <text>The <setting>expire</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if full-retention is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
+                <text>The <setting>expire</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if retention-full is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
 
                 <!-- CONFIG - RETENTION SECTION - FULL-RETENTION KEY -->
                 <config-key-list>
                     <config-key id="retention-full" name="Full Retention">
                         <summary>Number of full backups to retain.</summary>
 
-                        <text>When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When not defined then all full backups will be kept.</text>
+                        <text>When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When the option is not defined a warning will be issued.  If indefinite retention is desired then set the option to the max value.</text>
 
                         <example>2</example>
                     </config-key>
@@ -442,16 +442,20 @@
                     <config-key id="retention-archive-type" name="Archive Retention Type">
                         <summary>Backup type for WAL retention.</summary>
 
-                        <text>If set to <setting>full</setting> <backrest/> will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to <setting>diff</setting> (differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>retention-archive</setting>.  If set to <setting>incr</setting> (incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>retention-archive</setting>.</text>
+                        <text>If set to <setting>full</setting> <backrest/> will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to <setting>diff</setting> (differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>retention-archive</setting>, meaning if the last backup taken was a full backup, it will be counted as a differential for the purpose of retention.  If set to <setting>incr</setting> (incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>retention-archive</setting>. It is recommended that this setting not be changed from the default which will only expire WAL in conjunction with expiring full backups.</text>
 
                         <example>diff</example>
                     </config-key>
 
                     <!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION KEY -->
                     <config-key id="retention-archive" name="Archive Retention">
-                        <summary>Number of backups worth of WAL to retain.</summary>
+                        <summary>Number of backups worth of continuous WAL to retain.</summary>
 
-                        <text>Number of backups worth of archive log to keep.</text>
+                        <text>Note that the WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.
+
+                        If this value is not set, then the archive to expire will default to the <setting>retention-full</setting> (or <setting>retention-diff</setting>) value corresponding to the <setting>retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
+
+                        This option must be set if <setting>retention-archive-type</setting> is set to <setting>incr</setting>.  If disk space is at a premium, then this setting, in conjunction with <setting>retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</text>
 
                         <example>2</example>
                     </config-key>

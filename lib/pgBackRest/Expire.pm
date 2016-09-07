@@ -178,12 +178,18 @@ sub process
             confess &log(ERROR, 'retention-diff must be a number >= 1');
         }
 
-        @stryPath = $oBackupInfo->list(backupRegExpGet(false, true));
+        # Get a list of full and differential backups. Full are considered differential for the purpose of retention.
+        # Example: F1, D1, D2, F2 and retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
+        @stryPath = $oBackupInfo->list(backupRegExpGet(true, true));
 
         if (@stryPath > $iDifferentialRetention)
         {
             for (my $iDiffIdx = 0; $iDiffIdx < @stryPath - $iDifferentialRetention; $iDiffIdx++)
             {
+                # Skip if this is a full backup.  Full backups only count as differential when deciding which differential backups
+                # to expire.
+                next if ($stryPath[$iDiffIdx] =~ backupRegExpGet(true));
+
                 # Get a list of all differential and incremental backups
                 my @stryRemoveList;
 
@@ -224,28 +230,15 @@ sub process
         }
     }
 
-    # Default archive retention if not explicily set
-    if (defined($iFullRetention))
+    # If archive retention is still undefined, then ignore archiving
+    if  (!defined($iArchiveRetention))
     {
-        if (!defined($iArchiveRetention))
-        {
-            $iArchiveRetention = $iFullRetention;
-        }
-
-        if (!defined($strArchiveRetentionType))
-        {
-            $strArchiveRetentionType = BACKUP_TYPE_FULL;
-        }
-    }
-
-    # If no archive retention type is set then exit
-    if (!defined($strArchiveRetentionType))
-    {
-        &log(INFO, 'archive retention type not set - archive logs will not be expired');
+         &log(INFO, "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set - archive logs will not be expired");
     }
     else
     {
-        # Determine which backup type to use for archive retention (full, differential, incremental)
+        # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
+        # remaining non-expired backups based on the type.
         if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
         {
             @stryPath = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
@@ -259,7 +252,7 @@ sub process
             @stryPath = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
         }
 
-        # if no backups were found then preserve current archive logs - too soon to expire them
+        # If no backups were found then preserve current archive logs - too soon to expire them
         my $iBackupTotal = scalar @stryPath;
 
         if ($iBackupTotal > 0)
@@ -292,9 +285,9 @@ sub process
 
                     my $strArchiveExpireMax;
 
-                    # Get archive ranges to preserve.  Because archive retention can be less than total retention it is
-                    # important to preserve older archive that is required to make the older backups consistent even though
-                    # they cannot be played any further forward with PITR.
+                    # Get archive ranges to preserve.  Because archive retention can be less than total retention it is important
+                    # to preserve archive that is required to make the older backups consistent even though they cannot be played
+                    # any further forward with PITR.
                     my @oyArchiveRange;
 
                     foreach my $strBackup ($oBackupInfo->list())

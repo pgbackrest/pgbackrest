@@ -112,7 +112,7 @@ sub configLoadExpect
 
     eval
     {
-        configLoad();
+        configLoad(false);
         return true;
     }
     or do
@@ -130,8 +130,8 @@ sub configLoadExpect
         {
             if ($oException->code() != $iExpectedError)
             {
-                confess "expected error ${iExpectedError} from configLoad but got " . $oException->code() .
-                        " '" . $oException->message() . "'";
+                confess "expected error ${iExpectedError} from configLoad but got [" . $oException->code() .
+                        "] '" . $oException->message() . "'";
             }
 
             my $strError;
@@ -464,23 +464,57 @@ sub configTestRun
             configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_RANGE, '512', OPTION_BUFFER_SIZE);
         }
 
-        if (testRun(++$iRun, CMD_BACKUP . ' invalid option ' . OPTION_RETENTION_ARCHIVE_TYPE))
-        {
-            optionSetTest($oOption, OPTION_STANZA, $strStanza);
-            optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BOGUS);
-
-            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_RETENTION_ARCHIVE_TYPE, OPTION_RETENTION_ARCHIVE);
-        }
-
         if (testRun(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
         {
             optionSetTest($oOption, OPTION_STANZA, $strStanza);
             optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_RETENTION_ARCHIVE, 3);
             optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BOGUS);
 
             configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_RETENTION_ARCHIVE_TYPE);
+        }
+
+        if (testRun(++$iRun, CMD_BACKUP . ' default value ' . OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE . ' for ' .
+                    OPTION_RETENTION_ARCHIVE_TYPE . ' with valid ' . OPTION_RETENTION_FULL))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, OPTION_RETENTION_FULL, 1);
+
+            configLoadExpect($oOption, CMD_BACKUP);
+            optionTestExpect(OPTION_RETENTION_ARCHIVE, 1);
+            optionTestExpect(OPTION_RETENTION_FULL, 1);
+            optionTestExpect(OPTION_RETENTION_DIFF, undef);
+            # Default is FULL so this test will fail if the default is changed, alerting to the need to update configLoad.
+            optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
+        }
+
+        if (testRun(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_RETENTION_ARCHIVE . ' for ' . OPTION_RETENTION_ARCHIVE_TYPE .
+            ' ' . BACKUP_TYPE_DIFF))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, OPTION_RETENTION_DIFF, 1);
+            optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_DIFF);
+
+            configLoadExpect($oOption, CMD_BACKUP);
+            optionTestExpect(OPTION_RETENTION_ARCHIVE, 1);
+            optionTestExpect(OPTION_RETENTION_DIFF, 1);
+            optionTestExpect(OPTION_RETENTION_FULL, undef);
+            optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_DIFF);
+        }
+
+        if (testRun(++$iRun, CMD_BACKUP . ' warn no valid value ' . OPTION_RETENTION_ARCHIVE . ' for ' . OPTION_RETENTION_ARCHIVE_TYPE .
+                    ' ' . BACKUP_TYPE_INCR))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionSetTest($oOption, OPTION_RETENTION_FULL, 2);
+            optionSetTest($oOption, OPTION_RETENTION_DIFF, 1);
+            optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_INCR);
+
+            configLoadExpect($oOption, CMD_BACKUP);
+            optionTestExpect(OPTION_RETENTION_ARCHIVE, undef);
+            optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_INCR);
         }
 
         if (testRun(++$iRun, CMD_BACKUP . ' invalid value ' . OPTION_PROTOCOL_TIMEOUT))
@@ -493,18 +527,6 @@ sub configTestRun
             configLoadExpect(
                 $oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, 4, OPTION_PROTOCOL_TIMEOUT,
                 "'protocol-timeout' option should be greater than 'db-timeout' option");
-        }
-
-        if (testRun(++$iRun, CMD_BACKUP . ' valid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
-        {
-            optionSetTest($oOption, OPTION_STANZA, $strStanza);
-            optionSetTest($oOption, OPTION_DB_PATH, '/db');
-            optionSetTest($oOption, OPTION_RETENTION_ARCHIVE, 1);
-            optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
-
-            configLoadExpect($oOption, CMD_BACKUP);
-            optionTestExpect(OPTION_RETENTION_ARCHIVE, 1);
-            optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
         }
 
         if (testRun(++$iRun, CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
