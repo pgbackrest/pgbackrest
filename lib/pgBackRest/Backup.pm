@@ -662,9 +662,10 @@ sub process
     }
 
     # Start backup (unless --no-online is set)
-    my $strArchiveStart;
-    my $oTablespaceMap;
-	my $oDatabaseMap;
+    my $strArchiveStart = undef;
+    my $strLsnStart = undef;
+    my $oTablespaceMap = undef;
+	my $oDatabaseMap = undef;
 
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
@@ -688,13 +689,14 @@ sub process
     else
     {
         # Start the backup
-        ($strArchiveStart) =
+        ($strArchiveStart, $strLsnStart) =
             $oDbMaster->backupStart(
                 BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
 
         # Record the archive start location
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strArchiveStart);
-        &log(INFO, "backup lsn start: ${strArchiveStart}");
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef, $strLsnStart);
+        &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
 
         # Get tablespace map
         $oTablespaceMap = $oDbMaster->tablespaceMapGet();
@@ -710,9 +712,9 @@ sub process
 
             $oDbStandby->configValidate();
 
-            &log(INFO, "wait for replay on the standby to reach ${strArchiveStart}");
+            &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
 
-            my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strArchiveStart);
+            my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
 
             &log(
                 INFO,
@@ -858,14 +860,16 @@ sub process
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Stop backup (unless --no-online is set)
-    my $strArchiveStop;
+    my $strArchiveStop = undef;
+    my $strLsnStop = undef;
 
     if (optionGet(OPTION_ONLINE))
     {
-        ($strArchiveStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
+        ($strArchiveStop, $strLsnStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
 
-        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strArchiveStop);
-        &log(INFO, 'backup lsn stop: ' . $strArchiveStop);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchiveStop);
+        $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef, $strLsnStop);
+        &log(INFO, "backup stop archive = ${strArchiveStop}, lsn = ${strLsnStop}");
 
         # Write out files returned from stop backup
         foreach my $strFile (sort(keys(%{$oFileHash})))
@@ -912,23 +916,13 @@ sub process
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new pgBackRest::Archive();
         my $strArchiveId = $oArchive->getArchiveId($oFileLocal);
-        my @stryArchive = lsnFileRange($strArchiveStart, $strArchiveStop, $strDbVersion);
+        my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion);
 
         foreach my $strArchive (@stryArchive)
         {
             my $strArchiveFile =
                 $oArchive->walFileName($oFileLocal, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
             $strArchive = substr($strArchiveFile, 0, 24);
-
-            if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START))
-            {
-                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchive);
-                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchive);
-            }
-            else
-            {
-                $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, $strArchive);
-            }
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {

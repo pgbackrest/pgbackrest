@@ -140,6 +140,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>The <setting>archive-start</setting> and <setting>archive-stop</setting> settings are now filled in <file>backup.manifest</file> even when <br-option>archive-check-n</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Experimental support for non-exclusive backups in <postgres/> 9.6 rc1.  Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
                     </release-item>
                 </release-feature-list>

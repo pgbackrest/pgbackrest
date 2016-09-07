@@ -673,8 +673,8 @@ sub backupStart
                "exclusive pg_start_backup() with label \"${strLabel}\": backup begins after " .
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
-    my ($strTimestampDbStart, $strArchiveStart) = $self->executeSqlRow(
-        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), lsn::text" .
+    my ($strTimestampDbStart, $strArchiveStart, $strLsnStart) = $self->executeSqlRow(
+        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), lsn::text" .
             " from pg_start_backup('${strLabel}'" .
             ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
             ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
@@ -684,6 +684,7 @@ sub backupStart
     (
         $strOperation,
         {name => 'strArchiveStart', value => $strArchiveStart},
+        {name => 'strLsnStart', value => $strLsnStart},
         {name => 'strTimestampDbStart', value => $strTimestampDbStart}
     );
 }
@@ -702,9 +703,9 @@ sub backupStop
     &log(INFO, 'execute ' . ($self->{strDbVersion} >= PG_VERSION_96 ? 'non-' : '') .
                'exclusive pg_stop_backup() and wait for all WAL segments to archive');
 
-    my ($strTimestampDbStop, $strArchiveStop, $strLabel, $strTablespaceMap) =
+    my ($strTimestampDbStop, $strArchiveStop, $strLsnStop, $strLabel, $strTablespaceMap) =
         $self->executeSqlRow(
-            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), lsn::text, " .
+            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), lsn::text, " .
             ($self->{strDbVersion} >= PG_VERSION_96 ? 'labelfile, spcmapfile' : "null as labelfile, null as spcmapfile") .
             ' from pg_stop_backup(' .
             ($self->{strDbVersion} >= PG_VERSION_96 ? 'false)' : ') as lsn'));
@@ -721,6 +722,7 @@ sub backupStop
     (
         $strOperation,
         {name => 'strArchiveStop', value => $strArchiveStop},
+        {name => 'strLsnStop', value => $strLsnStop},
         {name => 'strTimestampDbStop', value => $strTimestampDbStop},
         {name => 'oFileHash', value => $oFileHash}
     );
