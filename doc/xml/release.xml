@@ -114,6 +114,20 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.08dev" title="UNDER DEVELOPMENT">
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="harvey.john"/>
+                        </release-item-contributor-list>
+
+                        <p>Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning in Vagrant VM build.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
         <release date="2016-09-07" version="1.07" title="Thread to Process Conversion and Bug Fixes">
             <release-core-list>
                 <release-bug-list>
