@@ -112,7 +112,7 @@ sub logAdd
         # Do replacements on each line of the log
         foreach my $strLine (split("\n", $strLog))
         {
-            $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} P[0-9]{2} //;
+            $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} //;
 
             if ($strLine !~ /^  TEST/)
             {

@@ -115,6 +115,14 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.08dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Show Process ID in output instead of filtering it out with the timestamp.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-refactor-list>
                     <release-item>
@@ -122,7 +130,11 @@
                             <release-item-contributor id="harvey.john"/>
                         </release-item-contributor-list>
 
-                        <p>Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning in Vagrant VM build.</p>
+                        <p>Suppress <quote>dpkg-reconfigure: unable to re-open stdin: No file or directory</quote> warning in Vagrant VM build.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Show Process ID in expect logs instead of filtering it out with the timestamp.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

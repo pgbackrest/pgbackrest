@@ -3,29 +3,29 @@ run 001 - rmt 0, cmp 0, exists 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: get WAL segment 000000010000000100000001
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
- DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
- DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
- DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
- DEBUG:     Db->new(): iRemoteIdx = 1
- DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
- DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
- DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
- DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
- ERROR: [130]: archive.info does not exist but is required to get WAL segments
+P00   INFO: archive-get start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: get WAL segment 000000010000000100000001
+P00  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
+P00  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  ERROR: [130]: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
- DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
-  INFO: archive-get stop
- DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
- DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
+P00   INFO: archive-get stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -45,66 +45,66 @@ db-version="9.3"
 stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf stop
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: stop start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
-  INFO: stop stop
- DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
- DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+P00   INFO: stop start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00   INFO: stop stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: get WAL segment 000000090000000900000009
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
- ERROR: [137]: stop file exists for all stanzas
- DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
-  INFO: archive-get stop
- DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
- DEBUG:     Common::Exit::exitSafe=>: iExitCode = 137
+P00   INFO: archive-get start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: get WAL segment 000000090000000900000009
+P00  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
+P00  ERROR: [137]: stop file exists for all stanzas
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
+P00   INFO: archive-get stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 137
 
 start all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: start start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
-  INFO: start stop
- DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
- DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+P00   INFO: start start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00   INFO: start stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000090000000900000009 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-  INFO: archive-get start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-  INFO: get WAL segment 000000090000000900000009
- DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
- DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
- DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
- DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
- DEBUG:     Db->new(): iRemoteIdx = 1
- DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
- DEBUG:     Protocol::Protocol::protocolGet: create local protocol
- DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
- DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
- DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
- DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
- DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 6156904820763115222
- DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
- DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
- DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
- DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
- DEBUG:     File->list=>: stryFileList = ()
- DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
-  INFO: unable to find 000000090000000900000009 in the archive
- DEBUG:     Archive->get=>: iResult = 1
- DEBUG:     Common::Exit::exitSafe(): iExitCode = 1, oException = [undef], strSignal = [undef]
-  INFO: archive-get stop
- DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
- DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
- DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
- DEBUG:     Common::Exit::exitSafe=>: iExitCode = 1
+P00   INFO: archive-get start: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: get WAL segment 000000090000000900000009
+P00  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
+P00  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.3, ullDbSysId = 6156904820763115222
+P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.3-1
+P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.3-1
+P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
+P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
+P00  DEBUG:     File->list=>: stryFileList = ()
+P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
+P00   INFO: unable to find 000000090000000900000009 in the archive
+P00  DEBUG:     Archive->get=>: iResult = 1
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 1, oException = [undef], strSignal = [undef]
+P00   INFO: archive-get stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 1
