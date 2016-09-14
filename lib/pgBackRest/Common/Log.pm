@@ -66,7 +66,9 @@ $oLogLevelRank{OFF}{rank} = 0;
 ####################################################################################################################################
 # Module globals
 ####################################################################################################################################
-my $hLogFile;
+my $hLogFile = undef;
+my $strLogFileCache = undef;
+
 my $strLogLevelFile = ERROR;
 my $strLogLevelConsole = REMOTE;
 
@@ -126,6 +128,13 @@ sub logFileSet
         }
 
         syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
+
+        # Write out anything that was cached before the file was opened
+        if (defined($strLogFileCache))
+        {
+            syswrite($hLogFile, $strLogFileCache);
+            undef($strLogFileCache);
+        }
     }
 }
 
@@ -533,11 +542,18 @@ sub log
     # Output to file depending on log level and test flag
     if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
     {
-        if (defined($hLogFile))
+        if (defined($hLogFile) || (defined($strLogLevelFile) && $strLogLevelFile ne OFF))
         {
             if (!$bSuppressLog)
             {
-                syswrite($hLogFile, $strMessageFormat);
+                if (defined($hLogFile))
+                {
+                    syswrite($hLogFile, $strMessageFormat);
+                }
+                else
+                {
+                    $strLogFileCache .= $strMessageFormat;
+                }
 
                 if ($strLevel eq ASSERT ||
                     ($strLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
@@ -545,7 +561,14 @@ sub log
                     my $strStackTrace = longmess() . "\n";
                     $strStackTrace =~ s/\n/\n                                   /g;
 
-                    syswrite($hLogFile, $strStackTrace);
+                    if (defined($hLogFile))
+                    {
+                        syswrite($hLogFile, $strStackTrace);
+                    }
+                    else
+                    {
+                        $strLogFileCache .= $strStackTrace;
+                    }
                 }
             }
         }

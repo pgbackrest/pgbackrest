@@ -1899,8 +1899,8 @@ sub configLoad
     if (!commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL) && $bInitLogging)
     {
         logLevelSet(
-            optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE): undef,
-            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE): undef);
+            optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
+            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF);
     }
 
     # Neutralize the umask to make the repository file/path modes more consistent

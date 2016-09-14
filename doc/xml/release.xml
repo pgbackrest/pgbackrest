@@ -133,6 +133,12 @@
                         <p>Fixed an issue where the protocol layer could timeout while waiting for WAL segments to arrive in the archive.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Cache file log output until the file is created to create a more complete log.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>
