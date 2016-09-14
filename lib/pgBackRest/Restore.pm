@@ -1280,7 +1280,8 @@ sub process
 
             ($lSizeCurrent) = restoreLog(
                 $hFile->{&OP_PARAM_DB_FILE}, $hResult->{bCopy}, $hFile->{&OP_PARAM_SIZE}, $hFile->{&OP_PARAM_MODIFICATION_TIME},
-                $hFile->{&OP_PARAM_CHECKSUM}, $hFile->{&OP_PARAM_ZERO}, optionGet(OPTION_FORCE), $lSizeTotal, $lSizeCurrent);
+                $hFile->{&OP_PARAM_CHECKSUM}, $hFile->{&OP_PARAM_ZERO}, optionGet(OPTION_FORCE), $lSizeTotal, $lSizeCurrent,
+                $hResult->{iProcessId});
         }
 
         # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed

@@ -97,7 +97,16 @@ sub close
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->close');
+    my
+    (
+        $strOperation,
+        $bComplete,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->close', \@_,
+            {name => 'bComplete', default => false, trace => true},
+        );
 
     # Exit status defaults to success
     my $iExitStatus = 0;
@@ -117,7 +126,7 @@ sub close
         {
             my $oException = $EVAL_ERROR;
             my $strError = 'unable to shutdown protocol';
-            my $strHint = 'HINT: the process completed successfully but protocol-timeout may need to be increased.';
+            my $strHint = 'HINT: the process completed all operations successfully but protocol-timeout may need to be increased.';
 
             if (isException($oException))
             {
@@ -135,7 +144,8 @@ sub close
 
             &log(WARN,
                 $strError . ($iExitStatus == ERROR_UNKNOWN ? '' : ' [' . $oException->code() . ']') . ': ' .
-                ($iExitStatus == ERROR_UNKNOWN ? $oException : $oException->message()) . "\n${strHint}");
+                ($iExitStatus == ERROR_UNKNOWN ? $oException : $oException->message()) .
+                ($bComplete ? "\n${strHint}" : ''));
         };
 
         undef($self->{io});

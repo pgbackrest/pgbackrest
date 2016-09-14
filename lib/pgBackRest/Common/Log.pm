@@ -91,10 +91,10 @@ use constant TEST_BACKUP_NORESUME                                   => 'BACKUP-N
     push @EXPORT, qw(TEST_BACKUP_NORESUME);
 use constant TEST_BACKUP_START                                      => 'BACKUP-START';
     push @EXPORT, qw(TEST_BACKUP_START);
+use constant TEST_BACKUP_STOP                                       => 'BACKUP-STOP';
+    push @EXPORT, qw(TEST_BACKUP_STOP);
 use constant TEST_KEEP_ALIVE                                        => 'KEEP_ALIVE';
     push @EXPORT, qw(TEST_KEEP_ALIVE);
-use constant TEST_PROCESS_EXIT                                      => 'TEST_PROCESS_EXIT';
-    push @EXPORT, qw(TEST_PROCESS_EXIT);
 use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-PUSH-ASYNC-START';
     push @EXPORT, qw(TEST_ARCHIVE_PUSH_ASYNC_START);
 

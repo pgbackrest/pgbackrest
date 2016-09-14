@@ -234,9 +234,6 @@ local $EVAL_ERROR = undef; eval
         }
     }
 
-    # Process exit test point
-    &log(TEST, TEST_PROCESS_EXIT);
-
     lockRelease();
     exitSafe(0);
 

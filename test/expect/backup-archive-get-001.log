@@ -22,7 +22,7 @@ P00  ERROR: [130]: archive.info does not exist but is required to get WAL segmen
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
@@ -48,7 +48,7 @@ stop all stanzas (db-master host)
 P00   INFO: stop start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: stop stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
@@ -61,7 +61,7 @@ P00  DEBUG:     Archive->get(): strDestinationFile = [TEST_PATH]/db-master/db/ba
 P00  ERROR: [137]: stop file exists for all stanzas
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 137
@@ -72,7 +72,7 @@ start all stanzas (db-master host)
 P00   INFO: start start: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: start stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
@@ -104,7 +104,7 @@ P00   INFO: unable to find 000000090000000900000009 in the archive
 P00  DEBUG:     Archive->get=>: iResult = 1
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 1, oException = [undef], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 1

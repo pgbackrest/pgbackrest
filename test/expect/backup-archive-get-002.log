@@ -22,7 +22,7 @@ P00  ERROR: [130]: archive.info does not exist but is required to get WAL segmen
                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
@@ -69,7 +69,7 @@ P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = 
 P00  DEBUG:     Archive->get=>: iResult = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
@@ -101,7 +101,7 @@ P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = 
 P00  DEBUG:     Archive->get=>: iResult = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
@@ -133,7 +133,7 @@ P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = 
 P00  DEBUG:     Archive->get=>: iResult = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-get stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0

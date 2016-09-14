@@ -184,6 +184,7 @@ sub restoreLog
         $bForce,
         $lSizeTotal,
         $lSizeCurrent,
+        $iLocalId,
     ) =
         logDebugParam
         (
@@ -197,6 +198,7 @@ sub restoreLog
             {name => &OP_PARAM_FORCE},
             {name => 'lSizeTotal'},
             {name => 'lSizeCurrent'},
+            {name => 'iLocalId', required => false},
         );
 
     # If the file was not copied then create a log entry to explain why
@@ -222,7 +224,7 @@ sub restoreLog
          " file ${strDbFile}" . (defined($strLog) ? " - ${strLog}" : '') .
          ' (' . fileSizeFormat($lSize) .
          ($lSizeTotal > 0 ? ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%' : '') . ')' .
-         ($lSize != 0 && !$bZero ? " checksum ${strChecksum}" : ''));
+         ($lSize != 0 && !$bZero ? " checksum ${strChecksum}" : ''), undef, undef, undef, $iLocalId);
 
     # Return from function and log return values if any
     return logDebugReturn

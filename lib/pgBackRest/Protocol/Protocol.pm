@@ -202,12 +202,14 @@ sub protocolDestroy
         $strOperation,
         $strRemoteType,
         $iRemoteIdx,
+        $bComplete,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::protocolDestroy', \@_,
             {name => 'strRemoteType', required => false},
             {name => 'iRemoteIdx', required => false},
+            {name => 'bComplete', default => false},
         );
 
     my $iExitStatus = 0;
@@ -218,7 +220,7 @@ sub protocolDestroy
 
         if (defined($$hProtocol{$strRemoteType}{$iRemoteIdx}))
         {
-            $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
+            $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close($bComplete);
             delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
         }
     }
@@ -235,7 +237,7 @@ sub protocolDestroy
                         {name => 'strRemoteType', value => $strRemoteType},
                         {name => 'iRemoteIdx', value => $iRemoteIdx});
 
-                    $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close();
+                    $iExitStatus = ($$hProtocol{$strRemoteType}{$iRemoteIdx})->close($bComplete);
                     delete($$hProtocol{$strRemoteType}{$iRemoteIdx});
                 }
             }

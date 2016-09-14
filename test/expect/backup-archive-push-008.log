@@ -45,7 +45,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -85,7 +85,7 @@ P00  ERROR: [119]: raised on backup host: WAL segment version 9.3 does not match
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -125,7 +125,7 @@ P00  ERROR: [119]: raised on backup host: WAL segment system-id 5947969990501855
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -180,7 +180,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -222,7 +222,7 @@ P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760
 P00  ERROR: [120]: WAL segment 000000010000000100000001 already exists in the archive
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -273,7 +273,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -328,7 +328,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -370,7 +370,7 @@ P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760
 P00  ERROR: [120]: WAL segment 000000010000000100000001.partial already exists in the archive
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -421,7 +421,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -472,7 +472,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -523,7 +523,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -574,7 +574,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -614,7 +614,7 @@ P00  ERROR: [119]: raised on backup host: WAL segment version 9.3 does not match
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -654,7 +654,7 @@ P00  ERROR: [119]: raised on backup host: WAL segment system-id 5947969990501855
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -709,7 +709,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -751,7 +751,7 @@ P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760
 P00  ERROR: [120]: WAL segment 000000010000000100000005 already exists in the archive
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -802,7 +802,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -857,7 +857,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -899,7 +899,7 @@ P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760
 P00  ERROR: [120]: WAL segment 000000010000000100000005.partial already exists in the archive
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -950,7 +950,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1001,7 +1001,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1052,7 +1052,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1103,7 +1103,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1143,7 +1143,7 @@ P00  ERROR: [119]: raised on backup host: WAL segment version 9.3 does not match
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1183,7 +1183,7 @@ P00  ERROR: [119]: raised on backup host: WAL segment system-id 5947969990501855
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1238,7 +1238,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1280,7 +1280,7 @@ P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760
 P00  ERROR: [120]: WAL segment 000000010000000100000009 already exists in the archive
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1331,7 +1331,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1386,7 +1386,7 @@ P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -1428,7 +1428,7 @@ P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 4518a0fdf41d796760
 P00  ERROR: [120]: WAL segment 000000010000000100000009.partial already exists in the archive
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0

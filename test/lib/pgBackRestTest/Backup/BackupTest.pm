@@ -1690,7 +1690,7 @@ sub backupTestRun
                     $strType, 'protocol shutdown timeout',
                     {oExpectedManifest => \%oManifest,
                      strOptionalParam => '--protocol-timeout=2 --db-timeout=.5 --log-level-console=warn',
-                     strTest => TEST_PROCESS_EXIT, fTestDelay => 2, bSupplemental => false});
+                     strTest => TEST_BACKUP_STOP, fTestDelay => 2, bSupplemental => false});
             }
         }
         }

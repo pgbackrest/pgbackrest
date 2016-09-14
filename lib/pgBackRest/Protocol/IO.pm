@@ -295,7 +295,7 @@ sub lineRead
         {
             if (!defined($bError) || $bError)
             {
-                confess &log(ERROR, "unable to read line after $self->{iProtocolTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
+                confess &log(ERROR, "unable to read line after ${fTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
             }
 
             return;
@@ -530,20 +530,18 @@ sub waitPid
                 if (!defined($bReportError) || $bReportError)
                 {
                     # Default error
-                    my $strError = 'no error on stderr';
+                    my $strError = undef;
 
                     # If the error stream is already closed then we can't fetch the real error
                     if (!defined($self->{hErr}))
                     {
-                            $strError = 'no error captured because stderr is already closed';
-                        }
+                        $strError = 'no error captured because stderr is already closed';
+                    }
                     # Get whatever text we can from the error stream
                     else
                     {
                         eval
                         {
-                            $strError = undef;
-
                             while (my $strLine = $self->lineRead(0, false, false))
                             {
                                 if (defined($strError))
@@ -578,7 +576,7 @@ sub waitPid
                     confess &log(
                         ERROR, 'remote process terminated on ' . $self->{strId} . ' host' .
                         ($iExitStatus < ERROR_MINIMUM || $iExitStatus > ERROR_MAXIMUM ? " (exit status ${iExitStatus})" : '') .
-                        ": ${strError}",
+                        ': ' . (defined($strError) ? $strError : 'no error on stderr'),
                         $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_HOST_CONNECT);
                 }
 

@@ -146,15 +146,19 @@ sub hostConnect
 
     foreach my $hHost (@{$self->{hyHost}})
     {
-        for (my $iProcessIdx = 0; $iProcessIdx < $hHost->{iProcessMax}; $iProcessIdx++)
+        for (my $iHostProcessIdx = 0; $iHostProcessIdx < $hHost->{iProcessMax}; $iHostProcessIdx++)
         {
             my $iLocalIdx = defined($self->{hyLocal}) ? @{$self->{hyLocal}} : 0;
+            my $iProcessId = $iLocalIdx + 1;
 
             logDebugMisc(
                 $strOperation, 'start local process',
                 {name => 'iHostIdx', value => $iHostIdx},
+                {name => 'iHostProcessIdx', value => $iHostProcessIdx},
                 {name => 'iHostConfigIdx', value => $hHost->{iHostConfigIdx}},
-                {name => 'iProcessIdx', value => $iProcessIdx});
+                {name => 'iProcessId', value => $iProcessId});
+
+            &log(INFO, "local process ${iProcessId} start for host $self->{strHostType}-$hHost->{iHostConfigIdx}");
 
             my $oLocal = new pgBackRest::Protocol::LocalMaster
             (
@@ -162,7 +166,7 @@ sub hostConnect
                     CMD_LOCAL, true, BACKREST_BIN, undef,
                     {
                         &OPTION_COMMAND => {value => commandGet()},
-                        &OPTION_PROCESS => {value => $iLocalIdx + 1},
+                        &OPTION_PROCESS => {value => $iProcessId},
                         &OPTION_TYPE => {value => $self->{strHostType}},
                         &OPTION_HOST_ID => {value => $hHost->{iHostConfigIdx}},
                     }),
@@ -172,14 +176,16 @@ sub hostConnect
             my $hLocal =
             {
                 iHostIdx => $iHostIdx,
-                iProcessIdx => $iProcessIdx,
+                iProcessId => $iProcessId,
+                iHostProcessIdx => $iHostProcessIdx,
                 oLocal => $oLocal,
+                hndIn => fileno($oLocal->{io}->{hIn}),
             };
 
             push(@{$self->{hyLocal}}, $hLocal);
 
-            $self->{oSelect}->add($oLocal->{io}->{hIn});
-            $self->{hLocalMap}{$oLocal->{io}->{hIn}} = $hLocal;
+            $self->{hLocalMap}{$hLocal->{hndIn}} = $hLocal;
+            $self->{oSelect}->add($hLocal->{hndIn});
         }
 
         $iHostIdx++;
@@ -209,8 +215,8 @@ sub init
         my $hyQueue = $hHost->{hyQueue};
 
         # Initialize variables to keep track of what job the local is working on
-        $hLocal->{iDirection} = $hLocal->{iProcessIdx} % 2 == 0 ? 1 : -1;
-        $hLocal->{iQueueIdx} = int((@{$hyQueue} / $hHost->{iProcessMax}) * $hLocal->{iProcessIdx});
+        $hLocal->{iDirection} = $hLocal->{iHostProcessIdx} % 2 == 0 ? 1 : -1;
+        $hLocal->{iQueueIdx} = int((@{$hyQueue} / $hHost->{iProcessMax}) * $hLocal->{iHostProcessIdx});
 
         # Calculate the last queue that this process should pull from
         $hLocal->{iQueueLastIdx} = $hLocal->{iQueueIdx} + ($hLocal->{iDirection} * -1);
@@ -227,7 +233,7 @@ sub init
         logDebugMisc(
             $strOperation, 'init local process',
             {name => 'iHostIdx', value => $hLocal->{iHostIdx}},
-            {name => 'iProcessIdx', value => $hLocal->{iProcessIdx}},
+            {name => 'iProcessId', value => $hLocal->{iProcessId}},
             {name => 'iDirection', value => $hLocal->{iDirection}},
             {name => 'iQueueIdx', value => $hLocal->{iQueueIdx}},
             {name => 'iQueueLastIdx', value => $hLocal->{iQueueLastIdx}});
@@ -271,28 +277,28 @@ sub process
             {name => 'iRunning', value => $self->{iRunning}, trace => true});
 
         # Wait for results to be available on any of the local process inputs
-        my @gyIn = $self->{oSelect}->can_read($self->{iSelectTimeout});
+        my @hndyIn = $self->{oSelect}->can_read($self->{iSelectTimeout});
 
         # Fetch results from the completed jobs
-        foreach my $gIn (@gyIn)
+        foreach my $hndIn (@hndyIn)
         {
             # Get the local data
-            my $hLocal = $self->{hLocalMap}{$gIn};
+            my $hLocal = $self->{hLocalMap}{$hndIn};
 
             if (!defined($hLocal))
             {
-                confess &log(ASSERT, "unable to map from file handle ${gIn} to local");
+                confess &log(ASSERT, "unable to map from fileno ${hndIn} to local");
             }
 
             # Get the job result
             my $hJob = $hLocal->{hJob};
             $self->cmdResult($hLocal->{oLocal}, $hJob);
-            $hJob->{iProcessIdx} = $hLocal->{iProcessIdx};
+            $hJob->{iProcessId} = $hLocal->{iProcessId};
             push(@hyResult, $hJob);
 
             logDebugMisc(
                 $strOperation, 'job complete',
-                {name => 'iProcessIdx', value => $hJob->{iProcessIdx}},
+                {name => 'iProcessId', value => $hJob->{iProcessId}},
                 {name => 'strKey', value => $hJob->{strKey}});
 
             # Free the local process to receive another job
@@ -311,11 +317,15 @@ sub process
             {name => 'iCompleted', value => $iCompleted, trace => true});
 
         my $bFound = false;
-        my $iLocalIdx = 0;
+        my $iLocalIdx = -1;
 
         # Iterate all local processes
         foreach my $hLocal (@{$self->{hyLocal}})
         {
+            # Skip this local process if it has already completed
+            $iLocalIdx++;
+            next if (!defined($hLocal));
+
             my $hHost = $self->{hyHost}[$hLocal->{iHostIdx}];
             my $hyQueue = $hHost->{hyQueue};
 
@@ -348,13 +358,29 @@ sub process
                     logDebugMisc(
                         $strOperation, 'no jobs found, stop local',
                         {name => 'iHostIdx', value => $hLocal->{iHostIdx}},
-                        {name => 'iProcessIdx', value => $hLocal->{iProcessIdx}});
+                        {name => 'iProcessId', value => $hLocal->{iProcessId}});
+
+                    &log(INFO, "local process $hLocal->{iProcessId} stop for $self->{strHostType}-$hHost->{iHostConfigIdx}");
 
                     # Remove input handle from the select object
-                    $self->{oSelect}->remove(glob($hLocal->{oLocal}->{io}->{hIn}));
+                    my $iHandleTotal = $self->{oSelect}->count();
 
-                    # Remove local process from list
-                    splice(@{$self->{hyLocal}}, $iLocalIdx, 1);
+                    $self->{oSelect}->remove($hLocal->{hndIn});
+
+                    if ($iHandleTotal - $self->{oSelect}->count() != 1)
+                    {
+                        confess &log(ASSERT,
+                            "iProcessId $hLocal->{iProcessId}, handle $hLocal->{hndIn} was not removed from select object");
+                    }
+
+                    # Remove input handle from the map
+                    delete($self->{hLocalMap}{$hLocal->{hndIn}});
+
+                    # Close the local process
+                    $hLocal->{oLocal}->close(true);
+
+                    # Undefine local process so it is no longer checked for new jobs
+                    undef(${$self->{hyLocal}}[$iLocalIdx]);
 
                     # Skip to next local process
                     next;
@@ -363,13 +389,12 @@ sub process
                 # Assign job to local process
                 $hLocal->{hJob} = $hJob;
                 $bFound = true;
-                $iLocalIdx++;
                 $self->{iRunning}++;
 
                 logDebugMisc(
                     $strOperation, 'get job from queue',
                     {name => 'iHostIdx', value => $hLocal->{iHostIdx}},
-                    {name => 'iProcessIdx', value => $hLocal->{iProcessIdx}},
+                    {name => 'iProcessId', value => $hLocal->{iProcessId}},
                     {name => 'strQueueIdx', value => $iQueueIdx},
                     {name => 'strKey', value => $hLocal->{hJob}{strKey}});
 

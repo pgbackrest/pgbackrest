@@ -59,7 +59,7 @@ sub exitSafe
     commandStop();
 
     # Close the remote
-    protocolDestroy();
+    protocolDestroy(undef, undef, defined($iExitCode) && ($iExitCode == 0 || $iExitCode == 1));
 
     # Don't fail if the lock can't be released
     eval

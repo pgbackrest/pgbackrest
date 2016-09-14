@@ -416,7 +416,7 @@ sub processManifest
 
                 ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
                     $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hResult->{iHostConfigIdx}), false),
-                    $hResult->{iProcessIdx} + 1, $$hFile{strRepoFile}, $$hFile{strDbFile}, $$hResult{iCopyResult}, $$hFile{lSize},
+                    $hResult->{iProcessId}, $$hFile{strRepoFile}, $$hFile{strDbFile}, $$hResult{iCopyResult}, $$hFile{lSize},
                     $$hResult{lCopySize}, $$hResult{lRepoSize}, $lSizeTotal, $lSizeCurrent, $$hFile{strChecksum},
                     $$hResult{strCopyChecksum}, $lManifestSaveSize, $lManifestSaveCurrent);
             }
@@ -600,7 +600,7 @@ sub process
                 # If the db was not used then destroy the protocol object underneath it
                 if (!$bAssigned)
                 {
-                    protocolDestroy(DB, $iRemoteIdx);
+                    protocolDestroy(DB, $iRemoteIdx, true);
                 }
             }
         }
@@ -723,7 +723,7 @@ sub process
 
             # The standby db object won't be used anymore so undef it to catch any subsequent references
             undef($oDbStandby);
-            protocolDestroy(DB, $self->{iCopyRemoteIdx});
+            protocolDestroy(DB, $self->{iCopyRemoteIdx}, true);
         }
     }
 
@@ -859,6 +859,9 @@ sub process
             $oFileMaster, $strDbMasterPath, $strDbCopyPath, $strType, $strDbVersion, $bCompress, $bHardLink, $oBackupManifest);
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
+    # Master file object no longer needed
+    undef($oFileMaster);
+
     # Stop backup (unless --no-online is set)
     my $strArchiveStop = undef;
     my $strLsnStop = undef;
@@ -900,6 +903,12 @@ sub process
             }
         }
     }
+
+    # Remotes no longer needed (destroy them here so they don't timeout)
+    &log(TEST, TEST_BACKUP_STOP);
+
+    undef($oDbMaster);
+    protocolDestroy(undef, undef, true);
 
     # If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful of this option because there is no way to verify that the backup

@@ -115,6 +115,26 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.08dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vernick.todd"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where local processes were not disconnecting when complete and could later timeout.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vernick.todd"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where the protocol layer could timeout while waiting for WAL segments to arrive in the archive.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-refactor-list>
                     <release-item>

@@ -142,7 +142,7 @@ sub backupManifestUpdate
         $strOperation,
         $oManifest,
         $strHost,
-        $iProcessId,
+        $iLocalId,
         $strRepoFile,
         $strDbFile,
         $iCopyResult,
@@ -161,7 +161,7 @@ sub backupManifestUpdate
             __PACKAGE__ . '::backupManifestUpdate', \@_,
             {name => 'oManifest', trace => true},
             {name => 'strHost', required => false, trace => true},
-            {name => 'iProcessId', required => false, trace => true},
+            {name => 'iLocalId', required => false, trace => true},
             {name => 'strRepoFile', trace => true},
             {name => 'strDbFile', trace => true},
             {name => 'iCopyResult', trace => true},
@@ -198,7 +198,7 @@ sub backupManifestUpdate
                 'checksum resumed file ' : 'backup file ' . (defined($strHost) ? "${strHost}:" : '')) .
              "${strDbFile} (" . fileSizeFormat($lSizeCopy) .
              ', ' . int($lSizeCurrent * 100 / $lSizeTotal) . '%)' .
-             ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iProcessId);
+             ($lSizeCopy != 0 ? " checksum ${strChecksumCopy}" : ''), undef, undef, undef, $iLocalId);
 
         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE, $lSizeCopy);
 
