@@ -114,7 +114,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.08dev" title="UNDER DEVELOPMENT">
+        <release date="2016-09-14" version="1.08" title="Bug Fixes and Log Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
