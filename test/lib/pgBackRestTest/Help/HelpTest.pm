@@ -27,9 +27,10 @@ use pgBackRestTest::CommonTest;
 sub helpExecute
 {
     my $strCommand = shift;
+    my $oLogTest = shift;
 
     my $oHostGroup = hostGroupGet();
-    executeTest($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --no-config ' . $strCommand);
+    executeTest($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --no-config ' . $strCommand, {oLogTest => $oLogTest});
 }
 
 ####################################################################################################################################
@@ -43,6 +44,7 @@ sub helpTestRun
     # Setup test variables
     my $iRun;
     my $strModule = 'help';
+    my $oLogTest = undef;
 
     # Print test banner
     if (!$bVmOut)
@@ -65,17 +67,17 @@ sub helpTestRun
         }
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (testRun(++$iRun, 'base', $strModule, $strThisTest, undef, false))
+        if (testRun(++$iRun, 'base', $strModule, $strThisTest, \$oLogTest))
         {
-            helpExecute('version');
-            helpExecute('help');
-            helpExecute('help version');
-            helpExecute('help --output=json --stanza=main info');
-            helpExecute('help --output=json --stanza=main info output');
+            helpExecute('version', $oLogTest);
+            helpExecute('help', $oLogTest);
+            helpExecute('help version', $oLogTest);
+            helpExecute('help --output=json --stanza=main info', $oLogTest);
+            helpExecute('help --output=json --stanza=main info output', $oLogTest);
         }
 
         # Cleanup
-        testCleanup();
+        testCleanup(\$oLogTest);
     }
 }
 

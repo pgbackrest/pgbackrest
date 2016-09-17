@@ -1,71 +1,80 @@
 run 001 - base
 ==============
 
-> [BACKREST_BIN] --no-config version
+> [BACKREST-BIN] --no-config version
 ------------------------------------------------------------------------------------------------------------------------------------
-[BACKREST_NAME_VERSION]
+[BACKREST-NAME-VERSION]
 
-> [BACKREST_BIN] --no-config help
+> [BACKREST-BIN] --no-config help
 ------------------------------------------------------------------------------------------------------------------------------------
-[BACKREST_NAME_VERSION] - General help
+[BACKREST-NAME-VERSION] - General help
 
 Usage:
-    pg_backrest [options] [command]
+    pgbackrest [options] [command]
 
 Commands:
     archive-get   Get a WAL segment from the archive.
     archive-push  Push a WAL segment to the archive.
     backup        Backup a database cluster.
+    check         Check the configuration.
     expire        Expire backups that exceed retention.
     help          Get help.
     info          Retrieve information about backups.
     restore       Restore a database cluster.
+    start         Allow pgBackRest processes to run.
+    stop          Stop pgBackRest processes from running.
     version       Get version.
 
-Use 'pg_backrest help [command]' for more information.
+Use 'pgbackrest help [command]' for more information.
 
-> [BACKREST_BIN] --no-config help version
+> [BACKREST-BIN] --no-config help version
 ------------------------------------------------------------------------------------------------------------------------------------
-[BACKREST_NAME_VERSION] - 'version' command help
+[BACKREST-NAME-VERSION] - 'version' command help
 
 Get version.
 
 Displays installed pgBackRest version.
 
-> [BACKREST_BIN] --no-config help --output=json --stanza=main info
+> [BACKREST-BIN] --no-config help --output=json --stanza=main info
 ------------------------------------------------------------------------------------------------------------------------------------
-[BACKREST_NAME_VERSION] - 'info' command help
+[BACKREST-NAME-VERSION] - 'info' command help
 
 Retrieve information about backups.
 
-The info command operates on a single stanza or all stanzas.  Text output is
-the default and gives a human-readable summary of backups for the stanza(s)
-requested.  This format is subject to change with any release.
+The info command operates on a single stanza or all stanzas. Text output is the
+default and gives a human-readable summary of backups for the stanza(s)
+requested. This format is subject to change with any release.
 
-For machine-readable output use --output=json.  The JSON output contains far
+For machine-readable output use --output=json. The JSON output contains far
 more information than the text output, however this feature is currently
 experimental so the format may change between versions.
 
 Command Options:
 
+  --backup-cmd              pgBackRest exe path on the backup host
+[default=[BACKREST-BIN]]
+  --backup-config           pgBackRest backup host configuration file
+[default=/etc/pgbackrest.conf]
   --backup-host             backup host when operating remotely via SSH
   --backup-user             backup host user when backup-host is set
+[default=backrest]
   --output                  output format [current=json, default=text]
 
 General Options:
 
   --buffer-size             buffer size for file operations [default=4194304]
-  --cmd-remote              pgBackRest exe path on the remote host
-                            [default=[BACKREST_BIN]]
   --compress-level          compression level for stored files [default=6]
   --compress-level-network  compression level for network transfer when
-                            compress=n [default=3]
+compress=n [default=3]
   --config                  pgBackRest configuration file
-                            [default=/etc/pg_backrest.conf]
-  --repo-path               repository path where WAL segments, backups, logs,
-                            etc are stored [default=/var/lib/backup]
-  --repo-remote-path        remote repository path where WAL segments, backups,
-                            logs, etc are stored
+[default=/etc/pgbackrest.conf]
+  --lock-path               path where lock files are stored
+[default=/tmp/pgbackrest]
+  --log-path                path where log files are stored
+[default=/var/log/pgbackrest]
+  --protocol-timeout        protocol timeout [default=1830]
+  --repo-path               repository path where WAL segments and backups
+stored [default=/var/lib/pgbackrest]
   --stanza                  command stanza [current=main]
 
 Log Options:
@@ -73,11 +82,11 @@ Log Options:
   --log-level-console       level for console logging [default=warn]
   --log-level-file          level for file logging [default=info]
 
-Use 'pg_backrest help info [option]' for more information.
+Use 'pgbackrest help info [option]' for more information.
 
-> [BACKREST_BIN] --no-config help --output=json --stanza=main info output
+> [BACKREST-BIN] --no-config help --output=json --stanza=main info output
 ------------------------------------------------------------------------------------------------------------------------------------
-[BACKREST_NAME_VERSION] - 'info' command - 'output' option help
+[BACKREST-NAME-VERSION] - 'info' command - 'output' option help
 
 Output format.
 

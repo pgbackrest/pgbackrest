@@ -2801,7 +2801,9 @@ push @EXPORT, qw(commandTest);
 ####################################################################################################################################
 sub commandStart
 {
-    &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} start:" . commandWrite($strCommand, true, '', false));
+    &log(
+        $strCommand eq CMD_INFO ? DEBUG : INFO,
+        "${strCommand} start " . BACKREST_VERSION . ':' . commandWrite($strCommand, true, '', false));
 }
 
 push @EXPORT, qw(commandStart);

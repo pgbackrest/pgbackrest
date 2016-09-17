@@ -1620,7 +1620,7 @@ sub backupTestRun
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2c.txt'}
                       {&MANIFEST_SUBKEY_CHECKSUM} = 'dfcb8679956b734706cf87259d50c88f83e80e66';
 
-            # Remove chacksum to match zeroed file
+            # Remove checksum to match zeroed file
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
             $oHostDbMaster->restore(

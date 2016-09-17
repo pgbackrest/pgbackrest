@@ -114,6 +114,28 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.09dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p><backrest/> version number included in command start INFO log output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Process ID logged for local process start/stop INFO log output.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-test-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed missing expect output for help module.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-test-list>
+        </release>
+
         <release date="2016-09-14" version="1.08" title="Bug Fixes and Log Improvements">
             <release-core-list>
                 <release-bug-list>
