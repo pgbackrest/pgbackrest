@@ -400,6 +400,8 @@
                     <exe-cmd>{[db-cluster-wait]}</exe-cmd>
                 </execute>
             </execute-list>
+
+            <p>If archiving a WAL segment is expected to take more than 60 seconds (the default) then the <backrest/> setting <br-option>archive-timeout</br-option> should be increased. See the <link page="{[backrest-page-configuration]}">Configuration Reference</link> for details.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - CHECK CONFIGURATION -->
@@ -689,6 +691,13 @@
             <p>Although useful this feature may not be appropriate when another third-party backup solution is being used to take online backups as <backrest/> will not recognize that the other software is running and may terminate a backup started by that software.  However, it would be unusual to run more than one third-party backup solution at the same time so this is not likely to be a problem.</p>
 
             <p>Note that <id>pg_dump</id> and <id>pg_base_backup</id> do not take online backups so are not affected.  It is safe to run them in conjunction with <backrest/>.</p>
+        </section>
+
+        <!-- SECTION => BACKUP - ARCHIVE-TIMEOUT -->
+        <section id="option-archive-timeout">
+            <title>Archive Timeout</title>
+
+            <p>During an online backup, <backrest/> waits for WAL segments to be archived that are required to make the backup consistent. This wait time is governed by the <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If WAL archiving is known to take longer, then this value should be increased.</p>
         </section>
     </section>
 
