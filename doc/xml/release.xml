@@ -116,6 +116,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.09dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed the <cmd>check</cmd> command to prevent an error message from being logged if the backup directory does not exist.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p><backrest/> version number included in command start INFO log output.</p>

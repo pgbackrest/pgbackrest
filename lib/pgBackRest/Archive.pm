@@ -494,8 +494,7 @@ sub getBackupInfoCheck
     if (!defined($strDbVersion) || !defined($iControlVersion) || !defined($iCatalogVersion) || !defined($ullDbSysId))
     {
         # get DB info for comparison
-        ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) =
-            (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
+        ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
     }
 
     if ($oFile->isRemote(PATH_BACKUP))
@@ -513,29 +512,8 @@ sub getBackupInfoCheck
     }
     else
     {
-        my $oBackupInfo = undef;
-
-        # Load or build backup.info
-        eval
-        {
-            $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
-            return true;
-        }
-        # If there is an error but it is not that the file is missing then confess
-        or do
-        {
-            if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
-            {
-                confess $EVAL_ERROR;
-            }
-        };
-
-        # Check that the stanza backup info is compatible with the current version of the database
-        # If not, an error will be thrown
-        if (defined($oBackupInfo))
-        {
-            $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-        }
+        $iDbHistoryId = (new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER)))->check(
+            $strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
     }
 
     # Return from function and log return values if any
@@ -1208,16 +1186,32 @@ sub check
         };
     }
 
-    # Reset the console logging
-    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
     # If the archive info was successful, then check the backup info
     if ($iResult == 0)
     {
         # Check the backup info
-        my $iDbHistoryId =  $self->getBackupInfoCheck($oFile);
+        eval
+        {
+            $self->getBackupInfoCheck($oFile);
+            return true;
+        }
+        # If there is an error but it is not that the file is missing then confess
+        or do
+        {
+            if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+            {
+                confess $EVAL_ERROR;
+            }
+        };
+    }
 
-        # If the backup and archive checks were successful, then indicate success
+    # Reset the console logging
+    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+
+    # If the archive info was successful and backup.info check did not error in an unexpected way, then indicate success
+    # Else, log the error.
+    if ($iResult == 0)
+    {
         &log(INFO,
             "WAL segment ${strWalSegment} successfully stored in the archive at '" .
             $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
