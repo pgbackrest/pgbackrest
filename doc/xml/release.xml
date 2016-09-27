@@ -132,6 +132,14 @@
                     <release-item>
                         <p>Fixed missing expect output for help module.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed the <cmd>check</cmd> so an error message is not displayed if the backup directory does not exist.</p>
+                    </release-item>
                 </release-bug-list>
             </release-test-list>
         </release>
