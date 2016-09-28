@@ -23,6 +23,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -58,18 +59,20 @@ sub new
     (
         $strOperation,
         $strArchiveClusterPath,                     # Backup cluster path
-        $bRequired                                  # Is archive info required?
+        $bRequired,                                 # Is archive info required?
+        $bValidate
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
-            {name => 'bRequired', default => false}
+            {name => 'bRequired', default => false},
+            {name => 'bValidate', default => true}
         );
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
-    my $bExists = -e $strArchiveInfoFile ? true : false;
+    my $bExists = fileExists($strArchiveInfoFile);
 
     if (!$bExists && $bRequired)
     {
@@ -85,12 +88,96 @@ sub new
     $self->{bExists} = $bExists;
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;
 
+    # Validate the backup info
+    if ($bValidate)
+    {
+        $self->validate();
+    }
+
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+
+####################################################################################################################################
+# validate
+#
+# Compare the backup info against the actual backups in the repository.
+####################################################################################################################################
+sub validate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->validate');
+
+    # If the archive directory exists then validate the archive info file against the directories
+    if (fileExists($self->{strArchiveClusterPath}))
+    {
+
+        foreach my $strArchiveDir (fileList($self->{strArchiveClusterPath}, '^[0-9]+\.[0-9]+-[0-9]+$'))
+        {
+print "DIR= $strArchiveDir\n";
+    # TODO:
+    # *  get a list of the directories in the archive/<stanza> -- the above regex gets this list and nothing more:
+    #     DIR= 9.4-1
+    #     DIR= 9.5-10
+    #     DIR= 10.1-3
+    # * split the directories to version and history
+    # * unpack the first file of the first subdir in each strArchiveDir to a temporary location (or is there a way to pull into memory without unpacking -- can do with gzip -dc FILE | head -10 but need to look if we do this anywhere)
+    # * instantiate an Archive object and pass file in the temp location to Archive->walInfo (not sure if that will work) to get the db system id
+    # * update the archive info file if necessary (figure out criteria for doing so)
+    # * remove temp files if we needed to create them
+        }
+    }
+
+    #     foreach my $strArchiveDir (fileList($self->{strArchiveClusterPath}, backupRegExpGet(true, true, true)))
+    #     {
+
+#     # Check for backups that are not in FILE_BACKUP_INFO
+#     my $strPattern = backupRegExpGet(true, true, true);
+# #CSHANG strPattern is not used - should be passed to the filelist function - or removed
+#
+#     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
+#     {
+#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
+#
+#         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
+#         # can't be moved.  This would also be true for the first move attempt in Backup->process();
+#
+#         if (!$self->current($strBackup) && fileExists($strManifestFile))
+#         {
+#             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
+#             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
+# #CSHANG This add updates the $oContent and saves the data to the backup.info file but then how come removing backups below does NOT save to the backup.info file?
+#             $self->add($oManifest);
+#         }
+#     }
+#
+#     # Remove backups from FILE_BACKUP_INFO that are no longer in the repository
+#     foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
+#     {
+#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
+#         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
+#
+#         if (!fileExists($strBackupPath))
+#         {
+#             &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
+#             $self->delete($strBackup);
+#         }
+#         elsif (!fileExists($strManifestFile))
+#         {
+#             &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
+#             $self->delete($strBackup);
+#         }
+#     }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -144,16 +231,11 @@ sub check
     # Else create the info file from the parameters passed which are usually derived from the current WAL segment
     else
     {
-        my $iDbId = 1;
+        # Initialize the DB id/history id
+        my $iDbId = $self->getDbHistoryId();
 
-        # Fill db section
-        $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId);
-        $self->set(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion);
-        $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID, undef, $iDbId);
-
-        # Fill db history
-        $self->numericSet(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbId, INFO_ARCHIVE_KEY_DB_ID, $ullDbSysId);
-        $self->set(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbId, INFO_ARCHIVE_KEY_DB_VERSION, $strDbVersion);
+        # Fill db section and db history section
+        $self->setDb($strDbVersion, $ullDbSysId, $iDbId);
 
         $bSave = true;
     }
@@ -192,6 +274,68 @@ sub archiveId
         {name => 'strArchiveId', value => $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
                                           $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID)}
     );
+}
+
+####################################################################################################################################
+# getDbHistoryId
+#
+# Get the db history ID
+####################################################################################################################################
+sub getDbHistoryId
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getDbHistoryId');
+
+    # If the DB section does not exist, initialize the history to one, else return the latest ID
+    my $iDbHistoryId = (!$self->test(INFO_ARCHIVE_SECTION_DB))
+                        ? 1 : $self->numericGet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# setDb
+#
+# Set the db and db:history sections.
+####################################################################################################################################
+sub setDb
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+        $iDbHistoryId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->setDb', \@_,
+            {name => 'strDbVersion', trace => true},
+            {name => 'ullDbSysId', trace => true},
+            {name => 'iDbHistoryId', trace => true}
+        );
+
+    # Fill db section
+    $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId);
+    $self->set(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion);
+    $self->numericSet(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID, undef, $iDbHistoryId);
+
+    # Fill db history
+    $self->numericSet(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbHistoryId, INFO_ARCHIVE_KEY_DB_ID, $ullDbSysId);
+    $self->set(INFO_ARCHIVE_SECTION_DB_HISTORY, $iDbHistoryId, INFO_ARCHIVE_KEY_DB_VERSION, $strDbVersion);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 1;

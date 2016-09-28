@@ -131,7 +131,7 @@ sub getProcess
     # Make sure the destination file is defined
     if (!defined($ARGV[2]))
     {
-        confess &log(ERROR, 'WAL segment destination no provided', ERROR_PARAM_REQUIRED);
+        confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
     }
 
     # Info for the Postgres log

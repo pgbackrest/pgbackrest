@@ -189,57 +189,66 @@ sub process
         protocolGet(DB)
     );
 
-# CSHANG why are we needing to pass a 1 now? What is iRemoteIdx?
     # Initialize the database object
+# CSHANG why are we needing to pass a 1 now? What is iRemoteIdx?
     my $oDb = new pgBackRest::Db(1);
 
     # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control then this will error
     # alerting the user to fix the pgbackrest.conf
     $oDb->configValidate(optionGet(OPTION_DB_PATH));
 
-    # get DB info for comparison
-    (my $strDbVersion, my $iControlVersion, my $iCatalogVersion, my $ullDbSysId) =
-        ($oDb->info(optionGet(OPTION_DB_PATH)));
+    my $oBackupInfo = undef;
 
-    # Load or build backup.info - do not validate it here - let archive->check do the validation once we're all done
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER), false);
+    # Turn off console logging to control when to display the error
+    logLevelSet(undef, OFF);
+
+    # Load or build backup.info
+    eval
+    {
+        $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+        return true;
+    }
+    # If there is an error but it is not that the file is missing then confess
+    or do
+    {
+        if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+        {
+            confess $EVAL_ERROR;
+        }
+    };
+
+    # Reset the console logging
+    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # Get archiveInfo object
     my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
 
     # if neither backup nor archive info files exist then there would be nothing to do except check the db-path against the
     # pg_control file which was performed above
-    if (!$oBackupInfo->{bExists} && !$oArchiveInfo->{bExists})
+    if ((!defined($oBackupInfo) || !$oBackupInfo->{bExists}) && !$oArchiveInfo->{bExists})
     {
         &log(INFO, "neither archive.info nor backup.info exist - upgrade is not necessary.");
     }
     else
     {
+        # get DB info for comparison
+        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = ($oDb->info(optionGet(OPTION_DB_PATH)));
+
         my $strResultInfo = "stanza " . optionGet(OPTION_STANZA) . " has been upgraded to DB version ${strDbVersion}";
         my $strResultMessage = undef;
         my $bUpgradedArchiveInfo = false;
         my $bUpgradedBackupInfo = false;
 
-        # Turn off console logging to control when to display the error
-        logLevelSet(undef, OFF);
-
         # If we have a backup.info file, then check that the stanza backup info db system id is compatible with the current version
         # of the database and if not, upgrade the DB data in backupinfo object and save the file.
         if ($oBackupInfo->{bExists})
         {
-            eval
+            my ($bVersionSystemMatch, $bCatalogControlMatch) =
+                $oBackupInfo->checkSectionDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+# CSHANG here we need to decide if the catalog/control doesn't match - is that truly an error instead?
+            # If something doesn't match, then perform the upgrade
+            if (!$bVersionSystemMatch || !$bCatalogControlMatch)
             {
-                my $iDbId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-                return true;
-            }
-            or do
-            {
-                # Confess unhandled errors
-                if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_BACKUP_MISMATCH)
-                {
-                    confess $EVAL_ERROR;
-                }
-
                 # Update the backupinfo object
                 $oBackupInfo->setDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId,
                                     ($oBackupInfo->getDbHistoryId() + 1));
@@ -247,35 +256,38 @@ sub process
                 $oBackupInfo->save();
                 $bUpgradedBackupInfo = true;
                 $strResultMessage = "backup info for ". $strResultInfo;
-            };
-        }
-
-        # If archive.info exists, then check that the stanza archive info db system id is compatible with the current version of the
-        # database and if not, upgrade the DB data in archive.info file.
-        if ($oArchiveInfo->{bExists})
-        {
-            eval
-            {
-                my $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-                return true;
             }
-            or do
-            {
-                # Confess unhandled errors
-                if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_ARCHIVE_MISMATCH)
-                {
-                    confess $EVAL_ERROR;
-                }
-
-                # Update the archive.info file
-                $oArchiveInfo->setDb($strDbVersion, $ullDbSysId, ($oArchiveInfo->getDbHistoryId() + 1));
-
-                # atomic save
-                $oArchiveInfo->save();
-                $bUpgradedArchiveInfo = true;
-                $strResultMessage = (defined($strResultMessage) ? "\n" : "") . "archive info for ". $strResultInfo;
-            };
         }
+
+        # Turn off console logging to control when to display the error
+        logLevelSet(undef, OFF);
+
+        # # If archive.info exists, then check that the stanza archive info db system id is compatible with the current version of the
+        # # database and if not, upgrade the DB data in archive.info file.
+        # if ($oArchiveInfo->{bExists})
+        # {
+        #     eval
+        #     {
+        #         my $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
+        #         return true;
+        #     }
+        #     or do
+        #     {
+        #         # Confess unhandled errors
+        #         if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_ARCHIVE_MISMATCH)
+        #         {
+        #             confess $EVAL_ERROR;
+        #         }
+        #
+        #         # Update the archive.info file
+        #         $oArchiveInfo->setDb($strDbVersion, $ullDbSysId, ($oArchiveInfo->getDbHistoryId() + 1));
+        #
+        #         # atomic save
+        #         $oArchiveInfo->save();
+        #         $bUpgradedArchiveInfo = true;
+        #         $strResultMessage = (defined($strResultMessage) ? "\n" : "") . "archive info for ". $strResultInfo;
+        #     };
+        # }
 
         # Reset the console logging
         logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
