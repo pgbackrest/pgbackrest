@@ -137,6 +137,18 @@
                 </release-refactor-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added <br-option>archive-timeout</br-option> option documentation to the user guide.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-bug-list>
                     <release-item>
