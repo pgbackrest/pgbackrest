@@ -142,6 +142,8 @@ use constant ERROR_PROTOCOL_OUTPUT_REQUIRED                         => ERROR_MIN
     push @EXPORT, qw(ERROR_PROTOCOL_OUTPUT_REQUIRED);
 use constant ERROR_LINK_OPEN                                        => ERROR_MINIMUM + 61;
     push @EXPORT, qw(ERROR_LINK_OPEN);
+use constant ERROR_ARCHIVE_DISABLED                                 => ERROR_MINIMUM + 62;
+    push @EXPORT, qw(ERROR_ARCHIVE_DISABLED);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

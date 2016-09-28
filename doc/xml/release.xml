@@ -124,7 +124,17 @@
 
                         <p>Fixed the <cmd>check</cmd> command to prevent an error message from being logged if the backup directory does not exist.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed error message to properly display the archive command when an invalid archive command is detected.</p>
+                    </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Check that archive_mode is enabled when <br-option>archive-check</br-option> option enabled.</p>
+                    </release-item>
+                </release-feature-list>
 
                 <release-refactor-list>
                     <release-item>

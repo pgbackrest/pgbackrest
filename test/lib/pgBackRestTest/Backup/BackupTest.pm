@@ -1794,15 +1794,24 @@ sub backupTestRun
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-                # Stop the cluster ignoring any errors in the postgresql log
-                $oHostDbMaster->clusterStop({bIgnoreLogError => true});
+                # Check ERROR_ARCHIVE_DISABLED error
+                $strComment = 'fail on archive_mode=off';
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveEnabled => false});
+
+                $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+                $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+
+                # If running the remote tests then also need to run check locally
+                if ($bHostBackup)
+                {
+                    $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+                }
 
                 # Check ERROR_ARCHIVE_COMMAND_INVALID error
                 $strComment = 'fail on invalid archive_command';
-                $oHostDbMaster->clusterStart({bArchive => false});
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchive => false});
 
                 $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
                 # If running the remote tests then also need to run check locally

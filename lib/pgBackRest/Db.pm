@@ -764,21 +764,29 @@ sub configValidate
             "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
     }
 
-    # Error if archive_mode = always (support has not been added yet)
-    if (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && $self->executeSql('show archive_mode') eq 'always')
+    # If archive checking is enabled then perform various validations
+    if (optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
-        confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
-    }
+        # Error if archive_mode = off since pg_start_backup () will fail
+        if ($self->executeSql('show archive_mode') eq 'off')
+        {
+            confess &log(ERROR, 'archive_mode must be enabled', ERROR_ARCHIVE_DISABLED);
+        }
 
-    # Check if archive_command is set
-    if (!optionGet(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
-    {
+        # Error if archive_mode = always (support has not been added yet)
+        if ($self->executeSql('show archive_mode') eq 'always')
+        {
+            confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
+        }
+
+        # Check if archive_command is set
         my $strArchiveCommand = $self->executeSql('show archive_command');
 
         if (index($strArchiveCommand, BACKREST_EXE) == -1)
         {
             confess &log(ERROR,
-                'archive_command \'${strArchiveCommand}\' must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
+                'archive_command ' . (defined($strArchiveCommand) ? "'${strArchiveCommand}'" : '[null]') . ' must contain \'' .
+                BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
         }
     }
 
