@@ -164,6 +164,10 @@
                     <release-item>
                         <p>Fixed missing expect output for help module.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed broken <id>vm-max</id> option in <file>test.pl</file>.</p>
+                    </release-item>
                 </release-bug-list>
             </release-test-list>
         </release>
