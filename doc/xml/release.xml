@@ -132,6 +132,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Non-exclusive backups will automatically be used on <postgres/> 9.6.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Check that archive_mode is enabled when <br-option>archive-check</br-option> option enabled.</p>
                     </release-item>
                 </release-feature-list>
