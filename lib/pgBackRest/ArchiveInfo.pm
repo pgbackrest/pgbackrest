@@ -16,6 +16,8 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
 
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
+
 use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -59,15 +61,13 @@ sub new
     (
         $strOperation,
         $strArchiveClusterPath,                     # Backup cluster path
-        $bRequired,                                 # Is archive info required?
-        $bValidate
+        $bRequired                                  # Is archive info required?
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
-            {name => 'bRequired', default => false},
-            {name => 'bValidate', default => true}
+            {name => 'bRequired', default => false}
         );
 
     # Build the archive info path/file name
@@ -88,96 +88,12 @@ sub new
     $self->{bExists} = $bExists;
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;
 
-    # Validate the backup info
-    if ($bValidate)
-    {
-        $self->validate();
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
     );
-}
-
-
-####################################################################################################################################
-# validate
-#
-# Compare the backup info against the actual backups in the repository.
-####################################################################################################################################
-sub validate
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->validate');
-
-    # If the archive directory exists then validate the archive info file against the directories
-    if (fileExists($self->{strArchiveClusterPath}))
-    {
-
-        foreach my $strArchiveDir (fileList($self->{strArchiveClusterPath}, '^[0-9]+\.[0-9]+-[0-9]+$'))
-        {
-print "DIR= $strArchiveDir\n";
-    # TODO:
-    # *  get a list of the directories in the archive/<stanza> -- the above regex gets this list and nothing more:
-    #     DIR= 9.4-1
-    #     DIR= 9.5-10
-    #     DIR= 10.1-3
-    # * split the directories to version and history
-    # * unpack the first file of the first subdir in each strArchiveDir to a temporary location (or is there a way to pull into memory without unpacking -- can do with gzip -dc FILE | head -10 but need to look if we do this anywhere)
-    # * instantiate an Archive object and pass file in the temp location to Archive->walInfo (not sure if that will work) to get the db system id
-    # * update the archive info file if necessary (figure out criteria for doing so)
-    # * remove temp files if we needed to create them
-        }
-    }
-
-    #     foreach my $strArchiveDir (fileList($self->{strArchiveClusterPath}, backupRegExpGet(true, true, true)))
-    #     {
-
-#     # Check for backups that are not in FILE_BACKUP_INFO
-#     my $strPattern = backupRegExpGet(true, true, true);
-# #CSHANG strPattern is not used - should be passed to the filelist function - or removed
-#
-#     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
-#     {
-#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
-#
-#         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
-#         # can't be moved.  This would also be true for the first move attempt in Backup->process();
-#
-#         if (!$self->current($strBackup) && fileExists($strManifestFile))
-#         {
-#             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
-#             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
-# #CSHANG This add updates the $oContent and saves the data to the backup.info file but then how come removing backups below does NOT save to the backup.info file?
-#             $self->add($oManifest);
-#         }
-#     }
-#
-#     # Remove backups from FILE_BACKUP_INFO that are no longer in the repository
-#     foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
-#     {
-#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
-#         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
-#
-#         if (!fileExists($strBackupPath))
-#         {
-#             &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
-#             $self->delete($strBackup);
-#         }
-#         elsif (!fileExists($strManifestFile))
-#         {
-#             &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
-#             $self->delete($strBackup);
-#         }
-#     }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -204,8 +120,6 @@ sub check
             {name => 'ullDbSysId'}
         );
 
-    my $bSave = false;
-
     if ($self->test(INFO_ARCHIVE_SECTION_DB))
     {
         my $strError = undef;
@@ -231,19 +145,7 @@ sub check
     # Else create the info file from the parameters passed which are usually derived from the current WAL segment
     else
     {
-        # Initialize the DB id/history id
-        my $iDbId = $self->getDbHistoryId();
-
-        # Fill db section and db history section
-        $self->setDb($strDbVersion, $ullDbSysId, $iDbId);
-
-        $bSave = true;
-    }
-
-    # Save if changes have been made
-    if ($bSave)
-    {
-        $self->save();
+        $self->fileCreate($strDbVersion, $ullDbSysId);
     }
 
     # Return from function and log return values if any
@@ -253,7 +155,6 @@ sub check
         {name => 'strArchiveId', value => $self->archiveId()}
     );
 }
-
 
 ####################################################################################################################################
 # archiveId
@@ -337,5 +238,144 @@ sub setDb
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }
+
+####################################################################################################################################
+# fileCreate
+#
+# Creates the archive.info file.
+####################################################################################################################################
+sub fileCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->fileCreate', \@_,
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'}
+        );
+
+    # Fill db section and db history section
+    $self->setDb($strDbVersion, $ullDbSysId, $self->getDbHistoryId());
+
+    $self->save();
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# validate
+#
+# Determines the existence of the archive.info file and if it is missing but subdirectories exist, it will attempt to recreate it.
+####################################################################################################################################
+sub validate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCompressExtension,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->validate', \@_,
+            {name => 'strCompressExtension'}
+        );
+
+    # If the archive directory exists then validate the archive info file against the directories
+    if (fileExists($self->{strArchiveClusterPath}))
+    {
+        # Get the upper level directory names, e.g. 9.4-1
+        foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, '^[0-9]+\.[0-9]+-[0-9]+$'))
+        {
+            my ($strDbVersion, $strDbId) = split("-", $strVersionDir);
+print "DIR= $strVersionDir, ver=$strDbVersion, id=$strDbId\n";
+# CSHANG can there be 000000010000000000000001-220ff32d22aa232cb1904504871678045a786cbe.SOME_OTHER_EXTENTION? I saw something about partial but not sure what that's all about
+            my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", '^[0-F]{16}$'))[0];
+            #CSHANG or should I be using "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"
+            my $strArchiveFile = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",'^[0-F]{24}-[0-f]{40}.*'))[0];
+            my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
+print "File= $strArchiveFilePath\n";
+            my $buffer;
+            if ($strArchiveFile =~ "\.$strCompressExtension")
+            {
+                # unzip
+                gunzip $strArchiveFilePath => \$buffer
+                    or confess "gunzip failed: $GunzipError\n";
+            }
+
+
+#000000010000000000000001-220ff32d22aa232cb1904504871678045a786cbe
+    # TODO:
+    # *  get a list of the directories in the archive/<stanza> -- the above regex gets this list and nothing more:
+    #     DIR= 9.4-1
+    #     DIR= 9.5-10
+    #     DIR= 10.1-3
+    # * split the directories to version and history
+    # * unpack the first file of the first subdir in each strArchiveDir to a scalar in memory using  IO::Uncompress::Gunzip -- this requires Perl5.005 or better. Also, compression may not actually be turned on, so we should look for non-gz files also (the compression option defaults to on, but it could be turned off.)
+    # * instantiate an Archive object and pass file to Archive->walInfo (not sure if that will work) to get the db system id
+    # * update the archive info file if necessary (figure out criteria for doing so)
+    # * remove temp files if we needed to create them
+    # * what if async archiving is on? the WAL goes to a spool dir first before getting to the dir.
+        }
+    }
+# here need to decide if we should error or create the file. If we create it, we need to get the DB information.
+
+
+    #     foreach my $strArchiveDir (fileList($self->{strArchiveClusterPath}, backupRegExpGet(true, true, true)))
+    #     {
+
+#     # Check for backups that are not in FILE_BACKUP_INFO
+#     my $strPattern = backupRegExpGet(true, true, true);
+# #CSHANG strPattern is not used - should be passed to the filelist function - or removed
+#
+#     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
+#     {
+#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
+#
+#         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
+#         # can't be moved.  This would also be true for the first move attempt in Backup->process();
+#
+#         if (!$self->current($strBackup) && fileExists($strManifestFile))
+#         {
+#             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
+#             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
+# #CSHANG This add updates the $oContent and saves the data to the backup.info file but then how come removing backups below does NOT save to the backup.info file?
+#             $self->add($oManifest);
+#         }
+#     }
+#
+#     # Remove backups from FILE_BACKUP_INFO that are no longer in the repository
+#     foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
+#     {
+#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
+#         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
+#
+#         if (!fileExists($strBackupPath))
+#         {
+#             &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
+#             $self->delete($strBackup);
+#         }
+#         elsif (!fileExists($strManifestFile))
+#         {
+#             &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
+#             $self->delete($strBackup);
+#         }
+#     }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
 
 1;

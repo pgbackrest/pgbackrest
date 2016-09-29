@@ -23,6 +23,7 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
+use IO::Uncompress::Gunzip qw($GunzipError);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -182,6 +183,9 @@ sub process
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     # Initialize default file object
+#CSHANG Are these right? I see Async in some constructors - when would i use something like:
+        # $bAsync ? optionGet(OPTION_SPOOL_PATH) : optionGet(OPTION_REPO_PATH),
+        # protocolGet($bAsync ? NONE : BACKUP)
     my $oFile = new pgBackRest::File
     (
         optionGet(OPTION_STANZA),
@@ -200,111 +204,120 @@ sub process
     my $oBackupInfo = undef;
 
     # Turn off console logging to control when to display the error
-    logLevelSet(undef, OFF);
-
-    # Load or build backup.info
-    eval
-    {
-        $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
-        return true;
-    }
-    # If there is an error but it is not that the file is missing then confess
-    or do
-    {
-        if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
-        {
-            confess $EVAL_ERROR;
-        }
-    };
-
-    # Reset the console logging
-    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
+#     logLevelSet(undef, OFF);
+#
+#     # Load or build backup.info
+#     eval
+#     {
+#         $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+#         return true;
+#     }
+#     # If there is an error but it is not that the file is missing then confess
+#     or do
+#     {
+#         if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+#         {
+#             confess $EVAL_ERROR;
+#         }
+#     };
+#
+#     # Reset the console logging
+#     logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+#
     # Get archiveInfo object
     my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
-
-    # if neither backup nor archive info files exist then there would be nothing to do except check the db-path against the
-    # pg_control file which was performed above
-    if ((!defined($oBackupInfo) || !$oBackupInfo->{bExists}) && !$oArchiveInfo->{bExists})
+    if (!$oArchiveInfo->{bExists})
     {
-        &log(INFO, "neither archive.info nor backup.info exist - upgrade is not necessary.");
+        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = ($oDb->info(optionGet(OPTION_DB_PATH)));
+        $oArchiveInfo->fileCreate($strDbVersion, $ullDbSysId);
     }
     else
     {
-        # get DB info for comparison
-        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = ($oDb->info(optionGet(OPTION_DB_PATH)));
-
-        my $strResultInfo = "stanza " . optionGet(OPTION_STANZA) . " has been upgraded to DB version ${strDbVersion}";
-        my $strResultMessage = undef;
-        my $bUpgradedArchiveInfo = false;
-        my $bUpgradedBackupInfo = false;
-
-        # If we have a backup.info file, then check that the stanza backup info db system id is compatible with the current version
-        # of the database and if not, upgrade the DB data in backupinfo object and save the file.
-        if ($oBackupInfo->{bExists})
-        {
-            my ($bVersionSystemMatch, $bCatalogControlMatch) =
-                $oBackupInfo->checkSectionDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-# CSHANG here we need to decide if the catalog/control doesn't match - is that truly an error instead?
-            # If something doesn't match, then perform the upgrade
-            if (!$bVersionSystemMatch || !$bCatalogControlMatch)
-            {
-                # Update the backupinfo object
-                $oBackupInfo->setDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId,
-                                    ($oBackupInfo->getDbHistoryId() + 1));
-                # atomic save
-                $oBackupInfo->save();
-                $bUpgradedBackupInfo = true;
-                $strResultMessage = "backup info for ". $strResultInfo;
-            }
-        }
-
-        # Turn off console logging to control when to display the error
-        logLevelSet(undef, OFF);
-
-        # # If archive.info exists, then check that the stanza archive info db system id is compatible with the current version of the
-        # # database and if not, upgrade the DB data in archive.info file.
-        # if ($oArchiveInfo->{bExists})
-        # {
-        #     eval
-        #     {
-        #         my $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-        #         return true;
-        #     }
-        #     or do
-        #     {
-        #         # Confess unhandled errors
-        #         if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_ARCHIVE_MISMATCH)
-        #         {
-        #             confess $EVAL_ERROR;
-        #         }
-        #
-        #         # Update the archive.info file
-        #         $oArchiveInfo->setDb($strDbVersion, $ullDbSysId, ($oArchiveInfo->getDbHistoryId() + 1));
-        #
-        #         # atomic save
-        #         $oArchiveInfo->save();
-        #         $bUpgradedArchiveInfo = true;
-        #         $strResultMessage = (defined($strResultMessage) ? "\n" : "") . "archive info for ". $strResultInfo;
-        #     };
-        # }
-
-        # Reset the console logging
-        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
-        if ($bUpgradedBackupInfo || $bUpgradedArchiveInfo)
-        {
-            # Confirm archive and backup are configured properly
-            my $iResult = new pgBackRest::Archive()->check($oArchiveInfo->{bExists}, $oBackupInfo->{bExists});
-
-            &log(INFO, "${strResultMessage}");
-        }
-        else
-        {
-            &log(INFO, "upgrade of " . optionGet(OPTION_STANZA) . "is not necessary");
-        }
-
+        $oArchiveInfo->validate($oFile->{strCompressExtension});
     }
+#
+#     # if neither backup nor archive info files exist then there would be nothing to do except check the db-path against the
+#     # pg_control file which was performed above
+#     if ((!defined($oBackupInfo) || !$oBackupInfo->{bExists}) && !$oArchiveInfo->{bExists})
+#     {
+#         &log(INFO, "neither archive.info nor backup.info exist - upgrade is not necessary.");
+#     }
+#     else
+#     {
+#         # get DB info for comparison
+#         my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = ($oDb->info(optionGet(OPTION_DB_PATH)));
+#
+#         my $strResultInfo = "stanza " . optionGet(OPTION_STANZA) . " has been upgraded to DB version ${strDbVersion}";
+#         my $strResultMessage = undef;
+#         my $bUpgradedArchiveInfo = false;
+#         my $bUpgradedBackupInfo = false;
+#
+#         # If we have a backup.info file, then check that the stanza backup info db system id is compatible with the current version
+#         # of the database and if not, upgrade the DB data in backupinfo object and save the file.
+#         if ($oBackupInfo->{bExists})
+#         {
+#             my ($bVersionSystemMatch, $bCatalogControlMatch) =
+#                 $oBackupInfo->checkSectionDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+# # CSHANG here we need to decide if the catalog/control doesn't match - is that truly an error instead?
+#             # If something doesn't match, then perform the upgrade
+#             if (!$bVersionSystemMatch || !$bCatalogControlMatch)
+#             {
+#                 # Update the backupinfo object
+#                 $oBackupInfo->setDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId,
+#                                     ($oBackupInfo->getDbHistoryId() + 1));
+#                 # atomic save
+#                 $oBackupInfo->save();
+#                 $bUpgradedBackupInfo = true;
+#                 $strResultMessage = "backup info for ". $strResultInfo;
+#             }
+#         }
+#
+#         # Turn off console logging to control when to display the error
+#         logLevelSet(undef, OFF);
+#
+#         # # If archive.info exists, then check that the stanza archive info db system id is compatible with the current version of the
+#         # # database and if not, upgrade the DB data in archive.info file.
+#         # if ($oArchiveInfo->{bExists})
+#         # {
+#         #     eval
+#         #     {
+#         #         my $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
+#         #         return true;
+#         #     }
+#         #     or do
+#         #     {
+#         #         # Confess unhandled errors
+#         #         if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_ARCHIVE_MISMATCH)
+#         #         {
+#         #             confess $EVAL_ERROR;
+#         #         }
+#         #
+#         #         # Update the archive.info file
+#         #         $oArchiveInfo->setDb($strDbVersion, $ullDbSysId, ($oArchiveInfo->getDbHistoryId() + 1));
+#         #
+#         #         # atomic save
+#         #         $oArchiveInfo->save();
+#         #         $bUpgradedArchiveInfo = true;
+#         #         $strResultMessage = (defined($strResultMessage) ? "\n" : "") . "archive info for ". $strResultInfo;
+#         #     };
+#         # }
+#
+#         # Reset the console logging
+#         logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+#
+#         if ($bUpgradedBackupInfo || $bUpgradedArchiveInfo)
+#         {
+#             # Confirm archive and backup are configured properly
+#             my $iResult = new pgBackRest::Archive()->check($oArchiveInfo->{bExists}, $oBackupInfo->{bExists});
+#
+#             &log(INFO, "${strResultMessage}");
+#         }
+#         else
+#         {
+#             &log(INFO, "upgrade of " . optionGet(OPTION_STANZA) . "is not necessary");
+#         }
+#
+#     }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
