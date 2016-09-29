@@ -169,6 +169,12 @@
                         <p>Fixed broken <id>vm-max</id> option in <file>test.pl</file>.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Update CentOS/Debian package definitions.</p>
+                    </release-item>
+                </release-feature-list>
             </release-test-list>
         </release>
 
