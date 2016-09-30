@@ -145,7 +145,7 @@ sub check
     # Else create the info file from the parameters passed which are usually derived from the current WAL segment
     else
     {
-        $self->fileCreate($strDbVersion, $ullDbSysId);
+        $self->fileCreateUpdate($strDbVersion, $ullDbSysId, $self->getDbHistoryId());
     }
 
     # Return from function and log return values if any
@@ -240,11 +240,11 @@ sub setDb
 }
 
 ####################################################################################################################################
-# fileCreate
+# fileCreateUpdate
 #
-# Creates the archive.info file.
+# Creates or updates the archive.info file.
 ####################################################################################################################################
-sub fileCreate
+sub fileCreateUpdate
 {
     my $self = shift;
 
@@ -254,16 +254,18 @@ sub fileCreate
         $strOperation,
         $strDbVersion,
         $ullDbSysId,
+        $iDbHistoryId
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->fileCreate', \@_,
+            __PACKAGE__ . '->fileCreateUpdate', \@_,
             {name => 'strDbVersion'},
-            {name => 'ullDbSysId'}
+            {name => 'ullDbSysId'},
+            {name => 'iDbHistoryId'}
         );
 
     # Fill db section and db history section
-    $self->setDb($strDbVersion, $ullDbSysId, $self->getDbHistoryId());
+    $self->setDb($strDbVersion, $ullDbSysId, $iDbHistoryId);
 
     $self->save();
 
@@ -292,86 +294,63 @@ sub validate
             {name => 'strCompressExtension'}
         );
 
-    # If the archive directory exists then validate the archive info file against the directories
-    if (fileExists($self->{strArchiveClusterPath}))
+# CSHANG TODO:
+# *  get a list of the directories in the archive/<stanza> -- the above regex gets this list and nothing more:
+#     DIR= 9.4-1
+#     DIR= 9.5-10
+#     DIR= 10.1-3
+# * split the directories to version and history
+# * unpack the first file into memory and extract the system id
+# * update the archive info file if necessary (figure out criteria for doing so)
+
+    # If the archive directory does not exist, it will throw and error and exit, but if it does exist and the archive.info file is
+    # missing then create a valid archive info from the directories.
+    if (fileExists($self->{strArchiveClusterPath}) && !$self->{bExists})
     {
         # Get the upper level directory names, e.g. 9.4-1
         foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, '^[0-9]+\.[0-9]+-[0-9]+$'))
         {
+            # Get the db-version and db-id (history id) from the directory name
             my ($strDbVersion, $strDbId) = split("-", $strVersionDir);
-print "DIR= $strVersionDir, ver=$strDbVersion, id=$strDbId\n";
-# CSHANG can there be 000000010000000000000001-220ff32d22aa232cb1904504871678045a786cbe.SOME_OTHER_EXTENTION? I saw something about partial but not sure what that's all about
+
+# CSHANG can there be 000000010000000000000001-220ff32d22aa232cb1904504871678045a786cbe.SOME_OTHER_EXTENTION? I saw something about partial but not sure what that's all about. Also, what if async archiving is on? the WAL goes to a spool dir first before getting to the dir, so if we did an upgrade and the archive.info was missing an archiving is happening but not to us yet....
+            # Get the name of the first archive directory
             my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", '^[0-F]{16}$'))[0];
-            #CSHANG or should I be using "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"
-            my $strArchiveFile = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",'^[0-F]{24}-[0-f]{40}.*'))[0];
+
+#CSHANG or should I be using "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"
+            # Get the name of the first archive file
+            my $strArchiveFile =
+                (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",'^[0-F]{24}-[0-f]{40}.*'))[0];
+
+            # Get the full path for the file
             my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
-print "File= $strArchiveFilePath\n";
-            my $buffer;
+
+# CSHANG I'm not sure I like this because it appears we can't just read out the first X number of bytes. 
+            my $tBlock;
             if ($strArchiveFile =~ "\.$strCompressExtension")
             {
-                # unzip
-                gunzip $strArchiveFilePath => \$buffer
+                # can't limit with InputLength - it requires you know the size of the compressed data stream
+                # gunzip $strArchiveFilePath => \$tBlock, InputLength => 100
+                #     or confess "gunzip failed: $GunzipError\n";
+                gunzip $strArchiveFilePath => \$tBlock
                     or confess "gunzip failed: $GunzipError\n";
             }
 
+# CSHANG may need to put these constants in a common location
+# my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
+            my $iSysIdOffset = $strDbVersion >= '9.3' ? 20 : 12;
+            my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
 
-#000000010000000000000001-220ff32d22aa232cb1904504871678045a786cbe
-    # TODO:
-    # *  get a list of the directories in the archive/<stanza> -- the above regex gets this list and nothing more:
-    #     DIR= 9.4-1
-    #     DIR= 9.5-10
-    #     DIR= 10.1-3
-    # * split the directories to version and history
-    # * unpack the first file of the first subdir in each strArchiveDir to a scalar in memory using  IO::Uncompress::Gunzip -- this requires Perl5.005 or better. Also, compression may not actually be turned on, so we should look for non-gz files also (the compression option defaults to on, but it could be turned off.)
-    # * instantiate an Archive object and pass file to Archive->walInfo (not sure if that will work) to get the db system id
-    # * update the archive info file if necessary (figure out criteria for doing so)
-    # * remove temp files if we needed to create them
-    # * what if async archiving is on? the WAL goes to a spool dir first before getting to the dir.
+            if (!defined($ullDbSysId))
+            {
+                confess &log(ERROR, "unable to read database system identifier");
+            }
+
+    print "strDbVersion=$strDbVersion, ullDbSysId=$ullDbSysId, strDbId=$strDbId\n";
+
+            $self->fileCreateUpdate($strDbVersion, $ullDbSysId, $strDbId);
         }
     }
-# here need to decide if we should error or create the file. If we create it, we need to get the DB information.
-
-
-    #     foreach my $strArchiveDir (fileList($self->{strArchiveClusterPath}, backupRegExpGet(true, true, true)))
-    #     {
-
-#     # Check for backups that are not in FILE_BACKUP_INFO
-#     my $strPattern = backupRegExpGet(true, true, true);
-# #CSHANG strPattern is not used - should be passed to the filelist function - or removed
-#
-#     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
-#     {
-#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
-#
-#         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
-#         # can't be moved.  This would also be true for the first move attempt in Backup->process();
-#
-#         if (!$self->current($strBackup) && fileExists($strManifestFile))
-#         {
-#             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
-#             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
-# #CSHANG This add updates the $oContent and saves the data to the backup.info file but then how come removing backups below does NOT save to the backup.info file?
-#             $self->add($oManifest);
-#         }
-#     }
-#
-#     # Remove backups from FILE_BACKUP_INFO that are no longer in the repository
-#     foreach my $strBackup ($self->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
-#     {
-#         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
-#         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
-#
-#         if (!fileExists($strBackupPath))
-#         {
-#             &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
-#             $self->delete($strBackup);
-#         }
-#         elsif (!fileExists($strManifestFile))
-#         {
-#             &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
-#             $self->delete($strBackup);
-#         }
-#     }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

@@ -226,15 +226,8 @@ sub process
 #
     # Get archiveInfo object
     my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
-    if (!$oArchiveInfo->{bExists})
-    {
-        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = ($oDb->info(optionGet(OPTION_DB_PATH)));
-        $oArchiveInfo->fileCreate($strDbVersion, $ullDbSysId);
-    }
-    else
-    {
+#CSHANG In reality, if it does not exist we would want to do a stanza-create? No - probably just call validate here in an eval block and if the cluster path is missing, then tell them they need to do a stanza create. So maybe this should not be "validate" unless we have an else statement in the validate function to confirm an existing file is valid before we continue...
         $oArchiveInfo->validate($oFile->{strCompressExtension});
-    }
 #
 #     # if neither backup nor archive info files exist then there would be nothing to do except check the db-path against the
 #     # pg_control file which was performed above
