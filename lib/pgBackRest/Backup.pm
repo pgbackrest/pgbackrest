@@ -569,10 +569,8 @@ sub process
                 # reached as long as the databases required for the backup type are present.
                 if ($oDb->connect(true))
                 {
-                    my $bStandby = $oDb->executeSqlOne('select pg_is_in_recovery()');
-
                     # If this db is a standby
-                    if ($bStandby)
+                    if ($oDb->isStandby())
                     {
                         # If standby backup is requested then use the first standby found
                         if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))

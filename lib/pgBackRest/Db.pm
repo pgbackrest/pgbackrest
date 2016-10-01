@@ -764,8 +764,8 @@ sub configValidate
             "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
     }
 
-    # If archive checking is enabled then perform various validations
-    if (optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
+    # If cluster is not a standby and archive checking is enabled, then perform various validations
+    if (!$self->isStandby() && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
         # Error if archive_mode = off since pg_start_backup () will fail
         if ($self->executeSql('show archive_mode') eq 'off')
@@ -824,6 +824,40 @@ sub xlogSwitch
     (
         $strOperation,
         {name => 'strXlogFileName', value => $strWalFileName}
+    );
+}
+
+####################################################################################################################################
+# isStandby
+#
+# Determines if a database is a standby by testing if it is in recovery mode.
+####################################################################################################################################
+sub isStandby
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->isStandby');
+
+    if (!defined($self->{bStandby}))
+    {
+        my ($strDbVersion) = $self->versionGet();
+
+        if ($strDbVersion <= PG_VERSION_90)
+        {
+            $self->{bStandby} = false;
+        }
+        else
+        {
+            $self->{bStandby} = $self->executeSqlOne('select pg_is_in_recovery()') ? true : false;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bStandby', value => $self->{bStandby}}
     );
 }
 
