@@ -25,6 +25,7 @@ use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 use pgBackRestTest::Backup::Common::HostBaseTest;
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::CommonTest;
@@ -103,7 +104,7 @@ sub new
     if (!defined($$oParam{strName}) || $$oParam{strName} eq HOST_BACKUP)
     {
         $strName = HOST_BACKUP;
-        $strImage = 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . '-backup-test-pre';
+        $strImage = containerNamespace() . '/' . $oHostGroup->paramGet(HOST_PARAM_VM) . '-backup-test-pre';
         $strUser = $oHostGroup->paramGet(HOST_BACKUP_USER);
         $strVm = $oHostGroup->paramGet(HOST_PARAM_VM);
     }

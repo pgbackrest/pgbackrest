@@ -33,7 +33,8 @@ Vagrant.configure(2) do |config|
         apt-get install -y vim htop
 
         # Install Texlive
-        apt-get install -y texlive texlive-latex-extra
+        apt-get install -y texlive
+        apt-get install -y --no-install-recommends texlive-latex-extra
 
         # Create backrest user and postgres group
         groupadd -g5000 postgres

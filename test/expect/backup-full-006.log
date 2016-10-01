@@ -16,7 +16,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/db-standby/pgbackrest.conf
 backup-host=db-standby
-backup-user=vagrant
+backup-user=[USER-1]
 compress=n
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
@@ -34,7 +34,7 @@ db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-master/pgbackrest.conf
 db2-host=db-master
 db2-path=[TEST_PATH]/db-master/db/base
-db2-user=vagrant
+db2-user=[USER-1]
 
 [global]
 compress=n
@@ -73,7 +73,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/db-standby/pgbackrest.conf
 backup-host=db-standby
-backup-user=vagrant
+backup-user=[USER-1]
 compress=n
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
@@ -91,7 +91,7 @@ db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-master/pgbackrest.conf
 db2-host=db-master
 db2-path=[TEST_PATH]/db-master/db/base
-db2-user=vagrant
+db2-user=[USER-1]
 
 [db:restore]
 
@@ -122,7 +122,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/db-standby/pgbackrest.conf
 backup-host=db-standby
-backup-user=vagrant
+backup-user=[USER-1]
 compress=n
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
@@ -140,7 +140,7 @@ db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-master/pgbackrest.conf
 db2-host=db-master
 db2-path=[TEST_PATH]/db-master/db/base
-db2-user=vagrant
+db2-user=[USER-1]
 
 [db:restore]
 

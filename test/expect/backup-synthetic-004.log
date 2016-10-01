@@ -256,7 +256,7 @@ pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_stat={"destination":"../pg_stat"}
@@ -264,7 +264,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -280,7 +280,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -538,7 +538,7 @@ pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_stat={"destination":"../pg_stat"}
@@ -546,7 +546,7 @@ pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -562,7 +562,7 @@ pg_data/pg_tblspc={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -820,8 +820,8 @@ restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.ma
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore start [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
-P00   WARN: group bogus in manifest cannot be used for restore, set to postgres
-P00   WARN: user bogus in manifest cannot be used for restore, set to vagrant
+P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-2]
+P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-1]
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
 P00   WARN: file link postgresql.conf will be restored as a file at the same location
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
@@ -1151,14 +1151,14 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1178,7 +1178,7 @@ pg_tblspc/1/[TS_PATH-1]/16384={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -1473,7 +1473,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1481,7 +1481,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1504,7 +1504,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -1620,7 +1620,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1628,7 +1628,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1651,7 +1651,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -1767,7 +1767,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
@@ -1775,7 +1775,7 @@ pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -1798,7 +1798,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2011,14 +2011,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2038,7 +2038,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2154,14 +2154,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2181,7 +2181,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2302,14 +2302,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2329,7 +2329,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2445,14 +2445,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e5
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2472,7 +2472,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2593,14 +2593,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2620,7 +2620,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -2749,14 +2749,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -2776,7 +2776,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -3233,14 +3233,14 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf
 group="postgres"
 master=false
 mode="0600"
-user="vagrant"
+user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
 group="postgres"
-user="vagrant"
+user="[USER-1]"
 
 [target:path]
 pg_data={}
@@ -3260,7 +3260,7 @@ pg_tblspc/2/[TS_PATH-1]/32768={}
 [target:path:default]
 group="postgres"
 mode="0700"
-user="vagrant"
+user="[USER-1]"
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------

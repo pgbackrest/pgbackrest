@@ -16,7 +16,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/backup/pgbackrest.conf
 backup-host=backup
-backup-user=backrest
+backup-user=[USER-1]
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
 log-level-file=trace
@@ -30,7 +30,7 @@ db-cmd=[BACKREST-BIN]
 db-config=[TEST_PATH]/db-master/pgbackrest.conf
 db-host=db-master
 db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+db-user=[USER-2]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock
@@ -58,7 +58,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/backup/pgbackrest.conf
 backup-host=backup
-backup-user=backrest
+backup-user=[USER-1]
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
 log-level-file=trace
@@ -72,7 +72,7 @@ db-cmd=[BACKREST-BIN]
 db-config=[TEST_PATH]/db-master/pgbackrest.conf
 db-host=db-master
 db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+db-user=[USER-2]
 
 [global]
 lock-path=[TEST_PATH]/backup/repo/lock

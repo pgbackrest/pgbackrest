@@ -179,6 +179,12 @@
                         <p>Update CentOS/Debian package definitions.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Regression tests can now be run as any properly-configured user, not just vagrant.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-test-list>
         </release>
 

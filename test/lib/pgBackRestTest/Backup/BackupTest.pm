@@ -41,6 +41,7 @@ use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Backup::Common::HostDbTest;
 use pgBackRestTest::Backup::Common::HostDbSyntheticTest;
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -1105,7 +1106,7 @@ sub backupTestRun
             # Fix permissions on the restore log & remove lock files
             if ($bNeutralTest && !$bRemote)
             {
-                executeTest('sudo chown -R vagrant:postgres ' . $oHostBackup->logPath());
+                executeTest('sudo chown -R ' . TEST_USER . ':' . POSTGRES_GROUP . ' ' . $oHostBackup->logPath());
                 executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
             }
 

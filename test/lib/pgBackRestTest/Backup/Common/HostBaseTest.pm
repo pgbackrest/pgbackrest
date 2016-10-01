@@ -20,6 +20,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::HostGroupTest;
 
 ####################################################################################################################################
@@ -83,7 +84,7 @@ sub new
     $self->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
 
     # Set permissions on the test path
-    $self->executeSimple('chown -R ' . $self->userGet() . ':postgres ' . $self->testPath(), undef, 'root');
+    $self->executeSimple('chown -R ' . $self->userGet() . ':'. POSTGRES_GROUP . ' ' . $self->testPath(), undef, 'root');
 
     # Return from function and log return values if any
     return logDebugReturn
