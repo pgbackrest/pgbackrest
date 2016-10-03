@@ -184,6 +184,10 @@
                     <release-item>
                         <p>Regression tests can now be run as any properly-configured user, not just vagrant.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Miminize TeXLive package list to save time during VM builds.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
