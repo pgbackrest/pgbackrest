@@ -168,6 +168,25 @@ local $EVAL_ERROR = undef; eval
         exitSafe(new pgBackRest::Info()->process());
     }
 
+     ################################################################################################################################
+    # Process stanza-upgrade command
+    ################################################################################################################################
+    if (commandTest(CMD_STANZA_CREATE))
+    {
+        if (!isRepoLocal())
+        {
+            confess &log(ERROR, commandGet() . ' command must be run on the backup host', ERROR_HOST_INVALID);
+        }
+
+        # Load module dynamically
+        require pgBackRest::Stanza;
+        pgBackRest::Stanza->import();
+
+        new pgBackRest::Stanza()->process();
+
+        exitSafe(0);
+    }
+
     ################################################################################################################################
     # Acquire the command lock
     ################################################################################################################################
