@@ -342,22 +342,11 @@ sub add
     my $iCatalogVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG);
     my $ullDbSysId = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
 
+# CSHANG - THIS SECTION GOES AWAY - we no longer want to do this dynamically. We should instead check that the db id exists in the history and if not then ERROR and tell them to maybe run a repair on the stanza (--force or something)
     # If the db section has not been created then create it
     if (!$self->test(INFO_BACKUP_SECTION_DB))
     {
         $self->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-    }
-    else
-    {
-        # Check the DB section
-        my ($bVersionSystemMatch, $bCatalogControlMatch) =
-            $self->checkSectionDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-#CSHANG this may not be right -- need to think about this -- can we be checking an old version and therefore incrementing the history incorrectly here?
-        # if something doesn't match, we assume an upgrade has occurred so update the DB section and increment the history id
-        if (!$bVersionSystemMatch || !$bCatalogControlMatch)
-        {
-            $self->setDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, ($self->getDbHistoryId() + 1));
-        }
     }
 
     # Calculate backup sizes and references
