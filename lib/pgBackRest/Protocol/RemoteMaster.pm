@@ -27,6 +27,7 @@ sub new
     (
         $strOperation,
         $strRemoteType,                             # Type of remote (DB or BACKUP)
+        $strCommandSSH,                             # SSH client
         $strCommand,                                # Command to execute on local/remote
         $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
@@ -39,6 +40,7 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strRemoteType'},
+            {name => 'strCommandSSH'},
             {name => 'strCommand'},
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
@@ -49,7 +51,8 @@ sub new
         );
 
     # Create SSH command
-    $strCommand = "ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
+    $strCommand =
+        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
     my $self = $class->SUPER::new(

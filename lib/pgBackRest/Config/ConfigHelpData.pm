@@ -178,6 +178,17 @@ my $oConfigHelpData =
                     "at a time per process. An additional maximum of 256K per process may be used for zlib buffers."
         },
 
+        # CMD-SSH Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'cmd-ssh' =>
+        {
+            section => 'general',
+            summary =>
+                "Path to ssh client executable.",
+            description =>
+                "Use a specific SSH client when an alternate is desired or the ssh executable is not in \$PATH."
+        },
+
         # COMPRESS Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'compress' =>
@@ -747,6 +758,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -782,6 +794,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -819,6 +832,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-standby' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -912,6 +926,7 @@ my $oConfigHelpData =
                 'backup-standby' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
@@ -948,6 +963,7 @@ my $oConfigHelpData =
             option =>
             {
                 'backup-host' => 'section',
+                'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
@@ -1000,6 +1016,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
@@ -1043,6 +1060,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -1201,6 +1219,7 @@ my $oConfigHelpData =
                 'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
+                'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
@@ -1232,6 +1251,7 @@ my $oConfigHelpData =
                 'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
+                'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',

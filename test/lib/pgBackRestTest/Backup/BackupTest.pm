@@ -230,7 +230,10 @@ sub backupTestRun
                             }
                         }
 
-                        $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
+                        $oHostDbMaster->executeSimple(
+                            $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                                " ${strSourceFile}",
+                            {oLogTest => $oLogTest});
 
                         # Make sure the temp file no longer exists
                         if (defined($strArchiveTmp))
@@ -560,7 +563,9 @@ sub backupTestRun
                         my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
 
                         $oHostDbMaster->executeSimple(
-                            $strCommand . " ${strArchiveFile} ${strDestinationFile}", {oLogTest => $oLogTest});
+                            $strCommand . ($bRemote && $iArchiveNo == 1 ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                                " ${strArchiveFile} ${strDestinationFile}",
+                            {oLogTest => $oLogTest});
 
                         # Check that the destination file exists
                         if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
@@ -936,8 +941,10 @@ sub backupTestRun
 
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'create pg_stat link, pg_clog dir',
-                {oExpectedManifest => \%oManifest, strOptionalParam => $strOptionalParam, strTest => $strTestPoint,
-                    fTestDelay => 0});
+                {oExpectedManifest => \%oManifest,
+                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
+                 strTest => $strTestPoint,
+                 fTestDelay => 0});
 
             # Test protocol timeout
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1101,7 +1108,8 @@ sub backupTestRun
 
             $oHostDbMaster->restore(
                 $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'add and delete files', undef, ' --link-all', undef, $bNeutralTest && !$bRemote ? 'root' : undef);
+                'add and delete files', undef,  ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
+                undef, $bNeutralTest && !$bRemote ? 'root' : undef);
 
             # Fix permissions on the restore log & remove lock files
             if ($bNeutralTest && !$bRemote)

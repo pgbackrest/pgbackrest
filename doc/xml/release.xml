@@ -111,6 +111,10 @@
             <contributor-name-display>Jan Wieck</contributor-name-display>
             <contributor-id type="github">wieck</contributor-id>
         </contributor>
+
+        <contributor id="wilke.jens">
+            <contributor-name-display>Jens Wilke</contributor-name-display>
+        </contributor>
     </contributor-list>
 
     <release-list>
@@ -126,6 +130,10 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                        </release-item-contributor-list>
+
                         <p>Fixed error message to properly display the archive command when an invalid archive command is detected.</p>
                     </release-item>
                 </release-bug-list>
@@ -133,6 +141,14 @@
                 <release-feature-list>
                     <release-item>
                         <p>Non-exclusive backups will automatically be used on <postgres/> 9.6.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Added the <br-option>cmd-ssh</br-option> to allow the ssh client to be specified.</p>
                     </release-item>
 
                     <release-item>

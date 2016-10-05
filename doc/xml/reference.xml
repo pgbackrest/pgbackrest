@@ -74,6 +74,15 @@
                         <example>32768</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
+                    <config-key id="cmd-ssh" name="SSH client command">
+                        <summary>Path to ssh client executable.</summary>
+
+                        <text>Use a specific SSH client when an alternate is desired or the <file>ssh</file> executable is not in $PATH.</text>
+
+                        <example>/usr/bin/ssh</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - COMPRESS -->
                     <config-key id="compress" name="Compress">
                         <summary>Use gzip file compression.</summary>
