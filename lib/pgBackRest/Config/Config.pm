@@ -280,6 +280,8 @@ use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-leve
     push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
 use constant OPTION_LOG_LEVEL_FILE                                  => 'log-level-file';
     push @EXPORT, qw(OPTION_LOG_LEVEL_FILE);
+use constant OPTION_LOG_LEVEL_STDERR                                => 'log-level-stderr';
+    push @EXPORT, qw(OPTION_LOG_LEVEL_STDERR);
 
 # ARCHIVE Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -469,6 +471,8 @@ use constant OPTION_DEFAULT_LOG_LEVEL_CONSOLE                       => lc(WARN);
     push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_CONSOLE);
 use constant OPTION_DEFAULT_LOG_LEVEL_FILE                          => lc(INFO);
     push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_FILE);
+use constant OPTION_DEFAULT_LOG_LEVEL_STDERR                        => lc(WARN);
+    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_STDERR);
 
 # ARCHIVE SECTION
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1290,6 +1294,35 @@ my %oOptionRule =
         }
     },
 
+    &OPTION_LOG_LEVEL_STDERR =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_LEVEL_STDERR,
+        &OPTION_RULE_ALLOW_LIST =>
+        {
+            lc(OFF)    => true,
+            lc(ERROR)  => true,
+            lc(WARN)   => true,
+            lc(INFO)   => true,
+            lc(DETAIL) => true,
+            lc(DEBUG)  => true,
+            lc(TRACE)  => true
+        },
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true
+        }
+    },
+
     # ARCHIVE Section
     #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_ARCHIVE_ASYNC =>
@@ -1926,7 +1959,8 @@ sub configLoad
     {
         logLevelSet(
             optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
-            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF);
+            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF,
+            optionValid(OPTION_LOG_LEVEL_STDERR) ? optionGet(OPTION_LOG_LEVEL_STDERR) : OFF);
     }
 
     # Neutralize the umask to make the repository file/path modes more consistent

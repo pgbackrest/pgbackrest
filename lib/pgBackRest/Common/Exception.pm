@@ -158,6 +158,7 @@ use constant ERROR_UNKNOWN                                          => ERROR_MAX
 sub new
 {
     my $class = shift;       # Class name
+    my $strLevel = shift;    # Log level
     my $iCode = shift;       # Error code
     my $strMessage = shift;  # ErrorMessage
     my $strTrace = shift;    # Stack trace
@@ -172,11 +173,22 @@ sub new
     bless $self, $class;
 
     # Initialize exception
+    $self->{strLevel} = $strLevel;
     $self->{iCode} = $iCode;
     $self->{strMessage} = $strMessage;
     $self->{strTrace} = $strTrace;
 
     return $self;
+}
+
+####################################################################################################################################
+# level
+####################################################################################################################################
+sub level
+{
+    my $self = shift;
+
+    return $self->{strLevel};
 }
 
 ####################################################################################################################################

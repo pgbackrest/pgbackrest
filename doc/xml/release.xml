@@ -32,6 +32,11 @@
             <contributor-id type="github">ChristophBerg</contributor-id>
         </contributor>
 
+        <contributor id="biberhofer.sascha">
+            <contributor-name-display>Sascha Biberhofer</contributor-name-display>
+            <contributor-id type="github">sbiberhofer</contributor-id>
+        </contributor>
+
         <contributor id="didovicher.dmitry">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
@@ -149,6 +154,14 @@
                         </release-item-contributor-list>
 
                         <p>Added the <br-option>cmd-ssh</br-option> to allow the ssh client to be specified.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="biberhofer.sascha"/>
+                        </release-item-contributor-list>
+
+                        <p>Added the <br-option>log-level-stderr</br-option> option to control whether console log messages are sent to <id>stderr</id> or <id>stdout</id>.  By default this is set to <setting>warn</setting> which represents a change in behavior from previous versions, even though it may be more intuitive.  Setting <br-option>log-level-stderr=off</br-option> will preserve the old behavior.</p>
                     </release-item>
 
                     <release-item>
@@ -294,6 +307,10 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
                         <p>The <setting>archive-start</setting> and <setting>archive-stop</setting> settings are now filled in <file>backup.manifest</file> even when <br-option>archive-check=n</br-option>.</p>
                     </release-item>
 

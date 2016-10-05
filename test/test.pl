@@ -177,7 +177,7 @@ eval
         $strLogLevel = 'off';
     }
 
-    logLevelSet(uc($strLogLevel), uc($strLogLevel));
+    logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
 
     if ($strModuleTest ne 'all' && $strModule eq 'all')
     {

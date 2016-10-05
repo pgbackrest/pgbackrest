@@ -82,6 +82,7 @@ Log Options:
 
   --log-level-console       level for console logging [default=warn]
   --log-level-file          level for file logging [default=info]
+  --log-level-stderr        level for stderr logging [default=warn]
 
 Use 'pgbackrest help info [option]' for more information.
 

@@ -148,7 +148,7 @@ eval
         @stryKeyword = ('default');
     }
 
-    logLevelSet(undef, uc($strLogLevel));
+    logLevelSet(undef, uc($strLogLevel), OFF);
 
     # Get the base path
     my $strBasePath = abs_path(dirname($0));

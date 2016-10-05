@@ -12,7 +12,7 @@
             <config-section id="log" name="Log">
                 <text>The <setting>log</setting> section defines logging-related settings.</text>
 
-                <!-- CONFIG - LOG SECTION - LEVEL-FILE KEY -->
+                <!-- CONFIG - LOG SECTION - LOG-LEVEL-FILE KEY -->
                 <config-key-list>
                     <config-key id="log-level-file" name="File Log Level">
                         <summary>Level for file logging.</summary>
@@ -31,11 +31,31 @@
                         <example>debug</example>
                     </config-key>
 
-                    <!-- CONFIG - LOG SECTION - LEVEL-CONSOLE KEY -->
+                    <!-- CONFIG - LOG SECTION - LOG-LEVEL-CONSOLE KEY -->
                     <config-key id="log-level-console" name="Console Log Level">
                         <summary>Level for console logging.</summary>
 
                         <text>The following log levels are supported:
+                        <ul>
+                            <li><id>off</id> - No logging at all (not recommended)</li>
+                            <li><id>error</id> - Log only errors</li>
+                            <li><id>warn</id> - Log warnings and errors</li>
+                            <li><id>info</id> - Log info, warnings, and errors</li>
+                            <li><id>detail</id> - Log detail, info, warnings, and errors</li>
+                            <li><id>debug</id> - Log debug, detail, info, warnings, and errors</li>
+                            <li><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</li>
+                        </ul></text>
+
+                        <example>error</example>
+                    </config-key>
+
+                    <!-- CONFIG - LOG SECTION - LOG-LEVEL-STDERR KEY -->
+                    <config-key id="log-level-stderr" name="Std Error Log Level">
+                        <summary>Level for stderr logging.</summary>
+
+                        <text>Specifies which log levels must will be output to <id>stderr</id> rather than <id>stdout</id> (specified by <br-option>log-level-console</br-option>).  The timestamp and process will not be output to <id>stderr</id>.
+
+                        The following log levels are supported:
                         <ul>
                             <li><id>off</id> - No logging at all (not recommended)</li>
                             <li><id>error</id> - Log only errors</li>

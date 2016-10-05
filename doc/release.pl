@@ -115,7 +115,7 @@ eval
         $strLogLevel = 'error';
     }
 
-    logLevelSet(undef, uc($strLogLevel));
+    logLevelSet(undef, uc($strLogLevel), OFF);
 
     # Set the paths
     my $strDocPath = dirname(abs_path($0));
