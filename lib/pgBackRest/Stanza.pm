@@ -15,8 +15,10 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive;
 use pgBackRest::Config::Config;
+use pgBackRest::Archive;
+use pgBackRest::ArchiveInfo;
+use pgBackRest::BackupInfo;
 use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
@@ -105,20 +107,65 @@ sub stanzaCreate
     # then this will error alerting the user to fix the pgbackrest.conf
     $oDb->configValidate(optionGet(OPTION_DB_PATH));
 
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info(optionGet(OPTION_DB_PATH));
+
     # If the backup path does not exist, create it
     if (!$oFile->fileExists($oFile->pathGet(PATH_BACKUP_CLUSTER)))
     {
-        # Create the cluster backup and history path
+        # Create the cluster backup path
         $oFile->pathCreate(PATH_BACKUP_CLUSTER, undef, undef, true, true);
+    }
+#CSHANG This will return empty list even if data in the dir
+    my @stryBackupList = $oFile->fileList($oFile->pathGet(PATH_BACKUP_CLUSTER), undef, 'forward', true);
+    # if the cluster backup path is empty then create the backup info file
+    if (!@stryBackupList)
+    {
+&log(INFO, "Backuplist empty");
+        # Create the backup.info file
+        my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+        $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+        $oBackupInfo->save();
+    }
+    else
+    {
+&log(INFO, "Backuplist not empty " . $stryBackupList[0]);
+    }
+
+    # If the archive path does not exist, create it
+    if (!$oFile->fileExists($oFile->pathGet(PATH_BACKUP_ARCHIVE)))
+    {
+        # Create the cluster archive path
+        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
+    }
+    my @stryArchiveList = $oFile->fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), undef, 'forward', true);
+
+    if (!@stryArchiveList)
+    {
+&log(INFO,  "archivelist empty");
+        my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
+        $oArchiveInfo->check($strDbVersion, $ullDbSysId);
+        # $oArchiveInfo->save();
+    }
+    else
+    {
+&log(INFO, "archivelist not empty " . $stryArchiveList[0]);
     }
 
     # Check the archive and backup configuration
-    my $iResult = new pgBackRest::Archive()->check();
+    my $iResult = 0;
+
+    # Since restore points are only supported in PG>= 9.1 the check command may fail for older versions if there has been no write
+    # activity since the last log rotation. Therefore, manually create the files to be sure the backup and archive.info files
+    # get created.
+    # if ($oDb->versionGet() >= PG_VERSION_91)
+    # {
+    #     $iResult = new pgBackRest::Archive()->check();
+    # }
 
     # Log that the stanza was created successfully
     if ($iResult == 0)
     {
-        &log(INFO, "stanza ". optionGet(OPTION_STANZA) . " was created successfully");
+        &log(INFO, "successfully created stanza ". optionGet(OPTION_STANZA));
     }
 
     # Return from function and log return values if any
@@ -128,128 +175,5 @@ sub stanzaCreate
         {name => 'iResult', value => $iResult, trace => true}
     );
 }
-
-    # my $oBackupInfo = undef;
-    #
-    # # Turn off console logging to control when to display the error
-    # logLevelSet(undef, OFF);
-    #
-    # # Load or build backup.info
-    # eval
-    # {
-    #     $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
-    #     return true;
-    # }
-    # # If there is an error but it is not that the file is missing then confess
-    # or do
-    # {
-    #     if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
-    #     {
-    #         confess $EVAL_ERROR;
-    #     }
-    #
-    #     if (($EVAL_ERROR->code() == ERROR_PATH_MISSING) ||
-    #         (defined($oBackupInfo) && !$oBackupInfo->{bExists}))
-    #     {
-    #         # Create the backup.info file if it does not exist
-    #         my $iDbHistoryId = $oBackupInfo->check(
-    #     }
-    #
-    # };
-#
-#     # Reset the console logging
-#     logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-#
-    # Get archiveInfo object
-    # my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
-#CSHANG In reality, if it does not exist we would want to do a stanza-create? No - probably just call validate here in an eval block and if the cluster path is missing, then tell them they need to do a stanza create. So maybe this should not be "validate" unless we have an else statement in the validate function to confirm an existing file is valid before we continue...
-#        $oArchiveInfo->validate($oFile->{strCompressExtension});
-#
-#     # if neither backup nor archive info files exist then there would be nothing to do except check the db-path against the
-#     # pg_control file which was performed above
-#     if ((!defined($oBackupInfo) || !$oBackupInfo->{bExists}) && !$oArchiveInfo->{bExists})
-#     {
-#         &log(INFO, "neither archive.info nor backup.info exist - upgrade is not necessary.");
-#     }
-#     else
-#     {
-#         # get DB info for comparison
-#         my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = ($oDb->info(optionGet(OPTION_DB_PATH)));
-#
-#         my $strResultInfo = "stanza " . optionGet(OPTION_STANZA) . " has been upgraded to DB version ${strDbVersion}";
-#         my $strResultMessage = undef;
-#         my $bUpgradedArchiveInfo = false;
-#         my $bUpgradedBackupInfo = false;
-#
-#         # If we have a backup.info file, then check that the stanza backup info db system id is compatible with the current version
-#         # of the database and if not, upgrade the DB data in backupinfo object and save the file.
-#         if ($oBackupInfo->{bExists})
-#         {
-#             my ($bVersionSystemMatch, $bCatalogControlMatch) =
-#                 $oBackupInfo->checkSectionDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-# # CSHANG here we need to decide if the catalog/control doesn't match - is that truly an error instead?
-#             # If something doesn't match, then perform the upgrade
-#             if (!$bVersionSystemMatch || !$bCatalogControlMatch)
-#             {
-#                 # Update the backupinfo object
-#                 $oBackupInfo->setDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId,
-#                                     ($oBackupInfo->getDbHistoryId() + 1));
-#                 # atomic save
-#                 $oBackupInfo->save();
-#                 $bUpgradedBackupInfo = true;
-#                 $strResultMessage = "backup info for ". $strResultInfo;
-#             }
-#         }
-#
-#         # Turn off console logging to control when to display the error
-#         logLevelSet(undef, OFF);
-#
-#         # # If archive.info exists, then check that the stanza archive info db system id is compatible with the current version of the
-#         # # database and if not, upgrade the DB data in archive.info file.
-#         # if ($oArchiveInfo->{bExists})
-#         # {
-#         #     eval
-#         #     {
-#         #         my $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-#         #         return true;
-#         #     }
-#         #     or do
-#         #     {
-#         #         # Confess unhandled errors
-#         #         if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_ARCHIVE_MISMATCH)
-#         #         {
-#         #             confess $EVAL_ERROR;
-#         #         }
-#         #
-#         #         # Update the archive.info file
-#         #         $oArchiveInfo->setDb($strDbVersion, $ullDbSysId, ($oArchiveInfo->getDbHistoryId() + 1));
-#         #
-#         #         # atomic save
-#         #         $oArchiveInfo->save();
-#         #         $bUpgradedArchiveInfo = true;
-#         #         $strResultMessage = (defined($strResultMessage) ? "\n" : "") . "archive info for ". $strResultInfo;
-#         #     };
-#         # }
-#
-#         # Reset the console logging
-#         logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-#
-#         if ($bUpgradedBackupInfo || $bUpgradedArchiveInfo)
-#         {
-#             # Confirm archive and backup are configured properly
-#             my $iResult = new pgBackRest::Archive()->check($oArchiveInfo->{bExists}, $oBackupInfo->{bExists});
-#
-#             &log(INFO, "${strResultMessage}");
-#         }
-#         else
-#         {
-#             &log(INFO, "upgrade of " . optionGet(OPTION_STANZA) . "is not necessary");
-#         }
-#
-#     }
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn($strOperation);
-# }
 
 1;

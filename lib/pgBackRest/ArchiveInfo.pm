@@ -23,6 +23,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -69,7 +70,7 @@ sub new
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
-    my $bExists = -e $strArchiveInfoFile ? true : false;
+    my $bExists = fileExists($strArchiveInfoFile);
 
     if (!$bExists && $bRequired)
     {

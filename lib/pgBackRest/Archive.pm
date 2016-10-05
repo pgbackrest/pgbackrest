@@ -589,6 +589,8 @@ sub pushProcess
     }
 
     # If an archive file is defined, then push it
+    my $oException = undef;
+
     if (defined($ARGV[1]))
     {
         # If the stop file exists then discard the archive log
@@ -606,13 +608,27 @@ sub pushProcess
 
         &log(INFO, 'push WAL segment ' . $ARGV[1] . ($bArchiveAsync ? ' asynchronously' : ''));
 
-        $self->push($ARGV[1], $bArchiveAsync);
+        # Push WAL segment - when async, any error will be deferred until after the async process has been started
+        eval
+        {
+            $self->push($ARGV[1], $bArchiveAsync);
+                return true;
+        }
+        or do
+        {
+            $oException = $EVAL_ERROR;
+
+            if (!$bArchiveAsync || !optionTest(OPTION_TEST_NO_FORK))
+            {
+                confess $oException;
+            }
+        };
 
         # Fork if async archiving is enabled
         if ($bArchiveAsync)
         {
             # Fork and disable the async archive flag if this is the parent process
-            if (!optionTest(OPTION_TEST_NO_FORK) || !optionGet(OPTION_TEST_NO_FORK))
+            if (!optionTest(OPTION_TEST_NO_FORK))
             {
                 $bArchiveAsync = fork() == 0 ? true : false;
             }
@@ -660,6 +676,10 @@ sub pushProcess
 
             lockRelease();
         }
+    }
+    elsif (defined($oException))
+    {
+        confess $oException;
     }
 
     # Return from function and log return values if any
@@ -1117,134 +1137,111 @@ sub check
     # Validate the database configuration
     $oDb->configValidate(optionGet(OPTION_DB_PATH));
 
+    # Force archiving
+    my $strWalSegment = $oDb->xlogSwitch();
+
+    # Get the timeout and error message to display - if it is 0 we are testing
+    my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
+
     # Initialize the result variables
     my $iResult = 0;
     my $strResultMessage = undef;
 
+    # Record the start time to wait for the archive.info file to be written
+    my $oWait = waitInit($iArchiveTimeout);
+
+    my $strArchiveId = undef;
+    my $strArchiveFile = undef;
+
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
-    # Check the backup info
-    eval
+    # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
+    do
     {
-        $self->getBackupInfoCheck($oFile);
-        return true;
-    }
-    # If there is an error but it is not that the file is missing then confess
-    or do
-    {
-        if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+        eval
         {
-            confess $EVAL_ERROR;
-        }
+            # check that the archive info file is written and is valid for the current database of the stanza
+            $strArchiveId = $self->getCheck($oFile);
 
-        if ($EVAL_ERROR->code() == ERROR_PATH_MISSING)
+            # Clear any previous errors if we've found the archive.info
+            $iResult = 0;
+
+            return true;
+        }
+        or do
         {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
+        };
+    } while (!defined($strArchiveId) && waitMore($oWait));
+
+    # If able to get the archive id then check the archived WAL file with the time remaining
+    if ($iResult == 0)
+    {
+        eval
+        {
+            $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
+            return true;
         }
-    };
-    
+        # If this is a backrest error then capture the code and message else confess
+        or do
+        {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
+        };
+    }
+
+    # If the archive info was successful, then check the backup info
+    if ($iResult == 0)
+    {
+        # Check the backup info
+        eval
+        {
+            $self->getBackupInfoCheck($oFile);
+            return true;
+        }
+        # If there is an error but it is not that the file is missing then confess
+        or do
+        {
+            if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+            {
+                confess $EVAL_ERROR;
+            }
+        };
+    }
+
     # Reset the console logging
     logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
+    # If the archive info was successful and backup.info check did not error in an unexpected way, then indicate success
+    # Else, log the error.
     if ($iResult == 0)
     {
-        # Force archiving
-        my $strWalSegment = $oDb->xlogSwitch();
-
-        # Get the timeout and error message to display - if it is 0 we are testing
-        my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
-
-        # Record the start time to wait for the archive.info file to be written
-        my $oWait = waitInit($iArchiveTimeout);
-
-        my $strArchiveId = undef;
-        my $strArchiveFile = undef;
-
-        # Turn off console logging to control when to display the error
-        logLevelSet(undef, OFF);
-
-        # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
-        do
-        {
-            eval
-            {
-                # check that the archive info file is written and is valid for the current database of the stanza
-                $strArchiveId = $self->getCheck($oFile);
-
-                # Clear any previous errors if we've found the archive.info
-                $iResult = 0;
-
-                return true;
-            }
-            or do
-            {
-                # Confess unhandled errors
-                if (!isException($EVAL_ERROR))
-                {
-                    confess $EVAL_ERROR;
-                }
-
-                # If this is a backrest error then capture the last code and message
-                $iResult = $EVAL_ERROR->code();
-                $strResultMessage = $EVAL_ERROR->message();
-            };
-        } while (!defined($strArchiveId) && waitMore($oWait));
-
-        # If able to get the archive id then check the archived WAL file with the time remaining
-        if ($iResult == 0)
-        {
-            eval
-            {
-                $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
-                return true;
-            }
-            # If this is a backrest error then capture the code and message else confess
-            or do
-            {
-                # Confess unhandled errors
-                if (!isException($EVAL_ERROR))
-                {
-                    confess $EVAL_ERROR;
-                }
-
-                # If this is a backrest error then capture the last code and message
-                $iResult = $EVAL_ERROR->code();
-                $strResultMessage = $EVAL_ERROR->message();
-            };
-        }
-
-        # Reset the console logging
-        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
-        # If the archive info was successful and backup.info check did not error in an unexpected way, then indicate success
-        # Else, log the error.
-        if ($iResult == 0)
-        {
-            &log(INFO,
-                "WAL segment ${strWalSegment} successfully stored in the archive at '" .
-                $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
-        }
-        else
-        {
-
-            if ($iResult != 0)
-            {
-                &log(ERROR, $strResultMessage, $iResult);
-                &log(WARN,
-                    "WAL segment ${strWalSegment} did not reach the archive:\n" .
-                    "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
-                    "HINT: Check the PostreSQL server log for errors.");
-            }
-        }
+        &log(INFO,
+            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
+            $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
     }
     else
     {
         &log(ERROR, $strResultMessage, $iResult);
         &log(WARN,
-            "Backup info is required:\n" .
-            "HINT: Did you run the stanza-create command?\n" .
+            "WAL segment ${strWalSegment} did not reach the archive:\n" .
+            "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
             "HINT: Check the PostreSQL server log for errors.");
     }
 

@@ -404,18 +404,18 @@
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) then the <br-option>archive-timeout</br-option> option should be increased.</p>
         </section>
 
-        <!-- SECTION => QUICKSTART - CHECK CONFIGURATION -->
-        <section id="check-configuration" depend="configure-archiving">
-            <title>Check the Configuration</title>
+        <!-- SECTION => QUICKSTART - STANZA CREATE -->
+        <section id="stanza-create" depend="configure-archiving">
+            <title>Create the Stanza</title>
 
-            <cmd-description key="check"/>
+            <p>Run this command on the backup host to create the required stanza data. The <cmd>check</cmd> command is invoked for <postgres/> versions &gt;= 9.1 to ensure archiving and backups are properly configured. For older versions of <postgres/>, it is recommended the <cmd>check</cmd> command be run manually.</p>
 
             <execute-list host="{[host-db-master]}">
-                <title>Check the configuration</title>
+                <title>Create the Stanza and Check the Configuration</title>
 
                 <execute output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
-                    <exe-highlight> successfully stored in the archive at </exe-highlight>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                    <exe-highlight>successfully created</exe-highlight>
                 </execute>
             </execute-list>
 
