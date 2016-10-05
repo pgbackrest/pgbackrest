@@ -929,6 +929,23 @@
                     </command-example>
                 </command-example-list>
             </command>
+
+            <!-- OPERATION - STANZA_CREATE COMMAND -->
+            <command id="stanza-create" name="Stanza Create">
+                <summary>CSHANG -TODO</summary>
+
+                <text>CSHANG -TODO</text>
+
+                <command-example-list>
+                    <command-example title="Create required stanza data">
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db stanza-create
+                        </code-block>
+
+                        CSHANG -TODO</text>
+                    </command-example>
+                </command-example-list>
+            </command>
         </command-list>
     </operation>
 </doc>

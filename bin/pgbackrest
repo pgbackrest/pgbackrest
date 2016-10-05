@@ -182,9 +182,7 @@ local $EVAL_ERROR = undef; eval
         require pgBackRest::Stanza;
         pgBackRest::Stanza->import();
 
-        new pgBackRest::Stanza()->process();
-
-        exitSafe(0);
+        exitSafe(new pgBackRest::Stanza()->process());
     }
 
     ################################################################################################################################

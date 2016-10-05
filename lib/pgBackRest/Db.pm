@@ -765,7 +765,7 @@ sub configValidate
     }
 
     # If cluster is not a standby and archive checking is enabled, then perform various validations
-    if (!$self->isStandby() && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
+    if (!$self->isStandby() && optionValid(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
         # Error if archive_mode = off since pg_start_backup () will fail
         if ($self->executeSql('show archive_mode') eq 'off')
