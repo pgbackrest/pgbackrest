@@ -141,6 +141,14 @@
 
                         <p>Fixed error message to properly display the archive command when an invalid archive command is detected.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where the async archiver would not be started if <cmd>archive-push</cmd> did not have enough space to queue a new WAL segment.  This meant that the queue would never be cleared without manual intervention (such as calling <cmd>archive-push</cmd> directly).  <postgres/> now receives errors when there is not enough space to store new WAL segments but the async process will still be started so that space is eventually freed.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

@@ -490,7 +490,7 @@ sub bufferWrite
         my $strError = $!;
 
         $self->waitPid();
-        confess "unable to write ${iWriteSize} bytes" . (defined($strError) ? ': ' . $strError : '');
+        confess &log(ERROR, "unable to write ${iWriteSize} bytes" . (defined($strError) ? ': ' . $strError : ''), ERROR_FILE_WRITE);
     }
 }
 

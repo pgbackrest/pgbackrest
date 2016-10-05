@@ -181,6 +181,10 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  ERROR: [137]: stop file exists for all stanzas
+P00  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
+P00  DEBUG:     Archive->pushProcess: start async archive-push
+P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+P00  ERROR: [137]: stop file exists for all stanzas
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-push stop
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
