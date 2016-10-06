@@ -2083,13 +2083,16 @@ sub backupTestRun
             # are run in non-exlusive mode.
             if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_93 && $oHostDbMaster->dbVersion() < PG_VERSION_96)
             {
-                $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be cancelled', true)");
+                $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
 
                 # Verify that an error is returned if the backup is already running
                 $oHostBackup->backup($strType, 'fail on backup already running', {iExpectedExitStatus => ERROR_DB_QUERY});
 
                 # Restart the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+                # Start a new backup to make the next test restart it
+                $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
             }
 
             $oExecuteBackup = $oHostBackup->backupBegin(

@@ -641,8 +641,8 @@ sub backupStart
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
     {
-        confess &log(ERROR, "unable to acquire backup lock\n" .
-                            'HINT: is another backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
+        confess &log(ERROR, 'unable to acquire ' . BACKREST_NAME . " advisory lock\n" .
+                            'HINT: is another ' . BACKREST_NAME . ' backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
     }
 
     # If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
@@ -655,7 +655,7 @@ sub backupStart
             # If a backup is currently in progress emit a warning and then stop it
             if ($self->executeSqlOne('select pg_is_in_backup()'))
             {
-                &log(WARN, 'the cluster is already in backup mode but no backup process is running.' .
+                &log(WARN, 'the cluster is already in backup mode but no ' . BACKREST_NAME . ' backup process is running.' .
                            ' pg_stop_backup() will be called so a new backup can be started.');
                 $self->backupStop();
             }

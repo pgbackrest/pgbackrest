@@ -179,6 +179,14 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarified error message when unable to acquire <backrest/> advisory lock to make it clear that it is not a <postgres/> backup lock.</p>
+                    </release-item>
+
+                    <release-item>
                         <p><backrest/> version number included in command start INFO log output.</p>
                     </release-item>
 
