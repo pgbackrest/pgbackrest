@@ -20,6 +20,7 @@ use pgBackRest::Archive;
 use pgBackRest::ArchiveInfo;
 use pgBackRest::BackupInfo;
 use pgBackRest::Db;
+use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Protocol::Common;
@@ -115,7 +116,7 @@ sub stanzaCreate
 
     # Since restore points are only supported in PG>= 9.1 the check command may fail for older versions if there has been no write
     # activity since the last log rotation. Therefore, manually create the files to be sure the backup and archive.info files
-    # get created.
+    # get created. If they run the command twice, just check the files if the DB version is older than 9.1.
 
     # If the backup path does not exist, create it
     if (!fileExists($oFile->pathGet(PATH_BACKUP_CLUSTER)))
@@ -141,7 +142,7 @@ sub stanzaCreate
                             "HINT: Has the directory been copied from another location and the copy has not completed?"
         #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
     }
-    else
+    elsif ($strDbVersion < PG_VERSION_91)
     {
         # Turn off console logging to control when to display the error
         logLevelSet(undef, OFF);
@@ -195,7 +196,7 @@ sub stanzaCreate
                                 "HINT: Has the directory been copied from another location and the copy has not completed?"
             #\n"."HINT: Use --force to force the archive.info to be created from the existing archive data in the directory.";
         }
-        else
+        elsif ($strDbVersion < PG_VERSION_91)
         {
             # Turn off console logging to control when to display the error
             logLevelSet(undef, OFF);
@@ -224,8 +225,9 @@ sub stanzaCreate
         }
     }
 
-    # the DB function xlogSwitch checks for the version >= 9.1 and only performs the restore point if met so check may fail here
-    if ($iResult == 0)
+    # The DB function xlogSwitch checks for the version >= 9.1 and only performs the restore point if met so check would fail here
+    # on initial stanza-create for those systems, so only run the full check on systems > 9.1.
+    if (($iResult == 0) && ($strDbVersion >= PG_VERSION_91))
     {
         $iResult = new pgBackRest::Archive()->check();
     }
