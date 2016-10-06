@@ -405,7 +405,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
-        <section id="stanza-create" depend="configure-archiving">
+        <section id="create-stanza" depend="configure-archiving">
             <title>Create the Stanza</title>
 
             <p>Run this command on the backup host to create the required stanza data. The <cmd>check</cmd> command is invoked for <postgres/> versions &gt;= 9.1 to ensure archiving and backups are properly configured. For older versions of <postgres/>, it is recommended the <cmd>check</cmd> command be run manually.</p>

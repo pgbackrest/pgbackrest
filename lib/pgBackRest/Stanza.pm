@@ -109,63 +109,135 @@ sub stanzaCreate
 
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info(optionGet(OPTION_DB_PATH));
 
-    # If the backup path does not exist, create it
-    if (!$oFile->fileExists($oFile->pathGet(PATH_BACKUP_CLUSTER)))
-    {
-        # Create the cluster backup path
-        $oFile->pathCreate(PATH_BACKUP_CLUSTER, undef, undef, true, true);
-    }
-#CSHANG This will return empty list even if data in the dir
-    my @stryBackupList = $oFile->fileList($oFile->pathGet(PATH_BACKUP_CLUSTER), undef, 'forward', true);
-    # if the cluster backup path is empty then create the backup info file
-    if (!@stryBackupList)
-    {
-&log(INFO, "Backuplist empty");
-        # Create the backup.info file
-        my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
-        $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-        $oBackupInfo->save();
-    }
-    else
-    {
-&log(INFO, "Backuplist not empty " . $stryBackupList[0]);
-    }
-
-    # If the archive path does not exist, create it
-    if (!$oFile->fileExists($oFile->pathGet(PATH_BACKUP_ARCHIVE)))
-    {
-        # Create the cluster archive path
-        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
-    }
-    my @stryArchiveList = $oFile->fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), undef, 'forward', true);
-
-    if (!@stryArchiveList)
-    {
-&log(INFO,  "archivelist empty");
-        my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
-        $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-        # $oArchiveInfo->save();
-    }
-    else
-    {
-&log(INFO, "archivelist not empty " . $stryArchiveList[0]);
-    }
-
-    # Check the archive and backup configuration
+    # Initialize the result variables
     my $iResult = 0;
+    my $strResultMessage = undef;
 
     # Since restore points are only supported in PG>= 9.1 the check command may fail for older versions if there has been no write
     # activity since the last log rotation. Therefore, manually create the files to be sure the backup and archive.info files
     # get created.
-    # if ($oDb->versionGet() >= PG_VERSION_91)
-    # {
-    #     $iResult = new pgBackRest::Archive()->check();
-    # }
 
-    # Log that the stanza was created successfully
+    # If the backup path does not exist, create it
+    if (!fileExists($oFile->pathGet(PATH_BACKUP_CLUSTER)))
+    {
+        # Create the cluster backup path
+        $oFile->pathCreate(PATH_BACKUP_CLUSTER, undef, undef, true, true);
+    }
+
+    # if the cluster backup path is empty then create the backup info file
+    my @stryBackupList = fileList($oFile->pathGet(PATH_BACKUP_CLUSTER), undef, 'forward', true);
+    my $strBackupInfo = &FILE_BACKUP_INFO;
+    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    if (!@stryBackupList)
+    {
+        # Create the backup.info file
+        $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+        $oBackupInfo->save();
+    }
+    elsif (!grep(/^$strBackupInfo$/i, @stryBackupList))
+    {
+        $iResult = &ERROR_FILE_MISSING;
+        $strResultMessage = "the backup directory is not empty but the backup.info file is missing\n" .
+                            "HINT: Has the directory been copied from another location and the copy has not completed?"
+        #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
+    }
+    else
+    {
+        # Turn off console logging to control when to display the error
+        logLevelSet(undef, OFF);
+
+        eval
+        {
+            # check that the backup info file is valid for the current database of the stanza
+            $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+            return true;
+        }
+        or do
+        {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
+        };
+
+        # Reset the console logging
+        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+    }
+
     if ($iResult == 0)
     {
-        &log(INFO, "successfully created stanza ". optionGet(OPTION_STANZA));
+        # If the archive path does not exist, create it
+        if (!fileExists($oFile->pathGet(PATH_BACKUP_ARCHIVE)))
+        {
+            # Create the cluster archive path
+            $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
+        }
+
+        my @stryArchiveList = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), undef, 'forward', true);
+        my $strArchiveInfo = &ARCHIVE_INFO_FILE;
+        my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
+
+        if (!@stryArchiveList)
+        {
+            $oArchiveInfo->check($strDbVersion, $ullDbSysId);
+            #!!! TODO: need to remove the save in the archive.info check or have a default so it does not get created unless forced?
+            # $oArchiveInfo->save();
+        }
+        elsif (!grep(/^$strArchiveInfo/i, @stryArchiveList ))
+        {
+            $iResult = &ERROR_FILE_MISSING;
+            $strResultMessage = "the archive directory is not empty but the archive.info file is missing\n" .
+                                "HINT: Has the directory been copied from another location and the copy has not completed?"
+            #\n"."HINT: Use --force to force the archive.info to be created from the existing archive data in the directory.";
+        }
+        else
+        {
+            # Turn off console logging to control when to display the error
+            logLevelSet(undef, OFF);
+
+            eval
+            {
+                # check that the archive info file is valid for the current database of the stanza
+                $oArchiveInfo->check($strDbVersion, $ullDbSysId);
+                return true;
+            }
+            or do
+            {
+                # Confess unhandled errors
+                if (!isException($EVAL_ERROR))
+                {
+                    confess $EVAL_ERROR;
+                }
+
+                # If this is a backrest error then capture the last code and message
+                $iResult = $EVAL_ERROR->code();
+                $strResultMessage = $EVAL_ERROR->message();
+            };
+
+            # Reset the console logging
+            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+        }
+    }
+
+    # the DB function xlogSwitch checks for the version >= 9.1 and only performs the restore point if met so check may fail here
+    if ($iResult == 0)
+    {
+        $iResult = new pgBackRest::Archive()->check();
+    }
+
+    if ($iResult == 0)
+    {
+        &log(INFO, "successfully created stanza " . optionGet(OPTION_STANZA));
+    }
+    else
+    {
+        &log(ERROR, $strResultMessage, $iResult);
+        &log(WARN, "the stanza " . optionGet(OPTION_STANZA) . " could not be created");
     }
 
     # Return from function and log return values if any
