@@ -213,6 +213,10 @@
 
                         <p>Added <br-option>archive-timeout</br-option> option documentation to the user guide.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added <setting>--dev</setting> option to <file>doc.pl</file> to easily add <id>dev</id> keyword to documentation builds.</p>
+                    </release-item>
                 </release-feature-list>
             </release-doc-list>
 
