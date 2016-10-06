@@ -207,6 +207,18 @@ sub connect
                 $bResult = false;
                 undef($self->{hDb});
             }
+            else
+            {
+                my ($fDbVersion) = $self->versionGet();
+
+                if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
+                {
+                    $self->{hDb}->do(
+                        "set application_name = '" . BACKREST_NAME . ' [' .
+                        (optionValid(OPTION_COMMAND) ? optionGet(OPTION_COMMAND) : commandGet()) . "]'")
+                        or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
+                }
+            }
         }
     }
 

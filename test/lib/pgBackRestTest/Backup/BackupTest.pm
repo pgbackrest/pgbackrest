@@ -2100,9 +2100,25 @@ sub backupTestRun
                 {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                     strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK});
 
+            # Drop a table
             $oHostDbMaster->sqlExecute('drop table test_remove');
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("update test set message = '$strIncrMessage'", {bCommit => true});
+
+            # Check that application name is set
+            if ($oHostDbMaster->dbVersion() >= PG_VERSION_APPLICATION_NAME)
+            {
+                my $strApplicationNameExpected = BACKREST_NAME . ' [' . CMD_BACKUP . ']';
+                my $strApplicationName = $oHostDbMaster->sqlSelectOne(
+                    "select application_name from pg_stat_activity where application_name like '" . BACKREST_NAME . "%'");
+
+                if (!defined($strApplicationName) || $strApplicationName ne $strApplicationNameExpected)
+                {
+                    confess &log(ERROR,
+                        "application name '" . (defined($strApplicationName) ? $strApplicationName : '[null]') .
+                            "' does not match '" . $strApplicationNameExpected . "'");
+                }
+            }
 
             my $strIncrBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
 
