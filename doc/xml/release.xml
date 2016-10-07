@@ -149,6 +149,14 @@
 
                         <p>Fixed an issue where the async archiver would not be started if <cmd>archive-push</cmd> did not have enough space to queue a new WAL segment.  This meant that the queue would never be cleared without manual intervention (such as calling <cmd>archive-push</cmd> directly).  <postgres/> now receives errors when there is not enough space to store new WAL segments but the async process will still be started so that space is eventually freed.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed a remote timeout that occurred when a local process generated checksums (during resume or restore) but did not copy files, allowing the remote to go idle.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
