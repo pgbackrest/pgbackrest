@@ -123,7 +123,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.09dev" title="UNDER DEVELOPMENT">
+        <release date="2016-10-10" version="1.09" title="9.6 Support, Configurability, and Bug Fixes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -169,7 +169,7 @@
                             <release-item-ideator id="wilke.jens"/>
                         </release-item-contributor-list>
 
-                        <p>Added the <br-option>cmd-ssh</br-option> to allow the ssh client to be specified.</p>
+                        <p>Added the <br-option>cmd-ssh</br-option> option to allow the ssh client to be specified.</p>
                     </release-item>
 
                     <release-item>
@@ -223,7 +223,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Added <setting>--dev</setting> option to <file>doc.pl</file> to easily add <id>dev</id> keyword to documentation builds.</p>
+                        <p>Added <setting>dev</setting> option to <file>doc.pl</file> to easily add the <id>dev</id> keyword to documentation builds.</p>
                     </release-item>
                 </release-feature-list>
             </release-doc-list>
