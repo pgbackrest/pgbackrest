@@ -971,7 +971,7 @@
                             {[backrest-exe]} --stanza=db stanza-create
                         </code-block>
 
-                        Create the required file structure for the stanza.</text>
+                        Create the required data for the <id>db</id> stanza.</text>
                     </command-example>
                 </command-example-list>
             </command>
