@@ -418,7 +418,7 @@
             <cmd-description key="check"/>
 
             <execute-list host="{[host-db-master]}">
-                <title>Check the Configuration</title>
+                <title>Check the configuration</title>
 
                 <execute output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
