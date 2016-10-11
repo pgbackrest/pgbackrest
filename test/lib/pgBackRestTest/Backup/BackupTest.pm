@@ -1784,7 +1784,7 @@ sub backupTestRun
             $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
             $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
 
-            # Test invalid check command
+            # Test check command and stanza create
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bTestExtra)
             {
@@ -1931,7 +1931,7 @@ sub backupTestRun
                     $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
                                                {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
 
-                    # Remove the repo sub-directorues to ensure they do not exist
+                    # Remove the repo sub-directories to ensure they do not exist
                     executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . "/*");
 
                     $oHostBackup->stanzaCreate('verify success', {iTimeout => 5});
