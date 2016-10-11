@@ -932,9 +932,9 @@
 
             <!-- OPERATION - STANZA_CREATE COMMAND -->
             <command id="stanza-create" name="Stanza Create">
-                <summary>Create the stanza.</summary>
+                <summary>Create the required stanza data.</summary>
 
-                <text>CSHANG -TODO: * must be run on backup host, invokes check if >= PG 9.1</text>
+                <text>Must be run on the backup host during <backrest/> installation. The <cmd>check</cmd> command will also be invoked if the <postgres/> database version is greater than or equal to 9.1.</text>
 
                 <command-example-list>
                     <command-example title="Create required stanza data">
@@ -942,7 +942,7 @@
                             {[backrest-exe]} --stanza=db stanza-create
                         </code-block>
 
-                        CSHANG -TODO</text>
+                        Create the required file structure for the stanza.</text>
                     </command-example>
                 </command-example-list>
             </command>

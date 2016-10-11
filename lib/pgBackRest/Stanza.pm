@@ -137,7 +137,7 @@ sub stanzaCreate
     }
     elsif (!grep(/^$strBackupInfo$/i, @stryBackupList))
     {
-        $iResult = &ERROR_FILE_MISSING;
+        $iResult = &ERROR_BACKUP_DIR_INVALID;
         $strResultMessage = "the backup directory is not empty but the backup.info file is missing\n" .
                             "HINT: Has the directory been copied from another location and the copy has not completed?"
         #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
@@ -186,12 +186,12 @@ sub stanzaCreate
         if (!@stryArchiveList)
         {
             $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-            #!!! TODO: need to remove the save in the archive.info check or have a default so it does not get created unless forced?
+            #TODO: need to remove the save in the archive.info check or have a default so it does not get created unless forced?
             # $oArchiveInfo->save();
         }
         elsif (!grep(/^$strArchiveInfo/i, @stryArchiveList ))
         {
-            $iResult = &ERROR_FILE_MISSING;
+            $iResult = &ERROR_ARCHIVE_DIR_INVALID;
             $strResultMessage = "the archive directory is not empty but the archive.info file is missing\n" .
                                 "HINT: Has the directory been copied from another location and the copy has not completed?"
             #\n"."HINT: Use --force to force the archive.info to be created from the existing archive data in the directory.";
