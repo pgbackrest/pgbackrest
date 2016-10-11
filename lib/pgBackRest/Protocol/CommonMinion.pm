@@ -245,32 +245,53 @@ sub process
     my $strCommand = OP_NOOP;
 
     # Loop until the exit command is received
-    while ($strCommand ne OP_EXIT)
+    eval
     {
-        ($strCommand, $self->{hParam}) = $self->cmdRead();
-
-        eval
+        while ($strCommand ne OP_EXIT)
         {
-            if (!$self->commandProcess($strCommand))
+            ($strCommand, $self->{hParam}) = $self->cmdRead();
+
+            eval
             {
-                if ($strCommand eq OP_NOOP)
+                if (!$self->commandProcess($strCommand))
                 {
-                    $self->outputWrite();
+                    if ($strCommand eq OP_NOOP)
+                    {
+                        $self->outputWrite();
+                    }
+                    elsif ($strCommand ne OP_EXIT)
+                    {
+                        confess "invalid command: ${strCommand}";
+                    }
                 }
-                elsif ($strCommand ne OP_EXIT)
-                {
-                    confess "invalid command: ${strCommand}";
-                }
-            }
 
-            return true;
+                return true;
+            }
+            # Process errors
+            or do
+            {
+                $self->errorWrite($EVAL_ERROR);
+            };
         }
-        # Process errors
-        or do
-        {
-            $self->errorWrite($EVAL_ERROR);
-        };
+
+        return true;
     }
+    or do
+    {
+        my $oException = $EVAL_ERROR;
+
+        # Change log level so error will go to stderr
+        logLevelSet(undef, undef, ERROR);
+
+        # If standard exception
+        if (isException($oException))
+        {
+            confess &log($oException->level(), $oException->message(), $oException->code());
+        }
+
+        # Else unexpected Perl exception
+        confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
+    };
 
     return 0;
 }

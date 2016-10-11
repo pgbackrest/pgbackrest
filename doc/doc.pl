@@ -61,6 +61,7 @@ doc.pl [options]
    --doc-path       Document path to render (manifest.xml should be located here)
    --out            Output types (html, pdf, markdown)
    --keyword        Keyword used to filter output
+   --dev            Add dev keyword
    --require        Require only certain sections of the document (to speed testing)
    --exclude        Exclude source from generation (links will reference website)
 =cut
@@ -82,6 +83,7 @@ my @stryKeyword;
 my @stryRequire;
 my @stryExclude;
 my $bDeploy = false;
+my $bDev = false;
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
@@ -94,6 +96,7 @@ GetOptions ('help' => \$bHelp,
             'no-exe', \$bNoExe,
             'deploy', \$bDeploy,
             'no-cache', \$bNoCache,
+            'dev', \$bDev,
             'cache-only', \$bCacheOnly,
             'var=s%', $oVariableOverride,
             'doc-path=s', \$strDocPath)
@@ -148,7 +151,13 @@ eval
         @stryKeyword = ('default');
     }
 
-    logLevelSet(undef, uc($strLogLevel));
+    # If -dev passed then add the dev keyword
+    if ($bDev)
+    {
+        push(@stryKeyword, 'dev');
+    }
+
+    logLevelSet(undef, uc($strLogLevel), OFF);
 
     # Get the base path
     my $strBasePath = abs_path(dirname($0));

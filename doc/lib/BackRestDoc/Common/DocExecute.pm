@@ -575,7 +575,21 @@ sub backrestConfig
 
             $oHost->copyTo($strLocalFile, $$hCacheKey{file}, $oConfig->paramGet('owner', false, 'postgres:postgres'), '640');
 
-            $strConfig = fileStringRead($strLocalFile);
+            # Remove the log-console-stderr option before pushing into the cache
+            # ??? This is not very pretty and should be replaced with a general way to hide config options
+            my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR});
+
+            if (keys(%{$$oConfigClean{&CONFIG_SECTION_GLOBAL}}) == 0)
+            {
+                delete($$oConfigClean{&CONFIG_SECTION_GLOBAL});
+            }
+
+            iniSave("${strLocalFile}.clean", $oConfigClean, true);
+
+            # Push config file into the cache
+            $strConfig = fileStringRead("${strLocalFile}.clean");
+
             my @stryConfig = undef;
 
             if (trim($strConfig) ne '')

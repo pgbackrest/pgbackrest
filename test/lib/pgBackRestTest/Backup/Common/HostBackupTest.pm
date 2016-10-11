@@ -745,6 +745,7 @@ sub configCreate
     # ------------------------------------------------------------------------------------------------------------------------------
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(DEBUG);
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_FILE} = lc(TRACE);
+    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR} = lc(OFF);
 
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = $self->repoPath();
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();

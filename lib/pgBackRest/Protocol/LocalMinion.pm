@@ -93,6 +93,8 @@ sub commandProcess
         );
 
     # Backup a file
+    my $bProcess = true;
+
     if ($strCommand eq OP_BACKUP_FILE)
     {
         my ($iCopyResult, $lCopySize, $lRepoSize, $strCopyChecksum) = backupFile(
@@ -132,11 +134,14 @@ sub commandProcess
     # Command not processed
     else
     {
-        return false;
+        $bProcess = false;
     }
 
+    # Send keep alive to remote
+    $self->{oFile}->{oProtocol}->keepAlive();
+
     # Command processed
-    return true;
+    return $bProcess;
 }
 
 1;

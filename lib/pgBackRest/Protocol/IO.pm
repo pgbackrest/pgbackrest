@@ -295,7 +295,7 @@ sub lineRead
         {
             if (!defined($bError) || $bError)
             {
-                confess &log(ERROR, "unable to read line after ${fTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
+                confess &log(ERROR, "unable to read line after ${fTimeout} second(s)", ERROR_PROTOCOL_TIMEOUT);
             }
 
             return;
@@ -490,7 +490,7 @@ sub bufferWrite
         my $strError = $!;
 
         $self->waitPid();
-        confess "unable to write ${iWriteSize} bytes" . (defined($strError) ? ': ' . $strError : '');
+        confess &log(ERROR, "unable to write ${iWriteSize} bytes" . (defined($strError) ? ': ' . $strError : ''), ERROR_FILE_WRITE);
     }
 }
 
