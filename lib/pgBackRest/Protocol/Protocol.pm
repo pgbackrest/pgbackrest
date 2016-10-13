@@ -145,6 +145,7 @@ sub protocolGet
             $oProtocol = new pgBackRest::Protocol::RemoteMaster
             (
                 $strRemoteType,
+                optionGet(OPTION_CMD_SSH),
                 commandWrite(
                     CMD_REMOTE, true, optionGet($strOptionCmd), undef,
                     {

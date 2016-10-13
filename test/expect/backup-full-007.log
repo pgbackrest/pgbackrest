@@ -16,11 +16,12 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/backup/pgbackrest.conf
 backup-host=backup
-backup-user=backrest
+backup-user=[USER-1]
 compress=n
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
 log-level-file=trace
+log-level-stderr=off
 log-path=[TEST_PATH]/db-master/spool/log
 repo-path=[TEST_PATH]/backup/repo
 
@@ -31,13 +32,14 @@ db-cmd=[BACKREST-BIN]
 db-config=[TEST_PATH]/db-master/pgbackrest.conf
 db-host=db-master
 db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+db-user=[USER-2]
 
 [global]
 compress=n
 lock-path=[TEST_PATH]/backup/repo/lock
 log-level-console=debug
 log-level-file=trace
+log-level-stderr=off
 log-path=[TEST_PATH]/backup/repo/log
 repo-path=[TEST_PATH]/backup/repo
 
@@ -60,11 +62,12 @@ db-socket-path=[TEST_PATH]/db-master/db
 backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/backup/pgbackrest.conf
 backup-host=backup
-backup-user=backrest
+backup-user=[USER-1]
 compress=n
 lock-path=[TEST_PATH]/db-master/spool/lock
 log-level-console=debug
 log-level-file=trace
+log-level-stderr=off
 log-path=[TEST_PATH]/db-master/spool/log
 repo-path=[TEST_PATH]/backup/repo
 
@@ -75,13 +78,14 @@ db-cmd=[BACKREST-BIN]
 db-config=[TEST_PATH]/db-master/pgbackrest.conf
 db-host=db-master
 db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+db-user=[USER-2]
 
 [global]
 compress=n
 lock-path=[TEST_PATH]/backup/repo/lock
 log-level-console=debug
 log-level-file=trace
+log-level-stderr=off
 log-path=[TEST_PATH]/backup/repo/log
 repo-path=[TEST_PATH]/backup/repo
 

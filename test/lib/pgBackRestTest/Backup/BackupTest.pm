@@ -41,6 +41,7 @@ use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Backup::Common::HostDbTest;
 use pgBackRestTest::Backup::Common::HostDbSyntheticTest;
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -229,7 +230,10 @@ sub backupTestRun
                             }
                         }
 
-                        $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
+                        $oHostDbMaster->executeSimple(
+                            $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                                " ${strSourceFile}",
+                            {oLogTest => $oLogTest});
 
                         # Make sure the temp file no longer exists
                         if (defined($strArchiveTmp))
@@ -559,7 +563,9 @@ sub backupTestRun
                         my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
 
                         $oHostDbMaster->executeSimple(
-                            $strCommand . " ${strArchiveFile} ${strDestinationFile}", {oLogTest => $oLogTest});
+                            $strCommand . ($bRemote && $iArchiveNo == 1 ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                                " ${strArchiveFile} ${strDestinationFile}",
+                            {oLogTest => $oLogTest});
 
                         # Check that the destination file exists
                         if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
@@ -935,8 +941,10 @@ sub backupTestRun
 
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'create pg_stat link, pg_clog dir',
-                {oExpectedManifest => \%oManifest, strOptionalParam => $strOptionalParam, strTest => $strTestPoint,
-                    fTestDelay => 0});
+                {oExpectedManifest => \%oManifest,
+                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
+                 strTest => $strTestPoint,
+                 fTestDelay => 0});
 
             # Test protocol timeout
             #-----------------------------------------------------------------------------------------------------------------------
@@ -1100,12 +1108,13 @@ sub backupTestRun
 
             $oHostDbMaster->restore(
                 $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'add and delete files', undef, ' --link-all', undef, $bNeutralTest && !$bRemote ? 'root' : undef);
+                'add and delete files', undef,  ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
+                undef, $bNeutralTest && !$bRemote ? 'root' : undef);
 
             # Fix permissions on the restore log & remove lock files
             if ($bNeutralTest && !$bRemote)
             {
-                executeTest('sudo chown -R vagrant:postgres ' . $oHostBackup->logPath());
+                executeTest('sudo chown -R ' . TEST_USER . ':' . POSTGRES_GROUP . ' ' . $oHostBackup->logPath());
                 executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
             }
 
@@ -1794,15 +1803,24 @@ sub backupTestRun
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-                # Stop the cluster ignoring any errors in the postgresql log
-                $oHostDbMaster->clusterStop({bIgnoreLogError => true});
+                # Check ERROR_ARCHIVE_DISABLED error
+                $strComment = 'fail on archive_mode=off';
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveEnabled => false});
+
+                $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+                $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+
+                # If running the remote tests then also need to run check locally
+                if ($bHostBackup)
+                {
+                    $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+                }
 
                 # Check ERROR_ARCHIVE_COMMAND_INVALID error
                 $strComment = 'fail on invalid archive_command';
-                $oHostDbMaster->clusterStart({bArchive => false});
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchive => false});
 
                 $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
-
                 $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
                 # If running the remote tests then also need to run check locally
@@ -2065,13 +2083,16 @@ sub backupTestRun
             # are run in non-exlusive mode.
             if ($bTestExtra && $oHostDbMaster->dbVersion() >= PG_VERSION_93 && $oHostDbMaster->dbVersion() < PG_VERSION_96)
             {
-                $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be cancelled', true)");
+                $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
 
                 # Verify that an error is returned if the backup is already running
                 $oHostBackup->backup($strType, 'fail on backup already running', {iExpectedExitStatus => ERROR_DB_QUERY});
 
                 # Restart the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+                # Start a new backup to make the next test restart it
+                $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will be restarted', true)");
             }
 
             $oExecuteBackup = $oHostBackup->backupBegin(
@@ -2079,9 +2100,25 @@ sub backupTestRun
                 {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                     strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK});
 
+            # Drop a table
             $oHostDbMaster->sqlExecute('drop table test_remove');
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("update test set message = '$strIncrMessage'", {bCommit => true});
+
+            # Check that application name is set
+            if ($oHostDbMaster->dbVersion() >= PG_VERSION_APPLICATION_NAME)
+            {
+                my $strApplicationNameExpected = BACKREST_NAME . ' [' . CMD_BACKUP . ']';
+                my $strApplicationName = $oHostDbMaster->sqlSelectOne(
+                    "select application_name from pg_stat_activity where application_name like '" . BACKREST_NAME . "%'");
+
+                if (!defined($strApplicationName) || $strApplicationName ne $strApplicationNameExpected)
+                {
+                    confess &log(ERROR,
+                        "application name '" . (defined($strApplicationName) ? $strApplicationName : '[null]') .
+                            "' does not match '" . $strApplicationNameExpected . "'");
+                }
+            }
 
             my $strIncrBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
 

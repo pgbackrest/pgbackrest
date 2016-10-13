@@ -105,6 +105,7 @@ sub fileTestRun
 
     my $oRemote = new pgBackRest::Protocol::RemoteMaster(
         BACKUP,
+        OPTION_DEFAULT_CMD_SSH,
         $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --stanza=' . HOST_STANZA .
             " --type=backup --repo-path=${strRepoPath} --no-config --command=test remote",
         OPTION_DEFAULT_BUFFER_SIZE,

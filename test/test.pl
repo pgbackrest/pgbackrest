@@ -131,7 +131,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'run=s' => \$iModuleTestRun,
             'process-max=s' => \$iProcessMax,
             'vm-id=s' => \$iVmId,
-            'vm-max=s' => \$iProcessMax,
+            'vm-max=s' => \$iVmMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
             'db-version=s' => \$strDbVersion,
@@ -177,7 +177,7 @@ eval
         $strLogLevel = 'off';
     }
 
-    logLevelSet(uc($strLogLevel), uc($strLogLevel));
+    logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
 
     if ($strModuleTest ne 'all' && $strModule eq 'all')
     {
@@ -402,7 +402,7 @@ eval
                     &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DETAIL, "${strTest}" .
                          ($bVmOut || $bShowOutputAsync ? "\n" : ''));
 
-                    my $strVmTestPath = "/home/vagrant/test/${strImage}";
+                    my $strVmTestPath = '/home/' . TEST_USER . "/test/${strImage}";
                     my $strHostTestPath = "${strTestPath}/${strImage}";
 
                     # Don't create the container if this is a dry run unless output from the VM is required.  Ouput can be requested
@@ -417,12 +417,13 @@ eval
                             executeTest(
                                 'docker run -itd -h ' . $$oTest{&TEST_VM} . "-test --name=${strImage}" .
                                 " -v ${strHostTestPath}:${strVmTestPath}" .
-                                " -v ${strBackRestBase}:${strBackRestBase} backrest/" . $$oTest{&TEST_VM} . "-loop-test-pre");
+                                " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . '/' . $$oTest{&TEST_VM} .
+                                "-loop-test-pre");
                         }
                     }
 
                     my $strCommand =
-                        ($$oTest{&TEST_CONTAINER} ? "docker exec -i -u vagrant ${strImage} " : '') . abs_path($0) .
+                        ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') . abs_path($0) .
                         " --test-path=${strVmTestPath}" .
                         " --vm=$$oTest{&TEST_VM}" .
                         " --vm-id=${iVmIdx}" .
@@ -450,7 +451,7 @@ eval
                         # Docker and the host VM.
                         if ($$oTest{&TEST_CONTAINER})
                         {
-                            executeTest("docker exec ${strImage} chown vagrant:postgres -R ${strVmTestPath}");
+                            executeTest("docker exec ${strImage} chown " . TEST_USER . ":postgres -R ${strVmTestPath}");
                         }
 
                         my $oExec = new pgBackRestTest::Common::ExecuteTest(
@@ -504,7 +505,7 @@ eval
     $oHostGroup->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
     $oHostGroup->paramSet(HOST_PARAM_BACKREST_EXE, "${strBackRestBase}/bin/pgbackrest");
     $oHostGroup->paramSet(HOST_PARAM_PROCESS_MAX, $iProcessMax);
-    $oHostGroup->paramSet(HOST_DB_USER, 'vagrant');
+    $oHostGroup->paramSet(HOST_DB_USER, TEST_USER);
     $oHostGroup->paramSet(HOST_BACKUP_USER, 'backrest');
 
     if ($strDbVersion ne 'minimal')

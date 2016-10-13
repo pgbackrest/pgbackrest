@@ -264,6 +264,10 @@ use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol
 use constant OPTION_PROCESS_MAX                                     => 'process-max';
     push @EXPORT, qw(OPTION_PROCESS_MAX);
 
+# Commands
+use constant OPTION_CMD_SSH                                         => 'cmd-ssh';
+    push @EXPORT, qw(OPTION_CMD_SSH);
+
 # Paths
 use constant OPTION_LOCK_PATH                                       => 'lock-path';
     push @EXPORT, qw(OPTION_LOCK_PATH);
@@ -279,6 +283,8 @@ use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-leve
     push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
 use constant OPTION_LOG_LEVEL_FILE                                  => 'log-level-file';
     push @EXPORT, qw(OPTION_LOG_LEVEL_FILE);
+use constant OPTION_LOG_LEVEL_STDERR                                => 'log-level-stderr';
+    push @EXPORT, qw(OPTION_LOG_LEVEL_STDERR);
 
 # ARCHIVE Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -441,6 +447,8 @@ use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN                    => OPTION_DE
 use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX                    => OPTION_DEFAULT_DB_TIMEOUT_MAX;
     push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX);
 
+use constant OPTION_DEFAULT_CMD_SSH                                 => 'ssh';
+    push @EXPORT, qw(OPTION_DEFAULT_CMD_SSH);
 use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_CONF;
     push @EXPORT, qw(OPTION_DEFAULT_CONFIG);
 use constant OPTION_DEFAULT_LOCK_PATH                               => '/tmp/' . BACKREST_EXE;
@@ -466,6 +474,8 @@ use constant OPTION_DEFAULT_LOG_LEVEL_CONSOLE                       => lc(WARN);
     push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_CONSOLE);
 use constant OPTION_DEFAULT_LOG_LEVEL_FILE                          => lc(INFO);
     push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_FILE);
+use constant OPTION_DEFAULT_LOG_LEVEL_STDERR                        => lc(WARN);
+    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_STDERR);
 
 # ARCHIVE SECTION
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1110,6 +1120,26 @@ my %oOptionRule =
         }
     },
 
+    &OPTION_CMD_SSH =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CMD_SSH,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_INFO => true,
+            &CMD_LOCAL => true,
+            &CMD_RESTORE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+            &CMD_EXPIRE => true,
+        },
+    },
+
     &OPTION_LOCK_PATH =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1282,6 +1312,35 @@ my %oOptionRule =
             &CMD_INFO => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_UPGRADE => true,
+            &CMD_START => true,
+            &CMD_STOP => true
+        }
+    },
+
+    &OPTION_LOG_LEVEL_STDERR =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_LEVEL_STDERR,
+        &OPTION_RULE_ALLOW_LIST =>
+        {
+            lc(OFF)    => true,
+            lc(ERROR)  => true,
+            lc(WARN)   => true,
+            lc(INFO)   => true,
+            lc(DETAIL) => true,
+            lc(DEBUG)  => true,
+            lc(TRACE)  => true
+        },
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_INFO => true,
+            &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true
         }
@@ -1934,7 +1993,8 @@ sub configLoad
     {
         logLevelSet(
             optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
-            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF);
+            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF,
+            optionValid(OPTION_LOG_LEVEL_STDERR) ? optionGet(OPTION_LOG_LEVEL_STDERR) : OFF);
     }
 
     # Neutralize the umask to make the repository file/path modes more consistent

@@ -9,6 +9,7 @@ package pgBackRestTest::Common::ContainerTest;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
+use English '-no_match_vars';
 
 use Cwd qw(abs_path);
 use Exporter qw(import);
@@ -20,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
+use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::VmTest;
@@ -28,19 +30,31 @@ use pgBackRestTest::Common::VmTest;
 # User/group definitions
 ####################################################################################################################################
 use constant POSTGRES_GROUP                                         => 'postgres';
+    push @EXPORT, qw(POSTGRES_GROUP);
 use constant POSTGRES_GROUP_ID                                      => getgrnam(POSTGRES_GROUP) . '';
 use constant POSTGRES_USER                                          => POSTGRES_GROUP;
 use constant POSTGRES_USER_ID                                       => POSTGRES_GROUP_ID;
 
 use constant TEST_GROUP                                             => POSTGRES_GROUP;
 use constant TEST_GROUP_ID                                          => POSTGRES_GROUP_ID;
-use constant TEST_USER                                              => 'vagrant';
-use constant TEST_USER_ID                                           => getpwnam(TEST_USER) . '';
+use constant TEST_USER                                              => getpwuid($UID) . '';
+    push @EXPORT, qw(TEST_USER);
+use constant TEST_USER_ID                                           => $UID;
 
 use constant BACKREST_GROUP                                         => POSTGRES_GROUP;
 use constant BACKREST_GROUP_ID                                      => POSTGRES_GROUP_ID;
 use constant BACKREST_USER                                          => 'backrest';
 use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
+
+####################################################################################################################################
+# Container namespace
+####################################################################################################################################
+sub containerNamespace
+{
+    return BACKREST_EXE . qw(/) . TEST_USER;
+}
+
+push @EXPORT, qw(containerNamespace);
 
 ####################################################################################################################################
 # User/group creation
@@ -155,7 +169,7 @@ sub containerWrite
     # Write the image
     fileStringWrite("${strTempPath}/${strImage}", trim($strScript) . "\n", false);
     executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
-                " -f ${strTempPath}/${strImage} -t backrest/${strImage} ${strTempPath}",
+                " -f ${strTempPath}/${strImage} -t " . containerNamespace() . "/${strImage} ${strTempPath}",
                 {bSuppressStdErr => true});
 }
 
@@ -291,7 +305,7 @@ sub containerBuild
     # Remove old images on force
     if ($bVmForce)
     {
-        my $strRegExp = '^backrest\/';
+        my $strRegExp = '^' . containerNamespace() . '/';
 
         if ($strVm ne 'all')
         {
@@ -352,26 +366,26 @@ sub containerBuild
         {
             $strScript .=
                 "RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-4.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-2.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-1.noarch.rpm";
+                "RUN rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
         }
         elsif ($strOS eq VM_CO7)
         {
             $strScript .=
-                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-1.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-1.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-1.noarch.rpm";
+                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm\n" .
+                "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
                 "RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main 9.6' >> /etc/apt/sources.list.d/pgdg.list\n" .
+                $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main' >> /etc/apt/sources.list.d/pgdg.list\n" .
                 "RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -\n" .
                 "RUN apt-get update";
         }
@@ -433,7 +447,7 @@ sub containerBuild
 
         # Base pre image
         ###########################################################################################################################
-        $strImageParent = "backrest/${strOS}-base";
+        $strImageParent = containerNamespace() . "/${strOS}-base";
         $strImage = "${strOS}-base-pre";
 
         # Install Perl packages
@@ -477,7 +491,7 @@ sub containerBuild
 
             my $bDocBuildVersion = ($bDocBuild && grep(/^$strDbVersion$/, @{$$oOS{&VM_DB_DOC}}));
 
-            $strImageParent = "backrest/${strOS}-base";
+            $strImageParent = containerNamespace() . "/${strOS}-base";
             $strImage = "${strOS}-db-${strDbVersion}";
 
             # Create PostgreSQL User
@@ -507,7 +521,7 @@ sub containerBuild
             ########################################################################################################################
             if ($bDocBuildVersion)
             {
-                $strImageParent = "backrest/${strOS}-db-${strDbVersion}";
+                $strImageParent = containerNamespace() . "/${strOS}-db-${strDbVersion}";
                 $strImage = "${strOS}-db-${strDbVersion}-doc";
 
                 # Install SSH key
@@ -522,7 +536,7 @@ sub containerBuild
 
             # Db test image
             ########################################################################################################################
-            $strImageParent = "backrest/${strOS}-db-${strDbVersion}";
+            $strImageParent = containerNamespace() . "/${strOS}-db-${strDbVersion}";
             $strImage = "${strOS}-db-${strDbVersion}-test";
 
             # Install SSH key
@@ -534,7 +548,7 @@ sub containerBuild
 
         # Db test image (for sythetic tests)
         ########################################################################################################################
-        $strImageParent = "backrest/${strOS}-base";
+        $strImageParent = containerNamespace() . "/${strOS}-base";
         $strImage = "${strOS}-db-test";
 
         # Install SSH key
@@ -545,7 +559,7 @@ sub containerBuild
 
         # Loop test image
         ########################################################################################################################
-        $strImageParent = "backrest/${strOS}-base";
+        $strImageParent = containerNamespace() . "/${strOS}-base";
         $strImage = "${strOS}-loop-test";
 
         # Create BackRest User
@@ -569,7 +583,7 @@ sub containerBuild
 
         # Backup image
         ###########################################################################################################################
-        $strImageParent = "backrest/${strOS}-base";
+        $strImageParent = containerNamespace() . "/${strOS}-base";
         $strImage = "${strOS}-backup";
         my $strTitle = "Backup";
 
@@ -588,7 +602,7 @@ sub containerBuild
         ###########################################################################################################################
         if ($bDocBuild)
         {
-            $strImageParent = "backrest/${strOS}-backup";
+            $strImageParent = containerNamespace() . "/${strOS}-backup";
             $strImage = "${strOS}-backup-doc";
 
             # Create configuration file
@@ -607,7 +621,7 @@ sub containerBuild
 
         # Backup Test image
         ###########################################################################################################################
-        $strImageParent = "backrest/${strOS}-backup";
+        $strImageParent = containerNamespace() . "/${strOS}-backup";
         $strImage = "${strOS}-backup-test";
 
         # Make test user home readable
@@ -640,6 +654,8 @@ sub containerRemove
     }
 }
 
+push @EXPORT, qw(containerRemove);
+
 ####################################################################################################################################
 # imageRemove
 #
@@ -658,7 +674,5 @@ sub imageRemove
         }
     }
 }
-
-push @EXPORT, qw(containerRemove);
 
 1;

@@ -43,8 +43,6 @@ use constant ERROR                                                  => 'ERROR';
     push @EXPORT, qw(ERROR);
 use constant ASSERT                                                 => 'ASSERT';
     push @EXPORT, qw(ASSERT);
-use constant REMOTE                                                 => 'REMOTE';
-    push @EXPORT, qw(REMOTE);
 use constant OFF                                                    => 'OFF';
     push @EXPORT, qw(OFF);
 
@@ -53,14 +51,13 @@ use constant OFF                                                    => 'OFF';
 ####################################################################################################################################
 my %oLogLevelRank;
 
-$oLogLevelRank{TRACE}{rank} = 8;
-$oLogLevelRank{DEBUG}{rank} = 7;
-$oLogLevelRank{DETAIL}{rank} = 6;
-$oLogLevelRank{INFO}{rank} = 5;
-$oLogLevelRank{WARN}{rank} = 4;
-$oLogLevelRank{ERROR}{rank} = 3;
-$oLogLevelRank{ASSERT}{rank} = 2;
-$oLogLevelRank{REMOTE}{rank} = 1;
+$oLogLevelRank{TRACE}{rank} = 7;
+$oLogLevelRank{DEBUG}{rank} = 6;
+$oLogLevelRank{DETAIL}{rank} = 5;
+$oLogLevelRank{INFO}{rank} = 4;
+$oLogLevelRank{WARN}{rank} = 3;
+$oLogLevelRank{ERROR}{rank} = 2;
+$oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
 
 ####################################################################################################################################
@@ -69,8 +66,9 @@ $oLogLevelRank{OFF}{rank} = 0;
 my $hLogFile = undef;
 my $strLogFileCache = undef;
 
-my $strLogLevelFile = ERROR;
-my $strLogLevelConsole = REMOTE;
+my $strLogLevelFile = OFF;
+my $strLogLevelConsole = OFF;
+my $strLogLevelStdOut = OFF;
 
 # Test globals
 my $bTest = false;
@@ -147,6 +145,7 @@ sub logLevelSet
 {
     my $strLevelFileParam = shift;
     my $strLevelConsoleParam = shift;
+    my $strLevelStdOutParam = shift;
 
     # Load FileCommon module
     require pgBackRest::FileCommon;
@@ -170,6 +169,16 @@ sub logLevelSet
         }
 
         $strLogLevelConsole = uc($strLevelConsoleParam);
+    }
+
+    if (defined($strLevelStdOutParam))
+    {
+        if (!defined($oLogLevelRank{uc($strLevelStdOutParam)}{rank}))
+        {
+            confess &log(ERROR, "stdout log level ${strLevelStdOutParam} does not exist");
+        }
+
+        $strLogLevelStdOut = uc($strLevelStdOutParam);
     }
 }
 
@@ -519,9 +528,13 @@ sub log
         (defined($iProcessId) ? $iProcessId : 0)) .
         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
-    # Output to console depending on log level and test flag
-    if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
-        $bTest && $strLevel eq TEST)
+    # Output to stderr depending on log level
+    if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelStdOut}{rank})
+    {
+        syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ": $strMessage\n");
+    }
+    # Else output to stdout depending on log level and test flag
+    elsif ($iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} || $bTest && $strLevel eq TEST)
     {
         if (!$bSuppressLog)
         {
@@ -533,10 +546,6 @@ sub log
         {
             usleep($fTestDelay * 1000000);
         }
-    }
-    elsif ($strLogLevelConsole eq REMOTE && ($strLevel eq ASSERT || $strLevel eq ERROR))
-    {
-        syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ": $strMessage\n");
     }
 
     # Output to file depending on log level and test flag
@@ -577,7 +586,7 @@ sub log
     # Throw a typed exception if code is defined
     if (defined($iCode))
     {
-        return new pgBackRest::Common::Exception($iCode, $strMessage, longmess());
+        return new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess());
     }
 
     # Return the message test so it can be used in a confess

@@ -589,6 +589,8 @@ sub pushProcess
     }
 
     # If an archive file is defined, then push it
+    my $oException = undef;
+
     if (defined($ARGV[1]))
     {
         # If the stop file exists then discard the archive log
@@ -606,13 +608,27 @@ sub pushProcess
 
         &log(INFO, 'push WAL segment ' . $ARGV[1] . ($bArchiveAsync ? ' asynchronously' : ''));
 
-        $self->push($ARGV[1], $bArchiveAsync);
+        # Push WAL segment - when async, any error will be deferred until after the async process has been started
+        eval
+        {
+            $self->push($ARGV[1], $bArchiveAsync);
+                return true;
+        }
+        or do
+        {
+            $oException = $EVAL_ERROR;
+
+            if (!$bArchiveAsync || !optionTest(OPTION_TEST_NO_FORK))
+            {
+                confess $oException;
+            }
+        };
 
         # Fork if async archiving is enabled
         if ($bArchiveAsync)
         {
             # Fork and disable the async archive flag if this is the parent process
-            if (!optionTest(OPTION_TEST_NO_FORK) || !optionGet(OPTION_TEST_NO_FORK))
+            if (!optionTest(OPTION_TEST_NO_FORK))
             {
                 $bArchiveAsync = fork() == 0 ? true : false;
             }
@@ -660,6 +676,10 @@ sub pushProcess
 
             lockRelease();
         }
+    }
+    elsif (defined($oException))
+    {
+        confess $oException;
     }
 
     # Return from function and log return values if any

@@ -30,6 +30,7 @@ use pgBackRest::Version;
 use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Backup::Common::HostDbCommonTest;
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::CommonTest;
@@ -58,7 +59,7 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strImage => 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-test-pre",
+            strImage => containerNamespace() . '/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-test-pre",
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => true,

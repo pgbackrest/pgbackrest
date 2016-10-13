@@ -207,6 +207,18 @@ sub connect
                 $bResult = false;
                 undef($self->{hDb});
             }
+            else
+            {
+                my ($fDbVersion) = $self->versionGet();
+
+                if ($fDbVersion >= PG_VERSION_APPLICATION_NAME)
+                {
+                    $self->{hDb}->do(
+                        "set application_name = '" . BACKREST_NAME . ' [' .
+                        (optionValid(OPTION_COMMAND) ? optionGet(OPTION_COMMAND) : commandGet()) . "]'")
+                        or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
+                }
+            }
         }
     }
 
@@ -641,8 +653,8 @@ sub backupStart
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
     {
-        confess &log(ERROR, "unable to acquire backup lock\n" .
-                            'HINT: is another backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
+        confess &log(ERROR, 'unable to acquire ' . BACKREST_NAME . " advisory lock\n" .
+                            'HINT: is another ' . BACKREST_NAME . ' backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
     }
 
     # If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
@@ -655,7 +667,7 @@ sub backupStart
             # If a backup is currently in progress emit a warning and then stop it
             if ($self->executeSqlOne('select pg_is_in_backup()'))
             {
-                &log(WARN, 'the cluster is already in backup mode but no backup process is running.' .
+                &log(WARN, 'the cluster is already in backup mode but no ' . BACKREST_NAME . ' backup process is running.' .
                            ' pg_stop_backup() will be called so a new backup can be started.');
                 $self->backupStop();
             }
@@ -769,24 +781,29 @@ sub configValidate
             "HINT: the db-path and db-port settings likely reference different clusters", ERROR_DB_MISMATCH);
     }
 
-    if (optionValid(OPTION_BACKUP_ARCHIVE_CHECK))
+    # If cluster is not a standby and archive checking is enabled, then perform various validations
+    if (!$self->isStandby() && optionValid(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
+        # Error if archive_mode = off since pg_start_backup () will fail
+        if ($self->executeSql('show archive_mode') eq 'off')
+        {
+            confess &log(ERROR, 'archive_mode must be enabled', ERROR_ARCHIVE_DISABLED);
+        }
+
         # Error if archive_mode = always (support has not been added yet)
-        if (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && $self->executeSql('show archive_mode') eq 'always')
+        if ($self->executeSql('show archive_mode') eq 'always')
         {
             confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
         }
 
         # Check if archive_command is set
-        if (!optionGet(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
-        {
-            my $strArchiveCommand = $self->executeSql('show archive_command');
+        my $strArchiveCommand = $self->executeSql('show archive_command');
 
-            if (index($strArchiveCommand, BACKREST_EXE) == -1)
-            {
-                confess &log(ERROR,
-                    'archive_command \'${strArchiveCommand}\' must contain \'' . BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
-            }
+        if (index($strArchiveCommand, BACKREST_EXE) == -1)
+        {
+            confess &log(ERROR,
+                'archive_command ' . (defined($strArchiveCommand) ? "'${strArchiveCommand}'" : '[null]') . ' must contain \'' .
+                BACKREST_EXE . '\'', ERROR_ARCHIVE_COMMAND_INVALID);
         }
     }
 
@@ -824,6 +841,40 @@ sub xlogSwitch
     (
         $strOperation,
         {name => 'strXlogFileName', value => $strWalFileName}
+    );
+}
+
+####################################################################################################################################
+# isStandby
+#
+# Determines if a database is a standby by testing if it is in recovery mode.
+####################################################################################################################################
+sub isStandby
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->isStandby');
+
+    if (!defined($self->{bStandby}))
+    {
+        my ($strDbVersion) = $self->versionGet();
+
+        if ($strDbVersion <= PG_VERSION_90)
+        {
+            $self->{bStandby} = false;
+        }
+        else
+        {
+            $self->{bStandby} = $self->executeSqlOne('select pg_is_in_recovery()') ? true : false;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bStandby', value => $self->{bStandby}}
     );
 }
 

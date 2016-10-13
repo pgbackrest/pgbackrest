@@ -63,6 +63,7 @@ Command Options:
 General Options:
 
   --buffer-size             buffer size for file operations [default=4194304]
+  --cmd-ssh                 path to ssh client executable [default=ssh]
   --compress-level          compression level for stored files [default=6]
   --compress-level-network  compression level for network transfer when
 compress=n [default=3]
@@ -81,6 +82,7 @@ Log Options:
 
   --log-level-console       level for console logging [default=warn]
   --log-level-file          level for file logging [default=info]
+  --log-level-stderr        level for stderr logging [default=warn]
 
 Use 'pgbackrest help info [option]' for more information.
 

@@ -28,6 +28,7 @@ use pgBackRest::Version;
 use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Backup::Common::HostDbCommonTest;
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::HostGroupTest;
 
 ####################################################################################################################################
@@ -81,7 +82,7 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strImage => 'backrest/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-${strDbVersion}-test-pre",
+            strImage => containerNamespace() . '/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-${strDbVersion}-test-pre",
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bStandby => $$oParam{bStandby},
@@ -393,6 +394,7 @@ sub clusterStart
     my $bArchive = defined($$hParam{bArchive}) ? $$hParam{bArchive} : true;
     my $bArchiveAlways = defined($$hParam{bArchiveAlways}) ? $$hParam{bArchiveAlways} : false;
     my $bArchiveInvalid = defined($$hParam{bArchiveInvalid}) ? $$hParam{bArchiveInvalid} : false;
+    my $bArchiveEnabled = defined($$hParam{bArchiveEnabled}) ? $$hParam{bArchiveEnabled} : true;
 
     # Make sure postgres is not running
     if (-e $self->dbBasePath() . '/postmaster.pid')
@@ -410,7 +412,7 @@ sub clusterStart
         $self->dbBinPath() . '/pg_ctl start -o "-c port=' . $self->dbPort() .
         ($self->dbVersion() < PG_VERSION_95 ? ' -c checkpoint_segments=1' : '');
 
-    if ($self->dbVersion() >= PG_VERSION_83)
+    if ($bArchiveEnabled)
     {
         if ($self->dbVersion() >= PG_VERSION_95 && $bArchiveAlways)
         {
@@ -420,6 +422,10 @@ sub clusterStart
         {
             $strCommand .= " -c archive_mode=on";
         }
+    }
+    else
+    {
+        $strCommand .= " -c archive_mode=off";
     }
 
     if ($bArchive)

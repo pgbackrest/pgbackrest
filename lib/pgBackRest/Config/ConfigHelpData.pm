@@ -178,6 +178,17 @@ my $oConfigHelpData =
                     "at a time per process. An additional maximum of 256K per process may be used for zlib buffers."
         },
 
+        # CMD-SSH Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'cmd-ssh' =>
+        {
+            section => 'general',
+            summary =>
+                "Path to ssh client executable.",
+            description =>
+                "Use a specific SSH client when an alternate is desired or the ssh executable is not in \$PATH."
+        },
+
         # COMPRESS Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'compress' =>
@@ -423,6 +434,28 @@ my $oConfigHelpData =
             summary =>
                 "Level for file logging.",
             description =>
+                "The following log levels are supported:\n" .
+                "\n" .
+                "* off - No logging at all (not recommended)\n" .
+                "* error - Log only errors\n" .
+                "* warn - Log warnings and errors\n" .
+                "* info - Log info, warnings, and errors\n" .
+                "* detail - Log detail, info, warnings, and errors\n" .
+                "* debug - Log debug, detail, info, warnings, and errors\n" .
+                "* trace - Log trace (very verbose debugging), debug, info, warnings, and errors"
+        },
+
+        # LOG-LEVEL-STDERR Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'log-level-stderr' =>
+        {
+            section => 'log',
+            summary =>
+                "Level for stderr logging.",
+            description =>
+                "Specifies which log levels must will be output to stderr rather than stdout (specified by log-level-console). " .
+                    "The timestamp and process will not be output to stderr.\n" .
+                "\n" .
                 "The following log levels are supported:\n" .
                 "\n" .
                 "* off - No logging at all (not recommended)\n" .
@@ -747,6 +780,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -755,6 +789,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
@@ -782,6 +817,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -790,6 +826,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
@@ -819,6 +856,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-standby' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -853,6 +891,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'manifest-save-threshold' => 'section',
                 'neutral-umask' => 'section',
@@ -912,6 +951,7 @@ my $oConfigHelpData =
                 'backup-standby' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
@@ -925,6 +965,7 @@ my $oConfigHelpData =
                 'db-user' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
                 'online' => 'default',
@@ -948,6 +989,7 @@ my $oConfigHelpData =
             option =>
             {
                 'backup-host' => 'section',
+                'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
@@ -955,6 +997,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'repo-path' => 'section',
                 'retention-archive' => 'section',
@@ -1000,12 +1043,14 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
 
                 # OUTPUT Option Help
@@ -1043,6 +1088,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
@@ -1090,6 +1136,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
                 'process-max' => 'section',
@@ -1201,6 +1248,7 @@ my $oConfigHelpData =
                 'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
+                'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
@@ -1208,6 +1256,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
@@ -1232,6 +1281,7 @@ my $oConfigHelpData =
                 'backup-config' => 'section',
                 'backup-host' => 'section',
                 'backup-user' => 'section',
+                'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
@@ -1254,6 +1304,7 @@ my $oConfigHelpData =
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
+                'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
