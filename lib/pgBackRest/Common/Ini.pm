@@ -210,12 +210,8 @@ sub save
     $self->hash();
     iniSave($self->{strFileName}, $self->{oContent}, false, true);
 
-    # Indicate the file exists for objects that have the flag
-    if (defined($self->{bExists}))
-    {
-        $self->{bExists} = true;
-    }
-
+    # Indicate the file now exists
+    $self->{bExists} = true;
 }
 
 ####################################################################################################################################

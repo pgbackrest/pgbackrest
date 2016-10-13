@@ -1758,7 +1758,7 @@ sub backupTestRun
                  bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
-            my $bTestExtra = $iRun == 1;
+            my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
             $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestExtra});
@@ -1792,7 +1792,7 @@ sub backupTestRun
             $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
             $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
 
-            # Test invalid check command
+            # Test check command and stanza create
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bTestExtra)
             {
@@ -1923,6 +1923,27 @@ sub backupTestRun
 
                 # Restart the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+                # Stanza Create
+                #--------------------------------------------------------------------------------
+                if ($bHostBackup)
+                {
+                    # With data existing in the backup and archive directories, remove the info files
+                    # Remove the archive.info file
+                    executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+                    $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
+                                               {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID});
+
+                    # Remove the backup.info file
+                    executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+                    $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
+                                               {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
+
+                    # Remove the repo sub-directories to ensure they do not exist
+                    executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . "/*");
+
+                    $oHostBackup->stanzaCreate('verify success', {iTimeout => 5});
+                }
             }
 
             # Full backup
