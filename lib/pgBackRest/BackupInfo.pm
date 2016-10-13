@@ -159,7 +159,7 @@ sub validate
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
 
         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
-        # can't be moved.  This would also be true for the first move attempty in Backup->process();
+        # can't be moved.  This would also be true for the first move attempt in Backup->process();
 
         if (!$self->current($strBackup) && fileExists($strManifestFile))
         {
