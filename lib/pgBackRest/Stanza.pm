@@ -59,7 +59,6 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
-
     my $iResult;
 
     # Process stanza create
@@ -125,10 +124,11 @@ sub stanzaCreate
         $oFile->pathCreate(PATH_BACKUP_CLUSTER, undef, undef, true, true);
     }
 
-    # if the cluster backup path is empty then create the backup info file
+    # If the cluster backup path is empty then create the backup info file
     my @stryBackupList = fileList($oFile->pathGet(PATH_BACKUP_CLUSTER), undef, 'forward', true);
     my $strBackupInfo = &FILE_BACKUP_INFO;
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    
     if (!@stryBackupList)
     {
         # Create the backup.info file
@@ -149,7 +149,7 @@ sub stanzaCreate
 
         eval
         {
-            # check that the backup info file is valid for the current database of the stanza
+            # Check that the backup info file is valid for the current database of the stanza
             $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
             return true;
         }

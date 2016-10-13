@@ -1130,6 +1130,7 @@ my %oOptionRule =
             &CMD_INFO => true,
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
+            &CMD_STANZA_CREATE => true,
             &CMD_START => true,
             &CMD_STOP => true,
             &CMD_EXPIRE => true,

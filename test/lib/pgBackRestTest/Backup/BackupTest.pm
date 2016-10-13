@@ -1758,7 +1758,7 @@ sub backupTestRun
                  bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
-            my $bTestExtra = (($iRun == 1) || ($iRun == 7));
+            my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
             # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
             $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestExtra});

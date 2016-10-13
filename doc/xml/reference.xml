@@ -585,7 +585,7 @@
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
                 <option id="stanza" name="Stanza">
-                    <summary>Option stanza.</summary>
+                    <summary>Defines a stanza.</summary>
 
                     <text>A stanza is the configuration for a <postgres/> database cluster that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres database cluster and therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to be backed up.
 
@@ -959,11 +959,11 @@
                 </command-example-list>
             </command>
 
-            <!-- OPERATION - STANZA_CREATE COMMAND -->
+            <!-- OPERATION - STANZA-CREATE COMMAND -->
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
-                <text>Must be run on the backup host during <backrest/> installation. The <cmd>check</cmd> command will also be invoked if the <postgres/> database version is greater than or equal to 9.1.</text>
+                <text>Must be run during <backrest/> installation on the host where the repository is located. The <cmd>check</cmd> command will also be invoked if the <postgres/> database version is greater than or equal to 9.1.</text>
 
                 <command-example-list>
                     <command-example title="Create required stanza data">
