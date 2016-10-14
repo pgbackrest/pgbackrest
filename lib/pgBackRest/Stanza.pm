@@ -200,7 +200,6 @@ sub DESTROY
 ####################################################################################################################################
 # Process Stanza Commands
 ####################################################################################################################################
-
 sub process
 {
     my $self = shift;
@@ -249,129 +248,19 @@ sub stanzaCreate
         protocolGet(NONE)
     );
 
-    # Initialize the database object
-    my $oDb = new pgBackRest::Db(1);
-
-    # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control
-    # then this will error alerting the user to fix the pgbackrest.conf
-    $oDb->configValidate(optionGet(OPTION_DB_PATH));
-
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info(optionGet(OPTION_DB_PATH));
+    $self->dbInfoGet();
 
     # Initialize the result variables
     my $iResult = 0;
     my $strResultMessage = undef;
 
-    # Since restore points are only supported in PG>= 9.1 the check command may fail for older versions if there has been no write
-    # activity since the last log rotation. Therefore, manually create the files to be sure the backup and archive.info files
-    # get created. If they run the command twice, just check the files if the DB version is older than 9.1.
-
-    # If the backup path does not exist, create it
-    if (!fileExists($oFile->pathGet(PATH_BACKUP_CLUSTER)))
-    {
-        # Create the cluster backup path
-        $oFile->pathCreate(PATH_BACKUP_CLUSTER, undef, undef, true, true);
-    }
-
-    # If the cluster backup path is empty then create the backup info file
-    my @stryBackupList = fileList($oFile->pathGet(PATH_BACKUP_CLUSTER), undef, 'forward', true);
-    my $strBackupInfo = &FILE_BACKUP_INFO;
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
-
-    if (!@stryBackupList)
-    {
-        # Create the backup.info file
-        $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-        $oBackupInfo->save();
-    }
-    elsif (!grep(/^$strBackupInfo$/i, @stryBackupList))
-    {
-        $iResult = &ERROR_BACKUP_DIR_INVALID;
-        $strResultMessage = "the backup directory is not empty but the backup.info file is missing\n" .
-                            "HINT: Has the directory been copied from another location and the copy has not completed?"
-        #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
-    }
-    elsif ($strDbVersion < PG_VERSION_91)
-    {
-        # Turn off console logging to control when to display the error
-        logLevelSet(undef, OFF);
-
-        eval
-        {
-            # Check that the backup info file is valid for the current database of the stanza
-            $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-            return true;
-        }
-        or do
-        {
-            # Confess unhandled errors
-            if (!isException($EVAL_ERROR))
-            {
-                confess $EVAL_ERROR;
-            }
-
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
-        };
-
-        # Reset the console logging
-        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-    }
+    # Create the backup.info file if possible
+    my ($iResult, $strResultMessage) = createInfoFile($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO, ERROR_BACKUP_DIR_INVALID);
 
     if ($iResult == 0)
     {
-        # If the archive path does not exist, create it
-        if (!fileExists($oFile->pathGet(PATH_BACKUP_ARCHIVE)))
-        {
-            # Create the cluster archive path
-            $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
-        }
-
-        my @stryArchiveList = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), undef, 'forward', true);
-        my $strArchiveInfo = &ARCHIVE_INFO_FILE;
-        my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
-
-        if (!@stryArchiveList)
-        {
-            $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-            #TODO: need to remove the save in the archive.info check or have a default so it does not get created unless forced?
-            # $oArchiveInfo->save();
-        }
-        elsif (!grep(/^$strArchiveInfo/i, @stryArchiveList ))
-        {
-            $iResult = &ERROR_ARCHIVE_DIR_INVALID;
-            $strResultMessage = "the archive directory is not empty but the archive.info file is missing\n" .
-                                "HINT: Has the directory been copied from another location and the copy has not completed?"
-            #\n"."HINT: Use --force to force the archive.info to be created from the existing archive data in the directory.";
-        }
-        elsif ($strDbVersion < PG_VERSION_91)
-        {
-            # Turn off console logging to control when to display the error
-            logLevelSet(undef, OFF);
-
-            eval
-            {
-                # check that the archive info file is valid for the current database of the stanza
-                $oArchiveInfo->check($strDbVersion, $ullDbSysId);
-                return true;
-            }
-            or do
-            {
-                # Confess unhandled errors
-                if (!isException($EVAL_ERROR))
-                {
-                    confess $EVAL_ERROR;
-                }
-
-                # If this is a backrest error then capture the last code and message
-                $iResult = $EVAL_ERROR->code();
-                $strResultMessage = $EVAL_ERROR->message();
-            };
-
-            # Reset the console logging
-            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-        }
+        # Create the archive.info file if possible
+        ($iResult, $strResultMessage) = createInfoFile($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE, ERROR_ARCHIVE_DIR_INVALID);
     }
 
     # The DB function xlogSwitch checks for the version >= 9.1 and only performs the restore point if met so check would fail here
@@ -561,7 +450,7 @@ sub createInfoFile
     my $strResultMessage = undef;
 
     # If the info path does not exist, create it
-    if (!fileExists($strParentPath))
+    if (!fileExists($oFile->pathGet($strParentPath)))
     {
         # Create the cluster backup path
         $oFile->pathCreate($strParentPath, undef, undef, true, true);
@@ -578,8 +467,8 @@ sub createInfoFile
     {
         # Create the info file
         ($strType == 'backup')
-            ? $oInfo->check($self->{strDbVersion}, $self->{iControlVersion}, $self->{iCatalogVersion}, $self->{ullDbSysId})
-            : $oInfo->check($self->{strDbVersion}, $self->{ullDbSysId});
+            ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
+            : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
         $oInfo->save();
     }
     elsif (!grep(/^$strInfoFile/i, @stryFileList))
@@ -598,8 +487,8 @@ sub createInfoFile
         {
             # Check that the info file is valid for the current database of the stanza
             ($strType == 'backup')
-                ? $oInfo->check($self->{strDbVersion}, $self->{iControlVersion}, $self->{iCatalogVersion}, $self->{ullDbSysId})
-                : $oInfo->check($self->{strDbVersion}, $self->{ullDbSysId});
+                ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
+                : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
             return true;
         }
         or do
@@ -628,21 +517,24 @@ sub createInfoFile
     );
 }
 
-sub getDbInfo
+sub dbInfoGet
 {
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->getDbInfo');
 
+    my $oDb = $self->{oDb};
+
     # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control
     # then this will error alerting the user to fix the pgbackrest.conf
     $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
 
-    ($self->{oDb}->{strDbVersion}, $self->{oDb}->{iControlVersion}, $self->{oDb}->{iCatalogVersion}, $self->{oDb}->{ullDbSysId})
+    (${$oDb}{strDbVersion}, ${$oDb}{iControlVersion}, ${$oDb}{oDb}{iCatalogVersion}, ${$oDb}{ullDbSysId})
         = $self->{oDb}->info(optionGet(OPTION_DB_PATH));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }
+
 1;

@@ -131,11 +131,12 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Created <cmd>stanza-create</cmd> in preperation for <cmd>stanza-upgrade</cmd>.</p>
+                        <p>Added the <cmd>stanza-create</cmd> command to formalize creation of stanzas in the repository.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
         </release>
+
         <release date="2016-10-10" version="1.09" title="9.6 Support, Configurability, and Bug Fixes">
             <release-core-list>
                 <release-bug-list>
