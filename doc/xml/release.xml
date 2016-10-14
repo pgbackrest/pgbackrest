@@ -123,6 +123,20 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.10dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added the <cmd>stanza-create</cmd> command to formalize creation of stanzas in the repository.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+        </release>
+
         <release date="2016-10-10" version="1.09" title="9.6 Support, Configurability, and Bug Fixes">
             <release-core-list>
                 <release-bug-list>

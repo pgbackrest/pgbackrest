@@ -680,7 +680,7 @@ my $oConfigHelpData =
         'stanza' =>
         {
             summary =>
-                "Command stanza.",
+                "Defines a stanza.",
             description =>
                 "A stanza is the configuration for a PostgreSQL database cluster that defines where it is located, how it will " .
                     "be backed up, archiving options, etc. Most db servers will only have one Postgres database cluster and " .
@@ -1228,6 +1228,46 @@ my $oConfigHelpData =
                             "segments present in pg_xlog. Provide the required WAL segments or use the archive-copy setting to " .
                             "include them with the backup."
                 }
+            }
+        },
+
+        # STANZA-CREATE Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'stanza-create' =>
+        {
+            summary =>
+                "Create the required stanza data.",
+            description =>
+                "Must be run during pgBackRest installation on the host where the repository is located. The check command will " .
+                    "also be invoked if the PostgreSQL database version is greater than or equal to 9.1.",
+
+            option =>
+            {
+                'archive-timeout' => 'section',
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
+                'backup-host' => 'section',
+                'backup-user' => 'section',
+                'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
+                'compress-level' => 'section',
+                'compress-level-network' => 'section',
+                'config' => 'default',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
+                'db-host' => 'section',
+                'db-path' => 'section',
+                'db-port' => 'section',
+                'db-socket-path' => 'section',
+                'db-timeout' => 'section',
+                'db-user' => 'section',
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
+                'log-path' => 'section',
+                'neutral-umask' => 'section',
+                'protocol-timeout' => 'section',
+                'repo-path' => 'section',
+                'stanza' => 'default'
             }
         },
 

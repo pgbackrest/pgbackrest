@@ -610,6 +610,44 @@ sub info
 }
 
 ####################################################################################################################################
+# stanzaCreate
+####################################################################################################################################
+sub stanzaCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strComment,
+        $oParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->check', \@_,
+            {name => 'strComment'},
+            {name => 'oParam', required => false},
+        );
+
+    $strComment =
+        'stanza-create ' . $self->stanza() . ' - ' . $strComment .
+        ' (' . $self->nameGet() . ' host)';
+    &log(INFO, "    $strComment");
+
+    $self->executeSimple(
+        $self->backrestExe() .
+        ' --config=' . $self->backrestConfig() .
+        (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
+        ' --stanza=' . $self->stanza() . ' stanza-create',
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
+         bLogOutput => $self->synthetic()});
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # start
 ####################################################################################################################################
 sub start

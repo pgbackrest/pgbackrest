@@ -209,6 +209,9 @@ sub save
 
     $self->hash();
     iniSave($self->{strFileName}, $self->{oContent}, false, true);
+
+    # Indicate the file now exists
+    $self->{bExists} = true;
 }
 
 ####################################################################################################################################
