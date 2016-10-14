@@ -41,12 +41,31 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->new');
 
+    # Initialize the database object
+    $self->{oDb} = new pgBackRest::Db(1);
+
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# DESTROY
+####################################################################################################################################
+sub DESTROY
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
+
+    undef($self->{oDb});
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 # # GOAL: to update the archive.info and backup.info files to the new database version  (the archive PGversion dir should be created automatically)
@@ -518,4 +537,112 @@ sub stanzaUpgrade
     return logDebugReturn($strOperation);
 }
 
+sub createInfoFile
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strParentPath
+        $strInfoFile
+        $iErrorCode
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->checkInfoFile', \@_,
+            {name => 'strParentPath'},
+            {name => 'strInfoFile'},
+            {name => 'iErrorCode'}
+        );
+
+    my $iResult = 0;
+    my $strResultMessage = undef;
+
+    # If the info path does not exist, create it
+    if (!fileExists($strParentPath))
+    {
+        # Create the cluster backup path
+        $oFile->pathCreate($strParentPath, undef, undef, true, true);
+    }
+
+    # If the cluster backup path is empty then create the backup info file
+    my @stryFileList = fileList($strParentPath, undef, 'forward', true);
+    my $oInfo = undef
+
+    $oInfo = ($strType == 'backup') ? new pgBackRest::BackupInfo($strParentPath)
+                                    : new pgBackRest::ArchiveInfo($strParentPath, false);
+
+    if (!@stryFileList)
+    {
+        # Create the info file
+        ($strType == 'backup')
+            ? $oInfo->check($self->{strDbVersion}, $self->{iControlVersion}, $self->{iCatalogVersion}, $self->{ullDbSysId})
+            : $oInfo->check($self->{strDbVersion}, $self->{ullDbSysId});
+        $oInfo->save();
+    }
+    elsif (!grep(/^$strInfoFile/i, @stryFileList))
+    {
+        $iResult = $iErrorCode;
+        $strResultMessage = "the ${strType} directory is not empty but the ${strInfoFile} file is missing\n" .
+                            "HINT: Has the directory been copied from another location and the copy has not completed?"
+        #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
+    }
+    elsif ($self->{strDbVersion} < PG_VERSION_91)
+    {
+        # Turn off console logging to control when to display the error
+        logLevelSet(undef, OFF);
+
+        eval
+        {
+            # Check that the info file is valid for the current database of the stanza
+            ($strType == 'backup')
+                ? $oInfo->check($self->{strDbVersion}, $self->{iControlVersion}, $self->{iCatalogVersion}, $self->{ullDbSysId})
+                : $oInfo->check($self->{strDbVersion}, $self->{ullDbSysId});
+            return true;
+        }
+        or do
+        {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
+        };
+
+        # Reset the console logging
+        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $iResult, trace => true},
+        {name => 'strResultMessage', value => $strResultMessage, trace => true}
+    );
+}
+
+sub getDbInfo
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getDbInfo');
+
+    # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control
+    # then this will error alerting the user to fix the pgbackrest.conf
+    $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
+
+    ($self->{oDb}->{strDbVersion}, $self->{oDb}->{iControlVersion}, $self->{oDb}->{iCatalogVersion}, $self->{oDb}->{ullDbSysId})
+        = $self->{oDb}->info(optionGet(OPTION_DB_PATH));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 1;
