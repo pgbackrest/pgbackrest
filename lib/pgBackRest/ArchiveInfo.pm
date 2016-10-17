@@ -35,7 +35,7 @@ use constant ARCHIVE_INFO_FILE                                      => 'archive.
     our @EXPORT = qw(ARCHIVE_INFO_FILE);
 
 ####################################################################################################################################
-# Backup info Constants
+# Archive info Constants
 ####################################################################################################################################
 use constant INFO_ARCHIVE_SECTION_DB                                => INFO_BACKUP_SECTION_DB;
     push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
@@ -48,6 +48,15 @@ use constant INFO_ARCHIVE_KEY_DB_ID                                 => INFO_BACK
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_ID);
 use constant INFO_ARCHIVE_KEY_DB_SYSTEM_ID                          => MANIFEST_KEY_SYSTEM_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
+
+####################################################################################################################################
+# Global variables
+####################################################################################################################################
+my $strArchiveInfoMissingMsg = ARCHIVE_INFO_FILE . " does not exist but is required to get WAL segments\n" .
+             "HINT: is archive_command configured in postgresql.conf?\n" .
+             "HINT: has a stanza-create been performed?\n " .
+             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving" .
+             " scheme.";
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -100,7 +109,7 @@ sub new
 # check
 #
 # Check archive info file and make sure it is compatible with the current version of the database for the stanza. If the file does
-# not exist it will be created with the values passed.
+# not exist an error will occur.
 ####################################################################################################################################
 sub check
 {
@@ -120,32 +129,27 @@ sub check
             {name => 'ullDbSysId'}
         );
 
-    if ($self->test(INFO_ARCHIVE_SECTION_DB))
+    # Confirm the info file exists
+    $self->confirmExists();
+
+    my $strError = undef;
+
+    if (!$self->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion))
     {
-        my $strError = undef;
-
-        if (!$self->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersion))
-        {
-            $strError = "WAL segment version ${strDbVersion} does not match archive version " .
-                        $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION);
-        }
-
-        if (!$self->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId))
-        {
-            $strError = (defined($strError) ? ($strError . "\n") : "") .
-                        "WAL segment system-id ${ullDbSysId} does not match archive system-id " .
-                        $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
-        }
-
-        if (defined($strError))
-        {
-            confess &log(ERROR, "${strError}\nHINT: are you archiving to the correct stanza?", ERROR_ARCHIVE_MISMATCH);
-        }
+        $strError = "WAL segment version ${strDbVersion} does not match archive version " .
+                    $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION);
     }
-    # Else create the info file from the parameters passed which are usually derived from the current WAL segment
-    else
+
+    if (!$self->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysId))
     {
-        $self->fileCreateUpdate($strDbVersion, $ullDbSysId, $self->getDbHistoryId());
+        $strError = (defined($strError) ? ($strError . "\n") : "") .
+                    "WAL segment system-id ${ullDbSysId} does not match archive system-id " .
+                    $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
+    }
+
+    if (defined($strError))
+    {
+        confess &log(ERROR, "${strError}\nHINT: are you archiving to the correct stanza?", ERROR_ARCHIVE_MISMATCH);
     }
 
     # Return from function and log return values if any
@@ -178,6 +182,46 @@ sub archiveId
 }
 
 ####################################################################################################################################
+# fileCreate
+#
+# Creates the archive.info file.
+####################################################################################################################################
+sub fileCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->fileCreateUpdate', \@_,
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'},
+        );
+
+    if (!$self->{bExists})
+    {
+        # Fill db section and db history section
+        $self->setDb($strDbVersion, $ullDbSysId, $self->getDbHistoryId(false));
+
+        $self->save();
+    }
+    else
+    {
+        # If file exists, then WARN
+        &log(WARN, $self->{strArchiveClusterPath} . "/" . ARCHIVE_INFO_FILE . " already exists");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # getDbHistoryId
 #
 # Get the db history ID
@@ -187,7 +231,21 @@ sub getDbHistoryId
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getDbHistoryId');
+    my
+    (
+        $strOperation,
+        $bFileRequired,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->getDbHistoryId',
+            {name => 'bFileRequired', default => true},
+        );
+
+    # Confirm the info file exists if it is required
+    if ($bFileRequired)
+    {
+        $self->confirmExists();
+    }
 
     # If the DB section does not exist, initialize the history to one, else return the latest ID
     my $iDbHistoryId = (!$self->test(INFO_ARCHIVE_SECTION_DB))
@@ -240,121 +298,16 @@ sub setDb
 }
 
 ####################################################################################################################################
-# fileCreateUpdate
-#
-# Creates or updates the archive.info file.
+# Helper functions
 ####################################################################################################################################
-sub fileCreateUpdate
+sub confirmExists
 {
     my $self = shift;
 
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strDbVersion,
-        $ullDbSysId,
-        $iDbHistoryId
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->fileCreateUpdate', \@_,
-            {name => 'strDbVersion'},
-            {name => 'ullDbSysId'},
-            {name => 'iDbHistoryId'}
-        );
-
-    # Fill db section and db history section
-    $self->setDb($strDbVersion, $ullDbSysId, $iDbHistoryId);
-
-    $self->save();
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# validate
-#
-# Determines the existence of the archive.info file and if it is missing but subdirectories exist, it will attempt to recreate it.
-####################################################################################################################################
-sub validate
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strCompressExtension,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->validate', \@_,
-            {name => 'strCompressExtension'}
-        );
-
-# CSHANG TODO:
-# *  get a list of the directories in the archive/<stanza> -- the above regex gets this list and nothing more:
-#     DIR= 9.4-1
-#     DIR= 9.5-10
-#     DIR= 10.1-3
-# * split the directories to version and history
-# * unpack the first file into memory and extract the system id
-# * update the archive info file if necessary (figure out criteria for doing so)
-
-    # If the archive directory does not exist, it will throw and error and exit, but if it does exist and the archive.info file is
-    # missing then create a valid archive info from the directories.
-    if (fileExists($self->{strArchiveClusterPath}) && !$self->{bExists})
+    if (!$self->test(INFO_ARCHIVE_SECTION_DB) || !$self->{bExists})
     {
-        # Get the upper level directory names, e.g. 9.4-1
-        foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, '^[0-9]+\.[0-9]+-[0-9]+$'))
-        {
-            # Get the db-version and db-id (history id) from the directory name
-            my ($strDbVersion, $strDbId) = split("-", $strVersionDir);
-
-# CSHANG can there be 000000010000000000000001-220ff32d22aa232cb1904504871678045a786cbe.SOME_OTHER_EXTENTION? I saw something about partial but not sure what that's all about. Also, what if async archiving is on? the WAL goes to a spool dir first before getting to the dir, so if we did an upgrade and the archive.info was missing an archiving is happening but not to us yet....
-            # Get the name of the first archive directory
-            my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", '^[0-F]{16}$'))[0];
-
-#CSHANG or should I be using "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"
-            # Get the name of the first archive file
-            my $strArchiveFile =
-                (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",'^[0-F]{24}-[0-f]{40}.*'))[0];
-
-            # Get the full path for the file
-            my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
-
-# CSHANG I'm not sure I like this because it appears we can't just read out the first X number of bytes. 
-            my $tBlock;
-            if ($strArchiveFile =~ "\.$strCompressExtension")
-            {
-                # can't limit with InputLength - it requires you know the size of the compressed data stream
-                # gunzip $strArchiveFilePath => \$tBlock, InputLength => 100
-                #     or confess "gunzip failed: $GunzipError\n";
-                gunzip $strArchiveFilePath => \$tBlock
-                    or confess "gunzip failed: $GunzipError\n";
-            }
-
-# CSHANG may need to put these constants in a common location
-# my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
-            my $iSysIdOffset = $strDbVersion >= '9.3' ? 20 : 12;
-            my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
-
-            if (!defined($ullDbSysId))
-            {
-                confess &log(ERROR, "unable to read database system identifier");
-            }
-
-    print "strDbVersion=$strDbVersion, ullDbSysId=$ullDbSysId, strDbId=$strDbId\n";
-
-            $self->fileCreateUpdate($strDbVersion, $ullDbSysId, $strDbId);
-        }
+        confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
     }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
-
 
 1;

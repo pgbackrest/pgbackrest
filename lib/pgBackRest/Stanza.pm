@@ -121,12 +121,12 @@ sub stanzaCreate
 
     $self->dbInfoGet();
 
-    # Create the backup.info file if possible
+    # Create the backup.info file
     my ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO, ERROR_BACKUP_DIR_INVALID);
 
     if ($iResult == 0)
     {
-        # Create the archive.info file if possible
+        # Create the archive.info file
         ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE, ERROR_ARCHIVE_DIR_INVALID);
     }
 
@@ -189,22 +189,22 @@ sub createInfoFile
     # If the info path does not exist, create it
     if (!fileExists($strParentPath))
     {
-        # Create the cluster backup path
+        # Create the cluster repo path
         $oFile->pathCreate($strPathType, undef, undef, true, true);
     }
 
-    # If the cluster backup path is empty then create the backup info file
+    # If the cluster repo path is empty then create the backup info file
     my @stryFileList = fileList($strParentPath, undef, 'forward', true);
-    my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath)
+    my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath, false, false)
                                                       : new pgBackRest::ArchiveInfo($strParentPath, false);
 
     if (!@stryFileList)
     {
-        # Create the info file
+        # Create and save the info file
         ($strPathType eq PATH_BACKUP_CLUSTER)
-            ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
-            : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
-        $oInfo->save();
+            ? $oInfo->fileCreate($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+                                 $self->{oDb}{ullDbSysId})
+            : $oInfo->fileCreate($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
     }
     elsif (!grep(/^$strInfoFile/i, @stryFileList))
     {
