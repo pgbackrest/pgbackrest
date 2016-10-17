@@ -14,6 +14,7 @@ use File::Basename qw(dirname basename);
 use File::stat;
 
 use lib dirname($0);
+use pgBackRest::ArchiveInfo;
 use pgBackRest::BackupCommon;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -22,6 +23,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # File/path constants
@@ -152,8 +155,6 @@ sub validate
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->validate');
 
     # Check for backups that are not in FILE_BACKUP_INFO
-    my $strPattern = backupRegExpGet(true, true, true);
-
     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
     {
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
@@ -165,6 +166,7 @@ sub validate
         {
             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
+#CSHANG This add updates the $oContent and saves the data to the backup.info file but then how come removing backups below does NOT save to the backup.info file?
             $self->add($oManifest);
         }
     }
@@ -196,7 +198,7 @@ sub validate
 ####################################################################################################################################
 # check
 #
-# Check db info and make sure it matches what is already in the repository.
+# Check db info and make sure it matches what is already in the repository. Return the db-id if everything matches.
 ####################################################################################################################################
 sub check
 {
@@ -220,28 +222,20 @@ sub check
             {name => 'ullDbSysId', trace => true}
         );
 
-    # Initialize history id
-    my $iDbHistoryId = 1;
+    # Initialize or get the latest history id
+    my $iDbHistoryId = $self->getDbHistoryId();
 
     if (!$self->test(INFO_BACKUP_SECTION_DB))
     {
-        # Fill db section
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId);
-        $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId);
-
-        # Fill db history
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
-        $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
+        # Fill db section and db history section
+        $self->setDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $iDbHistoryId);
     }
     else
     {
-        if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId) ||
-            !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion))
+        my ($bVersionSystemMatch, $bCatalogControlMatch) =
+            $self->checkSectionDb($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+
+        if (!$bVersionSystemMatch)
         {
             confess &log(ERROR, "database version = ${strDbVersion}, system-id ${ullDbSysId} does not match backup version = " .
                                 $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION) . ", system-id = " .
@@ -249,8 +243,7 @@ sub check
                                 "HINT: is this the correct stanza?", ERROR_BACKUP_MISMATCH);
         }
 
-        if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion) ||
-            !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion))
+        if (!$bCatalogControlMatch)
         {
             confess &log(ERROR, "database control-version = ${iControlVersion}, catalog-version ${iCatalogVersion}" .
                                 " does not match backup control-version = " .
@@ -258,8 +251,6 @@ sub check
                                 $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG) . "\n" .
                                 "HINT: this may be a symptom of database or repository corruption!", ERROR_BACKUP_MISMATCH);
         }
-
-        $iDbHistoryId = $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID);
     }
 
     # Return from function and log return values if any
@@ -267,6 +258,57 @@ sub check
     (
         $strOperation,
         {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# checkSectionDb
+#
+# Check db section and return whether the data matches what was passed in or not.
+####################################################################################################################################
+sub checkSectionDb
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $iControlVersion,
+        $iCatalogVersion,
+        $ullDbSysId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->checkSectionDb', \@_,
+            {name => 'strDbVersion', trace => true},
+            {name => 'iControlVersion', trace => true},
+            {name => 'iCatalogVersion', trace => true},
+            {name => 'ullDbSysId', trace => true}
+        );
+
+    my $bVersionSystemMatch = true;
+    my $bCatalogControlMatch = true;
+
+    if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId) ||
+        !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion))
+    {
+        $bVersionSystemMatch = false;
+    }
+
+    if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion) ||
+        !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion))
+    {
+        $bCatalogControlMatch = false;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bVersionSystemMatch', value => $bVersionSystemMatch},
+        {name => 'bCatalogControlMatch', value => $bCatalogControlMatch}
     );
 }
 
@@ -294,13 +336,17 @@ sub add
     # Get the backup label
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
+    # Get the DB section info
+    my $strDbVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
+    my $iControlVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL);
+    my $iCatalogVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG);
+    my $ullDbSysId = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
+
+# CSHANG - THIS SECTION GOES AWAY - we no longer want to do this dynamically. We should instead check that the db id exists in the history and if not then ERROR and tell them to maybe run a repair on the stanza (--force or something)
     # If the db section has not been created then create it
     if (!$self->test(INFO_BACKUP_SECTION_DB))
     {
-        $self->check($oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION),
-                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
-                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG),
-                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID));
+        $self->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
     }
 
     # Calculate backup sizes and references
@@ -518,8 +564,78 @@ sub delete
             __PACKAGE__ . '->delete', \@_,
             {name => 'strBackupLabel'}
         );
-
+# CSHANG this is in Ini.pm and it DOES NOT save the info file - it only delete's from the $oContent so we're not actually deleting from the backup.info file
     $self->remove(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# getDbHistoryId
+#
+# Get the db history ID
+####################################################################################################################################
+sub getDbHistoryId
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->getDbHistoryId');
+
+    # If the DB section does not exist, initialize the history to one, else return the latest ID
+    my $iDbHistoryId = (!$self->test(INFO_BACKUP_SECTION_DB))
+                        ? 1 : $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# setDb
+#
+# Set the db and db:history sections.
+####################################################################################################################################
+sub setDb
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $iControlVersion,
+        $iCatalogVersion,
+        $ullDbSysId,
+        $iDbHistoryId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->setDb', \@_,
+            {name => 'strDbVersion', trace => true},
+            {name => 'iControlVersion', trace => true},
+            {name => 'iCatalogVersion', trace => true},
+            {name => 'ullDbSysId', trace => true},
+            {name => 'iDbHistoryId', trace => true}
+        );
+
+    # Fill db section
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId);
+    $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId);
+
+    # Fill db history
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
+    $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

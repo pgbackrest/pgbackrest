@@ -60,6 +60,9 @@ use constant CMD_RESTORE                                            => 'restore'
 use constant CMD_STANZA_CREATE                                      => 'stanza-create';
     push @EXPORT, qw(CMD_STANZA_CREATE);
     $oCommandHash{&CMD_STANZA_CREATE} = true;
+use constant CMD_STANZA_UPGRADE                                     => 'stanza-upgrade';
+    push @EXPORT, qw(CMD_STANZA_UPGRADE);
+    $oCommandHash{&CMD_STANZA_UPGRADE} = true;
 use constant CMD_START                                              => 'start';
     push @EXPORT, qw(CMD_START);
     $oCommandHash{&CMD_START} = true;
@@ -547,6 +550,8 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 # 	        &CMD_CHECK => true,
 #   false - used in conjuntion with OPTION_RULE_DEFAULT so the user cannot override this option. If the option is provided for the
 #           command by the user, it will be ignored and the default will be used.
+#   NOTE: If the option (A) has a dependency on another option (B) then the CMD_ must also be specified in the other option (B),
+#         else it will still error on the option (A).
 #
 # OPTION_RULE_REQUIRED:
 #   In global section:
@@ -570,7 +575,8 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 #   The option can be negated with "no" e.g. --no-lock.
 #
 # OPTION_RULE_DEPEND:
-#   Specify the dependencies this option has on another option.
+#   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
+#   dependent option(s).
 #   OPTION_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
 #
 # OPTION_RULE_ALLOW_LIST:
@@ -597,8 +603,9 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
-            &CMD_STOP => true
+            &CMD_STOP => true,
         }
     },
 
@@ -721,6 +728,10 @@ my %oOptionRule =
             {
                 &OPTION_RULE_REQUIRED => true
             },
+            &CMD_STANZA_UPGRADE =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
             &CMD_START =>
             {
                 &OPTION_RULE_REQUIRED => false
@@ -728,7 +739,7 @@ my %oOptionRule =
             &CMD_STOP =>
             {
                 &OPTION_RULE_REQUIRED => false
-            }
+            },
         }
     },
 
@@ -992,6 +1003,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1013,7 +1025,8 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_DB_TIMEOUT =>
@@ -1034,7 +1047,8 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => false,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_COMPRESS =>
@@ -1048,8 +1062,9 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_EXPIRE => false,
-            &CMD_RESTORE => true
-        }
+            &CMD_RESTORE => true,
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_COMPRESS_LEVEL =>
@@ -1070,7 +1085,8 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_COMPRESS_LEVEL_NETWORK =>
@@ -1091,7 +1107,8 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_NEUTRAL_UMASK =>
@@ -1111,9 +1128,10 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => false,
-            &CMD_STOP => false
-        }
+            &CMD_STOP => false,
+        },
     },
 
     &OPTION_CMD_SSH =>
@@ -1147,13 +1165,13 @@ my %oOptionRule =
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
+            &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_START => true,
             &CMD_STOP => true,
-            &CMD_EXPIRE => true
         },
     },
 
@@ -1174,6 +1192,7 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1197,7 +1216,8 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_REPO_PATH =>
@@ -1217,6 +1237,7 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1279,9 +1300,10 @@ my %oOptionRule =
             &CMD_INFO => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
-            &CMD_STOP => true
-        }
+            &CMD_STOP => true,
+        },
     },
 
     &OPTION_LOG_LEVEL_FILE =>
@@ -1309,9 +1331,10 @@ my %oOptionRule =
             &CMD_INFO => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
-            &CMD_STOP => true
-        }
+            &CMD_STOP => true,
+        },
     },
 
     &OPTION_LOG_LEVEL_STDERR =>
@@ -1419,6 +1442,7 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1443,6 +1467,7 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1468,6 +1493,7 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1500,6 +1526,7 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1607,7 +1634,7 @@ my %oOptionRule =
         &OPTION_RULE_COMMAND =>
         {
             &CMD_BACKUP => true,
-            &CMD_EXPIRE => true
+            &CMD_EXPIRE => true,
         }
     },
 
@@ -1719,6 +1746,7 @@ my %oOptionRule =
             &CMD_EXPIRE => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1741,6 +1769,7 @@ my %oOptionRule =
             &CMD_EXPIRE => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1763,6 +1792,7 @@ my %oOptionRule =
             &CMD_EXPIRE => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         }
@@ -1789,6 +1819,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1804,7 +1835,8 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_REMOTE => true,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_DB_SOCKET_PATH =>
@@ -1820,7 +1852,8 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_STANZA_CREATE => true,
-        }
+            &CMD_STANZA_UPGRADE => true,
+        },
     },
 
     &OPTION_DB_USER =>
@@ -1835,6 +1868,7 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>
@@ -2183,6 +2217,7 @@ sub optionValidate
             }
 
             # Determine if an option is valid for a command
+# CSHANG: This just says does the CMD_ exist under OPTION_RULE_COMMAND - so it doesn't care if true/false or has more values
             if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
             {
                 $oOption{$strOption}{valid} = false;
@@ -2193,11 +2228,12 @@ sub optionValidate
             $oOption{$strOption}{valid} = true;
 
             # Store the option value
+#CSHANG so strValue will be set to the value from the command line so if --stanza=demo then strValue will be demo
             my $strValue = optionValueGet($strOption, $oOptionTest);
 
             # Check to see if an option can be negated.  Make sure that it is not set and negated at the same time.
             my $bNegate = false;
-
+#CSHANG if we're using stanza, then this is skipped
             if (defined($oOptionRule{$strOption}{&OPTION_RULE_NEGATE}) && $oOptionRule{$strOption}{&OPTION_RULE_NEGATE})
             {
                 $bNegate = defined($$oOptionTest{'no-' . $strOption});
@@ -2214,16 +2250,18 @@ sub optionValidate
             }
 
             # If the command has rules store them for later evaluation
+#CSHANG so this may be --stanza option for the CHECK command but it will return the actual hash (&OPTION_RULE_REQUIRED => true) if the construct is, say CMD_CHECK => {&OPTION_RULE_REQUIRED => true} but if it is not a hash, like CMD_CHECK => true then it returns undef.
             my $oCommandRule = optionCommandRule($strOption, $strCommand);
 
             # Check dependency for the command then for the option
             my $bDependResolved = true;
+#CSHANG if $oCommandRule = &OPTION_RULE_REQUIRED => true, then it is defined and oDepend in this case will be undefined
             my $oDepend = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_DEPEND} :
                                                    $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
             my $strDependOption;
             my $strDependValue;
             my $strDependType;
-
+#CSHANG since oDepend is undef, we bypass this
             if (defined($oDepend))
             {
                 # Check if the depend option has a value
@@ -2259,7 +2297,7 @@ sub optionValidate
                     $strDependType = 'list';
                 }
             }
-
+#CSHANG so strValue=demo is defined so bypass, but if it has not been
             # If the option value is undefined and not negated, see if it can be loaded from the config file
             if (!defined($strValue) && !$bNegate && $strOption ne OPTION_CONFIG &&
                 $oOptionRule{$strOption}{&OPTION_RULE_SECTION} && $bDependResolved)
@@ -2401,7 +2439,7 @@ sub optionValidate
                     }
                 }
             }
-
+#CSHANG oDepend is undef so bypass
             if (defined($oDepend) && !$bDependResolved && defined($strValue))
             {
                 my $strError = "option '${strOption}' not valid without option ";
@@ -2442,7 +2480,7 @@ sub optionValidate
                     confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
                 }
             }
-
+# CSHANG strValue=demo so check the types but if it was empty we'd jump to the elsif
             # Is the option defined?
             if (defined($strValue))
             {
@@ -2475,7 +2513,7 @@ sub optionValidate
                     !$bError
                         or confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
                 }
-
+# CSHANG oAllow will be undef
                 # Process an allow list for the command then for the option
                 my $oAllow = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_ALLOW_LIST} :
                                                       $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_LIST};
@@ -2484,7 +2522,7 @@ sub optionValidate
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
                 }
-
+#CSHANG Again, oAllow will be undef
                 # Process an allow range for the command then for the option
                 $oAllow = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_ALLOW_RANGE} :
                                                      $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE};
@@ -2493,7 +2531,7 @@ sub optionValidate
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_RANGE);
                 }
-
+#CSHANG in our example OPTION_RULE_TYPE is string, so bypass
                 # Set option value
                 if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH && ref($strValue) eq 'ARRAY')
                 {
@@ -2538,6 +2576,7 @@ sub optionValidate
                 }
                 else
                 {
+# CSHANG and here we are finally setting $oOption{stanza}{value}=demo
                     $oOption{$strOption}{value} = $strValue;
                 }
 
@@ -2547,6 +2586,7 @@ sub optionValidate
                     $oOption{$strOption}{source} = SOURCE_PARAM;
                 }
             }
+#CSHANG $bDependResolved is true, the $oOptionRule{stanza}{&OPTION_RULE_COMMAND} is set and it is a hash
             # Else try to set a default
             elsif ($bDependResolved &&
                    (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
