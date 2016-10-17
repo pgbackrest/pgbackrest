@@ -60,9 +60,6 @@ use constant CMD_RESTORE                                            => 'restore'
 use constant CMD_STANZA_CREATE                                      => 'stanza-create';
     push @EXPORT, qw(CMD_STANZA_CREATE);
     $oCommandHash{&CMD_STANZA_CREATE} = true;
-use constant CMD_STANZA_UPGRADE                                     => 'stanza-upgrade';
-    push @EXPORT, qw(CMD_STANZA_UPGRADE);
-    $oCommandHash{&CMD_STANZA_UPGRADE} = true;
 use constant CMD_START                                              => 'start';
     push @EXPORT, qw(CMD_START);
     $oCommandHash{&CMD_START} = true;
@@ -603,7 +600,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         }
@@ -725,10 +721,6 @@ my %oOptionRule =
                 &OPTION_RULE_REQUIRED => true
             },
             &CMD_STANZA_CREATE =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_STANZA_UPGRADE =>
             {
                 &OPTION_RULE_REQUIRED => true
             },
@@ -1003,7 +995,6 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1025,7 +1016,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1047,7 +1037,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => false,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1063,7 +1052,6 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_EXPIRE => false,
             &CMD_RESTORE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1085,7 +1073,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1107,7 +1094,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1128,7 +1114,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => false,
             &CMD_STOP => false,
         },
@@ -1192,7 +1177,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1216,7 +1200,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1237,7 +1220,6 @@ my %oOptionRule =
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1300,7 +1282,6 @@ my %oOptionRule =
             &CMD_INFO => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1331,7 +1312,6 @@ my %oOptionRule =
             &CMD_INFO => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1442,7 +1422,6 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1467,7 +1446,6 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1493,7 +1471,6 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1526,7 +1503,6 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1746,7 +1722,6 @@ my %oOptionRule =
             &CMD_EXPIRE => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1769,7 +1744,6 @@ my %oOptionRule =
             &CMD_EXPIRE => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
@@ -1792,7 +1766,6 @@ my %oOptionRule =
             &CMD_EXPIRE => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         }
@@ -1819,7 +1792,6 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1835,7 +1807,6 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_REMOTE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1852,7 +1823,6 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
     },
 
@@ -1868,7 +1838,6 @@ my %oOptionRule =
             &CMD_CHECK => true,
             &CMD_LOCAL => true,
             &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
         },
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_DEPEND =>

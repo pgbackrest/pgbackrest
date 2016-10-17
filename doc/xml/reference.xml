@@ -976,22 +976,6 @@
                 </command-example-list>
             </command>
 
-            <!-- OPERATION - STANZA-UPGRADE COMMAND -->
-            <command id="stanza-upgrade" name="Stanza Upgrade">
-                <summary>CSHANG -TODO</summary>
-
-                <text>CSHANG -TODO</text>
-
-                <command-example-list>
-                    <command-example title="Upgrade a stanza">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db stanza-upgrade
-                        </code-block>
-
-                        CSHANG -TODO</text>
-                    </command-example>
-                </command-example-list>
-            </command>
         </command-list>
     </operation>
 </doc>
