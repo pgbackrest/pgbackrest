@@ -541,7 +541,7 @@ sub fileCreate
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->fileCreateUpdate', \@_,
+            __PACKAGE__ . '->fileCreate', \@_,
             {name => 'strDbVersion'},
             {name => 'iControlVersion'},
             {name => 'iCatalogVersion'},

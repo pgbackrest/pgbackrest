@@ -1240,7 +1240,7 @@ sub check
     {
         &log(ERROR, $strResultMessage, $iResult);
         &log(WARN,
-            "WAL segment ${strWalSegment} did not reach the archive:\n" .
+            "WAL segment ${strWalSegment} did not reach the archive ".$oFile->pathGet(PATH_BACKUP_ARCHIVE)." :\n" .
             "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
             "HINT: Check the PostreSQL server log for errors.");
     }

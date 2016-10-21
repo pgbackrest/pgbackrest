@@ -653,6 +653,9 @@ sub backupStart
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
     {
+# CSHANG
+# my $strQuery = $self->executeSqlOne("select pg_stat_activity.query from pg_locks JOIN pg_stat_activity on pg_locks.pid = pg_stat_activity.pid WHERE pg_locks.locktype = 'advisory' and granted=true");
+# confess "  QUERY is ${strQuery}";
         confess &log(ERROR, 'unable to acquire ' . BACKREST_NAME . " advisory lock\n" .
                             'HINT: is another ' . BACKREST_NAME . ' backup already running on this cluster?', ERROR_LOCK_ACQUIRE);
     }

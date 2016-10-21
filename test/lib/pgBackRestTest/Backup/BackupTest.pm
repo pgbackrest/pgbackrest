@@ -627,7 +627,7 @@ sub backupTestRun
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
-
+#CSHANG Need to look at this function - why are we needing this?
             $oExpireTest->stanzaCreate($strStanza, PG_VERSION_92);
             use constant SECONDS_PER_DAY => 86400;
             my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
@@ -1760,8 +1760,7 @@ sub backupTestRun
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
-            # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
-            $oHostDbMaster->clusterCreate({bArchiveInvalid => $bTestExtra});
+            $oHostDbMaster->clusterCreate();
 
             # Static backup parameters
             my $fTestDelay = 1;
@@ -1797,11 +1796,36 @@ sub backupTestRun
             if ($bTestExtra)
             {
                 $strType = BACKUP_TYPE_FULL;
+#confess "BEFORE STOP\n"; # grep ERROR /home/vagrant/test/test-0/db-master/postgresql.log produes NO ERROR!
+                # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
+                $oHostDbMaster->clusterStop();
+confess "AFTER STOP\n"; # grep ERROR /home/vagrant/test/test-0/db-master/postgresql.log produes ERROR! why? What is going on in the stop cluster that would be checking for the archive info command????
+                $oHostDbMaster->clusterStart({bArchiveInvalid => $bTestExtra});
 
-                # NOTE: This must run before the success test since that will create the archive.info file
+                # NOTE: This must run before the stanzaCreate test since that will create the archive.info file
                 $oHostDbMaster->check(
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
+
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => false});
+
+                # Create the backup and archive info files - the stanza-create is only valid on the local repo
+                # The stanza-create will not run the check command if the version is less than 9.1
+                # otherwise it will run the check command and will timeout due to the invalid archive_command setting above
+                if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)
+                {
+                    $oHostDbMaster->stanzaCreate('create info files',
+                                                 {iTimeout => $oHostDbMaster->dbVersion() >= PG_VERSION_91 ? 0.1 : 5,
+                                                  iExpectedExitStatus => $oHostDbMaster->dbVersion() >= PG_VERSION_91
+                                                  ? ERROR_ARCHIVE_TIMEOUT : undef});
+                }
+                else
+                {
+                    $oHostBackup->stanzaCreate('create info files',
+                                               {iTimeout => $oHostDbMaster->dbVersion() >= PG_VERSION_91 ? 0.1 : 5,
+                                                iExpectedExitStatus => $oHostDbMaster->dbVersion() >= PG_VERSION_91
+                                                ? ERROR_ARCHIVE_TIMEOUT : undef});
+                }
 
                 # Check ERROR_ARCHIVE_DISABLED error
                 $strComment = 'fail on archive_mode=off';
@@ -1830,10 +1854,11 @@ sub backupTestRun
                 }
 
                 # When archive-check=n then ERROR_FILE_MISSING will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
-                $strComment = 'fail on file missing when archive-check=n';
+#CSHANG Shouldn't this now be failing on the fact the WAL never made it to the archive (ERROR_ARCHIVE_TIMEOUT)? The archive.info file is now there but the WAL won't make it if archive logs are going to a different server. But how would backups/restores work then if the archive logs are not sent to the repo in the config file? I'm not really clear on this...should we be checking for the archive-check=n option and not perform the archiving portion of the check?
+                $strComment = 'fail on could not find WAL when archive-check=n';
                 $oHostDbMaster->check(
                     $strComment,
-                    {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-archive-check'});
+                    {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
 
                 # Stop the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterStop({bIgnoreLogError => true});
@@ -1924,36 +1949,43 @@ sub backupTestRun
                 # Restart the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
 
-                # Stanza Create
+                # Stanza Create - only run locally (i.e. where the repo is)
                 #--------------------------------------------------------------------------------
-                if ($bHostBackup)
-                {
-                    # With data existing in the backup and archive directories, remove the info files
-                    # Remove the archive.info file
-                    executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-                    $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-                                               {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID});
+                my $oLocalHost = $bHostBackup ? $oHostBackup : $oHostDbMaster;
 
-                    # Remove the backup.info file
-                    executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-                    $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
-                                               {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
+                # With data existing in the backup and archive directories, remove the info files
+                # Remove the archive.info file
+                executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+                $oLocalHost->stanzaCreate('fail on archive info file missing from non-empty dir',
+                                           {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID});
 
-                    # Remove the repo sub-directories to ensure they do not exist
-                    executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . "/*");
+                # Remove the backup.info file
+                executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+                $oLocalHost->stanzaCreate('fail on backup info file missing from non-empty dir',
+                                           {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
 
-                    $oHostBackup->stanzaCreate('verify success', {iTimeout => 5});
-                }
+                # Remove the repo sub-directories to ensure they do not exist
+                executeTest('sudo rm -rf ' . $oLocalHost->repoPath() . "/*");
+
+                $oLocalHost->stanzaCreate('verify success', {iTimeout => 5});
             }
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
+confess "HERE\n";
+            # Restart the clust to make sure it is clean for the next tests
+            $oHostDbMaster->clusterStop({bIgnoreLogError => true});
+exit;
+            $oHostDbMaster->clusterStart();
 
             # Create the table where test messages will be stored
             $oHostDbMaster->sqlExecute("create table test (message text not null)");
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("insert into test values ('$strDefaultMessage')");
+
+            # Create the info files for the stanza
+            $oHostBackup->stanzaCreate('create stanza', {iTimeout => 5});
 
             if ($bTestExtra)
             {
@@ -2099,6 +2131,9 @@ sub backupTestRun
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("update test set message = '$strDefaultMessage'");
             $oHostDbMaster->sqlXlogRotate();
+
+            # Create the info files for the stanza
+            $oHostBackup->stanzaCreate('create info files', {iTimeout => 5});
 
             # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
             # are run in non-exlusive mode.

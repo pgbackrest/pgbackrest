@@ -85,10 +85,7 @@ sub new
 
     if (!$bExists && $bRequired)
     {
-        confess &log(ERROR, ARCHIVE_INFO_FILE . " does not exist but is required to get WAL segments\n" .
-                     "HINT: is archive_command configured in postgresql.conf?\n" .
-                     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving" .
-                     " scheme.", ERROR_FILE_MISSING);
+        confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
     }
 
     # Init object and store variables
@@ -199,7 +196,7 @@ sub fileCreate
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->fileCreateUpdate', \@_,
+            __PACKAGE__ . '->fileCreate', \@_,
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'},
         );
