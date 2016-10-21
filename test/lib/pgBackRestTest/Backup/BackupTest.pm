@@ -1759,7 +1759,7 @@ sub backupTestRun
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
-
+#CSHANG clusterStart (called from clusterCreate) needs a parameter to say whether the stanza should be created or not - so rather than archiveInvalid => $bTestExtra, have stanzaCreate => $bTestExtra
             $oHostDbMaster->clusterCreate();
 
             # Static backup parameters
@@ -1796,13 +1796,12 @@ sub backupTestRun
             if ($bTestExtra)
             {
                 $strType = BACKUP_TYPE_FULL;
-#confess "BEFORE STOP\n"; # grep ERROR /home/vagrant/test/test-0/db-master/postgresql.log produes NO ERROR!
-                # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
-                $oHostDbMaster->clusterStop();
-confess "AFTER STOP\n"; # grep ERROR /home/vagrant/test/test-0/db-master/postgresql.log produes ERROR! why? What is going on in the stop cluster that would be checking for the archive info command????
-                $oHostDbMaster->clusterStart({bArchiveInvalid => $bTestExtra});
 
-                # NOTE: This must run before the stanzaCreate test since that will create the archive.info file
+                # Restart the cluster to clear any errors since the stanza has not been created and archive_command is valid, then
+                # want to ignore and clear errors resulting from an archive push on cluster stop.
+                # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
+                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => true});
+
                 $oHostDbMaster->check(
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
@@ -1973,19 +1972,17 @@ confess "AFTER STOP\n"; # grep ERROR /home/vagrant/test/test-0/db-master/postgre
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
-confess "HERE\n";
-            # Restart the clust to make sure it is clean for the next tests
-            $oHostDbMaster->clusterStop({bIgnoreLogError => true});
-exit;
-            $oHostDbMaster->clusterStart();
+
+            # Restart the cluster to make sure it is clean for the next tests
+            $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+
+            # Create the required data for the stanza
+            $oHostBackup->stanzaCreate('create stanza', {iTimeout => 5});
 
             # Create the table where test messages will be stored
             $oHostDbMaster->sqlExecute("create table test (message text not null)");
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("insert into test values ('$strDefaultMessage')");
-
-            # Create the info files for the stanza
-            $oHostBackup->stanzaCreate('create stanza', {iTimeout => 5});
 
             if ($bTestExtra)
             {
