@@ -446,9 +446,10 @@ sub getCheck
     }
     else
     {
-        # check that the archive info is compatible with the database and create the file if it does not exist
+        # check that the archive info is compatible with the database
         $strArchiveId =
             (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
+    &log(WARN, "GETCHECK ARCHIVEID=${strArchiveId}"); #CSHANG
     }
 
     # Return from function and log return values if any
@@ -756,12 +757,14 @@ sub push
     {
         if ($bArchiveFile)
         {
+&log(WARN, "PUSH: calling WALINFO and PUSHCHECK"); #CSHANG
             my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
             ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $bPartial,
                                                              $strSourceFile, $strDbVersion, $ullDbSysId);
         }
         else
         {
+&log(WARN, "PUSH: calling GETCHECK"); #CSHANG
             $strArchiveId = $self->getCheck($oFile);
         }
     }
@@ -859,7 +862,7 @@ sub pushCheck
 
         # Check if the WAL segment already exists in the archive
         $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment, $bPartial);
-
+&log(WARN, "PUSH CHECK ${strArchiveId}, ".(defined($strChecksum) ? $strChecksum : "")); #CSHANG
         if (defined($strChecksum))
         {
             $strChecksum = substr($strChecksum, $bPartial ? 33 : 25, 40);
@@ -1137,9 +1140,10 @@ sub check
     # Validate the database configuration
     $oDb->configValidate(optionGet(OPTION_DB_PATH));
 
+    my $bSkipArchiveCheck = (optionValid(OPTION_BACKUP_ARCHIVE_CHECK) && !optionGet(OPTION_BACKUP_ARCHIVE_CHECK)) ? true : false;
     # Force archiving
-    my $strWalSegment = $oDb->xlogSwitch();
-
+    my $strWalSegment = !$bSkipArchiveCheck ? $oDb->xlogSwitch() : undef;
+if (defined($strWalSegment)) {&log(WARN, "CALLED SWITCH XLOG RETURNED ${strWalSegment}");} #CSHANG
     # Get the timeout and error message to display - if it is 0 we are testing
     my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
 
@@ -1154,7 +1158,8 @@ sub check
     my $strArchiveFile = undef;
 
     # Turn off console logging to control when to display the error
-    logLevelSet(undef, OFF);
+#    logLevelSet(undef, OFF);
+logLevelSet(undef, INFO);
 
     # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
     do
@@ -1180,11 +1185,12 @@ sub check
             # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
+&log(WARN, "RESULT1 IN CHECK ${iResult}"); #CSHANG
         };
     } while (!defined($strArchiveId) && waitMore($oWait));
-
-    # If able to get the archive id then check the archived WAL file with the time remaining
-    if ($iResult == 0)
+&log(WARN, "RESULT AFTER WAIT IN CHECK ${iResult}"); #CSHANG
+    # If able to get the archive id then check the archived WAL file with the time remaining if archive-check is true
+    if (($iResult == 0) && !$bSkipArchiveCheck)
     {
         eval
         {
@@ -1203,6 +1209,7 @@ sub check
             # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
+&log(WARN, "RESULT2 IN CHECK ${iResult}"); #CSHANG
         };
     }
 
@@ -1215,10 +1222,10 @@ sub check
             $self->getBackupInfoCheck($oFile);
             return true;
         }
-        # If there is an error but it is not that the file is missing then confess
+        # If there is an unhandled error then confess
         or do
         {
-            if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
+            if (!isException($EVAL_ERROR))
             {
                 confess $EVAL_ERROR;
             }
@@ -1232,17 +1239,29 @@ sub check
     # Else, log the error.
     if ($iResult == 0)
     {
-        &log(INFO,
+        if (!$bSkipArchiveCheck)
+        {
+            &log(INFO,
             "WAL segment ${strWalSegment} successfully stored in the archive at '" .
             $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+        }
+        else
+        {
+            &log(INFO,
+            "the stanza is configured properly for backups but archive_command has not been tested since --archive-check=n\n" .
+            "HINT: do not specify --no-archive-check on the command line or remove --archive-check=n from the configuration file");
+        }
     }
     else
     {
         &log(ERROR, $strResultMessage, $iResult);
-        &log(WARN,
-            "WAL segment ${strWalSegment} did not reach the archive ".$oFile->pathGet(PATH_BACKUP_ARCHIVE)." :\n" .
-            "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
-            "HINT: Check the PostreSQL server log for errors.");
+        if (!$bSkipArchiveCheck)
+        {
+            &log(WARN,
+                "WAL segment ${strWalSegment} did not reach the archive ".$oFile->pathGet(PATH_BACKUP_ARCHIVE)." :\n" .
+                "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
+                "HINT: Check the PostreSQL server log for errors.");
+        }
     }
 
     # Return from function and log return values if any

@@ -200,6 +200,7 @@ sub createInfoFile
 
     if (!@stryFileList)
     {
+&log(WARN, "CREATING INFO FILE at ${strPathType}"); #CSHANG
         # Create and save the info file
         ($strPathType eq PATH_BACKUP_CLUSTER)
             ? $oInfo->fileCreate($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},

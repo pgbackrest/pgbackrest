@@ -1759,7 +1759,7 @@ sub backupTestRun
 
             # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
-#CSHANG clusterStart (called from clusterCreate) needs a parameter to say whether the stanza should be created or not - so rather than archiveInvalid => $bTestExtra, have stanzaCreate => $bTestExtra
+
             $oHostDbMaster->clusterCreate();
 
             # Static backup parameters
@@ -1797,24 +1797,21 @@ sub backupTestRun
             {
                 $strType = BACKUP_TYPE_FULL;
 
-                # Restart the cluster to clear any errors since the stanza has not been created and archive_command is valid, then
-                # want to ignore and clear errors resulting from an archive push on cluster stop.
-                # For the 'fail on missing archive.info file' test, the archive.info file must not be found so set archive invalid.
-                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => true});
-
                 $oHostDbMaster->check(
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-                $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveInvalid => false});
-
                 # Create the backup and archive info files - the stanza-create is only valid on the local repo
                 # The stanza-create will not run the check command if the version is less than 9.1
-                # otherwise it will run the check command and will timeout due to the invalid archive_command setting above
+                # otherwise it will run the check command and will timeout because of an issue in the tests, so rather than waiting
+                # for the WAL, we only need the info files, so trap the error and move on.
+                # CSHANG!!! If the timeout is less than the 60 seconds default, we don't get the archive-push start in the Postgres
+                # logs until the timeout has elapsed and this pushes the WAL that failed the $oHostDbMaster->check
+                # 'fail on missing archive.info file' above, followed, within a second, by the WAL we're waiting for.
+                # If we let the timeout be the default 60 seconds, it works fine. Why????
                 if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)
                 {
-                    $oHostDbMaster->stanzaCreate('create info files',
-                                                 {iTimeout => $oHostDbMaster->dbVersion() >= PG_VERSION_91 ? 0.1 : 5,
+                    $oHostDbMaster->stanzaCreate('create info files', {iTimeout => 0.1,
                                                   iExpectedExitStatus => $oHostDbMaster->dbVersion() >= PG_VERSION_91
                                                   ? ERROR_ARCHIVE_TIMEOUT : undef});
                 }
@@ -1852,12 +1849,9 @@ sub backupTestRun
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
                 }
 
-                # When archive-check=n then ERROR_FILE_MISSING will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
-#CSHANG Shouldn't this now be failing on the fact the WAL never made it to the archive (ERROR_ARCHIVE_TIMEOUT)? The archive.info file is now there but the WAL won't make it if archive logs are going to a different server. But how would backups/restores work then if the archive logs are not sent to the repo in the config file? I'm not really clear on this...should we be checking for the archive-check=n option and not perform the archiving portion of the check?
-                $strComment = 'fail on could not find WAL when archive-check=n';
-                $oHostDbMaster->check(
-                    $strComment,
-                    {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
+                # When archive-check=n then check will skip checking for WAL in the archive
+                $strComment = 'succeed when archive-check=n';
+                $oHostDbMaster->check($strComment, {iTimeout => 0.1, strOptionalParam => '--no-archive-check'});
 
                 # Stop the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterStop({bIgnoreLogError => true});
@@ -1952,7 +1946,7 @@ sub backupTestRun
                 #--------------------------------------------------------------------------------
                 my $oLocalHost = $bHostBackup ? $oHostBackup : $oHostDbMaster;
 
-                # With data existing in the backup and archive directories, remove the info files
+                # With data existing in the backup and archive directories, remove the info files and confirm failure
                 # Remove the archive.info file
                 executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
                 $oLocalHost->stanzaCreate('fail on archive info file missing from non-empty dir',
@@ -1963,9 +1957,8 @@ sub backupTestRun
                 $oLocalHost->stanzaCreate('fail on backup info file missing from non-empty dir',
                                            {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
 
-                # Remove the repo sub-directories to ensure they do not exist
+                # Remove the repo sub-directories to ensure they do not exist and confirm success
                 executeTest('sudo rm -rf ' . $oLocalHost->repoPath() . "/*");
-
                 $oLocalHost->stanzaCreate('verify success', {iTimeout => 5});
             }
 

@@ -395,7 +395,11 @@ sub clusterStart
     my $bArchiveAlways = defined($$hParam{bArchiveAlways}) ? $$hParam{bArchiveAlways} : false;
     my $bArchiveInvalid = defined($$hParam{bArchiveInvalid}) ? $$hParam{bArchiveInvalid} : false;
     my $bArchiveEnabled = defined($$hParam{bArchiveEnabled}) ? $$hParam{bArchiveEnabled} : true;
-
+&log(WARN, "BHOTSTANDBY: ${bHotStandby}"); #CSHANG
+&log(WARN, "bARCHIVE: ${bArchive}"); #CSHANG
+&log(WARN, "BARCHIVEALWAYS: ${bArchiveAlways}"); #CSHANG
+&log(WARN, "BARCHIVEINVALID: ${bArchiveInvalid}"); #CSHANG
+&log(WARN, "BARCHIVEENABLED: ${bArchiveEnabled}"); #CSHANG
     # Make sure postgres is not running
     if (-e $self->dbBasePath() . '/postmaster.pid')
     {
@@ -457,7 +461,7 @@ sub clusterStart
         ' -c log_error_verbosity=verbose' .
         ' -c unix_socket_director' . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->dbLogFile() . ' -s';
-
+&log(WARN, "COMMAND: ${strCommand}"); #CSHANG
     $self->executeSimple($strCommand);
 
     # Connect user session
@@ -508,7 +512,7 @@ sub clusterRestart
 {
     my $self = shift;
     my $hParam = shift;
-
+&log(WARN, "CLUSTER RESTART"); #CSHANG
     $self->clusterStop($hParam);
     $self->clusterStart($hParam);
 }
