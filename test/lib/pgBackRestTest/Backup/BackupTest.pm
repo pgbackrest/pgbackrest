@@ -1974,7 +1974,7 @@ sub backupTestRun
 
             # Create the required data for the stanza
             $oHostBackup->stanzaCreate('create stanza', {iTimeout => 5});
-exit;
+
             # Create the table where test messages will be stored
             $oHostDbMaster->sqlExecute("create table test (message text not null)");
             $oHostDbMaster->sqlXlogRotate();

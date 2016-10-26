@@ -132,10 +132,11 @@ sub stanzaCreate
 
     # The DB function xlogSwitch checks for the version >= 9.1 and only performs the restore point if met so check would fail here
     # on initial stanza-create for those systems, so only run the full check on systems > 9.1.
-    if (($iResult == 0) && ($self->{oDb}{strDbVersion} >= PG_VERSION_91))
-    {
-        $iResult = new pgBackRest::Archive()->check();
-    }
+#CSHANG The only way around the issue of the check failing if a WAL is is the .ready state, is to not do the check at all and instead have them run the check manually.
+    # if (($iResult == 0) && ($self->{oDb}{strDbVersion} >= PG_VERSION_91))
+    # {
+    #     $iResult = new pgBackRest::Archive()->check();
+    # }
 
     if ($iResult == 0)
     {
@@ -206,7 +207,7 @@ sub createInfoFile
                                  $self->{oDb}{ullDbSysId})
             : $oInfo->fileCreate($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
     }
-    elsif (!grep(/^$strInfoFile/i, @stryFileList))
+    elsif (!grep(/^$strInfoFile$/i, @stryFileList))
     {
         $iResult = $iErrorCode;
         $strResultMessage = "the " . (($strPathType eq PATH_BACKUP_CLUSTER) ? "backup" : "archive") . " directory is not empty " .
@@ -214,7 +215,8 @@ sub createInfoFile
                             "HINT: Has the directory been copied from another location and the copy has not completed?";
         #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
     }
-    elsif ($self->{oDb}{strDbVersion} < PG_VERSION_91)
+# CSHANG if don't run check, then always confirm the validity of the info file that exists   elsif ($self->{oDb}{strDbVersion} < PG_VERSION_91)
+    else
     {
         # Turn off console logging to control when to display the error
         logLevelSet(undef, OFF);
