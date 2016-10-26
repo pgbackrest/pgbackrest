@@ -5,6 +5,10 @@ check db - fail on missing archive.info file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
+stanza-create db - create info files (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=0.1 --stanza=db stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
 full backup - fail on archive_mode=off (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -21,7 +25,7 @@ check db - fail on invalid archive_command (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
-check db - fail on file missing when archive-check=n (db-master host)
+check db - succeed when archive-check=n (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=0.1 --no-archive-check --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -69,6 +73,22 @@ check db - verify success after backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
+stanza-create db - fail on archive info file missing from non-empty dir (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-create db - fail on backup info file missing from non-empty dir (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-create db - verify success (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-create db - create stanza (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
 full backup - fail on backup lock exists (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -111,6 +131,10 @@ start all stanzas (db-master host)
 
 incr backup - fail on archive_mode=always (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-create db - create info files (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --archive-timeout=5 --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - fail on backup already running (db-master host)

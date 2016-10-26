@@ -82,7 +82,7 @@ sub new
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
     my $bExists = fileExists($strArchiveInfoFile);
-&log(WARN, "ARCHIVE $strArchiveInfoFile EXISTS? $bExists"); #CSHANG
+
     if (!$bExists && $bRequired)
     {
         confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);

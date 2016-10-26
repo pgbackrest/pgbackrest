@@ -449,7 +449,6 @@ sub getCheck
         # check that the archive info is compatible with the database
         $strArchiveId =
             (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
-    &log(WARN, "GETCHECK ARCHIVEID=${strArchiveId}"); #CSHANG
     }
 
     # Return from function and log return values if any
@@ -757,14 +756,12 @@ sub push
     {
         if ($bArchiveFile)
         {
-&log(WARN, "PUSH: calling WALINFO and PUSHCHECK"); #CSHANG
             my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
             ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $bPartial,
                                                              $strSourceFile, $strDbVersion, $ullDbSysId);
         }
         else
         {
-&log(WARN, "PUSH: calling GETCHECK"); #CSHANG
             $strArchiveId = $self->getCheck($oFile);
         }
     }
@@ -862,7 +859,7 @@ sub pushCheck
 
         # Check if the WAL segment already exists in the archive
         $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment, $bPartial);
-&log(WARN, "PUSH CHECK ${strArchiveId}, ".(defined($strChecksum) ? $strChecksum : "")); #CSHANG
+
         if (defined($strChecksum))
         {
             $strChecksum = substr($strChecksum, $bPartial ? 33 : 25, 40);
@@ -1143,7 +1140,7 @@ sub check
     my $bSkipArchiveCheck = (optionValid(OPTION_BACKUP_ARCHIVE_CHECK) && !optionGet(OPTION_BACKUP_ARCHIVE_CHECK)) ? true : false;
     # Force archiving
     my $strWalSegment = !$bSkipArchiveCheck ? $oDb->xlogSwitch() : undef;
-if (defined($strWalSegment)) {&log(WARN, "CALLED SWITCH XLOG RETURNED ${strWalSegment}");} #CSHANG
+
     # Get the timeout and error message to display - if it is 0 we are testing
     my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
 
@@ -1158,8 +1155,7 @@ if (defined($strWalSegment)) {&log(WARN, "CALLED SWITCH XLOG RETURNED ${strWalSe
     my $strArchiveFile = undef;
 
     # Turn off console logging to control when to display the error
-#    logLevelSet(undef, OFF);
-logLevelSet(undef, INFO);
+    logLevelSet(undef, OFF);
 
     # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
     do
@@ -1185,10 +1181,9 @@ logLevelSet(undef, INFO);
             # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
-&log(WARN, "RESULT1 IN CHECK ${iResult}"); #CSHANG
         };
     } while (!defined($strArchiveId) && waitMore($oWait));
-&log(WARN, "RESULT AFTER WAIT IN CHECK ${iResult}"); #CSHANG
+
     # If able to get the archive id then check the archived WAL file with the time remaining if archive-check is true
     if (($iResult == 0) && !$bSkipArchiveCheck)
     {
@@ -1209,7 +1204,6 @@ logLevelSet(undef, INFO);
             # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
-&log(WARN, "RESULT2 IN CHECK ${iResult}"); #CSHANG
         };
     }
 
@@ -1229,6 +1223,10 @@ logLevelSet(undef, INFO);
             {
                 confess $EVAL_ERROR;
             }
+
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
         };
     }
 
