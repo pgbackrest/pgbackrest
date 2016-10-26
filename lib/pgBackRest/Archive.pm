@@ -851,6 +851,7 @@ sub pushCheck
     }
     else
     {
+#CSHANG we should not be creating the path here anymore
         # Create the archive path if it does not exist
         $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
 

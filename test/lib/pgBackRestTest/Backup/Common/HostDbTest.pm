@@ -446,7 +446,7 @@ sub clusterStart
             $strCommand .= ' -c hot_standby=on';
         }
     }
-
+#CSHANG added log_statement and log_duration
     $strCommand .=
         ($self->dbVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
         ' -c listen_addresses=\'*\'' .
@@ -455,6 +455,8 @@ sub clusterStart
         ' -c log_rotation_age=0' .
         ' -c log_rotation_size=0' .
         ' -c log_error_verbosity=verbose' .
+        ' -c log_statement=\'all\'' .
+        ' -c log_duration=on' .
         ' -c unix_socket_director' . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
         ' -D ' . $self->dbBasePath() . ' -l ' . $self->dbLogFile() . ' -s';
 

@@ -1809,6 +1809,7 @@ sub backupTestRun
                 # logs until the timeout has elapsed and this pushes the WAL that failed the $oHostDbMaster->check
                 # 'fail on missing archive.info file' above, followed, within a second, by the WAL we're waiting for.
                 # If we let the timeout be the default 60 seconds, it works fine. Why????
+                #According to PG docs a nonzero status tells PostgreSQL that the file was not archived; it will try again periodically until it succeeds. This does appear to be a problem in the "real-world" as I tested it in db-doc-master by removing the directory and I get the error that the archive.info is missing and the xlog stays in .ready, then I run stanza-create archive-timeout=5 and I get it could not push the WAL but then I check the archive dir and it is there and there is no error in the postgres log and in the pg_xlog archive_status it is set to done. If I run the stanza-create (or check) again with timeout=5 it works. Since people have gotten used to running check, they could realistically create this situation if they do not use the default 60 second timeout. And using anything less, results in the WAL being written to the archive dir right after the check returns an error. There is no error reported in the postgresl log at this point - because PG doesn't see a problem but backrest does? I thought these were all logged in the pg file...
                 if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)
                 {
                     $oHostDbMaster->stanzaCreate('create info files', {iTimeout => 0.1,
@@ -1965,13 +1966,15 @@ sub backupTestRun
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
-
+#CSHANG As soon as we perform the restart, we get an archive-push error about a missing archive.info file so then the stanzaCreate fails because PG is trying to archive the last failed archive - so how can we find this out? pg_current_xlog_location() does not help. to see if an xlog has not been archived, need to look at /var/lib/postgresql/9.4/demo/pg_xlog/archive_status for a .ready file
             # Restart the cluster to make sure it is clean for the next tests
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
+#             my $currxlogname = $oHostDbMaster->sqlSelectOne("select pg_xlogfile_name(pg_current_xlog_location())");
+# confess print "currxlogname=$currxlogname";
 
             # Create the required data for the stanza
             $oHostBackup->stanzaCreate('create stanza', {iTimeout => 5});
-
+exit;
             # Create the table where test messages will be stored
             $oHostDbMaster->sqlExecute("create table test (message text not null)");
             $oHostDbMaster->sqlXlogRotate();
