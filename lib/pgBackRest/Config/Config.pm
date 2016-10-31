@@ -994,7 +994,6 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
-            &CMD_STANZA_CREATE => true,
         },
     },
 

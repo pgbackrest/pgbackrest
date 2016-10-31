@@ -121,22 +121,16 @@ sub stanzaCreate
 
     $self->dbInfoGet();
 
-    # Create the backup.info file
-    my ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO, ERROR_BACKUP_DIR_INVALID);
+    # Create the archive.info file
+    my ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE,
+                                                             ERROR_ARCHIVE_DIR_INVALID);
 
     if ($iResult == 0)
     {
-        # Create the archive.info file
-        ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE, ERROR_ARCHIVE_DIR_INVALID);
+        # Create the backup.info file
+        ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO,
+                                                              ERROR_BACKUP_DIR_INVALID);
     }
-
-    # The DB function xlogSwitch checks for the version >= 9.1 and only performs the restore point if met so check would fail here
-    # on initial stanza-create for those systems, so only run the full check on systems > 9.1.
-#CSHANG The only way around the issue of the check failing if a WAL is is the .ready state, is to not do the check at all and instead have them run the check manually.
-    # if (($iResult == 0) && ($self->{oDb}{strDbVersion} >= PG_VERSION_91))
-    # {
-    #     $iResult = new pgBackRest::Archive()->check();
-    # }
 
     if ($iResult == 0)
     {
@@ -194,7 +188,7 @@ sub createInfoFile
         $oFile->pathCreate($strPathType, undef, undef, true, true);
     }
 
-    # If the cluster repo path is empty then create the backup info file
+    # If the cluster repo path is empty then create the info file
     my @stryFileList = fileList($strParentPath, undef, 'forward', true);
     my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath, false, false)
                                                       : new pgBackRest::ArchiveInfo($strParentPath, false);
@@ -215,7 +209,7 @@ sub createInfoFile
                             "HINT: Has the directory been copied from another location and the copy has not completed?";
         #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
     }
-# CSHANG if don't run check, then always confirm the validity of the info file that exists   elsif ($self->{oDb}{strDbVersion} < PG_VERSION_91)
+    # Check the validity of the existing info file
     else
     {
         # Turn off console logging to control when to display the error

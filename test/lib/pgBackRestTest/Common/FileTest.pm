@@ -113,6 +113,8 @@ sub testPathCopy
     executeTest("cp -RpP ${strSourcePath} ${strDestinationPath}", {bSuppressError => $bSuppressError});
 }
 
+push(@EXPORT, qw(testPathCopy));
+
 ####################################################################################################################################
 # testPathMove
 #

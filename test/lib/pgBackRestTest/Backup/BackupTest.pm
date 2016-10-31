@@ -12,7 +12,7 @@ use Carp qw(confess);
 
 use DBI;
 use Exporter qw(import);
-use Fcntl ':mode';
+use Fcntl ':mode', qw(O_RDONLY);
 use File::Basename qw(dirname);
 use File::Copy 'cp';
 use File::stat;
@@ -511,7 +511,7 @@ sub backupTestRun
                 $oHostDbMaster->executeSimple(
                         $strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
                         {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $oLogTest});
-
+#CSHANG Need to fix this
                 # Create the archive info file
                 filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
                 (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 6156904820763115222);
@@ -1762,6 +1762,60 @@ sub backupTestRun
 
             $oHostDbMaster->clusterCreate();
 
+            # Run the stanza create only where the repo is local
+            my $oLocalHostRepo = undef;
+            if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)
+            {
+                $oHostDbMaster->stanzaCreate('main create stanza info files');
+                $oLocalHostRepo = $oHostDbMaster;
+            }
+            elsif ($bHostBackup)
+            {
+                $oHostBackup->stanzaCreate('main create stanza info files');
+                $oLocalHostRepo = $oHostBackup;
+            }
+            else
+            {
+                # If the repo is on the standby, we can't use the stanza-create command due to the way the test environment is set
+                # up, so manually create the files to allow the standby tests to pass.
+                my $strControlFile = $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL;
+                my $hFile;
+                my $tBlock;
+
+                sysopen($hFile, $strControlFile, O_RDONLY)
+                    or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+                # Read system identifier
+                sysread($hFile, $tBlock, 8) == 8
+                    or confess &log(ERROR, "unable to read database system identifier");
+
+                my $ullDbSysId = unpack('Q', $tBlock);
+
+                # Read control version
+                sysread($hFile, $tBlock, 4) == 4
+                    or confess &log(ERROR, "unable to read control version");
+
+                my $iControlVersion = unpack('L', $tBlock);
+
+                # Read catalog version
+                sysread($hFile, $tBlock, 4) == 4
+                    or confess &log(ERROR, "unable to read catalog version");
+
+                my $iCatalogVersion = unpack('L', $tBlock);
+
+                # Close the control file
+                close($hFile);
+
+                # Create the archive and backup info files
+                filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
+                filePathCreate($oFile->pathGet(PATH_BACKUP_CLUSTER), '0770', undef, true);
+                (new pgBackRest::ArchiveInfo(
+                 $oFile->pathGet(PATH_BACKUP_ARCHIVE), false))->fileCreate($oHostDbStandby->dbVersion(), $ullDbSysId);
+                (new pgBackRest::BackupInfo(
+                 $oFile->pathGet(PATH_BACKUP_CLUSTER), false, false))->fileCreate($oHostDbStandby->dbVersion(), $iControlVersion,
+                                                                                 $iCatalogVersion, $ullDbSysId);
+            }
+
             # Static backup parameters
             my $fTestDelay = 1;
 
@@ -1797,32 +1851,14 @@ sub backupTestRun
             {
                 $strType = BACKUP_TYPE_FULL;
 
+                # Remove the files in the archive directory
+                executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . "/*");
                 $oHostDbMaster->check(
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-                # Create the backup and archive info files - the stanza-create is only valid on the local repo
-                # The stanza-create will not run the check command if the version is less than 9.1
-                # otherwise it will run the check command and will timeout because of an issue in the tests, so rather than waiting
-                # for the WAL, we only need the info files, so trap the error and move on.
-                # CSHANG!!! If the timeout is less than the 60 seconds default, we don't get the archive-push start in the Postgres
-                # logs until the timeout has elapsed and this pushes the WAL that failed the $oHostDbMaster->check
-                # 'fail on missing archive.info file' above, followed, within a second, by the WAL we're waiting for.
-                # If we let the timeout be the default 60 seconds, it works fine. Why????
-                #According to PG docs a nonzero status tells PostgreSQL that the file was not archived; it will try again periodically until it succeeds. This does appear to be a problem in the "real-world" as I tested it in db-doc-master by removing the directory and I get the error that the archive.info is missing and the xlog stays in .ready, then I run stanza-create archive-timeout=5 and I get it could not push the WAL but then I check the archive dir and it is there and there is no error in the postgres log and in the pg_xlog archive_status it is set to done. If I run the stanza-create (or check) again with timeout=5 it works. Since people have gotten used to running check, they could realistically create this situation if they do not use the default 60 second timeout. And using anything less, results in the WAL being written to the archive dir right after the check returns an error. There is no error reported in the postgresl log at this point - because PG doesn't see a problem but backrest does? I thought these were all logged in the pg file...
-                if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)
-                {
-                    $oHostDbMaster->stanzaCreate('create info files', {iTimeout => 0.1,
-                                                  iExpectedExitStatus => $oHostDbMaster->dbVersion() >= PG_VERSION_91
-                                                  ? ERROR_ARCHIVE_TIMEOUT : undef});
-                }
-                else
-                {
-                    $oHostBackup->stanzaCreate('create info files',
-                                               {iTimeout => $oHostDbMaster->dbVersion() >= PG_VERSION_91 ? 0.1 : 5,
-                                                iExpectedExitStatus => $oHostDbMaster->dbVersion() >= PG_VERSION_91
-                                                ? ERROR_ARCHIVE_TIMEOUT : undef});
-                }
+                # Create the backup and archive info files - must be run on the local repo
+                $oLocalHostRepo->stanzaCreate('create stanza info files');
 
                 # Check ERROR_ARCHIVE_DISABLED error
                 $strComment = 'fail on archive_mode=off';
@@ -1850,9 +1886,12 @@ sub backupTestRun
                     $oHostBackup->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
                 }
 
-                # When archive-check=n then check will skip checking for WAL in the archive
-                $strComment = 'succeed when archive-check=n';
-                $oHostDbMaster->check($strComment, {iTimeout => 0.1, strOptionalParam => '--no-archive-check'});
+                # When archive-check=n then ERROR_ARCHIVE_TIMEOUT will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
+# CSHANG But maybe we should error with the fact that that option is not valid -- Stephen does not want the check command to skip the archive checking - he wants it to error - either in checking the archive or indicating the option is invalid. Therefore I have put the backup.info file check first.
+                $strComment = 'fail on archive timeout when archive-check=n';
+                $oHostDbMaster->check(
+                    $strComment,
+                    {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_TIMEOUT, strOptionalParam => '--no-archive-check'});
 
                 # Stop the cluster ignoring any errors in the postgresql log
                 $oHostDbMaster->clusterStop({bIgnoreLogError => true});
@@ -1945,35 +1984,25 @@ sub backupTestRun
 
                 # Stanza Create - only run locally (i.e. where the repo is)
                 #--------------------------------------------------------------------------------
-                my $oLocalHost = $bHostBackup ? $oHostBackup : $oHostDbMaster;
-
                 # With data existing in the backup and archive directories, remove the info files and confirm failure
-                # Remove the archive.info file
-                executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-                $oLocalHost->stanzaCreate('fail on archive info file missing from non-empty dir',
-                                           {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID});
-
                 # Remove the backup.info file
                 executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-                $oLocalHost->stanzaCreate('fail on backup info file missing from non-empty dir',
+                $oLocalHostRepo->stanzaCreate('fail on backup info file missing from non-empty dir',
                                            {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
 
+                # Remove the archive.info file
+                executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+                $oLocalHostRepo->stanzaCreate('fail on archive info file missing from non-empty dir',
+                                           {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID});
+
                 # Remove the repo sub-directories to ensure they do not exist and confirm success
-                executeTest('sudo rm -rf ' . $oLocalHost->repoPath() . "/*");
-                $oLocalHost->stanzaCreate('verify success', {iTimeout => 5});
+                executeTest('sudo rm -rf ' . $oLocalHostRepo->repoPath() . "/*");
+                $oLocalHostRepo->stanzaCreate('verify success');
             }
 
             # Full backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_FULL;
-#CSHANG As soon as we perform the restart, we get an archive-push error about a missing archive.info file so then the stanzaCreate fails because PG is trying to archive the last failed archive - so how can we find this out? pg_current_xlog_location() does not help. to see if an xlog has not been archived, need to look at /var/lib/postgresql/9.4/demo/pg_xlog/archive_status for a .ready file
-            # Restart the cluster to make sure it is clean for the next tests
-            $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
-#             my $currxlogname = $oHostDbMaster->sqlSelectOne("select pg_xlogfile_name(pg_current_xlog_location())");
-# confess print "currxlogname=$currxlogname";
-
-            # Create the required data for the stanza
-            $oHostBackup->stanzaCreate('create stanza', {iTimeout => 5});
 
             # Create the table where test messages will be stored
             $oHostDbMaster->sqlExecute("create table test (message text not null)");
@@ -2124,9 +2153,6 @@ sub backupTestRun
             $oHostDbMaster->sqlXlogRotate();
             $oHostDbMaster->sqlExecute("update test set message = '$strDefaultMessage'");
             $oHostDbMaster->sqlXlogRotate();
-
-            # Create the info files for the stanza
-            $oHostBackup->stanzaCreate('create info files', {iTimeout => 5});
 
             # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
             # are run in non-exlusive mode.

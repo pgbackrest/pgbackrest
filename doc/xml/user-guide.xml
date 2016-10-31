@@ -1924,6 +1924,6 @@
 
         <p>This incremental backup shows that most of the files are copied from the <host>db-standby</host> host and only a few are copied from the <host>db-master</host> host.</p>
 
-        <p><backrest/> creates a standby backup that is identical to a backup performed on the master.  It does this by starting/stopping the backup on the <host>db-master</host> host, copying only files that are replicated from the <host>db-standby</host> host, the copying the remaining few files from the <host>db-master</host> host.  This means that logs and statistics from the master database will be included in the backup.</p>
+        <p><backrest/> creates a standby backup that is identical to a backup performed on the master.  It does this by starting/stopping the backup on the <host>db-master</host> host, copying only files that are replicated from the <host>db-standby</host> host, then copying the remaining few files from the <host>db-master</host> host.  This means that logs and statistics from the master database will be included in the backup.</p>
     </section>
 </doc>
