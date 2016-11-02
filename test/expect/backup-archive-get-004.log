@@ -19,7 +19,8 @@ P00  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, 
 P00  DEBUG:     ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  ERROR: [130]: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
-               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+               HINT: has a stanza-create been performed?
+                HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00   INFO: archive-get stop
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]

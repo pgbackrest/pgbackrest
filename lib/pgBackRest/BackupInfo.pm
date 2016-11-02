@@ -293,13 +293,6 @@ sub add
     # Get the backup label
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
-    # Get the DB section info
-    my $strDbVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
-    my $iControlVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL);
-    my $iCatalogVersion = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG);
-    my $ullDbSysId = $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
-
-
     # Calculate backup sizes and references
     my $lBackupSize = 0;
     my $lBackupSizeDelta = 0;

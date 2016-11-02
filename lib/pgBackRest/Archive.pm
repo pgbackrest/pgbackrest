@@ -1238,7 +1238,7 @@ sub check
     else
     {
         &log(WARN,
-            "WAL segment ${strWalSegment} did not reach the archive ".$oFile->pathGet(PATH_BACKUP_ARCHIVE)." :\n" .
+            "WAL segment ${strWalSegment} did not reach the archive:\n" .
             "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
             "HINT: Check the PostreSQL server log for errors.");
     }

@@ -508,13 +508,14 @@ sub backupTestRun
                     ' --config=' . $oHostDbMaster->backrestConfig() .
                     " --stanza=${strStanza} archive-get";
 
+                # Fail on missing archive info file
                 $oHostDbMaster->executeSimple(
                         $strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
                         {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $oLogTest});
-#CSHANG Need to fix this
+
                 # Create the archive info file
                 filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 6156904820763115222);
+                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->fileCreate(PG_VERSION_93, 6156904820763115222);
 
                 if (defined($oLogTest))
                 {
