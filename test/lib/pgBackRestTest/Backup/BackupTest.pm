@@ -187,6 +187,8 @@ sub backupTestRun
                     $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
                     ' --no-fork --stanza=db archive-push';
 
+                my $bInfoFileExist = false;
+
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
                 {
@@ -230,6 +232,21 @@ sub backupTestRun
                             }
                         }
 
+                        # Create the archive info file (if doesn't exist) from the WAL file as it is required for archiving
+                        if (!$bInfoFileExist)
+                        {
+                            my ($strDbVersion, $ullDbSysId) = (new pgBackRest::Archive)->walInfo($strSourceFile);
+
+                            # Create the stanza archive path
+                            filePathCreate($oHostBackup->repoPath() . "/archive/${strStanza}", undef, undef, true);
+
+                            # Create the archive info object
+                            (new pgBackRest::ArchiveInfo($oHostBackup->repoPath() . "/archive/${strStanza}")
+                            )->fileCreate($strDbVersion, $ullDbSysId);
+
+                            $bInfoFileExist = true;
+                        }
+exit;
                         $oHostDbMaster->executeSimple(
                             $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
                                 " ${strSourceFile}",
