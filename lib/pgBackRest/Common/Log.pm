@@ -14,7 +14,6 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(blessed reftype);
 use Time::HiRes qw(gettimeofday usleep);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::String;
 

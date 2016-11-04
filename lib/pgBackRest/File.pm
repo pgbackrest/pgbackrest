@@ -17,7 +17,6 @@ use File::Path qw(make_path remove_tree);
 use File::stat;
 use IO::Handle;
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;

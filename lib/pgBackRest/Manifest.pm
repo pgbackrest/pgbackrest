@@ -14,7 +14,6 @@ use File::Basename qw(dirname basename);
 use Digest::SHA;
 use Time::Local qw(timelocal);
 
-use lib dirname($0);
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;

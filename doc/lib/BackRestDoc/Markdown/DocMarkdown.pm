@@ -15,13 +15,11 @@ use File::Copy;
 use POSIX qw(strftime);
 use Storable qw(dclone);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
-use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
 
 use BackRestDoc::Common::DocConfig;

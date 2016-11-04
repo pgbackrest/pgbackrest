@@ -12,7 +12,6 @@ use File::Basename qw(dirname);
 use File::Path qw(remove_tree);
 use Scalar::Util qw(looks_like_number);
 
-use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::BackupCommon;

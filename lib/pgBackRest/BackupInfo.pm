@@ -13,7 +13,6 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
 
-use lib dirname($0);
 use pgBackRest::BackupCommon;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;

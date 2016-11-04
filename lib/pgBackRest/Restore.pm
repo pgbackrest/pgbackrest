@@ -11,7 +11,6 @@ use Cwd qw(abs_path);
 use File::Basename qw(basename dirname);
 use File::stat qw(lstat);
 
-use lib dirname($0);
 use pgBackRest::BackupInfo;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;

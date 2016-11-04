@@ -57,6 +57,11 @@
             <contributor-id type="github">sfrost</contributor-id>
         </contributor>
 
+        <contributor id="gunduz.devrim">
+            <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
+            <contributor-id type="github">devrimgunduz</contributor-id>
+        </contributor>
+
         <contributor id="harvey.john">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
@@ -125,13 +130,23 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.10dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                <release-refactor-list>
+                <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
                         <p>Added the <cmd>stanza-create</cmd> command to formalize creation of stanzas in the repository.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gunduz.devrim"/>
+                        </release-item-contributor-list>
+
+                        <p>Removed extraneous <code>use lib</code> directives from Perl modules.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>

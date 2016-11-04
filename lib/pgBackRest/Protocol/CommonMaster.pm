@@ -12,7 +12,6 @@ use English '-no_match_vars';
 use File::Basename qw(dirname);
 use Time::HiRes qw(gettimeofday);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
