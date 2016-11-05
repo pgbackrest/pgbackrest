@@ -1603,6 +1603,27 @@ sub backupTestRun
             $strBackup = $oHostBackup->backup(
                 $strType, 'add file', {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});
 
+            # Incr Backup - no files changed (except pg_control)
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bNeutralTest && !$bRemote)
+            {
+                $strType = BACKUP_TYPE_INCR;
+
+                $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
+
+                utime($lTime - 50, $lTime - 50, $oHostDbMaster->dbBasePath(2) . '/' . DB_FILE_PGCONTROL)
+                    or confess &log(ERROR, "unable to set time");
+                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
+                          {&MANIFEST_SUBKEY_TIMESTAMP} = $lTime - 50;
+                delete(
+                    $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
+                    {&MANIFEST_SUBKEY_REFERENCE});
+
+                $oHostBackup->backup(
+                    $strType, 'no changes',
+                    {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});
+            }
+
             # Selective Restore
             #-----------------------------------------------------------------------------------------------------------------------
             $bDelta = true;

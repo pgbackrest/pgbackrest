@@ -130,6 +130,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.10dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed an issue where a backup could error if no changes were made to a database between backups and only <file>pg_control</file> changed.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>

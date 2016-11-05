@@ -146,6 +146,13 @@ sub hostConnect
 
     foreach my $hHost (@{$self->{hyHost}})
     {
+        # If there a no jobs in the queue for this host then no need to connect
+        if (!defined($hHost->{hyQueue}))
+        {
+            &log(INFO, "no jobs for host $self->{strHostType}-$hHost->{iHostConfigIdx}");
+            next;
+        }
+
         for (my $iHostProcessIdx = 0; $iHostProcessIdx < $hHost->{iProcessMax}; $iHostProcessIdx++)
         {
             my $iLocalIdx = defined($self->{hyLocal}) ? @{$self->{hyLocal}} : 0;
@@ -194,7 +201,11 @@ sub hostConnect
     }
 
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $iHostIdx > 0 ? true : false}
+    );
 }
 
 ####################################################################################################################################
@@ -209,45 +220,50 @@ sub init
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->init');
 
-    $self->hostConnect();
-
-    foreach my $hLocal (@{$self->{hyLocal}})
+    if ($self->hostConnect())
     {
-        my $hHost = $self->{hyHost}[$hLocal->{iHostIdx}];
-        my $hyQueue = $hHost->{hyQueue};
-
-        # Initialize variables to keep track of what job the local is working on
-        $hLocal->{iDirection} = $hLocal->{iHostProcessIdx} % 2 == 0 ? 1 : -1;
-        $hLocal->{iQueueIdx} = int((@{$hyQueue} / $hHost->{iProcessMax}) * $hLocal->{iHostProcessIdx});
-
-        # Calculate the last queue that this process should pull from
-        $hLocal->{iQueueLastIdx} = $hLocal->{iQueueIdx} + ($hLocal->{iDirection} * -1);
-
-        if ($hLocal->{iQueueLastIdx} < 0)
+        foreach my $hLocal (@{$self->{hyLocal}})
         {
-            $hLocal->{iQueueLastIdx} = @{$hyQueue} - 1;
-        }
-        elsif ($hLocal->{iQueueLastIdx} >= @{$hyQueue})
-        {
-            $hLocal->{iQueueLastIdx} = 0;
+            my $hHost = $self->{hyHost}[$hLocal->{iHostIdx}];
+            my $hyQueue = $hHost->{hyQueue};
+
+            # Initialize variables to keep track of what job the local is working on
+            $hLocal->{iDirection} = $hLocal->{iHostProcessIdx} % 2 == 0 ? 1 : -1;
+            $hLocal->{iQueueIdx} = int((@{$hyQueue} / $hHost->{iProcessMax}) * $hLocal->{iHostProcessIdx});
+
+            # Calculate the last queue that this process should pull from
+            $hLocal->{iQueueLastIdx} = $hLocal->{iQueueIdx} + ($hLocal->{iDirection} * -1);
+
+            if ($hLocal->{iQueueLastIdx} < 0)
+            {
+                $hLocal->{iQueueLastIdx} = @{$hyQueue} - 1;
+            }
+            elsif ($hLocal->{iQueueLastIdx} >= @{$hyQueue})
+            {
+                $hLocal->{iQueueLastIdx} = 0;
+            }
+
+            logDebugMisc(
+                $strOperation, 'init local process',
+                {name => 'iHostIdx', value => $hLocal->{iHostIdx}},
+                {name => 'iProcessId', value => $hLocal->{iProcessId}},
+                {name => 'iDirection', value => $hLocal->{iDirection}},
+                {name => 'iQueueIdx', value => $hLocal->{iQueueIdx}},
+                {name => 'iQueueLastIdx', value => $hLocal->{iQueueLastIdx}});
+
+            # Queue map is no longer needed
+            undef($hHost->{hQueueMap});
         }
 
-        logDebugMisc(
-            $strOperation, 'init local process',
-            {name => 'iHostIdx', value => $hLocal->{iHostIdx}},
-            {name => 'iProcessId', value => $hLocal->{iProcessId}},
-            {name => 'iDirection', value => $hLocal->{iDirection}},
-            {name => 'iQueueIdx', value => $hLocal->{iQueueIdx}},
-            {name => 'iQueueLastIdx', value => $hLocal->{iQueueLastIdx}});
-
-        # Queue map is no longer needed
-        undef($hHost->{hQueueMap});
+        $self->{bProcessing} = true;
     }
 
-    $self->{bProcessing} = true;
-
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => $self->{bProcessing}}
+    );
 }
 
 ####################################################################################################################################
@@ -265,7 +281,12 @@ sub process
     # Initialize processing
     if (!$self->{bProcessing})
     {
-        $self->init();
+        if (!$self->init())
+        {
+            logDebugMisc($strOperation, 'no jobs to run');
+            $self->reset();
+            return;
+        }
     }
 
     # If jobs are running then wait for any of them to complete

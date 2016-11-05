@@ -121,7 +121,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
@@ -611,7 +613,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
@@ -980,7 +984,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host backup-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
@@ -1444,7 +1450,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 1
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/badchecksum.txt
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 1
@@ -1732,7 +1740,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 2
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/badchecksum.txt
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueueIdx = 1
@@ -3754,11 +3764,161 @@ db-version="9.4"
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
 
+incr backup - no changes (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+P00   WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
+P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: last backup label = [BACKUP-DIFF-5], version = [VERSION-1]
+P00   INFO: no jobs for host db-1
+P00   INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: incr backup size = 8KB
+P00   INFO: new backup label = [BACKUP-INCR-6]
+P00   INFO: backup stop
+P00   INFO: expire start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
+P00   INFO: expire stop
+
++ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
+----------------------------------------------------------
+[db]
+db-path=[TEST_PATH]/db-master/db/base-2
+
+[db:restore]
+tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
+tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+
+[global]
+compress=n
+lock-path=[TEST_PATH]/db-master/repo/lock
+log-level-console=debug
+log-level-file=trace
+log-level-stderr=off
+log-path=[TEST_PATH]/db-master/repo/log
+repo-path=[TEST_PATH]/db-master/repo
+
+[global:backup]
+archive-copy=y
+start-fast=y
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-6]/backup.manifest
+-----------------------------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup]
+backup-label="[BACKUP-INCR-6]"
+backup-prior="[BACKUP-DIFF-5]"
+backup-timestamp-copy-start=[TIMESTAMP]
+backup-timestamp-start=[TIMESTAMP]
+backup-timestamp-stop=[TIMESTAMP]
+backup-type="incr"
+
+[backup:db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=6317709442043514973
+db-version="9.4"
+
+[backup:option]
+option-archive-check=true
+option-archive-copy=true
+option-backup-standby=false
+option-compress=false
+option-hardlink=false
+option-online=false
+
+[backup:target]
+pg_data={"path":"[TEST_PATH]/db-master/db/base-2","type":"path"}
+pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+
+[target:file]
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","reference":"[BACKUP-DIFF-5]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-3]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+
+[target:file:default]
+group="postgres"
+master=false
+mode="0600"
+user="[USER-1]"
+
+[target:link]
+pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
+
+[target:link:default]
+group="postgres"
+user="[USER-1]"
+
+[target:path]
+pg_data={}
+pg_data/base={}
+pg_data/base/1={}
+pg_data/base/16384={}
+pg_data/base/32768={}
+pg_data/global={}
+pg_data/pg_clog={}
+pg_data/pg_dynshmem={}
+pg_data/pg_notify={}
+pg_data/pg_replslot={}
+pg_data/pg_serial={}
+pg_data/pg_snapshots={}
+pg_data/pg_stat={}
+pg_data/pg_stat_tmp={}
+pg_data/pg_subtrans={}
+pg_data/pg_tblspc={}
+pg_tblspc={}
+pg_tblspc/2={}
+pg_tblspc/2/[TS_PATH-1]={}
+pg_tblspc/2/[TS_PATH-1]/32768={}
+
+[target:path:default]
+group="postgres"
+mode="0700"
+user="[USER-1]"
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
+---------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup:current]
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+[BACKUP-INCR-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-DIFF-5]","backup-reference":["[BACKUP-FULL-3]","[BACKUP-DIFF-5]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"incr","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+
+[db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=6317709442043514973
+db-version="9.4"
+
+[db:history]
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+
 restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384=1 --db-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-INCR-6]
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -3795,7 +3955,7 @@ restore delta, remap - selective restore 32768 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768=1 --db-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-INCR-6]
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
@@ -3842,7 +4002,7 @@ restore, remap, expect exit 148 - no tablespace remap - error when tablespace di
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-INCR-6]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
@@ -3854,7 +4014,7 @@ restore - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
-P00   INFO: restore backup set [BACKUP-DIFF-5]
+P00   INFO: restore backup set [BACKUP-INCR-6]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
@@ -3899,6 +4059,12 @@ stanza: db
         database size: 8KB, backup size: 9B
         repository size: 8KB, repository backup size: 9B
         backup reference list: [BACKUP-FULL-3]
+
+    incr backup: [BACKUP-INCR-6]
+        start / stop timestamp: [TIMESTAMP-STR]
+        database size: 8KB, backup size: 8KB
+        repository size: 8KB, repository backup size: 8KB
+        backup reference list: [BACKUP-FULL-3], [BACKUP-DIFF-5]
 
 stanza: db_empty
     status: error (no valid backups)
@@ -3968,6 +4134,38 @@ info all stanzas - normal output (db-master host)
                     "stop" : [TIMESTAMP]
                 },
                 "type" : "diff"
+            },
+            {
+                "archive" : {
+                    "start" : null,
+                    "stop" : null
+                },
+                "backrest" : {
+                    "format" : 5,
+                    "version" : "[VERSION-1]"
+                },
+                "database" : {
+                    "id" : 1
+                },
+                "info" : {
+                    "delta" : [DELTA],
+                    "repository" : {
+                        "delta" : [DELTA],
+                        "size" : [SIZE]
+                    },
+                    "size" : [SIZE]
+                },
+                "label" : "[BACKUP-INCR-6]",
+                "prior" : "[BACKUP-DIFF-5]",
+                "reference" : [
+                    "[BACKUP-FULL-3]",
+                    "[BACKUP-DIFF-5]"
+                ],
+                "timestamp" : {
+                    "start" : [TIMESTAMP],
+                    "stop" : [TIMESTAMP]
+                },
+                "type" : "incr"
             }
         ],
         "db" : [
@@ -4033,4 +4231,5 @@ info bogus stanza - bogus stanza (db-master host)
 [BACKUP-DIFF-4].manifest.gz
 [BACKUP-FULL-2].manifest.gz
 [BACKUP-DIFF-5].manifest.gz
+[BACKUP-INCR-6].manifest.gz
 [BACKUP-FULL-3].manifest.gz
