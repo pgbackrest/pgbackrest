@@ -36,7 +36,9 @@ sub new
         $self->{strFavicon},
         $self->{strLogo},
         $self->{strDescription},
-        $self->{bPretty}
+        $self->{bPretty},
+        $self->{bCompact},
+        $self->{strCss},
     ) =
         logDebugParam
         (
@@ -46,7 +48,9 @@ sub new
             {name => 'strFavicon', required => false},
             {name => 'strLogo', required => false},
             {name => 'strDescription', required => false},
-            {name => 'bPretty', default => false}
+            {name => 'bPretty', default => false},
+            {name => 'bCompact', default => false},
+            {name => 'strCss', required => false},
         );
 
     $self->{oBody} = new BackRestDoc::Html::DocHtmlElement(HTML_BODY);
@@ -133,6 +137,10 @@ sub htmlRender
             $oElement->{strContent} = trim($oElement->{strContent});
             $strHtml .= $self->lf();
         }
+        else
+        {
+            $oElement->{strContent} =~ s/\&/\&amp\;/g;
+        }
 
         $strHtml .= $oElement->{strContent};
 
@@ -170,6 +178,22 @@ sub htmlRender
 }
 
 ####################################################################################################################################
+# escape
+#
+# Generate the HTML.
+####################################################################################################################################
+sub escape
+{
+    my $self = shift;
+    my $strBuffer = shift;
+
+    $strBuffer =~ s/\&/\&amp\;/g;
+    $strBuffer =~ s/\</\&lt\;/g;
+
+    return $strBuffer;
+}
+
+####################################################################################################################################
 # htmlGet
 #
 # Generate the HTML.
@@ -187,37 +211,67 @@ sub htmlGet
                            " \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">" . $self->lf() .
         $self->indent(0) . "<html xmlns=\"http://www.w3.org/1999/xhtml\">" . $self->lf() .
         $self->indent(0) . "<head>" . $self->lf() .
-            $self->indent(1) . "<title>$self->{strTitle}</title>" . $self->lf() .
-            $self->indent(1) . "<link rel=\"stylesheet\" href=\"default.css\" type=\"text/css\"></link>" . $self->lf() .
+            $self->indent(1) . '<title>' . $self->escape($self->{strTitle}) . '</title>' . $self->lf() .
+            $self->indent(1) . "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></meta>" . $self->lf();
+
+    if (!$self->{bCompact})
+    {
+        $strHtml .=
             # $self->indent(1) . "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></meta>" . $self->lf() .
-            $self->indent(1) . "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></meta>" . $self->lf() .
-            $self->indent(1) . "<meta property=\"og:site_name\" content=\"$self->{strName}\"></meta>" . $self->lf() .
-            $self->indent(1) . "<meta property=\"og:title\" content=\"$self->{strTitle}\"></meta>" . $self->lf() .
-            $self->indent(1) . "<meta property=\"og:type\" content=\"website\"></meta>" . $self->lf();
+            $self->indent(1) .
+                '<meta property="og:site_name" content="' . $self->escape($self->{strName}) . '"></meta>' . $self->lf() .
+            $self->indent(1) .
+                '<meta property="og:title" content="' . $self->escape($self->{strTitle}) . '"></meta>' . $self->lf() .
+            $self->indent(1) . '<meta property="og:type" content="website"></meta>' . $self->lf();
 
-            if (defined($self->{strFavicon}))
-            {
-                $strHtml .=
-                    $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/png\"></link>" . $self->lf();
-            }
+        if (defined($self->{strFavicon}))
+        {
+            $strHtml .=
+                $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/png\"></link>" . $self->lf();
+        }
 
-            if (defined($self->{strLogo}))
-            {
-                $strHtml .=
-                    $self->indent(1) . "<meta property=\"og:image:type\" content=\"image/png\"></meta>" . $self->lf() .
-                    $self->indent(1) . "<meta property=\"og:image\" content=\"{[backrest-url-base]}/$self->{strLogo}\"></meta>" . $self->lf();
-            }
+        if (defined($self->{strLogo}))
+        {
+            $strHtml .=
+                $self->indent(1) . "<meta property=\"og:image:type\" content=\"image/png\"></meta>" . $self->lf() .
+                $self->indent(1) . "<meta property=\"og:image\" content=\"{[backrest-url-base]}/$self->{strLogo}\"></meta>" .
+                $self->lf();
+        }
 
-            if (defined($self->{strDescription}))
-            {
-                $strHtml .=
-                    $self->indent(1) . "<meta name=\"description\" content=\"$self->{strDescription}\"></meta>" . $self->lf() .
-                    $self->indent(1) . "<meta property=\"og:description\" content=\"$self->{strDescription}\"></meta>" . $self->lf();
-            }
+        if (defined($self->{strDescription}))
+        {
+            $strHtml .=
+                $self->indent(1) .
+                    '<meta name="description" content="' . $self->escape($self->{strDescription}) . '"></meta>' . $self->lf() .
+                $self->indent(1) .
+                    '<meta property="og:description" content="' . $self->escape($self->{strDescription}) . '"></meta>' . $self->lf();
+        }
+    }
 
-        $self->indent(0) . "</head>" . $self->lf();
+    if (defined($self->{strCss}))
+    {
+        my $strCss = $self->{strCss};
 
-    $strHtml .= $self->htmlRender($self->bodyGet(), 0);
+        if (!$self->{bPretty})
+        {
+            $strCss =~ s/^\s+//mg;
+            $strCss =~ s/\n//g;
+            $strCss =~ s/\/\*.*?\*\///g;
+        }
+
+        $strHtml .=
+            $self->indent(1) . '<style type="text/css">' . $self->lf() . trim($strCss) . $self->lf() .
+            $self->indent(1) . '</style>' . $self->lf();
+    }
+    else
+    {
+        $strHtml .=
+            $self->indent(1) . "<link rel=\"stylesheet\" href=\"default.css\" type=\"text/css\"></link>" . $self->lf();
+    }
+
+    $strHtml .=
+        $self->indent(0) . "</head>" . $self->lf() .
+        $self->htmlRender($self->bodyGet(), 0);
 
     # Complete the html
     $strHtml .=

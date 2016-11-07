@@ -236,6 +236,14 @@ sub new
         }
     }
 
+    if (defined($self->{oDoc}))
+    {
+        $self->{bToc} = !defined($self->{oDoc}->paramGet('toc', false)) || $self->{oDoc}->paramGet('toc') eq 'y' ? true : false;
+        $self->{bTocNumber} =
+            $self->{bToc} &&
+            (!defined($self->{oDoc}->paramGet('toc-number', false)) || $self->{oDoc}->paramGet('toc-number') eq 'y') ? true : false;
+    }
+
     # Return from function and log return values if any
     return logDebugReturn
     (

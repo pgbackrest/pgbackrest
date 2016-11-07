@@ -67,6 +67,8 @@ sub new
 
     $self->{bExe} = $bExe;
 
+    $self->{iCmdLineLen} = $self->{oDoc}->paramGet('cmd-line-len', false, 80);
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -105,6 +107,7 @@ sub executeKey
 
     # Format and split command
     $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
+    $strCommand =~ s/ \\\@ \\//smg;
     my @stryCommand = split("\n", $strCommand);
 
     my $hCacheKey =
@@ -186,16 +189,17 @@ sub execute
         # Make sure that no lines are greater than 80 chars
         foreach my $strLine (split("\n", $strCommand))
         {
-            if (length(trim($strLine)) > 80)
+            if (length(trim($strLine)) > $self->{iCmdLineLen})
             {
-                confess &log(ERROR, "command has a line > 80 characters:\n${strCommand}\noffending line: ${strLine}");
+                confess &log(ERROR,
+                    "command has a line > $self->{iCmdLineLen} characters:\n${strCommand}\noffending line: ${strLine}");
             }
         }
     }
 
     &log(DEBUG, ('    ' x $iIndent) . "execute: $strCommand");
 
-    if (!$oCommand->paramTest('skip', 'y'))
+    if ($self->{oManifest}->variableReplace($oCommand->paramGet('skip', false, 'n')) ne 'y')
     {
         if ($self->{bExe} && $self->isRequired($oSection))
         {
@@ -503,8 +507,8 @@ sub backrestConfig
 
             foreach my $oOption ($oConfig->nodeList('backrest-config-option'))
             {
-                my $strSection = $oOption->paramGet('section');
-                my $strKey = $oOption->paramGet('key');
+                my $strSection = $self->{oManifest}->variableReplace($oOption->paramGet('section'));
+                my $strKey = $self->{oManifest}->variableReplace($oOption->paramGet('key'));
                 my $strValue;
 
                 if (!$oOption->paramTest('remove', 'y'))
@@ -568,7 +572,7 @@ sub backrestConfig
                 }
             }
 
-            my $strLocalFile = "/home/vagrant/data/db-master/etc/pgbackrest.conf";
+            my $strLocalFile = "/home/vagrant/data/pgbackrest.conf";
 
             # Save the ini file
             iniSave($strLocalFile, $self->{config}{$strHostName}{$$hCacheKey{file}}, true);
@@ -663,7 +667,7 @@ sub postgresConfig
                 confess &log(ERROR, "cannot configure postgres on host ${strHostName} because the host does not exist");
             }
 
-            my $strLocalFile = '/home/vagrant/data/db-master/etc/postgresql.conf';
+            my $strLocalFile = '/home/vagrant/data/postgresql.conf';
             $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
@@ -972,14 +976,14 @@ sub sectionChildProcess
 
                 my $oHost = new pgBackRestTest::Common::HostTest(
                     $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os},
-                    [$$hCacheKey{mount}]);
+                    defined($$hCacheKey{mount}) ? [$$hCacheKey{mount}] : undef);
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);
                 $$hCacheValue{ip} = $oHost->{strIP};
 
                 # Execute cleanup commands
-                foreach my $oExecute ($oChild->nodeList('execute'))
+                foreach my $oExecute ($oChild->nodeList('execute', false))
                 {
                     $self->execute($oSection, $$hCacheKey{name}, $oExecute, $iDepth + 1, false);
                 }

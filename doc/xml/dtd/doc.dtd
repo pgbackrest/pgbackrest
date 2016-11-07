@@ -3,6 +3,8 @@
     <!ATTLIST doc title CDATA "">
     <!ATTLIST doc subtitle CDATA "">
     <!ATTLIST doc toc CDATA "y">
+    <!ATTLIST doc toc-number CDATA "y">
+    <!ATTLIST doc cmd-line-len CDATA "80">
 
 <!ELEMENT description (#PCDATA)>
 
@@ -116,7 +118,7 @@
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section keyword CDATA "">
     <!ATTLIST section depend CDATA "">
-<!ELEMENT title (#PCDATA|b|i|bi|ul|ol|id|code|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
+<!ELEMENT title (#PCDATA|quote|b|i|bi|ul|ol|id|code|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
                  pg-option|pg-setting|link|user)*>
 
 <!ELEMENT default (#PCDATA)>

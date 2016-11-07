@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="Releases">
+<doc title="Releases" toc-number="n">
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
@@ -169,6 +169,44 @@
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed missing variable replacements.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Removed hard-coded host names from configuration file paths.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Allow command-line length to be configured using <id>cmd-line-len</id> param.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <id>compact</id> param to allow CSS to be embedded in HTML file.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <id>pretty</id> param to produce HTML with proper indenting.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Only generate HTML menu when required and don't require index page.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Assign numbers to sections by default.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>VM mount points are now optional.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-doc-list>
         </release>
 
         <release date="2016-10-10" version="1.09" title="9.6 Support, Configurability, and Bug Fixes">

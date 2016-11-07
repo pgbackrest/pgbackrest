@@ -34,19 +34,32 @@ sub new
         $strOperation,
         $oManifest,
         $strRenderOutKey,
-        $bExe
+        $bMenu,
+        $bExe,
+        $bCompact,
+        $strCss,
+        $bPretty,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'oManifest'},
             {name => 'strRenderOutKey'},
-            {name => 'bExe'}
+            {name => 'bMenu'},
+            {name => 'bExe'},
+            {name => 'bCompact'},
+            {name => 'strCss'},
+            {name => 'bPretty'},
         );
 
     # Create the class hash
     my $self = $class->SUPER::new(RENDER_TYPE_HTML, $oManifest, $strRenderOutKey, $bExe);
     bless $self, $class;
+
+    $self->{bMenu} = $bMenu;
+    $self->{bCompact} = $bCompact;
+    $self->{strCss} = $strCss;
+    $self->{bPretty} = $bPretty;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -77,12 +90,15 @@ sub process
     my $strSubTitle = $oPage->paramGet('subtitle', false);
 
     my $oHtmlBuilder = new BackRestDoc::Html::DocHtmlBuilder(
-        "{[project]} - Reliable PostgreSQL Backup & Restore",
-         $strTitle . (defined($strSubTitle) ? " - ${strSubTitle}" : ''),
-         $self->{oManifest}->variableGet('project-favicon'),
-         $self->{oManifest}->variableGet('project-logo'),
-         trim($self->{oDoc}->fieldGet('description')),
-         $self->{bPretty});
+        $self->{oManifest}->variableReplace('{[project]}' . (defined($self->{oManifest}->variableGet('project-tagline')) ?
+            $self->{oManifest}->variableGet('project-tagline') : '')),
+        $self->{oManifest}->variableReplace($strTitle . (defined($strSubTitle) ? " - ${strSubTitle}" : '')),
+        $self->{oManifest}->variableGet('project-favicon'),
+        $self->{oManifest}->variableGet('project-logo'),
+        $self->{oManifest}->variableReplace(trim($self->{oDoc}->fieldGet('description'))),
+        $self->{bPretty},
+        $self->{bCompact},
+        $self->{bCompact} ? $self->{strCss} : undef);
 
     # Generate header
     my $oPageHeader = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-header');
@@ -107,40 +123,41 @@ sub process
     }
 
     # Generate menu
-    my $oMenuBody = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-menu')->addNew(HTML_DIV, 'menu-body');
-
-    if ($self->{strRenderOutKey} ne 'index')
+    if ($self->{bMenu})
     {
-        my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, 'index');
+        my $oMenuBody = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-menu')->addNew(HTML_DIV, 'menu-body');
 
-        $oMenuBody->
-            addNew(HTML_DIV, 'menu')->
-                addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => '{[project-url-root]}'});
-    }
-
-    # ??? The sort order here is hokey and only works for backrest - will need to be changed
-    foreach my $strRenderOutKey (sort {$b cmp $a} $self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
-    {
-        if ($strRenderOutKey ne $self->{strRenderOutKey} && $strRenderOutKey ne 'index')
+        if ($self->{strRenderOutKey} ne 'index')
         {
-            my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strRenderOutKey);
+            my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, 'index');
 
             $oMenuBody->
                 addNew(HTML_DIV, 'menu')->
-                    addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => "${strRenderOutKey}.html"});
+                    addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => '{[project-url-root]}'});
+        }
+
+        # ??? The sort order here is hokey and only works for backrest - will need to be changed
+        foreach my $strRenderOutKey (sort {$b cmp $a} $self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
+        {
+            if ($strRenderOutKey ne $self->{strRenderOutKey} && $strRenderOutKey ne 'index')
+            {
+                my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strRenderOutKey);
+
+                $oMenuBody->
+                    addNew(HTML_DIV, 'menu')->
+                        addNew(HTML_A, 'menu-link', {strContent => $$oRenderOut{menu}, strRef => "${strRenderOutKey}.html"});
+            }
         }
     }
 
     # Generate table of contents
     my $oPageTocBody;
 
-    if (!defined($oPage->paramGet('toc', false)) || $oPage->paramGet('toc') eq 'y')
+    if ($self->{bToc})
     {
         my $oPageToc = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-toc');
 
-        $oPageToc->
-            addNew(HTML_DIV, 'page-toc-title',
-                   {strContent => "Table of Contents"});
+        $oPageToc->addNew(HTML_DIV, 'page-toc-header')->addNew(HTML_DIV, 'page-toc-title', {strContent => "Table of Contents"});
 
         $oPageTocBody = $oPageToc->
             addNew(HTML_DIV, 'page-toc-body');
@@ -148,12 +165,13 @@ sub process
 
     # Generate body
     my $oPageBody = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-body');
+    my $iSectionNo = 1;
 
     # Render sections
     foreach my $oSection ($oPage->nodeList('section'))
     {
         my ($oChildSectionElement, $oChildSectionTocElement) =
-            $self->sectionProcess($oSection, undef, 1);
+            $self->sectionProcess($oSection, undef, "${iSectionNo}", 1);
 
         $oPageBody->add($oChildSectionElement);
 
@@ -161,6 +179,8 @@ sub process
         {
             $oPageTocBody->add($oChildSectionTocElement);
         }
+
+        $iSectionNo++;
     }
 
     my $oPageFooter = $oHtmlBuilder->bodyGet()->
@@ -188,6 +208,7 @@ sub sectionProcess
         $strOperation,
         $oSection,
         $strAnchor,
+        $strSectionNo,
         $iDepth
     ) =
         logDebugParam
@@ -195,6 +216,7 @@ sub sectionProcess
             __PACKAGE__ . '->sectionProcess', \@_,
             {name => 'oSection'},
             {name => 'strAnchor', required => false},
+            {name => 'strSectionNo'},
             {name => 'iDepth'}
         );
 
@@ -208,7 +230,7 @@ sub sectionProcess
     # Working variables
     $strAnchor =
         ($oSection->paramTest(XML_SECTION_PARAM_ANCHOR, XML_SECTION_PARAM_ANCHOR_VALUE_NOINHERIT) ? '' :
-            (defined($strAnchor) ? "${strAnchor}/" : '')) .
+            (defined($strAnchor) ? "${strAnchor}." : '')) .
         $oSection->paramGet('id');
 
     # Create the section toc element
@@ -221,18 +243,26 @@ sub sectionProcess
     $oSectionElement->addNew(HTML_A, undef, {strId => $strAnchor});
 
     # Add the section title to section and toc
+    my $oSectionHeaderElement = $oSectionElement->addNew(HTML_DIV, "section${iDepth}-header");
     my $strSectionTitle = $self->processText($oSection->nodeGet('title')->textGet());
 
-    $oSectionElement->
-        addNew(HTML_DIV, "section${iDepth}-title",
-               {strContent => $strSectionTitle});
+    if ($self->{bTocNumber})
+    {
+        $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-number", {strContent => $strSectionNo});
+    }
 
-    my $oTocSectionTitleElement = $oSectionTocElement->
-        addNew(HTML_DIV, "section${iDepth}-toc-title");
+    $oSectionHeaderElement->addNew(HTML_DIV, "section${iDepth}-title", {strContent => $strSectionTitle});
 
-    $oTocSectionTitleElement->
-        addNew(HTML_A, undef,
-               {strContent => $strSectionTitle, strRef => "#${strAnchor}"});
+    if ($self->{bTocNumber})
+    {
+        $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-number", {strContent => $strSectionNo});
+    }
+
+    my $oTocSectionTitleElement = $oSectionTocElement->addNew(HTML_DIV, "section${iDepth}-toc-title");
+
+    $oTocSectionTitleElement->addNew(
+        HTML_A, undef,
+        {strContent => $strSectionTitle, strRef => "#${strAnchor}"});
 
     # Add the section intro if it exists
     if (defined($oSection->textGet(false)))
@@ -247,6 +277,7 @@ sub sectionProcess
 
     # Process each child
     my $oSectionBodyExe;
+    my $iSectionNo = 1;
 
     foreach my $oChild ($oSection->nodeList())
     {
@@ -449,7 +480,7 @@ sub sectionProcess
         elsif ($oChild->nameGet() eq 'section')
         {
             my ($oChildSectionElement, $oChildSectionTocElement) =
-                $self->sectionProcess($oChild, $strAnchor, $iDepth + 1);
+                $self->sectionProcess($oChild, $strAnchor, "${strSectionNo}.${iSectionNo}", $iDepth + 1);
 
             $oSectionBodyElement->add($oChildSectionElement);
 
@@ -457,6 +488,8 @@ sub sectionProcess
             {
                 $oSectionTocElement->add($oChildSectionTocElement);
             }
+
+            $iSectionNo++;
         }
         # Check if the child can be processed by a parent
         else

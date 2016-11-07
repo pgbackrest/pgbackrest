@@ -136,21 +136,49 @@ Table of Contents
     margin-top: .5em;
 }
 
+.section1-toc-number
+{
+    display: inline;
+    font-size: 14pt;
+    margin-right: .5em;
+}
+
 .section1-toc-title
 {
-    /*margin-top: .25em;*/
+    display: inline;
     font-size: 14pt;
+}
+
+.section2-toc
+{
+    margin-left: 1.8em;
+}
+
+.section2-toc-number
+{
+    display: inline;
+    margin-right: .5em;
 }
 
 .section2-toc-title
 {
-    font-size: 12pt;
-    margin-left: 2em;
+    display: inline;
+}
+
+.section3-toc
+{
+    margin-left: 2.3em;
+}
+
+.section3-toc-number
+{
+    display: inline;
+    margin-right: .5em;
 }
 
 .section3-toc-title
 {
-    margin-left: 4em;
+    display: inline;
 }
 
 /*******************************************************************************
@@ -171,13 +199,13 @@ Section
     margin-top: 1em;
 }
 
-.section1-title, .section2-title, .section3-title, .page-toc-title
+.section1-header, .section2-header, .section3-header, .page-toc-header
 {
     margin-top: .5em;
     font-weight: 500;
 }
 
-.section1-title, .page-toc-title
+.section1-header, .page-toc-header
 {
     border-radius: 3px;
     background-color: #396a93;
@@ -185,6 +213,17 @@ Section
     font-size: 22pt;
     padding-left: .5em;
     margin-bottom: .5em;
+}
+
+.section1-number, .section2-number, .section3-number
+{
+    display: inline;
+    margin-right: .5em;
+}
+
+.section1-title, .section2-title, .section3-title
+{
+    display: inline;
 }
 
 .section1-subtitle, .section2-subtitle, .section3-subtitle
@@ -216,7 +255,7 @@ Section
     margin-top: 1em;
 }
 
-.section2-title
+.section2-header
 {
     border-bottom: 2px #396a93 solid;
     color: #396a93;
@@ -244,7 +283,7 @@ Section
     border-top: none;
 }
 
-.section3-title
+.section3-header
 {
     display: inline;
     font-size: 14pt;

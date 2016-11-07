@@ -26,7 +26,13 @@ use constant FILE_MANIFEST                                          => 'manifest
 # Render constants
 ####################################################################################################################################
 use constant RENDER                                                 => 'render';
+use constant RENDER_COMPACT                                         => 'compact';
+    push @EXPORT, qw(RENDER_COMPACT);
 use constant RENDER_FILE                                            => 'file';
+use constant RENDER_MENU                                            => 'menu';
+    push @EXPORT, qw(RENDER_MENU);
+use constant RENDER_PRETTY                                          => 'pretty';
+    push @EXPORT, qw(RENDER_PRETTY);
 
 use constant RENDER_TYPE                                            => 'type';
 use constant RENDER_TYPE_HTML                                       => 'html';
@@ -128,6 +134,9 @@ sub new
 
         # Get the file param
         $${oRenderHash}{file} = $oRender->paramGet(RENDER_FILE, false);
+        $${oRenderHash}{&RENDER_COMPACT} = $oRender->paramGet(RENDER_COMPACT, false, 'n') eq 'y' ? true : false;
+        $${oRenderHash}{&RENDER_PRETTY} = $oRender->paramGet(RENDER_PRETTY, false, 'n') eq 'y' ? true : false;
+        $${oRenderHash}{&RENDER_MENU} = false;
 
         logDebugMisc
         (
@@ -157,12 +166,6 @@ sub new
 
             $$oRenderOutHash{source} = $strSource;
 
-            # Get the menu caption
-            if (defined($oRenderOut->paramGet('menu', false)) && $strType ne RENDER_TYPE_HTML)
-            {
-                confess &log(ERROR, "menu is only valid with html render type");
-            }
-
             # Get the filename
             if (defined($oRenderOut->paramGet('file', false)))
             {
@@ -176,8 +179,16 @@ sub new
                 }
             }
 
+            # Get the menu caption
+            if (defined($oRenderOut->paramGet('menu', false)) && $strType ne RENDER_TYPE_HTML)
+            {
+                confess &log(ERROR, "menu is only valid with html render type");
+            }
+
             if (defined($oRenderOut->paramGet('menu', false)))
             {
+                $${oRenderHash}{&RENDER_MENU} = true;
+
                 if ($strType eq RENDER_TYPE_HTML)
                 {
                     $$oRenderOutHash{menu} = $oRenderOut->paramGet('menu', false);
