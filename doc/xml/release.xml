@@ -67,6 +67,11 @@
             <contributor-id type="github">crunchyjohn</contributor-id>
         </contributor>
 
+        <contributor id="kulkarni.nikhilchandra">
+            <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
+            <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
+        </contributor>
+
         <contributor id="lardiere.sebastien">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
@@ -133,6 +138,14 @@
                 <release-bug-list>
                     <release-item>
                         <p>Fixed an issue where a backup could error if no changes were made to a database between backups and only <file>pg_control</file> changed.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kulkarni.nikhilchandra"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where tablespace paths with the same prefix would cause an invalid link error.</p>
                     </release-item>
                 </release-bug-list>
 

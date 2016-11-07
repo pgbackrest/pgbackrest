@@ -1040,6 +1040,7 @@ sub backupTestRun
             testFileCreate($oHostDbMaster->tablespacePath(2) . '/donotdelete.txt', 'DONOTDELETE-2');
             filePathCreate($oHostDbMaster->tablespacePath(2, 2), undef, undef, true);
             testFileCreate($oHostDbMaster->tablespacePath(2, 2) . '/donotdelete.txt', 'DONOTDELETE-2-2');
+            filePathCreate($oHostDbMaster->tablespacePath(11), undef, undef, true);
 
             my $strTmpPath = $oHostBackup->repoPath() . "/temp/${strStanza}.tmp";
             executeTest("sudo chmod g+w " . dirname($strTmpPath));
@@ -1388,6 +1389,11 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
                                                   'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
 
+            # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
+            if ($bNeutralTest)
+            {
+                $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
+            }
 
             $strBackup = $oHostBackup->backup(
                 $strType, 'resume and add tablespace 2', {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME});
@@ -1395,6 +1401,12 @@ sub backupTestRun
             # Resume Diff Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = BACKUP_TYPE_DIFF;
+
+            # Drop tablespace 11
+            if ($bNeutralTest)
+            {
+                $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 11);
+            }
 
             $strTmpPath = $oHostBackup->repoPath() . "/temp/${strStanza}.tmp";
 

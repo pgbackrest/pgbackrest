@@ -939,7 +939,8 @@ sub linkCheck
                 {
                     my $strChildPath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetChild, MANIFEST_SUBKEY_PATH);
 
-                    if (index(pathAbsolute($strBasePath, $strChildPath), pathAbsolute($strBasePath, $strParentPath)) == 0)
+                    if (index(
+                        pathAbsolute($strBasePath, $strChildPath) . '/', pathAbsolute($strBasePath, $strParentPath) . '/') == 0)
                     {
                         confess &log(ERROR, 'link ' . $self->dbPathGet($strBasePath, $strTargetChild) .
                                             " (${strChildPath}) references a subdirectory of or" .

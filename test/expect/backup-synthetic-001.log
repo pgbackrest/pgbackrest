@@ -1677,6 +1677,7 @@ P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oData
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
 P00  DEBUG:     Manifest->build: found tablespace 1
+P00  DEBUG:     Manifest->build: found tablespace 11
 P00  DEBUG:     Manifest->build: found tablespace 2
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
@@ -1701,7 +1702,11 @@ P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], 
 P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/16384, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1]/pgsql_tmp, strPathOp = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/11, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts11
+P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts11, strPathType = db:absolute
+P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts11, strPathType = db:absolute
+P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts11, strPathType = db:absolute
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = [TS_PATH-1], strPathOp = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
@@ -1851,6 +1856,7 @@ option-online=false
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
 pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
+pg_tblspc/11={"path":"[TEST_PATH]/db-master/db/tablespace/ts11","tablespace-id":"11","tablespace-name":"ts11","type":"link"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
@@ -1876,6 +1882,7 @@ user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
+pg_data/pg_tblspc/11={"destination":"[TEST_PATH]/db-master/db/tablespace/ts11"}
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
@@ -1903,6 +1910,8 @@ pg_tblspc={}
 pg_tblspc/1={}
 pg_tblspc/1/[TS_PATH-1]={}
 pg_tblspc/1/[TS_PATH-1]/16384={}
+pg_tblspc/11={}
+pg_tblspc/11/[TS_PATH-1]={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
