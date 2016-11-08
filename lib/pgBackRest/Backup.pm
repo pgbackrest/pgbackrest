@@ -971,6 +971,7 @@ sub process
     # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
     # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
     # be skipped by dealing with any backup label collisions here.
+#CSHANG why is "gz" hardcoded in this IF statement?
     if (fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER),
                  ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
                  timestampFileFormat(undef, $lTimestampStop) .

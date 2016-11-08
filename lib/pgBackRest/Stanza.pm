@@ -122,13 +122,13 @@ sub stanzaCreate
     $self->dbInfoGet();
 
     # Create the archive.info file
-    my ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE,
+    my ($iResult, $strResultMessage) = $self->infoFileCreate($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE,
                                                              ERROR_ARCHIVE_DIR_INVALID);
 
     if ($iResult == 0)
     {
         # Create the backup.info file
-        ($iResult, $strResultMessage) = $self->createInfoFile($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO,
+        ($iResult, $strResultMessage) = $self->infoFileCreate($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO,
                                                               ERROR_BACKUP_DIR_INVALID);
     }
 
@@ -151,11 +151,11 @@ sub stanzaCreate
 }
 
 ####################################################################################################################################
-# createInfoFile
+# infoFileCreate
 #
 # Creates the info file based on the data passed to the function
 ####################################################################################################################################
-sub createInfoFile
+sub infoFileCreate
 {
     my $self = shift;
 
@@ -170,11 +170,11 @@ sub createInfoFile
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->createInfoFile', \@_,
-            {name => 'oFile'},
-            {name => 'strPathType'},
-            {name => 'strInfoFile'},
-            {name => 'iErrorCode'}
+            __PACKAGE__ . '->infoFileCreate', \@_,
+            {name => 'oFile', trace => true},
+            {name => 'strPathType', trace => true},
+            {name => 'strInfoFile', trace => true},
+            {name => 'iErrorCode', trace => true}
         );
 
     my $iResult = 0;
@@ -197,17 +197,48 @@ sub createInfoFile
     {
         # Create and save the info file
         ($strPathType eq PATH_BACKUP_CLUSTER)
-            ? $oInfo->fileCreate($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+            ? $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
                                  $self->{oDb}{ullDbSysId})
-            : $oInfo->fileCreate($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+            : $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
     }
     elsif (!grep(/^$strInfoFile$/i, @stryFileList))
     {
-        $iResult = $iErrorCode;
-        $strResultMessage = "the " . (($strPathType eq PATH_BACKUP_CLUSTER) ? "backup" : "archive") . " directory is not empty " .
-                            "but the ${strInfoFile} file is missing\n" .
-                            "HINT: Has the directory been copied from another location and the copy has not completed?";
-        #\n"."HINT: Use --force to force the backup.info to be created from the existing backup data in the directory.";
+        if (!optionGet(OPTION_FORCE))
+        {
+            $iResult = $iErrorCode;
+            $strResultMessage =
+                "the " . (($strPathType eq PATH_BACKUP_CLUSTER) ? "backup" : "archive") . " directory is not empty " .
+                "but the ${strInfoFile} file is missing\n" .
+                "HINT: Has the directory been copied from another location and the copy has not completed?\n" .
+                "HINT: Use --force to force the ${strInfoFile} to be created from the existing data in the directory.";
+        }
+        # Force the recreation of the info file
+        else
+        {
+            # Turn off console logging to control when to display the error
+            # logLevelSet(undef, OFF);
+
+            eval
+            {
+                $oInfo->reconstruct($oFile);
+                return true;
+            }
+            or do
+            {
+                # Confess unhandled errors
+                if (!isException($EVAL_ERROR))
+                {
+                    confess $EVAL_ERROR;
+                }
+
+                # If this is a backrest error then capture the last code and message
+                $iResult = $EVAL_ERROR->code();
+                $strResultMessage = $EVAL_ERROR->message();
+            };
+
+            # Reset the console logging
+            # logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+        }
     }
     # Check the validity of the existing info file
     else

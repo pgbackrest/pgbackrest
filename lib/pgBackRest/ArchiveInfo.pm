@@ -15,7 +15,6 @@ use Carp qw(confess);
 use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
-
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
 
 use lib dirname($0);
@@ -179,11 +178,11 @@ sub archiveId
 }
 
 ####################################################################################################################################
-# fileCreate
+# create
 #
 # Creates the archive.info file.
 ####################################################################################################################################
-sub fileCreate
+sub create
 {
     my $self = shift;
 
@@ -193,25 +192,87 @@ sub fileCreate
         $strOperation,
         $strDbVersion,
         $ullDbSysId,
+        $strDbHistoryId,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->fileCreate', \@_,
+            __PACKAGE__ . '->create', \@_,
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'},
+            {name => 'strDbHistoryId', required => false},
         );
 
-    if (!$self->{bExists})
-    {
-        # Fill db section and db history section
-        $self->setDb($strDbVersion, $ullDbSysId, $self->getDbHistoryId(false));
+    # Fill db section and db history section
+    $self->setDb($strDbVersion, $ullDbSysId, (defined($strDbHistoryId) ? $strDbHistoryId : $self->getDbHistoryId(false)));
 
-        $self->save();
-    }
-    else
+    $self->save();
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# reconstruct
+#
+# Reconstruct the info file from the existing directory and files
+####################################################################################################################################
+sub reconstruct
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+    ) =
+        logDebugParam
+    (
+        __PACKAGE__ . '->reconstruct', \@_,
+        {name => 'oFile'},
+    );
+
+# CSHANG should we confirm the file does not exist? Or just always recreate, regardless? (I vote the latter)
+
+    # Get the upper level directory names, e.g. 9.4-1
+    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_DB_VERSION . '-[0-9]+$'))
     {
-        # If file exists, then WARN
-        &log(WARN, $self->{strArchiveClusterPath} . "/" . ARCHIVE_INFO_FILE . " already exists");
+        # Get the db-version and db-id (history id) from the directory name
+        my ($strDbVersion, $strDbId) = split("-", $strVersionDir);
+
+# CSHANG what if async archiving is on? the WAL goes to a spool dir first before getting to the dir, so if we did an upgrade and the archive.info was missing an archiving is happening but not to us yet....is this the "queue" refered to in "If async archiving is going on we’ll need to be sure that queue is flushed before allowing the stanza-upgrade."
+        # Get the name of the first archive directory
+        my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR))[0];
+
+#CSHANG Create a constant for the regexs below - or maybe have a function to provide regex for archive stuff like the backupregex function?
+        my $strArchiveFile =
+            (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",
+            "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"))[0];
+
+        # Get the full path for the file
+        my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
+
+# CSHANG I'm not sure I like this because it appears we can't just read out the first X number of bytes.
+        my $tBlock;
+        if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
+        {
+            # can't limit with InputLength - it requires you know the size of the compressed data stream
+            # gunzip $strArchiveFilePath => \$tBlock, InputLength => 100
+            #     or confess "gunzip failed: $GunzipError\n";
+            gunzip $strArchiveFilePath => \$tBlock
+                or confess "gunzip failed: $GunzipError\n";
+        }
+
+# CSHANG may need to put these constants in a common location: PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
+        my $iSysIdOffset = $strDbVersion >= '9.3' ? 20 : 12;
+        my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
+
+        if (!defined($ullDbSysId))
+        {
+            confess &log(ERROR, "unable to read database system identifier");
+        }
+
+        $self->create($strDbVersion, $ullDbSysId, $strDbId);
     }
 
     # Return from function and log return values if any
@@ -232,11 +293,12 @@ sub getDbHistoryId
     (
         $strOperation,
         $bFileRequired,
-    ) = logDebugParam
-        (
-            __PACKAGE__ . '->getDbHistoryId',
-            {name => 'bFileRequired', default => true},
-        );
+    ) =
+        logDebugParam
+    (
+        __PACKAGE__ . '->reconstruct', \@_,
+        {name => 'bFileRequired', default => true},
+    );
 
     # Confirm the info file exists if it is required
     if ($bFileRequired)
@@ -301,7 +363,7 @@ sub confirmExists
 {
     my $self = shift;
 
-    if (!$self->test(INFO_ARCHIVE_SECTION_DB) || !$self->{bExists})
+    if (!$self->{bExists})
     {
         confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
     }

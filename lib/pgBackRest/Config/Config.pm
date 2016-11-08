@@ -390,6 +390,8 @@ use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
 use constant OPTION_DEFAULT_LOCK                                    => true;
     push @EXPORT, qw(OPTION_DEFAULT_LOCK);
+use constant OPTION_DEFAULT_STANZA_CREATE_FORCE                     => false;
+    push @EXPORT, qw(OPTION_DEFAULT_STANZA_CREATE_FORCE);
 
 # Command-line only test
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -635,6 +637,11 @@ my %oOptionRule =
             &CMD_RESTORE =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_FORCE,
+            },
+
+            &CMD_STANZA_CREATE =>
+            {
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STANZA_CREATE_FORCE,
             },
 
             &CMD_STOP =>

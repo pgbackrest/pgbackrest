@@ -965,6 +965,17 @@
 
                 <text>Must be run during <backrest/> installation on the host where the repository is located. The <cmd>check</cmd> command will also be invoked if the <postgres/> database version is greater than or equal to 9.1.</text>
 
+                <option-list>
+                    <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
+                    <option id="force" name="Force">
+                        <summary>Force stanza creation.</summary>
+
+                        <text>CSHANG TO DO</text>
+
+                        <example>n</example>
+                    </option>
+                </option-list>
+
                 <command-example-list>
                     <command-example title="Create required stanza data">
                         <text><code-block title="">

@@ -101,7 +101,7 @@ sub stanzaCreate
     $$oStanza{strBackupClusterPath} = $strBackupClusterPath;
 
     # Create the backup info object
-    my $oBackupInfo = (new pgBackRest::BackupInfo($$oStanza{strBackupClusterPath}, false, false))->fileCreate($strDbVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId});;
+    my $oBackupInfo = (new pgBackRest::BackupInfo($$oStanza{strBackupClusterPath}, false, false))->create($strDbVersion, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId});;
 
     # Create the stanza archive path
     my $strArchiveClusterPath = $self->{oHostBackup}->repoPath() . "/archive/${strStanza}";
@@ -109,7 +109,7 @@ sub stanzaCreate
 
     # Create the archive info object
     $$oStanza{oArchiveInfo} = new pgBackRest::ArchiveInfo($strArchiveClusterPath);
-    $$oStanza{oArchiveInfo}->fileCreate($$oStanza{strDbVersion}, $$oStanza{ullDbSysId});
+    $$oStanza{oArchiveInfo}->create($$oStanza{strDbVersion}, $$oStanza{ullDbSysId});
 
     # Create the stanza archive version path
     $strArchiveClusterPath .= '/' . $$oStanza{strDbVersion} . '-' . $$oStanza{iDbId};

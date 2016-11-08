@@ -316,7 +316,7 @@ sub process
                             push(@oyArchiveRange, $oArchiveRange);
                         }
                     }
-
+# CSHANG replace with REGEX_ARCHIVE_DIR and test
                     # Get all major archive paths (timeline and first 64 bits of LSN)
                     foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
                     {

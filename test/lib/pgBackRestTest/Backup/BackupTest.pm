@@ -106,6 +106,68 @@ sub archiveCheck
     }
 }
 
+# Create the archive.info from an existing WAL file
+sub archiveInfoCreateFromWAL
+{
+    my $oFile = shift;
+    my $strSourceFile = shift;
+
+    my ($strDbVersion, $ullDbSysId) = (new pgBackRest::Archive)->walInfo($strSourceFile);
+
+    # Create the stanza archive path
+    filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
+
+    # Create the archive info file
+    (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->create($strDbVersion, $ullDbSysId);
+}
+
+# Create the info files from the pg_control file. Used for test that do not spin up a DB cluster.
+sub infoFileManualCreate
+{
+    my $oFile = shift;
+    my $strDbBasePath = shift;
+    my $strDbVersion = shift;
+
+    # If the repo is on the standby, we can't use the stanza-create command due to the way the test environment is set
+    # up, so manually create the files to allow the standby tests to pass.
+    my $strControlFile = $strDbBasePath . '/' . DB_FILE_PGCONTROL;
+    my $hFile;
+    my $tBlock;
+
+    sysopen($hFile, $strControlFile, O_RDONLY)
+        or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
+
+    # Read system identifier
+    sysread($hFile, $tBlock, 8) == 8
+        or confess &log(ERROR, "unable to read database system identifier");
+
+    my $ullDbSysId = unpack('Q', $tBlock);
+
+    # Read control version
+    sysread($hFile, $tBlock, 4) == 4
+        or confess &log(ERROR, "unable to read control version");
+
+    my $iControlVersion = unpack('L', $tBlock);
+
+    # Read catalog version
+    sysread($hFile, $tBlock, 4) == 4
+        or confess &log(ERROR, "unable to read catalog version");
+
+    my $iCatalogVersion = unpack('L', $tBlock);
+
+    # Close the control file
+    close($hFile);
+
+    # Create the archive and backup info files
+    filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
+    filePathCreate($oFile->pathGet(PATH_BACKUP_CLUSTER), '0770', undef, true);
+    (new pgBackRest::ArchiveInfo(
+     $oFile->pathGet(PATH_BACKUP_ARCHIVE), false))->create($strDbVersion, $ullDbSysId);
+    (new pgBackRest::BackupInfo(
+     $oFile->pathGet(PATH_BACKUP_CLUSTER), false, false))->create($strDbVersion, $iControlVersion,
+                                                                  $iCatalogVersion, $ullDbSysId);
+}
+
 ####################################################################################################################################
 # backupTestRun
 ####################################################################################################################################
@@ -232,21 +294,14 @@ sub backupTestRun
                             }
                         }
 
-                        # Create the archive info file (if doesn't exist) from the WAL file as it is required for archiving
+                        # Create the required archive info file (if doesn't exist) from the WAL file since DB not setup for these
+# CSHANG in the archiveInfoCreateFromWAL, I had to create the path with 770 otherwise the default permissions resulted in  ERROR: [199]: unable to open /home/vagrant/test/test-0/backup/repo/archive/db/archive.info -- not sure if this is the correct way to handle it since for the remote tests, the HostBackup->userGet returns backrest instead of vagrant (HostDbMaster always returns vagrant) and if I changed owner instead, then iniLoad in the $oHostBackup->infoMunge call below fails to open the file.
                         if (!$bInfoFileExist)
                         {
-                            my ($strDbVersion, $ullDbSysId) = (new pgBackRest::Archive)->walInfo($strSourceFile);
-
-                            # Create the stanza archive path
-                            filePathCreate($oHostBackup->repoPath() . "/archive/${strStanza}", undef, undef, true);
-
-                            # Create the archive info object
-                            (new pgBackRest::ArchiveInfo($oHostBackup->repoPath() . "/archive/${strStanza}")
-                            )->fileCreate($strDbVersion, $ullDbSysId);
-
+                            archiveInfoCreateFromWAL($oFile, $strSourceFile);
                             $bInfoFileExist = true;
                         }
-exit;
+
                         $oHostDbMaster->executeSimple(
                             $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
                                 " ${strSourceFile}",
@@ -282,7 +337,6 @@ exit;
                             $oHostDbMaster->executeSimple(
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
-
 
                             # break the system id
                             $oHostBackup->infoMunge(
@@ -431,22 +485,18 @@ exit;
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
+                # Create the archive info file from the WAL since DB is not set up for these tests
+                archiveInfoCreateFromWAL($oFile, $strArchiveTestFile);
+
                 # Push a WAL segment
                 $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
 
-                # load the archive info file so it can be munged for testing
-                my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
-                executeTest("sudo chmod 660 ${strInfoFile}");
-                my %oInfo;
-                iniLoad($strInfoFile, \%oInfo);
-                my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
-                my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
-
-                # Break the database version
+                # Break the database version of the archive info file
                 if ($iError == 0)
                 {
-                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
-                    testIniSave($strInfoFile, \%oInfo, true);
+                    $oHostBackup->infoMunge(
+                        $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                        {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
                 }
 
                 # Push two more segments with errors to exceed archive-max-mb
@@ -462,8 +512,7 @@ exit;
                 # Fix the database version
                 if ($iError == 0)
                 {
-                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = PG_VERSION_93;
-                    testIniSave($strInfoFile, \%oInfo, true);
+                    $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
                 }
 
                 # Remove the stop file
@@ -532,7 +581,7 @@ exit;
 
                 # Create the archive info file
                 filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->fileCreate(PG_VERSION_93, 6156904820763115222);
+                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->create(PG_VERSION_93, 6156904820763115222);
 
                 if (defined($oLogTest))
                 {
@@ -915,6 +964,9 @@ exit;
                     $strTestPoint = TEST_KEEP_ALIVE;
                 }
             }
+
+            # Create the backup info from the pg_control file; cannot use stanza-create command because no PG instance is setup
+            infoFileManualCreate($oFile, $oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
             # Create a file link
             filePathCreate($oHostDbMaster->dbPath() . '/pg_config', undef, undef, true);
@@ -1796,42 +1848,7 @@ exit;
             {
                 # If the repo is on the standby, we can't use the stanza-create command due to the way the test environment is set
                 # up, so manually create the files to allow the standby tests to pass.
-                my $strControlFile = $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL;
-                my $hFile;
-                my $tBlock;
-
-                sysopen($hFile, $strControlFile, O_RDONLY)
-                    or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
-
-                # Read system identifier
-                sysread($hFile, $tBlock, 8) == 8
-                    or confess &log(ERROR, "unable to read database system identifier");
-
-                my $ullDbSysId = unpack('Q', $tBlock);
-
-                # Read control version
-                sysread($hFile, $tBlock, 4) == 4
-                    or confess &log(ERROR, "unable to read control version");
-
-                my $iControlVersion = unpack('L', $tBlock);
-
-                # Read catalog version
-                sysread($hFile, $tBlock, 4) == 4
-                    or confess &log(ERROR, "unable to read catalog version");
-
-                my $iCatalogVersion = unpack('L', $tBlock);
-
-                # Close the control file
-                close($hFile);
-
-                # Create the archive and backup info files
-                filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                filePathCreate($oFile->pathGet(PATH_BACKUP_CLUSTER), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo(
-                 $oFile->pathGet(PATH_BACKUP_ARCHIVE), false))->fileCreate($oHostDbStandby->dbVersion(), $ullDbSysId);
-                (new pgBackRest::BackupInfo(
-                 $oFile->pathGet(PATH_BACKUP_CLUSTER), false, false))->fileCreate($oHostDbStandby->dbVersion(), $iControlVersion,
-                                                                                 $iCatalogVersion, $ullDbSysId);
+                infoFileManualCreate($oFile, $oHostDbMaster->dbBasePath(), $oHostDbStandby->dbVersion());
             }
 
             # Static backup parameters

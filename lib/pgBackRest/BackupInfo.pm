@@ -293,6 +293,13 @@ sub add
     # Get the backup label
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
+# CSHANG so as we are adding the data from the manifest, then shouldn't we check that the DB section is the same as what the
+# DB-version of the manifest is and update it if it is not? Backup.info may be there but may be incomplete. SAy they did a backup
+# and then performed and stanza-upgrade but something went wrong and the backup.info file was not updated. They started a backup
+# but it was taking a while and did a control-c the manifest file may have been added but the backup.info file not updated so now
+# the manifest has 9.5 but backup.info has 9.4, so here, should we be trying to update the DB section? Or maybe just update it from
+# DB->info but what if the they have --no-online - can we just have another function to read the pg_control and reconstruct it?
+
     # Calculate backup sizes and references
     my $lBackupSize = 0;
     my $lBackupSizeDelta = 0;
@@ -515,11 +522,11 @@ sub delete
 }
 
 ####################################################################################################################################
-# fileCreate
+# create
 #
 # Create the info file
 ####################################################################################################################################
-sub fileCreate
+sub create
 {
     my $self = shift;
 
@@ -534,7 +541,7 @@ sub fileCreate
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->fileCreate', \@_,
+            __PACKAGE__ . '->create', \@_,
             {name => 'strDbVersion'},
             {name => 'iControlVersion'},
             {name => 'iCatalogVersion'},
@@ -558,6 +565,31 @@ sub fileCreate
     return logDebugReturn($strOperation);
 }
 
+####################################################################################################################################
+# reconstruct
+#
+# Reconstruct the info file from the existing directory and files
+####################################################################################################################################
+sub reconstruct
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->reconstruct',
+            {name => 'oFile', default => true},
+        );
+
+# CSHANG Need to fill in
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
 # getDbHistoryId
