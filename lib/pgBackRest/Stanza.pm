@@ -296,6 +296,7 @@ sub dbInfoGet
 
     # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control
     # then this will error alerting the user to fix the pgbackrest.conf
+#CSHANG Need to not call this. We're going to have to WARN if the version is the same because if they haven't updated the db-path we'll only know that if the versions has not been the same - OR only do this call when the DB is online? The issue is we should not require them to start the database before creating a stanza because they'll get an immediate error in the postgres logs from the archive_command when pushing an archive with no archive.info. 
     $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
 
     (${$oDb}{strDbVersion}, ${$oDb}{iControlVersion}, ${$oDb}{iCatalogVersion}, ${$oDb}{ullDbSysId})

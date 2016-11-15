@@ -244,7 +244,7 @@ sub backupTestRun
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
-
+#CSHANG NEED TO CREATE PGCONTROL
                 my $strCommand =
                     $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
                     ' --no-fork --stanza=db archive-push';
@@ -295,7 +295,7 @@ sub backupTestRun
                         }
 
                         # Create the required archive info file (if doesn't exist) from the WAL file since DB not setup for these
-# CSHANG in the archiveInfoCreateFromWAL, I had to create the path with 770 otherwise the default permissions resulted in  ERROR: [199]: unable to open /home/vagrant/test/test-0/backup/repo/archive/db/archive.info -- not sure if this is the correct way to handle it since for the remote tests, the HostBackup->userGet returns backrest instead of vagrant (HostDbMaster always returns vagrant) and if I changed owner instead, then iniLoad in the $oHostBackup->infoMunge call below fails to open the file.
+# CSHANG in the archiveInfoCreateFromWAL, I had to create the path with 770 otherwise the default permissions resulted in  ERROR: [199]: unable to open /home/vagrant/test/test-0/backup/repo/archive/db/archive.info -- not sure if this is the correct way to handle it since for the remote tests, the HostBackup->userGet returns backrest instead of vagrant (HostDbMaster always returns vagrant) and if I changed owner instead, then iniLoad in the $oHostBackup->infoMunge call below fails to open the file.n (SEE ABOVE PG_CONTROL)
                         if (!$bInfoFileExist)
                         {
                             archiveInfoCreateFromWAL($oFile, $strSourceFile);
@@ -1831,6 +1831,15 @@ sub backupTestRun
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
             $oHostDbMaster->clusterCreate();
+            my $oTestMaster; my $iTestMasterIdx; my $oTestStandby; my $iTestStandbyIdx;
+            ($oTestMaster, $iTestMasterIdx, $oTestStandby, $iTestStandbyIdx) = dbObjectGet();
+use Data::Dumper;
+print "DBMASTER\n".Dumper($oHostDbMaster);
+print "BACKUP\n".Dumper($oHostBackup);
+print "DBSTANDBY\n".Dumper($oHostDbStandby);
+print "idx=$iTestMasterIdx, DBTESTMASTER\n".Dumper($oTestMaster);
+print "idx=$iTestStandbyIdx, DBTESTSTANDBY\n".Dumper($oTestMaster);
+exit;
 
             # Run the stanza create only where the repo is local
             my $oLocalHostRepo = undef;

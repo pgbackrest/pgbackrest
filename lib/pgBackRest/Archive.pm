@@ -1237,6 +1237,7 @@ sub check
     }
     else
     {
+        &log(ERROR, $strResultMessage, $iResult);
         &log(WARN,
             "WAL segment ${strWalSegment} did not reach the archive:\n" .
             "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .

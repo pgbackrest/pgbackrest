@@ -64,6 +64,83 @@ my $oPgControlVersionHash =
 };
 
 ####################################################################################################################################
+# dbObjectGet
+#
+# Gets the database objects(s) and indexes. The databases required for the backup type must be online. A connection to the
+# available databases will be established to determine which is the master and which, if any, is the standby. If there is a master
+# and a standby, returns both, else just the master.
+####################################################################################################################################
+sub dbObjectGet
+{
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->dbObjectGet');
+
+    my $iStandbyIdx = 0;
+    my $iMasterRemoteIdx = 0;
+    my $oDbMaster = undef;
+    my $oDbStandby = undef;
+
+    for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
+    {
+        # Make sure a db is defined for this index
+        if (optionTest(optionIndex(OPTION_DB_PATH, $iRemoteIdx)) || optionTest(optionIndex(OPTION_DB_HOST, $iRemoteIdx)))
+        {
+            # Create the db object
+            my $oDb = new pgBackRest::Db($iRemoteIdx);
+            my $bAssigned = false;
+
+            # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
+            # reached as long as the databases required for the backup type are present.
+            if ($oDb->connect(true))
+            {
+                # If this db is a standby
+                if ($oDb->isStandby())
+                {
+                    # If standby backup is requested then use the first standby found
+                    if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+                    {
+                        $oDbStandby = $oDb;
+                        $iStandbyIdx = $iRemoteIdx;
+                        $bAssigned = true;
+                    }
+                }
+                # Else this db is a master
+                else
+                {
+                    # Error if more than one master is found
+                    if (defined($oDbMaster))
+                    {
+                        confess &log(ERROR, 'more than one master database found');
+                    }
+
+                    $oDbMaster = $oDb;
+                    $iMasterRemoteIdx = $iRemoteIdx;
+                    $bAssigned = true;
+                }
+            }
+
+            # If the db was not used then destroy the protocol object underneath it
+            if (!$bAssigned)
+            {
+                protocolDestroy(DB, $iRemoteIdx, true);
+            }
+        }
+    }
+# CSHANG should these return values have trace => true?
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oDbMaster', value => $oDbMaster},
+        {name => 'iDbMasterIdx', value => $iMasterRemoteIdx},
+        {name => 'oDbStandby', value => $oDbStandby},
+        {name => 'iDbStandbyIdx', value => $iStandbyIdx},
+    );
+}
+
+push @EXPORT, qw(dbObjectGet);
+
+####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new

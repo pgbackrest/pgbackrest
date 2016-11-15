@@ -164,6 +164,7 @@ sub new
 ####################################################################################################################################
 sub validate
 {
+# CSHANG Dave also thinks maybe we rename this function to reconstruct
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
@@ -182,6 +183,8 @@ sub validate
             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
             $self->add($oManifest);
+
+# CSHANG add code to update DB section AFTER by going to the DB to get the info --- add should be told what the DB history ID is (if missing, use most recent one?). Call a history funtion?
         }
     }
 
@@ -294,11 +297,12 @@ sub add
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
 # CSHANG so as we are adding the data from the manifest, then shouldn't we check that the DB section is the same as what the
-# DB-version of the manifest is and update it if it is not? Backup.info may be there but may be incomplete. SAy they did a backup
-# and then performed and stanza-upgrade but something went wrong and the backup.info file was not updated. They started a backup
+# DB-version of the manifest is and update it if it is not? Backup.info may be there but may be incomplete. Say they did a backup
+# and then performed a stanza-upgrade but something went wrong and the backup.info file was not updated. They started a backup
 # but it was taking a while and did a control-c the manifest file may have been added but the backup.info file not updated so now
 # the manifest has 9.5 but backup.info has 9.4, so here, should we be trying to update the DB section? Or maybe just update it from
 # DB->info but what if the they have --no-online - can we just have another function to read the pg_control and reconstruct it?
+# IF THE FILE DOESN'T EXIST, ERROR out and have call stanza-create, else rebuild from the manifest files
 
     # Calculate backup sizes and references
     my $lBackupSize = 0;
@@ -377,7 +381,7 @@ sub add
                    \@stryReference);
     }
 
-    $self->save();
+    $self->save(); # CSHANG maybe not do this until the end of the validate loop. but do save if called from somewhere else. Need to make sure validate is always run.
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -557,6 +561,7 @@ sub create
     }
     else
     {
+# CSHANG If forcing, then recreate it
         # If file exists, then WARN
         &log(WARN, $self->{strBackupClusterPath} . "/" . FILE_BACKUP_INFO . " already exists");
     }

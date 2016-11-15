@@ -233,18 +233,21 @@ sub reconstruct
     );
 
 # CSHANG should we confirm the file does not exist? Or just always recreate, regardless? (I vote the latter)
-
     # Get the upper level directory names, e.g. 9.4-1
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_DB_VERSION . '-[0-9]+$'))
     {
         # Get the db-version and db-id (history id) from the directory name
         my ($strDbVersion, $strDbId) = split("-", $strVersionDir);
 
-# CSHANG what if async archiving is on? the WAL goes to a spool dir first before getting to the dir, so if we did an upgrade and the archive.info was missing an archiving is happening but not to us yet....is this the "queue" refered to in "If async archiving is going on we’ll need to be sure that queue is flushed before allowing the stanza-upgrade."
+# CSHANG what if async archiving is on? the WAL goes to a spool dir first before getting to the dir, so if we did an upgrade and the
+# archive.info was missing an archiving is happening but not to us yet....is this the "queue" refered to in "If async archiving is
+# going on we’ll need to be sure that queue is flushed before allowing the stanza-upgrade."
+# DAVE: Ignore anything in ASYNC queue - redoing the archive. IF don't have anything in archive dir then recreate from dir
         # Get the name of the first archive directory
         my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR))[0];
 
 #CSHANG Create a constant for the regexs below - or maybe have a function to provide regex for archive stuff like the backupregex function?
+# CAN MAKE FUNCTION in archiveCommon.pm
         my $strArchiveFile =
             (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",
             "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"))[0];
@@ -264,6 +267,7 @@ sub reconstruct
         }
 
 # CSHANG may need to put these constants in a common location: PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
+# MOVE TO COMMON FOR PG_WAL...
         my $iSysIdOffset = $strDbVersion >= '9.3' ? 20 : 12;
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
 
