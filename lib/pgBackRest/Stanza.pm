@@ -42,7 +42,7 @@ sub new
     my $strOperation = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize the database object
-    $self->{oDb} = new pgBackRest::Db(1);
+    ($self->{oDb}) = dbObjectGet();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -141,6 +141,29 @@ sub stanzaCreate
         &log(ERROR, $strResultMessage, $iResult);
         &log(WARN, "the stanza " . optionGet(OPTION_STANZA) . " could not be created");
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $iResult, trace => true}
+    );
+}
+
+####################################################################################################################################
+# stanzaUpgrade
+#
+# Updates the database backup and archive information for the stanza.
+####################################################################################################################################
+sub stanzaUpgrade
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
+
+    my $iResult;
+#CSHANG We're going to have to WARN if the version is the same because if they haven't updated the db-path we'll only know that if the version has not been the changed - OR only do this call when the DB is online? The issue is we should not require them to start the database before creating a stanza because they'll get an immediate error in the postgres logs from the archive_command when pushing an archive with no archive.info.
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -292,14 +315,19 @@ sub dbInfoGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->dbInfoGet');
 
-    my $oDb = $self->{oDb};
+#CSHANG    my $oDb = $self->{oDb};
 
-    # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control
-    # then this will error alerting the user to fix the pgbackrest.conf
-#CSHANG Need to not call this. We're going to have to WARN if the version is the same because if they haven't updated the db-path we'll only know that if the versions has not been the same - OR only do this call when the DB is online? The issue is we should not require them to start the database before creating a stanza because they'll get an immediate error in the postgres logs from the archive_command when pushing an archive with no archive.info. 
-    $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
+    # Validate the database configuration. Do not require the database to be online before creating a stanza because the
+    # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
+    # postgres logs.
+    if (optionGet(OPTION_ONLINE))
+    {
+        # If the db-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
+        $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
+    }
 
-    (${$oDb}{strDbVersion}, ${$oDb}{iControlVersion}, ${$oDb}{iCatalogVersion}, ${$oDb}{ullDbSysId})
+# CSHANG   (${$oDb}{strDbVersion}, ${$oDb}{iControlVersion}, ${$oDb}{iCatalogVersion}, ${$oDb}{ullDbSysId})
+    ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
         = $self->{oDb}->info(optionGet(OPTION_DB_PATH));
 
     # Return from function and log return values if any

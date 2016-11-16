@@ -550,33 +550,10 @@ sub process
     # Initialize database objects
     my $oDbMaster = undef;
     my $oDbStandby = undef;
-    $self->{iMasterRemoteIdx} = 1;
 
 #CSHANG it might be nice to have this through the IF statement after "# If master db is not already defined then set to default" so that we don't have to raise errors all over the place and so that we always return a masterDB. BUT for stanza create, we shouldn't force them to bring up postgres before doing a stanza create - obviously that results in an error from the archive push command (which ALSO causes a problem with the check command if they try to perform that before the stanza create).
-    # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
-    # this is simple and works.
-    if (optionGet(OPTION_ONLINE) && optionTest(optionIndex(OPTION_DB_PATH, 2)))
-    {
-        ($oDbMaster, $self->{iMasterRemoteIdx}, $oDbStandby, $self->{iCopyRemoteIdx}) = dbObjectGet();
 
-        # Make sure the standby database is defined when backup from standby requested
-        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
-        {
-            confess &log(ERROR, 'unable to find standby database - cannot proceed');
-        }
-
-        # A master database is always required
-        if (!defined($oDbMaster))
-        {
-            confess &log(ERROR, 'unable to find master database - cannot proceed');
-        }
-    }
-
-    # If master db is not already defined then set to default
-    if (!defined($oDbMaster))
-    {
-        $oDbMaster = new pgBackRest::Db($self->{iMasterRemoteIdx});
-    }
+    ($oDbMaster, $self->{iMasterRemoteIdx}, $oDbStandby, $self->{iCopyRemoteIdx}) = dbObjectGet();
 
     # If remote copy was not explicitly set then set it equal to master
     if (!defined($self->{iCopyRemoteIdx}))

@@ -1831,16 +1831,7 @@ sub backupTestRun
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
             $oHostDbMaster->clusterCreate();
-            my $oTestMaster; my $iTestMasterIdx; my $oTestStandby; my $iTestStandbyIdx;
-            ($oTestMaster, $iTestMasterIdx, $oTestStandby, $iTestStandbyIdx) = dbObjectGet();
-use Data::Dumper;
-print "DBMASTER\n".Dumper($oHostDbMaster);
-print "BACKUP\n".Dumper($oHostBackup);
-print "DBSTANDBY\n".Dumper($oHostDbStandby);
-print "idx=$iTestMasterIdx, DBTESTMASTER\n".Dumper($oTestMaster);
-print "idx=$iTestStandbyIdx, DBTESTSTANDBY\n".Dumper($oTestMaster);
-exit;
-
+# CSHANG Dave says oHostBackup is always filled in and will be a copy of master if the backup is on the same server as the DB so I should always be using the oHostBackup but then why do the tests below fail?
             # Run the stanza create only where the repo is local
             my $oLocalHostRepo = undef;
             if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)

@@ -75,57 +75,81 @@ sub dbObjectGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->dbObjectGet');
 
-    my $iStandbyIdx = 0;
-    my $iMasterRemoteIdx = 0;
+    my $iStandbyIdx = undef;
+    my $iMasterRemoteIdx = 1;
     my $oDbMaster = undef;
     my $oDbStandby = undef;
 
-    for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
+    # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
+    # this is simple and works.
+    if (optionGet(OPTION_ONLINE) && optionTest(optionIndex(OPTION_DB_PATH, 2)))
     {
-        # Make sure a db is defined for this index
-        if (optionTest(optionIndex(OPTION_DB_PATH, $iRemoteIdx)) || optionTest(optionIndex(OPTION_DB_HOST, $iRemoteIdx)))
+        for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
         {
-            # Create the db object
-            my $oDb = new pgBackRest::Db($iRemoteIdx);
-            my $bAssigned = false;
-
-            # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
-            # reached as long as the databases required for the backup type are present.
-            if ($oDb->connect(true))
+            # Make sure a db is defined for this index
+            if (optionTest(optionIndex(OPTION_DB_PATH, $iRemoteIdx)) || optionTest(optionIndex(OPTION_DB_HOST, $iRemoteIdx)))
             {
-                # If this db is a standby
-                if ($oDb->isStandby())
+                # Create the db object
+                my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $bAssigned = false;
+
+                # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
+                # reached as long as the databases required for the backup type are present.
+                if ($oDb->connect(true))
                 {
-                    # If standby backup is requested then use the first standby found
-                    if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+                    # If this db is a standby
+                    if ($oDb->isStandby())
                     {
-                        $oDbStandby = $oDb;
-                        $iStandbyIdx = $iRemoteIdx;
+                        # If standby backup is requested then use the first standby found
+                        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+                        {
+                            $oDbStandby = $oDb;
+                            $iStandbyIdx = $iRemoteIdx;
+                            $bAssigned = true;
+                        }
+                    }
+                    # Else this db is a master
+                    else
+                    {
+                        # Error if more than one master is found
+                        if (defined($oDbMaster))
+                        {
+                            confess &log(ERROR, 'more than one master database found');
+                        }
+
+                        $oDbMaster = $oDb;
+                        $iMasterRemoteIdx = $iRemoteIdx;
                         $bAssigned = true;
                     }
                 }
-                # Else this db is a master
-                else
-                {
-                    # Error if more than one master is found
-                    if (defined($oDbMaster))
-                    {
-                        confess &log(ERROR, 'more than one master database found');
-                    }
 
-                    $oDbMaster = $oDb;
-                    $iMasterRemoteIdx = $iRemoteIdx;
-                    $bAssigned = true;
+                # If the db was not used then destroy the protocol object underneath it
+                if (!$bAssigned)
+                {
+                    protocolDestroy(DB, $iRemoteIdx, true);
                 }
             }
+        }
 
-            # If the db was not used then destroy the protocol object underneath it
-            if (!$bAssigned)
-            {
-                protocolDestroy(DB, $iRemoteIdx, true);
-            }
+        # Make sure the standby database is defined when backup from standby requested
+        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+        {
+            confess &log(ERROR, 'unable to find standby database - cannot proceed');
+        }
+
+        # A master database is always required
+        if (!defined($oDbMaster))
+        {
+            confess &log(ERROR, 'unable to find master database - cannot proceed');
         }
     }
+
+    # If master db is not already defined then set to default
+    if (!defined($oDbMaster))
+    {
+        $oDbMaster = new pgBackRest::Db($iMasterRemoteIdx);
+    }
+
 # CSHANG should these return values have trace => true?
     # Return from function and log return values if any
     return logDebugReturn
@@ -674,7 +698,7 @@ sub versionGet
         return $self->{strDbVersion}, $self->{strDbPath};
     }
 
-    # Get version and db-path from
+    # Get version and db-path from the database
     ($self->{strDbVersion}, $self->{strDbPath}) =
         $self->executeSqlRow("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1], setting" .
                              " from pg_settings where name = 'data_directory'");
