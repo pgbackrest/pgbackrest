@@ -49,7 +49,7 @@ sub new
             {name => 'strImage', trace => true},
             {name => 'strUser', trace => true},
             {name => 'strOS', trace => true},
-            {name => 'stryMount', trace => true}
+            {name => 'stryMount', required => false, trace => true}
         );
 
     executeTest("docker rm -f $self->{strContainer}", {bSuppressError => true});

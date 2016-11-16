@@ -14,7 +14,6 @@ use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT);
 use File::Basename qw(dirname basename);
 use Scalar::Util qw(blessed);
 
-use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -1133,7 +1132,7 @@ sub check
     );
 
     # Initialize the database object
-    my $oDb = new pgBackRest::Db(1);
+    (my $oDb) = dbObjectGet();
 
     # Validate the database configuration
     $oDb->configValidate(optionGet(OPTION_DB_PATH));

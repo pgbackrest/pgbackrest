@@ -21,7 +21,10 @@ use Pod::Usage qw(pod2usage);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
 
+use lib dirname($0) . '/lib';
 use lib dirname($0) . '/../lib';
+use lib dirname($0) . '/../doc/lib';
+
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -32,10 +35,8 @@ use pgBackRest::DbVersion;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
-use lib dirname($0) . '/../doc/lib';
 use BackRestDoc::Custom::DocCustomRelease;
 
-use lib dirname($0) . '/lib';
 use pgBackRestTest::Backup::BackupTest;
 use pgBackRestTest::Backup::Common::HostBackupTest;
 use pgBackRestTest::Backup::Common::HostBaseTest;
@@ -219,7 +220,6 @@ eval
     if (!defined($iVmId))
     {
         # Load the doc module dynamically since it is not supported on all systems
-        use lib dirname(abs_path($0)) . '/../doc/lib';
         require BackRestDoc::Common::Doc;
         BackRestDoc::Common::Doc->import();
 

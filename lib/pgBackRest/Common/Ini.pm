@@ -15,7 +15,6 @@ use IO::Handle;
 use JSON::PP;
 use Storable qw(dclone);
 
-use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;

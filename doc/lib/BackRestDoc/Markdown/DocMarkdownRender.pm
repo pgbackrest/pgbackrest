@@ -15,7 +15,6 @@ use File::Basename qw(dirname);
 use File::Copy;
 use Storable qw(dclone);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::ConfigHelp;

@@ -17,7 +17,6 @@ use File::Basename qw(dirname basename);
 use File::stat;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
 
-use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;

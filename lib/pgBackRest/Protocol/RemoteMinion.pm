@@ -10,7 +10,6 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive;

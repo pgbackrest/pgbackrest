@@ -13,7 +13,6 @@ use File::Basename qw(dirname);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday usleep);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 
 ####################################################################################################################################

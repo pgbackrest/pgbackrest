@@ -17,7 +17,6 @@ use POSIX qw(:sys_wait_h);
 use Symbol 'gensym';
 use Time::HiRes qw(gettimeofday);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;

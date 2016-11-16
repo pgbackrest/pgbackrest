@@ -13,7 +13,6 @@ use Fcntl 'SEEK_CUR';
 use File::Basename;
 use File::Path qw(remove_tree);
 
-use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Exit;
 use pgBackRest::Common::Ini;

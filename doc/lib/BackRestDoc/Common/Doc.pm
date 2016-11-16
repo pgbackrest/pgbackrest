@@ -12,7 +12,6 @@ use File::Basename qw(dirname);
 use Scalar::Util qw(blessed);
 use XML::Checker::Parser;
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::FileCommon;

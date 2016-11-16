@@ -13,7 +13,6 @@ use Fcntl qw(O_WRONLY O_CREAT O_TRUNC);
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
-use lib dirname($0);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;

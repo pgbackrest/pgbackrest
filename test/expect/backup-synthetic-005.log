@@ -97,7 +97,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-timeout=1 --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --protocol-timeout=2 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 2, strCommand = [BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-timeout=1 --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --protocol-timeout=2 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
@@ -757,7 +759,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
@@ -1100,7 +1104,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host backup-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --cmd-ssh=/usr/bin/ssh --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/spool/lock --log-path=[TEST_PATH]/db-master/spool/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --cmd-ssh=/usr/bin/ssh --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/spool/lock --log-path=[TEST_PATH]/db-master/spool/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
@@ -1392,7 +1398,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 1
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/badchecksum.txt
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 1
@@ -1635,11 +1643,14 @@ P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [object], oTablespaceMapRef = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
 P00  DEBUG:     Manifest->build: found tablespace 1
+P00  DEBUG:     Manifest->build: found tablespace 11
 P00  DEBUG:     Manifest->build: found tablespace 2
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/11, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts11
+P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts11, strPathType = db:absolute
+P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, oDatabaseMapRef = [undef], oFile = [object], oLastManifest = [undef], oTablespaceMapRef = [hash], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
 P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
 P00  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
 P00   WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
@@ -1675,7 +1686,9 @@ P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostC
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
+P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 2
+P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/badchecksum.txt, strQueueIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/badchecksum.txt
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueueIdx = 1
@@ -1808,6 +1821,7 @@ option-online=false
 [backup:target]
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
 pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts1","tablespace-id":"1","tablespace-name":"ts1","type":"link"}
+pg_tblspc/11={"path":"[TEST_PATH]/db-master/db/tablespace/ts11","tablespace-id":"11","tablespace-name":"ts11","type":"link"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
@@ -1833,6 +1847,7 @@ user="[USER-1]"
 
 [target:link]
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
+pg_data/pg_tblspc/11={"destination":"[TEST_PATH]/db-master/db/tablespace/ts11"}
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
@@ -1853,6 +1868,8 @@ pg_tblspc={}
 pg_tblspc/1={}
 pg_tblspc/1/[TS_PATH-1]={}
 pg_tblspc/1/[TS_PATH-1]/16384={}
+pg_tblspc/11={}
+pg_tblspc/11/[TS_PATH-1]={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}

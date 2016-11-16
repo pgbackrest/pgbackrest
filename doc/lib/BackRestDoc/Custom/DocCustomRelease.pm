@@ -259,6 +259,7 @@ sub docGet
     # Create the doc
     my $oDoc = new BackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $self->{oDoc}->paramGet('title'));
+    $oDoc->paramSet('toc-number', $self->{oDoc}->paramGet('toc-number'));
 
     # Set the description for use as a meta tag
     $oDoc->fieldSet('description', $self->{oDoc}->fieldGet('description'));

@@ -13,17 +13,18 @@ Usage:
     pgbackrest [options] [command]
 
 Commands:
-    archive-get   Get a WAL segment from the archive.
-    archive-push  Push a WAL segment to the archive.
-    backup        Backup a database cluster.
-    check         Check the configuration.
-    expire        Expire backups that exceed retention.
-    help          Get help.
-    info          Retrieve information about backups.
-    restore       Restore a database cluster.
-    start         Allow pgBackRest processes to run.
-    stop          Stop pgBackRest processes from running.
-    version       Get version.
+    archive-get    Get a WAL segment from the archive.
+    archive-push   Push a WAL segment to the archive.
+    backup         Backup a database cluster.
+    check          Check the configuration.
+    expire         Expire backups that exceed retention.
+    help           Get help.
+    info           Retrieve information about backups.
+    restore        Restore a database cluster.
+    stanza-create  Create the required stanza data.
+    start          Allow pgBackRest processes to run.
+    stop           Stop pgBackRest processes from running.
+    version        Get version.
 
 Use 'pgbackrest help [command]' for more information.
 
@@ -76,7 +77,7 @@ compress=n [default=3]
   --protocol-timeout        protocol timeout [default=1830]
   --repo-path               repository path where WAL segments and backups
 stored [default=/var/lib/pgbackrest]
-  --stanza                  command stanza [current=main]
+  --stanza                  defines a stanza [current=main]
 
 Log Options:
 

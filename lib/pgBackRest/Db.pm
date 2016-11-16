@@ -14,7 +14,6 @@ use Exporter qw(import);
 use Fcntl qw(O_RDONLY);
 use File::Basename qw(dirname);
 
-use lib dirname($0);
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;

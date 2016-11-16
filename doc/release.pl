@@ -20,6 +20,9 @@ use Pod::Usage qw(pod2usage);
 use Storable;
 
 use lib dirname($0) . '/lib';
+use lib dirname($0) . '/../lib';
+use lib dirname($0) . '/../test/lib';
+
 use BackRestDoc::Common::Doc;
 use BackRestDoc::Common::DocConfig;
 use BackRestDoc::Common::DocManifest;
@@ -28,7 +31,6 @@ use BackRestDoc::Html::DocHtmlSite;
 use BackRestDoc::Latex::DocLatex;
 use BackRestDoc::Markdown::DocMarkdown;
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -36,7 +38,6 @@ use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
-use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
 
 ####################################################################################################################################

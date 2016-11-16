@@ -14,6 +14,8 @@
 <!ELEMENT render-list (render+)>
 <!ELEMENT render (render-source+)>
     <!ATTLIST render type CDATA #REQUIRED>
+    <!ATTLIST render compact CDATA "n">
+    <!ATTLIST render pretty CDATA "n">
     <!ATTLIST render file CDATA "">
 <!ELEMENT render-source EMPTY>
     <!ATTLIST render-source key CDATA #REQUIRED>

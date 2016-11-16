@@ -12,7 +12,6 @@ use Exporter qw(import);
 use Fcntl qw(:DEFAULT :flock);
 use File::Basename qw(dirname);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;

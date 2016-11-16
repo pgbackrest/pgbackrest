@@ -16,14 +16,12 @@ use File::Copy;
 use POSIX qw(strftime);
 use Storable qw(dclone);
 
-use lib dirname($0) . '/../lib';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
-use lib dirname($0) . '/../test/lib';
 use pgBackRestTest::Common::ExecuteTest;
 
 use BackRestDoc::Common::DocConfig;
@@ -98,25 +96,35 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
-    # Copy the css file
-    my $strCssFileDestination = "$self->{strHtmlPath}/default.css";
-    copy($self->{strCssFile}, $strCssFileDestination)
-        or confess &log(ERROR, "unable to copy $self->{strCssFile} to ${strCssFileDestination}");
+    # Get render options
+    my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_HTML);
 
-    # Copy the favicon file
-    if (defined($self->{strFaviconFile}))
-    {
-        my $strFaviconFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-favicon');
-        copy($self->{strFaviconFile}, $strFaviconFileDestination)
-            or confess &log(ERROR, "unable to copy $self->{strFaviconFile} to ${strFaviconFileDestination}");
-    }
+    my $bMenu = $$oRender{&RENDER_MENU};
+    my $bPretty = $$oRender{&RENDER_PRETTY};
+    my $bCompact = $$oRender{&RENDER_COMPACT};
 
-    # Copy the project logo file
-    if (defined($self->{strProjectLogoFile}))
+    if (!$bCompact)
     {
-        my $strProjectLogoFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-logo');
-        copy($self->{strProjectLogoFile}, $strProjectLogoFileDestination)
-            or confess &log(ERROR, "unable to copy $self->{strProjectLogoFile} to ${strProjectLogoFileDestination}");
+        # Copy the css file
+        my $strCssFileDestination = "$self->{strHtmlPath}/default.css";
+        copy($self->{strCssFile}, $strCssFileDestination)
+            or confess &log(ERROR, "unable to copy $self->{strCssFile} to ${strCssFileDestination}");
+
+        # Copy the favicon file
+        if (defined($self->{strFaviconFile}))
+        {
+            my $strFaviconFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-favicon');
+            copy($self->{strFaviconFile}, $strFaviconFileDestination)
+                or confess &log(ERROR, "unable to copy $self->{strFaviconFile} to ${strFaviconFileDestination}");
+        }
+
+        # Copy the project logo file
+        if (defined($self->{strProjectLogoFile}))
+        {
+            my $strProjectLogoFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-logo');
+            copy($self->{strProjectLogoFile}, $strProjectLogoFileDestination)
+                or confess &log(ERROR, "unable to copy $self->{strProjectLogoFile} to ${strProjectLogoFileDestination}");
+        }
     }
 
     foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_HTML))
@@ -124,12 +132,14 @@ sub process
         &log(INFO, "    render out: ${strPageId}");
 
         my $strHtml;
+        my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
 
         eval
         {
-            $strHtml =
-                $self->{oManifest}->variableReplace(
-                    (new BackRestDoc::Html::DocHtmlPage($self->{oManifest}, $strPageId, $self->{bExe}))->process());
+            $strHtml = $self->{oManifest}->variableReplace(
+                new BackRestDoc::Html::DocHtmlPage(
+                    $self->{oManifest}, $strPageId, $bMenu, $self->{bExe}, $bCompact, fileStringRead($self->{strCssFile}),
+                    $bPretty)->process());
 
             return true;
         }
@@ -142,9 +152,10 @@ sub process
                 my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
                 $self->{oManifest}->cacheReset($$oRenderOut{source});
 
-                $strHtml =
-                    $self->{oManifest}->variableReplace(
-                        (new BackRestDoc::Html::DocHtmlPage($self->{oManifest}, $strPageId, $self->{bExe}))->process());
+                $strHtml = $self->{oManifest}->variableReplace(
+                    new BackRestDoc::Html::DocHtmlPage(
+                        $self->{oManifest}, $strPageId, $bMenu, $self->{bExe}, $bCompact, fileStringRead($self->{strCssFile}),
+                        $bPretty)->process());
             }
             else
             {
@@ -153,7 +164,8 @@ sub process
         };
 
         # Save the html page
-        fileStringWrite("$self->{strHtmlPath}/${strPageId}.html", $strHtml, false);
+        my $strFile = "$self->{strHtmlPath}/" . (defined($$oRenderOut{file}) ? $$oRenderOut{file} : "${strPageId}.html");
+        fileStringWrite($strFile, $strHtml, false);
     }
 
     # Return from function and log return values if any
