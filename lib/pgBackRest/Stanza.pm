@@ -163,7 +163,7 @@ sub stanzaUpgrade
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
 
     my $iResult;
-#CSHANG We're going to have to WARN if the version is the same because if they haven't updated the db-path we'll only know that if the version has not been the changed - OR only do this call when the DB is online? The issue is we should not require them to start the database before creating a stanza because they'll get an immediate error in the postgres logs from the archive_command when pushing an archive with no archive.info.
+#CSHANG We're going to have to WARN if the version is the same because if they haven't updated the db-path we'll only know that if the version has not been the changed - BUT how do we know this if the database is offline? We can't always assume that the db-path will have the postgres version in it so if the only way we're getting the version is from the pg_control file of the db-path they set up then the only way to know if the db-version is the same is to compare it with the archive.info/backup.info files. If the files don't exist, then we should throw and error and tell them to run stanza-create.
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -239,7 +239,7 @@ sub infoFileCreate
         else
         {
             # Turn off console logging to control when to display the error
-            # logLevelSet(undef, OFF);
+            logLevelSet(undef, OFF);
 
             eval
             {
@@ -260,7 +260,7 @@ sub infoFileCreate
             };
 
             # Reset the console logging
-            # logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
         }
     }
     # Check the validity of the existing info file
@@ -315,8 +315,6 @@ sub dbInfoGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->dbInfoGet');
 
-#CSHANG    my $oDb = $self->{oDb};
-
     # Validate the database configuration. Do not require the database to be online before creating a stanza because the
     # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
     # postgres logs.
@@ -326,7 +324,6 @@ sub dbInfoGet
         $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
     }
 
-# CSHANG   (${$oDb}{strDbVersion}, ${$oDb}{iControlVersion}, ${$oDb}{iCatalogVersion}, ${$oDb}{ullDbSysId})
     ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
         = $self->{oDb}->info(optionGet(OPTION_DB_PATH));
 

@@ -1831,25 +1831,7 @@ sub backupTestRun
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
             $oHostDbMaster->clusterCreate();
-# CSHANG Dave says oHostBackup is always filled in and will be a copy of master if the backup is on the same server as the DB so I should always be using the oHostBackup but then why do the tests below fail?
-            # Run the stanza create only where the repo is local
-            my $oLocalHostRepo = undef;
-            if ($strBackupDestination eq HOST_DB_MASTER && !$bHostBackup)
-            {
-                $oHostDbMaster->stanzaCreate('main create stanza info files');
-                $oLocalHostRepo = $oHostDbMaster;
-            }
-            elsif ($bHostBackup)
-            {
-                $oHostBackup->stanzaCreate('main create stanza info files');
-                $oLocalHostRepo = $oHostBackup;
-            }
-            else
-            {
-                # If the repo is on the standby, we can't use the stanza-create command due to the way the test environment is set
-                # up, so manually create the files to allow the standby tests to pass.
-                infoFileManualCreate($oFile, $oHostDbMaster->dbBasePath(), $oHostDbStandby->dbVersion());
-            }
+            $oHostBackup->stanzaCreate('main create stanza info files');
 
             # Static backup parameters
             my $fTestDelay = 1;
@@ -1892,8 +1874,8 @@ sub backupTestRun
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-                # Create the backup and archive info files - must be run on the local repo
-                $oLocalHostRepo->stanzaCreate('create stanza info files');
+                # Create the backup and archive info files
+                $oHostBackup->stanzaCreate('create stanza info files');
 
                 # Check ERROR_ARCHIVE_DISABLED error
                 $strComment = 'fail on archive_mode=off';
@@ -2022,17 +2004,17 @@ sub backupTestRun
                 # With data existing in the backup and archive directories, remove the info files and confirm failure
                 # Remove the backup.info file
                 executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-                $oLocalHostRepo->stanzaCreate('fail on backup info file missing from non-empty dir',
+                $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
                                            {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
 
                 # Remove the archive.info file
                 executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-                $oLocalHostRepo->stanzaCreate('fail on archive info file missing from non-empty dir',
+                $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
                                            {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID});
 
                 # Remove the repo sub-directories to ensure they do not exist and confirm success
-                executeTest('sudo rm -rf ' . $oLocalHostRepo->repoPath() . "/*");
-                $oLocalHostRepo->stanzaCreate('verify success');
+                executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . "/*");
+                $oHostBackup->stanzaCreate('verify success');
             }
 
             # Full backup

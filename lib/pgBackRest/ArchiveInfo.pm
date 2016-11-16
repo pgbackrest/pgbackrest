@@ -232,7 +232,7 @@ sub reconstruct
         {name => 'oFile'},
     );
 
-# CSHANG should we confirm the file does not exist? Or just always recreate, regardless? (I vote the latter)
+# CSHANG should we confirm the file does not exist? Or just always recreate, regardless? ALWAYS CREATE IT
     # Get the upper level directory names, e.g. 9.4-1
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_DB_VERSION . '-[0-9]+$'))
     {
@@ -255,13 +255,9 @@ sub reconstruct
         # Get the full path for the file
         my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
 
-# CSHANG I'm not sure I like this because it appears we can't just read out the first X number of bytes.
         my $tBlock;
         if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
         {
-            # can't limit with InputLength - it requires you know the size of the compressed data stream
-            # gunzip $strArchiveFilePath => \$tBlock, InputLength => 100
-            #     or confess "gunzip failed: $GunzipError\n";
             gunzip $strArchiveFilePath => \$tBlock
                 or confess "gunzip failed: $GunzipError\n";
         }

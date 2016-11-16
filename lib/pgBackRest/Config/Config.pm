@@ -1493,6 +1493,7 @@ my %oOptionRule =
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_REMOTE => true,
+            &CMD_STANZA_CREATE => true,
         },
     },
 
