@@ -133,7 +133,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.11dev" title="UNDER DEVELOPMENT">
+        <release date="2016-11-17" version="1.11" title="Bug Fix for Asynchronous Archiving Efficiency">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
