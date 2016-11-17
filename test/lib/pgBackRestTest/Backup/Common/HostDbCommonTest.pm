@@ -146,32 +146,40 @@ sub archivePush
         $strArchiveTestFile,
         $iArchiveNo,
         $iExpectedError,
+        $bAsync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->archivePush', \@_,
             {name => 'strXlogPath'},
-            {name => 'strArchiveTestFile'},
-            {name => 'iArchiveNo'},
+            {name => 'strArchiveTestFile', required => false},
+            {name => 'iArchiveNo', required => false},
             {name => 'iExpectedError', required => false},
+            {name => 'bAsync', default => true},
         );
 
-    my $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
+    my $strSourceFile;
 
-    $self->{oFile}->copy(
-        PATH_DB_ABSOLUTE, $strArchiveTestFile,                      # Source file
-        PATH_DB_ABSOLUTE, $strSourceFile,                           # Destination file
-        false,                                                      # Source is not compressed
-        false,                                                      # Destination is not compressed
-        undef, undef, undef,                                        # Unused params
-        true);                                                      # Create path if it does not exist
+    if (defined($strArchiveTestFile))
+    {
+        $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
+
+        $self->{oFile}->copy(
+            PATH_DB_ABSOLUTE, $strArchiveTestFile,                      # Source file
+            PATH_DB_ABSOLUTE, $strSourceFile,                           # Destination file
+            false,                                                      # Source is not compressed
+            false,                                                      # Destination is not compressed
+            undef, undef, undef,                                        # Unused params
+            true);                                                      # Create path if it does not exist
+    }
 
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         ' --archive-max-mb=24 --no-fork --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ? ' --backup-host=bogus' : '') .
-        " archive-push ${strSourceFile}",
+        ($bAsync ? '' : ' --no-archive-async') .
+        " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : ''),
         {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
