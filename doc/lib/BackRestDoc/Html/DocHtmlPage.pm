@@ -85,8 +85,7 @@ sub process
     my $oPage = $self->{oDoc};
 
     # Initialize page
-    my $strTitle = "{[project]}" .
-                   (defined($oPage->paramGet('title', false)) ? ' ' . $oPage->paramGet('title') : '');
+    my $strTitle = $oPage->paramGet('title');
     my $strSubTitle = $oPage->paramGet('subtitle', false);
 
     my $oHtmlBuilder = new BackRestDoc::Html::DocHtmlBuilder(

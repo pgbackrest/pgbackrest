@@ -62,10 +62,16 @@ doc.pl [options]
    --var            Override variables defined in the XML
    --doc-path       Document path to render (manifest.xml should be located here)
    --out            Output types (html, pdf, markdown)
-   --keyword        Keyword used to filter output
-   --dev            Add dev keyword
    --require        Require only certain sections of the document (to speed testing)
+   --include        Include source in generation (links will reference website)
    --exclude        Exclude source from generation (links will reference website)
+
+Keyword Options:
+   --keyword        Keyword used to filter output
+   --keyword-add    Add keyword without overriding 'default' keyword
+   --dev            Add 'dev' keyword
+   --debug          Add 'debug' keyword
+   --pre            Add 'pre' keyword
 =cut
 
 ####################################################################################################################################
@@ -82,10 +88,14 @@ my $oVariableOverride = {};
 my $strDocPath;
 my @stryOutput;
 my @stryKeyword;
+my @stryKeywordAdd;
 my @stryRequire;
+my @stryInclude;
 my @stryExclude;
 my $bDeploy = false;
 my $bDev = false;
+my $bDebug = false;
+my $bPre = false;
 
 GetOptions ('help' => \$bHelp,
             'version' => \$bVersion,
@@ -93,12 +103,16 @@ GetOptions ('help' => \$bHelp,
             'log-level=s' => \$strLogLevel,
             'out=s@' => \@stryOutput,
             'keyword=s@' => \@stryKeyword,
+            'keyword-add=s@' => \@stryKeywordAdd,
             'require=s@' => \@stryRequire,
+            'include=s@' => \@stryInclude,
             'exclude=s@' => \@stryExclude,
             'no-exe', \$bNoExe,
             'deploy', \$bDeploy,
             'no-cache', \$bNoCache,
             'dev', \$bDev,
+            'debug', \$bDebug,
+            'pre', \$bPre,
             'cache-only', \$bCacheOnly,
             'var=s%', $oVariableOverride,
             'doc-path=s', \$strDocPath)
@@ -153,10 +167,31 @@ eval
         @stryKeyword = ('default');
     }
 
-    # If -dev passed then add the dev keyword
+    # Push added keywords
+    push(@stryKeyword, @stryKeywordAdd);
+
+    # If --dev passed then add the dev keyword
     if ($bDev)
     {
         push(@stryKeyword, 'dev');
+    }
+
+    # If --debug passed then add the debug keyword
+    if ($bDebug)
+    {
+        push(@stryKeyword, 'debug');
+    }
+
+    # If --pre passed then add the pre keyword
+    if ($bPre)
+    {
+        push(@stryKeyword, 'pre');
+    }
+
+    # Doesn't make sense to pass include and exclude
+    if (@stryInclude > 0 && @stryExclude > 0)
+    {
+        confess "cannot specify both --include and --exclude";
     }
 
     logLevelSet(undef, uc($strLogLevel), OFF);
@@ -180,7 +215,7 @@ eval
 
     # Load the manifest
     my $oManifest = new BackRestDoc::Common::DocManifest(
-        \@stryKeyword, \@stryRequire, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy, $bCacheOnly);
+        \@stryKeyword, \@stryRequire, \@stryInclude, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy, $bCacheOnly);
 
     if (!$bNoCache)
     {

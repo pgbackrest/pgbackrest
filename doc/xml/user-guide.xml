@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="User Guide" subtitle="{[user-guide-subtitle]} / {[postgres]} {[pg-version]}">
+<doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]} / {[postgres]} {[pg-version]}">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
     <variable-list>

@@ -253,7 +253,7 @@ sub build
             {
                 $$oOut{field}{text} = $oSub;
             }
-            elsif (defined($$oSub{value}) && !defined($$oSub{param}))
+            elsif ((defined($$oSub{value}) && !defined($$oSub{param})) && $strName ne 'code-block')
             {
                 $$oOut{field}{$strName} = $$oSub{value};
             }

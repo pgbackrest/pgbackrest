@@ -1,6 +1,6 @@
 <!ELEMENT doc ((description, intro, contributor-list, release-list)|(config, operation)|
-               (description, variable-list?, cleanup?, section+))>
-    <!ATTLIST doc title CDATA "">
+               (description?, variable-list?, cleanup?, section+))>
+    <!ATTLIST doc title CDATA #REQUIRED>
     <!ATTLIST doc subtitle CDATA "">
     <!ATTLIST doc toc CDATA "y">
     <!ATTLIST doc toc-number CDATA "y">
@@ -111,13 +111,14 @@
 <!ELEMENT cmd-description EMPTY>
     <!ATTLIST cmd-description key CDATA #REQUIRED>
 
-<!ELEMENT section (title,
+<!ELEMENT section (title?,
                    ((p|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
                      option-description|code-block)+|
                    ((p|list)*, section+)|(p|list)*))>
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section keyword CDATA "">
     <!ATTLIST section depend CDATA "">
+    <!ATTLIST section source CDATA "">
 <!ELEMENT title (#PCDATA|quote|b|i|bi|ul|ol|id|code|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
                  pg-option|pg-setting|link|user)*>
 
@@ -212,7 +213,7 @@
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA|exe)*>
-    <!ATTLIST code-block title CDATA #REQUIRED>
+    <!ATTLIST code-block title CDATA "">
 
 <!ELEMENT host (#PCDATA)>
 <!ELEMENT file (#PCDATA)>
