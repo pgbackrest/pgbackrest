@@ -452,9 +452,27 @@ sub backupTestRun
                 # Remove the stop file
                 fileRemove($oHostDbMaster->spoolPath() . '/stop/db-archive.stop');
 
-                # Push two more segments - only #4 should be missing from the archive at the end
-                $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5);
-                $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 6);
+                # Check the dir to be sure that segment 2 and 3 were not pushed yet
+                executeTest(
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    {oLogTest => $oLogTest, bRemote => $bRemote});
+
+                # Push segment 5
+                $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5, undef, false);
+
+                # Check that 5 is pushed
+                executeTest(
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    {oLogTest => $oLogTest, bRemote => $bRemote});
+
+                # Call push without a segment
+                $oHostDbMaster->archivePush($strXlogPath);
+
+                # Check the dir to be sure that segment 2 and 3 were pushed
+                executeTest(
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    {oLogTest => $oLogTest, bRemote => $bRemote});
+
             }
             }
         }
@@ -2015,6 +2033,23 @@ sub backupTestRun
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
 
             my $strFullBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
+
+            # Kick out a bunch of archive logs to excercise async archiving.  Only do this when compressed and remote to slow it
+            # down enough to make it evident that the async process is working.
+            if ($bArchiveAsync && $bCompress && $strBackupDestination eq HOST_BACKUP)
+            {
+                &log(INFO, '    multiple pg_switch_xlog() to exercise async archiving');
+                $oHostDbMaster->sqlExecute("create table xlog_activity (id int)");
+                $oHostDbMaster->sqlXlogRotate();
+                $oHostDbMaster->sqlExecute("insert into xlog_activity values (1)");
+                $oHostDbMaster->sqlXlogRotate();
+                $oHostDbMaster->sqlExecute("insert into xlog_activity values (2)");
+                $oHostDbMaster->sqlXlogRotate();
+                $oHostDbMaster->sqlExecute("insert into xlog_activity values (3)");
+                $oHostDbMaster->sqlXlogRotate();
+                $oHostDbMaster->sqlExecute("insert into xlog_activity values (4)");
+                $oHostDbMaster->sqlXlogRotate();
+            }
 
             # Setup replica
             #-----------------------------------------------------------------------------------------------------------------------

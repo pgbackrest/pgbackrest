@@ -1466,6 +1466,40 @@
                     <exe-highlight>WAL segment</exe-highlight>
                 </execute>
             </execute-list>
+
+            <!-- DEBUG test to ensure async archiving is working in batch until better tests can be written -->
+            <execute-list host="{[host-db-master]}" keyword="debug">
+                <title>DEBUG asynchronous archiving</title>
+
+                <execute output="n">
+                    <exe-cmd>rm /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                </execute>
+
+                <execute output="n">
+                    <exe-cmd>
+                        psql -c "
+                            select pg_create_restore_point('test asynchronous archiving');
+                            select pg_switch_xlog();
+                            select pg_create_restore_point('test asynchronous archiving');
+                            select pg_switch_xlog();
+                            select pg_create_restore_point('test asynchronous archiving');
+                            select pg_switch_xlog();
+                            select pg_create_restore_point('test asynchronous archiving');
+                            select pg_switch_xlog();
+                            select pg_create_restore_point('test asynchronous archiving');
+                            select pg_switch_xlog();"
+                    </exe-cmd>
+                </execute>
+
+                <execute output="n">
+                    <exe-cmd>sleep 5</exe-cmd>
+                </execute>
+
+                <execute output="y">
+                    <exe-cmd>cat /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                    <exe-highlight>WAL segments to archive</exe-highlight>
+                </execute>
+            </execute-list>
         </section>
     </section>
 
