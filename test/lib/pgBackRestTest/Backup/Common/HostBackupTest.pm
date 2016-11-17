@@ -75,7 +75,7 @@ use constant HOST_PROTOCOL_TIMEOUT                                  => 10;
 ####################################################################################################################################
 # Cached data sections
 ####################################################################################################################################
-use constant SECTION_FILE_NAME                                        => 'strFileName';
+use constant SECTION_FILE_NAME                                      => 'strFileName';
     push @EXPORT, qw(SECTION_FILE_NAME);
 
 ####################################################################################################################################
@@ -638,7 +638,9 @@ sub stanzaCreate
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        ' --stanza=' . $self->stanza() . ' stanza-create',
+        ' --stanza=' . $self->stanza() .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        ' stanza-create',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
 

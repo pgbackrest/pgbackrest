@@ -50,6 +50,11 @@ use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
+# Constants
+####################################################################################################################################
+use constant WAL_VERSION_94                                      => '_wal94';
+
+####################################################################################################################################
 # Archive helper functions
 ####################################################################################################################################
 # Generate an archive log for testing
@@ -59,11 +64,12 @@ sub archiveGenerate
     my $strXlogPath = shift;
     my $iSourceNo = shift;
     my $iArchiveNo = shift;
+    my $strWalVersion = shift;
     my $bPartial = shift;
 
     my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
                          (defined($bPartial) && $bPartial ? '.partial' : '');
-    my $strArchiveTestFile = testDataPath() . "/test.archive${iSourceNo}.bin";
+    my $strArchiveTestFile = testDataPath() . "/test.archive${iSourceNo}${strWalVersion}.bin";
 
     my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
 
@@ -84,7 +90,7 @@ sub archiveCheck
     my $bCompress = shift;
 
     # Build the archive name to check for at the destination
-    my $strArchiveCheck = PG_VERSION_93 . "-1/${strArchiveFile}-${strArchiveChecksum}";
+    my $strArchiveCheck = PG_VERSION_94 . "-1/${strArchiveFile}-${strArchiveChecksum}";
 
     if ($bCompress)
     {
@@ -121,53 +127,6 @@ sub archiveInfoCreateFromWAL
     (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->create($strDbVersion, $ullDbSysId);
 }
 
-# Create the info files from the pg_control file. Used for test that do not spin up a DB cluster.
-sub infoFileManualCreate
-{
-    my $oFile = shift;
-    my $strDbBasePath = shift;
-    my $strDbVersion = shift;
-
-    # If the repo is on the standby, we can't use the stanza-create command due to the way the test environment is set
-    # up, so manually create the files to allow the standby tests to pass.
-    my $strControlFile = $strDbBasePath . '/' . DB_FILE_PGCONTROL;
-    my $hFile;
-    my $tBlock;
-
-    sysopen($hFile, $strControlFile, O_RDONLY)
-        or confess &log(ERROR, "unable to open ${strControlFile}", ERROR_FILE_OPEN);
-
-    # Read system identifier
-    sysread($hFile, $tBlock, 8) == 8
-        or confess &log(ERROR, "unable to read database system identifier");
-
-    my $ullDbSysId = unpack('Q', $tBlock);
-
-    # Read control version
-    sysread($hFile, $tBlock, 4) == 4
-        or confess &log(ERROR, "unable to read control version");
-
-    my $iControlVersion = unpack('L', $tBlock);
-
-    # Read catalog version
-    sysread($hFile, $tBlock, 4) == 4
-        or confess &log(ERROR, "unable to read catalog version");
-
-    my $iCatalogVersion = unpack('L', $tBlock);
-
-    # Close the control file
-    close($hFile);
-
-    # Create the archive and backup info files
-    filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-    filePathCreate($oFile->pathGet(PATH_BACKUP_CLUSTER), '0770', undef, true);
-    (new pgBackRest::ArchiveInfo(
-     $oFile->pathGet(PATH_BACKUP_ARCHIVE), false))->create($strDbVersion, $ullDbSysId);
-    (new pgBackRest::BackupInfo(
-     $oFile->pathGet(PATH_BACKUP_CLUSTER), false, false))->create($strDbVersion, $iControlVersion,
-                                                                  $iCatalogVersion, $ullDbSysId);
-}
-
 ####################################################################################################################################
 # backupTestRun
 ####################################################################################################################################
@@ -194,10 +153,9 @@ sub backupTestRun
     my $strStanza = HOST_STANZA;
     my $oLogTest;
 
-    my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+    my $strArchiveChecksum = '72b9da071c13957fb4ca31f05dbd5c644297c2f7';
     my $iArchiveMax = 3;
-    my $strArchiveTestFile = testDataPath() . '/test.archive2.bin';
-    my $strArchiveTestFile2 = testDataPath() . '/test.archive1.bin';
+    my $strArchiveTestFile = testDataPath() . '/test.archive2' . WAL_VERSION_94 . '.bin';
 
     pathModeDefaultSet('0700');
     fileModeDefaultSet('0600');
@@ -244,12 +202,19 @@ sub backupTestRun
                 # Create the xlog path
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
-#CSHANG NEED TO CREATE PGCONTROL
+
+                # Create the test path for pg_control
+                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+
+                # Copy pg_control for stanza-create
+                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
+                # Create the archive info file
+                $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
                 my $strCommand =
                     $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
                     ' --no-fork --stanza=db archive-push';
-
-                my $bInfoFileExist = false;
 
                 # Loop through backups
                 for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
@@ -269,7 +234,8 @@ sub backupTestRun
                             confess 'backup total * archive total cannot be greater than 255';
                         }
 
-                        ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo);
+                        ($strArchiveFile, $strSourceFile) =
+                            archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, WAL_VERSION_94);
                         &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
                                    ', archive ' .sprintf('%02x', $iArchive) .
                                    " - ${strArchiveFile}");
@@ -283,7 +249,7 @@ sub backupTestRun
 
                             $strArchiveTmp =
                                 $oHostBackup->repoPath() . "/archive/${strStanza}/" .
-                                PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.pgbackrest.tmp";
+                                PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.pgbackrest.tmp";
 
                             executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
                             fileStringWrite($strArchiveTmp, 'JUNK');
@@ -292,14 +258,6 @@ sub backupTestRun
                             {
                                 executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
                             }
-                        }
-
-                        # Create the required archive info file (if doesn't exist) from the WAL file since DB not setup for these
-# CSHANG in the archiveInfoCreateFromWAL, I had to create the path with 770 otherwise the default permissions resulted in  ERROR: [199]: unable to open /home/vagrant/test/test-0/backup/repo/archive/db/archive.info -- not sure if this is the correct way to handle it since for the remote tests, the HostBackup->userGet returns backrest instead of vagrant (HostDbMaster always returns vagrant) and if I changed owner instead, then iniLoad in the $oHostBackup->infoMunge call below fails to open the file.n (SEE ABOVE PG_CONTROL)
-                        if (!$bInfoFileExist)
-                        {
-                            archiveInfoCreateFromWAL($oFile, $strSourceFile);
-                            $bInfoFileExist = true;
                         }
 
                         $oHostDbMaster->executeSimple(
@@ -390,7 +348,8 @@ sub backupTestRun
                             # Now it should break on archive duplication (because checksum is different
                             &log(INFO, '        test archive duplicate error');
 
-                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo);
+                            ($strArchiveFile, $strSourceFile) =
+                                archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, WAL_VERSION_94);
                             $oHostDbMaster->executeSimple(
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
@@ -407,7 +366,8 @@ sub backupTestRun
 
                             # Test .partial archive
                             &log(INFO, '        test .partial archive');
-                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, true);
+                            ($strArchiveFile, $strSourceFile) =
+                                archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, WAL_VERSION_94, true);
                             $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
                             archiveCheck($oFile, $strArchiveFile, $strArchiveChecksum, $bCompress);
 
@@ -417,7 +377,8 @@ sub backupTestRun
 
                             # Test .partial archive with different checksum
                             &log(INFO, '        test .partial archive with different checksum');
-                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, true);
+                            ($strArchiveFile, $strSourceFile) =
+                                archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, WAL_VERSION_94, true);
                             $oHostDbMaster->executeSimple(
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
@@ -485,8 +446,11 @@ sub backupTestRun
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
-                # Create the archive info file from the WAL since DB is not set up for these tests
-                archiveInfoCreateFromWAL($oFile, $strArchiveTestFile);
+                # Copy pg_control for stanza-create
+                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
+                # Create the archive info file
+                $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
                 # Push a WAL segment
                 $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
@@ -964,7 +928,7 @@ sub backupTestRun
                     $strTestPoint = TEST_KEEP_ALIVE;
                 }
             }
-
+#CSHANG should not need this
             # Create the backup info from the pg_control file; cannot use stanza-create command because no PG instance is setup
             infoFileManualCreate($oFile, $oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
