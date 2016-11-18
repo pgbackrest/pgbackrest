@@ -151,29 +151,6 @@ sub stanzaCreate
 }
 
 ####################################################################################################################################
-# stanzaUpgrade
-#
-# Updates the database backup and archive information for the stanza.
-####################################################################################################################################
-sub stanzaUpgrade
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
-
-    my $iResult;
-#CSHANG We're going to have to WARN if the version is the same because if they haven't updated the db-path we'll only know that if the version has not been the changed - BUT how do we know this if the database is offline? We can't always assume that the db-path will have the postgres version in it so if the only way we're getting the version is from the pg_control file of the db-path they set up then the only way to know if the db-version is the same is to compare it with the archive.info/backup.info files. If the files don't exist, then we should throw and error and tell them to run stanza-create.
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'iResult', value => $iResult, trace => true}
-    );
-}
-
-####################################################################################################################################
 # infoFileCreate
 #
 # Creates the info file based on the data passed to the function
@@ -210,8 +187,8 @@ sub infoFileCreate
         # Create the cluster repo path
         $oFile->pathCreate($strPathType, undef, undef, true, true);
     }
-
-    # If the cluster repo path is empty then create the info file
+# CSHANG - Need to put in checking the DB against the archive.info/backup.info file - we don't want to create a DB=2 scenario so we should be checking against the database.
+    # If the cluster repo path is empty then don't validate the info files, just create them
     my @stryFileList = fileList($strParentPath, undef, 'forward', true);
     my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath, false, false)
                                                       : new pgBackRest::ArchiveInfo($strParentPath, false);
@@ -243,7 +220,10 @@ sub infoFileCreate
 
             eval
             {
-                $oInfo->reconstruct($oFile);
+                ($strPathType eq PATH_BACKUP_CLUSTER)
+                    ? $oInfo->reconstruct($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+                                          $self->{oDb}{ullDbSysId})
+                    : $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
                 return true;
             }
             or do

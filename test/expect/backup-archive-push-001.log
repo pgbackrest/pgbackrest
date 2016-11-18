@@ -17,13 +17,13 @@ P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/d
 P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->create(): strDbHistoryId = [undef], strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     ArchiveInfo->reconstruct(): bFileRequired = false
-P00  DEBUG:     ArchiveInfo->reconstruct=>: iDbHistoryId = 1
+P00  DEBUG:     ArchiveInfo->create(): bSave = <true>, strDbHistoryId = [undef], strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->dbHistoryIdGet(): bFileRequired = false
+P00  DEBUG:     ArchiveInfo->dbHistoryIdGet=>: iDbHistoryId = 1
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     BackupInfo->create(): iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     BackupInfo->getDbHistoryId=>: iDbHistoryId = 1
+P00  DEBUG:     BackupInfo->dbHistoryIdGet=>: iDbHistoryId = 1
 P00   INFO: successfully created stanza db
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: stanza-create stop
@@ -45,7 +45,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -74,7 +74,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -97,7 +97,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -158,7 +158,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -191,7 +191,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -222,7 +222,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -251,7 +251,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -284,7 +284,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -315,7 +315,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strWalSegment = 000000010000000100000002, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000002
@@ -344,7 +344,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strWalSegment = 000000010000000100000003, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000003
@@ -373,7 +373,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004, strWalSegment = 000000010000000100000004, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000004
@@ -402,7 +402,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -431,7 +431,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -454,7 +454,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -477,7 +477,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -510,7 +510,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -541,7 +541,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -570,7 +570,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -603,7 +603,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -634,7 +634,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, strWalSegment = 000000010000000100000006, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000006
@@ -663,7 +663,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007, strWalSegment = 000000010000000100000007, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000007
@@ -692,7 +692,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008, strWalSegment = 000000010000000100000008, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000008
@@ -721,7 +721,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -750,7 +750,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -773,7 +773,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -796,7 +796,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -829,7 +829,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -860,7 +860,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -889,7 +889,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -922,7 +922,7 @@ P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 63539490185
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
 P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009

@@ -207,7 +207,8 @@ sub backupTestRun
                 filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
 
                 # Copy pg_control for stanza-create
-                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' .
+                            DB_FILE_PGCONTROL);
 
                 # Create the archive info file
                 $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
@@ -350,6 +351,7 @@ sub backupTestRun
 
                             ($strArchiveFile, $strSourceFile) =
                                 archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, WAL_VERSION_94);
+
                             $oHostDbMaster->executeSimple(
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
@@ -359,7 +361,7 @@ sub backupTestRun
                                 my $strDuplicateWal =
                                     ($bRemote ? $oHostDbMaster->spoolPath() :
                                                 $oHostBackup->repoPath()) .
-                                    "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
+                                    "/archive/${strStanza}/out/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
 
                                 fileRemove($strDuplicateWal);
                             }
@@ -387,7 +389,7 @@ sub backupTestRun
                             {
                                 my $strDuplicateWal =
                                     ($bRemote ? $oHostDbMaster->spoolPath() : $oHostBackup->repoPath()) .
-                                    "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
+                                    "/archive/${strStanza}/out/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
 
                                 fileRemove($strDuplicateWal);
                             }
@@ -446,8 +448,10 @@ sub backupTestRun
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
-                # Copy pg_control for stanza-create
-                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                # Create the test path for pg_control and copy pg_control for stanza-create
+                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' .
+                            DB_FILE_PGCONTROL);
 
                 # Create the archive info file
                 $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
@@ -484,7 +488,7 @@ sub backupTestRun
 
                 # Check the dir to be sure that segment 2 and 3 were not pushed yet
                 executeTest(
-                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . "-1/0000000100000001",
                     {oLogTest => $oLogTest, bRemote => $bRemote});
 
                 # Push segment 5
@@ -492,7 +496,7 @@ sub backupTestRun
 
                 # Check that 5 is pushed
                 executeTest(
-                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . "-1/0000000100000001",
                     {oLogTest => $oLogTest, bRemote => $bRemote});
 
                 # Call push without a segment
@@ -500,7 +504,7 @@ sub backupTestRun
 
                 # Check the dir to be sure that segment 2 and 3 were pushed
                 executeTest(
-                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . "-1/0000000100000001",
                     {oLogTest => $oLogTest, bRemote => $bRemote});
 
             }
@@ -545,11 +549,11 @@ sub backupTestRun
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
-                # Create the test path for pg_control
-                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
 
-                # Copy pg_control
-                executeTest('cp ' . testDataPath() . '/pg_control_93 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                # Create the test path for pg_control and copy pg_control for stanza-create
+                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+                executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' .
+                            DB_FILE_PGCONTROL);
 
                 my $strCommand =
                     $oHostDbMaster->backrestExe() .
@@ -562,8 +566,7 @@ sub backupTestRun
                         {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $oLogTest});
 
                 # Create the archive info file
-                filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->create(PG_VERSION_93, 6156904820763115222);
+        	    $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
                 if (defined($oLogTest))
                 {
@@ -595,13 +598,15 @@ sub backupTestRun
                             $strSourceFile .= '.gz';
                         }
 
+                        # Change the directory permissions to enable file creation
+                        executeTest('sudo chmod 770 ' . dirname($oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . "-1")));
                         filePathCreate(
                             dirname(
-                                $oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_93 . "-1/${strSourceFile}")), '0770', true, true);
+                                $oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . "-1/${strSourceFile}")), '0770', true, true);
 
                         $oFile->copy(
-                            PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
-                            PATH_BACKUP_ARCHIVE, PG_VERSION_93 .    # Destination file
+                            PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file $strArchiveTestFile
+                            PATH_BACKUP_ARCHIVE, PG_VERSION_94 .    # Destination file
                                 "-1/${strSourceFile}",
                             false,                                  # Source is not compressed
                             $bCompress,                             # Destination compress based on test
@@ -676,7 +681,7 @@ sub backupTestRun
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
-#CSHANG Need to look at this function - why are we needing this?
+#CSHANG Need to look at this function. It creates data elements in the $oExpireTest object that are used by the $oExpireTest functions. We will likely have to change all of this with stanza-upgrade.
             $oExpireTest->stanzaCreate($strStanza, PG_VERSION_92);
             use constant SECONDS_PER_DAY => 86400;
             my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
@@ -817,7 +822,7 @@ sub backupTestRun
 
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6317709442043514973;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6353949018581704918;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
@@ -871,10 +876,11 @@ sub backupTestRun
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-                                                  '2ee0de0a5fb5cf15f4a24e72b368c41f7e187003', $lTime - 100, undef, true);
+                                                  '89373d9f2973502940de06bc5212489df3f8a912', $lTime - 100, undef, true);
 
             # Copy pg_control
-            executeTest('cp ' . testDataPath() . '/pg_control_94 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' .
+                        DB_FILE_PGCONTROL);
             utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
@@ -946,9 +952,9 @@ sub backupTestRun
                     $strTestPoint = TEST_KEEP_ALIVE;
                 }
             }
-#CSHANG should not need this
-            # Create the backup info from the pg_control file; cannot use stanza-create command because no PG instance is setup
-            infoFileManualCreate($oFile, $oHostDbMaster->dbBasePath(), PG_VERSION_94);
+
+            # Create the archive info file
+            $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
             # Create a file link
             filePathCreate($oHostDbMaster->dbPath() . '/pg_config', undef, undef, true);
@@ -1559,7 +1565,7 @@ sub backupTestRun
             $strType = BACKUP_TYPE_INCR;
             $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
-            # Delete the backup.info and make sure it gets reconstructed correctly
+            # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
             if ($bNeutralTest)
             {
                 executeTest('sudo rm ' . $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info");
@@ -1568,6 +1574,27 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT',
                                                   '9a53d532e27785e681766c98516a5e93f096a501', $lTime);
 
+            if ($bNeutralTest)
+            {
+                $strBackup =$oHostBackup->backup(
+                $strType, 'update files - fail on missing backup.info',
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING,
+                 strOptionalParam => '--log-level-console=detail'});
+
+                # Fail on attempt to create the stanza data since force was not used
+                $oHostBackup->stanzaCreate('fail on backup directory not empty and missing backup.info',
+                    {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+
+                # Use force to create the stanza
+                $oHostBackup->stanzaCreate('create required data for stanza',
+                    {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            }
+            else
+            {
+                $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+            }
+
+            # Perform the backup
             $strBackup =$oHostBackup->backup(
                 $strType, 'update files',
                 {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});

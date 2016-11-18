@@ -17,7 +17,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [und
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [130]: raised on backup host: archive.info does not exist but is required to get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: has a stanza-create been performed?
@@ -31,6 +31,41 @@ P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
 
+stanza-create db - create required data for stanza (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-create start [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-2] --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
+P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=stanza-create --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strCommandSSH = ssh, strHost = db-master, strRemoteType = db, strUser = [USER-2]
+P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no [USER-2]@db-master '[BACKREST-BIN] --buffer-size=4194304 --command=stanza-create --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = db-master, strName = remote, strRemoteType = db
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
+P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/backup/repo/archive/db
+P00  DEBUG:     ArchiveInfo->create(): bSave = <true>, strDbHistoryId = [undef], strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->dbHistoryIdGet(): bFileRequired = false
+P00  DEBUG:     ArchiveInfo->dbHistoryIdGet=>: iDbHistoryId = 1
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
+P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
+P00  DEBUG:     BackupInfo->create(): iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     BackupInfo->dbHistoryIdGet=>: iDbHistoryId = 1
+P00   INFO: successfully created stanza db
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00   INFO: stanza-create stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
+P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
 [backrest]
@@ -40,11 +75,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6156904820763115222
-db-version="9.3"
+db-system-id=6353949018581704918
+db-version="9.4"
 
 [db:history]
-1={"db-id":6156904820763115222,"db-version":"9.3"}
+1={"db-id":6353949018581704918,"db-version":"9.4"}
 
 stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf stop
@@ -97,9 +132,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [und
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201306121, iControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6156904820763115222
-P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.3-1, strWalSegment = 000000090000000900000009
-P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backup/repo/archive/db/9.3-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000090000000900000009
+P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backup/repo/archive/db/9.4-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00   INFO: unable to find 000000090000000900000009 in the archive

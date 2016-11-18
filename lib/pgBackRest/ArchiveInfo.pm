@@ -115,17 +115,23 @@ sub check
     (
         $strOperation,
         $strDbVersion,
-        $ullDbSysId
+        $ullDbSysId,
+        $bRequired,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->check', \@_,
             {name => 'strDbVersion'},
-            {name => 'ullDbSysId'}
+            {name => 'ullDbSysId'},
+            {name => 'bRequired', default => true},
         );
 
-    # Confirm the info file exists
-    $self->confirmExists();
+    # ??? remove bRequired after stanza-upgrade
+    if ($bRequired)
+    {
+        # Confirm the info file exists with the DB section
+        $self->confirmExists();
+    }
 
     my $strError = undef;
 
@@ -199,10 +205,11 @@ sub create
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'},
             {name => 'strDbHistoryId', required => false},
+            {name => 'bSave', default => true},
         );
 
     # Fill db section and db history section
-    $self->setDb($strDbVersion, $ullDbSysId, (defined($strDbHistoryId) ? $strDbHistoryId : $self->getDbHistoryId(false)));
+    $self->dbSectionSet($strDbVersion, $ullDbSysId, (defined($strDbHistoryId) ? $strDbHistoryId : $self->dbHistoryIdGet(false)));
 
     $self->save();
 
@@ -224,24 +231,23 @@ sub reconstruct
     (
         $strOperation,
         $oFile,
+        $strChkDbVersion,
+        $ullChkDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
         {name => 'oFile'},
+        {name => 'strChkDbVersion', trace => true},
+        {name => 'ullChkDbSysId', trace => true},
     );
 
-# CSHANG should we confirm the file does not exist? Or just always recreate, regardless? ALWAYS CREATE IT
     # Get the upper level directory names, e.g. 9.4-1
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_DB_VERSION . '-[0-9]+$'))
     {
         # Get the db-version and db-id (history id) from the directory name
-        my ($strDbVersion, $strDbId) = split("-", $strVersionDir);
+        my ($strDbVersion, $strDbHistoryId) = split("-", $strVersionDir);
 
-# CSHANG what if async archiving is on? the WAL goes to a spool dir first before getting to the dir, so if we did an upgrade and the
-# archive.info was missing an archiving is happening but not to us yet....is this the "queue" refered to in "If async archiving is
-# going on we’ll need to be sure that queue is flushed before allowing the stanza-upgrade."
-# DAVE: Ignore anything in ASYNC queue - redoing the archive. IF don't have anything in archive dir then recreate from dir
         # Get the name of the first archive directory
         my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR))[0];
 
@@ -271,7 +277,11 @@ sub reconstruct
             confess &log(ERROR, "unable to read database system identifier");
         }
 
-        $self->create($strDbVersion, $ullDbSysId, $strDbId);
+        # ??? Until stanza-upgrade, make sure the current DB info matches what should be stored in the file before saving
+        # Fill db section and db history section
+        $self->dbSectionSet($strDbVersion, $ullDbSysId, $strDbHistoryId);
+        $self->check($strChkDbVersion, $ullChkDbSysId, false);
+        $self->save();
     }
 
     # Return from function and log return values if any
@@ -279,11 +289,11 @@ sub reconstruct
 }
 
 ####################################################################################################################################
-# getDbHistoryId
+# dbHistoryIdGet
 #
 # Get the db history ID
 ####################################################################################################################################
-sub getDbHistoryId
+sub dbHistoryIdGet
 {
     my $self = shift;
 
@@ -295,7 +305,7 @@ sub getDbHistoryId
     ) =
         logDebugParam
     (
-        __PACKAGE__ . '->reconstruct', \@_,
+        __PACKAGE__ . '->dbHistoryIdGet', \@_,
         {name => 'bFileRequired', default => true},
     );
 
@@ -318,11 +328,11 @@ sub getDbHistoryId
 }
 
 ####################################################################################################################################
-# setDb
+# dbSectionSet
 #
 # Set the db and db:history sections.
 ####################################################################################################################################
-sub setDb
+sub dbSectionSet
 {
     my $self = shift;
 
@@ -336,7 +346,7 @@ sub setDb
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->setDb', \@_,
+            __PACKAGE__ . '->dbSectionSet', \@_,
             {name => 'strDbVersion', trace => true},
             {name => 'ullDbSysId', trace => true},
             {name => 'iDbHistoryId', trace => true}
@@ -362,7 +372,8 @@ sub confirmExists
 {
     my $self = shift;
 
-    if (!$self->{bExists})
+    # Confirm the file exists and the DB section is filled out
+    if (!$self->test(INFO_ARCHIVE_SECTION_DB) || !$self->{bExists})
     {
         confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
     }

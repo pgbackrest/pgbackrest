@@ -11,6 +11,37 @@ info all stanzas - no stanzas exist (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 []
 
+stanza-create db - create required data for stanza (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-create start [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
+P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->create(): bSave = <true>, strDbHistoryId = [undef], strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->dbHistoryIdGet(): bFileRequired = false
+P00  DEBUG:     ArchiveInfo->dbHistoryIdGet=>: iDbHistoryId = 1
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
+P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->create(): iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     BackupInfo->dbHistoryIdGet=>: iDbHistoryId = 1
+P00   INFO: successfully created stanza db
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00   INFO: stanza-create stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+
 full backup - error on identical link destinations (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -41,20 +72,20 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
@@ -165,7 +196,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checks
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = false, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
-P00   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 8192, lManifestSaveSize = 3
 P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
 P00   INFO: full backup size = 8KB
@@ -184,9 +215,8 @@ P00   INFO: expire start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -242,7 +272,7 @@ backup-type="full"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -266,7 +296,7 @@ pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
@@ -321,11 +351,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force stop
@@ -351,9 +381,8 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -361,12 +390,13 @@ P00  DEBUG:     BackupInfo->current=>: bTest = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
@@ -508,9 +538,8 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
@@ -518,12 +547,13 @@ P00  DEBUG:     BackupInfo->delete(): strBackupLabel = [BACKUP-FULL-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
@@ -648,8 +678,8 @@ P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
 P00  DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_data/global/pg_control, strHashType = <sha1>, strPathType = backup:tmp
-P00  DEBUG:     File->hashSize=>: iSize = 8192, strHash = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
-P00 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00  DEBUG:     File->hashSize=>: iSize = 8192, strHash = 89373d9f2973502940de06bc5212489df3f8a912
+P00 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
 P00   INFO: full backup size = 8KB
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -667,9 +697,8 @@ P00   INFO: expire start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -725,7 +754,7 @@ backup-type="full"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -749,7 +778,7 @@ pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
@@ -804,11 +833,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 full backup - invalid repo (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --repo-path=/bogus_path  --log-level-console=detail --type=full --stanza=db backup
@@ -833,7 +862,7 @@ P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/PG_VERSION, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/backup.info, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = backup.info, strSourcePathType = backup:cluster, strUser = [undef]
-P00  DEBUG:     BackupInfo->new(): bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/db/base
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.info, strPathType = db:absolute
 P00  DEBUG:     File->remove=>: bRemoved = true
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1037,8 +1066,8 @@ P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/global/p
 P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = [TEST_PATH]/db-master/db/base/global/pg_control, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster, strUser = [USER-1]
 P00  DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = [undef], lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, lSizeCurrent = 51, lSizeTotal = 8243, strChecksum = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003, strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = [undef], lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, lSizeCurrent = 51, lSizeTotal = 8243, strChecksum = 89373d9f2973502940de06bc5212489df3f8a912, strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control
+P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.manifest, strPathType = db:absolute
 P00  DEBUG:     File->remove=>: bRemoved = true
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -1080,7 +1109,7 @@ P01   INFO: local process 1 stop for backup-1
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1116,7 +1145,7 @@ P01   INFO: local process 1 stop for backup-1
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1169,7 +1198,7 @@ P01   INFO: local process 1 stop for backup-1
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1220,7 +1249,7 @@ P01   INFO: local process 1 stop for backup-1
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1234,7 +1263,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
         HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00  ERROR: [126]: database version = 9.4, system-id 6317709442043514973 does not match backup version = 8.0, system-id = 6317709442043514973
+P00  ERROR: [126]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 8.0, system-id = 6353949018581704918
                HINT: is this the correct stanza?
 P00   INFO: backup stop
 
@@ -1245,7 +1274,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
         HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00  ERROR: [126]: database version = 9.4, system-id 6317709442043514973 does not match backup version = 9.4, system-id = 6999999999999999999
+P00  ERROR: [126]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 9.4, system-id = 6999999999999999999
                HINT: is this the correct stanza?
 P00   INFO: backup stop
 
@@ -1373,9 +1402,8 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1390,12 +1418,13 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
@@ -1480,9 +1509,8 @@ P00   INFO: expire start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1543,7 +1571,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -1567,7 +1595,7 @@ pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1627,11 +1655,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 incr backup - resume and add tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
@@ -1645,9 +1673,8 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1664,12 +1691,13 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6317709442043514973
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
@@ -1779,9 +1807,8 @@ P00   INFO: expire start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     BackupInfo->new(): bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  DEBUG:     BackupInfo->reconstruct(): iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1842,7 +1869,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -1868,7 +1895,7 @@ pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1936,11 +1963,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 diff backup - cannot resume - new diff (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
@@ -2001,7 +2028,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -2026,7 +2053,7 @@ pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2091,11 +2118,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 diff backup - cannot resume - disabled (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --no-resume --log-level-console=detail --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
@@ -2156,7 +2183,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -2181,7 +2208,7 @@ pg_data/base/16384/17000={"checksum":"a3b357a3e395e43fcfb19bb13f3c1b5179279593",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2246,11 +2273,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 115 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
@@ -2304,7 +2331,7 @@ P01   INFO: local process 1 stop for backup-1
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 0%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -2342,7 +2369,7 @@ P01   INFO: local process 1 stop for backup-1
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 0%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -2408,7 +2435,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -2433,7 +2460,7 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2495,11 +2522,72 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+
+incr backup - update files - fail on missing backup.info (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+P00   WARN: option retention-full is not set, the repository may run out of space
+        HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
+P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00  ERROR: [130]: [TEST_PATH]/db-master/repo/backup/db/backup.info does not exist and is required to perform a backup.
+               HINT: has a stanza-create been performed?
+P00   INFO: backup stop
+
+stanza-create db - fail on backup directory not empty and missing backup.info (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-create start [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base-2
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00  ERROR: [164]: the backup directory is not empty but the backup.info file is missing
+               HINT: Has the directory been copied from another location and the copy has not completed?
+               HINT: Use --force to force the backup.info to be created from the existing data in the directory.
+P00   WARN: the stanza db could not be created
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 164, oException = [undef], strSignal = [undef]
+P00   INFO: stanza-create stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 164
+
+stanza-create db - create required data for stanza (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online --force stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-create start [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --force --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db->dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base-2
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00   INFO: successfully created stanza db
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00   INFO: stanza-create stop
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 incr backup - update files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -2507,9 +2595,6 @@ incr backup - update files (db-master host)
 P00   WARN: option retention-full is not set, the repository may run out of space
         HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
-P00   WARN: backup [BACKUP-FULL-2] found in repository added to backup.info
-P00   WARN: backup [BACKUP-DIFF-2] found in repository added to backup.info
-P00   WARN: backup [BACKUP-INCR-3] found in repository added to backup.info
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
 P01   INFO: local process 1 start for host db-1
 P01   INFO: local process 1 stop for db-1
@@ -2562,7 +2647,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -2587,7 +2672,7 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2650,11 +2735,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 diff backup - updates since last full (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup
@@ -2718,7 +2803,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -2743,7 +2828,7 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2807,11 +2892,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 incr backup - remove files - but won't affect manifest (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
@@ -2869,7 +2954,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -2894,7 +2979,7 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2959,11 +3044,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 diff backup - remove files during backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
@@ -3027,7 +3112,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -3050,7 +3135,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3116,11 +3201,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 full backup - update file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
@@ -3142,7 +3227,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 0%) chec
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 0%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01   INFO: local process 1 stop for db-1
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: full backup size = 8KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
 P00   INFO: backup stop
@@ -3190,7 +3275,7 @@ backup-type="full"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -3214,7 +3299,7 @@ pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33",
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3281,11 +3366,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 info db stanza - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db info
@@ -3597,7 +3682,7 @@ info db stanza - normal output (db-master host)
         "db" : [
             {
                 "id" : "1",
-                "system-id" : 6317709442043514973,
+                "system-id" : 6353949018581704918,
                 "version" : "9.4"
             }
         ],
@@ -3681,7 +3766,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -3706,7 +3791,7 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3767,11 +3852,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 incr backup - no changes (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -3781,7 +3866,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
 P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   INFO: last backup label = [BACKUP-DIFF-5], version = [VERSION-1]
 P00   INFO: no jobs for host db-1
-P00   INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: backup file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: incr backup size = 8KB
 P00   INFO: new backup label = [BACKUP-INCR-6]
 P00   INFO: backup stop
@@ -3830,7 +3915,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [backup:option]
@@ -3855,7 +3940,7 @@ pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/base/32768/33000={"checksum":"7f4c74dc10f61eef43e6ae642606627df1999b34","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","reference":"[BACKUP-DIFF-5]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"2ee0de0a5fb5cf15f4a24e72b368c41f7e187003","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-3]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-3]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3917,11 +4002,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6317709442043514973
+db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6317709442043514973,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
 restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
@@ -3953,7 +4038,7 @@ P01   INFO: local process 1 stop for backup-1
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%)
 P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -3990,7 +4075,7 @@ P01   INFO: local process 1 stop for backup-1
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -4045,7 +4130,7 @@ P01   INFO: local process 1 stop for backup-1
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/base/recovery.conf
@@ -4180,7 +4265,7 @@ info all stanzas - normal output (db-master host)
         "db" : [
             {
                 "id" : "1",
-                "system-id" : 6317709442043514973,
+                "system-id" : 6353949018581704918,
                 "version" : "9.4"
             }
         ],
