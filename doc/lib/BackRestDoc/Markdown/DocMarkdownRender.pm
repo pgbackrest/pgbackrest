@@ -72,8 +72,7 @@ sub process
     my $oPage = $self->{oDoc};
 
     # Initialize page
-    my $strMarkdown = "# {[project]}" .
-                   (defined($oPage->paramGet('title', false)) ? ' ' . $oPage->paramGet('title') : '');
+    my $strMarkdown = "# " . $oPage->paramGet('title');
 
     if (defined($oPage->paramGet('subtitle', false)))
     {
@@ -280,7 +279,12 @@ sub sectionProcess
         {
             if ($oChild->paramTest('title'))
             {
-                $strMarkdown .= "\n\n_" . $oChild->paramGet('title') . "_:";
+                if (defined($strLastChild) && $strLastChild ne 'code-block')
+                {
+                    $strMarkdown .= "\n";
+                }
+
+                $strMarkdown .= "\n_" . $oChild->paramGet('title') . "_:";
             }
 
             $strMarkdown .= "\n```\n" . trim($oChild->valueGet()) . "\n```";
@@ -333,11 +337,9 @@ sub sectionProcess
         # Add a list
         elsif ($oChild->nameGet() eq 'list')
         {
-            $strMarkdown .= "\n";
-
             foreach my $oListItem ($oChild->nodeList())
             {
-                $strMarkdown .= "\n- " . $self->processText($oListItem->textGet());
+                $strMarkdown .= "\n\n- " . $self->processText($oListItem->textGet());
             }
         }
         # Add a subsection

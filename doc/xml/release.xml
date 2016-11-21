@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="Releases" toc-number="n">
+<doc title="{[project]} Releases" toc-number="n">
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
@@ -133,6 +133,56 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.12dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed and issue that suppressed exceptions in PDF builds.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Allow a source to be included as a section so large documents can be broken up.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added section link support to Markdown output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added list support to PDF output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>include</setting> option to explicitly build sources (complements the <setting>exclude</setting> option though both cannot be used in the same invocation).</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>keyword-add</setting> option to add keywords without overriding the <id>default</id> keyword.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>debug</setting> option to <file>doc.pl</file> to easily add the <id>debug</id> keyword to documentation builds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>pre</setting> option to <file>doc.pl</file> to easily add the <id>pre</id> keyword to documentation builds.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improvements to markdown rendering.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove code dependency on <id>project</id> variable, instead use <id>title</id> param.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+        </release>
+
         <release date="2016-11-17" version="1.11" title="Bug Fix for Asynchronous Archiving Efficiency">
             <release-core-list>
                 <release-bug-list>

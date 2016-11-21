@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
+<doc title="{[project]}" subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
     <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and multi-processing.</description>
 
     <variable-list>

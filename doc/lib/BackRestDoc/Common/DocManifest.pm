@@ -58,6 +58,7 @@ sub new
         my $strOperation,
         $self->{stryKeyword},
         $self->{stryRequire},
+        $self->{stryInclude},
         $self->{stryExclude},
         my $oVariableOverride,
         $self->{strDocPath},
@@ -69,6 +70,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'stryKeyword'},
             {name => 'stryRequire'},
+            {name => 'stryInclude'},
             {name => 'stryExclude'},
             {name => 'oVariableOverride', required => false},
             {name => 'strDocPath', required => false},
@@ -160,6 +162,12 @@ sub new
 
             # Skip sources in exclude list
             if (grep(/^$strSource$/, @{$self->{stryExclude}}))
+            {
+                next;
+            }
+
+            # Skip sources not in include list
+            if (@{$self->{stryInclude}} > 0 && !grep(/^$strSource$/, @{$self->{stryInclude}}))
             {
                 next;
             }

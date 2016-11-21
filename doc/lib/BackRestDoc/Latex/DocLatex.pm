@@ -100,6 +100,9 @@ sub process
 
     my $strLatex = $self->{oManifest}->variableReplace(fileStringRead($self->{strPreambleFile}), 'latex') . "\n";
 
+    # !!! Temp hack for underscores in filename
+    $strLatex =~ s/pgaudit\\\_doc/pgaudit\_doc/g;
+
     foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_PDF))
     {
         &log(INFO, "    render out: ${strPageId}");
@@ -128,6 +131,10 @@ sub process
 
                 # Save the html page
                 $strLatex .= $oDocLatexSection->process();
+            }
+            else
+            {
+                confess $oException;
             }
         };
     }

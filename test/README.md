@@ -24,27 +24,22 @@ _Run All Tests_:
 ```
 /backrest/test/test.pl
 ```
-
 _Run Tests for a Specific OS_:
 ```
 /backrest/test/test.pl --vm=co6
 ```
-
 _Run Tests for a Specific OS and Module_:
 ```
 /backrest/test/test.pl --vm=co6 --module=backup
 ```
-
 _Run Tests for a Specific OS, Module, and Test_:
 ```
 /backrest/test/test.pl --vm=co6 --module=backup --test=full
 ```
-
 _Run Tests for a Specific OS, Module, Test, and Run_:
 ```
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --run=1
 ```
-
 _Run Tests for a Specific OS, Module, Test, and Process Max_:
 ```
 /backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4

@@ -71,8 +71,7 @@ sub process
     my $strLatex;
 
     # Initialize page
-    my $strTitle = "{[project]}" .
-                   (defined($oPage->paramGet('title', false)) ? ' ' . $oPage->paramGet('title') : '');
+    my $strTitle = $oPage->paramGet('title');
     my $strSubTitle = $oPage->paramGet('subtitle', false);
 
     # Render sections
@@ -324,6 +323,18 @@ sub sectionProcess
             }
 
             $strLatex .= "\n" . $self->processText($oDescription) . "\n";
+        }
+        # Add a list
+        elsif ($oChild->nameGet() eq 'list')
+        {
+            $strLatex .= "\n\\begin{itemize}";
+
+            foreach my $oListItem ($oChild->nodeList())
+            {
+                $strLatex .= "\n    \\item " . $self->processText($oListItem->textGet());
+            }
+
+            $strLatex .= "\n\\end{itemize}";
         }
         # Add/remove config options
         elsif ($oChild->nameGet() eq 'backrest-config' || $oChild->nameGet() eq 'postgres-config')

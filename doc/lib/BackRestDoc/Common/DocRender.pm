@@ -43,6 +43,7 @@ my $oRenderTag =
         'cmd' => ['`', '`'],
         'param' => ['`', '`'],
         'setting' => ['`', '`'],
+        'pg-setting' => ['`', '`'],
         'code' => ['`', '`'],
         # 'code-block' => ['```', '```'],
         # 'exe' => [undef, ''],
@@ -299,6 +300,7 @@ sub build
     my $oNode = shift;
     my $oParent = shift;
     my $strPath = shift;
+    my $strPathPrefix = shift;
 
     # &log(INFO, "        node " . $oNode->nameGet());
 
@@ -326,8 +328,12 @@ sub build
             $self->{oSection} = {};
     }
 
+    # Build section
     if ($strName eq 'section')
     {
+        &log(DEBUG, 'build section [' . $oNode->paramGet('id') . ']');
+
+        # Set path and parent-path for this section
         if (defined($strPath))
         {
             $oNode->paramSet('path-parent', $strPath);
@@ -338,12 +344,55 @@ sub build
         &log(DEBUG, "            path ${strPath}");
         ${$self->{oSection}}{$strPath} = $oNode;
         $oNode->paramSet('path', $strPath);
+
+        # If section content is being pulled from elsewhere go get the content
+        if ($oNode->paramTest('source'))
+        {
+            my $oSource = ${$self->{oManifest}->sourceGet($oNode->paramGet('source'))}{doc};
+
+            foreach my $oSection ($oSource->nodeList('section'))
+            {
+                push(@{${$oNode->{oDoc}}{children}}, $oSection->{oDoc});
+            }
+
+            # Set path prefix to modify all section paths further down
+            $strPathPrefix = $strPath;
+        }
+    }
+    # Build link
+    elsif ($strName eq 'link')
+    {
+        &log(DEBUG, 'build link [' . $oNode->valueGet() . ']');
+
+        # If the path prefix is set and this is a section
+        if (defined($strPathPrefix) && $oNode->paramTest('section'))
+        {
+            my $strNewPath = $strPathPrefix . $oNode->paramGet('section');
+            &log(DEBUG, "modify link section from '" . $oNode->paramGet('section') . "' to '${strNewPath}'");
+
+            $oNode->paramSet('section', $strNewPath);
+        }
     }
 
-    # Iterate all nodes
+    # Iterate all text nodes
+    if (defined($oNode->textGet(false)))
+    {
+        foreach my $oChild ($oNode->textGet()->nodeList(undef, false))
+        {
+            if (ref(\$oChild) ne "SCALAR")
+            {
+                $self->build($oChild, $oNode, $strPath, $strPathPrefix);
+            }
+        }
+    }
+
+    # Iterate all non-text nodes
     foreach my $oChild ($oNode->nodeList(undef, false))
     {
-        $self->build($oChild, $oNode, $strPath);
+        if (ref(\$oChild) ne "SCALAR")
+        {
+            $self->build($oChild, $oNode, $strPath, $strPathPrefix);
+        }
     }
 }
 
@@ -496,6 +545,12 @@ sub processTag
             else
             {
                 my $strSection = $oTag->paramGet('section');
+                my $oSection = ${$self->{oSection}}{$strSection};
+
+                if (!defined($oSection))
+                {
+                    confess &log(ERROR, "section link '${strSection}' does not exist");
+                }
 
                 if (!defined($strSection))
                 {
@@ -504,7 +559,7 @@ sub processTag
 
                 if ($strType eq 'html')
                 {
-                    $strUrl = '#' . substr($oTag->paramGet('section'), 1);
+                    $strUrl = '#' . substr($strSection, 1);
                 }
                 elsif ($strType eq 'latex')
                 {
@@ -512,7 +567,10 @@ sub processTag
                 }
                 else
                 {
-                    confess &log(ERROR, "section links not supported for type ${strType}, value '" . $oTag->valueGet() . "'");
+                    $strUrl = lc($self->processText($oSection->nodeGet('title')->textGet()));
+                    $strUrl =~ s/[^\w\- ]//g;
+                    $strUrl =~ s/ /-/g;
+                    $strUrl = '#' . $strUrl;
                 }
             }
         }
