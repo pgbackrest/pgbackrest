@@ -112,21 +112,6 @@ sub archiveCheck
     }
 }
 
-# Create the archive.info from an existing WAL file
-sub archiveInfoCreateFromWAL
-{
-    my $oFile = shift;
-    my $strSourceFile = shift;
-
-    my ($strDbVersion, $ullDbSysId) = (new pgBackRest::Archive)->walInfo($strSourceFile);
-
-    # Create the stanza archive path
-    filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-
-    # Create the archive info file
-    (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->create($strDbVersion, $ullDbSysId);
-}
-
 ####################################################################################################################################
 # backupTestRun
 ####################################################################################################################################
@@ -681,7 +666,9 @@ sub backupTestRun
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
-#CSHANG Need to look at this function. It creates data elements in the $oExpireTest object that are used by the $oExpireTest functions. We will likely have to change all of this with stanza-upgrade.
+
+            # ??? This function create data elements in the $oExpireTest object that are used by the $oExpireTest functions. But
+            # should probably change to use the stanza-create command especially with stanza-upgrade.
             $oExpireTest->stanzaCreate($strStanza, PG_VERSION_92);
             use constant SECONDS_PER_DAY => 86400;
             my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
@@ -1873,6 +1860,15 @@ sub backupTestRun
             my $bTestExtra = ($iRun == 1) || ($iRun == 7);
 
             $oHostDbMaster->clusterCreate();
+
+            # Copy the pg_control file from master to the standby so that the stanza can be created
+
+        # CSHANG Test run=6 will fail. The dbObjectGet was created to "identify the master server among the choices" but in the
+        # constructor of stanzaCreate, we set up the oDb by calling it (which returns Db->dbObjectGet=>: iDbMasterIdx = 2,
+        # iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]) and getting the oDbMaster object. But then in the
+        # case of run=6 (the standby) Stanza.pm stanzaCreate fails with ERROR: [116]: raised on db-master host: unable to open
+        # /home/vagrant/test/test-0/db-standby/db/base/global/pg_control.
+
             $oHostBackup->stanzaCreate('main create stanza info files');
 
             # Static backup parameters
@@ -1946,7 +1942,7 @@ sub backupTestRun
                 }
 
                 # When archive-check=n then ERROR_ARCHIVE_TIMEOUT will be raised instead of ERROR_ARCHIVE_COMMAND_INVALID
-# CSHANG But maybe we should error with the fact that that option is not valid -- Stephen does not want the check command to skip the archive checking - he wants it to error - either in checking the archive or indicating the option is invalid. Therefore I have put the backup.info file check first.
+                # ??? But maybe we should error with the fact that that option is not valid
                 $strComment = 'fail on archive timeout when archive-check=n';
                 $oHostDbMaster->check(
                     $strComment,

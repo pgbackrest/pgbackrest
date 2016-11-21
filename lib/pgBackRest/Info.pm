@@ -320,7 +320,7 @@ sub backupList
             {name => 'strStanza'}
         );
 
-    # Load backup.info
+    # Load the backup.info but do not attempt to validate it or confirm it's existence
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"), false, false);
 
     # Build the db list

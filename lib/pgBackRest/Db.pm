@@ -67,7 +67,7 @@ my $oPgControlVersionHash =
 #
 # Gets the database objects(s) and indexes. The databases required for the backup type must be online. A connection to the
 # available databases will be established to determine which is the master and which, if any, is the standby. If there is a master
-# and a standby, returns both, else just the master.
+# and a standby to which a connection can be established, it returns both, else just the master.
 ####################################################################################################################################
 sub dbObjectGet
 {
@@ -149,15 +149,14 @@ sub dbObjectGet
         $oDbMaster = new pgBackRest::Db($iMasterRemoteIdx);
     }
 
-# CSHANG should these return values have trace => true?
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'oDbMaster', value => $oDbMaster},
-        {name => 'iDbMasterIdx', value => $iMasterRemoteIdx},
+        {name => 'iDbMasterIdx', value => $iMasterRemoteIdx, trace => true},
         {name => 'oDbStandby', value => $oDbStandby},
-        {name => 'iDbStandbyIdx', value => $iStandbyIdx},
+        {name => 'iDbStandbyIdx', value => $iStandbyIdx, trace => true},
     );
 }
 

@@ -2224,12 +2224,10 @@ sub optionValidate
             }
 
             # If the command has rules store them for later evaluation
-#CSHANG so this may be --stanza option for the CHECK command but it will return the actual hash (&OPTION_RULE_REQUIRED => true) if the construct is, say CMD_CHECK => {&OPTION_RULE_REQUIRED => true} but if it is not a hash, like CMD_CHECK => true then it returns undef.
             my $oCommandRule = optionCommandRule($strOption, $strCommand);
 
             # Check dependency for the command then for the option
             my $bDependResolved = true;
-#CSHANG if $oCommandRule = &OPTION_RULE_REQUIRED => true, then it is defined and oDepend in the case of say option --stanza will be undefined
             my $oDepend = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_DEPEND} :
                                                    $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
             my $strDependOption;

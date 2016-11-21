@@ -625,7 +625,7 @@ sub stanzaCreate
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->check', \@_,
+            __PACKAGE__ . '->stanzaCreate', \@_,
             {name => 'strComment'},
             {name => 'oParam', required => false},
         );

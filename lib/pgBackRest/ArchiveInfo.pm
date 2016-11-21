@@ -20,8 +20,10 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
+use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
@@ -74,7 +76,7 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
-            {name => 'bRequired', default => false}
+            {name => 'bRequired', default => true}
         );
 
     # Build the archive info path/file name
@@ -243,16 +245,15 @@ sub reconstruct
     );
 
     # Get the upper level directory names, e.g. 9.4-1
-    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_DB_VERSION . '-[0-9]+$'))
+    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION . '-[0-9]+$'))
     {
         # Get the db-version and db-id (history id) from the directory name
         my ($strDbVersion, $strDbHistoryId) = split("-", $strVersionDir);
 
         # Get the name of the first archive directory
-        my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR))[0];
+        my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL))[0];
 
-#CSHANG Create a constant for the regexs below - or maybe have a function to provide regex for archive stuff like the backupregex function?
-# CAN MAKE FUNCTION in archiveCommon.pm
+        # ??? Should probably make a function in ArchiveCommon
         my $strArchiveFile =
             (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",
             "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"))[0];
@@ -267,9 +268,8 @@ sub reconstruct
                 or confess "gunzip failed: $GunzipError\n";
         }
 
-# CSHANG may need to put these constants in a common location: PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
-# MOVE TO COMMON FOR PG_WAL...
-        my $iSysIdOffset = $strDbVersion >= '9.3' ? 20 : 12;
+        # Get the db-system-id from the WAL file depending on the version of postgres
+        my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
 
         if (!defined($ullDbSysId))

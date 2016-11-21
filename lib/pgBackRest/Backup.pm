@@ -481,7 +481,7 @@ sub process
     # Create the cluster backup and history path
     $oFileLocal->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true);
 
-    # Load or build backup.info
+    # Load the backup.info
     my $oBackupInfo = new pgBackRest::BackupInfo($oFileLocal->pathGet(PATH_BACKUP_CLUSTER));
 
     # Build backup tmp and config
@@ -550,8 +550,7 @@ sub process
     my $oDbMaster = undef;
     my $oDbStandby = undef;
 
-#CSHANG it might be nice to have this through the IF statement after "# If master db is not already defined then set to default" so that we don't have to raise errors all over the place and so that we always return a masterDB. BUT for stanza create, we shouldn't force them to bring up postgres before doing a stanza create - obviously that results in an error from the archive push command (which ALSO causes a problem with the check command if they try to perform that before the stanza create).
-
+    # Get the database objects
     ($oDbMaster, $self->{iMasterRemoteIdx}, $oDbStandby, $self->{iCopyRemoteIdx}) = dbObjectGet();
 
     # If remote copy was not explicitly set then set it equal to master
@@ -903,8 +902,6 @@ sub process
     # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
     # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
     # be skipped by dealing with any backup label collisions here.
-#CSHANG why is "gz" hardcoded in this IF statement?
-# CHANGE
     if (fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER),
                  ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
                  timestampFileFormat(undef, $lTimestampStop) .
@@ -912,7 +909,7 @@ sub process
         fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
                  ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
                  timestampFileFormat(undef, $lTimestampStop) .
-                 ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.gz$'), undef, true))
+                 ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . $oFileLocal->{strCompressExtension}), undef, true))
     {
         waitRemainder();
         $strBackupLabel = backupLabelFormat($strType, $strBackupLastPath, time());

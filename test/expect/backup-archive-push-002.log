@@ -56,8 +56,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -109,8 +108,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
@@ -145,8 +143,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
@@ -248,8 +245,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -305,8 +301,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -349,8 +344,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -402,8 +396,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -459,8 +452,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -503,8 +495,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000002, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -556,8 +547,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000003, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -609,8 +599,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000004, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -662,8 +651,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -715,8 +703,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
@@ -751,8 +738,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
@@ -787,8 +773,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -844,8 +829,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -888,8 +872,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -941,8 +924,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -998,8 +980,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1042,8 +1023,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000006, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1095,8 +1075,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000007, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1148,8 +1127,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000008, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1201,8 +1179,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1254,8 +1231,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
@@ -1290,8 +1266,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
@@ -1326,8 +1301,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1383,8 +1357,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1427,8 +1400,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1480,8 +1452,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
@@ -1537,8 +1508,7 @@ P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1

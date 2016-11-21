@@ -162,7 +162,6 @@ sub new
 ####################################################################################################################################
 sub validate
 {
-# CSHANG Dave also thinks maybe we rename this function to reconstruct
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
@@ -420,7 +419,7 @@ sub add
                    \@stryReference);
     }
 
-    $self->save(); 
+    $self->save();
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

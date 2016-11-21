@@ -187,12 +187,13 @@ sub infoFileCreate
         # Create the cluster repo path
         $oFile->pathCreate($strPathType, undef, undef, true, true);
     }
-# CSHANG - Need to put in checking the DB against the archive.info/backup.info file - we don't want to create a DB=2 scenario so we should be checking against the database.
-    # If the cluster repo path is empty then don't validate the info files, just create them
+
+    # Get the contents of the directory and create the info object
     my @stryFileList = fileList($strParentPath, undef, 'forward', true);
     my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath, false, false)
                                                       : new pgBackRest::ArchiveInfo($strParentPath, false);
 
+    # If the cluster repo path is empty then don't validate the info files, just create them
     if (!@stryFileList)
     {
         # Create and save the info file
@@ -203,6 +204,8 @@ sub infoFileCreate
     }
     elsif (!grep(/^$strInfoFile$/i, @stryFileList))
     {
+        # If the directory is not empty but does not contain the info file, then check if they have used the force option,
+        # if so, reconstruct the info file from the contents of the directories, else error
         if (!optionGet(OPTION_FORCE))
         {
             $iResult = $iErrorCode;
@@ -212,7 +215,6 @@ sub infoFileCreate
                 "HINT: Has the directory been copied from another location and the copy has not completed?\n" .
                 "HINT: Use --force to force the ${strInfoFile} to be created from the existing data in the directory.";
         }
-        # Force the recreation of the info file
         else
         {
             # Turn off console logging to control when to display the error
@@ -243,9 +245,10 @@ sub infoFileCreate
             logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
         }
     }
-    # Check the validity of the existing info file
-    else
+
+    if ($iResult == 0)
     {
+        # Check the validity of the existing info file
         # Turn off console logging to control when to display the error
         logLevelSet(undef, OFF);
 
@@ -269,10 +272,10 @@ sub infoFileCreate
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
         };
-
-        # Reset the console logging
-        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
     }
+
+    # Reset the console logging
+    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # Return from function and log return values if any
     return logDebugReturn

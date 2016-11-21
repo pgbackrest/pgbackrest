@@ -14,6 +14,7 @@ use Scalar::Util qw(looks_like_number);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
@@ -130,7 +131,7 @@ sub process
     my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
     my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
 
-    # Load or build backup.info
+    # Load the backup.info
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
 
     # Find all the expired full backups
@@ -315,9 +316,9 @@ sub process
                             push(@oyArchiveRange, $oArchiveRange);
                         }
                     }
-# CSHANG replace with REGEX_ARCHIVE_DIR and test
+
                     # Get all major archive paths (timeline and first 64 bits of LSN)
-                    foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
+                    foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
                     {
                         logDebugMisc($strOperation, "found major WAL path: ${strPath}");
                         $bRemove = true;

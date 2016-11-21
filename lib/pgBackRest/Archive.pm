@@ -46,12 +46,6 @@ my $oWalMagicHash =
 };
 
 ####################################################################################################################################
-# PostgreSQL WAL system id offset
-####################################################################################################################################
-use constant PG_WAL_SYSTEM_ID_OFFSET_GTE_93                         => 20;
-use constant PG_WAL_SYSTEM_ID_OFFSET_LT_93                          => 12;
-
-####################################################################################################################################
 # constructor
 ####################################################################################################################################
 sub new
@@ -862,11 +856,7 @@ sub pushCheck
     }
     else
     {
-#CSHANG we should not be creating the path here anymore
-        # Create the archive path if it does not exist
-        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
-
-        # If the info file exists check db version and system-id, else create it with the db version and system-id passed and the history
+        # If the info file exists check db version and system-id else error
         $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive
