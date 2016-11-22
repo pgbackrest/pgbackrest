@@ -139,6 +139,10 @@
                     <release-item>
                         <p>Fixed and issue that suppressed exceptions in PDF builds.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed regression in section links introduced in <id>v1.10</id>.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -168,6 +172,10 @@
 
                     <release-item>
                         <p>Added <setting>pre</setting> option to <file>doc.pl</file> to easily add the <id>pre</id> keyword to documentation builds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Builds in <file>release.pl</file> now remove all docker containers to get consistent IP address assignments.</p>
                     </release-item>
                 </release-feature-list>
 
