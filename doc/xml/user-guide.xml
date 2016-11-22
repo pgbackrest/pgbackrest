@@ -400,7 +400,7 @@
         <section id="create-stanza" depend="configure-archiving">
             <title>Create the Stanza</title>
 
-            <p>To create the required stanza data <cmd>stanza-create</cmd> must be run on the host where the repository is located. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are also properly configured.</p>
+            <p>To create the required stanza data, <cmd>stanza-create</cmd> must be run on the host where the repository is located. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are also properly configured.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create the Stanza and Check the Configuration</title>
@@ -1313,7 +1313,7 @@
                 <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository. The <host>backup</host> host must also be configured with the <host>db-master</host> host/user and database path.  The master database will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/>, <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository and <link section="/quickstart/create-stanza">Create the Stanza</link> to create the required information files for the stanza. The <host>backup</host> host must also be configured with the <host>db-master</host> host/user and database path.  The master database will be configured as <id>db1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>db1-host</br-option>/<br-option>db1-user</br-option> and <br-option>db1-path</br-option></title>
@@ -1345,7 +1345,7 @@
             <p>The repository directory will also be removed from the database host.  It will not be used anymore so leaving it around may be confusing later on.</p>
 
             <execute-list host="{[host-db-master]}">
-                <title>Remove repository now that it will be located on the database server</title>
+                <title>Remove repository now that it will be located on the backup host server</title>
 
                 <execute user="root">
                     <exe-cmd>find {[backrest-repo-path]} -delete</exe-cmd>
@@ -1353,6 +1353,16 @@
             </execute-list>
 
             <p>Commands are run the same as on a single host configuration except that the <cmd>backup</cmd> and <cmd>expire</cmd> command are run from the <host>backup</host> host and all other commands are run from the <host>database</host> host.</p>
+
+            <p>Create the required information files for the stanza in the new repository.</p>
+
+            <execute-list host="{[host-backup]}">
+                <title>Create the stanza files</title>
+
+                <execute user="backrest" output="y" filter="n" >
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stanza-create</exe-cmd>
+                </execute>
+            </execute-list>
 
             <p>Check that the configuration is correct on both the <host>database</host> and <host>backup</host> hosts. More information about the <cmd>check</cmd> command can be found in <link section="/quickstart/check-configuration">Check the Configuration</link>.</p>
 

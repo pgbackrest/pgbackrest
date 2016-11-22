@@ -963,14 +963,14 @@
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
-                <text>Must be run during <backrest/> installation on the host where the repository is located. The <cmd>check</cmd> command will also be invoked if the <postgres/> database version is greater than or equal to 9.1.</text>
+                <text>After <backrest/> has been configured for use with a stanza, <cmd>stanza-create</cmd> must be run on the host where the repository is located.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
                         <summary>Force stanza creation.</summary>
 
-                        <text>CSHANG TO DO</text>
+                        <text>If a required information file does not exist for some reason in the stanza repository yet backups or arhives do exist, then this option can be used to force the information files to be created from the existing data in the directory.</text>
 
                         <example>n</example>
                     </option>

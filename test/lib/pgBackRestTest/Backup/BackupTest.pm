@@ -1861,14 +1861,7 @@ sub backupTestRun
 
             $oHostDbMaster->clusterCreate();
 
-            # Copy the pg_control file from master to the standby so that the stanza can be created
-
-        # CSHANG Test run=6 will fail. The dbObjectGet was created to "identify the master server among the choices" but in the
-        # constructor of stanzaCreate, we set up the oDb by calling it (which returns Db->dbObjectGet=>: iDbMasterIdx = 2,
-        # iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]) and getting the oDbMaster object. But then in the
-        # case of run=6 (the standby) Stanza.pm stanzaCreate fails with ERROR: [116]: raised on db-master host: unable to open
-        # /home/vagrant/test/test-0/db-standby/db/base/global/pg_control.
-
+            # Create the stanza
             $oHostBackup->stanzaCreate('main create stanza info files');
 
             # Static backup parameters
