@@ -78,18 +78,14 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
-    my $iResult;
-
-    # Process stanza create
-    if (commandTest(CMD_STANZA_CREATE))
-    {
-        $iResult = $self->stanzaCreate();
-    }
-    # Else error if any other command is found
-    else
+    # Error if any other command other than stanza-create is found
+    if (!commandTest(CMD_STANZA_CREATE))
     {
         confess &log(ASSERT, "Stanza->process() called with invalid command: " . commandGet());
     }
+
+    # Process stanza create
+    my $iResult = $self->stanzaCreate();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -122,14 +118,14 @@ sub stanzaCreate
     $self->dbInfoGet();
 
     # Create the archive.info file
-    my ($iResult, $strResultMessage) = $self->infoFileCreate($oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE,
-                                                             ERROR_ARCHIVE_DIR_INVALID);
+    my ($iResult, $strResultMessage) = $self->infoFileCreate(
+        $oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE, ERROR_ARCHIVE_DIR_INVALID);
 
     if ($iResult == 0)
     {
         # Create the backup.info file
-        ($iResult, $strResultMessage) = $self->infoFileCreate($oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO,
-                                                              ERROR_BACKUP_DIR_INVALID);
+        ($iResult, $strResultMessage) = $self->infoFileCreate(
+            $oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO, ERROR_BACKUP_DIR_INVALID);
     }
 
     if ($iResult == 0)
@@ -226,6 +222,7 @@ sub infoFileCreate
                     ? $oInfo->reconstruct($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
                                           $self->{oDb}{ullDbSysId})
                     : $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+
                 return true;
             }
             or do
@@ -256,8 +253,10 @@ sub infoFileCreate
         {
             # Check that the info file is valid for the current database of the stanza
             ($strPathType eq PATH_BACKUP_CLUSTER)
-                ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
+                ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+                    $self->{oDb}{ullDbSysId})
                 : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+
             return true;
         }
         or do

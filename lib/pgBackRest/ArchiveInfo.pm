@@ -52,11 +52,11 @@ use constant INFO_ARCHIVE_KEY_DB_SYSTEM_ID                          => MANIFEST_
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-my $strArchiveInfoMissingMsg = ARCHIVE_INFO_FILE . " does not exist but is required to get WAL segments\n" .
-             "HINT: is archive_command configured in postgresql.conf?\n" .
-             "HINT: has a stanza-create been performed?\n " .
-             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving" .
-             " scheme.";
+my $strArchiveInfoMissingMsg =
+    ARCHIVE_INFO_FILE . " does not exist but is required to push/get WAL segments\n" .
+    "HINT: is archive_command configured in postgresql.conf?\n" .
+    "HINT: has a stanza-create been performed?\n " .
+    "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.";
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -366,7 +366,9 @@ sub dbSectionSet
 }
 
 ####################################################################################################################################
-# Helper functions
+# confirmExists
+#
+# Ensure that the archive.info file and the db section exist.
 ####################################################################################################################################
 sub confirmExists
 {

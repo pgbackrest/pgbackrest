@@ -18,7 +18,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     Db->info(): strDbPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  ERROR: [130]: raised on backup host: archive.info does not exist but is required to get WAL segments
+P00  ERROR: [130]: raised on backup host: archive.info does not exist but is required to push/get WAL segments
                HINT: is archive_command configured in postgresql.conf?
                HINT: has a stanza-create been performed?
                 HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
