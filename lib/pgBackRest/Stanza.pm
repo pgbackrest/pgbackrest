@@ -304,11 +304,11 @@ sub dbInfoGet
     if (optionGet(OPTION_ONLINE))
     {
         # If the db-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
-        $self->{oDb}->configValidate(optionGet(OPTION_DB_PATH));
+        $self->{oDb}->configValidate();
     }
 
     ($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion}, $self->{oDb}{ullDbSysId})
-        = $self->{oDb}->info(optionGet(OPTION_DB_PATH));
+        = $self->{oDb}->info();
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

@@ -1137,7 +1137,7 @@ sub check
     (my $oDb) = dbObjectGet();
 
     # Validate the database configuration
-    $oDb->configValidate(optionGet(OPTION_DB_PATH));
+    $oDb->configValidate();
 
     # Force archiving
     my $strWalSegment = $oDb->xlogSwitch();
