@@ -1161,6 +1161,7 @@ my %oOptionRule =
             &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
+            &CMD_STANZA_CREATE => true,
             &CMD_START => true,
             &CMD_STOP => true,
         },
