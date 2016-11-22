@@ -139,6 +139,10 @@
                     <release-item>
                         <p>Fixed and issue that suppressed exceptions in PDF builds.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed regression in section links introduced in <id>v1.10</id>.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
