@@ -229,7 +229,7 @@ sub sectionProcess
     # Working variables
     $strAnchor =
         ($oSection->paramTest(XML_SECTION_PARAM_ANCHOR, XML_SECTION_PARAM_ANCHOR_VALUE_NOINHERIT) ? '' :
-            (defined($strAnchor) ? "${strAnchor}." : '')) .
+            (defined($strAnchor) ? "${strAnchor}/" : '')) .
         $oSection->paramGet('id');
 
     # Create the section toc element
