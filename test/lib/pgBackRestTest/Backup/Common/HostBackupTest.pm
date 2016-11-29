@@ -644,6 +644,17 @@ sub stanzaCreate
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
 
+    # If the info file was created, then add it to the expect log
+    if (fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+    {
+        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+    }
+
+    if (fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+    {
+        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+    }
+
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }

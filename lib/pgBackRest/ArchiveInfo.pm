@@ -198,20 +198,17 @@ sub create
     (
         $strOperation,
         $strDbVersion,
-        $ullDbSysId,
-        $strDbHistoryId,
+        $ullDbSysId
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->create', \@_,
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'},
-            {name => 'strDbHistoryId', required => false},
-            {name => 'bSave', default => true},
         );
 
     # Fill db section and db history section
-    $self->dbSectionSet($strDbVersion, $ullDbSysId, (defined($strDbHistoryId) ? $strDbHistoryId : $self->dbHistoryIdGet(false)));
+    $self->dbSectionSet($strDbVersion, $ullDbSysId, $self->dbHistoryIdGet(false));
 
     $self->save();
 
@@ -233,29 +230,26 @@ sub reconstruct
     (
         $strOperation,
         $oFile,
-        $strChkDbVersion,
-        $ullChkDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
         {name => 'oFile'},
-        {name => 'strChkDbVersion', trace => true},
-        {name => 'ullChkDbSysId', trace => true},
     );
 
+    # ??? This function is a placeholder for stanza-upgrade feature, so the commented out code will be implemented when it is added
     # Get the upper level directory names, e.g. 9.4-1
-    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION . '-[0-9]+$'))
+    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION))
     {
         # Get the db-version and db-id (history id) from the directory name
-        my ($strDbVersion, $strDbHistoryId) = split("-", $strVersionDir);
+        my ($strDbVersion, $iDbHistoryId) = split("-", $strVersionDir);
 
         # Get the name of the first archive directory
         my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL))[0];
 
         # ??? Should probably make a function in ArchiveCommon
         my $strArchiveFile =
-            (fileList($self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}",
+            (fileList($self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
             "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"))[0];
 
         # Get the full path for the file
@@ -265,7 +259,9 @@ sub reconstruct
         if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
         {
             gunzip $strArchiveFilePath => \$tBlock
-                or confess "gunzip failed: $GunzipError\n";
+                or confess &log(ERROR,
+                                "gunzip failed with error: " . $GunzipError .
+                                " on file ${strVersionDir}/${strArchiveDir}/${strArchiveFile}", ERROR_GUNZIP);
         }
 
         # Get the db-system-id from the WAL file depending on the version of postgres
@@ -274,14 +270,15 @@ sub reconstruct
 
         if (!defined($ullDbSysId))
         {
-            confess &log(ERROR, "unable to read database system identifier");
+            confess &log(ERROR, "unable to read database system identifier", ERROR_FILE_READ);
         }
 
-        # ??? Until stanza-upgrade, make sure the current DB info matches what should be stored in the file before saving
+        # ??? Until stanza-upgrade, make sure the DB version and system ID match
+        $self->check($strDbVersion, $ullDbSysId);
+
+        # ??? For stanza-upgrade, need to test that the history does not already exist        
         # Fill db section and db history section
-        $self->dbSectionSet($strDbVersion, $ullDbSysId, $strDbHistoryId);
-        $self->check($strChkDbVersion, $ullChkDbSysId, false);
-        $self->save();
+        $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
 
     # Return from function and log return values if any

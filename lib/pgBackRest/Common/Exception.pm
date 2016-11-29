@@ -148,6 +148,8 @@ use constant ERROR_ARCHIVE_DIR_INVALID                              => ERROR_MIN
     push @EXPORT, qw(ERROR_ARCHIVE_DIR_INVALID);
 use constant ERROR_BACKUP_DIR_INVALID                               => ERROR_MINIMUM + 64;
     push @EXPORT, qw(ERROR_BACKUP_DIR_INVALID);
+use constant ERROR_GUNZIP                                           => ERROR_MINIMUM + 65;
+    push @EXPORT, qw(ERROR_GUNZIP);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

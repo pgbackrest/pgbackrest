@@ -190,24 +190,11 @@ sub reconstruct
     my
     (
         $strOperation,
-        $strDbVersion,
-        $iControlVersion,
-        $iCatalogVersion,
-        $ullDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
-        {name => 'strDbVersion', required => false},
-        {name => 'iControlVersion', required => false},
-        {name => 'iCatalogVersion', required => false},
-        {name => 'ullDbSysId', required => false},
     );
-
-    if (!$self->{bExists})
-    {
-        $self->create($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-    }
 
     # Check for backups that are not in FILE_BACKUP_INFO
     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
@@ -577,17 +564,17 @@ sub create
     (
         $strOperation,
         $strDbVersion,
+        $ullDbSysId,
         $iControlVersion,
         $iCatalogVersion,
-        $ullDbSysId
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->create', \@_,
             {name => 'strDbVersion'},
+            {name => 'ullDbSysId'},
             {name => 'iControlVersion'},
             {name => 'iCatalogVersion'},
-            {name => 'ullDbSysId'},
         );
 
     # Fill db section and db history section

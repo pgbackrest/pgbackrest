@@ -189,27 +189,35 @@ sub infoFileCreate
     my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath, false, false)
                                                       : new pgBackRest::ArchiveInfo($strParentPath, false);
 
-    # If the cluster repo path is empty then don't validate the info files, just create them
+    # If the cluster repo path is empty then don't validate the info file, just create it
     if (!@stryFileList)
     {
         # Create and save the info file
-        ($strPathType eq PATH_BACKUP_CLUSTER)
-            ? $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                                 $self->{oDb}{ullDbSysId})
-            : $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+        $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+            $self->{oDb}{iCatalogVersion});
     }
-    elsif (!grep(/^$strInfoFile$/i, @stryFileList))
+    else
     {
-        # If the directory is not empty but does not contain the info file, then check if they have used the force option,
-        # if so, reconstruct the info file from the contents of the directories, else error
+        # If the directory is not empty then check if they have used the force option
         if (!optionGet(OPTION_FORCE))
         {
             $iResult = $iErrorCode;
-            $strResultMessage =
-                "the " . (($strPathType eq PATH_BACKUP_CLUSTER) ? "backup" : "archive") . " directory is not empty " .
-                "but the ${strInfoFile} file is missing\n" .
-                "HINT: Has the directory been copied from another location and the copy has not completed?\n" .
-                "HINT: Use --force to force the ${strInfoFile} to be created from the existing data in the directory.";
+
+            # Display the appropriate error message based on whether the info file exists of not
+            if (!grep(/^$strInfoFile$/i, @stryFileList))
+            {
+                $strResultMessage =
+                    "the " . (($strPathType eq PATH_BACKUP_CLUSTER) ? "backup" : "archive") . " directory is not empty " .
+                    "but the ${strInfoFile} file is missing\n" .
+                    "HINT: Has the directory been copied from another location and the copy has not completed?\n" .
+                    "HINT: Use --force to force the ${strInfoFile} to be created from the existing data in the directory.";
+            }
+            else
+            {
+                $strResultMessage =
+                    "the ${strInfoFile} file exists - stanza-create is not required\n" .
+                    "HINT: Use --force to force the ${strInfoFile} to be recreated from the existing data in the directory.";
+            }
         }
         else
         {
@@ -218,10 +226,17 @@ sub infoFileCreate
 
             eval
             {
-                ($strPathType eq PATH_BACKUP_CLUSTER)
-                    ? $oInfo->reconstruct($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                                          $self->{oDb}{ullDbSysId})
-                    : $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+                # If the file doesn't exist create it
+                if (!$oInfo->{bExists})
+                {
+                    $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+                        $self->{oDb}{iCatalogVersion});
+                }
+
+                $oInfo->reconstruct($oFile);
+
+                # Save the reconstructed file
+                $oInfo->save();
 
                 return true;
             }
@@ -254,7 +269,7 @@ sub infoFileCreate
             # Check that the info file is valid for the current database of the stanza
             ($strPathType eq PATH_BACKUP_CLUSTER)
                 ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                    $self->{oDb}{ullDbSysId})
+                                $self->{oDb}{ullDbSysId})
                 : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
 
             return true;
