@@ -189,6 +189,14 @@
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improved exception handling in file unit tests.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2016-11-17" version="1.11" title="Bug Fix for Asynchronous Archiving Efficiency">

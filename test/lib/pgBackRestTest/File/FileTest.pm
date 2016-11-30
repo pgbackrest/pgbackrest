@@ -196,7 +196,7 @@ sub fileTestRun
                         next;
                     }
 
-                    confess "error raised: " . $EVAL_ERROR . "\n";
+                    confess $EVAL_ERROR;
                 };
 
                 if ($bErrorExpected)
@@ -312,7 +312,7 @@ sub fileTestRun
                         next;
                     }
 
-                    confess 'error raised: ' . $EVAL_ERROR . "\n";
+                    confess $EVAL_ERROR;
                 };
 
                 if (!$bSourceExists || (!$bDestinationExists && !$bCreate) || $bSourceError || $bDestinationError)
@@ -392,7 +392,7 @@ sub fileTestRun
                         next;
                     }
 
-                    confess 'error raised: ' . $EVAL_ERROR . "\n";
+                    confess $EVAL_ERROR;
                 };
 
                 if (!$bExists || $bError)
@@ -582,7 +582,7 @@ sub fileTestRun
                         next;
                     }
 
-                    confess 'error raised: ' . $EVAL_ERROR . "\n";
+                    confess $EVAL_ERROR;
                 };
 
                 # Check for an expected error
@@ -731,7 +731,7 @@ sub fileTestRun
                                 next;
                             }
 
-                            confess 'error raised: ' . $EVAL_ERROR . "\n";
+                            confess $EVAL_ERROR;
                         };
 
                         if ($bErrorExpected)
@@ -841,7 +841,7 @@ sub fileTestRun
                             next;
                         }
 
-                        confess 'unexpected error raised: ' . $EVAL_ERROR;
+                        confess $EVAL_ERROR;
                     };
 
                     if ($bError || $bRemote)
@@ -944,7 +944,7 @@ sub fileTestRun
                         next;
                     }
 
-                    confess 'unexpected error raised: ' . $EVAL_ERROR;
+                    confess $EVAL_ERROR;
                 };
 
                 if ($bErrorExpected)
@@ -1217,7 +1217,7 @@ sub fileTestRun
                             next;
                         }
 
-                        confess $oException->message() . (defined($oException->trace()) ? "\n" . $oException->trace() : '');
+                        confess $oException;
                     }
 
                     confess $oException;
