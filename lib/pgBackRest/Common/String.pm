@@ -37,14 +37,21 @@ sub dataHashBuild
 
         for (my $iColumnIdx = 1; $iColumnIdx < scalar @stryHeader; $iColumnIdx++)
         {
-            if (defined(${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
+            if (defined(${$oHashRef}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
             {
                 confess 'the first column must be unique to build the hash';
             }
 
             if (defined($stryLine[$iColumnIdx]) && $stryLine[$iColumnIdx] ne '')
             {
-                ${$oHashRef}{"$stryHeader[0]"}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"} = $stryLine[$iColumnIdx];
+                if (scalar @stryHeader > 2)
+                {
+                    $oHashRef->{$stryLine[0]}{$stryHeader[$iColumnIdx]} = $stryLine[$iColumnIdx];
+                }
+                else
+                {
+                    $oHashRef->{$stryLine[0]} = $stryLine[$iColumnIdx];
+                }
             }
         }
     }

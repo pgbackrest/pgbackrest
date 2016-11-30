@@ -930,22 +930,21 @@ sub xfer
     );
 
     # Load the archive manifest - all the files that need to be pushed
-    my %oManifestHash;
-    $oFile->manifest(PATH_DB_ABSOLUTE, $strArchivePath, \%oManifestHash);
+    my $hManifest = $oFile->manifest(PATH_DB_ABSOLUTE, $strArchivePath);
 
     # Get all the files to be transferred and calculate the total size
     my @stryFile;
     my $lFileSize = 0;
     my $lFileTotal = 0;
 
-    foreach my $strFile (sort(keys(%{$oManifestHash{name}})))
+    foreach my $strFile (sort(keys(%{$hManifest})))
     {
         if ($strFile =~ "^[0-F]{24}(\\.partial){0,1}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
             $strFile =~ /^[0-F]{8}\.history$/ || $strFile =~ /^[0-F]{24}\.[0-F]{8}\.backup$/)
         {
             CORE::push(@stryFile, $strFile);
 
-            $lFileSize += $oManifestHash{name}{$strFile}{size};
+            $lFileSize += $hManifest->{$strFile}{size};
             $lFileTotal++;
         }
     }
@@ -1075,7 +1074,7 @@ sub xfer
                                            CMD_ARCHIVE_PUSH . ' is being run with different permissions in different contexts.');
 
                 # Remove the copied segment from the total size
-                $lFileSize -= $oManifestHash{name}{$strFile}{size};
+                $lFileSize -= $hManifest->{$strFile}{size};
             }
 
             return true;
@@ -1181,7 +1180,7 @@ sub check
     }
     or do
     {
-            # Confess unhandled errors
+        # Confess unhandled errors
         if (!isException($EVAL_ERROR))
         {
             confess $EVAL_ERROR;

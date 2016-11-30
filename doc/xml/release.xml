@@ -151,6 +151,10 @@
                     <release-item>
                         <p>For simplicity, the <file>pg_control</file> file is now copied with the rest of the files instead of by itself of at the end of the process.  The <cmd>backup</cmd> command does not require this behavior and the <cmd>restore</cmd> copies to a temporary file which is renamed at the end of the restore.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Simplified the result hash of <code>File->manifest()</code>, <code>Db->tablespaceMapGet()</code>, and <code>Db->databaseMapGet()</code>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

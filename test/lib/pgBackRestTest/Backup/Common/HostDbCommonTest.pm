@@ -540,7 +540,7 @@ sub restoreCompare
                 my $iTablespaceId =
                     ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID};
 
-                $$oTablespaceMap{oid}{$iTablespaceId}{name} =
+                $$oTablespaceMap{$iTablespaceId} =
                     ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_NAME};
             }
         }
@@ -580,7 +580,6 @@ sub restoreCompare
         MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
         $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
 
-    my $oTablespaceMapRef = undef;
     $oActualManifest->build(
         $self->{oFile}, ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
         $oLastManifest, false, $oTablespaceMap);

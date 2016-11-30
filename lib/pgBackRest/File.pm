@@ -1044,18 +1044,17 @@ sub manifest
         $strOperation,
         $strPathType,
         $strPath,
-        $oManifestHashRef
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifest', \@_,
             {name => 'strPathType'},
             {name => 'strPath', required => false},
-            {name => 'oManifestHashRef'}
         );
 
     # Set operation variables
     my $strPathOp = $self->pathGet($strPathType, $strPath);
+    my $hManifest = {};
 
     # Run remotely
     if ($self->isRemote($strPathType))
@@ -1066,18 +1065,19 @@ sub manifest
         $oParamHash{path} = $strPathOp;
 
         # Execute the command
-        dataHashBuild($oManifestHashRef, $self->{oProtocol}->cmdExecute(OP_FILE_MANIFEST, \%oParamHash, true), "\t");
+        dataHashBuild($hManifest, $self->{oProtocol}->cmdExecute(OP_FILE_MANIFEST, \%oParamHash, true), "\t");
     }
     # Run locally
     else
     {
-        $self->manifestRecurse($strPathType, $strPathOp, undef, 0, $oManifestHashRef);
+        $self->manifestRecurse($strPathType, $strPathOp, undef, 0, $hManifest);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
-        $strOperation
+        $strOperation,
+        {name => 'hManifest', value => $hManifest, trace => true}
     );
 }
 
@@ -1192,31 +1192,31 @@ sub manifestRecurse
         # Check for regular file
         if (S_ISREG($oStat->mode))
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = 'f';
+            ${$oManifestHashRef}{$strFile}{type} = 'f';
 
             # Get inode
-            ${$oManifestHashRef}{name}{"${strFile}"}{inode} = $oStat->ino;
+            ${$oManifestHashRef}{$strFile}{inode} = $oStat->ino;
 
             # Get size
-            ${$oManifestHashRef}{name}{"${strFile}"}{size} = $oStat->size;
+            ${$oManifestHashRef}{$strFile}{size} = $oStat->size;
 
             # Get modification time
-            ${$oManifestHashRef}{name}{"${strFile}"}{modification_time} = $oStat->mtime;
+            ${$oManifestHashRef}{$strFile}{modification_time} = $oStat->mtime;
         }
         # Check for directory
         elsif (S_ISDIR($oStat->mode))
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = 'd';
+            ${$oManifestHashRef}{$strFile}{type} = 'd';
         }
         # Check for link
         elsif (S_ISLNK($oStat->mode))
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{type} = 'l';
+            ${$oManifestHashRef}{$strFile}{type} = 'l';
 
             # Get link destination
-            ${$oManifestHashRef}{name}{"${strFile}"}{link_destination} = readlink($strPathFile);
+            ${$oManifestHashRef}{$strFile}{link_destination} = readlink($strPathFile);
 
-            if (!defined(${$oManifestHashRef}{name}{"${strFile}"}{link_destination}))
+            if (!defined(${$oManifestHashRef}{$strFile}{link_destination}))
             {
                 if (-e $strPathFile)
                 {
@@ -1247,19 +1247,19 @@ sub manifestRecurse
         }
 
         # Get user name
-        ${$oManifestHashRef}{name}{"${strFile}"}{user} = getpwuid($oStat->uid);
+        ${$oManifestHashRef}{$strFile}{user} = getpwuid($oStat->uid);
 
         # Get group name
-        ${$oManifestHashRef}{name}{"${strFile}"}{group} = getgrgid($oStat->gid);
+        ${$oManifestHashRef}{$strFile}{group} = getgrgid($oStat->gid);
 
         # Get mode
-        if (${$oManifestHashRef}{name}{"${strFile}"}{type} ne 'l')
+        if (${$oManifestHashRef}{$strFile}{type} ne 'l')
         {
-            ${$oManifestHashRef}{name}{"${strFile}"}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
+            ${$oManifestHashRef}{$strFile}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
         }
 
         # Recurse into directories
-        if (${$oManifestHashRef}{name}{"${strFile}"}{type} eq 'd' && !$bCurrentDir)
+        if (${$oManifestHashRef}{$strFile}{type} eq 'd' && !$bCurrentDir)
         {
             $self->manifestRecurse($strPathType, $strPathOp, $strFile, $iDepth + 1, $oManifestHashRef);
         }
@@ -1548,7 +1548,7 @@ sub copy
                             $stryToken[1] eq '?' && $stryToken[2] eq '?')
                         {
                             confess &log(ERROR, "invalid return from copy" . (defined($strOutput) ? ": ${strOutput}" : ''));
-                        }
+                    }
 
                         # Read the checksum and size
                         if ($stryToken[1] ne '?')
@@ -1586,7 +1586,7 @@ sub copy
                     return false, undef, undef;
                 }
 
-                confess $oException;
+                    confess $oException;
             };
         }
     }
@@ -1618,72 +1618,72 @@ sub copy
         }
     }
 
-    # Close the source file (if local)
-    if (defined($hSourceFile))
-    {
-        close($hSourceFile) or confess &log(ERROR, "cannot close file ${strSourceOp}");
-    }
+        # Close the source file (if local)
+        if (defined($hSourceFile))
+        {
+            close($hSourceFile) or confess &log(ERROR, "cannot close file ${strSourceOp}");
+        }
 
-    # Sync and close the destination file (if local)
-    if (defined($hDestinationFile))
-    {
-        $hDestinationFile->sync()
-            or confess &log(ERROR, "unable to sync ${strDestinationTmpOp}", ERROR_FILE_SYNC);
+        # Sync and close the destination file (if local)
+        if (defined($hDestinationFile))
+        {
+            $hDestinationFile->sync()
+                or confess &log(ERROR, "unable to sync ${strDestinationTmpOp}", ERROR_FILE_SYNC);
 
-        close($hDestinationFile)
-            or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
-    }
+            close($hDestinationFile)
+                or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
+        }
 
-    # Checksum and file size should be set if the destination is not remote
+        # Checksum and file size should be set if the destination is not remote
     if ($bResult &&
         !(!$bSourceRemote && $bDestinationRemote && $bSourceCompressed) &&
-        (!defined($strChecksum) || !defined($iFileSize)))
-    {
-        confess &log(ASSERT, 'checksum or file size not set');
-    }
+            (!defined($strChecksum) || !defined($iFileSize)))
+        {
+            confess &log(ASSERT, 'checksum or file size not set');
+        }
 
-    # Where the destination is local, set mode, modification time, and perform move to final location
+        # Where the destination is local, set mode, modification time, and perform move to final location
     if ($bResult && !$bDestinationRemote)
-    {
-        # Set the file Mode if required
-        if (defined($strMode))
         {
-            chmod(oct($strMode), $strDestinationTmpOp)
-                or confess &log(ERROR, "unable to set mode for local ${strDestinationTmpOp}");
-        }
-
-        # Set the file modification time if required
-        if (defined($lModificationTime))
-        {
-            utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
-                or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
-        }
-
-        # set user and/or group if required
-        if (defined($strUser) || defined($strGroup))
-        {
-            $self->owner(PATH_ABSOLUTE, $strDestinationTmpOp, $strUser, $strGroup);
-        }
-
-        # Replace checksum in destination filename (if exists)
-        if ($bAppendChecksum)
-        {
-            # Replace destination filename
-            if ($bDestinationCompress)
+            # Set the file Mode if required
+            if (defined($strMode))
             {
-                $strDestinationOp =
-                    substr($strDestinationOp, 0, length($strDestinationOp) - length($self->{strCompressExtension}) - 1) .
-                    '-' . $strChecksum . '.' . $self->{strCompressExtension};
+                chmod(oct($strMode), $strDestinationTmpOp)
+                    or confess &log(ERROR, "unable to set mode for local ${strDestinationTmpOp}");
             }
-            else
-            {
-                $strDestinationOp .= '-' . $strChecksum;
-            }
-        }
 
-        # Move the file from tmp to final destination
-        fileMove($strDestinationTmpOp, $strDestinationOp, $bDestinationPathCreate);
-    }
+            # Set the file modification time if required
+            if (defined($lModificationTime))
+            {
+                utime($lModificationTime, $lModificationTime, $strDestinationTmpOp)
+                    or confess &log(ERROR, "unable to set time for local ${strDestinationTmpOp}");
+            }
+
+            # set user and/or group if required
+            if (defined($strUser) || defined($strGroup))
+            {
+                $self->owner(PATH_ABSOLUTE, $strDestinationTmpOp, $strUser, $strGroup);
+            }
+
+            # Replace checksum in destination filename (if exists)
+            if ($bAppendChecksum)
+            {
+                # Replace destination filename
+                if ($bDestinationCompress)
+                {
+                    $strDestinationOp =
+                        substr($strDestinationOp, 0, length($strDestinationOp) - length($self->{strCompressExtension}) - 1) .
+                        '-' . $strChecksum . '.' . $self->{strCompressExtension};
+                }
+                else
+                {
+                    $strDestinationOp .= '-' . $strChecksum;
+                }
+            }
+
+            # Move the file from tmp to final destination
+            fileMove($strDestinationTmpOp, $strDestinationOp, $bDestinationPathCreate);
+        }
 
     # Return from function and log return values if any
     return logDebugReturn

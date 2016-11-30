@@ -549,8 +549,8 @@ sub build
         $strPath,
         $oLastManifest,
         $bOnline,
-        $oTablespaceMapRef,
-        $oDatabaseMapRef,
+        $hTablespaceMap,
+        $hDatabaseMap,
         $strLevel,
         $bTablespace,
         $strParentPath,
@@ -564,8 +564,8 @@ sub build
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
-            {name => 'oTablespaceMapRef', required => false},
-            {name => 'oDatabaseMapRef', required => false},
+            {name => 'hTablespaceMap', required => false},
+            {name => 'hDatabaseMap', required => false},
             {name => 'strLevel', required => false},
             {name => 'bTablespace', required => false},
             {name => 'strParentPath', required => false},
@@ -577,23 +577,21 @@ sub build
         $strLevel = MANIFEST_TARGET_PGDATA;
 
         # If not online then build the tablespace map from pg_tblspc path
-        if (!$bOnline && !defined($oTablespaceMapRef))
+        if (!$bOnline && !defined($hTablespaceMap))
         {
-            $oTablespaceMapRef = {};
+            my $hTablespaceManifest = $oFile->manifest(PATH_DB_ABSOLUTE, $strPath . '/' . DB_PATH_PGTBLSPC);
+            $hTablespaceMap = {};
 
-            my %oTablespaceManifestHash;
-            $oFile->manifest(PATH_DB_ABSOLUTE, $strPath . '/' . DB_PATH_PGTBLSPC, \%oTablespaceManifestHash);
-
-            foreach my $strName (sort(CORE::keys(%{$oTablespaceManifestHash{name}})))
+            foreach my $strOid (sort(CORE::keys(%{$hTablespaceManifest})))
             {
-                if ($strName eq '.' or $strName eq '..')
+                if ($strOid eq '.' or $strOid eq '..')
                 {
                     next;
                 }
 
-                logDebugMisc($strOperation, "found tablespace ${strName}");
+                logDebugMisc($strOperation, "found tablespace ${strOid} in offline mode");
 
-                ${$oTablespaceMapRef}{oid}{$strName}{name} = "ts${strName}";
+                $hTablespaceMap->{$strOid} = "ts${strOid}";
             }
         }
     }
@@ -606,7 +604,7 @@ sub build
     {
         my $iTablespaceId = (split('\/', $strLevel))[1];
 
-        if (!defined(${$oTablespaceMapRef}{oid}{$iTablespaceId}{name}))
+        if (!defined($hTablespaceMap->{$iTablespaceId}))
         {
             confess &log(ASSERT, "tablespace with oid ${iTablespaceId} not found in tablespace map\n" .
                                  "HINT: was a tablespace created or dropped during the backup?");
@@ -614,7 +612,7 @@ sub build
 
         $self->set(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_TABLESPACE_ID, $iTablespaceId);
         $self->set(MANIFEST_SECTION_BACKUP_TARGET, $strLevel, MANIFEST_SUBKEY_TABLESPACE_NAME,
-                   ${$oTablespaceMapRef}{oid}{$iTablespaceId}{name});
+                   $hTablespaceMap->{$iTablespaceId});
     }
 
     if (index($strPath, '/') != 0)
@@ -628,18 +626,17 @@ sub build
     }
 
     # Get the manifest for this level
-    my %oManifestHash;
-    $oFile->manifest(PATH_DB_ABSOLUTE, $strPath, \%oManifestHash);
+    my $hManifest = $oFile->manifest(PATH_DB_ABSOLUTE, $strPath);
     my $strManifestType = MANIFEST_VALUE_LINK;
 
     # Loop though all paths/files/links in the manifest
-    foreach my $strName (sort(CORE::keys(%{$oManifestHash{name}})))
+    foreach my $strName (sort(CORE::keys(%{$hManifest})))
     {
         my $strFile = $strLevel;
 
         if ($strName ne '.')
         {
-            if ($strManifestType eq MANIFEST_VALUE_LINK && $oManifestHash{name}{$strName}{type} eq 'l')
+            if ($strManifestType eq MANIFEST_VALUE_LINK && $hManifest->{$strName}{type} eq 'l')
             {
                 confess &log(ERROR, 'link \'' .
                     $self->dbPathGet(
@@ -699,7 +696,7 @@ sub build
             next;
         }
 
-        my $cType = $oManifestHash{name}{$strName}{type};
+        my $cType = $hManifest->{$strName}{type};
         my $strSection = MANIFEST_SECTION_TARGET_PATH;
 
         if ($cType eq 'f')
@@ -724,36 +721,36 @@ sub build
             $strFile = MANIFEST_TARGET_PGDATA . '/' . $strName;
 
             # Check for files in DB_PATH_PGTBLSPC that are not links
-            if ($oManifestHash{name}{$strName}{type} ne 'l')
+            if ($hManifest->{$strName}{type} ne 'l')
             {
                 confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
                              ERROR_LINK_EXPECTED);
             }
 
             # Check for tablespaces in PGDATA
-            if (index($oManifestHash{name}{$strName}{link_destination}, "${strPath}/") == 0 ||
-                (index($oManifestHash{name}{$strName}{link_destination}, '/') != 0 &&
+            if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
+                (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
                  index(pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
-                       $oManifestHash{name}{$strName}{link_destination}) . '/', "${strPath}/") == 0))
+                       $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
             {
-                confess &log(ERROR, 'tablespace symlink ' . $oManifestHash{name}{$strName}{link_destination} .
+                confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
                              ' destination must not be in $PGDATA', ERROR_TABLESPACE_IN_PGDATA);
             }
         }
 
         # User and group required for all types
-        if (defined($oManifestHash{name}{$strName}{user}))
+        if (defined($hManifest->{$strName}{user}))
         {
-            $self->set($strSection, $strFile, MANIFEST_SUBKEY_USER, $oManifestHash{name}{$strName}{user});
+            $self->set($strSection, $strFile, MANIFEST_SUBKEY_USER, $hManifest->{$strName}{user});
         }
         else
         {
             $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_USER, false);
         }
 
-        if (defined($oManifestHash{name}{$strName}{group}))
+        if (defined($hManifest->{$strName}{group}))
         {
-            $self->set($strSection, $strFile, MANIFEST_SUBKEY_GROUP, $oManifestHash{name}{$strName}{group});
+            $self->set($strSection, $strFile, MANIFEST_SUBKEY_GROUP, $hManifest->{$strName}{group});
         }
         else
         {
@@ -763,15 +760,15 @@ sub build
         # Mode for required file and path type only
         if ($cType eq 'f' || $cType eq 'd')
         {
-            $self->set($strSection, $strFile, MANIFEST_SUBKEY_MODE, $oManifestHash{name}{$strName}{mode});
+            $self->set($strSection, $strFile, MANIFEST_SUBKEY_MODE, $hManifest->{$strName}{mode});
         }
 
         # Modification time and size required for file type only
         if ($cType eq 'f')
         {
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_TIMESTAMP,
-                       $oManifestHash{name}{$strName}{modification_time} + 0);
-            $self->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $oManifestHash{name}{$strName}{size} + 0);
+                       $hManifest->{$strName}{modification_time} + 0);
+            $self->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $hManifest->{$strName}{size} + 0);
             $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_MASTER,
                 ($strFile eq MANIFEST_FILE_PGCONTROL || $strFile !~ COPY_STANDBY_EXPRESSION) ? true : false);
         }
@@ -779,7 +776,7 @@ sub build
         # Link destination required for link type only
         if ($cType eq 'l')
         {
-            my $strLinkDestination = $oManifestHash{name}{$strName}{link_destination};
+            my $strLinkDestination = $hManifest->{$strName}{link_destination};
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_DESTINATION, $strLinkDestination);
 
             # If this is a tablespace then set the filter to use for the next level
@@ -798,7 +795,7 @@ sub build
 
             $strPath = dirname("${strPath}/${strName}");
 
-            $self->build($oFile, $strDbVersion, $strLinkDestination, undef, $bOnline, $oTablespaceMapRef, $oDatabaseMapRef,
+            $self->build($oFile, $strDbVersion, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap,
                          $strFile, $bTablespace, $strPath, $strFilter, $strLinkDestination);
         }
     }
@@ -825,12 +822,12 @@ sub build
         }
 
         # Store database map information when provided during an online backup.
-        foreach my $strDbName (sort(keys(%{${$oDatabaseMapRef}{name}})))
+        foreach my $strDbName (sort(keys(%{$hDatabaseMap})))
         {
             $self->numericSet(MANIFEST_SECTION_DB, $strDbName, MANIFEST_KEY_DB_ID,
-                              ${$oDatabaseMapRef}{'name'}{$strDbName}{&MANIFEST_KEY_DB_ID});
+                              $hDatabaseMap->{$strDbName}{&MANIFEST_KEY_DB_ID});
             $self->numericSet(MANIFEST_SECTION_DB, $strDbName, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
-                              ${$oDatabaseMapRef}{'name'}{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
+                              $hDatabaseMap->{$strDbName}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
         }
 
         # Loop though all files

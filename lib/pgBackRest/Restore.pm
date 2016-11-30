@@ -563,10 +563,9 @@ sub clean
             }
 
             # Build a manifest of the path to check for existing files
-            my %oTargetManifest;
-            $self->{oFile}->manifest(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget}, \%oTargetManifest);
+            my $hTargetManifest = $self->{oFile}->manifest(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget});
 
-            for my $strName (keys(%{$oTargetManifest{name}}))
+            for my $strName (keys(%{$hTargetManifest}))
             {
                 # Skip the root path and backup.manifest in the base path
                 if ($strName eq '.' ||
@@ -605,8 +604,7 @@ sub clean
             }
 
             # Load path manifest so it can be compared to deleted files/paths/links that are not in the backup
-            my %oTargetManifest;
-            $self->{oFile}->manifest(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget}, \%oTargetManifest);
+            my $hTargetManifest = $self->{oFile}->manifest(PATH_DB_ABSOLUTE, ${$self->{oTargetPath}}{$strTarget});
 
             # If the target is a file it doesn't matter whether it already exists or not.
             if ($oManifest->isTargetFile($strTarget))
@@ -614,7 +612,7 @@ sub clean
                 next;
             }
 
-            foreach my $strName (sort {$b cmp $a} (keys(%{$oTargetManifest{name}})))
+            foreach my $strName (sort {$b cmp $a} (keys(%{$hTargetManifest})))
             {
                 # Skip the root path
                 if ($strName eq '.' || ($strName eq FILE_MANIFEST && $strTarget eq MANIFEST_TARGET_PGDATA))
@@ -628,11 +626,11 @@ sub clean
                 # Determine the file/path/link type
                 my $strSection = MANIFEST_SECTION_TARGET_FILE;
 
-                if ($oTargetManifest{name}{$strName}{type} eq 'd')
+                if ($hTargetManifest->{$strName}{type} eq 'd')
                 {
                     $strSection = MANIFEST_SECTION_TARGET_PATH;
                 }
-                elsif ($oTargetManifest{name}{$strName}{type} eq 'l')
+                elsif ($hTargetManifest->{$strName}{type} eq 'l')
                 {
                     $strSection = MANIFEST_SECTION_TARGET_LINK;
                 }
@@ -645,10 +643,10 @@ sub clean
                     my $strGroup = $oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_GROUP);
 
                     # If ownership does not match, fix it
-                    if (!defined($oTargetManifest{name}{$strName}{user}) ||
-                        $strUser ne $oTargetManifest{name}{$strName}{user} ||
-                        !defined($oTargetManifest{name}{$strName}{group}) ||
-                        $strGroup ne $oTargetManifest{name}{$strName}{group})
+                    if (!defined($hTargetManifest->{$strName}{user}) ||
+                        $strUser ne $hTargetManifest->{$strName}{user} ||
+                        !defined($hTargetManifest->{$strName}{group}) ||
+                        $strGroup ne $hTargetManifest->{$strName}{group})
                     {
                         &log(DETAIL, "set ownership ${strUser}:${strGroup} on ${strOsFile}");
 
@@ -659,7 +657,7 @@ sub clean
                     if ($strSection eq MANIFEST_SECTION_TARGET_LINK)
                     {
                         if ($oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_DESTINATION) ne
-                            $oTargetManifest{name}{$strName}{link_destination})
+                            $hTargetManifest->{$strName}{link_destination})
                         {
                             &log(DETAIL, "remove link ${strOsFile} - destination changed");
                             fileRemove($strOsFile);
@@ -670,7 +668,7 @@ sub clean
                     {
                         my $strMode = $oManifest->get($strSection, $strManifestFile, MANIFEST_SUBKEY_MODE);
 
-                        if ($strMode ne $oTargetManifest{name}{$strName}{mode})
+                        if ($strMode ne $hTargetManifest->{$strName}{mode})
                         {
                             &log(DETAIL, "set mode ${strMode} on ${strOsFile}");
 
@@ -1238,13 +1236,13 @@ sub process
             $strQueueKey, $strRepoFile, $strRepoFile, $strDbFile,
             $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false), $lSize,
-            $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP),
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MODE),
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
+                $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP),
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MODE),
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
             $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $lSize > 0),
             defined($strDbFilter) && $strRepoFile =~ $strDbFilter && $strRepoFile !~ /\/PG\_VERSION$/ ? true : false,
-            $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START), optionGet(OPTION_DELTA),
+                $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START),  optionGet(OPTION_DELTA),
             optionGet(OPTION_FORCE), $self->{strBackupSet},
             $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS));
     }

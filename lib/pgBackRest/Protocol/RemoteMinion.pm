@@ -191,26 +191,23 @@ sub commandProcess
     # Generate a manifest
     elsif ($strCommand eq OP_FILE_MANIFEST)
     {
-        my %oManifestHash;
-
-        $self->{oFile}->manifest(PATH_ABSOLUTE, $self->paramGet('path'), \%oManifestHash);
-
+        my $hManifest = $self->{oFile}->manifest(PATH_ABSOLUTE, $self->paramGet('path'));
         my $strOutput = "name\ttype\tuser\tgroup\tmode\tmodification_time\tinode\tsize\tlink_destination";
 
-        foreach my $strName (sort(keys(%{$oManifestHash{name}})))
+        foreach my $strName (sort(keys(%{$hManifest})))
         {
             $strOutput .=
                 "\n${strName}\t" .
-                $oManifestHash{name}{"${strName}"}{type} . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{user}) ? $oManifestHash{name}{"${strName}"}{user} : "") . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{group}) ? $oManifestHash{name}{"${strName}"}{group} : "") . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{mode}) ? $oManifestHash{name}{"${strName}"}{mode} : "") . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
-                    $oManifestHash{name}{"${strName}"}{modification_time} : "") . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{inode}) ? $oManifestHash{name}{"${strName}"}{inode} : "") . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{size}) ? $oManifestHash{name}{"${strName}"}{size} : "") . "\t" .
-                (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                    $oManifestHash{name}{"${strName}"}{link_destination} : "");
+                $hManifest->{$strName}{type} . "\t" .
+                (defined($hManifest->{$strName}{user}) ? $hManifest->{$strName}{user} : "") . "\t" .
+                (defined($hManifest->{$strName}{group}) ? $hManifest->{$strName}{group} : "") . "\t" .
+                (defined($hManifest->{$strName}{mode}) ? $hManifest->{$strName}{mode} : "") . "\t" .
+                (defined($hManifest->{$strName}{modification_time}) ?
+                    $hManifest->{$strName}{modification_time} : "") . "\t" .
+                (defined($hManifest->{$strName}{inode}) ? $hManifest->{$strName}{inode} : "") . "\t" .
+                (defined($hManifest->{$strName}{size}) ? $hManifest->{$strName}{size} : "") . "\t" .
+                (defined($hManifest->{$strName}{link_destination}) ?
+                    $hManifest->{$strName}{link_destination} : "");
         }
 
         $self->outputWrite($strOutput);

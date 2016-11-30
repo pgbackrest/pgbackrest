@@ -566,12 +566,12 @@ sub fileTestRun
                 }
 
                 # Execute in eval in case of error
-                my %oManifestHash;
+                my $hManifest;
                 my $bErrorExpected = !$bExists || $bError;
 
                 eval
                 {
-                    $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath, \%oManifestHash);
+                    $hManifest = $oFile->manifest(PATH_BACKUP_ABSOLUTE, $strPath);
                     return true;
                 }
                 # Check for an error
@@ -594,7 +594,7 @@ sub fileTestRun
                 my $strManifest;
 
                 # Validate the manifest
-                foreach my $strName (sort(keys(%{$oManifestHash{name}})))
+                foreach my $strName (sort(keys(%{$hManifest})))
                 {
                     if (!defined($strManifest))
                     {
@@ -605,28 +605,28 @@ sub fileTestRun
                         $strManifest .= "\n";
                     }
 
-                    if (defined($oManifestHash{name}{"${strName}"}{inode}))
+                    if (defined($hManifest->{$strName}{inode}))
                     {
-                        $oManifestHash{name}{"${strName}"}{inode} = 0;
+                        $hManifest->{$strName}{inode} = 0;
                     }
 
                     $strManifest .=
                         "${strName}," .
-                        $oManifestHash{name}{"${strName}"}{type} . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{user}) ?
-                            $oManifestHash{name}{"${strName}"}{user} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{group}) ?
-                            $oManifestHash{name}{"${strName}"}{group} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{mode}) ?
-                            $oManifestHash{name}{"${strName}"}{mode} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{modification_time}) ?
-                            $oManifestHash{name}{"${strName}"}{modification_time} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{inode}) ?
-                            $oManifestHash{name}{"${strName}"}{inode} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{size}) ?
-                            $oManifestHash{name}{"${strName}"}{size} : '') . ',' .
-                        (defined($oManifestHash{name}{"${strName}"}{link_destination}) ?
-                            $oManifestHash{name}{"${strName}"}{link_destination} : '');
+                        $hManifest->{$strName}{type} . ',' .
+                        (defined($hManifest->{$strName}{user}) ?
+                            $hManifest->{$strName}{user} : '') . ',' .
+                        (defined($hManifest->{$strName}{group}) ?
+                            $hManifest->{$strName}{group} : '') . ',' .
+                        (defined($hManifest->{$strName}{mode}) ?
+                            $hManifest->{$strName}{mode} : '') . ',' .
+                        (defined($hManifest->{$strName}{modification_time}) ?
+                            $hManifest->{$strName}{modification_time} : '') . ',' .
+                        (defined($hManifest->{$strName}{inode}) ?
+                            $hManifest->{$strName}{inode} : '') . ',' .
+                        (defined($hManifest->{$strName}{size}) ?
+                            $hManifest->{$strName}{size} : '') . ',' .
+                        (defined($hManifest->{$strName}{link_destination}) ?
+                            $hManifest->{$strName}{link_destination} : '');
                 }
 
                 if ($strManifest ne $strManifestCompare)

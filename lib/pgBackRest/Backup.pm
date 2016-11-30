@@ -85,15 +85,14 @@ sub fileNotInManifest
         );
 
     # Build manifest for aborted temp path
-    my %oFileHash;
-    $oFileLocal->manifest($strPathType, undef, \%oFileHash);
+    my $hFile = $oFileLocal->manifest($strPathType);
 
     # Get compress flag
     my $bCompressed = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
 
     my @stryFile;
 
-    foreach my $strName (sort(keys(%{$oFileHash{name}})))
+    foreach my $strName (sort(keys(%{$hFile})))
     {
         # Ignore certain files that will never be in the manifest
         if ($strName eq FILE_MANIFEST ||
@@ -103,7 +102,7 @@ sub fileNotInManifest
         }
 
         # Get the file type (all links will be deleted since they are easy to recreate)
-        my $cType = $oFileHash{name}{$strName}{type};
+        my $cType = $hFile->{$strName}{type};
 
         # If a directory check if it exists in the new manifest
         if ($cType eq 'd')
@@ -135,9 +134,9 @@ sub fileNotInManifest
                 # not worth extracting the size - it will be hashed later to verify its authenticity.
                 if (defined($strChecksum) &&
                     ($bCompressed || ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
-                        $oFileHash{name}{$strName}{size})) &&
+                        $hFile->{$strName}{size})) &&
                     $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                        $oFileHash{name}{$strName}{modification_time})
+                        $hFile->{$strName}{modification_time})
                 {
                     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
                     next;
@@ -552,8 +551,8 @@ sub process
     # Start backup (unless --no-online is set)
     my $strArchiveStart = undef;
     my $strLsnStart = undef;
-    my $oTablespaceMap = undef;
-	my $oDatabaseMap = undef;
+    my $hTablespaceMap = undef;
+	my $hDatabaseMap = undef;
 
     # Don't start the backup but do check if PostgreSQL is running
     if (!optionGet(OPTION_ONLINE))
@@ -587,10 +586,10 @@ sub process
         &log(INFO, "backup start archive = ${strArchiveStart}, lsn = ${strLsnStart}");
 
         # Get tablespace map
-        $oTablespaceMap = $oDbMaster->tablespaceMapGet();
+        $hTablespaceMap = $oDbMaster->tablespaceMapGet();
 
         # Get database map
-        $oDatabaseMap = $oDbMaster->databaseMapGet();
+        $hDatabaseMap = $oDbMaster->databaseMapGet();
 
         # Wait for replay on the standby to catch up
         if (optionGet(OPTION_BACKUP_STANDBY))
@@ -617,7 +616,7 @@ sub process
 
     # Build the manifest
     $oBackupManifest->build($oFileMaster, $strDbVersion, $strDbMasterPath, $oLastManifest, optionGet(OPTION_ONLINE),
-                            $oTablespaceMap, $oDatabaseMap);
+                            $hTablespaceMap, $hDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
     # Check if an aborted backup exists for this stanza

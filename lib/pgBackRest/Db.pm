@@ -430,14 +430,14 @@ sub tablespaceMapGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->tablespaceMapGet');
 
-    dataHashBuild(my $oTablespaceMapRef = {}, "oid\tname\n" . $self->executeSql(
+    dataHashBuild(my $hTablespaceMap = {}, "oid\tname\n" . $self->executeSql(
                   'select oid, spcname from pg_tablespace'), "\t");
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oTablespaceMapRef', value => $oTablespaceMapRef}
+        {name => 'hTablespaceMap', value => $hTablespaceMap}
     );
 }
 
@@ -453,14 +453,14 @@ sub databaseMapGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->databaseMapGet');
 
-    dataHashBuild(my $oDatabaseMapRef = {}, "name\t" . MANIFEST_KEY_DB_ID . "\t" . MANIFEST_KEY_DB_LAST_SYSTEM_ID  . "\n" .
+    dataHashBuild(my $hDatabaseMap = {}, "name\t" . MANIFEST_KEY_DB_ID . "\t" . MANIFEST_KEY_DB_LAST_SYSTEM_ID  . "\n" .
                   $self->executeSql('select datname, oid, datlastsysoid from pg_database'), "\t");
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oDatabaseMapRef', value => $oDatabaseMapRef}
+        {name => 'hDatabaseMap', value => $hDatabaseMap}
     );
 }
 

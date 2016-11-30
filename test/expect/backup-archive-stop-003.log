@@ -18,7 +18,7 @@ P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/ar
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
@@ -38,7 +38,7 @@ P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/ar
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
@@ -69,7 +69,7 @@ P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/ar
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
@@ -109,7 +109,7 @@ P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/ar
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
@@ -189,7 +189,7 @@ P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/ar
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
@@ -215,7 +215,7 @@ P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/ar
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
-P00  DEBUG:     File->manifest(): oManifestHashRef = [hash], strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
