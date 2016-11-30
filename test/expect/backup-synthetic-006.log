@@ -85,15 +85,16 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <f
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 21, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strKey = pg_data/postgresql.conf, strQueue = pg_data, strRepoFile = pg_data/postgresql.conf
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 5, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strKey = pg_data/pg_stat/global.stat, strQueue = pg_data, strRepoFile = pg_data/pg_stat/global.stat
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strKey = pg_data/base/32768/33000, strQueue = pg_data, strRepoFile = pg_data/base/32768/33000
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strKey = pg_data/base/16384/17000, strQueue = pg_data, strRepoFile = pg_data/base/16384/17000
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000, strKey = pg_data/base/1/12000, strQueue = pg_data, strRepoFile = pg_data/base/1/12000
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strKey = pg_data/base/32768/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/32768/PG_VERSION
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strKey = pg_data/base/16384/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/16384/PG_VERSION
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strKey = pg_data/base/1/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/1/PG_VERSION
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = false, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strKey = pg_data/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = false, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control, strKey = pg_data/global/pg_control, strQueue = pg_data, strRepoFile = pg_data/global/pg_control
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 21, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strKey = pg_data/postgresql.conf, strQueue = pg_data, strRepoFile = pg_data/postgresql.conf
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 5, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strKey = pg_data/pg_stat/global.stat, strQueue = pg_data, strRepoFile = pg_data/pg_stat/global.stat
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strKey = pg_data/base/32768/33000, strQueue = pg_data, strRepoFile = pg_data/base/32768/33000
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strKey = pg_data/base/16384/17000, strQueue = pg_data, strRepoFile = pg_data/base/16384/17000
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000, strKey = pg_data/base/1/12000, strQueue = pg_data, strRepoFile = pg_data/base/1/12000
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strKey = pg_data/base/32768/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/32768/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strKey = pg_data/base/16384/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/16384/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strKey = pg_data/base/1/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/1/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strKey = pg_data/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
@@ -101,49 +102,50 @@ P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLe
 P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
+P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/global/pg_control, strQueueIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/global/pg_control
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/global/pg_control (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 8192, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 21, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/pg_stat/global.stat
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/32768/33000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 5, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/16384/17000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/12000, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/1/12000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/1/12000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 4, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/PG_VERSION, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/1/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/PG_VERSION, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: no jobs found, stop local: iHostIdx = 0, iProcessId = 1
 P01   INFO: local process 1 stop for db-1
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 3, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = false, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathType = db:absolute, strUser = [undef]
-P00   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
-P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 8192, lManifestSaveSize = 3
 P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
 P00   INFO: full backup size = 8KB
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -396,15 +398,16 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <f
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 21, strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strKey = pg_data/postgresql.conf, strQueue = pg_data, strRepoFile = pg_data/postgresql.conf
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 5, strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strKey = pg_data/pg_stat/global.stat, strQueue = pg_data, strRepoFile = pg_data/pg_stat/global.stat
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, strChecksum = 7f4c74dc10f61eef43e6ae642606627df1999b34, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strKey = pg_data/base/32768/33000, strQueue = pg_data, strRepoFile = pg_data/base/32768/33000
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strKey = pg_data/base/16384/17000, strQueue = pg_data, strRepoFile = pg_data/base/16384/17000
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000, strKey = pg_data/base/1/12000, strQueue = pg_data, strRepoFile = pg_data/base/1/12000
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strKey = pg_data/base/32768/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/32768/PG_VERSION
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strKey = pg_data/base/16384/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/16384/PG_VERSION
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strKey = pg_data/base/1/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/1/PG_VERSION
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = false, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strKey = pg_data/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = false, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, strChecksum = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003, strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control, strKey = pg_data/global/pg_control, strQueue = pg_data, strRepoFile = pg_data/global/pg_control
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 21, strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strKey = pg_data/postgresql.conf, strQueue = pg_data, strRepoFile = pg_data/postgresql.conf
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 5, strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strKey = pg_data/pg_stat/global.stat, strQueue = pg_data, strRepoFile = pg_data/pg_stat/global.stat
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, strChecksum = 7f4c74dc10f61eef43e6ae642606627df1999b34, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strKey = pg_data/base/32768/33000, strQueue = pg_data, strRepoFile = pg_data/base/32768/33000
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strKey = pg_data/base/16384/17000, strQueue = pg_data, strRepoFile = pg_data/base/16384/17000
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000, strKey = pg_data/base/1/12000, strQueue = pg_data, strRepoFile = pg_data/base/1/12000
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strKey = pg_data/base/32768/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/32768/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strKey = pg_data/base/16384/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/16384/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strKey = pg_data/base/1/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/base/1/PG_VERSION
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strKey = pg_data/PG_VERSION, strQueue = pg_data, strRepoFile = pg_data/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1
 P01   INFO: local process 1 start for host db-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-user=[USER-1] --host-id=1 --lock-path=[TEST_PATH]/backup/repo/lock --log-path=[TEST_PATH]/backup/repo/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db local
@@ -412,40 +415,40 @@ P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLe
 P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
+P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/global/pg_control, strQueueIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/global/pg_control
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/pg_stat/global.stat
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/32768/33000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000 (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/16384/17000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/12000, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/1/12000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/12000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/PG_VERSION, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/1/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/PG_VERSION, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: no jobs found, stop local: iHostIdx = 0, iProcessId = 1
 P01   INFO: local process 1 stop for db-1
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
-P00  DEBUG:     File->hashSize(): bCompressed = false, strFile = pg_data/global/pg_control, strHashType = <sha1>, strPathType = backup:tmp
-P00  DEBUG:     File->hashSize=>: iSize = 8192, strHash = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
-P00 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 8243
 P00   INFO: full backup size = 8KB
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -733,15 +736,16 @@ P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     build level 3 paths/links
 P00  DEBUG:     Protocol::LocalProcess->new(): iSelectTimeout = <915>, strHostType = backup
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-1], lSize = 21, strBackupPath = [BACKUP-FULL-2], strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strGroup = [GROUP-1], strKey = pg_data/postgresql.conf, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/postgresql.conf, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-1], lSize = 5, strBackupPath = [BACKUP-FULL-2], strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strGroup = [GROUP-1], strKey = pg_data/pg_stat/global.stat, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/pg_stat/global.stat, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 5, strBackupPath = [BACKUP-FULL-2], strChecksum = 7f4c74dc10f61eef43e6ae642606627df1999b34, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strGroup = [GROUP-1], strKey = pg_data/base/32768/33000, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/32768/33000, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strBackupPath = [BACKUP-FULL-2], strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strGroup = [GROUP-1], strKey = pg_data/base/16384/17000, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/16384/17000, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strBackupPath = [BACKUP-FULL-2], strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000, strGroup = [GROUP-1], strKey = pg_data/base/1/12000, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/1/12000, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/base/32768/PG_VERSION, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/32768/PG_VERSION, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/base/16384/PG_VERSION, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/16384/PG_VERSION, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/base/1/PG_VERSION, strMode = 0660, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/1/PG_VERSION, strUser = [USER-1]
-P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = <false>, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/PG_VERSION, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/PG_VERSION, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, strBackupPath = [BACKUP-FULL-2], strChecksum = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003, strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest, strGroup = [GROUP-1], strKey = pg_data/global/pg_control, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/global/pg_control, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-1], lSize = 21, strBackupPath = [BACKUP-FULL-2], strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf, strGroup = [GROUP-1], strKey = pg_data/postgresql.conf, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/postgresql.conf, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-1], lSize = 5, strBackupPath = [BACKUP-FULL-2], strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat, strGroup = [GROUP-1], strKey = pg_data/pg_stat/global.stat, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/pg_stat/global.stat, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 5, strBackupPath = [BACKUP-FULL-2], strChecksum = 7f4c74dc10f61eef43e6ae642606627df1999b34, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000, strGroup = [GROUP-1], strKey = pg_data/base/32768/33000, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/32768/33000, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strBackupPath = [BACKUP-FULL-2], strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000, strGroup = [GROUP-1], strKey = pg_data/base/16384/17000, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/16384/17000, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 4, strBackupPath = [BACKUP-FULL-2], strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000, strGroup = [GROUP-1], strKey = pg_data/base/1/12000, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/1/12000, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/base/32768/PG_VERSION, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/32768/PG_VERSION, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/base/16384/PG_VERSION, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/16384/PG_VERSION, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/base/1/PG_VERSION, strMode = 0660, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/base/1/PG_VERSION, strUser = [USER-1]
+P00  DEBUG:     RestoreProcess->queueBackup(): bDelta = true, bForce = false, bSourceCompression = false, bZero = false, lCopyTimeStart = [TIMESTAMP], lModificationTime = [MODIFICATION-TIME-2], lSize = 3, strBackupPath = [BACKUP-FULL-2], strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION, strGroup = [GROUP-1], strKey = pg_data/PG_VERSION, strMode = 0600, strQueue = pg_data, strReference = [undef], strRepoFile = pg_data/PG_VERSION, strUser = [USER-1]
 P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1
 P01   INFO: local process 1 start for host backup-1
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --cmd-ssh=/usr/bin/ssh --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/spool/lock --log-path=[TEST_PATH]/db-master/spool/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup local
@@ -749,58 +753,57 @@ P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLe
 P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
+P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/global/pg_control, strQueueIdx = 0
+P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/global/pg_control
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/postgresql.conf, strQueueIdx = 0
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, lSizeCurrent = 0, lSizeTotal = 8243, strChecksum = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003, strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/postgresql.conf
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_stat/global.stat, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 21, lSizeCurrent = 0, lSizeTotal = 8243, strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/postgresql.conf - exists and matches backup (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 21, lSizeCurrent = 8192, lSizeTotal = 8243, strChecksum = 6721d92c9fcdf4248acff1f9a1377127d9064807, strDbFile = [TEST_PATH]/db-master/db/base/postgresql.conf
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/pg_stat/global.stat
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 5, lSizeCurrent = 21, lSizeTotal = 8243, strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat - exists and matches backup (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 5, lSizeCurrent = 8213, lSizeTotal = 8243, strChecksum = e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, strDbFile = [TEST_PATH]/db-master/db/base/pg_stat/global.stat
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat - exists and matches backup (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/32768/33000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, lSizeCurrent = 26, lSizeTotal = 8243, strChecksum = 7f4c74dc10f61eef43e6ae642606627df1999b34, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches backup (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 5, lSizeCurrent = 8218, lSizeTotal = 8243, strChecksum = 7f4c74dc10f61eef43e6ae642606627df1999b34, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches backup (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/16384/17000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/12000, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, lSizeCurrent = 31, lSizeTotal = 8243, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000
-P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, lSizeCurrent = 8223, lSizeTotal = 8243, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/17000
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/1/12000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, lSizeCurrent = 35, lSizeTotal = 8243, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 4, lSizeCurrent = 8227, lSizeTotal = 8243, strChecksum = a3b357a3e395e43fcfb19bb13f3c1b5179279593, strDbFile = [TEST_PATH]/db-master/db/base/base/1/12000
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/32768/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 39, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 8231, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/16384/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/1/PG_VERSION, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 42, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 8234, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/base/1/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/PG_VERSION, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 45, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 8237, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/base/1/PG_VERSION
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, strKey = pg_data/PG_VERSION
 P00  DEBUG:     Protocol::LocalProcess->process: no jobs found, stop local: iHostIdx = 0, iProcessId = 1
 P01   INFO: local process 1 stop for backup-1
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 48, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 3, lSizeCurrent = 8240, lSizeTotal = 8243, strChecksum = 184473f470864e067ee3a22e64b47b0a1c356f29, strDbFile = [TEST_PATH]/db-master/db/base/PG_VERSION
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/recovery.conf, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/recovery.conf, strPathType = db:absolute
 P00  DEBUG:     File->remove=>: bRemoved = true
-P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/global/pg_control, strPathType = db:absolute
-P00  DEBUG:     File->exists=>: bExists = false
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bSourceCompressed = false, lModificationTime = [MODIFICATION-TIME-1], strDestinationFile = [TEST_PATH]/db-master/db/base/global/pg_control, strDestinationPathType = db:absolute, strGroup = [GROUP-1], strMode = 0600, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster, strUser = [USER-1]
-P00  DEBUG:     File->owner(): strFile = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest.tmp, strGroup = [GROUP-1], strPathType = absolute, strUser = [USER-1]
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = true, bForce = false, bZero = false, iLocalId = [undef], lModificationTime = [MODIFICATION-TIME-1], lSize = 8192, lSizeCurrent = 51, lSizeTotal = 8243, strChecksum = 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003, strDbFile = [TEST_PATH]/db-master/db/base/global/pg_control
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, strDestinationFile = [TEST_PATH]/db-master/db/base/global/pg_control, strDestinationPathType = db:absolute, strSourceFile = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest, strSourcePathType = db:absolute
 P00  DEBUG:     File->remove(): bIgnoreMissing = false, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.manifest, strPathType = db:absolute
 P00  DEBUG:     File->remove=>: bRemoved = true
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -830,19 +833,19 @@ P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat - destination changed
 P01   INFO: local process 1 start for host backup-1
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/postgresql.conf - exists and matches backup (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat - exists and matches backup (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches backup (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat - exists and matches backup (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches backup (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: local process 1 stop for backup-1
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -877,19 +880,19 @@ P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/postgresql.conf
 P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat
 P00   INFO: cleanup removed 2 links
 P01   INFO: local process 1 start for host backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches size 5 and modification time [MODIFICATION-TIME-2] (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches size 5 and modification time [MODIFICATION-TIME-2] (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/12000 - exists and matches size 4 and modification time [MODIFICATION-TIME-2] (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/1/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-2] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: local process 1 stop for backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P00   INFO: wrote [TEST_PATH]/db-master/db/base/recovery.conf
+P01   INFO: restore file [TEST_PATH]/db-master/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1042,8 +1045,8 @@ P00  DEBUG:     Backup->processManifest: hardlink pg_data/global/pg_control to [
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/postgresql.conf, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/postgresql.conf, strSourcePathType = backup:cluster
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 11, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strKey = pg_data/badchecksum.txt, strQueue = pg_data, strRepoFile = pg_data/badchecksum.txt
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 7, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueue = pg_tblspc/1, strRepoFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 11, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strKey = pg_data/badchecksum.txt, strQueue = pg_data, strRepoFile = pg_data/badchecksum.txt
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 7, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueue = pg_tblspc/1, strRepoFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/pg_stat/global.stat, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/pg_stat/global.stat, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/base/32768/33000 to [BACKUP-FULL-2]
@@ -1372,9 +1375,9 @@ P00  DEBUG:     Backup->processManifest: hardlink pg_data/global/pg_control to [
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/postgresql.conf, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/postgresql.conf, strSourcePathType = backup:cluster
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 11, strChecksum = bogus, strDbFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strKey = pg_data/badchecksum.txt, strQueue = pg_data, strRepoFile = pg_data/badchecksum.txt
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 7, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueue = pg_tblspc/2, strRepoFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt
-P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = [undef], iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 7, strChecksum = d85de07d6421d90aa9191c11c889bfde43680f0f, strDbFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueue = pg_tblspc/1, strRepoFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 11, strChecksum = bogus, strDbFile = [TEST_PATH]/db-master/db/base/badchecksum.txt, strKey = pg_data/badchecksum.txt, strQueue = pg_data, strRepoFile = pg_data/badchecksum.txt
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 7, strChecksum = [undef], strDbFile = [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueue = pg_tblspc/2, strRepoFile = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt
+P00  DEBUG:     BackupProcess->queueBackup(): bDestinationCompress = false, bIgnoreMissing = true, iHostConfigIdx = 1, lModificationTime = [MODIFICATION-TIME-2], lSize = 7, strChecksum = d85de07d6421d90aa9191c11c889bfde43680f0f, strDbFile = [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueue = pg_tblspc/1, strRepoFile = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/pg_stat/global.stat, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/pg_stat/global.stat, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/base/32768/33000 to [BACKUP-FULL-2]
@@ -1985,22 +1988,22 @@ P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P01   INFO: local process 1 start for host backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 0%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P01   INFO: local process 1 stop for backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 0%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
-P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -2023,22 +2026,22 @@ P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/table
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base-2
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P01   INFO: local process 1 start for host backup-1
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf - exists and matches backup (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt - exists and matches backup (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat - exists and matches backup (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 - exists and matches backup (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 0%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 99%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt - exists and matches backup (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat - exists and matches backup (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 - exists and matches backup (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P01   INFO: local process 1 stop for backup-1
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 0%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
-P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -2562,6 +2565,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
 P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base-2 --db-user=[USER-1] --hardlink --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
 P00   INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
 P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
+P00   INFO: no jobs for host db-1
 P00   INFO: incr backup size = 0B
 P00   INFO: new backup label = [BACKUP-INCR-5]
 P00   INFO: backup stop
@@ -2902,20 +2906,20 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
         HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: backup start [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base-2 --db-user=[USER-1] --hardlink --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast --type=full
 P01   INFO: local process 1 start for host db-1
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 0%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 0%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 98%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/1/12000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01   INFO: local process 1 stop for db-1
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: full backup size = 8KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
 P00   INFO: backup stop
@@ -3592,23 +3596,23 @@ P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: databases for include/exclude (1, 16384, 32768)
 P00 DETAIL: database filter: (^pg_data\/base\/32768\/)|(^pg_tblspc/2\/[TS_PATH-1]\/32768\/)
 P01   INFO: local process 1 start for host backup-1
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf - exists and matches backup (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt - exists and matches backup (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/base2.txt - exists and matches backup (9B, 0%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 - exists and matches backup (9B, 0%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat - exists and matches backup (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 0%)
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 1%)
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 98%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt - exists and matches backup (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/base2.txt - exists and matches backup (9B, 99%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 - exists and matches backup (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat - exists and matches backup (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%)
 P01   INFO: local process 1 stop for backup-1
-P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%)
-P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
+P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%)
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -3629,23 +3633,23 @@ P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: databases for include/exclude (1, 16384, 32768)
 P00 DETAIL: database filter: (^pg_data\/base\/16384\/)|(^pg_tblspc/2\/[TS_PATH-1]\/16384\/)
 P01   INFO: local process 1 start for host backup-1
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf - exists and matches backup (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt - exists and matches backup (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/base2.txt - exists and matches backup (9B, 0%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 0%)
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat - exists and matches backup (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 1%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 98%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/badchecksum.txt - exists and matches backup (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/base2.txt - exists and matches backup (9B, 99%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (9B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_stat/global.stat - exists and matches backup (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01   INFO: local process 1 stop for backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/recovery.conf
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/recovery.conf
@@ -3684,23 +3688,23 @@ P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P01   INFO: local process 1 start for host backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/postgresql.conf (21B, 0%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/badchecksum.txt (11B, 0%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 0%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/16384/17000 (9B, 0%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_stat/global.stat (5B, 0%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33000 (5B, 0%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/1/12000 (4B, 0%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/16384/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/1/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/PG_VERSION (3B, 0%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 1%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/global/pg_control.pgbackrest (8KB, 98%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 99%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/16384/17000 (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33000 (5B, 99%) checksum 7f4c74dc10f61eef43e6ae642606627df1999b34
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/1/12000 (4B, 99%) checksum a3b357a3e395e43fcfb19bb13f3c1b5179279593
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01   INFO: local process 1 stop for backup-1
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 1%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   INFO: wrote [TEST_PATH]/db-master/db/base-2/base/recovery.conf
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00   INFO: write [TEST_PATH]/db-master/db/base-2/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
-P00   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/global/pg_control (8KB, 100%) checksum 2ee0de0a5fb5cf15f4a24e72b368c41f7e187003
 P00   INFO: restore stop
 
 + supplemental file: [TEST_PATH]/db-master/db/base-2/base/recovery.conf

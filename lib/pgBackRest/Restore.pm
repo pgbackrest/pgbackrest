@@ -23,6 +23,7 @@ use pgBackRest::RestoreFile;
 use pgBackRest::RestoreProcess;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -1013,7 +1014,7 @@ sub recovery
             close($hFile)
                 or confess "unable to close ${strRecoveryConf}: $!";
 
-            &log(INFO, "wrote $strRecoveryConf");
+            &log(INFO, "write $strRecoveryConf");
         }
     }
 
@@ -1104,8 +1105,6 @@ sub process
     $self->build($oManifest);
 
     # Get variables required for restore
-    my $lCopyTimeStart = $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
-    my $bSourceCompression = $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
     my $strCurrentUser = getpwuid($<);
     my $strCurrentGroup = getgrgid($();
 
@@ -1196,18 +1195,17 @@ sub process
     my $oRestoreProcess = new pgBackRest::RestoreProcess(optionGet(OPTION_PROCESS_MAX));
 
     # Variables used for parallel copy
-    my $hFileControl = undef;
     my $lSizeTotal = 0;
     my $lSizeCurrent = 0;
 
-    foreach my $strFile (
+    foreach my $strRepoFile (
         sort {sprintf("%016d-${b}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE)) cmp
               sprintf("%016d-${a}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE))}
         ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE, 'none')))
     {
         # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in DB_PATH_PGTBLSPC.
         # The tablespace links have already been created by Restore::build().
-        if ($strFile eq MANIFEST_FILE_TABLESPACEMAP &&
+        if ($strRepoFile eq MANIFEST_FILE_TABLESPACEMAP &&
             $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) >= PG_VERSION_95)
         {
             next;
@@ -1217,57 +1215,38 @@ sub process
         my $strQueueKey = MANIFEST_TARGET_PGDATA;
 
         # If the file belongs in a tablespace then put in a tablespace-specific queue
-        if (index($strFile, DB_PATH_PGTBLSPC . '/') == 0)
+        if (index($strRepoFile, DB_PATH_PGTBLSPC . '/') == 0)
         {
-            $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strFile))[1];
+            $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strRepoFile))[1];
         }
 
         # Get restore information
-        my $hFile =
-        {
-            &OP_PARAM_REPO_FILE => $strFile,
-            &OP_PARAM_DB_FILE =>  $oManifest->dbPathGet($self->{strDbClusterPath}, $strFile),
-            &OP_PARAM_REFERENCE =>
-                $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
-                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false),
-            &OP_PARAM_SIZE => $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE),
-            &OP_PARAM_MODIFICATION_TIME =>
-                $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP),
-            &OP_PARAM_MODE => $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_MODE),
-            &OP_PARAM_USER => $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_USER),
-            &OP_PARAM_GROUP => $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_GROUP),
-        };
+        my $strDbFile = $oManifest->dbPathGet($self->{strDbClusterPath}, $strRepoFile);
+        my $lSize = $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
 
-        # Zero files that should be filtered
-        if (defined($strDbFilter) && $strFile =~ $strDbFilter && $strFile !~ /\/PG\_VERSION$/)
+        # Copy pg_control to a temporary file that will be renamed later
+        if ($strRepoFile eq MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL)
         {
-            $hFile->{&OP_PARAM_ZERO} = true;
-        }
-        # Checksum is only stored if size > 0
-        elsif ($hFile->{&OP_PARAM_SIZE} > 0)
-        {
-            $hFile->{&OP_PARAM_CHECKSUM} =
-                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM);
+            $strDbFile .= '.' . BACKREST_EXE;
         }
 
         # Increment file size
-        $lSizeTotal += $hFile->{&OP_PARAM_SIZE};
+        $lSizeTotal += $lSize;
 
-        # pg_control will be restored last so assign it to a special variable
-        if ($strFile eq MANIFEST_FILE_PGCONTROL)
-        {
-            $hFileControl = $hFile;
-        }
-        # Else queue for parallel restore
-        else
-        {
-            $oRestoreProcess->queueRestore(
-                $strQueueKey, $hFile->{&OP_PARAM_REPO_FILE}, $hFile->{&OP_PARAM_REPO_FILE}, $hFile->{&OP_PARAM_DB_FILE},
-                $hFile->{&OP_PARAM_REFERENCE}, $hFile->{&OP_PARAM_SIZE}, $hFile->{&OP_PARAM_MODIFICATION_TIME},
-                $hFile->{&OP_PARAM_MODE}, $hFile->{&OP_PARAM_USER}, $hFile->{&OP_PARAM_GROUP}, $hFile->{&OP_PARAM_CHECKSUM},
-                $hFile->{&OP_PARAM_ZERO}, $lCopyTimeStart, optionGet(OPTION_DELTA), optionGet(OPTION_FORCE), $self->{strBackupSet},
-                $bSourceCompression);
-        }
+        # Queue for parallel restore
+        $oRestoreProcess->queueRestore(
+            $strQueueKey, $strRepoFile, $strRepoFile, $strDbFile,
+            $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false), $lSize,
+            $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP),
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MODE),
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
+            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $lSize > 0),
+            defined($strDbFilter) && $strRepoFile =~ $strDbFilter && $strRepoFile !~ /\/PG\_VERSION$/ ? true : false,
+            $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START), optionGet(OPTION_DELTA),
+            optionGet(OPTION_FORCE), $self->{strBackupSet},
+            $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS));
     }
 
     # Run the restore jobs and process results
@@ -1292,20 +1271,13 @@ sub process
     $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 
     # Copy pg_control last
-    &log(
-        INFO,
+    &log(INFO,
         'restore ' . $oManifest->dbPathGet(undef, MANIFEST_FILE_PGCONTROL) .
         ' (copied last to ensure aborted restores cannot be started)');
 
-    restoreFile(
-        $self->{oFile}, $hFileControl->{&OP_PARAM_REPO_FILE}, $hFileControl->{&OP_PARAM_DB_FILE},
-        $hFileControl->{&OP_PARAM_REFERENCE}, $hFileControl->{&OP_PARAM_SIZE}, $hFileControl->{&OP_PARAM_MODIFICATION_TIME},
-        $hFileControl->{&OP_PARAM_MODE}, $hFileControl->{&OP_PARAM_USER}, $hFileControl->{&OP_PARAM_GROUP},
-        $hFileControl->{&OP_PARAM_CHECKSUM}, false, false, false, false, $self->{strBackupSet}, $bSourceCompression);
-
-    restoreLog(
-        $hFileControl->{&OP_PARAM_DB_FILE}, true, $hFileControl->{&OP_PARAM_SIZE}, $hFileControl->{&OP_PARAM_MODIFICATION_TIME},
-        $hFileControl->{&OP_PARAM_CHECKSUM}, false, false, $lSizeTotal, $lSizeCurrent);
+    $self->{oFile}->move(
+        PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_PGCONTROL . '.' . BACKREST_EXE,
+        PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_PGCONTROL);
 
     # Finally remove the manifest to indicate the restore is complete
     $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST, undef, false);

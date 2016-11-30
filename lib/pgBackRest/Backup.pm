@@ -265,7 +265,6 @@ sub processManifest
     $oBackupProcess->hostAdd($self->{iCopyRemoteIdx}, optionGet(OPTION_PROCESS_MAX));
 
     # Variables used for parallel copy
-    my $hFileControl = undef;
     my $lFileTotal = 0;
     my $lSizeTotal = 0;
 
@@ -279,104 +278,82 @@ sub processManifest
     }
 
     # Iterate all files in the manifest
-    foreach my $strFile (
+    foreach my $strRepoFile (
         sort {sprintf("%016d-${b}", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE)) cmp
               sprintf("%016d-${a}", $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE))}
         ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_FILE, 'none')))
     {
         # If the file has a reference it does not need to be copied since it can be retrieved from the referenced backup.
         # However, if hard-linking is turned on the link will need to be created
-        my $bProcess = true;
-        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_REFERENCE, false);
+        my $strReference = $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false);
 
         if (defined($strReference))
         {
             # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
             if ($bHardLink)
             {
-                logDebugMisc($strOperation, "hardlink ${strFile} to ${strReference}");
+                logDebugMisc($strOperation, "hardlink ${strRepoFile} to ${strReference}");
 
                 $oFileMaster->linkCreate(
-                    PATH_BACKUP_CLUSTER, "${strReference}/${strFile}", PATH_BACKUP_TMP, "${strFile}", true, false, true);
+                    PATH_BACKUP_CLUSTER, "${strReference}/${strRepoFile}", PATH_BACKUP_TMP, "${strRepoFile}", true, false, true);
             }
             # Else log the reference
             else
             {
-                logDebugMisc($strOperation, "reference ${strFile} to ${strReference}");
+                logDebugMisc($strOperation, "reference ${strRepoFile} to ${strReference}");
             }
 
             # This file will not need to be copied
-            $bProcess = false;
+            next;
         }
 
-        # If the file must be copied
-        if ($bProcess)
+        # By default put everything into a single queue
+        my $strQueueKey = MANIFEST_TARGET_PGDATA;
+
+        # If the file belongs in a tablespace then put in a tablespace-specific queue
+        if (index($strRepoFile, DB_PATH_PGTBLSPC . '/') == 0)
         {
-            # By default put everything into a single queue
-            my $strQueueKey = MANIFEST_TARGET_PGDATA;
-
-            # If the file belongs in a tablespace then put in a tablespace-specific queue
-            if (index($strFile, DB_PATH_PGTBLSPC . '/') == 0)
-            {
-                $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strFile))[1];
-            }
-
-            # Create the file hash
-            my $hFile = {bIgnoreMissing => undef};
-            my $iHostConfigIdx = $self->{iCopyRemoteIdx};
-
-            # Certain files must be copied from the master
-            if ($oBackupManifest->boolGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_MASTER))
-            {
-                $hFile->{db_file} = $oBackupManifest->dbPathGet($strDbMasterPath, $strFile);
-                $iHostConfigIdx = $self->{iMasterRemoteIdx};
-            }
-            # Else continue normally
-            else
-            {
-                $hFile->{db_file} = $oBackupManifest->dbPathGet($strDbCopyPath, $strFile);
-            }
-
-            # Make sure that pg_data/PG_VERSION does go away as a sanity check
-            if ($strFile eq MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGVERSION)
-            {
-                $hFile->{bIgnoreMissing} = false;
-            }
-
-            $hFile->{queue} = $strQueueKey;
-            $hFile->{repo_file} = $strFile;
-            $hFile->{size} =
-                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE);
-            $hFile->{modification_time} =
-                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP, false);
-            $hFile->{checksum} =
-                $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
-
-            # Size and checksum will be removed and then verified later as a sanity check
-            $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE);
-            $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM);
-
-            # Increment file total and size
-            $lFileTotal++;
-            $lSizeTotal += $hFile->{size};
-
-            # pg_control will be copied last so assign it to a special variable
-            if ($strFile eq MANIFEST_FILE_PGCONTROL)
-            {
-                $hFileControl = $hFile;
-            }
-            # Else queue for parallel backup
-            else
-            {
-                $oBackupProcess->queueBackup(
-                    $iHostConfigIdx, $hFile->{queue}, $hFile->{repo_file}, $hFile->{db_file}, $hFile->{repo_file},
-                    $bCompress, $hFile->{modification_time}, $hFile->{size}, $hFile->{checksum}, $hFile->{bIgnoreMissing});
-            }
+            $strQueueKey = DB_PATH_PGTBLSPC . '/' . (split('\/', $strRepoFile))[1];
         }
+
+        # Create the file hash
+        my $bIgnoreMissing = true;
+        my $strDbFile = $oBackupManifest->dbPathGet($strDbCopyPath, $strRepoFile);
+        my $iHostConfigIdx = $self->{iCopyRemoteIdx};
+
+        # Certain files must be copied from the master
+        if ($oBackupManifest->boolGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MASTER))
+        {
+            $strDbFile = $oBackupManifest->dbPathGet($strDbMasterPath, $strRepoFile);
+            $iHostConfigIdx = $self->{iMasterRemoteIdx};
+        }
+
+        # Make sure that pg_control is not removed during the backup
+        if ($strRepoFile eq MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL)
+        {
+            $bIgnoreMissing = false;
+        }
+
+        # Increment file total and size
+        my $lSize = $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
+
+        $lFileTotal++;
+        $lSizeTotal += $lSize;
+
+        # Queue for parallel backup
+        $oBackupProcess->queueBackup(
+            $iHostConfigIdx, $strQueueKey, $strRepoFile, $strDbFile, $strRepoFile, $bCompress,
+            $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false), $lSize,
+            $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
+            $bIgnoreMissing);
+
+        # Size and checksum will be removed and then verified later as a sanity check
+        $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
+        $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM);
     }
 
     # pg_control should always be in the backup (unless this is an offline backup)
-    if (!defined($hFileControl) && optionGet(OPTION_ONLINE))
+    if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && optionGet(OPTION_ONLINE))
     {
         confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
                      'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
@@ -384,59 +361,41 @@ sub processManifest
 
     # If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
     # the database is down and backup is called with --no-online twice in a row.
-    if ($lFileTotal == 0)
+    if ($lFileTotal == 0 && !optionGet(OPTION_TEST))
     {
-        if (!optionGet(OPTION_TEST))
-        {
-            confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
-        }
+        confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
     }
-    else
+
+    # Running total of bytes copied
+    my $lSizeCurrent = 0;
+
+    # Determine how often the manifest will be saved
+    my $lManifestSaveCurrent = 0;
+    my $lManifestSaveSize = int($lSizeTotal / 100);
+
+    if (optionSource(OPTION_MANIFEST_SAVE_THRESHOLD) ne SOURCE_DEFAULT ||
+        $lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
     {
-        # Running total of bytes copied
-        my $lSizeCurrent = 0;
+        $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
+    }
 
-        # Determine how often the manifest will be saved
-        my $lManifestSaveCurrent = 0;
-        my $lManifestSaveSize = int($lSizeTotal / 100);
-
-        if (optionSource(OPTION_MANIFEST_SAVE_THRESHOLD) ne SOURCE_DEFAULT ||
-            $lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
+    # Run the backup jobs and process results
+    while (my $hyResult = $oBackupProcess->process())
+    {
+        foreach my $hResult (@{$hyResult})
         {
-            $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
+            my $hFile = $hResult->{hPayload};
+
+            ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
+                $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hResult->{iHostConfigIdx}), false),
+                $hResult->{iProcessId}, $$hFile{strRepoFile}, $$hFile{strDbFile}, $$hResult{iCopyResult}, $$hFile{lSize},
+                $$hResult{lCopySize}, $$hResult{lRepoSize}, $lSizeTotal, $lSizeCurrent, $$hFile{strChecksum},
+                $$hResult{strCopyChecksum}, $lManifestSaveSize, $lManifestSaveCurrent);
         }
 
-        # Run the backup jobs and process results
-        while (my $hyResult = $oBackupProcess->process())
-        {
-            foreach my $hResult (@{$hyResult})
-            {
-                my $hFile = $hResult->{hPayload};
-
-                ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-                    $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hResult->{iHostConfigIdx}), false),
-                    $hResult->{iProcessId}, $$hFile{strRepoFile}, $$hFile{strDbFile}, $$hResult{iCopyResult}, $$hFile{lSize},
-                    $$hResult{lCopySize}, $$hResult{lRepoSize}, $lSizeTotal, $lSizeCurrent, $$hFile{strChecksum},
-                    $$hResult{strCopyChecksum}, $lManifestSaveSize, $lManifestSaveCurrent);
-            }
-
-            # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
-            # then the remote might timeout while waiting for a command.
-            $oProtocolMaster->keepAlive();
-        }
-
-        # Copy pg_control last - this is required for backups taken during recovery
-        if (defined($hFileControl))
-        {
-            my ($iCopyResult, $lCopySize, $lRepoSize, $strCopyChecksum) = backupFile(
-                $oFileMaster, $$hFileControl{db_file}, $$hFileControl{repo_file}, $bCompress, $$hFileControl{checksum},
-                $$hFileControl{modification_time}, $$hFileControl{size}, false);
-
-            backupManifestUpdate(
-                $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $self->{iMasterRemoteIdx}), false), undef,
-                $$hFileControl{repo_file}, $$hFileControl{db_file}, $iCopyResult, $$hFileControl{size}, $lCopySize, $lRepoSize,
-                $lSizeTotal, $lSizeCurrent, $$hFileControl{checksum}, $strCopyChecksum, $lManifestSaveSize, $lManifestSaveCurrent);
-        }
+        # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
+        # then the remote might timeout while waiting for a command.
+        $oProtocolMaster->keepAlive();
     }
 
     # Validate the manifest
