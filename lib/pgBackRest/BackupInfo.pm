@@ -190,10 +190,14 @@ sub reconstruct
     my
     (
         $strOperation,
+        $bSave,
+        $bRequired,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
+        {name => 'bSave', default => true},
+        {name => 'bRequired', default => true},
     );
 
     # Check for backups that are not in FILE_BACKUP_INFO
@@ -209,13 +213,7 @@ sub reconstruct
             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
 
-            # ??? Until stanza-upgrade, make sure the current DB info matches what should be stored in the file before saving
-            $self->check($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION),
-                 $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
-                 $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG),
-                 $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID));
-
-            $self->add($oManifest);
+            $self->add($oManifest, $bSave, $bRequired);
         }
     }
 
@@ -260,6 +258,7 @@ sub check
         $iControlVersion,
         $iCatalogVersion,
         $ullDbSysId,
+        $bRequired,
     ) =
         logDebugParam
         (
@@ -267,11 +266,15 @@ sub check
             {name => 'strDbVersion', trace => true},
             {name => 'iControlVersion', trace => true},
             {name => 'iCatalogVersion', trace => true},
-            {name => 'ullDbSysId', trace => true}
+            {name => 'ullDbSysId', trace => true},
+            {name => 'bRequired', default => true},
         );
 
     # Confirm the info file exists with the DB section
-    $self->confirmExists();
+    if ($bRequired)
+    {
+        $self->confirmExists();
+    }
 
     if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId) ||
         !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion))
@@ -315,16 +318,21 @@ sub add
         $strOperation,
         $oBackupManifest,
         $bSave,
+        $bRequired,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->add', \@_,
             {name => 'oBackupManifest', trace => true},
             {name => 'bSave', default => true, trace => true},
+            {name => 'bRequired', default => true, trace => true},
         );
 
-    # Error on missing backup.info
-    $self->confirmExists();
+    # Confirm the info file exists with the DB section
+    if ($bRequired)
+    {
+        $self->confirmExists();
+    }
 
     # Get the backup label
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
@@ -406,7 +414,10 @@ sub add
                    \@stryReference);
     }
 
-    $self->save();
+    if ($bSave)
+    {
+        $self->save();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -553,7 +564,7 @@ sub delete
 ####################################################################################################################################
 # create
 #
-# Create the info file
+# Create the info file. WARNING - this file should only be called from stanza-create.
 ####################################################################################################################################
 sub create
 {
@@ -567,6 +578,7 @@ sub create
         $ullDbSysId,
         $iControlVersion,
         $iCatalogVersion,
+        $bSave,
     ) =
         logDebugParam
         (
@@ -575,19 +587,15 @@ sub create
             {name => 'ullDbSysId'},
             {name => 'iControlVersion'},
             {name => 'iCatalogVersion'},
+            {name => 'bSave', default => true},
         );
 
     # Fill db section and db history section
-    if (!$self->{bExists})
-    {
-        $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false));
+    $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false));
 
-        $self->save();
-    }
-    # If file exists, then WARN
-    else
+    if ($bSave)
     {
-        &log(WARN, $self->{strBackupClusterPath} . "/" . FILE_BACKUP_INFO . " already exists");
+        $self->save();
     }
 
     # Return from function and log return values if any

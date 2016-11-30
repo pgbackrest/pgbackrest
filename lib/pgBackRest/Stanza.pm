@@ -27,6 +27,13 @@ use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 use IO::Uncompress::Gunzip qw($GunzipError);
 
+
+####################################################################################################################################
+# Global variables
+####################################################################################################################################
+my $strStanzaCreateErrorMsg = "not empty, stanza-create has already been attempted\n" .
+    "HINT: Use --force to force the stanza data to be created.";
+
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
@@ -117,15 +124,35 @@ sub stanzaCreate
 
     $self->dbInfoGet();
 
+    # Get the parent paths (create if not exist)
+    my $strParentPathArchive = $self->parentPathGet($oFile, PATH_BACKUP_ARCHIVE);
+    my $strParentPathBackup = $self->parentPathGet($oFile, PATH_BACKUP_CLUSTER);
+
+    # Get a listing of files in the directory, ignoring if any are missing
+    my @stryFileListArchive = fileList($strParentPathArchive, undef, 'forward', true);
+    my @stryFileListBackup = fileList($strParentPathBackup, undef, 'forward', true);
+
+    # If force was not used then error if any dir has data
+    if (!optionGet(OPTION_FORCE) && (@stryFileListArchive || @stryFileListBackup))
+    {
+        confess &log(ERROR, "the " . (@stryFileListBackup ? 'backup directory ' : '') .
+            ((@stryFileListBackup && @stryFileListArchive) ? 'and ' : '') .
+            (@stryFileListArchive ? 'archive directory ' : '') .
+            $strStanzaCreateErrorMsg, ERROR_STANZA_DIR_INVALID);
+    }
+
+    # If we get here, then the directories are either empty or force was used
     # Create the archive.info file
-    my ($iResult, $strResultMessage) = $self->infoFileCreate(
-        $oFile, PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE, ERROR_ARCHIVE_DIR_INVALID);
+    my ($iResult, $strResultMessage) =
+        $self->infoFileCreate((new pgBackRest::ArchiveInfo($strParentPathArchive, false)), $oFile,
+            PATH_BACKUP_ARCHIVE, (!@stryFileListArchive ? true : false));
 
     if ($iResult == 0)
     {
         # Create the backup.info file
-        ($iResult, $strResultMessage) = $self->infoFileCreate(
-            $oFile, PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO, ERROR_BACKUP_DIR_INVALID);
+        ($iResult, $strResultMessage) =
+            $self->infoFileCreate((new pgBackRest::BackupInfo($strParentPathBackup, false, false)), $oFile,
+                PATH_BACKUP_CLUSTER, (!@stryFileListBackup ? true : false));
     }
 
     if ($iResult == 0)
@@ -147,6 +174,46 @@ sub stanzaCreate
 }
 
 ####################################################################################################################################
+# parentPathGet
+#
+# Creates the the parent path if it doesn't exist and returns the path.
+####################################################################################################################################
+sub parentPathGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strPathType,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->parentPathGet', \@_,
+            {name => 'oFile', trace => true},
+            {name => 'strPathType', trace => true},
+        );
+
+    my $strParentPath = $oFile->pathGet($strPathType);
+
+    # If the info path does not exist, create it
+    if (!fileExists($strParentPath))
+    {
+        # Create the cluster repo path
+        $oFile->pathCreate($strPathType, undef, undef, true, true);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strParentPath', value => $strParentPath, trace => true},
+    );
+}
+
+####################################################################################################################################
 # infoFileCreate
 #
 # Creates the info file based on the data passed to the function
@@ -159,118 +226,67 @@ sub infoFileCreate
     my
     (
         $strOperation,
+        $oInfo,
         $oFile,
         $strPathType,
-        $strInfoFile,
-        $iErrorCode,
+        $bDirEmpty,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->infoFileCreate', \@_,
+            {name => 'oInfo', trace => true},
             {name => 'oFile', trace => true},
             {name => 'strPathType', trace => true},
-            {name => 'strInfoFile', trace => true},
-            {name => 'iErrorCode', trace => true}
+            {name => 'bDirEmpty', trace => true},
         );
 
     my $iResult = 0;
     my $strResultMessage = undef;
-    my $strParentPath = $oFile->pathGet($strPathType);
+    my $strWarningMsgArchive = undef;
 
-    # If the info path does not exist, create it
-    if (!fileExists($strParentPath))
+    # If force option used, reconstruct the files regardless of whether they exist or not
+    if (optionGet(OPTION_FORCE))
     {
-        # Create the cluster repo path
-        $oFile->pathCreate($strPathType, undef, undef, true, true);
-    }
-
-    # Get the contents of the directory and create the info object
-    my @stryFileList = fileList($strParentPath, undef, 'forward', true);
-    my $oInfo = ($strPathType eq PATH_BACKUP_CLUSTER) ? new pgBackRest::BackupInfo($strParentPath, false, false)
-                                                      : new pgBackRest::ArchiveInfo($strParentPath, false);
-
-    # If the cluster repo path is empty then don't validate the info file, just create it
-    if (!@stryFileList)
-    {
-        # Create and save the info file
-        $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
-            $self->{oDb}{iCatalogVersion});
-    }
-    else
-    {
-        # If the directory is not empty then check if they have used the force option
-        if (!optionGet(OPTION_FORCE))
-        {
-            $iResult = $iErrorCode;
-
-            # Display the appropriate error message based on whether the info file exists of not
-            if (!grep(/^$strInfoFile$/i, @stryFileList))
-            {
-                $strResultMessage =
-                    "the " . (($strPathType eq PATH_BACKUP_CLUSTER) ? "backup" : "archive") . " directory is not empty " .
-                    "but the ${strInfoFile} file is missing\n" .
-                    "HINT: Has the directory been copied from another location and the copy has not completed?\n" .
-                    "HINT: Use --force to force the ${strInfoFile} to be created from the existing data in the directory.";
-            }
-            else
-            {
-                $strResultMessage =
-                    "the ${strInfoFile} file exists - stanza-create is not required\n" .
-                    "HINT: Use --force to force the ${strInfoFile} to be recreated from the existing data in the directory.";
-            }
-        }
-        else
-        {
-            # Turn off console logging to control when to display the error
-            logLevelSet(undef, OFF);
-
-            eval
-            {
-                # If the file doesn't exist create it
-                if (!$oInfo->{bExists})
-                {
-                    $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
-                        $self->{oDb}{iCatalogVersion});
-                }
-
-                $oInfo->reconstruct($oFile);
-
-                # Save the reconstructed file
-                $oInfo->save();
-
-                return true;
-            }
-            or do
-            {
-                # Confess unhandled errors
-                if (!isException($EVAL_ERROR))
-                {
-                    confess $EVAL_ERROR;
-                }
-
-                # If this is a backrest error then capture the last code and message
-                $iResult = $EVAL_ERROR->code();
-                $strResultMessage = $EVAL_ERROR->message();
-            };
-
-            # Reset the console logging
-            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-        }
-    }
-
-    if ($iResult == 0)
-    {
-        # Check the validity of the existing info file
         # Turn off console logging to control when to display the error
         logLevelSet(undef, OFF);
 
         eval
         {
-            # Check that the info file is valid for the current database of the stanza
+            # ??? File init will need to be addressed with stanza-upgrade since there could then be more than one DB and db-id
+            # so the DB section, esp for backup.info, cannot be initialized before we attempt to reconstruct the file from the
+            # directories since the history id would be wrong. Also need to handle if the reconstruction fails - if any file in
+            # the backup directory or archive directory are missing or mal-formed, then currently an error will be thrown, which
+            # may not be desireable.
+
+            # If the file backup.info file does not exist, initialize it internally but do not save until complete reconstruction
+            if (!$oInfo->{bExists})
+            {
+                ($strPathType eq PATH_BACKUP_CLUSTER)
+                    ? $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+                        $self->{oDb}{iCatalogVersion}, false)
+                    : $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
+            }
+
+            # Reconstruct the file from the data in the directory
+            if ($strPathType eq PATH_BACKUP_CLUSTER)
+            {
+                $oInfo->reconstruct(false, false);
+            }
+            # If this is the archive.info reconstruction then catch any warnings
+            else
+            {
+                $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+            }
+
+            # ??? With stanza-upgrade we will want ability to force the DB section to match but for now, if it doesn't match,
+            # then something is wrong.
             ($strPathType eq PATH_BACKUP_CLUSTER)
                 ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                                $self->{oDb}{ullDbSysId})
-                : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+                    $self->{oDb}{ullDbSysId}, false)
+                : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
+
+            # Save the reconstructed file
+            $oInfo->save();
 
             return true;
         }
@@ -286,10 +302,36 @@ sub infoFileCreate
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
         };
+
+        # Reset the console logging
+        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+    }
+    else
+    {   # If the cluster repo path is empty then create it
+        if ($bDirEmpty)
+        {
+            # Create and save the info file
+            $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+                $self->{oDb}{iCatalogVersion});
+        }
+        # Else somehow we got here when we should not have so error
+        else
+        {
+            $iResult = ERROR_STANZA_DIR_INVALID;
+            $strResultMessage = "the " .
+                ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') .
+                $strStanzaCreateErrorMsg;
+        }
     }
 
     # Reset the console logging
     logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+
+    # If a warning was issued, raise it
+    if (defined($strWarningMsgArchive))
+    {
+        &log(WARN, $strWarningMsgArchive);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn

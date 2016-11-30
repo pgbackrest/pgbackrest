@@ -201,7 +201,7 @@ sub backupTestRun
             # With data existing in the archive dir, remove the info file and confirm failure
             fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
             $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-                {iExpectedExitStatus => ERROR_ARCHIVE_DIR_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+                {iExpectedExitStatus => ERROR_STANZA_DIR_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
 
             # Change the permissions of the archive file so it cannot be read
             executeTest('sudo chmod 220 ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
@@ -211,23 +211,53 @@ sub backupTestRun
             $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
                 {iExpectedExitStatus => ERROR_GUNZIP, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-            # Change permissions back and force creation of archive info
+            # Change permissions back and force creation of archive info from the gz file
             executeTest('sudo chmod 640 ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
                 substr($strArchiveFile, 0, 16) . "/*.gz");
 
-            $oHostBackup->stanzaCreate('test force for missing archive.info',
+            $oHostBackup->stanzaCreate('force create archive.info from gz file',
                 {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+            # Run force again to ensure the format is still valid
+            $oHostBackup->stanzaCreate('repeat force', {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             # Change the database version by copying a new pg_control file
             executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
             executeTest('cp ' . testDataPath() . '/pg_control_93 ' . $oHostDbMaster->dbBasePath() . '/' .
                 DB_FILE_PGCONTROL);
+
+            # Remove the archive info file
             fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
             # Run stanza-create with --force
             $oHostBackup->stanzaCreate('test force fails for database mismatch with directory',
                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .
                 ' --' . OPTION_FORCE});
+
+            # Restore pg_control
+            executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' .
+                DB_FILE_PGCONTROL);
+
+            # Unzip the archive file and recreate the archive.info file from it
+            executeTest('sudo gunzip ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
+                substr($strArchiveFile, 0, 16) . "/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz");
+            $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
+                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+            # Remove the uncompressed WAL archive file and archive.info
+            executeTest('sudo rm ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
+                substr($strArchiveFile, 0, 16) . "/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27");
+            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->stanzaCreate('force with missing WAL archive file',
+                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+            # Remove the WAL archive directory
+            executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
+                substr($strArchiveFile, 0, 16));
+            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->stanzaCreate('force with missing WAL archive directory',
+                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             testCleanup(\$oLogTest);
         }
@@ -765,7 +795,7 @@ sub backupTestRun
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
 
-            # ??? This function create data elements in the $oExpireTest object that are used by the $oExpireTest functions. But
+            # ??? This function creates data elements in the $oExpireTest object that are used by the $oExpireTest functions. But
             # should probably change to use the stanza-create command especially with stanza-upgrade.
             $oExpireTest->stanzaCreate($strStanza, PG_VERSION_92);
             use constant SECONDS_PER_DAY => 86400;
@@ -1668,7 +1698,7 @@ sub backupTestRun
 
                 # Fail on attempt to create the stanza data since force was not used
                 $oHostBackup->stanzaCreate('fail on backup directory not empty and missing backup.info',
-                    {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+                    {iExpectedExitStatus => ERROR_STANZA_DIR_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
 
                 # Use force to create the stanza
                 $oHostBackup->stanzaCreate('create required data for stanza',
@@ -1676,7 +1706,8 @@ sub backupTestRun
             }
             else
             {
-                $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+                $oHostBackup->stanzaCreate('create required data for stanza',
+                    {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
             }
 
             # Perform the backup
@@ -2003,8 +2034,8 @@ sub backupTestRun
                     'fail on missing archive.info file',
                     {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
 
-                # Create the backup and archive info files
-                $oHostBackup->stanzaCreate('create stanza info files');
+                # Backup.info was created earlier so force stanza-create to create archive info file
+                $oHostBackup->stanzaCreate('force create stanza info files', {strOptionalParam => ' --' . OPTION_FORCE});
 
                 # Check ERROR_ARCHIVE_DISABLED error
                 $strComment = 'fail on archive_mode=off';
@@ -2129,15 +2160,17 @@ sub backupTestRun
                 $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
 
                 # Stanza Create - ??? move to stanza-create tests when can create a backup synthetically
-                #---------------------------------------------------------------------------------------
-                # With data existing in the backup directory, remove the info file and confirm failure
-                # Remove the backup.info file
-                executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+                #-------------------------------------------------------------------------------------------------
+                # With data existing in the archive and backup directory, remove backup info file and confirm failure
+                executeTest('sudo rm ' . $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info");
                 $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
-                                           {iExpectedExitStatus => ERROR_BACKUP_DIR_INVALID});
+                    {iExpectedExitStatus => ERROR_STANZA_DIR_INVALID});
 
                 # Force the backup.info file to be recreated
-                $oHostBackup->stanzaCreate('verify success', {strOptionalParam => ' --' . OPTION_FORCE});
+                $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . OPTION_FORCE});
+
+                # Remove the backup info file
+                executeTest('sudo rm ' . $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info");
 
                 # Change the database version by copying a new pg_control file
                 executeTest('sudo mv ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL .
@@ -2145,13 +2178,19 @@ sub backupTestRun
                 executeTest('cp ' . testDataPath() . '/pg_control' . WAL_VERSION_94 . ' ' . $oHostDbMaster->dbBasePath() . '/' .
                     DB_FILE_PGCONTROL);
 
-                # Remove the backup info file
-                fileRemove($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-
                 # Run stanza-create with --force
-                $oHostBackup->stanzaCreate('test force fails for database mismatch with directory',
-                    {iExpectedExitStatus => ERROR_BACKUP_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .
+                $oHostBackup->stanzaCreate('test force fails on database mismatch with directory',
+                    {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .
                     ' --' . OPTION_FORCE});
+
+                # Restore the database version
+                executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                executeTest('sudo mv ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL . 'save' .
+                    ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
+                # Run stanza-create offline with --force
+                $oHostBackup->stanzaCreate('restore stanza files',
+                    {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
             }
 
             # Full backup

@@ -1240,7 +1240,7 @@ sub check
     {
         &log(ERROR, $strResultMessage, $iResult);
         &log(WARN,
-            "WAL segment ${strWalSegment} did not reach the archive ${strArchiveId}:\n" .
+            "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
             "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
             "HINT: Check the PostreSQL server log for errors.");
     }

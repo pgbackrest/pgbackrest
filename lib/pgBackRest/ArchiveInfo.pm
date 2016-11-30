@@ -15,7 +15,8 @@ use Carp qw(confess);
 use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError) ;
+use Fcntl qw(O_RDONLY);
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -187,7 +188,7 @@ sub archiveId
 ####################################################################################################################################
 # create
 #
-# Creates the archive.info file.
+# Creates the archive.info file. WARNING - this file should only be called from stanza-create.
 ####################################################################################################################################
 sub create
 {
@@ -198,19 +199,24 @@ sub create
     (
         $strOperation,
         $strDbVersion,
-        $ullDbSysId
+        $ullDbSysId,
+        $bSave,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->create', \@_,
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'},
+            {name => 'bSave', default => true},
         );
 
     # Fill db section and db history section
     $self->dbSectionSet($strDbVersion, $ullDbSysId, $self->dbHistoryIdGet(false));
 
-    $self->save();
+    if ($bSave)
+    {
+        $self->save();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -230,42 +236,75 @@ sub reconstruct
     (
         $strOperation,
         $oFile,
+        $strCurrentDbVersion,
+        $ullCurrentDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
         {name => 'oFile'},
+        {name => 'strCurrentDbVersion'},
+        {name => 'ullCurrentDbSysId'},
     );
 
-    # ??? This function is a placeholder for stanza-upgrade feature, so the commented out code will be implemented when it is added
-    # Get the upper level directory names, e.g. 9.4-1
-    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION))
+    my $strInvalidFileStructure = undef;
+
+    # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
+    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
     {
         # Get the db-version and db-id (history id) from the directory name
         my ($strDbVersion, $iDbHistoryId) = split("-", $strVersionDir);
 
         # Get the name of the first archive directory
-        my $strArchiveDir = (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL))[0];
+        my $strArchiveDir =
+            (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL, 'forward', true))[0];
+
+        # Continue if any file structure or missing files info
+        if (!defined($strArchiveDir))
+        {
+            $strInvalidFileStructure = "Empty directory " . $self->{strArchiveClusterPath} . "/${strVersionDir}";
+            next;
+        }
 
         # ??? Should probably make a function in ArchiveCommon
         my $strArchiveFile =
             (fileList($self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
-            "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$"))[0];
+            "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 'forward', true))[0];
+
+        # Continue if any file structure or missing files info
+        if (!defined($strArchiveFile))
+        {
+            $strInvalidFileStructure = "Empty directory " . $self->{strArchiveClusterPath} .
+                "/${strVersionDir}/${strArchiveDir}";
+            next;
+        }
 
         # Get the full path for the file
         my $strArchiveFilePath = $self->{strArchiveClusterPath}."/${strVersionDir}/${strArchiveDir}/${strArchiveFile}";
 
+        # Get the db-system-id from the WAL file depending on the version of postgres
+        my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
+
         my $tBlock;
+        # If the file is a compressed file, unzip it, else open the first 8KB
         if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
         {
             gunzip $strArchiveFilePath => \$tBlock
                 or confess &log(ERROR,
-                                "gunzip failed with error: " . $GunzipError .
-                                " on file ${strVersionDir}/${strArchiveDir}/${strArchiveFile}", ERROR_GUNZIP);
+                    "gunzip failed with error: " . $GunzipError .
+                    " on file ${strVersionDir}/${strArchiveDir}/${strArchiveFile}", ERROR_GUNZIP);
+        }
+        else
+        {
+            my $hFile;
+            sysopen($hFile, $strArchiveFilePath, O_RDONLY)
+                or confess &log(ERROR, "unable to open ${strArchiveFilePath}", ERROR_FILE_OPEN);
+            # Read part of the file
+            sysread($hFile, $tBlock, 8192) == 8192
+                or confess &log(ERROR, "unable to read ${strArchiveFilePath}", ERROR_FILE_READ);
         }
 
-        # Get the db-system-id from the WAL file depending on the version of postgres
-        my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
+        # Get the required data from the file that was pulled into scalar $tBlock
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
 
         if (!defined($ullDbSysId))
@@ -273,16 +312,25 @@ sub reconstruct
             confess &log(ERROR, "unable to read database system identifier", ERROR_FILE_READ);
         }
 
-        # ??? Until stanza-upgrade, make sure the DB version and system ID match
-        $self->check($strDbVersion, $ullDbSysId);
-
-        # ??? For stanza-upgrade, need to test that the history does not already exist        
+        # ??? For stanza-upgrade, need to test that the history does not already exist
         # Fill db section and db history section
         $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
 
+    # ??? This is a precursor for stanza-upgrade: If the DB section does not exist, then there were no valid directories to read
+    # from so create the file. Can't raise warning b/c log-log-level console in calling routine is turned off -- determine how to
+    # handle cases above where directory structure or files are causing errors
+    if (!$self->test(INFO_ARCHIVE_SECTION_DB))
+    {
+        $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
+    }
+
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strInvalidFileStructure', value => $strInvalidFileStructure}
+    );
 }
 
 ####################################################################################################################################

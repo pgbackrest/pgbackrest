@@ -144,12 +144,10 @@ use constant ERROR_LINK_OPEN                                        => ERROR_MIN
     push @EXPORT, qw(ERROR_LINK_OPEN);
 use constant ERROR_ARCHIVE_DISABLED                                 => ERROR_MINIMUM + 62;
     push @EXPORT, qw(ERROR_ARCHIVE_DISABLED);
-use constant ERROR_ARCHIVE_DIR_INVALID                              => ERROR_MINIMUM + 63;
-    push @EXPORT, qw(ERROR_ARCHIVE_DIR_INVALID);
-use constant ERROR_BACKUP_DIR_INVALID                               => ERROR_MINIMUM + 64;
-    push @EXPORT, qw(ERROR_BACKUP_DIR_INVALID);
-use constant ERROR_GUNZIP                                           => ERROR_MINIMUM + 65;
+use constant ERROR_GUNZIP                                           => ERROR_MINIMUM + 63;
     push @EXPORT, qw(ERROR_GUNZIP);
+use constant ERROR_STANZA_DIR_INVALID                               => ERROR_MINIMUM + 64;
+    push @EXPORT, qw(ERROR_STANZA_DIR_INVALID);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

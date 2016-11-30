@@ -46,14 +46,9 @@ P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info=>: iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/backup/repo/archive/db
-P00  DEBUG:     ArchiveInfo->create(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     ArchiveInfo->dbHistoryIdGet(): bFileRequired = false
-P00  DEBUG:     ArchiveInfo->dbHistoryIdGet=>: iDbHistoryId = 1
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
+P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/backup/repo/archive/db
 P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->create(): iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     BackupInfo->dbHistoryIdGet=>: iDbHistoryId = 1
 P00   INFO: successfully created stanza db
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00   INFO: stanza-create stop
