@@ -143,6 +143,10 @@
 
                         <p>Abstracted code to determine which database cluster is the master and which are standbys.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improved <code>IO->bufferRead</code> to always return requested number of bytes until EOF.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

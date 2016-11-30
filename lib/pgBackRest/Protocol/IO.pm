@@ -370,7 +370,6 @@ sub bufferRead
     # Set working variables
     my $iRemainingSize = $iRequestSize;
     $iOffset = defined($iOffset) ? $iOffset : 0;
-    $bBlock = defined($bBlock) ? $bBlock : false;
 
     # If there is data left over in the buffer from lineRead then use it
     if (defined($self->{strBuffer}) && $self->{iBufferPos} < $self->{iBufferSize})
@@ -390,80 +389,72 @@ sub bufferRead
             $iRemainingSize -= $iReadSize;
             undef($self->{strBuffer});
 
-            return $iReadSize if !$bBlock || $iRemainingSize == 0;
+            return $iReadSize if $iRemainingSize == 0;
 
             $iOffset += $iReadSize;
         }
     }
 
-    # If this is a blocking read then loop until all bytes have been read - else error.
+    # If this is a blocking read then loop until all bytes have been read, else error.  If not blocking read until the request size
+    # has been met or EOF.
     #
     # This link (http://docstore.mik.ua/orelly/perl/cookbook/ch07_15.htm) demonstrates a way to implement this same loop without
     # using select.  Not sure if it would be better but the link has been left here so it can be found in the future if the
     # implementation needs to be changed.
-    if ($bBlock)
+    my $fTimeStart = gettimeofday();
+    my $fRemaining = 1; #$self->{iProtocolTimeout};
+
+    do
     {
-        my $fTimeStart = gettimeofday();
-        my $fRemaining = $self->{iProtocolTimeout};
-
-        do
+        # Check if the sysread call will block
+        if ($self->{oInSelect}->can_read($fRemaining))
         {
-            # Check if the sysread call will block
-            if ($self->{oInSelect}->can_read($fRemaining))
+            # Read a data into the buffer
+            my $iReadSize = sysread($self->{hIn}, $$tBufferRef, $iRemainingSize, $iOffset);
+
+            # Process errors from the sysread
+            if (!defined($iReadSize))
             {
-                # Read a data into the buffer
-                my $iReadSize = sysread($self->{hIn}, $$tBufferRef, $iRemainingSize, $iOffset);
+                my $strError = $!;
 
-                # Process errors from the sysread
-                if (!defined($iReadSize))
-                {
-                    my $strError = $!;
-
-                    $self->waitPid();
-                    confess &log(ERROR, 'unable to read' . (defined($strError) ? ": ${strError}" : ''));
-                }
-
-                # Check for EOF
-                if ($iReadSize == 0)
-                {
-                    confess &log(ERROR, 'unexpected EOF', ERROR_FILE_READ);
-                }
-
-                # Update remaining size and return when it reaches 0
-                $iRemainingSize -= $iReadSize;
-
-                if ($iRemainingSize == 0)
-                {
-                    return $iRequestSize;
-                }
-
-                # Update the offset to advance the next read further into the buffer
-                $iOffset += $iReadSize;
+                $self->waitPid();
+                confess &log(ERROR, 'unable to read' . (defined($strError) ? ": ${strError}" : ''));
             }
 
-            # Calculate time remaining before timeout
-            $fRemaining = $self->{iProtocolTimeout} - (gettimeofday() - $fTimeStart);
+            # Check for EOF
+            if ($iReadSize == 0)
+            {
+                if (defined($bBlock) && $bBlock)
+                {
+                    confess &log(ERROR,
+                        'EOF after ' . ($iRequestSize - $iRemainingSize) . " bytes but expected ${iRequestSize}",
+                        ERROR_FILE_READ);
+                }
+                else
+                {
+                    return $iRequestSize - $iRemainingSize;
+                }
+            }
+
+            # Update remaining size and return when it reaches 0
+            $iRemainingSize -= $iReadSize;
+
+            if ($iRemainingSize == 0)
+            {
+                return $iRequestSize;
+            }
+
+            # Update the offset to advance the next read further into the buffer
+            $iOffset += $iReadSize;
         }
-        while ($fRemaining > 0);
 
-        # Throw an error if timeout happened before required bytes were read
-        confess &log(ERROR, "unable to read ${iRequestSize} bytes after $self->{iProtocolTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
+        # Calculate time remaining before timeout
+        $fRemaining = $self->{iProtocolTimeout} - (gettimeofday() - $fTimeStart);
     }
+    while ($fRemaining > 0);
 
-    # Otherwise do a non-blocking read and return whatever bytes are ready
-    my $iReadSize = sysread($self->{hIn}, $$tBufferRef, $iRemainingSize, $iOffset);
-
-    # Process errors from sysread
-    if (!defined($iReadSize))
-    {
-        my $strError = $!;
-
-        $self->waitPid();
-        confess &log(ERROR, 'unable to read' . (defined($strError) ? ": ${strError}" : ''));
-    }
-
-    # Return the number of bytes read
-    return $iReadSize;
+    # Throw an error if timeout happened before required bytes were read
+    confess &log(ERROR, "unable to read ${iRequestSize} bytes after $self->{iProtocolTimeout} seconds", ERROR_PROTOCOL_TIMEOUT);
 }
 
 ####################################################################################################################################
