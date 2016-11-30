@@ -101,13 +101,13 @@ sub stanzaCreate
     );
 
     # Initialize the database object
-    my $oDb = new pgBackRest::Db(1);
+    my $oDb = dbMasterGet();
 
     # Validate the database configuration - if the db-path in pgbackrest.conf does not match the pg_control
     # then this will error alerting the user to fix the pgbackrest.conf
-    $oDb->configValidate(optionGet(OPTION_DB_PATH));
+    $oDb->configValidate();
 
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info(optionGet(OPTION_DB_PATH));
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
 
     # Initialize the result variables
     my $iResult = 0;

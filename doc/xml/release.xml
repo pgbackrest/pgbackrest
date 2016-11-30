@@ -134,6 +134,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.12dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Abstracted code to determine which database cluster is the master and which are standbys.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-bug-list>
                     <release-item>

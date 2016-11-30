@@ -428,8 +428,7 @@ sub getCheck
     if (!defined($strDbVersion) || !defined($ullDbSysId) )
     {
         # get DB info for comparison
-        ($strDbVersion, my $iControlVersion, my $iCatalogVersion, $ullDbSysId) =
-            (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
+        ($strDbVersion, my $iControlVersion, my $iCatalogVersion, $ullDbSysId) = dbMasterGet()->info();
     }
 
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
@@ -493,7 +492,7 @@ sub getBackupInfoCheck
     if (!defined($strDbVersion) || !defined($iControlVersion) || !defined($iCatalogVersion) || !defined($ullDbSysId))
     {
         # get DB info for comparison
-        ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = (new pgBackRest::Db(1))->info(optionGet(OPTION_DB_PATH));
+        ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = dbMasterGet()->info();
     }
 
     if ($oFile->isRemote(PATH_BACKUP))
@@ -1143,10 +1142,10 @@ sub check
     );
 
     # Initialize the database object
-    my $oDb = new pgBackRest::Db(1);
+    my $oDb = dbMasterGet();
 
     # Validate the database configuration
-    $oDb->configValidate(optionGet(OPTION_DB_PATH));
+    $oDb->configValidate();
 
     # Force archiving
     my $strWalSegment = $oDb->xlogSwitch();
@@ -1170,28 +1169,28 @@ sub check
     # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
     do
     {
-        eval
-        {
+    eval
+    {
             # check that the archive info file is written and is valid for the current database of the stanza
             $strArchiveId = $self->getCheck($oFile);
 
             # Clear any previous errors if we've found the archive.info
             $iResult = 0;
 
-            return true;
-        }
-        or do
-        {
+        return true;
+    }
+    or do
+    {
             # Confess unhandled errors
-            if (!isException($EVAL_ERROR))
-            {
-                confess $EVAL_ERROR;
-            }
+        if (!isException($EVAL_ERROR))
+        {
+            confess $EVAL_ERROR;
+        }
 
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
-        };
+        # If this is a backrest error then capture the last code and message
+        $iResult = $EVAL_ERROR->code();
+        $strResultMessage = $EVAL_ERROR->message();
+    };
     } while (!defined($strArchiveId) && waitMore($oWait));
 
     # If able to get the archive id then check the archived WAL file with the time remaining
@@ -1244,8 +1243,8 @@ sub check
     if ($iResult == 0)
     {
         &log(INFO,
-            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
-            $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+        "WAL segment ${strWalSegment} successfully stored in the archive at '" .
+        $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
     }
     else
     {
