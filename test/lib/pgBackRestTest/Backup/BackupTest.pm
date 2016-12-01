@@ -50,6 +50,11 @@ use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
+# Constants
+####################################################################################################################################
+use constant WAL_VERSION_94                                      => '94';
+
+####################################################################################################################################
 # Archive helper functions
 ####################################################################################################################################
 # Generate an archive log for testing
@@ -59,11 +64,12 @@ sub archiveGenerate
     my $strXlogPath = shift;
     my $iSourceNo = shift;
     my $iArchiveNo = shift;
+    my $strWalVersion = shift;
     my $bPartial = shift;
 
     my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
                          (defined($bPartial) && $bPartial ? '.partial' : '');
-    my $strArchiveTestFile = testDataPath() . "/test.archive${iSourceNo}.bin";
+    my $strArchiveTestFile = testDataPath() . "/backup.wal${iSourceNo}_${strWalVersion}.bin";
 
     my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
 
@@ -84,7 +90,7 @@ sub archiveCheck
     my $bCompress = shift;
 
     # Build the archive name to check for at the destination
-    my $strArchiveCheck = PG_VERSION_93 . "-1/${strArchiveFile}-${strArchiveChecksum}";
+    my $strArchiveCheck = PG_VERSION_94 . "-1/${strArchiveFile}-${strArchiveChecksum}";
 
     if ($bCompress)
     {
@@ -132,10 +138,9 @@ sub backupTestRun
     my $strStanza = HOST_STANZA;
     my $oLogTest;
 
-    my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
+    my $strArchiveChecksum = '72b9da071c13957fb4ca31f05dbd5c644297c2f7';
     my $iArchiveMax = 3;
-    my $strArchiveTestFile = testDataPath() . '/test.archive2.bin';
-    my $strArchiveTestFile2 = testDataPath() . '/test.archive1.bin';
+    my $strArchiveTestFile = testDataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
 
     pathModeDefaultSet('0700');
     fileModeDefaultSet('0600');
@@ -205,7 +210,8 @@ sub backupTestRun
                             confess 'backup total * archive total cannot be greater than 255';
                         }
 
-                        ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo);
+                        ($strArchiveFile, $strSourceFile) =
+                            archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, WAL_VERSION_94);
                         &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
                                    ', archive ' .sprintf('%02x', $iArchive) .
                                    " - ${strArchiveFile}");
@@ -219,7 +225,7 @@ sub backupTestRun
 
                             $strArchiveTmp =
                                 $oHostBackup->repoPath() . "/archive/${strStanza}/" .
-                                PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.pgbackrest.tmp";
+                                PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.pgbackrest.tmp";
 
                             executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
                             fileStringWrite($strArchiveTmp, 'JUNK');
@@ -266,8 +272,7 @@ sub backupTestRun
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $oLogTest});
 
-
-                            # break the system id
+                            # Break the system id
                             $oHostBackup->infoMunge(
                                 $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
                                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
@@ -319,7 +324,9 @@ sub backupTestRun
                             # Now it should break on archive duplication (because checksum is different
                             &log(INFO, '        test archive duplicate error');
 
-                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo);
+                            ($strArchiveFile, $strSourceFile) =
+                                archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, WAL_VERSION_94);
+
                             $oHostDbMaster->executeSimple(
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
@@ -329,14 +336,15 @@ sub backupTestRun
                                 my $strDuplicateWal =
                                     ($bRemote ? $oHostDbMaster->spoolPath() :
                                                 $oHostBackup->repoPath()) .
-                                    "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
+                                    "/archive/${strStanza}/out/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
 
                                 fileRemove($strDuplicateWal);
                             }
 
                             # Test .partial archive
                             &log(INFO, '        test .partial archive');
-                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, true);
+                            ($strArchiveFile, $strSourceFile) =
+                                archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, WAL_VERSION_94, true);
                             $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
                             archiveCheck($oFile, $strArchiveFile, $strArchiveChecksum, $bCompress);
 
@@ -346,7 +354,8 @@ sub backupTestRun
 
                             # Test .partial archive with different checksum
                             &log(INFO, '        test .partial archive with different checksum');
-                            ($strArchiveFile, $strSourceFile) = archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, true);
+                            ($strArchiveFile, $strSourceFile) =
+                                archiveGenerate($oFile, $strXlogPath, 1, $iArchiveNo, WAL_VERSION_94, true);
                             $oHostDbMaster->executeSimple(
                                 $strCommand . " ${strSourceFile}",
                                 {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $oLogTest});
@@ -355,7 +364,7 @@ sub backupTestRun
                             {
                                 my $strDuplicateWal =
                                     ($bRemote ? $oHostDbMaster->spoolPath() : $oHostBackup->repoPath()) .
-                                    "/archive/${strStanza}/out/${strArchiveFile}-4518a0fdf41d796760b384a358270d4682589820";
+                                    "/archive/${strStanza}/out/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
 
                                 fileRemove($strDuplicateWal);
                             }
@@ -369,7 +378,7 @@ sub backupTestRun
 
                 if (defined($oLogTest))
                 {
-                    $oLogTest->supplementalAdd($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info');
+                    $oLogTest->supplementalAdd($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
                 }
             }
             }
@@ -417,19 +426,12 @@ sub backupTestRun
                 # Push a WAL segment
                 $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
 
-                # load the archive info file so it can be munged for testing
-                my $strInfoFile = $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE);
-                executeTest("sudo chmod 660 ${strInfoFile}");
-                my %oInfo;
-                iniLoad($strInfoFile, \%oInfo);
-                my $strDbVersion = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION};
-                my $ullDbSysId = $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_SYSTEM_ID};
-
-                # Break the database version
+                # Break the database version of the archive info file
                 if ($iError == 0)
                 {
-                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = '8.0';
-                    testIniSave($strInfoFile, \%oInfo, true);
+                    $oHostBackup->infoMunge(
+                        $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                        {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
                 }
 
                 # Push two more segments with errors to exceed archive-max-mb
@@ -445,8 +447,7 @@ sub backupTestRun
                 # Fix the database version
                 if ($iError == 0)
                 {
-                    $oInfo{&INFO_ARCHIVE_SECTION_DB}{&INFO_ARCHIVE_KEY_DB_VERSION} = PG_VERSION_93;
-                    testIniSave($strInfoFile, \%oInfo, true);
+                    $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
                 }
 
                 # Remove the stop file
@@ -454,7 +455,7 @@ sub backupTestRun
 
                 # Check the dir to be sure that segment 2 and 3 were not pushed yet
                 executeTest(
-                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . "-1/0000000100000001",
                     {oLogTest => $oLogTest, bRemote => $bRemote});
 
                 # Push segment 5
@@ -462,7 +463,7 @@ sub backupTestRun
 
                 # Check that 5 is pushed
                 executeTest(
-                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . "-1/0000000100000001",
                     {oLogTest => $oLogTest, bRemote => $bRemote});
 
                 # Call push without a segment
@@ -470,7 +471,7 @@ sub backupTestRun
 
                 # Check the dir to be sure that segment 2 and 3 were pushed
                 executeTest(
-                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/9.3-1/0000000100000001",
+                    'ls -1R ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . "-1/0000000100000001",
                     {oLogTest => $oLogTest, bRemote => $bRemote});
 
             }
@@ -515,24 +516,25 @@ sub backupTestRun
                 my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
                 filePathCreate($strXlogPath, undef, false, true);
 
-                # Create the test path for pg_control
-                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
 
-                # Copy pg_control
-                executeTest('cp ' . testDataPath() . '/pg_control_93 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+                # Create the test path for pg_control and copy pg_control for stanza-create
+                filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+                executeTest('cp ' . testDataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
+                            DB_FILE_PGCONTROL);
 
                 my $strCommand =
                     $oHostDbMaster->backrestExe() .
                     ' --config=' . $oHostDbMaster->backrestConfig() .
                     " --stanza=${strStanza} archive-get";
 
+                # Fail on missing archive info file
                 $oHostDbMaster->executeSimple(
                         $strCommand . " 000000010000000100000001 ${strXlogPath}/000000010000000100000001",
                         {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $oLogTest});
 
                 # Create the archive info file
                 filePathCreate($oFile->pathGet(PATH_BACKUP_ARCHIVE), '0770', undef, true);
-                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_93, 6156904820763115222);
+                (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(PG_VERSION_94, 6353949018581704918);
 
                 if (defined($oLogTest))
                 {
@@ -564,13 +566,15 @@ sub backupTestRun
                             $strSourceFile .= '.gz';
                         }
 
+                        # Change the directory permissions to enable file creation
+                        executeTest('sudo chmod 770 ' . dirname($oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . "-1")));
                         filePathCreate(
                             dirname(
-                                $oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_93 . "-1/${strSourceFile}")), '0770', true, true);
+                                $oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . "-1/${strSourceFile}")), '0770', true, true);
 
                         $oFile->copy(
-                            PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file
-                            PATH_BACKUP_ARCHIVE, PG_VERSION_93 .    # Destination file
+                            PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file $strArchiveTestFile
+                            PATH_BACKUP_ARCHIVE, PG_VERSION_94 .    # Destination file
                                 "-1/${strSourceFile}",
                             false,                                  # Source is not compressed
                             $bCompress,                             # Destination compress based on test
@@ -646,6 +650,8 @@ sub backupTestRun
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Backup::Common::ExpireCommonTest($oHostBackup, $oFile, $oLogTest);
 
+            # ??? This function creates data elements in the $oExpireTest object that are used by the $oExpireTest functions. But
+            # should probably change to use the stanza-create command especially with stanza-upgrade.
             $oExpireTest->stanzaCreate($strStanza, PG_VERSION_92);
             use constant SECONDS_PER_DAY => 86400;
             my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
@@ -786,7 +792,7 @@ sub backupTestRun
 
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
-            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6317709442043514973;
+            $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6353949018581704918;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
             $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
@@ -840,10 +846,12 @@ sub backupTestRun
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-                                                  '2ee0de0a5fb5cf15f4a24e72b368c41f7e187003', $lTime - 100, undef, true);
+                                                  '89373d9f2973502940de06bc5212489df3f8a912', $lTime - 100, undef, true);
 
             # Copy pg_control
-            executeTest('cp ' . testDataPath() . '/pg_control_94 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            executeTest(
+                'cp ' . testDataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' .  $oHostDbMaster->dbBasePath() . '/' .
+                DB_FILE_PGCONTROL);
             utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
                 or confess &log(ERROR, "unable to set time");
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}

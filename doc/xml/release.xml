@@ -217,6 +217,14 @@
             <release-test-list>
                 <release-refactor-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Update control and wal test files to <id>9.4</id> with matching system identifiers.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improved exception handling in file unit tests.</p>
                     </release-item>
                 </release-refactor-list>

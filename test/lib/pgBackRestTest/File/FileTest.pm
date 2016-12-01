@@ -1140,13 +1140,13 @@ sub fileTestRun
 
                         if ($iLarge < 3)
                         {
-                            executeTest('cp ' . testDataPath() . "/test.archive${iLarge}.bin ${strSourceFile}");
+                            executeTest('cp ' . testDataPath() . "/filecopy.archive${iLarge}.bin ${strSourceFile}");
                         }
                         else
                         {
                             for (my $iTableSizeIdx = 0; $iTableSizeIdx < 100; $iTableSizeIdx++)
                             {
-                                executeTest('cat ' . testDataPath() . "/test.table.bin >> ${strSourceFile}");
+                                executeTest('cat ' . testDataPath() . "/filecopy.table.bin >> ${strSourceFile}");
                             }
                         }
                     }
