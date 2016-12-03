@@ -15,6 +15,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
 
+use pgBackRest::BackupCommon;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -212,6 +213,7 @@ sub backupBegin
         (defined($oExpectedManifest) ? " --no-online" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
+        (defined($oParam->{bRepoLink}) && !$oParam->{bRepoLink} ? ' --no-repo-link' : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . $self->stanza() . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
@@ -280,55 +282,86 @@ sub backupEnd
         my $hTablespaceManifest = $self->{oFile}->manifest(
             PATH_BACKUP_CLUSTER, "${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
 
-        # Iterate file links
-        for my $strFile (sort(keys(%{$hTablespaceManifest})))
+        # Remove . and ..
+        delete($hTablespaceManifest->{'.'});
+        delete($hTablespaceManifest->{'..'});
+
+        # Only check links if repo links are disabled
+        if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
         {
-            next if ($strFile eq '.' || $strFile eq '..');
-
-            # Make sure the link is in the expected manifest
-            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
-
-            if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
-                $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+            # Iterate file links
+            for my $strFile (sort(keys(%{$hTablespaceManifest})))
             {
-                confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                # Make sure the link is in the expected manifest
+                my $hManifestTarget =
+                    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+
+                if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
+                    $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+                {
+                    confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                }
+
+                # Make sure the link really is a link
+                if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+                {
+                    confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
+                }
+
+                # Make sure the link destination is correct
+                my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
+
+                if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
+                {
+                    confess &log(ERROR,
+                        "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
+                        "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                }
             }
 
-            # Make sure the link really is a link
-            if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+            # Iterate manifest targets
+            for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
             {
-                confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
-            }
+                my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
+                my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
 
-            # Make sure the link destination is correct
-            my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
-
-            if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
-            {
-                confess &log(ERROR,
-                    "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
-                    "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                # Make sure the target exists as a link on disk
+                if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
+                    !defined($hTablespaceManifest->{$strTablespaceId}))
+                {
+                    confess &log(ERROR,
+                        "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
+                }
             }
         }
-
-        # Iterate manifest targets
-        for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
+        # Else make sure the tablespace directory is empty
+        elsif (keys(%{$hTablespaceManifest}) > 0)
         {
-            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
-            my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
-
-            # Make sure the target exists as a link on disk
-            if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
-                !defined($hTablespaceManifest->{$strTablespaceId}))
-            {
-                confess &log(ERROR, "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
-            }
+            confess &log(ERROR, DB_PATH_PGTBLSPC . ' directory should be empty when --no-' . OPTION_REPO_LINK);
         }
     }
     # Else there should not be a tablespace directory at all
     elsif ($self->{oFile}->exists(PATH_BACKUP_CLUSTER, "${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
     {
         confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
+    }
+
+    # Check that latest link exists unless repo links are disabled
+    my $strLatestLink = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, LINK_LATEST);
+    my $bLatestLinkExists = fileExists($strLatestLink);
+
+    if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
+    {
+        my $strLatestLinkDestination = readlink($strLatestLink);
+
+        if ($strLatestLinkDestination ne $strBackup)
+        {
+            confess &log(ERROR, "'" . LINK_LATEST . "' link should be '${strBackup}' but is '${strLatestLinkDestination}");
+        }
+    }
+    elsif ($bLatestLinkExists)
+    {
+        confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist when --no-" . OPTION_REPO_LINK);
     }
 
     # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
@@ -549,14 +582,15 @@ sub backupLast
 {
     my $self = shift;
 
-    my @stryBackup = $self->{oFile}->list(PATH_BACKUP_CLUSTER, undef, undef, 'reverse');
+    my @stryBackup = $self->{oFile}->list(
+        PATH_BACKUP_CLUSTER, undef, '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', 'reverse');
 
-    if (!defined($stryBackup[3]))
+    if (!defined($stryBackup[0]))
     {
         confess 'no backup was found: ' . join(@stryBackup, ', ');
     }
 
-    return $stryBackup[3];
+    return $stryBackup[0];
 }
 
 ####################################################################################################################################

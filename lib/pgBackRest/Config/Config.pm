@@ -262,6 +262,8 @@ use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol
     push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
 use constant OPTION_PROCESS_MAX                                     => 'process-max';
     push @EXPORT, qw(OPTION_PROCESS_MAX);
+use constant OPTION_REPO_LINK                                       => 'repo-link';
+    push @EXPORT, qw(OPTION_REPO_LINK);
 
 # Commands
 use constant OPTION_CMD_SSH                                         => 'cmd-ssh';
@@ -456,6 +458,8 @@ use constant OPTION_DEFAULT_LOG_PATH                                => '/var/log
     push @EXPORT, qw(OPTION_DEFAULT_LOG_PATH);
 use constant OPTION_DEFAULT_NEUTRAL_UMASK                           => true;
     push @EXPORT, qw(OPTION_DEFAULT_NEUTRAL_UMASK);
+use constant OPTION_DEFAULT_REPO_LINK                               => true;
+    push @EXPORT, qw(OPTION_DEFAULT_REPO_LINK);
 use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
 use constant OPTION_DEFAULT_SPOOL_PATH                              => '/var/spool/' . BACKREST_EXE;
@@ -1197,6 +1201,17 @@ my %oOptionRule =
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
         }
+    },
+
+    &OPTION_REPO_LINK =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_LINK,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true,
+        },
     },
 
     &OPTION_REPO_PATH =>

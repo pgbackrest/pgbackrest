@@ -276,13 +276,15 @@ sub processManifest
             $oFileMaster->pathCreate(PATH_BACKUP_TMP, $strPath);
         }
 
-        # Create tablespace links
-        for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+        if (optionGet(OPTION_REPO_LINK))
         {
-            if ($oBackupManifest->isTargetTablespace($strTarget))
+            for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
             {
-                $oFileMaster->linkCreate(
-                    PATH_BACKUP_TMP, $strTarget, PATH_BACKUP_TMP, MANIFEST_TARGET_PGDATA . "/${strTarget}", false, true);
+                if ($oBackupManifest->isTargetTablespace($strTarget))
+                {
+                    $oFileMaster->linkCreate(
+                        PATH_BACKUP_TMP, $strTarget, PATH_BACKUP_TMP, MANIFEST_TARGET_PGDATA . "/${strTarget}", false, true);
+                }
             }
         }
     }
@@ -908,8 +910,12 @@ sub process
                          "/${strBackupLabel}.manifest.gz", true);
 
     # Create a link to the most recent backup
-    $oFileLocal->remove(PATH_BACKUP_CLUSTER, "latest");
-    $oFileLocal->linkCreate(PATH_BACKUP_CLUSTER, $strBackupLabel, PATH_BACKUP_CLUSTER, "latest", undef, true);
+    $oFileLocal->remove(PATH_BACKUP_CLUSTER, LINK_LATEST);
+
+    if (optionGet(OPTION_REPO_LINK))
+    {
+        $oFileLocal->linkCreate(PATH_BACKUP_CLUSTER, $strBackupLabel, PATH_BACKUP_CLUSTER, LINK_LATEST, undef, true);
+    }
 
     # Save backup info
     $oBackupInfo->add($oBackupManifest);

@@ -137,9 +137,15 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Fixed a bug where internal symlinks were not being created for tablespaces in the repository.  This issue was only apparent when trying to bring up clusters in-place with filesystem snapshots and did not affect normal backup and restore.</p>
+                        <p>Fixed a bug where internal symlinks were not being created for tablespaces in the repository.  This issue was only apparent when trying to bring up clusters in-place manually using filesystem snapshots and did not affect normal backup and restore.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Added the <br-option>--repo-link</br-option> option to allow internal symlinks to be suppressed when the repository is located on a filesystem that does not support symlinks.  This does not affect any <backrest/> functionality, but the convenience link <path>latest</path> will not be created and neither will internal tablespace symlinks, which will affect the ability to bring up clusters in-place manually using filesystem snapshots.</p>
+                    </release-item>
+                </release-feature-list>
 
                 <release-refactor-list>
                     <release-item>

@@ -198,6 +198,17 @@
                         <example>630</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - REPO-LINK KEY -->
+                    <config-key id="repo-link" name="Repository Symlink Creation">
+                        <summary>Create convenience symlinks in repository.</summary>
+
+                        <text>Creates the convenience link <path>latest</path> in the stanza directory and internal tablespace symlinks in each backup directory. The internal tablespace symlinks allow clusters to be brought up manually in-place using filesystem snapshots as long as the backup is not compressed.
+
+                        This option should be disabled when the repository is located on a filesystem that does not support symlinks.  No <backrest/> functionality will be affected, but certain manual operations on the repository may be less convenient.</text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Repository path where WAL segments and backups stored.</summary>

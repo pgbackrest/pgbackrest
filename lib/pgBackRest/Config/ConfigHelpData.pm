@@ -568,6 +568,23 @@ my $oConfigHelpData =
                     "edit/check recovery.conf before manually restarting."
         },
 
+        # REPO-LINK Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-link' =>
+        {
+            section => 'general',
+            summary =>
+                "Create convenience symlinks in repository.",
+            description =>
+                "Creates the convenience link latest in the stanza directory and internal tablespace symlinks in each backup " .
+                    "directory. The internal tablespace symlinks allow clusters to be brought up manually in-place using " .
+                    "filesystem snapshots as long as the backup is not compressed.\n" .
+                "\n" .
+                "This option should be disabled when the repository is located on a filesystem that does not support symlinks. " .
+                    "No pgBackRest functionality will be affected, but certain manual operations on the repository may be less " .
+                    "convenient."
+        },
+
         # REPO-PATH Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-path' =>
@@ -898,6 +915,7 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
+                'repo-link' => 'section',
                 'repo-path' => 'section',
                 'resume' => 'section',
                 'retention-archive' => 'section',

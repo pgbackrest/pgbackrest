@@ -1454,8 +1454,8 @@ sub backupTestRun
             executeTest("sudo chmod -R g+w " . dirname($strTmpPath));
 
             $strBackup = $oHostBackup->backup(
-                $strType, 'cannot resume - disabled',
-                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
+                $strType, 'cannot resume - disabled / no repo link',
+                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME, bRepoLink => false,
                     strOptionalParam => '--no-resume --log-level-console=detail'});
 
             # Restore
