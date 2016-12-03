@@ -1037,6 +1037,7 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <f
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/1, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1], strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
+P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = pg_data/pg_tblspc/1, strDestinationPathType = backup:tmp, strSourceFile = pg_tblspc/1, strSourcePathType = backup:tmp
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/global/pg_control to [BACKUP-FULL-2]
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/postgresql.conf to [BACKUP-FULL-2]
@@ -1333,8 +1334,9 @@ P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], 
 P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     Backup->fileNotInManifest=>: stryFile = (pg_data/PG_VERSION.gz, pg_data/base/1/12000.gz, pg_data/base/1/PG_VERSION.gz, pg_data/base/16384/17000.gz, pg_data/base/16384/PG_VERSION.gz, pg_data/base/32768/33000.gz, pg_data/base/32768/PG_VERSION.gz, pg_data/global/pg_control.gz, pg_data/pg_stat/global.stat.gz, pg_data/postgresql.conf.gz)
+P00  DEBUG:     Backup->fileNotInManifest=>: stryFile = (pg_data/PG_VERSION.gz, pg_data/base/1/12000.gz, pg_data/base/1/PG_VERSION.gz, pg_data/base/16384/17000.gz, pg_data/base/16384/PG_VERSION.gz, pg_data/base/32768/33000.gz, pg_data/base/32768/PG_VERSION.gz, pg_data/global/pg_control.gz, pg_data/pg_stat/global.stat.gz, pg_data/pg_tblspc/1, pg_data/postgresql.conf.gz)
 P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/postgresql.conf.gz
+P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/pg_tblspc/1
 P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/pg_stat/global.stat.gz
 P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/global/pg_control.gz
 P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/base/32768/PG_VERSION.gz
@@ -1365,6 +1367,8 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <f
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/2, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/2/[TS_PATH-1], strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = <false>, strMode = <0750>, strPath = pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:tmp
+P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = pg_data/pg_tblspc/1, strDestinationPathType = backup:tmp, strSourceFile = pg_tblspc/1, strSourcePathType = backup:tmp
+P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = pg_data/pg_tblspc/2, strDestinationPathType = backup:tmp, strSourceFile = pg_tblspc/2, strSourcePathType = backup:tmp
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/global/pg_control to [BACKUP-FULL-2]
 P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup->processManifest: hardlink pg_data/postgresql.conf to [BACKUP-FULL-2]

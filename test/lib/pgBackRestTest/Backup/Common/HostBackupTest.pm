@@ -145,6 +145,9 @@ sub new
     # Set the backup destination
     $self->{strBackupDestination} = $$oParam{strBackupDestination};
 
+    # Default hardlink to false
+    $self->{bHardLink} = false;
+
     # Create the local file object
     $self->{oFile} = new pgBackRest::File(
         $self->stanza(),
@@ -263,8 +266,73 @@ sub backupEnd
 
     my $strBackup = $self->backupLast();
 
-    # Only do compare for synthetic backups
-    if (defined($oExpectedManifest))
+    # If a real backup then load the expected manifest from the actual manifest.  An expected manifest can't be generated perfectly
+    # because a running database is always in flux.  Even so, it allows us test many things.
+    if (!$self->synthetic())
+    {
+        $oExpectedManifest =
+            iniLoad($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST, $oExpectedManifest);
+    }
+
+    # Make sure tablespace links are correct
+    if ($strType eq BACKUP_TYPE_FULL || $self->hardLink())
+    {
+        my $hTablespaceManifest = $self->{oFile}->manifest(
+            PATH_BACKUP_CLUSTER, "${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
+
+        # Iterate file links
+        for my $strFile (sort(keys(%{$hTablespaceManifest})))
+        {
+            next if ($strFile eq '.' || $strFile eq '..');
+
+            # Make sure the link is in the expected manifest
+            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+
+            if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
+                $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+            {
+                confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+            }
+
+            # Make sure the link really is a link
+            if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+            {
+                confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
+            }
+
+            # Make sure the link destination is correct
+            my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
+
+            if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
+            {
+                confess &log(ERROR,
+                    "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
+                    "'$hTablespaceManifest->{$strFile}{link_destination}'");
+            }
+        }
+
+        # Iterate manifest targets
+        for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
+        {
+            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
+            my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
+
+            # Make sure the target exists as a link on disk
+            if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
+                !defined($hTablespaceManifest->{$strTablespaceId}))
+            {
+                confess &log(ERROR, "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
+            }
+        }
+    }
+    # Else there should not be a tablespace directory at all
+    elsif ($self->{oFile}->exists(PATH_BACKUP_CLUSTER, "${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
+    {
+        confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
+    }
+
+    # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
+    if ($self->synthetic())
     {
         # Set backup type in the expected manifest
         ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
@@ -765,6 +833,7 @@ sub configCreate
     {
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
+            $self->{bHardLink} = true;
             $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'y';
         }
 
@@ -1024,6 +1093,7 @@ sub infoRestore
 sub backrestConfig {return shift->paramGet(HOST_PARAM_BACKREST_CONFIG);}
 sub backupDestination {return shift->{strBackupDestination};}
 sub backrestExe {return shift->paramGet(HOST_PARAM_BACKREST_EXE);}
+sub hardLink {return shift->{bHardLink};}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet();}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER;}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY;}

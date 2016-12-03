@@ -135,6 +135,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.12dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed a bug where internal symlinks were not being created for tablespaces in the repository.  This issue was only apparent when trying to bring up clusters in-place with filesystem snapshots and did not affect normal backup and restore.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <release-item-contributor-list>

@@ -191,7 +191,7 @@ sub tmpClean
         my $strDelete = $oFileLocal->pathGet(PATH_BACKUP_TMP, $strFile);
 
         # If a path then delete it, all the files should have already been deleted since we are going in reverse order
-        if (-d $strDelete)
+        if (!-X $strDelete && -d $strDelete)
         {
             logDebugMisc($strOperation, "remove path ${strDelete}");
 
@@ -267,12 +267,23 @@ sub processManifest
     my $lFileTotal = 0;
     my $lSizeTotal = 0;
 
-    # If this is a full backup or hard-linked then create all paths
+    # If this is a full backup or hard-linked then create all paths and tablespace links
     if ($bHardLink || $strType eq BACKUP_TYPE_FULL)
     {
+        # Create paths
         foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
         {
             $oFileMaster->pathCreate(PATH_BACKUP_TMP, $strPath);
+        }
+
+        # Create tablespace links
+        for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
+        {
+            if ($oBackupManifest->isTargetTablespace($strTarget))
+            {
+                $oFileMaster->linkCreate(
+                    PATH_BACKUP_TMP, $strTarget, PATH_BACKUP_TMP, MANIFEST_TARGET_PGDATA . "/${strTarget}", false, true);
+            }
         }
     }
 

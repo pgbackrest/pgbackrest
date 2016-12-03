@@ -447,12 +447,26 @@ sub linkCreate
         # Generate relative path if requested
         if ($bRelative)
         {
-            my $iCommonLen = commonPrefix($strSource, $strDestination);
+            # Determine how much of the paths are common
+            my @strySource = split('/', $strSource);
+            my @stryDestination = split('/', $strDestination);
 
-            if ($iCommonLen != 0)
+            while (defined($strySource[0]) && defined($stryDestination[0]) && $strySource[0] eq $stryDestination[0])
             {
-                $strSource = ('../' x substr($strDestination, $iCommonLen) =~ tr/\///) . substr($strSource, $iCommonLen);
+                shift(@strySource);
+                shift(@stryDestination);
             }
+
+            # Add relative path sections
+            $strSource = '';
+
+            for (my $iIndex = 0; $iIndex < @stryDestination - 1; $iIndex++)
+            {
+                $strSource .= '../';
+            }
+
+            # Add path to source
+            $strSource .= join('/', @strySource);
 
             logDebugMisc
             (
