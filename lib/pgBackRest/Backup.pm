@@ -23,7 +23,6 @@ use pgBackRest::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupFile;
 use pgBackRest::BackupInfo;
-use pgBackRest::BackupProcess;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
@@ -32,6 +31,7 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::LocalProcess;
 use pgBackRest::Protocol::Protocol;
 use pgBackRest::Version;
 
@@ -254,7 +254,7 @@ sub processManifest
     $oProtocolMaster->noOp();
 
     # Initialize the backup process
-    my $oBackupProcess = new pgBackRest::BackupProcess();
+    my $oBackupProcess = new pgBackRest::Protocol::LocalProcess(DB);
 
     if ($self->{iCopyRemoteIdx} != $self->{iMasterRemoteIdx})
     {
@@ -353,11 +353,12 @@ sub processManifest
         $lSizeTotal += $lSize;
 
         # Queue for parallel backup
-        $oBackupProcess->queueBackup(
-            $iHostConfigIdx, $strQueueKey, $strRepoFile, $strDbFile, $strRepoFile, $bCompress,
-            $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false), $lSize,
-            $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
-            $bIgnoreMissing);
+        $oBackupProcess->queueJob(
+            $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
+            [$strDbFile, $strRepoFile, $lSize,
+                $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false), $bCompress,
+                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false),
+                $bIgnoreMissing]);
 
         # Size and checksum will be removed and then verified later as a sanity check
         $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
@@ -392,17 +393,14 @@ sub processManifest
     }
 
     # Run the backup jobs and process results
-    while (my $hyResult = $oBackupProcess->process())
+    while (my $hyJob = $oBackupProcess->process())
     {
-        foreach my $hResult (@{$hyResult})
+        foreach my $hJob (@{$hyJob})
         {
-            my $hFile = $hResult->{hPayload};
-
             ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-                $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hResult->{iHostConfigIdx}), false),
-                $hResult->{iProcessId}, $$hFile{strRepoFile}, $$hFile{strDbFile}, $$hResult{iCopyResult}, $$hFile{lSize},
-                $$hResult{lCopySize}, $$hResult{lRepoSize}, $lSizeTotal, $lSizeCurrent, $$hFile{strChecksum},
-                $$hResult{strCopyChecksum}, $lManifestSaveSize, $lManifestSaveCurrent);
+                $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hJob->{iHostConfigIdx}), false), $hJob->{iProcessId},
+                @{$hJob->{rParam}}[0..3], @{$hJob->{rResult}},
+                $lSizeTotal, $lSizeCurrent, $lManifestSaveSize, $lManifestSaveCurrent);
         }
 
         # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed

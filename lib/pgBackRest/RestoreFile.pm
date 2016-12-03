@@ -34,41 +34,41 @@ sub restoreFile
     (
         $strOperation,
         $oFile,                                     # File object
-        $strRepoFile,
         $strDbFile,
-        $strReference,
         $lSize,
         $lModificationTime,
+        $strChecksum,
+        $bZero,
+        $bForce,                                    # Force flag
+        $strRepoFile,
+        $strReference,
         $strMode,
         $strUser,
         $strGroup,
-        $strChecksum,
-        $bZero,
         $lCopyTimeStart,                            # Backup start time - used for size/timestamp deltas
         $bDelta,                                    # Is restore a delta?
-        $bForce,                                    # Force flag
         $strBackupPath,                             # Backup path
-        $bSourceCompression,                        # Is the source compressed?
+        $bSourceCompressed,                         # Is the source compressed?
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::restoreFile', \@_,
             {name => 'oFile', trace => true},
-            {name => &OP_PARAM_REPO_FILE, trace => true},
-            {name => &OP_PARAM_DB_FILE, trace => true},
-            {name => &OP_PARAM_REFERENCE, required => false, trace => true},
-            {name => &OP_PARAM_SIZE, trace => true},
-            {name => &OP_PARAM_MODIFICATION_TIME, trace => true},
-            {name => &OP_PARAM_MODE, trace => true},
-            {name => &OP_PARAM_USER, trace => true},
-            {name => &OP_PARAM_GROUP, trace => true},
-            {name => &OP_PARAM_CHECKSUM, required => false, trace => true},
-            {name => &OP_PARAM_ZERO, required => false, default => false, trace => true},
-            {name => &OP_PARAM_COPY_TIME_START, trace => true},
-            {name => &OP_PARAM_DELTA, trace => true},
-            {name => &OP_PARAM_FORCE, trace => true},
-            {name => &OP_PARAM_BACKUP_PATH, trace => true},
-            {name => &OP_PARAM_SOURCE_COMPRESSION, trace => true},
+            {name => 'strDbFile', trace => true},
+            {name => 'lSize', trace => true},
+            {name => 'lModificationTime', trace => true},
+            {name => 'strChecksum', required => false, trace => true},
+            {name => 'bZero', required => false, default => false, trace => true},
+            {name => 'bForce', trace => true},
+            {name => 'strRepoFile', trace => true},
+            {name => 'strReference', required => false, trace => true},
+            {name => 'strMode', trace => true},
+            {name => 'strUser', trace => true},
+            {name => 'strGroup', trace => true},
+            {name => 'lCopyTimeStart', trace => true},
+            {name => 'bDelta', trace => true},
+            {name => 'strBackupPath', trace => true},
+            {name => 'bSourceCompressed', trace => true},
         );
 
     # Copy flag and log message
@@ -138,9 +138,9 @@ sub restoreFile
     {
         my ($bCopyResult, $strCopyChecksum, $lCopySize) = $oFile->copy(
             PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $strBackupPath) .
-                "/${strRepoFile}" . ($bSourceCompression ? '.' . $oFile->{strCompressExtension} : ''),
+                "/${strRepoFile}" . ($bSourceCompressed ? '.' . $oFile->{strCompressExtension} : ''),
             PATH_DB_ABSOLUTE, $strDbFile,
-            $bSourceCompression,
+            $bSourceCompressed,
             undef, undef,
             $lModificationTime, $strMode,
             undef,
@@ -174,30 +174,30 @@ sub restoreLog
     my
     (
         $strOperation,
+        $iLocalId,
         $strDbFile,
-        $bCopy,
         $lSize,
         $lModificationTime,
         $strChecksum,
         $bZero,
         $bForce,
+        $bCopy,
         $lSizeTotal,
         $lSizeCurrent,
-        $iLocalId,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::restoreLog', \@_,
-            {name => &OP_PARAM_DB_FILE},
+            {name => 'iLocalId', required => false},
+            {name => 'strDbFile'},
+            {name => 'lSize'},
+            {name => 'lModificationTime'},
+            {name => 'strChecksum', required => false},
+            {name => 'bZero', required => false, default => false},
+            {name => 'bForce'},
             {name => 'bCopy'},
-            {name => &OP_PARAM_SIZE},
-            {name => &OP_PARAM_MODIFICATION_TIME},
-            {name => &OP_PARAM_CHECKSUM, required => false},
-            {name => &OP_PARAM_ZERO, required => false, default => false},
-            {name => &OP_PARAM_FORCE},
             {name => 'lSizeTotal'},
             {name => 'lSizeCurrent'},
-            {name => 'iLocalId', required => false},
         );
 
     # If the file was not copied then create a log entry to explain why

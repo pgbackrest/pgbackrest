@@ -20,8 +20,8 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
-use pgBackRest::RestoreProcess;
 use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::LocalProcess;
 use pgBackRest::Protocol::Protocol;
 use pgBackRest::Version;
 
@@ -1190,7 +1190,8 @@ sub process
     }
 
     # Initialize the restore process
-    my $oRestoreProcess = new pgBackRest::RestoreProcess(optionGet(OPTION_PROCESS_MAX));
+    my $oRestoreProcess = new pgBackRest::Protocol::LocalProcess(BACKUP);
+    $oRestoreProcess->hostAdd(1, optionGet(OPTION_PROCESS_MAX));
 
     # Variables used for parallel copy
     my $lSizeTotal = 0;
@@ -1232,32 +1233,29 @@ sub process
         $lSizeTotal += $lSize;
 
         # Queue for parallel restore
-        $oRestoreProcess->queueRestore(
-            $strQueueKey, $strRepoFile, $strRepoFile, $strDbFile,
-            $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
-                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false), $lSize,
+        $oRestoreProcess->queueJob(
+            1, $strQueueKey, $strRepoFile, OP_RESTORE_FILE,
+            [$strDbFile, $lSize,
                 $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP),
+                $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $lSize > 0),
+                defined($strDbFilter) && $strRepoFile =~ $strDbFilter && $strRepoFile !~ /\/PG\_VERSION$/ ? true : false,
+                optionGet(OPTION_FORCE), $strRepoFile,
+                $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
+                    $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MODE),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
-            $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $lSize > 0),
-            defined($strDbFilter) && $strRepoFile =~ $strDbFilter && $strRepoFile !~ /\/PG\_VERSION$/ ? true : false,
                 $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START),  optionGet(OPTION_DELTA),
-            optionGet(OPTION_FORCE), $self->{strBackupSet},
-            $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS));
+                $self->{strBackupSet}, $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS)]);
     }
 
     # Run the restore jobs and process results
-    while (my $hyResult = $oRestoreProcess->process())
+    while (my $hyJob = $oRestoreProcess->process())
     {
-        foreach my $hResult (@{$hyResult})
+        foreach my $hJob (@{$hyJob})
         {
-            my $hFile = $hResult->{hPayload};
-
             ($lSizeCurrent) = restoreLog(
-                $hFile->{&OP_PARAM_DB_FILE}, $hResult->{bCopy}, $hFile->{&OP_PARAM_SIZE}, $hFile->{&OP_PARAM_MODIFICATION_TIME},
-                $hFile->{&OP_PARAM_CHECKSUM}, $hFile->{&OP_PARAM_ZERO}, optionGet(OPTION_FORCE), $lSizeTotal, $lSizeCurrent,
-                $hResult->{iProcessId});
+                $hJob->{iProcessId}, @{$hJob->{rParam}}[0..5], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent);
         }
 
         # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed

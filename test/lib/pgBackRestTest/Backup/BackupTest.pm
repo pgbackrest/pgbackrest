@@ -772,7 +772,7 @@ sub backupTestRun
             my $bNeutralTest = !$bCompress && !$bHardLink;
 
             # Get base time
-            my $lTime = time() - 100000;
+            my $lTime = time() - 10000;
 
             # Build the manifest
             my %oManifest;

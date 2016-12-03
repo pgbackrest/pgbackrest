@@ -150,7 +150,7 @@ sub process
                 # List the backup reference chain, if any, for this backup
                 if (defined($$oBackupInfo{&INFO_KEY_REFERENCE}))
                 {
-                    $strOutput .= '        backup reference list: ' . (join(', ' ,@{$$oBackupInfo{&INFO_KEY_REFERENCE}})) . "\n";
+                    $strOutput .= '        backup reference list: ' . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}})) . "\n";
                 }
             }
         }
@@ -214,28 +214,12 @@ sub stanzaList
 
     my @oyStanzaList;
 
+    # Run remotely
     if ($oFile->isRemote(PATH_BACKUP))
     {
-        # Build param hash
-        my $oParamHash = undef;
-
-        if (defined($strStanza))
-        {
-            $$oParamHash{'stanza'} = $strStanza;
-        }
-
-        # Trace the remote parameters
-        &log(TRACE, OP_INFO_STANZA_LIST . ": remote (" . $oFile->{oProtocol}->commandParamString($oParamHash) . ')');
-
-        # Execute the command
-        my $strStanzaList = $oFile->{oProtocol}->cmdExecute(OP_INFO_STANZA_LIST, $oParamHash, true);
-
-        # Trace the remote response
-        &log(TRACE, OP_INFO_STANZA_LIST . ": remote json response (${strStanzaList})");
-
-        my $oJSON = JSON::PP->new();
-        return $oJSON->decode($strStanzaList);
+        @oyStanzaList = @{$oFile->{oProtocol}->cmdExecute(OP_INFO_STANZA_LIST, [$strStanza], true)};
     }
+    # Run locally
     else
     {
         my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, undef, undef, true);

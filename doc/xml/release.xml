@@ -157,6 +157,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improved consistency and flexibility of the protocol layer by using JSON for all messages.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improved <code>IO->bufferRead</code> to always return requested number of bytes until EOF.</p>
                     </release-item>
 

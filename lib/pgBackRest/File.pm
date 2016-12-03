@@ -631,21 +631,12 @@ sub pathCreate
     # Set operation variables
     my $strPathOp = $self->pathGet($strPathType, $strPath);
 
+    # Run remotely
     if ($self->isRemote($strPathType))
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{path} = ${strPathOp};
-
-        if (defined($strMode))
-        {
-            $oParamHash{mode} = ${strMode};
-        }
-
-        # Execute the command
-        $self->{oProtocol}->cmdExecute(OP_FILE_PATH_CREATE, \%oParamHash);
+        $self->{oProtocol}->cmdExecute(OP_FILE_PATH_CREATE, [$strPathOp, $strMode, $bIgnoreExists, $bCreateParents]);
     }
+    # Run locally
     else
     {
         filePathCreate($strPathOp, $strMode, $bIgnoreExists, $bCreateParents);
@@ -685,18 +676,12 @@ sub exists
 
     # Set operation variables
     my $strPathOp = $self->pathGet($strPathType, $strPath);
-    my $bExists = true;
+    my $bExists;
 
     # Run remotely
     if ($self->isRemote($strPathType))
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{path} = $strPathOp;
-
-        # Execute the command
-        $bExists = $self->{oProtocol}->cmdExecute(OP_FILE_EXISTS, \%oParamHash, true) eq 'Y' ? true : false;
+        $bExists = $self->{oProtocol}->cmdExecute(OP_FILE_EXISTS, [$strPathOp], true);
     }
     # Run locally
     else
@@ -954,25 +939,8 @@ sub list
     # Run remotely
     if ($self->isRemote($strPathType))
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{path} = $strPathOp;
-        $oParamHash{sort_order} = $strSortOrder;
-        $oParamHash{ignore_missing} = ${bIgnoreMissing};
-
-        if (defined($strExpression))
-        {
-            $oParamHash{expression} = $strExpression;
-        }
-
-        # Execute the command
-        my $strOutput = $self->{oProtocol}->cmdExecute(OP_FILE_LIST, \%oParamHash);
-
-        if (defined($strOutput))
-        {
-            @stryFileList = split(/\n/, $strOutput);
-        }
+        @stryFileList = $self->{oProtocol}->cmdExecute(
+            OP_FILE_LIST, [$strPathOp, $strExpression, $strSortOrder, $bIgnoreMissing]);
     }
     # Run locally
     else
@@ -1020,12 +988,7 @@ sub wait
     # Run remotely
     if ($self->isRemote($strPathType))
     {
-        # Build param hash
-        my %oParamHash;
-        $oParamHash{wait} = $bWait;
-
-        # Execute the command
-        $lTimeBegin = $self->{oProtocol}->cmdExecute(OP_FILE_WAIT, \%oParamHash, true);
+        $lTimeBegin = $self->{oProtocol}->cmdExecute(OP_FILE_WAIT, [$bWait], true);
     }
     # Run locally
     else
@@ -1073,13 +1036,7 @@ sub manifest
     # Run remotely
     if ($self->isRemote($strPathType))
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{path} = $strPathOp;
-
-        # Execute the command
-        dataHashBuild($hManifest, $self->{oProtocol}->cmdExecute(OP_FILE_MANIFEST, \%oParamHash, true), "\t");
+        $hManifest = $self->{oProtocol}->cmdExecute(OP_FILE_MANIFEST, [$strPathOp], true);
     }
     # Run locally
     else
@@ -1427,11 +1384,11 @@ sub copy
     {
         # Build the command and open the local file
         my $hFile;
-        my %oParamHash;
         my $hIn,
         my $hOut;
         my $strRemote;
         my $strRemoteOp;
+        my $bController = false;
 
         # If source is remote and destination is local
         if ($bSourceRemote && !$bDestinationRemote)
@@ -1442,9 +1399,9 @@ sub copy
 
             if ($strSourcePathType ne PIPE_STDIN)
             {
-                $oParamHash{source_file} = $strSourceOp;
-                $oParamHash{source_compressed} = $bSourceCompressed;
-                $oParamHash{destination_compress} = $bDestinationCompress;
+                $self->{oProtocol}->cmdWrite($strRemoteOp, [$strSourceOp, undef, $bSourceCompressed, $bDestinationCompress]);
+
+                $bController = true;
             }
         }
         # Else if source is local and destination is remote
@@ -1456,30 +1413,12 @@ sub copy
 
             if ($strDestinationPathType ne PIPE_STDOUT)
             {
-                $oParamHash{destination_file} = $strDestinationOp;
-                $oParamHash{source_compressed} = $bSourceCompressed;
-                $oParamHash{destination_compress} = $bDestinationCompress;
-                $oParamHash{destination_path_create} = $bDestinationPathCreate;
+                $self->{oProtocol}->cmdWrite(
+                    $strRemoteOp,
+                    [undef, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, undef, undef, $strMode,
+                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum]);
 
-                if (defined($strMode))
-                {
-                    $oParamHash{mode} = $strMode;
-                }
-
-                if (defined($strUser))
-                {
-                    $oParamHash{user} = $strUser;
-                }
-
-                if (defined($strGroup))
-                {
-                    $oParamHash{group} = $strGroup;
-                }
-
-                if ($bAppendChecksum)
-                {
-                    $oParamHash{append_checksum} = true;
-                }
+                $bController = true;
             }
         }
         # Else source and destination are remote
@@ -1487,42 +1426,12 @@ sub copy
         {
             $strRemoteOp = OP_FILE_COPY;
 
-            $oParamHash{source_file} = $strSourceOp;
-            $oParamHash{source_compressed} = $bSourceCompressed;
-            $oParamHash{destination_file} = $strDestinationOp;
-            $oParamHash{destination_compress} = $bDestinationCompress;
-            $oParamHash{destination_path_create} = $bDestinationPathCreate;
+            $self->{oProtocol}->cmdWrite(
+                $strRemoteOp,
+                [$strSourceOp, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, $bIgnoreMissingSource, undef,
+                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum]);
 
-            if (defined($strMode))
-            {
-                $oParamHash{mode} = $strMode;
-            }
-
-            if (defined($strUser))
-            {
-                $oParamHash{user} = $strUser;
-            }
-
-            if (defined($strGroup))
-            {
-                $oParamHash{group} = $strGroup;
-            }
-
-            if ($bIgnoreMissingSource)
-            {
-                $oParamHash{ignore_missing_source} = $bIgnoreMissingSource;
-            }
-
-            if ($bAppendChecksum)
-            {
-                $oParamHash{append_checksum} = true;
-            }
-        }
-
-        # If an operation is defined then write it
-        if (%oParamHash)
-        {
-            $self->{oProtocol}->cmdWrite($strRemoteOp, \%oParamHash);
+            $bController = true;
         }
 
         # Transfer the file (skip this for copies where both sides are remote)
@@ -1533,17 +1442,18 @@ sub copy
         }
 
         # If this is the controlling process then wait for OK from remote
-        if (%oParamHash)
+        if ($bController)
         {
             # Test for an error when reading output
             my $strOutput;
 
             eval
             {
-                $strOutput = $self->{oProtocol}->outputRead(true, $bIgnoreMissingSource);
+                ($bResult, my $strResultChecksum, my $iResultFileSize) =
+                    $self->{oProtocol}->outputRead(true, $bIgnoreMissingSource);
 
                 # Check the result of the remote call
-                if (substr($strOutput, 0, 1) eq 'Y')
+                if ($bResult)
                 {
                     # If the operation was purely remote, get checksum/size
                     if ($strRemoteOp eq OP_FILE_COPY ||
@@ -1555,31 +1465,9 @@ sub copy
                             confess &log(ASSERT, "checksum and size are already defined, but shouldn't be");
                         }
 
-                        # Parse output and check to make sure tokens are defined
-                        my @stryToken = split(/ /, $strOutput);
-
-                        if (!defined($stryToken[1]) || !defined($stryToken[2]) ||
-                            $stryToken[1] eq '?' && $stryToken[2] eq '?')
-                        {
-                            confess &log(ERROR, "invalid return from copy" . (defined($strOutput) ? ": ${strOutput}" : ''));
+                        $strChecksum = $strResultChecksum;
+                        $iFileSize = $iResultFileSize;
                     }
-
-                        # Read the checksum and size
-                        if ($stryToken[1] ne '?')
-                        {
-                            $strChecksum = $stryToken[1];
-                        }
-
-                        if ($stryToken[2] ne '?')
-                        {
-                            $iFileSize = $stryToken[2];
-                        }
-                    }
-                }
-                # Remote called returned false
-                else
-                {
-                    $bResult = false;
                 }
 
                 return true;
@@ -1597,10 +1485,12 @@ sub copy
                         or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
                     fileRemove($strDestinationTmpOp);
 
-                    return false, undef, undef;
+                    $bResult = false;
                 }
-
+                else
+                {
                     confess $oException;
+                }
             };
         }
     }
@@ -1632,6 +1522,8 @@ sub copy
         }
     }
 
+    if ($bResult)
+    {
         # Close the source file (if local)
         if (defined($hSourceFile))
         {
@@ -1649,15 +1541,14 @@ sub copy
         }
 
         # Checksum and file size should be set if the destination is not remote
-    if ($bResult &&
-        !(!$bSourceRemote && $bDestinationRemote && $bSourceCompressed) &&
+        if (!(!$bSourceRemote && $bDestinationRemote && $bSourceCompressed) &&
             (!defined($strChecksum) || !defined($iFileSize)))
         {
             confess &log(ASSERT, 'checksum or file size not set');
         }
 
         # Where the destination is local, set mode, modification time, and perform move to final location
-    if ($bResult && !$bDestinationRemote)
+        if (!$bDestinationRemote)
         {
             # Set the file Mode if required
             if (defined($strMode))
@@ -1698,6 +1589,7 @@ sub copy
             # Move the file from tmp to final destination
             fileMove($strDestinationTmpOp, $strDestinationOp, $bDestinationPathCreate);
         }
+    }
 
     # Return from function and log return values if any
     return logDebugReturn

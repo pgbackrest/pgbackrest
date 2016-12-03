@@ -315,14 +315,15 @@ sub process
 
             # Get the job result
             my $hJob = $hLocal->{hJob};
-            $self->cmdResult($hLocal->{oLocal}, $hJob);
+            $hJob->{rResult} = $hLocal->{oLocal}->outputRead(true, undef, undef, true);
             $hJob->{iProcessId} = $hLocal->{iProcessId};
             push(@hyResult, $hJob);
 
             logDebugMisc(
                 $strOperation, 'job complete',
                 {name => 'iProcessId', value => $hJob->{iProcessId}},
-                {name => 'strKey', value => $hJob->{strKey}});
+                {name => 'strKey', value => $hJob->{strKey}},
+                {name => 'rResult', value => $hJob->{rResult}});
 
             # Free the local process to receive another job
             $hLocal->{hJob} = undef;
@@ -424,7 +425,7 @@ sub process
                     {name => 'strKey', value => $hLocal->{hJob}{strKey}});
 
                 # Send job to local process
-                $self->cmdSend($hLocal->{oLocal}, $hLocal->{hJob});
+                $hLocal->{oLocal}->cmdWrite($hLocal->{hJob}{strOp}, $hLocal->{hJob}->{rParam});
             }
         }
 
@@ -457,15 +458,17 @@ sub queueJob
         $iHostConfigIdx,
         $strQueue,
         $strKey,
-        $hPayload,
+        $strOp,
+        $rParam,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->queueJob', \@_,
-            {name => 'iHostConfigIdx', trace => true},
-            {name => 'strQueue', trace => true},
-            {name => 'strKey', trace => true},
-            {name => 'hPayload', trace => true},
+            {name => 'iHostConfigIdx'},
+            {name => 'strQueue'},
+            {name => 'strKey'},
+            {name => 'strOp'},
+            {name => 'rParam'},
         );
 
     # Don't add jobs while in the middle of processing the current queue
@@ -480,7 +483,8 @@ sub queueJob
         iHostConfigIdx => $iHostConfigIdx,
         strQueue => $strQueue,
         strKey => $strKey,
-        hPayload => $hPayload,
+        strOp => $strOp,
+        rParam => $rParam,
     };
 
     # Get the host that will perform this job

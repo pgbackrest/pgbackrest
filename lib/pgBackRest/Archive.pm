@@ -427,14 +427,7 @@ sub getCheck
 
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
     {
-        # Build param hash
-        my %oParamHash;
-
-        # Pass the database information to the remote server
-        $oParamHash{'db-version'} = $strDbVersion;
-        $oParamHash{'db-sys-id'} = $ullDbSysId;
-
-        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_CHECK, \%oParamHash, true);
+        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId], true);
     }
     else
     {
@@ -491,16 +484,8 @@ sub getBackupInfoCheck
 
     if ($oFile->isRemote(PATH_BACKUP))
     {
-        # Build param hash
-        my %oParamHash;
-
-        # Pass the database information to the remote server
-        $oParamHash{'db-version'} = $strDbVersion;
-        $oParamHash{'db-control-version'} = $iControlVersion;
-        $oParamHash{'db-catalog-version'} = $iCatalogVersion;
-        $oParamHash{'db-sys-id'} = $ullDbSysId;
-
-        $iDbHistoryId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_BACKUP_INFO_CHECK, \%oParamHash, false);
+        $iDbHistoryId = $oFile->{oProtocol}->cmdExecute(
+            OP_ARCHIVE_GET_BACKUP_INFO_CHECK, [$strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId]);
     }
     else
     {
@@ -829,29 +814,14 @@ sub pushCheck
         );
 
     # Set operation and debug strings
-    my $strChecksum;
     my $strArchiveId;
+    my $strChecksum;
 
     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{'wal-segment'} = $strWalSegment;
-        $oParamHash{'partial'} = $bPartial;
-        $oParamHash{'db-version'} = $strDbVersion;
-        $oParamHash{'db-sys-id'} = $ullDbSysId;
-
         # Execute the command
-        my $strResult = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_PUSH_CHECK, \%oParamHash, true);
-
-        $strArchiveId = (split("\t", $strResult))[0];
-        $strChecksum = (split("\t", $strResult))[1];
-
-        if ($strChecksum eq 'Y')
-        {
-            undef($strChecksum);
-        }
+        ($strArchiveId, $strChecksum) = $oFile->{oProtocol}->cmdExecute(
+            OP_ARCHIVE_PUSH_CHECK, [$strWalSegment, $bPartial, undef, $strDbVersion, $ullDbSysId], true);
     }
     else
     {

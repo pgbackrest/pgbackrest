@@ -11,12 +11,12 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use Compress::Raw::Zlib qw(WANT_GZIP Z_OK Z_BUF_ERROR Z_STREAM_END);
 use File::Basename qw(dirname);
+use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Protocol::IO;
-use pgBackRest::Version;
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -84,43 +84,9 @@ use constant OP_INFO_STANZA_LIST                                    => 'infoStan
 use constant OP_RESTORE_FILE                                         => 'restoreFile';
     push @EXPORT, qw(OP_RESTORE_FILE);
 
-####################################################################################################################################
-# Parameter constants
-####################################################################################################################################
-use constant OP_PARAM_BACKUP_PATH                                   => 'strBackupPath';
-    push @EXPORT, qw(OP_PARAM_BACKUP_PATH);
-use constant OP_PARAM_CHECKSUM                                      => 'strChecksum';
-    push @EXPORT, qw(OP_PARAM_CHECKSUM);
-use constant OP_PARAM_COPY_TIME_START                               => 'lCopyTimeStart';
-    push @EXPORT, qw(OP_PARAM_COPY_TIME_START);
-use constant OP_PARAM_DB_FILE                                       => 'strDbFile';
-    push @EXPORT, qw(OP_PARAM_DB_FILE);
-use constant OP_PARAM_DELTA                                         => 'bDelta';
-    push @EXPORT, qw(OP_PARAM_DELTA);
-use constant OP_PARAM_DESTINATION_COMPRESS                          => 'bDestinationCompress';
-    push @EXPORT, qw(OP_PARAM_DESTINATION_COMPRESS);
-use constant OP_PARAM_FORCE                                         => 'bForce';
-    push @EXPORT, qw(OP_PARAM_FORCE);
-use constant OP_PARAM_GROUP                                         => 'strGroup';
-    push @EXPORT, qw(OP_PARAM_GROUP);
-use constant OP_PARAM_IGNORE_MISSING                                => 'bIgnoreMissing';
-    push @EXPORT, qw(OP_PARAM_IGNORE_MISSING);
-use constant OP_PARAM_MODE                                          => 'strMode';
-    push @EXPORT, qw(OP_PARAM_MODE);
-use constant OP_PARAM_MODIFICATION_TIME                             => 'lModificationTime';
-    push @EXPORT, qw(OP_PARAM_MODIFICATION_TIME);
-use constant OP_PARAM_REFERENCE                                     => 'strReference';
-    push @EXPORT, qw(OP_PARAM_REFERENCE);
-use constant OP_PARAM_REPO_FILE                                     => 'strRepoFile';
-    push @EXPORT, qw(OP_PARAM_REPO_FILE);
-use constant OP_PARAM_SIZE                                          => 'lSize';
-    push @EXPORT, qw(OP_PARAM_SIZE);
-use constant OP_PARAM_SOURCE_COMPRESSION                            => 'bSourceCompression';
-    push @EXPORT, qw(OP_PARAM_SOURCE_COMPRESSION);
-use constant OP_PARAM_USER                                          => 'strUser';
-    push @EXPORT, qw(OP_PARAM_USER);
-use constant OP_PARAM_ZERO                                          => 'bZero';
-    push @EXPORT, qw(OP_PARAM_ZERO);
+# To be run after each command
+use constant OP_POST                                                 => 'post';
+    push @EXPORT, qw(OP_POST);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -155,11 +121,8 @@ sub new
     # By default remote type is NONE
     $self->{strRemoteType} = NONE;
 
-    # Create the greeting that will be used to check versions with the remote
-    if (defined($self->{strName}))
-    {
-        $self->{strGreeting} = uc(BACKREST_NAME) . uc($self->{strName}) . ' ' . BACKREST_VERSION;
-    }
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -327,9 +290,8 @@ sub binaryXfer
     $bProtocol = defined($bProtocol) ? $bProtocol : true;
     my $strMessage = undef;
 
-    # Checksum and size
-    my $strChecksum = undef;
-    my $iFileSize = undef;
+    # Data that will be passed back (sha1 checksum, size, extra data)
+    my $hMessage = {};
 
     # Read from the protocol stream
     if ($strRemote eq 'in')
@@ -421,8 +383,8 @@ sub binaryXfer
             # Get checksum and total uncompressed bytes written
             if (defined($oSHA))
             {
-                $strChecksum = $oSHA->hexdigest();
-                $iFileSize = $oZLib->total_out();
+                $hMessage->{strChecksum} = $oSHA->hexdigest();
+                $hMessage->{iFileSize} = $oZLib->total_out();
             };
         }
         # If the destination should be compressed then just write out the already compressed stream
@@ -437,7 +399,7 @@ sub binaryXfer
             if (!$bProtocol)
             {
                 $oSHA = Digest::SHA->new('sha1');
-                $iFileSize = 0;
+                $hMessage->{iFileSize} = 0;
             }
 
             do
@@ -452,7 +414,7 @@ sub binaryXfer
                     if (!$bProtocol)
                     {
                         $oSHA->add($tBuffer);
-                        $iFileSize += $iBlockSize;
+                        $hMessage->{iFileSize} += $iBlockSize;
                     }
 
                     $oOut->bufferWrite(\$tBuffer, $iBlockSize);
@@ -464,7 +426,7 @@ sub binaryXfer
             # Get checksum
             if (!$bProtocol)
             {
-                $strChecksum = $oSHA->hexdigest();
+                $hMessage->{strChecksum} = $oSHA->hexdigest();
             };
         }
     }
@@ -548,8 +510,8 @@ sub binaryXfer
             }
 
             # Get checksum and total uncompressed bytes written
-            $strChecksum = $oSHA->hexdigest();
-            $iFileSize = $oZLib->total_in();
+            $hMessage->{strChecksum} = $oSHA->hexdigest();
+            $hMessage->{iFileSize} = $oZLib->total_in();
 
             # Write out the last block
             if (defined($oOut))
@@ -562,7 +524,7 @@ sub binaryXfer
                     undef($strMessage);
                 }
 
-                $self->blockWrite($oOut, undef, 0, $bProtocol, "${strChecksum}-${iFileSize}");
+                $self->blockWrite($oOut, undef, 0, $bProtocol, $self->{oJSON}->encode($hMessage));
             }
         }
         # If source is already compressed or transfer is not compressed then just read the stream
@@ -587,7 +549,7 @@ sub binaryXfer
 
                 # Initialize checksum and size
                 $oSHA = Digest::SHA->new('sha1');
-                $iFileSize = 0;
+                $hMessage->{iFileSize} = 0;
 
                 # Initialize inflate object and check for errors
                 ($oZLib, $iZLibStatus) =
@@ -645,7 +607,7 @@ sub binaryXfer
                                 if ($iUncompressedBufferSize > 0)
                                 {
                                     $oSHA->add($tUncompressedBuffer);
-                                    $iFileSize += $iUncompressedBufferSize;
+                                    $hMessage->{iFileSize} += $iUncompressedBufferSize;
                                 }
                             }
                             # Else error, exit so it can be handled
@@ -660,7 +622,7 @@ sub binaryXfer
             }
             while ($iBlockSize > 0);
 
-            # Check decompression get checksum
+            # Check decompression, get checksum
             if ($bDestinationCompress)
             {
                 # Make sure the decompression succeeded (iBlockSize < 0 indicates remote error, handled later)
@@ -670,12 +632,12 @@ sub binaryXfer
                 }
 
                 # Get checksum
-                $strChecksum = $oSHA->hexdigest();
+                $hMessage->{strChecksum} = $oSHA->hexdigest();
 
                 # Set protocol message
                 if ($bProtocol)
                 {
-                    $strMessage = "${strChecksum}-${iFileSize}";
+                    $strMessage = $self->{oJSON}->encode($hMessage);
                 }
             }
 
@@ -688,16 +650,14 @@ sub binaryXfer
         }
     }
 
-    # If message is defined then the checksum and size should be in it
+    # If message is defined then the checksum, size, and extra should be in it
     if (defined($strMessage))
     {
-        my @stryToken = split(/-/, $strMessage);
-        $strChecksum = $stryToken[0];
-        $iFileSize = $stryToken[1];
+        $hMessage = $self->{oJSON}->decode($strMessage);
     }
 
     # Return the checksum and size if they are available
-    return $strChecksum, $iFileSize;
+    return $hMessage->{strChecksum}, $hMessage->{iFileSize};
 }
 
 ####################################################################################################################################

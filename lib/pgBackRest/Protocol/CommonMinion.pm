@@ -9,12 +9,15 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use JSON::PP;
+
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -58,7 +61,7 @@ sub new
     $self->greetingWrite();
 
     # Initialize module variables
-    $self->init();
+    $self->{hCommandMap} = $self->init();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -77,23 +80,12 @@ sub greetingWrite
 {
     my $self = shift;
 
-    $self->{io}->lineWrite($self->{strGreeting});
-    $self->{io}->lineWrite('OK');
-}
+    # Write the greeting
+    $self->{io}->lineWrite((JSON::PP->new()->canonical()->allow_nonref())->encode(
+        {name => BACKREST_NAME, service => $self->{strName}, version => BACKREST_VERSION}));
 
-####################################################################################################################################
-# textWrite
-#
-# Write text out to the protocol layer prefixing each line with a period.
-####################################################################################################################################
-sub textWrite
-{
-    my $self = shift;
-    my $strBuffer = shift;
-
-    $strBuffer =~ s/\n/\n\./g;
-
-    $self->{io}->lineWrite('.' . $strBuffer);
+    # Exchange one protocol message to catch errors early
+    $self->outputWrite();
 }
 
 ####################################################################################################################################
@@ -119,29 +111,14 @@ sub errorWrite
     my $self = shift;
     my $oException = shift;
 
-    my $iCode;
-    my $strMessage;
-
-    # If the message is blessed it may be a standard exception
-    if (isException($oException))
-    {
-        $iCode = $oException->code();
-        $strMessage = $oException->message();
-    }
-    # Else terminate the process with an error
-    else
+    # Throw hard error if this is not a standard exception
+    if (!isException($oException))
     {
         confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
     }
 
-    # Write the message text into protocol
-    if (defined($strMessage))
-    {
-        $self->textWrite(trim($strMessage));
-    }
-
-    # Indicate that an error ocurred and provide the code
-    $self->{io}->lineWrite("ERROR" . (defined($iCode) ? " $iCode" : ''));
+    # Write error code and message
+    $self->{io}->lineWrite($self->{oJSON}->encode({err => $oException->code(), out => $oException->message()}));
 }
 
 ####################################################################################################################################
@@ -152,14 +129,8 @@ sub errorWrite
 sub outputWrite
 {
     my $self = shift;
-    my $strOutput = shift;
 
-    if (defined($strOutput))
-    {
-        $self->textWrite($strOutput);
-    }
-
-    $self->{io}->lineWrite('OK');
+    $self->{io}->lineWrite($self->{oJSON}->encode({out => \@_}));
 }
 
 ####################################################################################################################################
@@ -171,67 +142,9 @@ sub cmdRead
 {
     my $self = shift;
 
-    my $strLine;
-    my $strCommand;
-    my $hParam = {};
+    my $hCommand = $self->{oJSON}->decode($self->{io}->lineRead());
 
-    while ($strLine = $self->{io}->lineRead())
-    {
-        if (!defined($strCommand))
-        {
-            if ($strLine =~ /:$/)
-            {
-                $strCommand = substr($strLine, 0, length($strLine) - 1);
-            }
-            else
-            {
-                $strCommand = $strLine;
-                last;
-            }
-        }
-        else
-        {
-            if ($strLine eq 'end')
-            {
-                last;
-            }
-
-            my $iPos = index($strLine, '=');
-
-            if ($iPos == -1)
-            {
-                confess "param \"${strLine}\" is missing = character";
-            }
-
-            my $strParam = substr($strLine, 0, $iPos);
-            my $strValue = substr($strLine, $iPos + 1);
-
-            $hParam->{$strParam} = ${strValue};
-        }
-    }
-
-    return $strCommand, $hParam;
-}
-
-####################################################################################################################################
-# paramGet
-#
-# Helper function that returns the param or an error if required and it does not exist.
-####################################################################################################################################
-sub paramGet
-{
-    my $self = shift;
-    my $strParam = shift;
-    my $bRequired = shift;
-
-    my $strValue = $self->{hParam}{$strParam};
-
-    if (!defined($strValue) && (!defined($bRequired) || $bRequired))
-    {
-        confess "${strParam} must be defined";
-    }
-
-    return $strValue;
+    return $hCommand->{cmd}, $hCommand->{param};
 }
 
 ####################################################################################################################################
@@ -241,28 +154,36 @@ sub process
 {
     my $self = shift;
 
-    # Command string
-    my $strCommand = OP_NOOP;
-
     # Loop until the exit command is received
     eval
     {
-        while ($strCommand ne OP_EXIT)
+        while (true)
         {
-            ($strCommand, $self->{hParam}) = $self->cmdRead();
+            my ($strCommand, $rParam) = $self->cmdRead();
+
+            last if ($strCommand eq OP_EXIT);
 
             eval
             {
-                if (!$self->commandProcess($strCommand))
+                # Check for the command in the map and run it if found
+                if (defined($self->{hCommandMap}{$strCommand}))
                 {
-                    if ($strCommand eq OP_NOOP)
-                    {
-                        $self->outputWrite();
-                    }
-                    elsif ($strCommand ne OP_EXIT)
-                    {
-                        confess "invalid command: ${strCommand}";
-                    }
+                    $self->outputWrite($self->{hCommandMap}{$strCommand}->($rParam));
+                }
+                # Run the standard NOOP command.  This this can be overridden in hCommandMap to implement a custom NOOP.
+                elsif ($strCommand eq OP_NOOP)
+                {
+                    $self->outputWrite();
+                }
+                else
+                {
+                    confess "invalid command: ${strCommand}";
+                }
+
+                # Run the post command if defined
+                if (defined($self->{hCommandMap}{&OP_POST}))
+                {
+                    $self->{hCommandMap}{&OP_POST}->($strCommand, $rParam);
                 }
 
                 return true;

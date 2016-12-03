@@ -17,6 +17,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::IO;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -179,16 +180,24 @@ sub greetingRead
     my $self = shift;
 
     # Get the first line of output from the remote if possible
-    my $strLine = $self->{io}->lineRead(undef, undef, undef, true);
+    my $hGreeting = $self->{oJSON}->decode($self->{io}->lineRead(undef, undef, undef, true));
 
-    # If the line could not be read or does equal the greeting then error and exit
-    if (!defined($strLine) || $strLine ne $self->{strGreeting})
+    # Error if greeting parameters do not match
+    for my $hParam ({strName => 'name', strExpected => BACKREST_NAME},
+                    {strName => 'version', strExpected => BACKREST_VERSION},
+                    {strName => 'service', strExpected => $self->{strName}})
     {
-        $self->{io}->kill();
+        if (!defined($hGreeting->{$hParam->{strName}}) || $hGreeting->{$hParam->{strName}} ne $hParam->{strExpected})
+        {
+            $self->{io}->kill();
 
-        confess &log(ERROR, 'protocol version mismatch' . (defined($strLine) ? ": ${strLine}" : ''), ERROR_HOST_CONNECT);
+            confess &log(ERROR,
+                'found name \'' . (defined($hGreeting->{$hParam->{strName}}) ? $hGreeting->{$hParam->{strName}} : '[undef]') .
+                "' in protocol greeting instead of expected '$hParam->{strName}'", ERROR_HOST_CONNECT);
+        }
     }
 
+    # Exchange one protocol message to catch errors early
     $self->outputRead();
 }
 
@@ -208,6 +217,7 @@ sub outputRead
         $bOutputRequired,
         $bSuppressLog,
         $bWarnOnError,
+        $bRef,
     ) =
         logDebugParam
         (
@@ -215,55 +225,39 @@ sub outputRead
             {name => 'bOutputRequired', default => false, trace => true},
             {name => 'bSuppressLog', required => false, trace => true},
             {name => 'bWarnOnError', default => false, trace => true},
+            {name => 'bRef', default => false, trace => true},
         );
 
-    my $strLine;
-    my $strOutput;
-    my $bError = false;
-    my $iErrorCode;
-    my $strError;
+    my $strProtocolResult = $self->{io}->lineRead();
 
-    # Read output lines
-    while ($strLine = $self->{io}->lineRead())
-    {
-        # Exit if an error is found
-        if ($strLine =~ /^ERROR.*/)
-        {
-            $bError = true;
-            $iErrorCode = (split(' ', $strLine))[1];
-            last;
-        }
+    logDebugMisc
+    (
+        $strOperation, undef,
+        {name => 'strProtocolResult', value => $strProtocolResult, trace => true}
+    );
 
-        # Exit if OK is found
-        if ($strLine =~ /^OK$/)
-        {
-            last;
-        }
-
-        # Else append to output
-        $strOutput .= (defined($strOutput) ? "\n" : '') . substr($strLine, 1);
-    }
+    my $hResult = $self->{oJSON}->decode($strProtocolResult);
 
     # Raise any errors
-    if ($bError)
+    if (defined($hResult->{err}))
     {
-        my $strError = $self->{strErrorPrefix} . (defined($strOutput) ? ": ${strOutput}" : '');
+        my $strError = $self->{strErrorPrefix} . (defined($hResult->{out}) ? ": $hResult->{out}" : '');
 
         # Raise the error if a warning is not requested
         if (!$bWarnOnError)
         {
-            confess &log(ERROR, $strError, $iErrorCode, $bSuppressLog);
+            confess &log(ERROR, $strError, $hResult->{err}, $bSuppressLog);
         }
 
-        &log(WARN, $strError, $iErrorCode);
-        undef($strOutput);
+        &log(WARN, $strError, $hResult->{err});
+        undef($hResult->{out});
     }
 
     # Reset the keep alive time
     $self->{fKeepAliveTime} = gettimeofday();
 
     # If output is required and there is no output, raise exception
-    if ($bOutputRequired && !defined($strOutput))
+    if ($bOutputRequired && !defined($hResult->{out}))
     {
         $self->{io}->waitPid();
         confess &log(ERROR, "$self->{strErrorPrefix}: output is not defined", ERROR_PROTOCOL_OUTPUT_REQUIRED);
@@ -273,32 +267,8 @@ sub outputRead
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strOutput', value => $strOutput, trace => true}
+        {name => 'hOutput', value => $hResult->{out}, ref => $bRef, trace => true}
     );
-}
-
-####################################################################################################################################
-# commandParamString
-#
-# Output command parameters in the hash as a string (used for debugging).
-####################################################################################################################################
-sub commandParamString
-{
-    my $self = shift;
-    my $oParamHashRef = shift;
-
-    my $strParamList = '';
-
-    if (defined($oParamHashRef))
-    {
-        foreach my $strParam (sort(keys(%$oParamHashRef)))
-        {
-            $strParamList .= (defined($strParamList) ? ',' : '') . "${strParam}=" .
-                             (defined(${$oParamHashRef}{"${strParam}"}) ? ${$oParamHashRef}{"${strParam}"} : '[undef]');
-        }
-    }
-
-    return $strParamList;
 }
 
 ####################################################################################################################################
@@ -315,50 +285,25 @@ sub cmdWrite
     (
         $strOperation,
         $strCommand,
-        $oParamRef,
+        $hParam,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->cmdWrite', \@_,
             {name => 'strCommand', trace => true},
-            {name => 'oParamRef', required => false, trace => true}
+            {name => 'hParam', required => false, trace => true},
         );
 
-    if (defined($oParamRef))
-    {
-        $strCommand .= ":\n";
-
-        foreach my $strParam (sort(keys(%$oParamRef)))
-        {
-            if ($strParam =~ /=/)
-            {
-                confess &log(ASSERT, "param \"${strParam}\" cannot contain = character");
-            }
-
-            my $strValue = ${$oParamRef}{"${strParam}"};
-
-            if ($strParam =~ /\n\$/)
-            {
-                confess &log(ASSERT, "param \"${strParam}\" value cannot end with LF");
-            }
-
-            if (defined(${strValue}))
-            {
-                $strCommand .= "${strParam}=${strValue}\n";
-            }
-        }
-
-        $strCommand .= 'end';
-    }
+    my $strProtocolCommand = $self->{oJSON}->encode({cmd => $strCommand, param => $hParam});
 
     logDebugMisc
     (
         $strOperation, undef,
-        {name => 'strCommand', value => $strCommand, trace => true}
+        {name => 'strProtocolCommand', value => $strProtocolCommand, trace => true}
     );
 
     # Write out the command
-    $self->{io}->lineWrite($strCommand);
+    $self->{io}->lineWrite($strProtocolCommand);
 
     # Reset the keep alive time
     $self->{fKeepAliveTime} = gettimeofday();

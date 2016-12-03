@@ -19,6 +19,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 
 ####################################################################################################################################
@@ -252,12 +253,12 @@ sub regExpReplace
 
                     if (@stryReplacement == 0)
                     {
-                        confess &log(ASSERT, $strError . "is not a sub-regexp of '${strExpression}' or" .
+                        confess &log(ASSERT, $strError . " is not a sub-regexp of '${strExpression}' or" .
                                              " matches " . @stryReplacement . " times on {[${strReplace}]}");
                     }
 
                     confess &log(
-                        ASSERT, $strError . " matches '${strExpression}'" . @stryReplacement . " times on '${strReplace}': " .
+                        ASSERT, $strError . " matches '${strExpression}' " . @stryReplacement . " times on '${strReplace}': " .
                         join(',', @stryReplacement));
                 }
 
@@ -338,9 +339,6 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'CONTAINER-EXEC', '^docker exec -u [a-z]*', '^docker exec -u [a-z]*', false);
 
     $strLine = $self->regExpReplace($strLine, 'PROCESS-ID', 'sent term signal to process [0-9]+', '[0-9]+$', false);
-    $strLine = $self->regExpReplace($strLine, 'MODIFICATION-TIME', 'lModificationTime = [0-9]+', '[0-9]+$');
-    $strLine = $self->regExpReplace($strLine, 'MODIFICATION-TIME', 'and modification time [0-9]+', '[0-9]+$');
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]+$');
 
     $strLine = $self->regExpReplace($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
     $strLine = $self->regExpReplace($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
@@ -358,6 +356,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'USER', 'cannot be used for restore\, set to .+$', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', '-user=[a-z0-9_]+', '[^=]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', '[^ ]+\@db\-master', '^[^\@]+');
+    $strLine = $self->regExpReplace($strLine, 'USER', '[\( ]{1}' . TEST_USER . '[\,\)]{1}', TEST_USER);
 
     $strLine = $self->regExpReplace($strLine, 'PORT', 'db-port=[0-9]+', '[0-9]+$');
 
@@ -372,20 +371,19 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'TS_PATH', "PG\\_[0-9]\\.[0-9]\\_[0-9]{9}");
     $strLine = $self->regExpReplace($strLine, 'VERSION',
         "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . BACKREST_VERSION, BACKREST_VERSION . '$');
+
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]{10}$');
+
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
-        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]+$', false);
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
-        "start\" : [0-9]{10}", '[0-9]{10}$', false);
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
-        "stop\" : [0-9]{10}", '[0-9]{10}$', false);
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
-        "lCopyTimeStart = [0-9]{10}", '[0-9]{10}$', false);
-    $strLine = $self->regExpReplace($strLine, 'SIZE',
-        "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
-    $strLine = $self->regExpReplace($strLine, 'DELTA',
-        "delta\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP-STR', " timestamp: $strTimestampRegExp / $strTimestampRegExp",
-                                                "${strTimestampRegExp} / ${strTimestampRegExp}\$", false);
+        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]{10}$', false);
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', "start\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', "stop\" : [0-9]{10}", '[0-9]{10}$', false);
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', TEST_GROUP . '\, [0-9]{10}', '[0-9]{10}$', false);
+    $strLine = $self->regExpReplace($strLine, 'SIZE', "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
+    $strLine = $self->regExpReplace($strLine, 'DELTA', "delta\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
+    $strLine = $self->regExpReplace(
+        $strLine, 'TIMESTAMP-STR', " timestamp: $strTimestampRegExp / $strTimestampRegExp",
+        "${strTimestampRegExp} / ${strTimestampRegExp}\$", false);
     $strLine = $self->regExpReplace($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
 
     $strLine = $self->regExpReplace($strLine, 'REMOTE-PROCESS-TERMINATED-MESSAGE',
@@ -401,6 +399,10 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'XID-TARGET', "\\, target \\'[0-9]+", "[0-9]+\$");
     $strLine = $self->regExpReplace($strLine, 'XID-TARGET', " \\-\\-target\\=\\\"[0-9]+", "[0-9]+\$");
     $strLine = $self->regExpReplace($strLine, 'XID-TARGET', "^recovery_target_xid \\= \\'[0-9]+", "[0-9]+\$");
+
+    $strLine = $self->regExpReplace(
+        $strLine, 'MODIFICATION-TIME', '(' . (substr(time(), 0, 5) - 1) . '[0-9]{5}|' . substr(time(), 0, 5) . '[0-9]{5})',
+        '^[0-9]{10}$');
 
     return $strLine;
 }

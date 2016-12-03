@@ -366,7 +366,8 @@ sub logDebugOut
     $strLevel = defined($strLevel) ? $strLevel : DEBUG;
 
     if ($oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
-        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank})
+        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank} ||
+        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelStdOut}{rank})
     {
         if (defined($oParamHash))
         {
@@ -392,7 +393,32 @@ sub logDebugOut
                     {
                         if (ref($$oParamHash{$strParam}{value}) eq 'ARRAY')
                         {
-                            $strValueRef = \('(' . join(', ', @{$$oParamHash{$strParam}{value}}) . ')');
+                            my $strValueArray;
+
+                            for my $strValue (@{$$oParamHash{$strParam}{value}})
+                            {
+                                if (ref($strValue) eq 'ARRAY')
+                                {
+                                    my $strSubValueArray;
+
+                                    for my $strSubValue (@{$strValue})
+                                    {
+                                        $strSubValueArray .=
+                                            (defined($strSubValueArray) ? ', ' : '(') .
+                                            (defined($strSubValue) ? $strSubValue : '[undef]');
+                                    }
+
+                                    $strValueArray .= (defined($strValueArray) ? ', ' : '(') .
+                                        (defined($strSubValueArray) ? $strSubValueArray . ')' : '()');
+                                }
+                                else
+                                {
+                                    $strValueArray .=
+                                        (defined($strValueArray) ? ', ' : '(') . (defined($strValue) ? $strValue : '[undef]');
+                                }
+                            }
+
+                            $strValueRef = \(defined($strValueArray) ?  $strValueArray . ')' : '()');
                         }
                         else
                         {
@@ -407,7 +433,15 @@ sub logDebugOut
                 # If this is an ARRAY ref then create a comma-separated list
                 elsif (ref($$oParamHash{$strParam}) eq 'ARRAY')
                 {
-                    $strValueRef = \(join(', ', @{$$oParamHash{$strParam}}));
+                    my $strValueArray;
+
+                    for my $strValue (@{$$oParamHash{$strParam}{value}})
+                    {
+                        $strValueArray .=
+                            (defined($strValueArray) ? ', ' : '(') . (defined($strValue) ? $strValue : '[undef]');
+                    }
+
+                    $strValueRef = \(defined($strValueArray) ?  $strValueArray . ')' : '()');
                 }
                 # Else get a reference if a reference was not passed
                 else

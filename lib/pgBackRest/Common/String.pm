@@ -12,54 +12,6 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 
 ####################################################################################################################################
-# dataHashBuild
-#
-# Hash a delimited multi-line string with a header.
-####################################################################################################################################
-sub dataHashBuild
-{
-    my $oHashRef = shift;
-    my $strData = shift;
-    my $strDelimiter = shift;
-    my $strUndefinedKey = shift;
-
-    my @stryFile = split("\n", $strData);
-    my @stryHeader = split($strDelimiter, $stryFile[0]);
-
-    for (my $iLineIdx = 1; $iLineIdx < scalar @stryFile; $iLineIdx++)
-    {
-        my @stryLine = split($strDelimiter, $stryFile[$iLineIdx]);
-
-        if (!defined($stryLine[0]) || $stryLine[0] eq '')
-        {
-            $stryLine[0] = $strUndefinedKey;
-        }
-
-        for (my $iColumnIdx = 1; $iColumnIdx < scalar @stryHeader; $iColumnIdx++)
-        {
-            if (defined(${$oHashRef}{"$stryLine[0]"}{"$stryHeader[$iColumnIdx]"}))
-            {
-                confess 'the first column must be unique to build the hash';
-            }
-
-            if (defined($stryLine[$iColumnIdx]) && $stryLine[$iColumnIdx] ne '')
-            {
-                if (scalar @stryHeader > 2)
-                {
-                    $oHashRef->{$stryLine[0]}{$stryHeader[$iColumnIdx]} = $stryLine[$iColumnIdx];
-                }
-                else
-                {
-                    $oHashRef->{$stryLine[0]} = $stryLine[$iColumnIdx];
-                }
-            }
-        }
-    }
-}
-
-push @EXPORT, qw(dataHashBuild);
-
-####################################################################################################################################
 # trim
 #
 # Trim whitespace.

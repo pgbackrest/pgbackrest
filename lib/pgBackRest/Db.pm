@@ -147,18 +147,8 @@ sub connect
     # Run remotely
     if ($self->{oProtocol}->isRemote())
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{'warn-on-error'} = $bWarnOnError;
-
-        # Execute the command
-        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, \%oParamHash, false, $bWarnOnError);
-
-        if (!defined($bResult))
-        {
-            $bResult = false;
-        }
+        # Set bResult to false if undef is returned
+        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
     }
     # Else run locally
     else
@@ -253,20 +243,13 @@ sub executeSql
         );
 
     # Get the user-defined command for psql
-    my $strResult;
+    my @stryResult;
 
     # Run remotely
     if ($self->{oProtocol}->isRemote())
     {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{'script'} = $strSql;
-        $oParamHash{'ignore-error'} = $bIgnoreError;
-        $oParamHash{'result'} = $bResult;
-
         # Execute the command
-        $strResult = $self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, \%oParamHash, $bResult);
+        @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
     }
     # Else run locally
     else
@@ -293,7 +276,7 @@ sub executeSql
                 # return now if there is no result expected
                 if (!$bResult)
                 {
-                    return;
+                    return \@stryResult;
                 }
 
                 if (!$hStatement->pg_result())
@@ -301,7 +284,7 @@ sub executeSql
                     # Return if the error should be ignored
                     if ($bIgnoreError)
                     {
-                        return '';
+                        return \@stryResult;
                     }
 
                     # Else report it
@@ -319,18 +302,7 @@ sub executeSql
                     # If the row has data then add it to the result
                     if (@stryRow)
                     {
-                        # Add an LF after the first row
-                        $strResult .= (defined($strResult) ? "\n" : '');
-
-                        # Add row to result
-                        for (my $iColumnIdx = 0; $iColumnIdx < @stryRow; $iColumnIdx++)
-                        {
-                            # Add tab between columns
-                            $strResult .= $iColumnIdx == 0 ? '' : "\t";
-
-                            # Add column data
-                            $strResult .= defined($stryRow[$iColumnIdx]) ? $stryRow[$iColumnIdx] : '';
-                        }
+                        push(@{$stryResult[@stryResult]}, @stryRow);
                     }
                     # Else check for error
                     elsif ($hStatement->err)
@@ -357,7 +329,7 @@ sub executeSql
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strResult', value => $strResult}
+        {name => 'stryResult', value => \@stryResult, ref => true}
     );
 }
 
@@ -377,17 +349,14 @@ sub executeSqlRow
         logDebugParam
         (
             __PACKAGE__ . '->executeSqlRow', \@_,
-            {name => 'strSql', trace => true}
+            {name => 'strSql'}
         );
-
-    # Return from function and log return values if any
-    my @stryResult = split("\t", $self->executeSql($strSql));
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strResult', value => \@stryResult}
+        {name => 'stryResult', value => @{$self->executeSql($strSql)}[0]}
     );
 }
 
@@ -407,14 +376,14 @@ sub executeSqlOne
         logDebugParam
         (
             __PACKAGE__ . '->executeSqlOne', \@_,
-            {name => 'strSql', trace => true}
+            {name => 'strSql'}
         );
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strResult', value => ($self->executeSqlRow($strSql))[0], trace => true}
+        {name => 'strResult', value => @{@{$self->executeSql($strSql)}[0]}[0]}
     );
 }
 
@@ -430,8 +399,12 @@ sub tablespaceMapGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->tablespaceMapGet');
 
-    dataHashBuild(my $hTablespaceMap = {}, "oid\tname\n" . $self->executeSql(
-                  'select oid, spcname from pg_tablespace'), "\t");
+    my $hTablespaceMap = {};
+
+    for my $strRow (@{$self->executeSql('select oid, spcname from pg_tablespace')})
+    {
+        $hTablespaceMap->{@{$strRow}[0]} = @{$strRow}[1];
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -453,8 +426,13 @@ sub databaseMapGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->databaseMapGet');
 
-    dataHashBuild(my $hDatabaseMap = {}, "name\t" . MANIFEST_KEY_DB_ID . "\t" . MANIFEST_KEY_DB_LAST_SYSTEM_ID  . "\n" .
-                  $self->executeSql('select datname, oid, datlastsysoid from pg_database'), "\t");
+    my $hDatabaseMap = {};
+
+    for my $strRow (@{$self->executeSql('select datname, oid, datlastsysoid from pg_database')})
+    {
+        $hDatabaseMap->{@{$strRow}[0]}{&MANIFEST_KEY_DB_ID} = @{$strRow}[1];
+        $hDatabaseMap->{@{$strRow}[0]}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID} = @{$strRow}[2];
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -499,25 +477,10 @@ sub info
         #---------------------------------------------------------------------------------------------------------------------------
         if ($oFile->isRemote(PATH_DB_ABSOLUTE))
         {
-            # Build param hash
-            my %oParamHash;
-
-            $oParamHash{'db-path'} = $strDbPath;
-
-            # Output remote trace info
-            &log(TRACE, OP_DB_INFO . ": remote (" . $oFile->{oProtocol}->commandParamString(\%oParamHash) . ')');
-
             # Execute the command
-            my $strResult = $oFile->{oProtocol}->cmdExecute(OP_DB_INFO, \%oParamHash, true);
-
-            # Split the result into return values
-            my @stryToken = split(/\t/, $strResult);
-
-            # Cache info so it does not need to read again for the same database
-            $self->{info}{$strDbPath}{strDbVersion} = $stryToken[0];
-            $self->{info}{$strDbPath}{iControlVersion} = $stryToken[1];
-            $self->{info}{$strDbPath}{iCatalogVersion} = $stryToken[2];
-            $self->{info}{$strDbPath}{ullDbSysId} = $stryToken[3];
+            ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
+                $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
+                    $oFile->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
         }
         # Get info locally
         #---------------------------------------------------------------------------------------------------------------------------
@@ -542,27 +505,28 @@ sub info
             sysread($hFile, $tBlock, 4) == 4
                 or confess &log(ERROR, "unable to read control version");
 
-            $self->{info}{$strDbPath}{iControlVersion} = unpack('L', $tBlock);
+            $self->{info}{$strDbPath}{iDbControlVersion} = unpack('L', $tBlock);
 
             # Read catalog version
             sysread($hFile, $tBlock, 4) == 4
                 or confess &log(ERROR, "unable to read catalog version");
 
-            $self->{info}{$strDbPath}{iCatalogVersion} = unpack('L', $tBlock);
+            $self->{info}{$strDbPath}{iDbCatalogVersion} = unpack('L', $tBlock);
 
             # Close the control file
             close($hFile);
 
             # Get PostgreSQL version
             $self->{info}{$strDbPath}{strDbVersion} =
-                $$oPgControlVersionHash{$self->{info}{$strDbPath}{iControlVersion}}{$self->{info}{$strDbPath}{iCatalogVersion}};
+                $oPgControlVersionHash->{$self->{info}{$strDbPath}{iDbControlVersion}}
+                    {$self->{info}{$strDbPath}{iDbCatalogVersion}};
 
             if (!defined($self->{info}{$strDbPath}{strDbVersion}))
             {
                 confess &log(
                     ERROR,
-                    'unexpected control version = ' . $self->{info}{$strDbPath}{iControlVersion} .
-                    ' and catalog version = ' . $self->{info}{$strDbPath}{iCatalogVersion} . "\n" .
+                    'unexpected control version = ' . $self->{info}{$strDbPath}{iDbControlVersion} .
+                    ' and catalog version = ' . $self->{info}{$strDbPath}{iDbCatalogVersion} . "\n" .
                     'HINT: is this version of PostgreSQL supported?',
                     ERROR_VERSION_NOT_SUPPORTED);
             }
@@ -574,8 +538,8 @@ sub info
     (
         $strOperation,
         {name => 'strDbVersion', value => $self->{info}{$strDbPath}{strDbVersion}},
-        {name => 'iControlVersion', value => $self->{info}{$strDbPath}{iControlVersion}},
-        {name => 'iCatalogVersion', value => $self->{info}{$strDbPath}{iCatalogVersion}},
+        {name => 'iDbControlVersion', value => $self->{info}{$strDbPath}{iDbControlVersion}},
+        {name => 'iDbCatalogVersion', value => $self->{info}{$strDbPath}{iDbCatalogVersion}},
         {name => 'ullDbSysId', value => $self->{info}{$strDbPath}{ullDbSysId}}
     );
 }
@@ -717,7 +681,10 @@ sub backupStop
     my ($strTimestampDbStop, $strArchiveStop, $strLsnStop, $strLabel, $strTablespaceMap) =
         $self->executeSqlRow(
             "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), lsn::text, " .
-            ($self->{strDbVersion} >= PG_VERSION_96 ? 'labelfile, spcmapfile' : "null as labelfile, null as spcmapfile") .
+            ($self->{strDbVersion} >= PG_VERSION_96 ?
+                'labelfile, ' .
+                'case when length(trim(both \'\t\n \' from spcmapfile)) = 0 then null else spcmapfile end as spcmapfile' :
+                'null as labelfile, null as spcmapfile') .
             ' from pg_stop_backup(' .
             ($self->{strDbVersion} >= PG_VERSION_96 ? 'false)' : ') as lsn'));
 
@@ -777,20 +744,22 @@ sub configValidate
     # If cluster is not a standby and archive checking is enabled, then perform various validations
     if (!$self->isStandby() && optionValid(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
+        my $strArchiveMode = $self->executeSqlOne('show archive_mode');
+
         # Error if archive_mode = off since pg_start_backup () will fail
-        if ($self->executeSql('show archive_mode') eq 'off')
+        if ($strArchiveMode eq 'off')
         {
             confess &log(ERROR, 'archive_mode must be enabled', ERROR_ARCHIVE_DISABLED);
         }
 
         # Error if archive_mode = always (support has not been added yet)
-        if ($self->executeSql('show archive_mode') eq 'always')
+        if ($strArchiveMode eq 'always')
         {
             confess &log(ERROR, "archive_mode=always not supported", ERROR_FEATURE_NOT_SUPPORTED);
         }
 
         # Check if archive_command is set
-        my $strArchiveCommand = $self->executeSql('show archive_command');
+        my $strArchiveCommand = $self->executeSqlOne('show archive_command');
 
         if (index($strArchiveCommand, BACKREST_EXE) == -1)
         {
@@ -825,7 +794,7 @@ sub xlogSwitch
         $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Archive Check');");
     }
 
-    my $strWalFileName = $self->executeSqlRow('select pg_xlogfile_name from pg_xlogfile_name(pg_switch_xlog());');
+    my $strWalFileName = $self->executeSqlOne('select pg_xlogfile_name from pg_xlogfile_name(pg_switch_xlog());');
 
     &log(INFO, "switch xlog ${strWalFileName}");
 

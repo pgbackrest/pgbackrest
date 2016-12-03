@@ -1279,6 +1279,7 @@ my $oConfigHelpData =
                 'db-socket-path' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
+                'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'log-path' => 'section',

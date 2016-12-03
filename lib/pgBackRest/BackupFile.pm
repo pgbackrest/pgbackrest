@@ -43,23 +43,23 @@ sub backupFile
         $oFile,                                     # File object
         $strDbFile,                                 # Database file to backup
         $strRepoFile,                               # Location in the repository to copy to
-        $bDestinationCompress,                      # Compress destination file
-        $strChecksum,                               # File checksum to be checked
-        $lModificationTime,                         # File modification time
         $lSizeFile,                                 # File size
+        $strChecksum,                               # File checksum to be checked
+        $bDestinationCompress,                      # Compress destination file
+        $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::backupFile', \@_,
             {name => 'oFile', trace => true},
-            {name => OP_PARAM_DB_FILE, trace => true},
-            {name => OP_PARAM_REPO_FILE, trace => true},
-            {name => OP_PARAM_DESTINATION_COMPRESS, trace => true},
-            {name => OP_PARAM_CHECKSUM, required => false, trace => true},
-            {name => OP_PARAM_MODIFICATION_TIME, trace => true},
-            {name => OP_PARAM_SIZE, trace => true},
-            {name => OP_PARAM_IGNORE_MISSING, default => true, trace => true},
+            {name => 'strDbFile', trace => true},
+            {name => 'strRepoFile', trace => true},
+            {name => 'lSizeFile', trace => true},
+            {name => 'strChecksum', required => false, trace => true},
+            {name => 'bDestinationCompress', trace => true},
+            {name => 'lModificationTime', trace => true},
+            {name => 'bIgnoreMissing', default => true, trace => true},
         );
 
     my $iCopyResult = BACKUP_FILE_COPY;             # Copy result
@@ -142,16 +142,16 @@ sub backupManifestUpdate
         $oManifest,
         $strHost,
         $iLocalId,
-        $strRepoFile,
         $strDbFile,
-        $iCopyResult,
+        $strRepoFile,
         $lSize,
+        $strChecksum,
+        $iCopyResult,
         $lSizeCopy,
         $lSizeRepo,
+        $strChecksumCopy,
         $lSizeTotal,
         $lSizeCurrent,
-        $strChecksum,
-        $strChecksumCopy,
         $lManifestSaveSize,
         $lManifestSaveCurrent
     ) =
@@ -161,16 +161,22 @@ sub backupManifestUpdate
             {name => 'oManifest', trace => true},
             {name => 'strHost', required => false, trace => true},
             {name => 'iLocalId', required => false, trace => true},
-            {name => 'strRepoFile', trace => true},
+
+            # Parameters to backupFile()
             {name => 'strDbFile', trace => true},
-            {name => 'iCopyResult', trace => true},
+            {name => 'strRepoFile', trace => true},
             {name => 'lSize', required => false, trace => true},
+            {name => 'strChecksum', required => false, trace => true},
+
+            # Results from backupFile()
+            {name => 'iCopyResult', trace => true},
             {name => 'lSizeCopy', required => false, trace => true},
             {name => 'lSizeRepo', required => false, trace => true},
+            {name => 'strChecksumCopy', required => false, trace => true},
+
+            # Accumulators
             {name => 'lSizeTotal', trace => true},
             {name => 'lSizeCurrent', trace => true},
-            {name => 'strChecksum', required => false, trace => true},
-            {name => 'strChecksumCopy', required => false, trace => true},
             {name => 'lManifestSaveSize', trace => true},
             {name => 'lManifestSaveCurrent', trace => true}
         );

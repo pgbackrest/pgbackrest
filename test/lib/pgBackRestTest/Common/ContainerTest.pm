@@ -36,6 +36,7 @@ use constant POSTGRES_USER                                          => POSTGRES_
 use constant POSTGRES_USER_ID                                       => POSTGRES_GROUP_ID;
 
 use constant TEST_GROUP                                             => POSTGRES_GROUP;
+    push @EXPORT, qw(TEST_GROUP);
 use constant TEST_GROUP_ID                                          => POSTGRES_GROUP_ID;
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
