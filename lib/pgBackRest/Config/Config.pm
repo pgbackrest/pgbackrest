@@ -550,6 +550,8 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 # 	        &CMD_CHECK => true,
 #   false - used in conjuntion with OPTION_RULE_DEFAULT so the user cannot override this option. If the option is provided for the
 #           command by the user, it will be ignored and the default will be used.
+#   NOTE: If the option (A) has a dependency on another option (B) then the CMD_ must also be specified in the other option (B),
+#         else it will still error on the option (A).
 #
 # OPTION_RULE_REQUIRED:
 #   In global section:
@@ -573,7 +575,8 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 #   The option can be negated with "no" e.g. --no-lock.
 #
 # OPTION_RULE_DEPEND:
-#   Specify the dependencies this option has on another option.
+#   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
+#   dependent option(s).
 #   OPTION_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
 #
 # OPTION_RULE_ALLOW_LIST:
@@ -1149,6 +1152,7 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
+            &CMD_STANZA_CREATE => true,
             &CMD_BACKUP => true,
             &CMD_INFO => true,
             &CMD_LOCAL => true,

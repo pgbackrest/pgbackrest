@@ -46,12 +46,6 @@ my $oWalMagicHash =
 };
 
 ####################################################################################################################################
-# PostgreSQL WAL system id offset
-####################################################################################################################################
-use constant PG_WAL_SYSTEM_ID_OFFSET_GTE_93                         => 20;
-use constant PG_WAL_SYSTEM_ID_OFFSET_LT_93                          => 12;
-
-####################################################################################################################################
 # constructor
 ####################################################################################################################################
 sub new
@@ -130,7 +124,7 @@ sub getProcess
     # Make sure the destination file is defined
     if (!defined($ARGV[2]))
     {
-        confess &log(ERROR, 'WAL segment destination no provided', ERROR_PARAM_REQUIRED);
+        confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
     }
 
     # Info for the Postgres log
@@ -1168,28 +1162,28 @@ sub check
     # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
     do
     {
-    eval
-    {
+        eval
+        {
             # check that the archive info file is written and is valid for the current database of the stanza
             $strArchiveId = $self->getCheck($oFile);
 
             # Clear any previous errors if we've found the archive.info
             $iResult = 0;
 
-        return true;
-    }
-    or do
-    {
-        # Confess unhandled errors
-        if (!isException($EVAL_ERROR))
-        {
-            confess $EVAL_ERROR;
+            return true;
         }
+        or do
+        {
+            # Confess unhandled errors
+            if (!isException($EVAL_ERROR))
+            {
+                confess $EVAL_ERROR;
+            }
 
-        # If this is a backrest error then capture the last code and message
-        $iResult = $EVAL_ERROR->code();
-        $strResultMessage = $EVAL_ERROR->message();
-    };
+            # If this is a backrest error then capture the last code and message
+            $iResult = $EVAL_ERROR->code();
+            $strResultMessage = $EVAL_ERROR->message();
+        };
     } while (!defined($strArchiveId) && waitMore($oWait));
 
     # If able to get the archive id then check the archived WAL file with the time remaining

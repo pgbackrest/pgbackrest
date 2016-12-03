@@ -167,6 +167,14 @@
                     <release-item>
                         <p>Simplified the result hash of <code>File->manifest()</code>, <code>Db->tablespaceMapGet()</code>, and <code>Db->databaseMapGet()</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Code cleanup in preparation for improved <cmd>stanza-create</cmd> command.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

@@ -10,13 +10,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
-use DBI;
 use Exporter qw(import);
-use Fcntl ':mode';
 use File::Basename qw(dirname);
-use File::Copy 'cp';
-use File::stat;
-use Time::HiRes qw(gettimeofday);
 
 use pgBackRest::Archive;
 use pgBackRest::ArchiveInfo;

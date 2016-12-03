@@ -32,7 +32,7 @@ use constant ARCHIVE_INFO_FILE                                      => 'archive.
     our @EXPORT = qw(ARCHIVE_INFO_FILE);
 
 ####################################################################################################################################
-# Backup info Constants
+# Archive info constants
 ####################################################################################################################################
 use constant INFO_ARCHIVE_SECTION_DB                                => INFO_BACKUP_SECTION_DB;
     push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);

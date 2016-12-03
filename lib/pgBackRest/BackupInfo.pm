@@ -51,13 +51,13 @@ use constant INFO_BACKUP_KEY_ARCHIVE_STOP                           => MANIFEST_
 use constant INFO_BACKUP_KEY_BACKUP_STANDBY                         => MANIFEST_KEY_BACKUP_STANDBY;
     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_STANDBY);
 use constant INFO_BACKUP_KEY_BACKUP_REPO_SIZE                       => 'backup-info-repo-size';
-     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE);
+    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE);
 use constant INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA                 => 'backup-info-repo-size-delta';
-     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA);
+    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_REPO_SIZE_DELTA);
 use constant INFO_BACKUP_KEY_BACKUP_SIZE                            => 'backup-info-size';
-     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE);
+    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE);
 use constant INFO_BACKUP_KEY_BACKUP_SIZE_DELTA                      => 'backup-info-size-delta';
-     push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE_DELTA);
+    push @EXPORT, qw(INFO_BACKUP_KEY_BACKUP_SIZE_DELTA);
 use constant INFO_BACKUP_KEY_CATALOG                                => MANIFEST_KEY_CATALOG;
     push @EXPORT, qw(INFO_BACKUP_KEY_CATALOG);
 use constant INFO_BACKUP_KEY_CONTROL                                => MANIFEST_KEY_CONTROL;

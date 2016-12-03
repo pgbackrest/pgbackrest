@@ -14,6 +14,7 @@ use Scalar::Util qw(looks_like_number);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
@@ -317,7 +318,7 @@ sub process
                     }
 
                     # Get all major archive paths (timeline and first 64 bits of LSN)
-                    foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, "^[0-F]{16}\$"))
+                    foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
                     {
                         logDebugMisc($strOperation, "found major WAL path: ${strPath}");
                         $bRemove = true;
