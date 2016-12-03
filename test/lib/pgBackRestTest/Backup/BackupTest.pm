@@ -967,6 +967,15 @@ sub backupTestRun
                  strTest => $strTestPoint,
                  fTestDelay => 0});
 
+            # Error on backup option to check logging
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($bNeutralTest && !$bRemote)
+            {
+                $oHostBackup->backup(
+                    $strType, 'invalid cmd line',
+                    {oExpectedManifest => \%oManifest, strStanza => 'bogus', iExpectedExitStatus => ERROR_OPTION_REQUIRED});
+            }
+
             # Test protocol timeout
             #-----------------------------------------------------------------------------------------------------------------------
             if ($bNeutralTest && $bRemote)

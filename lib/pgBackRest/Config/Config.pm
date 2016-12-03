@@ -1867,6 +1867,29 @@ my %oOptionRule =
 ####################################################################################################################################
 my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
+my $bInitLog = false;       # Has logging been initialized yet?
+
+####################################################################################################################################
+# configLogging
+#
+# Configure logging based on options.
+####################################################################################################################################
+sub configLogging
+{
+    my $bLogInitForce = shift;
+
+    if (($bInitLog || (defined($bLogInitForce) && $bLogInitForce)) && !commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL))
+    {
+        logLevelSet(
+            optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
+            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF,
+            optionValid(OPTION_LOG_LEVEL_STDERR) ? optionGet(OPTION_LOG_LEVEL_STDERR) : OFF);
+
+        $bInitLog = true;
+    }
+}
+
+push @EXPORT, qw(configLogging);
 
 ####################################################################################################################################
 # configLoad
@@ -1876,9 +1899,6 @@ my $strCommand;             # Command (backup, archive-get, ...)
 sub configLoad
 {
     my $bInitLogging = shift;
-
-    # Determine if logging should be initialized
-    $bInitLogging = (!defined($bInitLogging) ? true : $bInitLogging);
 
     # Clear option in case it was loaded before
     %oOption = ();
@@ -2003,13 +2023,11 @@ sub configLoad
     }
 
     # If this is not the remote and logging is allowed (to not overwrite log levels for tests) then set the log level so that
-    # INFO/WARN messages can be displayed (the user may still disable them).
-    if (!commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL) && $bInitLogging)
+    # INFO/WARN messages can be displayed (the user may still disable them).  This should be run before any WARN logging is
+    # generated.
+    if (!defined($bInitLogging) || $bInitLogging)
     {
-        logLevelSet(
-            optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
-            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF,
-            optionValid(OPTION_LOG_LEVEL_STDERR) ? optionGet(OPTION_LOG_LEVEL_STDERR) : OFF);
+        configLogging(true);
     }
 
     # Neutralize the umask to make the repository file/path modes more consistent

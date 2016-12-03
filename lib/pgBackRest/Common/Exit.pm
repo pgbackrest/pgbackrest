@@ -55,6 +55,10 @@ sub exitSafe
             {name => 'strSignal', required => false},
         );
 
+    # Reset logging in case it was disabled when the exception/signal occurred
+    configLogging();
+
+    # Log command stop
     commandStop();
 
     # Close the remote
@@ -74,6 +78,7 @@ sub exitSafe
         if (isException($oException))
         {
             $iExitCode = $oException->code();
+            logException($oException);
         }
         else
         {

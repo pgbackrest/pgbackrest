@@ -166,6 +166,7 @@ sub new
     my $iCode = shift;       # Error code
     my $strMessage = shift;  # ErrorMessage
     my $strTrace = shift;    # Stack trace
+    my $rExtra = shift;      # Extra info used exclusively by the logging system
 
     if ($iCode < ERROR_MINIMUM || $iCode > ERROR_MAXIMUM)
     {
@@ -181,6 +182,7 @@ sub new
     $self->{iCode} = $iCode;
     $self->{strMessage} = $strMessage;
     $self->{strTrace} = $strTrace;
+    $self->{rExtra} = $rExtra;
 
     return $self;
 }
@@ -203,6 +205,16 @@ sub code
     my $self = shift;
 
     return $self->{iCode};
+}
+
+####################################################################################################################################
+# extra
+####################################################################################################################################
+sub extra
+{
+    my $self = shift;
+
+    return $self->{rExtra};
 }
 
 ####################################################################################################################################

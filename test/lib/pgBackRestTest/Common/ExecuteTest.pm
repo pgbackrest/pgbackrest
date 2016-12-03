@@ -195,6 +195,11 @@ sub endRetry
     # Pass the log to the LogTest object
     if (defined($self->{oLogTest}))
     {
+        if (defined($self->{strErrorLog}) && $self->{strErrorLog} ne '')
+        {
+            $self->{strOutLog} .= "STDERR:\n" . $self->{strErrorLog};
+        }
+
         $self->{oLogTest}->logAdd($self->{strCommand}, $self->{strComment}, $self->{bLogOutput} ? $self->{strOutLog} : undef);
     }
 

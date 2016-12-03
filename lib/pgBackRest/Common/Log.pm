@@ -67,7 +67,7 @@ my $strLogFileCache = undef;
 
 my $strLogLevelFile = OFF;
 my $strLogLevelConsole = OFF;
-my $strLogLevelStdOut = OFF;
+my $strLogLevelStdErr = WARN;
 
 # Test globals
 my $bTest = false;
@@ -144,7 +144,7 @@ sub logLevelSet
 {
     my $strLevelFileParam = shift;
     my $strLevelConsoleParam = shift;
-    my $strLevelStdOutParam = shift;
+    my $strLevelStdErrParam = shift;
 
     # Load FileCommon module
     require pgBackRest::FileCommon;
@@ -170,14 +170,14 @@ sub logLevelSet
         $strLogLevelConsole = uc($strLevelConsoleParam);
     }
 
-    if (defined($strLevelStdOutParam))
+    if (defined($strLevelStdErrParam))
     {
-        if (!defined($oLogLevelRank{uc($strLevelStdOutParam)}{rank}))
+        if (!defined($oLogLevelRank{uc($strLevelStdErrParam)}{rank}))
         {
-            confess &log(ERROR, "stdout log level ${strLevelStdOutParam} does not exist");
+            confess &log(ERROR, "stdout log level ${strLevelStdErrParam} does not exist");
         }
 
-        $strLogLevelStdOut = uc($strLevelStdOutParam);
+        $strLogLevelStdErr = uc($strLevelStdErrParam);
     }
 }
 
@@ -367,7 +367,7 @@ sub logDebugOut
 
     if ($oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
         $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelFile}{rank} ||
-        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelStdOut}{rank})
+        $oLogLevelRank{$strLevel}{rank} <= $oLogLevelRank{$strLogLevelStdErr}{rank})
     {
         if (defined($oParamHash))
         {
@@ -474,6 +474,18 @@ sub logDebugOut
 }
 
 ####################################################################################################################################
+# logException
+####################################################################################################################################
+sub logException
+{
+    my $oException = shift;
+
+    return &log($oException->level(), $oException->message(), $oException->code(), undef, undef, undef, $oException->extra());
+}
+
+push @EXPORT, qw(logException);
+
+####################################################################################################################################
 # LOG - log messages
 ####################################################################################################################################
 sub log
@@ -484,9 +496,20 @@ sub log
     my $bSuppressLog = shift;
     my $iIndent = shift;
     my $iProcessId = shift;
+    my $rExtra = shift;
 
     # Set defaults
     $bSuppressLog = defined($bSuppressLog) ? $bSuppressLog : false;
+
+    # Initialize rExtra
+    if (!defined($rExtra))
+    {
+        $rExtra =
+        {
+            bLogFile => false,
+            bLogConsole => false,
+        };
+    }
 
     # Set operational variables
     my $strMessageFormat = $strMessage;
@@ -562,12 +585,13 @@ sub log
         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Output to stderr depending on log level
-    if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelStdOut}{rank})
+    if (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelStdErr}{rank})
     {
         syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ": $strMessage\n");
+        $rExtra->{bLogConsole} = true;
     }
     # Else output to stdout depending on log level and test flag
-    elsif ($iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} || $bTest && $strLevel eq TEST)
+    elsif (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} || $bTest && $strLevel eq TEST)
     {
         if (!$bSuppressLog)
         {
@@ -579,10 +603,12 @@ sub log
         {
             usleep($fTestDelay * 1000000);
         }
+
+        $rExtra->{bLogConsole} = true;
     }
 
     # Output to file depending on log level and test flag
-    if ($iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
+    if (!$rExtra->{bLogLogFile} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
     {
         if (defined($hLogFile) || (defined($strLogLevelFile) && $strLogLevelFile ne OFF))
         {
@@ -614,12 +640,14 @@ sub log
                 }
             }
         }
+
+        $rExtra->{bLogFile} = true;
     }
 
     # Throw a typed exception if code is defined
     if (defined($iCode))
     {
-        return new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess());
+        return new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
     }
 
     # Return the message test so it can be used in a confess

@@ -215,7 +215,7 @@ sub backupBegin
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         (defined($oParam->{bRepoLink}) && !$oParam->{bRepoLink} ? ' --no-repo-link' : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
-        ' --stanza=' . $self->stanza() . ' backup' .
+        ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
          oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
@@ -265,6 +265,13 @@ sub backupEnd
     my $iExitStatus = $oExecuteBackup->end();
 
     return if ($oExecuteBackup->{iExpectedExitStatus} != 0);
+
+    # If an alternate stanza was specified
+    if (defined($oParam->{strStanza}))
+    {
+        confess &log(ASSERT,
+            'if an alternate stanza is specified it must generate an error - the remaining code will not be aware of the stanza');
+    }
 
     my $strBackup = $self->backupLast();
 

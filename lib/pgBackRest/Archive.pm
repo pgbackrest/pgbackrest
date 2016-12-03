@@ -1145,10 +1145,7 @@ sub check
         or do
         {
             # Confess unhandled errors
-            if (!isException($EVAL_ERROR))
-            {
-                confess $EVAL_ERROR;
-            }
+            confess $EVAL_ERROR if (!isException($EVAL_ERROR));
 
             # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
@@ -1168,10 +1165,7 @@ sub check
         or do
         {
             # Confess unhandled errors
-            if (!isException($EVAL_ERROR))
-            {
-                confess $EVAL_ERROR;
-            }
+            confess $EVAL_ERROR if (!isException($EVAL_ERROR));
 
             # If this is a backrest error then capture the last code and message
             $iResult = $EVAL_ERROR->code();
@@ -1188,9 +1182,9 @@ sub check
             $self->getBackupInfoCheck($oFile);
             return true;
         }
-        # If there is an error but it is not that the file is missing then confess
         or do
         {
+            # If there is an error but it is not that the file is missing then confess
             if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
             {
                 confess $EVAL_ERROR;
