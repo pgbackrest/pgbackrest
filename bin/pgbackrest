@@ -113,9 +113,6 @@ local $EVAL_ERROR = undef; eval
         exitSafe($oLocal->process());
     }
 
-    # Log the command start
-    commandStart();
-
     # Check that the repo path exists
     if (isRepoLocal() && !-e optionGet(OPTION_REPO_PATH))
     {

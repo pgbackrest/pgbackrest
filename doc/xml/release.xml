@@ -155,6 +155,10 @@
                     <release-item>
                         <p>Added the <br-option>--repo-link</br-option> option to allow internal symlinks to be suppressed when the repository is located on a filesystem that does not support symlinks.  This does not affect any <backrest/> functionality, but the convenience link <path>latest</path> will not be created and neither will internal tablespace symlinks, which will affect the ability to bring up clusters in-place manually using filesystem snapshots.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added a predictable log entry to signal that a command has completed successfully. For example a backup ends successfully with: <code>INFO: backup command end: completed successfully</code>.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>

@@ -58,9 +58,6 @@ sub exitSafe
     # Reset logging in case it was disabled when the exception/signal occurred
     configLogging();
 
-    # Log command stop
-    commandStop();
-
     # Close the remote
     protocolDestroy(undef, undef, defined($iExitCode) && ($iExitCode == 0 || $iExitCode == 1));
 
@@ -95,6 +92,9 @@ sub exitSafe
     {
         &log(ERROR, "process terminated on a ${strSignal} signal", ERROR_TERM);
     }
+
+    # Log command end
+    commandEnd($iExitCode, $strSignal);
 
     # Log return values if any
     logDebugReturn

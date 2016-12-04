@@ -333,7 +333,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'BACKREST-NAME-VERSION', '^' . BACKREST_NAME . ' ' . BACKREST_VERSION,
                                                 undef, false);
     $strLine = $self->regExpReplace(
-        $strLine, 'BACKREST-VERSION', ' start ' . BACKREST_VERSION . '\:', BACKREST_VERSION, false);
+        $strLine, 'BACKREST-VERSION', ' begin ' . BACKREST_VERSION . '\:', BACKREST_VERSION, false);
 
     $strLine = $self->regExpReplace($strLine, undef, '^docker exec -u [a-z]* test-[0-9]+\-', 'test-[0-9]+\-', false);
     $strLine = $self->regExpReplace($strLine, 'CONTAINER-EXEC', '^docker exec -u [a-z]*', '^docker exec -u [a-z]*', false);

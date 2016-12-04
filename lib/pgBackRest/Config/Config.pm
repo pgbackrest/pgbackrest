@@ -2017,18 +2017,21 @@ sub configLoad
         }
     }
 
-    # Return and display version and help in main
-    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
-    {
-        return true;
-    }
-
     # If this is not the remote and logging is allowed (to not overwrite log levels for tests) then set the log level so that
     # INFO/WARN messages can be displayed (the user may still disable them).  This should be run before any WARN logging is
     # generated.
     if (!defined($bInitLogging) || $bInitLogging)
     {
         configLogging(true);
+    }
+
+    # Log the command begin
+    commandBegin();
+
+    # Return and display version and help in main
+    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
+    {
+        return true;
     }
 
     # Neutralize the umask to make the repository file/path modes more consistent
@@ -2938,33 +2941,42 @@ sub commandTest
 push @EXPORT, qw(commandTest);
 
 ####################################################################################################################################
-# commandStart
+# commandBegin
 #
-# Log information about the command that was just started.
+# Log information about the command when it begins.
 ####################################################################################################################################
-sub commandStart
+sub commandBegin
 {
     &log(
         $strCommand eq CMD_INFO ? DEBUG : INFO,
-        "${strCommand} start " . BACKREST_VERSION . ':' . commandWrite($strCommand, true, '', false));
+        "${strCommand} command begin " . BACKREST_VERSION . ':' . commandWrite($strCommand, true, '', false));
 }
 
-push @EXPORT, qw(commandStart);
+push @EXPORT, qw(commandBegin);
 
 ####################################################################################################################################
-# commandStop
+# commandEnd
 #
-# Log information about the command that was just stopped.
+# Log information about the command that ended.
 ####################################################################################################################################
-sub commandStop
+sub commandEnd
 {
+    my $iExitCode = shift;
+    my $strSignal = shift;
+
     if (defined($strCommand))
     {
-        &log($strCommand eq CMD_INFO ? DEBUG : INFO, "${strCommand} stop");
+        &log(
+            $strCommand eq CMD_INFO ? DEBUG : INFO,
+            "${strCommand} command end: " . (defined($iExitCode) && $iExitCode != 0 ?
+                ($iExitCode == ERROR_TERM ? "terminated on signal " .
+                    (defined($strSignal) ? "[SIG${strSignal}]" : 'from child process') :
+                "aborted with exception [${iExitCode}]") :
+                'completed successfully'));
     }
 }
 
-push @EXPORT, qw(commandStop);
+push @EXPORT, qw(commandEnd);
 
 ####################################################################################################################################
 # commandSet
@@ -2975,11 +2987,11 @@ sub commandSet
 {
     my $strValue = shift;
 
-    commandStop();
+    commandEnd();
 
     $strCommand = $strValue;
 
-    commandStart();
+    commandBegin();
 }
 
 push @EXPORT, qw(commandSet);
