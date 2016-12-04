@@ -213,6 +213,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Added Retention to QuickStart section.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow a source to be included as a section so large documents can be broken up.</p>
                     </release-item>
 

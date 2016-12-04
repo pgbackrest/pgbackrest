@@ -396,6 +396,21 @@
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) then the <br-option>archive-timeout</br-option> option should be increased.</p>
         </section>
 
+        <!-- SECTION => QUICKSTART - RETENTION -->
+        <section id="retention" depend="configure-archiving">
+            <title>Configure Retention</title>
+
+            <p><backrest/> expires backups based on retention options.</p>
+
+            <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
+                <title>Configure retention to 2 full backups</title>
+
+                <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
+            </backrest-config>
+
+            <p>More information about retention can be found in the <link section="/retention">Retention</link> section.</p>
+        </section>
+
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
         <section id="create-stanza" depend="configure-archiving">
             <title>Create the Stanza</title>
@@ -1323,6 +1338,7 @@
                 <backrest-config-option section="demo" key="db1-user">postgres</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
+                <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
             </backrest-config>
@@ -1504,7 +1520,7 @@
     </section>
 
     <!-- SECTION => START/STOP -->
-    <section id="start-stop" depend="/quickstart/configure-archiving">
+    <section id="start-stop" depend="/backup-host/install-config">
         <title>Starting and Stopping</title>
 
         <p>Sometimes it is useful to prevent <backrest/> from running on a system.  For example, when failing over from a master to a standby it's best to prevent <backrest/> from running on the old master in case <postgres/> gets restarted or can't be completely killed.  This will also prevent <backrest/> from running on <id>cron</id>.</p>
@@ -1519,12 +1535,12 @@
 
         <p>New <backrest/> processes will no longer run.</p>
 
-        <execute-list host="{[host-db-master]}">
+        <execute-list host="{[host-backup]}">
             <title>Attempt a backup</title>
 
-            <execute err-expect="137" output="y">
+            <execute user="backrest" err-expect="137" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>stop file exists for all stanzas</exe-highlight>
+                <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for all stanzas</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1556,10 +1572,16 @@
             <execute>
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
             </execute>
+        </execute-list>
 
-            <execute err-expect="137" output="y">
+        <p>New <backrest/> processes for the specified stanza will no longer run.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Attempt a backup</title>
+
+            <execute user="backrest" err-expect="137" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>stop file exists for stanza demo</exe-highlight>
+                <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for stanza demo</exe-highlight>
             </execute>
         </execute-list>
 
