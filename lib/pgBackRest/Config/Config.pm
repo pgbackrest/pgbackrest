@@ -1879,7 +1879,7 @@ sub configLogging
 {
     my $bLogInitForce = shift;
 
-    if (($bInitLog || (defined($bLogInitForce) && $bLogInitForce)) && !commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL))
+    if ($bInitLog || (defined($bLogInitForce) && $bLogInitForce))
     {
         logLevelSet(
             optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
@@ -2867,11 +2867,14 @@ sub optionSet
 {
     my $strOption = shift;
     my $oValue = shift;
+    my $bForce = shift;
 
-    optionValid($strOption, true);
+    if (!optionValid($strOption, !defined($bForce) || !$bForce))
+    {
+        $oOption{$strOption}{valid} = true;
+    }
 
     $oOption{$strOption}{source} = SOURCE_PARAM;
-
     $oOption{$strOption}{value} = $oValue;
 }
 

@@ -187,6 +187,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improved errors returned from child processes by removing redundant error level and code.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>

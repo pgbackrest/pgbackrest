@@ -154,6 +154,9 @@ sub process
 {
     my $self = shift;
 
+    # Reset stderr log level so random errors do not get output
+    logLevelSet(undef, undef, OFF);
+
     # Loop until the exit command is received
     eval
     {
@@ -202,7 +205,7 @@ sub process
         my $oException = $EVAL_ERROR;
 
         # Change log level so error will go to stderr
-        logLevelSet(undef, undef, ERROR);
+        logLevelSet(undef, undef, PROTOCOL);
 
         # If standard exception
         if (isException($oException))

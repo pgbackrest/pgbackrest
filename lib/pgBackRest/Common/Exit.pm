@@ -90,7 +90,7 @@ sub exitSafe
     }
     elsif ($iExitCode == ERROR_TERM)
     {
-        &log(ERROR, "process terminated on a ${strSignal} signal", ERROR_TERM);
+        &log(ERROR, "terminated on signal [SIG${strSignal}]", ERROR_TERM);
     }
 
     # Log command end

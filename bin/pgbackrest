@@ -62,7 +62,8 @@ local $EVAL_ERROR = undef; eval
     if (commandTest(CMD_REMOTE))
     {
         # Set log levels
-        logLevelSet(OFF, OFF, OFF);
+        optionSet(OPTION_LOG_LEVEL_STDERR, PROTOCOL, true);
+        logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
 
         # Check that the repo path exists if this is a backup remote
         if (optionTest(OPTION_TYPE, BACKUP) && !-e optionGet(OPTION_REPO_PATH))
@@ -97,7 +98,8 @@ local $EVAL_ERROR = undef; eval
     if (commandTest(CMD_LOCAL))
     {
         # Set log levels
-        logLevelSet(OFF, OFF, OFF);
+        optionSet(OPTION_LOG_LEVEL_STDERR, PROTOCOL, true);
+        logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
 
         # Load module dynamically
         require pgBackRest::Protocol::LocalMinion;

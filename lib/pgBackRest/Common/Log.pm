@@ -38,6 +38,8 @@ use constant INFO                                                   => 'INFO';
     push @EXPORT, qw(INFO);
 use constant WARN                                                   => 'WARN';
     push @EXPORT, qw(WARN);
+use constant PROTOCOL                                               => 'PROTOCOL';
+    push @EXPORT, qw(PROTOCOL);
 use constant ERROR                                                  => 'ERROR';
     push @EXPORT, qw(ERROR);
 use constant ASSERT                                                 => 'ASSERT';
@@ -50,11 +52,12 @@ use constant OFF                                                    => 'OFF';
 ####################################################################################################################################
 my %oLogLevelRank;
 
-$oLogLevelRank{TRACE}{rank} = 7;
-$oLogLevelRank{DEBUG}{rank} = 6;
-$oLogLevelRank{DETAIL}{rank} = 5;
-$oLogLevelRank{INFO}{rank} = 4;
-$oLogLevelRank{WARN}{rank} = 3;
+$oLogLevelRank{TRACE}{rank} = 8;
+$oLogLevelRank{DEBUG}{rank} = 7;
+$oLogLevelRank{DETAIL}{rank} = 6;
+$oLogLevelRank{INFO}{rank} = 5;
+$oLogLevelRank{WARN}{rank} = 4;
+$oLogLevelRank{PROTOCOL}{rank} = 3;
 $oLogLevelRank{ERROR}{rank} = 2;
 $oLogLevelRank{ASSERT}{rank} = 1;
 $oLogLevelRank{OFF}{rank} = 0;
@@ -587,7 +590,12 @@ sub log
     # Output to stderr depending on log level
     if (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelStdErr}{rank})
     {
-        syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ": $strMessage\n");
+        if ($strLogLevelStdErr ne PROTOCOL)
+        {
+            syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ': ');
+        }
+
+        syswrite(*STDERR, "${strMessage}\n");
         $rExtra->{bLogConsole} = true;
     }
     # Else output to stdout depending on log level and test flag

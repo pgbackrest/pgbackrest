@@ -168,7 +168,7 @@ P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 138, oException = [undef],
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00  ERROR: [138]: process terminated on a TERM signal
+P00  ERROR: [138]: terminated on signal [SIGTERM]
 P00   INFO: archive-push command end: terminated on signal [SIGTERM]
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 138
 
