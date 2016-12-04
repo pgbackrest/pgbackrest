@@ -595,7 +595,7 @@ sub pushProcess
         {
             $oException = $EVAL_ERROR;
 
-            if (!$bArchiveAsync || optionGet(OPTION_TEST_NO_FORK))
+            if (!$bArchiveAsync || !optionGet(OPTION_TEST_FORK))
             {
                 confess $oException;
             }
@@ -622,7 +622,7 @@ sub pushProcess
             if (!$bBatch)
             {
                 # Fork and disable the async archive flag if this is the parent process
-                if (!optionGet(OPTION_TEST_NO_FORK))
+                if (optionGet(OPTION_TEST_FORK))
                 {
                     $bBatch = fork() == 0 ? true : false;
                 }

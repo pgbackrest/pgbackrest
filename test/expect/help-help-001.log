@@ -1,11 +1,11 @@
 run 001 - base
 ==============
 
-> [BACKREST-BIN] --no-config version
+> [BACKREST-BIN] version
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION]
 
-> [BACKREST-BIN] --no-config help
+> [BACKREST-BIN] help
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION] - General help
 
@@ -28,7 +28,7 @@ Commands:
 
 Use 'pgbackrest help [command]' for more information.
 
-> [BACKREST-BIN] --no-config help version
+> [BACKREST-BIN] help version
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION] - 'version' command help
 
@@ -36,7 +36,7 @@ Get version.
 
 Displays installed pgBackRest version.
 
-> [BACKREST-BIN] --no-config help --output=json --stanza=main info
+> [BACKREST-BIN] help --output=json --stanza=main info
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION] - 'info' command help
 
@@ -87,7 +87,7 @@ Log Options:
 
 Use 'pgbackrest help info [option]' for more information.
 
-> [BACKREST-BIN] --no-config help --output=json --stanza=main info output
+> [BACKREST-BIN] help --output=json --stanza=main info output
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION] - 'info' command - 'output' option help
 

@@ -237,8 +237,8 @@ use constant OPTION_TEST                                            => 'test';
     push @EXPORT, qw(OPTION_TEST);
 use constant OPTION_TEST_DELAY                                      => 'test-delay';
     push @EXPORT, qw(OPTION_TEST_DELAY);
-use constant OPTION_TEST_NO_FORK                                    => 'no-fork';
-    push @EXPORT, qw(OPTION_TEST_NO_FORK);
+use constant OPTION_TEST_FORK                                       => 'fork';
+    push @EXPORT, qw(OPTION_TEST_FORK);
 use constant OPTION_TEST_POINT                                      => 'test-point';
     push @EXPORT, qw(OPTION_TEST_POINT);
 
@@ -398,8 +398,8 @@ use constant OPTION_DEFAULT_TEST                                    => false;
     push @EXPORT, qw(OPTION_DEFAULT_TEST);
 use constant OPTION_DEFAULT_TEST_DELAY                              => 5;
     push @EXPORT, qw(OPTION_DEFAULT_TEST_DELAY);
-use constant OPTION_DEFAULT_TEST_NO_FORK                            => false;
-    push @EXPORT, qw(OPTION_DEFAULT_TEST_NO_FORK);
+use constant OPTION_DEFAULT_TEST_FORK                               => true;
+    push @EXPORT, qw(OPTION_DEFAULT_TEST_FORK);
 
 # GENERAL Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -975,10 +975,11 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_TEST_NO_FORK =>
+    &OPTION_TEST_FORK =>
     {
         &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_NO_FORK,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_FORK,
+        &OPTION_RULE_NEGATE => true,
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_PUSH => true
@@ -2153,6 +2154,9 @@ sub optionValueGet
             if (!defined($strValue))
             {
                 $strValue = $strAltValue;
+
+                delete($hOption->{$oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME}});
+                $hOption->{$strOption} = $strValue;
             }
             else
             {
@@ -2613,6 +2617,18 @@ sub optionValidate
             $oOptionResolved{$strOption} = true;
         }
     }
+
+    # Make sure all options specified on the command line are valid
+    foreach my $strOption (sort(keys(%{$oOptionTest})))
+    {
+        # Strip "no-" off the option
+        $strOption = $strOption =~ /^no\-/ ? substr($strOption, 3) : $strOption;
+
+        if (!$oOption{$strOption}{valid})
+        {
+            confess &log(ERROR, "option '${strOption}' not valid for command '${strCommand}'", ERROR_OPTION_COMMAND);
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -2809,7 +2825,7 @@ sub optionValid
             confess &log(ASSERT, "option '${strOption}' does not have 'valid' flag set");
         }
 
-        confess &log(ASSERT, "option ${strOption} is not valid for command '" . commandGet() . "'");
+        confess &log(ASSERT, "option '${strOption}' not valid for command '" . commandGet() . "'");
     }
 
     return false;

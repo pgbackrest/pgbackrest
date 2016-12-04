@@ -155,6 +155,10 @@ sub configLoadExpect
                                  " in ('" . join("', '",@{ $strErrorParam3}) . "')";
                 }
             }
+            elsif ($iExpectedError == ERROR_OPTION_COMMAND)
+            {
+                $strError = "option '${strErrorParam1}' not valid for command '${strErrorParam2}'";
+            }
             elsif ($iExpectedError == ERROR_OPTION_INVALID_VALUE)
             {
                 $strError = "'${strErrorParam1}' is not valid for '${strErrorParam2}' option" .
@@ -295,6 +299,15 @@ sub configTestRun
 
             configLoadExpect($oOption, CMD_BACKUP);
             optionTestExpect(OPTION_TYPE, BACKUP_TYPE_INCR);
+        }
+
+        if (testRun(++$iRun, CMD_BACKUP . ' invalid option ' . OPTION_ARCHIVE_ASYNC))
+        {
+            optionSetTest($oOption, OPTION_STANZA, $strStanza);
+            optionSetTest($oOption, OPTION_DB_PATH, '/db');
+            optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC);
+
+            configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_COMMAND, OPTION_ARCHIVE_ASYNC, CMD_BACKUP);
         }
 
         if (testRun(++$iRun, 'backup type set to ' . BACKUP_TYPE_FULL))

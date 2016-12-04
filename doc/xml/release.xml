@@ -135,7 +135,13 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.12dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                 <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
+
                 <release-bug-list>
+                    <release-item>
+                        <p>Fixed an issue where options that were invalid for the specified command could be provided on the command-line without generating an error.  The options were ignored and did not cause any change in behavior, but it did lead to some confusion.  Invalid options will now generate an error.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Fixed an issue where internal symlinks were not being created for tablespaces in the repository.  This issue was only apparent when trying to bring up clusters in-place manually using filesystem snapshots and did not affect normal backup and restore.</p>
                     </release-item>
@@ -243,6 +249,12 @@
             </release-doc-list>
 
             <release-test-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Removed erroneous <br-option>--no-config</br-option> option in <id>help</id> test module.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -254,6 +266,10 @@
 
                     <release-item>
                         <p>Improved exception handling in file unit tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Changed the <br-option>--no-fork</br-option> test option to <br-option>--fork</br-option> with negation to match all other boolean parameters.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

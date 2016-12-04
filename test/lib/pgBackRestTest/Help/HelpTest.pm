@@ -30,7 +30,8 @@ sub helpExecute
     my $oLogTest = shift;
 
     my $oHostGroup = hostGroupGet();
-    executeTest($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . ' --no-config ' . $strCommand, {oLogTest => $oLogTest});
+
+    executeTest($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) . " $strCommand", {oLogTest => $oLogTest});
 }
 
 ####################################################################################################################################
@@ -69,11 +70,11 @@ sub helpTestRun
         # Increment the run, log, and decide whether this unit test should be run
         if (testRun(++$iRun, 'base', $strModule, $strThisTest, \$oLogTest))
         {
-            helpExecute('version', $oLogTest);
-            helpExecute('help', $oLogTest);
-            helpExecute('help version', $oLogTest);
-            helpExecute('help --output=json --stanza=main info', $oLogTest);
-            helpExecute('help --output=json --stanza=main info output', $oLogTest);
+            helpExecute(CMD_VERSION, $oLogTest);
+            helpExecute(CMD_HELP, $oLogTest);
+            helpExecute(CMD_HELP . ' version', $oLogTest);
+            helpExecute(CMD_HELP . ' --output=json --stanza=main info', $oLogTest);
+            helpExecute(CMD_HELP . ' --output=json --stanza=main info output', $oLogTest);
         }
 
         # Cleanup
