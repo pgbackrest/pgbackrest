@@ -58,6 +58,7 @@ sub new
                 (defined($self->{stryMount}) ? ' -v ' . join(' -v ', @{$self->{stryMount}}) : '') .
                 " $self->{strImage}");
 
+    # Get IP Address
     $self->{strIP} = trim(executeTest("docker inspect --format '\{\{ .NetworkSettings.IPAddress \}\}' $self->{strContainer}"));
     $self->{bActive} = true;
 

@@ -42,8 +42,6 @@ use constant HOST_BACKUP_USER                                       => 'backup-u
 ####################################################################################################################################
 use constant HOST_PARAM_BACKREST_CONFIG                             => 'backrest-config';
     push @EXPORT, qw(HOST_PARAM_BACKREST_CONFIG);
-use constant HOST_PARAM_BACKREST_EXE                                => 'backrest-exe';
-    push @EXPORT, qw(HOST_PARAM_BACKREST_EXE);
 use constant HOST_PARAM_LOCK_PATH                                   => 'lock-path';
     push @EXPORT, qw(HOST_PARAM_LOCK_PATH);
 use constant HOST_PARAM_LOG_PATH                                    => 'log-path';
@@ -260,7 +258,7 @@ sub backupEnd
         );
 
     # Set defaults
-    my $oExpectedManifest = defined($$oParam{oExpectedManifest}) ? $$oParam{oExpectedManifest} : undef;
+    my $oExpectedManifest = defined($$oParam{oExpectedManifest}) ? dclone($$oParam{oExpectedManifest}) : undef;
 
     my $iExitStatus = $oExecuteBackup->end();
 
@@ -472,7 +470,7 @@ sub backupCompare
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL} = $strBackup;
 
-    my $oActualManifest = new pgBackRest::Common::Ini(
+    my $oActualManifest = new pgBackRest::Manifest(
         $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST));
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
@@ -485,19 +483,49 @@ sub backupCompare
         $oActualManifest->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM);
     ${$oExpectedManifest}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT + 0;
 
-    foreach my $strPathKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_PATH))
-    {
-        my $strFileSection = MANIFEST_SECTION_TARGET_FILE;
+    my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
-        foreach my $strFileKey ($oActualManifest->keys($strFileSection))
+    foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+    {
+        # Determine repo size if compression is enabled
+        if ($oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS})
         {
-            if ($oActualManifest->test($strFileSection, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE))
+            my $lRepoSize =
+                $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
+                    $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
+                    (fileStat($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/${strFileKey}.gz")))->size;
+
+            if (defined($lRepoSize) &&
+                $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
             {
-                ${$oExpectedManifest}{$strFileSection}{$strFileKey}{&MANIFEST_SUBKEY_REPO_SIZE} =
-                    $oActualManifest->get($strFileSection, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE);
+                $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_REPO_SIZE} = $lRepoSize;
             }
         }
     }
+
+    $self->manifestDefault($oExpectedManifest);
+
+    my $strTestPath = $self->testPath();
+
+    iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
+    iniSave("${strTestPath}/expected.manifest", $oExpectedManifest);
+
+    executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
+
+    fileRemove("${strTestPath}/expected.manifest");
+    fileRemove("${strTestPath}/actual.manifest");
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# manifestDefault
+####################################################################################################################################
+sub manifestDefault
+{
+    my $self = shift;
+    my $oExpectedManifest = shift;
 
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
@@ -507,16 +535,11 @@ sub backupCompare
             my %oDefault;
             my $iSectionTotal = 0;
 
-            foreach my $strFile (keys(%{${$oExpectedManifest}{$strSection}}))
-            {
-                if (!defined(${$oExpectedManifest}{$strSection}{$strFile}{$strSubKey}) &&
-                    defined(${$oExpectedManifest}{"${strSection}:default"}{$strSubKey}))
-                {
-                    ${$oExpectedManifest}{$strSection}{$strFile}{$strSubKey} =
-                        ${$oExpectedManifest}{"${strSection}:default"}{$strSubKey};
-                }
+            next if !defined($oExpectedManifest->{$strSection});
 
-                my $strValue = ${$oExpectedManifest}{$strSection}{$strFile}{$strSubKey};
+            foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
+            {
+                my $strValue = $oExpectedManifest->{$strSection}{$strFile}{$strSubKey};
 
                 if (defined($strValue))
                 {
@@ -549,37 +572,24 @@ sub backupCompare
             {
                 if ($strSubKey eq MANIFEST_SUBKEY_MASTER)
                 {
-                    ${$oExpectedManifest}{"${strSection}:default"}{$strSubKey} = $strMaxValue ? JSON::PP::true : JSON::PP::false;
+                    $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue ? JSON::PP::true : JSON::PP::false;
                 }
                 else
                 {
-                    ${$oExpectedManifest}{"${strSection}:default"}{$strSubKey} = $strMaxValue;
+                    $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue;
                 }
 
-                foreach my $strFile (keys(%{${$oExpectedManifest}{$strSection}}))
+                foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
                 {
-                    if (defined(${$oExpectedManifest}{$strSection}{$strFile}{$strSubKey}) &&
-                        ${$oExpectedManifest}{$strSection}{$strFile}{$strSubKey} eq $strMaxValue)
+                    if (defined($oExpectedManifest->{$strSection}{$strFile}{$strSubKey}) &&
+                        $oExpectedManifest->{$strSection}{$strFile}{$strSubKey} eq $strMaxValue)
                     {
-                        delete(${$oExpectedManifest}{$strSection}{$strFile}{$strSubKey});
+                        delete($oExpectedManifest->{$strSection}{$strFile}{$strSubKey});
                     }
                 }
             }
         }
     }
-
-    my $strTestPath = $self->testPath();
-
-    iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
-    iniSave("${strTestPath}/expected.manifest", $oExpectedManifest);
-
-    executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
-
-    fileRemove("${strTestPath}/expected.manifest");
-    fileRemove("${strTestPath}/actual.manifest");
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

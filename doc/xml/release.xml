@@ -287,6 +287,10 @@
                     <release-item>
                         <p>Changed the <br-option>--no-fork</br-option> test option to <br-option>--fork</br-option> with negation to match all other boolean parameters.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Various improvements to validation of backup and restore.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

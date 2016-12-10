@@ -21,7 +21,7 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
-use pgBackRestTest::Backup::Common::HostBackupTest;
+use pgBackRestTest::Backup::Common::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::HostGroupTest;

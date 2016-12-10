@@ -15,6 +15,7 @@ use DBI;
 use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl ':mode';
+use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -391,7 +392,7 @@ sub restore
 
     if (!defined($oExpectedManifestRef))
     {
-        # Change mode on the backup path so it can be read
+        # Load the manifest
         my $oExpectedManifest = new pgBackRest::Manifest(
             $self->{oFile}->pathGet(
                 PATH_BACKUP_CLUSTER, ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
@@ -471,7 +472,7 @@ sub restore
 
     if (!defined($iExpectedExitStatus))
     {
-        $self->restoreCompare($strBackup, $oExpectedManifestRef, $bTablespace);
+        $self->restoreCompare($strBackup, dclone($oExpectedManifestRef), $bTablespace);
 
         if (defined($self->{oLogTest}))
         {
@@ -595,12 +596,9 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        if (defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE}))
-        {
-            $oActualManifest->numericSet(
-                MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE,
-                ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
-        }
+        # Remove repo-size from the manifest.  ??? This could be improved to get actual sizes from the backup.
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
@@ -654,21 +652,33 @@ sub restoreCompare
 
     $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
                           ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_VERSION});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
-                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef,
-                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef,
-                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
-                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL});
-    $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
-                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE});
-    $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef,
-                          ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
 
-    if (!$self->synthetic())
+    if ($self->synthetic())
     {
+        $oActualManifest->remove(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START);
+        $oActualManifest->remove(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
+        $oActualManifest->remove(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE);
+    }
+    else
+    {
+        $oActualManifest->set(
+            INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef, $oExpectedManifestRef->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE});
+
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LSN_START});
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_STOP, undef,
@@ -696,6 +706,8 @@ sub restoreCompare
 
     # Delete the list of DBs
     delete($$oExpectedManifestRef{&MANIFEST_SECTION_DB});
+
+    $self->manifestDefault($oExpectedManifestRef);
 
     iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
     iniSave("${strTestPath}/expected.manifest", $oExpectedManifestRef);

@@ -38,6 +38,8 @@ use constant HOST_BACKUP                                            => 'backup';
 ####################################################################################################################################
 # Host parameters
 ####################################################################################################################################
+use constant HOST_PARAM_BACKREST_EXE                                => 'backrest-exe';
+    push @EXPORT, qw(HOST_PARAM_BACKREST_EXE);
 use constant HOST_PARAM_VM_ID                                       => 'vm-id';
     push @EXPORT, qw(HOST_PARAM_VM_ID);
 use constant HOST_PARAM_TEST_PATH                                   => 'test-path';

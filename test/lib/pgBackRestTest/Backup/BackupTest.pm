@@ -779,6 +779,7 @@ sub backupTestRun
             my %oManifest;
 
             $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
+            $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
@@ -1714,6 +1715,9 @@ sub backupTestRun
             $oHostDbMaster->restore(
                 OPTION_DEFAULT_RESTORE_SET, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
                 'no tablespace remap', undef, '--tablespace-map-all=../../tablespace --log-level-console=detail', false);
+
+            $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
+            $oManifest{&MANIFEST_SECTION_TARGET_LINK}{'pg_data/pg_tblspc/2'}{&MANIFEST_SUBKEY_DESTINATION} = '../../tablespace/ts2';
 
             # Backup Info (with an empty stanza)
             #-----------------------------------------------------------------------------------------------------------------------
