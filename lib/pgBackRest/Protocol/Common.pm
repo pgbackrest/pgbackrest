@@ -163,7 +163,7 @@ sub blockRead
     my $bProtocol = shift;
 
     my $iBlockSize;
-    my $strMessage;
+    my $hMessage;
 
     if ($bProtocol)
     {
@@ -178,7 +178,11 @@ sub blockRead
         # Get block size from the header
         my @stryToken = split(/ /, $strBlockHeader);
         $iBlockSize = $stryToken[1];
-        $strMessage = $stryToken[2];
+
+        if (defined($stryToken[2]))
+        {
+            $hMessage = $self->{oJSON}->decode($stryToken[2]);
+        }
 
         # If block size is 0 or an error code then undef the buffer
         if ($iBlockSize <= 0)
@@ -197,7 +201,7 @@ sub blockRead
     }
 
     # Return the block size
-    return $iBlockSize, $strMessage;
+    return $iBlockSize, $hMessage;
 }
 
 ####################################################################################################################################
@@ -212,7 +216,7 @@ sub blockWrite
     my $tBlockRef = shift;
     my $iBlockSize = shift;
     my $bProtocol = shift;
-    my $strMessage = shift;
+    my $hMessage = shift;
 
     # If block size is not defined, get it from buffer length
     $iBlockSize = defined($iBlockSize) ? $iBlockSize : length($$tBlockRef);
@@ -220,7 +224,7 @@ sub blockWrite
     # Write block header to the protocol stream
     if ($bProtocol)
     {
-        $oOut->lineWrite("block ${iBlockSize}" . (defined($strMessage) ? " ${strMessage}" : ''));
+        $oOut->lineWrite("block ${iBlockSize}" . (defined($hMessage) ? " " . $self->{oJSON}->encode($hMessage) : ''));
     }
 
     # Write block if size > 0
@@ -288,10 +292,11 @@ sub binaryXfer
 
     # Default protocol to true
     $bProtocol = defined($bProtocol) ? $bProtocol : true;
-    my $strMessage = undef;
+    my $hMessage = undef;
 
-    # Data that will be passed back (sha1 checksum, size, extra data)
-    my $hMessage = {};
+    # Checksum and size
+    my $strChecksum = undef;
+    my $iFileSize = undef;
 
     # Read from the protocol stream
     if ($strRemote eq 'in')
@@ -326,13 +331,13 @@ sub binaryXfer
             do
             {
                 # Read a block from the input stream
-                ($iBlockSize, $strMessage) = $self->blockRead($oIn, \$tCompressedBuffer, $bProtocol);
+                ($iBlockSize, $hMessage) = $self->blockRead($oIn, \$tCompressedBuffer, $bProtocol);
 
                 # Process protocol messages
-                if (defined($strMessage) && $strMessage eq 'nochecksum')
+                if (defined($hMessage) && defined($hMessage->{bChecksum}) && !$hMessage->{bChecksum})
                 {
                     $oSHA = Digest::SHA->new('sha1');
-                    undef($strMessage);
+                    undef($hMessage);
                 }
 
                 # If the block contains data, decompress it
@@ -383,8 +388,8 @@ sub binaryXfer
             # Get checksum and total uncompressed bytes written
             if (defined($oSHA))
             {
-                $hMessage->{strChecksum} = $oSHA->hexdigest();
-                $hMessage->{iFileSize} = $oZLib->total_out();
+                $strChecksum = $oSHA->hexdigest();
+                $iFileSize = $oZLib->total_out();
             };
         }
         # If the destination should be compressed then just write out the already compressed stream
@@ -399,13 +404,13 @@ sub binaryXfer
             if (!$bProtocol)
             {
                 $oSHA = Digest::SHA->new('sha1');
-                $hMessage->{iFileSize} = 0;
+                $iFileSize = 0;
             }
 
             do
             {
                 # Read a block from the protocol stream
-                ($iBlockSize, $strMessage) = $self->blockRead($oIn, \$tBuffer, $bProtocol);
+                ($iBlockSize, $hMessage) = $self->blockRead($oIn, \$tBuffer, $bProtocol);
 
                 # If the block contains data, write it
                 if ($iBlockSize > 0)
@@ -414,9 +419,10 @@ sub binaryXfer
                     if (!$bProtocol)
                     {
                         $oSHA->add($tBuffer);
-                        $hMessage->{iFileSize} += $iBlockSize;
+                        $iFileSize += $iBlockSize;
                     }
 
+                    # Write block
                     $oOut->bufferWrite(\$tBuffer, $iBlockSize);
                     undef($tBuffer);
                 }
@@ -426,7 +432,7 @@ sub binaryXfer
             # Get checksum
             if (!$bProtocol)
             {
-                $hMessage->{strChecksum} = $oSHA->hexdigest();
+                $strChecksum = $oSHA->hexdigest();
             };
         }
     }
@@ -444,7 +450,7 @@ sub binaryXfer
             # Initialize message to indicate that a checksum will be sent
             if ($bProtocol && defined($oOut))
             {
-                $strMessage = 'checksum';
+                $hMessage->{bChecksum} = true;
             }
 
             # Initialize checksum
@@ -483,9 +489,9 @@ sub binaryXfer
                         # The compressed data is larger than block size, then write
                         if ($iCompressedBufferSize > $self->{iBufferMax})
                         {
-                            $self->blockWrite($oOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
+                            $self->blockWrite($oOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $hMessage);
                             undef($tCompressedBuffer);
-                            undef($strMessage);
+                            undef($hMessage);
                         }
                     }
                     # Else if error
@@ -510,8 +516,8 @@ sub binaryXfer
             }
 
             # Get checksum and total uncompressed bytes written
-            $hMessage->{strChecksum} = $oSHA->hexdigest();
-            $hMessage->{iFileSize} = $oZLib->total_in();
+            $strChecksum = $oSHA->hexdigest();
+            $iFileSize = $oZLib->total_in();
 
             # Write out the last block
             if (defined($oOut))
@@ -520,11 +526,12 @@ sub binaryXfer
 
                 if ($iCompressedBufferSize > 0)
                 {
-                    $self->blockWrite($oOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $strMessage);
-                    undef($strMessage);
+                    $self->blockWrite($oOut, \$tCompressedBuffer, $iCompressedBufferSize, $bProtocol, $hMessage);
+                    undef($hMessage);
                 }
 
-                $self->blockWrite($oOut, undef, 0, $bProtocol, $self->{oJSON}->encode($hMessage));
+                $self->blockWrite(
+                    $oOut, undef, 0, $bProtocol, {strChecksum => $strChecksum, iFileSize => $iFileSize});
             }
         }
         # If source is already compressed or transfer is not compressed then just read the stream
@@ -544,12 +551,12 @@ sub binaryXfer
             {
                 if ($bProtocol)
                 {
-                    $strMessage = 'checksum';
+                    $hMessage->{bChecksum} = true;
                 }
 
                 # Initialize checksum and size
                 $oSHA = Digest::SHA->new('sha1');
-                $hMessage->{iFileSize} = 0;
+                $iFileSize = 0;
 
                 # Initialize inflate object and check for errors
                 ($oZLib, $iZLibStatus) =
@@ -563,7 +570,7 @@ sub binaryXfer
             # Initialize message to indicate that a checksum will not be sent
             elsif ($bProtocol)
             {
-                $strMessage = 'nochecksum';
+                $hMessage->{bChecksum} = false;
             }
 
             # Read input
@@ -574,8 +581,8 @@ sub binaryXfer
                 # Write a block if size > 0
                 if ($iBlockSize > 0)
                 {
-                    $self->blockWrite($oOut, \$tBuffer, $iBlockSize, $bProtocol, $strMessage);
-                    undef($strMessage);
+                    $self->blockWrite($oOut, \$tBuffer, $iBlockSize, $bProtocol, $hMessage);
+                    undef($hMessage);
                 }
 
                 # Decompress the buffer to calculate checksum/size
@@ -607,7 +614,7 @@ sub binaryXfer
                                 if ($iUncompressedBufferSize > 0)
                                 {
                                     $oSHA->add($tUncompressedBuffer);
-                                    $hMessage->{iFileSize} += $iUncompressedBufferSize;
+                                    $iFileSize += $iUncompressedBufferSize;
                                 }
                             }
                             # Else error, exit so it can be handled
@@ -631,13 +638,15 @@ sub binaryXfer
                     confess &log(ERROR, "unable to inflate stream: ${iZLibStatus}");
                 }
 
-                # Get checksum
-                $hMessage->{strChecksum} = $oSHA->hexdigest();
-
-                # Set protocol message
+                # If protocol then create the message
                 if ($bProtocol)
                 {
-                    $strMessage = $self->{oJSON}->encode($hMessage);
+                    $hMessage = {strChecksum => $oSHA->hexdigest(), iFileSize => $iFileSize};
+                }
+                # Otherwise just set checksum
+                else
+                {
+                    $strChecksum = $oSHA->hexdigest();
                 }
             }
 
@@ -645,19 +654,19 @@ sub binaryXfer
             if ($bProtocol)
             {
                 # Write 0 block to indicate end of stream
-                $self->blockWrite($oOut, undef, 0, $bProtocol, $strMessage);
+                $self->blockWrite($oOut, undef, 0, $bProtocol, $hMessage);
             }
         }
     }
 
     # If message is defined then the checksum, size, and extra should be in it
-    if (defined($strMessage))
+    if (defined($hMessage))
     {
-        $hMessage = $self->{oJSON}->decode($strMessage);
+        return $hMessage->{strChecksum}, $hMessage->{iFileSize};
     }
 
     # Return the checksum and size if they are available
-    return $hMessage->{strChecksum}, $hMessage->{iFileSize};
+    return $strChecksum, $iFileSize;
 }
 
 ####################################################################################################################################
