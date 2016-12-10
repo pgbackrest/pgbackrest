@@ -201,6 +201,10 @@
 
                         <p>Code cleanup in preparation for improved <cmd>stanza-create</cmd> command.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improved parameter/result logging in debug/trace functions.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

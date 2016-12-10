@@ -63,18 +63,11 @@ push @EXPORT, qw(commonPrefix);
 ####################################################################################################################################
 # boolFormat
 #
-# Outut boolean as true or false.
+# Output boolean as true or false.
 ####################################################################################################################################
 sub boolFormat
 {
-    my $bValue;
-
-    if ($bValue)
-    {
-        return 'true';
-    }
-
-    return 'false';
+    return shift() ? 'true' : 'false';
 }
 
 push @EXPORT, qw(boolFormat);

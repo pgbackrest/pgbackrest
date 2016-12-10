@@ -354,6 +354,59 @@ sub logDebugProcess
 }
 
 ####################################################################################################################################
+# logDebugBuild
+####################################################################################################################################
+sub logDebugBuild
+{
+    my $strValue = shift;
+
+    my $rResult;
+
+    # Value is undefined
+    if (!defined($strValue))
+    {
+        $rResult = \'[undef]';
+    }
+    # Value is not a ref, but return it as a ref for efficiency
+    elsif (!ref($strValue))
+    {
+        $rResult = \$strValue;
+    }
+    # Value is a hash
+    elsif (ref($strValue) eq 'HASH')
+    {
+        my $strValueHash;
+
+        for my $strSubValue (sort(keys(%{$strValue})))
+        {
+            $strValueHash .=
+                (defined($strValueHash) ? ', ' : '{') . "${strSubValue} => " . ${logDebugBuild($strValue->{$strSubValue})};
+        }
+
+        $rResult = \(defined($strValueHash) ?  $strValueHash . '}' : '{}');
+    }
+    # Value is an array
+    elsif (ref($strValue) eq 'ARRAY')
+    {
+        my $strValueArray;
+
+        for my $strSubValue (@{$strValue})
+        {
+            $strValueArray .= (defined($strValueArray) ? ', ' : '(') . ${logDebugBuild($strSubValue)};
+        }
+
+        $rResult = \(defined($strValueArray) ?  $strValueArray . ')' : '()');
+    }
+    # Else some other type ??? For the moment this is forced to object to not make big log changes
+    else
+    {
+        $rResult = \('[object]');
+    }
+
+    return $rResult;
+}
+
+####################################################################################################################################
 # logDebugOut
 ####################################################################################################################################
 use constant DEBUG_STRING_MAX_LEN                                   => 1024;
@@ -383,74 +436,9 @@ sub logDebugOut
                     $strParamSet .= ', ';
                 }
 
-                my $strValueRef;
-                my $bDefault = false;
-
-                if (ref($$oParamHash{$strParam}) eq 'HASH')
-                {
-                    if (blessed($$oParamHash{$strParam}{value}))
-                    {
-                        $strValueRef = \'[object]';
-                    }
-                    else
-                    {
-                        if (ref($$oParamHash{$strParam}{value}) eq 'ARRAY')
-                        {
-                            my $strValueArray;
-
-                            for my $strValue (@{$$oParamHash{$strParam}{value}})
-                            {
-                                if (ref($strValue) eq 'ARRAY')
-                                {
-                                    my $strSubValueArray;
-
-                                    for my $strSubValue (@{$strValue})
-                                    {
-                                        $strSubValueArray .=
-                                            (defined($strSubValueArray) ? ', ' : '(') .
-                                            (defined($strSubValue) ? $strSubValue : '[undef]');
-                                    }
-
-                                    $strValueArray .= (defined($strValueArray) ? ', ' : '(') .
-                                        (defined($strSubValueArray) ? $strSubValueArray . ')' : '()');
-                                }
-                                else
-                                {
-                                    $strValueArray .=
-                                        (defined($strValueArray) ? ', ' : '(') . (defined($strValue) ? $strValue : '[undef]');
-                                }
-                            }
-
-                            $strValueRef = \(defined($strValueArray) ?  $strValueArray . ')' : '()');
-                        }
-                        else
-                        {
-                            $strValueRef = ref($$oParamHash{$strParam}{value}) ? $$oParamHash{$strParam}{value} :
-                                                                                 \$$oParamHash{$strParam}{value};
-
-                            $bDefault = defined($$strValueRef) &&
-                                        defined($$oParamHash{$strParam}{default}) ? $$oParamHash{$strParam}{default} : false;
-                        }
-                    }
-                }
-                # If this is an ARRAY ref then create a comma-separated list
-                elsif (ref($$oParamHash{$strParam}) eq 'ARRAY')
-                {
-                    my $strValueArray;
-
-                    for my $strValue (@{$$oParamHash{$strParam}{value}})
-                    {
-                        $strValueArray .=
-                            (defined($strValueArray) ? ', ' : '(') . (defined($strValue) ? $strValue : '[undef]');
-                    }
-
-                    $strValueRef = \(defined($strValueArray) ?  $strValueArray . ')' : '()');
-                }
-                # Else get a reference if a reference was not passed
-                else
-                {
-                    $strValueRef = ref($$oParamHash{$strParam}) ? $$oParamHash{$strParam} : \$$oParamHash{$strParam};
-                }
+                my $strValueRef = defined($oParamHash->{$strParam}{value}) ? logDebugBuild($oParamHash->{$strParam}{value}) : undef;
+                my $bDefault =
+                    defined($$strValueRef) && defined($$oParamHash{$strParam}{default}) ? $$oParamHash{$strParam}{default} : false;
 
                 $strParamSet .= "${strParam} = " .
                                 ($bDefault ? '<' : '') .
