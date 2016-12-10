@@ -291,6 +291,10 @@
                     <release-item>
                         <p>Various improvements to validation of backup and restore.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add more realistic data files to synthetic backup and restore tests.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

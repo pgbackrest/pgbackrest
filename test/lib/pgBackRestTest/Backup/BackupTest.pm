@@ -802,12 +802,16 @@ sub backupTestRun
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION, PG_VERSION_94,
                                                   '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
+            # Load sample page
+            my $tBasePage = fileStringRead(testDataPath() . '/page.bin');
+            my $iBasePageChecksum = 0x1B99;
+
             # Create base path
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base');
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1');
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', 'BASE',
-                                                  'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/12000', $tBasePage,
+                                                  '22c98d248ff548311eda88559e4a8405ed77c003', $lTime);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
                                                   PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, '660');
 
@@ -818,10 +822,13 @@ sub backupTestRun
                           {&MANIFEST_SUBKEY_USER} = INI_FALSE;
             }
 
+            my $tPageInvalid17000 = $tBasePage . $tBasePage;
+
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384');
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASE',
-                                                  'a3b357a3e395e43fcfb19bb13f3c1b5179279593', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', $tPageInvalid17000,
+                'e0101dd8ffb910c9c202ca35b5f828bcb9697bed', $lTime, undef, undef, '1');
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
                                                   PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
@@ -834,8 +841,28 @@ sub backupTestRun
 
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', '33000',
-                                                  '7f4c74dc10f61eef43e6ae642606627df1999b34', $lTime);
+            my $tPageValid =
+                $tBasePage .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 1) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum - 2) . substr($tBasePage, 10);
+
+            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid,
+                                                  '826512f67291135871eb54e133afd076c859a224', $lTime);
+
+            my $tPageInvalid33001 =
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 1) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 1) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum - 2) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 2) . substr($tBasePage, 10) .
+                substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10);
+
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33001', $tPageInvalid33001,
+                '6bf316f11d28c28914ea9be92c00de9bea6d9a6b', $lTime, undef, undef, '0, [3, 5], 7');
+
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/' . DB_FILE_PGVERSION,
                                                   PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
@@ -965,7 +992,8 @@ sub backupTestRun
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'create pg_stat link, pg_clog dir',
                 {oExpectedManifest => \%oManifest,
-                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . ' --no-' . OPTION_REPO_SYNC,
+                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                    ' --no-' . OPTION_REPO_SYNC . ' --' . OPTION_BUFFER_SIZE . '=16384',
                  strTest => $strTestPoint,
                  fTestDelay => 0});
 
@@ -1384,8 +1412,9 @@ sub backupTestRun
             $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 1);
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384');
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
-                                                  'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', '16384/tablespace1.txt', 'TBLSPC1',
+                'd85de07d6421d90aa9191c11c889bfde43680f0f', $lTime, undef, undef, false);
             $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'badchecksum.txt', 'BADCHECKSUM',
                                                   'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime, undef, true);
 
@@ -1418,8 +1447,9 @@ sub backupTestRun
             $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 2);
             $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768');
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
-                                                  'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
+                'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime, undef, undef, false);
 
             # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
             if ($bNeutralTest)
@@ -1519,13 +1549,15 @@ sub backupTestRun
             $strType = BACKUP_TYPE_INCR;
             $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2',
-                                                  '09b5e31766be1dba1ec27de82f975c1b6eea2a92', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2', '09b5e31766be1dba1ec27de82f975c1b6eea2a92',
+                $lTime, undef, undef, false);
 
             $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 1, 2);
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt',
-                                                  'TBLSPC2B', 'e324463005236d83e6e54795dbddd20a74533bf3', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', 'TBLSPC2B',
+                'e324463005236d83e6e54795dbddd20a74533bf3', $lTime, undef, undef, false);
 
             # Munge the version to make sure it gets corrected on the next run
             $oHostBackup->manifestMunge($strBackup, INI_SECTION_BACKREST, INI_KEY_VERSION, undef, '0.00');
@@ -1545,8 +1577,9 @@ sub backupTestRun
                 executeTest('sudo rm ' . $oHostBackup->repoPath() . "/backup/${strStanza}/backup.info");
             }
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT',
-                                                  '9a53d532e27785e681766c98516a5e93f096a501', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
+                $lTime, undef, undef, false);
 
             $strBackup =$oHostBackup->backup(
                 $strType, 'update files',
@@ -1591,16 +1624,18 @@ sub backupTestRun
             $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
             $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2b.txt', true);
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPC2C',
-                                                  'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPC2C',
+                'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime, undef, undef, false);
 
             $oBackupExecute = $oHostBackup->backupBegin(
                 $strType, 'remove files during backup',
                 {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
                     strOptionalParam => '--log-level-console=detail'});
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt',
-                                                  'TBLSPCBIGGER', 'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
+                'dfcb8679956b734706cf87259d50c88f83e80e66', $lTime, undef, undef, false);
 
             $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', true);
 
@@ -1612,8 +1647,9 @@ sub backupTestRun
 
             $oHostDbMaster->manifestReference(\%oManifest);
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT2',
-                                                  '7579ada0808d7f98087a0a586d0df9de009cdc33', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT2', '7579ada0808d7f98087a0a586d0df9de009cdc33',
+                $lTime, undef, undef, false);
 
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'update file',
@@ -1642,8 +1678,9 @@ sub backupTestRun
 
             $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
 
-            $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2UPDT',
-                                                  'cafac3c59553f2cfde41ce2e62e7662295f108c0', $lTime);
+            $oHostDbMaster->manifestFileCreate(
+                \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2UPDT', 'cafac3c59553f2cfde41ce2e62e7662295f108c0',
+                $lTime, undef, undef, false);
 
             $strBackup = $oHostBackup->backup(
                 $strType, 'add file', {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});
@@ -1657,6 +1694,7 @@ sub backupTestRun
 
             # Remove checksum to match zeroed files
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM});
+            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33001'}{&MANIFEST_SUBKEY_CHECKSUM});
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2.txt'}
                              {&MANIFEST_SUBKEY_CHECKSUM});
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2c.txt'}
@@ -1668,7 +1706,9 @@ sub backupTestRun
 
             # Restore checksum values for next test
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
-                '7f4c74dc10f61eef43e6ae642606627df1999b34';
+                '826512f67291135871eb54e133afd076c859a224';
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33001'}{&MANIFEST_SUBKEY_CHECKSUM} =
+                '6bf316f11d28c28914ea9be92c00de9bea6d9a6b';
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2.txt'}
                       {&MANIFEST_SUBKEY_CHECKSUM} = 'dc7f76e43c46101b47acc55ae4d593a9e6983578';
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2c.txt'}
@@ -2022,7 +2062,8 @@ sub backupTestRun
 
             my $oExecuteBackup = $oHostBackup->backupBegin(
                 $strType, 'update during backup',
-                {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay});
+                {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
+                    strOptionalParam => ' --' . OPTION_BUFFER_SIZE . '=16384'});
 
             $oHostDbMaster->sqlExecute("update test set message = '$strFullMessage'");
 
@@ -2184,7 +2225,8 @@ sub backupTestRun
             $oExecuteBackup = $oHostBackup->backupBegin(
                 $strType, 'update during backup',
                 {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
-                    strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK});
+                    strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK .
+                        ' --' . OPTION_BUFFER_SIZE . '=24576'});
 
             # Drop a table
             $oHostDbMaster->sqlExecute('drop table test_remove');
