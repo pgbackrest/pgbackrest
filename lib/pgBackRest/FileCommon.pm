@@ -6,6 +6,7 @@ package pgBackRest::FileCommon;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Digest::SHA;
 use Exporter qw(import);
@@ -363,14 +364,16 @@ sub fileMove
         $strOperation,
         $strSourceFile,
         $strDestinationFile,
-        $bDestinationPathCreate
+        $bDestinationPathCreate,
+        $bPathSync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileMove', \@_,
             {name => 'strSourceFile', trace => true},
             {name => 'strDestinationFile', trace => true},
-            {name => 'bDestinationPathCreate', default => false, trace => true}
+            {name => 'bDestinationPathCreate', default => false, trace => true},
+            {name => 'bPathSync', default => false, trace => true},
         );
 
     # Get source and destination paths
@@ -388,7 +391,7 @@ sub fileMove
         {
             $bError = false;
 
-            filePathCreate(dirname($strDestinationFile), undef, true, true);
+            filePathCreate(dirname($strDestinationFile), undef, true, true, $bPathSync);
 
             # Try the rename again and store the error if it fails
             if (!rename($strSourceFile, $strDestinationFile))
@@ -406,13 +409,17 @@ sub fileMove
         }
     }
 
-    # Always sync the destination directory
-    filePathSync(dirname($strDestinationFile));
-
-    # If the source and destination directories are not the same then sync the source directory
-    if (dirname($strSourceFile) ne dirname($strDestinationFile))
+    # Sync path(s) if requested
+    if ($bPathSync)
     {
-        filePathSync(dirname($strSourceFile));
+        # Always sync the destination directory
+        filePathSync(dirname($strDestinationFile));
+
+        # If the source and destination directories are not the same then sync the source directory
+        if (dirname($strSourceFile) ne dirname($strDestinationFile))
+        {
+            filePathSync(dirname($strSourceFile));
+        }
     }
 
     # Return from function and log return values if any
@@ -489,12 +496,15 @@ sub filePathSync
         );
 
     open(my $hPath, "<", $strPath)
-        or confess &log(ERROR, "unable to open ${strPath}", ERROR_PATH_OPEN);
+        or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
     open(my $hPathDup, ">&", $hPath)
-        or confess &log(ERROR, "unable to duplicate handle for ${strPath}", ERROR_PATH_OPEN);
+        or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
 
     $hPathDup->sync
-        or confess &log(ERROR, "unable to sync ${strPath}", ERROR_PATH_SYNC);
+        or confess &log(ERROR, "unable to sync '${strPath}'", ERROR_PATH_SYNC);
+
+    close($hPathDup);
+    close($hPath);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -514,13 +524,15 @@ sub fileRemove
     (
         $strOperation,
         $strPath,
-        $bIgnoreMissing
+        $bIgnoreMissing,
+        $bPathSync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileRemove', \@_,
             {name => 'strPath', trace => true},
-            {name => 'bIgnoreMissing', default => false, trace => true}
+            {name => 'bIgnoreMissing', default => false, trace => true},
+            {name => 'bPathSync', default => false, trace => true},
         );
 
     # Working variables
@@ -544,6 +556,12 @@ sub fileRemove
         }
     }
 
+    # Sync parent directory if requested
+    if ($bRemoved && $bPathSync)
+    {
+        filePathSync(dirname($strPath));
+    }
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -553,7 +571,6 @@ sub fileRemove
 }
 
 push @EXPORT, qw(fileRemove);
-
 
 ####################################################################################################################################
 # fileStat
@@ -802,7 +819,8 @@ sub filePathCreate
         $strPath,
         $strMode,
         $bIgnoreExists,
-        $bCreateParents
+        $bCreateParents,
+        $bPathSync,
     ) =
         logDebugParam
         (
@@ -810,27 +828,40 @@ sub filePathCreate
             {name => 'strPath', trace => true},
             {name => 'strMode', default => $strPathModeDefault, trace => true},
             {name => 'bIgnoreExists', default => false, trace => true},
-            {name => 'bCreateParents', default => false, trace => true}
+            {name => 'bCreateParents', default => false, trace => true},
+            {name => 'bPathSync', default => false, trace => true},
         );
 
-    if (!($bIgnoreExists && fileExists($strPath)))
-    {
-        # Attempt to create the directory
-        my $stryError;
+    # Determine if parent directory exists
+    my $strParentPath = dirname($strPath);
 
-        if (!$bCreateParents && !fileExists(dirname($strPath)))
+    if (!fileExists($strParentPath))
+    {
+        if (!$bCreateParents)
         {
             confess &log(ERROR, "unable to create ${strPath} because parent path does not exist", ERROR_PATH_CREATE);
         }
 
-        make_path($strPath, {mode => oct($strMode), error => \$stryError});
+        filePathCreate($strParentPath, $strMode, $bIgnoreExists, $bCreateParents, $bPathSync);
+    }
 
-        # Throw any errrors that were returned
-        if (@$stryError)
+    # Create the path
+    if (!mkdir($strPath, oct($strMode)))
+    {
+        # Get the error as a string
+        my $strError = $OS_ERROR . '';
+
+        # Error if not ignoring existence of the path
+        if (!($bIgnoreExists && fileExists($strPath)))
         {
-            my ($strErrorPath, $strErrorMessage) = %{@$stryError[0]};
-            confess &log(ERROR, "unable to create ${strPath}: ${strErrorMessage}", ERROR_PATH_CREATE);
+            confess &log(ERROR, "unable to create ${strPath}: " . $OS_ERROR, ERROR_PATH_CREATE);
         }
+    }
+
+    # Sync path if requested
+    if ($bPathSync)
+    {
+        filePathSync($strParentPath);
     }
 
     # Return from function and log return values if any

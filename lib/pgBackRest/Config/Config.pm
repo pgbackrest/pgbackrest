@@ -18,6 +18,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
+use pgBackRest::FileCommon;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Version;
 
@@ -258,6 +259,8 @@ use constant OPTION_COMPRESS_LEVEL_NETWORK                          => 'compress
     push @EXPORT, qw(OPTION_COMPRESS_LEVEL_NETWORK);
 use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-umask';
     push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
+use constant OPTION_REPO_SYNC                                       => 'repo-sync';
+    push @EXPORT, qw(OPTION_REPO_SYNC);
 use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
     push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
 use constant OPTION_PROCESS_MAX                                     => 'process-max';
@@ -440,6 +443,8 @@ use constant OPTION_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME
     push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MIN);
 use constant OPTION_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
     push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MAX);
+
+use constant OPTION_DEFAULT_REPO_SYNC                               => true;
 
 use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT                        => OPTION_DEFAULT_DB_TIMEOUT + 30;
     push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT);
@@ -1184,6 +1189,20 @@ my %oOptionRule =
             &CMD_STANZA_CREATE => true,
             &CMD_START => true,
             &CMD_STOP => true,
+        },
+    },
+
+    &OPTION_REPO_SYNC =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_SYNC,
+        &OPTION_RULE_NEGATE => true,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_STANZA_CREATE => true,
         },
     },
 

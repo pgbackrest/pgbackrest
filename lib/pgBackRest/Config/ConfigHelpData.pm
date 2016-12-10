@@ -601,6 +601,18 @@ my $oConfigHelpData =
                     "need, though of course requirements will likely change over time as your database evolves."
         },
 
+        # REPO-SYNC Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-sync' =>
+        {
+            section => 'general',
+            summary =>
+                "Sync directories in repository.",
+            description =>
+                "Syncs directories when writing to the repository. Not all file systems support directory syncs (e.g., NTFS) so " .
+                    "this option allows them to be disabled."
+        },
+
         # RESUME Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'resume' =>
@@ -848,6 +860,7 @@ my $oConfigHelpData =
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-sync' => 'section',
                 'spool-path' => 'section',
                 'stanza' => 'default'
             }
@@ -917,6 +930,7 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-link' => 'section',
                 'repo-path' => 'section',
+                'repo-sync' => 'section',
                 'resume' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
@@ -1286,6 +1300,7 @@ my $oConfigHelpData =
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-sync' => 'section',
                 'stanza' => 'default'
             }
         },

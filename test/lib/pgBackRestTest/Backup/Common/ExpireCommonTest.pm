@@ -306,7 +306,7 @@ sub archiveCreate
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        filePathCreate($strPath);
+        filePathCreate($strPath, undef, true);
 
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
         testFileCreate($strFile, 'ARCHIVE');

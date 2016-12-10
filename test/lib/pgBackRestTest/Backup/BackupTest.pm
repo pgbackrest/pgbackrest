@@ -340,7 +340,8 @@ sub backupTestRun
                             &log(INFO, '        test .partial archive');
                             ($strArchiveFile, $strSourceFile) =
                                 archiveGenerate($oFile, $strXlogPath, 2, $iArchiveNo, WAL_VERSION_94, true);
-                            $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
+                            $oHostDbMaster->executeSimple(
+                                $strCommand . " --no-" . OPTION_REPO_SYNC . " ${strSourceFile}", {oLogTest => $oLogTest});
                             archiveCheck($oFile, $strArchiveFile, $strArchiveChecksum, $bCompress);
 
                             # Test .partial archive duplicate
@@ -963,7 +964,7 @@ sub backupTestRun
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'create pg_stat link, pg_clog dir',
                 {oExpectedManifest => \%oManifest,
-                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
+                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . ' --no-' . OPTION_REPO_SYNC,
                  strTest => $strTestPoint,
                  fTestDelay => 0});
 

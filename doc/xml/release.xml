@@ -157,6 +157,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Added the <br-option>--repo-sync</br-option> option to allow directory syncs in the repository to be disabled for file systems that do not support them, e.g. NTFS.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added a predictable log entry to signal that a command has completed successfully. For example a backup ends successfully with: <code>INFO: backup command end: completed successfully</code>.</p>
                     </release-item>
                 </release-feature-list>

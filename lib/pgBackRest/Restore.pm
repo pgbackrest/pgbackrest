@@ -1063,7 +1063,7 @@ sub process
 
     my $oBackupInfo = new pgBackRest::BackupInfo($self->{strDbClusterPath}, false);
 
-    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO, undef, false);
+    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO, undef, false, true);
 
     # If set to restore is latest then get the actual set
     if ($self->{strBackupSet} eq OPTION_DEFAULT_RESTORE_SET)
@@ -1094,7 +1094,7 @@ sub process
     # from being started by PostgreSQL.
     $self->{oFile}->remove(PATH_DB_ABSOLUTE, $oManifest->dbPathGet(
                            $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH),
-                           MANIFEST_FILE_PGCONTROL));
+                           MANIFEST_FILE_PGCONTROL), true, true);
 
     # Clean the restore paths
     $self->clean($oManifest);
@@ -1266,6 +1266,9 @@ sub process
     # Create recovery.conf file
     $self->recovery($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION));
 
+    # Sync db cluster path
+    $self->{oFile}->pathSync(PATH_DB_ABSOLUTE, $self->{strDbClusterPath}, true);
+
     # Copy pg_control last
     &log(INFO,
         'restore ' . $oManifest->dbPathGet(undef, MANIFEST_FILE_PGCONTROL) .
@@ -1273,10 +1276,10 @@ sub process
 
     $self->{oFile}->move(
         PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_PGCONTROL . '.' . BACKREST_EXE,
-        PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_PGCONTROL);
+        PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_PGCONTROL, undef, true);
 
     # Finally remove the manifest to indicate the restore is complete
-    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST, undef, false);
+    $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_MANIFEST, undef, false, true);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

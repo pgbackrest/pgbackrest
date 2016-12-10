@@ -746,8 +746,9 @@ sub push
         if ($bArchiveFile)
         {
             my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
-            ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strSourceFile), 0, 24), $bPartial,
-                                                             $strSourceFile, $strDbVersion, $ullDbSysId);
+            ($strArchiveId, $strChecksum) = $self->pushCheck(
+                $oFile, substr(basename($strSourceFile), 0, 24), $bPartial, $strSourceFile, $strDbVersion, $ullDbSysId,
+                optionGet(OPTION_REPO_SYNC));
         }
         else
         {
@@ -774,7 +775,8 @@ sub push
                      undef, undef, undef,                                       # Unused params
                      true,                                                      # Create path if it does not exist
                      undef, undef,                                              # User and group
-                     $bArchiveFile);                                            # Append checksum if archive file
+                     $bArchiveFile,                                             # Append checksum if archive file
+                     $bAsync ? true : optionGet(OPTION_REPO_SYNC));             # Sync if spool, else check repo sync option
     }
 
     # Return from function and log return values if any
@@ -800,7 +802,8 @@ sub pushCheck
         $bPartial,
         $strWalFile,
         $strDbVersion,
-        $ullDbSysId
+        $ullDbSysId,
+        $bPathSync,
     ) =
         logDebugParam
         (
@@ -810,7 +813,8 @@ sub pushCheck
             {name => 'bPartial'},
             {name => 'strWalFile', required => false},
             {name => 'strDbVersion'},
-            {name => 'ullDbSysId'}
+            {name => 'ullDbSysId'},
+            {name => 'bPathSync'},
         );
 
     # Set operation and debug strings
@@ -821,15 +825,16 @@ sub pushCheck
     {
         # Execute the command
         ($strArchiveId, $strChecksum) = $oFile->{oProtocol}->cmdExecute(
-            OP_ARCHIVE_PUSH_CHECK, [$strWalSegment, $bPartial, undef, $strDbVersion, $ullDbSysId], true);
+            OP_ARCHIVE_PUSH_CHECK, [$strWalSegment, $bPartial, undef, $strDbVersion, $ullDbSysId, $bPathSync], true);
     }
     else
     {
         # Create the archive path if it does not exist
         $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
 
-        # If the info file exists check db version and system-id, else create it with the db version and system-id passed and the history
-        $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
+        # If the info file exists check db version and system-id, else create it
+        $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(
+            $strDbVersion, $ullDbSysId, $bPathSync);
 
         # Check if the WAL segment already exists in the archive
         $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment, $bPartial);
@@ -996,8 +1001,9 @@ sub xfer
                 if ($bArchiveFile)
                 {
                     my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
-                    ($strArchiveId, $strChecksum) = $self->pushCheck($oFile, substr(basename($strArchiveFile), 0, 24), $bPartial,
-                                                                     $strArchiveFile, $strDbVersion, $ullDbSysId);
+                    ($strArchiveId, $strChecksum) = $self->pushCheck(
+                        $oFile, substr(basename($strArchiveFile), 0, 24), $bPartial, $strArchiveFile, $strDbVersion, $ullDbSysId,
+                        optionGet(OPTION_REPO_SYNC));
                 }
                 else
                 {
@@ -1019,7 +1025,8 @@ sub xfer
                         undef, undef, undef,                        # Unused params
                         true,                                       # Create path if it does not exist
                         undef, undef,                               # Unused params
-                        true);                                      # Append checksum
+                        true,                                       # Append checksum
+                        optionGet(OPTION_REPO_SYNC));               # Sync path if set
 
                     # If appended checksum does not equal copy checksum
                     if (defined($strAppendedChecksum) && $strAppendedChecksum ne $strCopyChecksum)

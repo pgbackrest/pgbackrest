@@ -424,7 +424,7 @@ sub linkCreate
         # ??? This should only happen when the link create errors
         if ($bPathCreate && $self->pathTypeGet($strDestinationPathType) eq PATH_BACKUP)
         {
-            filePathCreate(dirname($strDestination));
+            filePathCreate(dirname($strDestination), undef, true);
         }
 
         unless (-e $strSource)
@@ -508,7 +508,8 @@ sub move
         $strSourceFile,
         $strDestinationPathType,
         $strDestinationFile,
-        $bDestinationPathCreate
+        $bDestinationPathCreate,
+        $bPathSync,
     ) =
         logDebugParam
         (
@@ -517,7 +518,8 @@ sub move
             {name => 'strSourceFile', required => false},
             {name => 'strDestinationPathType'},
             {name => 'strDestinationFile'},
-            {name => 'bDestinationPathCreate', default => false}
+            {name => 'bDestinationPathCreate', default => false},
+            {name => 'bPathSync', default => false},
         );
 
     # Source and destination path types must be the same
@@ -538,7 +540,7 @@ sub move
     # Run locally
     else
     {
-        fileMove($strPathOpSource, $strPathOpDestination, $bDestinationPathCreate);
+        fileMove($strPathOpSource, $strPathOpDestination, $bDestinationPathCreate, $bPathSync);
     }
 
     # Return from function and log return values if any
@@ -649,6 +651,70 @@ sub pathCreate
     );
 }
 
+
+####################################################################################################################################
+# pathSync
+####################################################################################################################################
+sub pathSync
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathType,
+        $strPath,
+        $bRecursive,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathSync', \@_,
+            {name => 'strPathType'},
+            {name => 'strPath', required => false},
+            {name => 'bRecursive', default => false},
+        );
+
+    # Remote not implemented
+    if ($self->isRemote($strPathType))
+    {
+        confess &log(ASSERT, "${strOperation}: remote operation not supported");
+    }
+
+    # Sync all paths in the tree
+    if ($bRecursive)
+    {
+        my $oManifest = $self->manifest($strPathType, $strPath);
+
+        # Iterate all files in the manifest
+        foreach my $strFile (sort(keys(%{$oManifest})))
+        {
+            # Only sync if this is a directory
+            if ($oManifest->{$strFile}{type} eq 'd')
+            {
+                # If current directory
+                if ($strFile eq '.')
+                {
+                    $self->pathSync($strPathType, $strPath);
+                }
+                # Else a subdirectory
+                else
+                {
+                    $self->pathSync($strPathType, (defined($strPath) ? "${strPath}/" : '') . $strFile);
+                }
+            }
+        }
+    }
+    # Only sync the specified path
+    else
+    {
+        filePathSync($self->pathGet($strPathType, $strPath));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
 ####################################################################################################################################
 # exists
 #
@@ -711,7 +777,8 @@ sub remove
         $strPathType,
         $strPath,
         $bTemp,
-        $bIgnoreMissing
+        $bIgnoreMissing,
+        $bPathSync,
     ) =
         logDebugParam
         (
@@ -719,7 +786,8 @@ sub remove
             {name => 'strPathType'},
             {name => 'strPath'},
             {name => 'bTemp', required => false},
-            {name => 'bIgnoreMissing', default => true}
+            {name => 'bIgnoreMissing', default => true},
+            {name => 'bPathSync', default => false},
         );
 
     # Set operation variables
@@ -734,7 +802,7 @@ sub remove
     # Run locally
     else
     {
-        $bRemoved = fileRemove($strPathOp, $bIgnoreMissing);
+        $bRemoved = fileRemove($strPathOp, $bIgnoreMissing, $bPathSync);
     }
 
     # Return from function and log return values if any
@@ -1271,7 +1339,8 @@ sub copy
         $bDestinationPathCreate,
         $strUser,
         $strGroup,
-        $bAppendChecksum
+        $bAppendChecksum,
+        $bPathSync,
     ) =
         logDebugParam
         (
@@ -1288,7 +1357,8 @@ sub copy
             {name => 'bDestinationPathCreate', default => false},
             {name => 'strUser', required => false},
             {name => 'strGroup', required => false},
-            {name => 'bAppendChecksum', default => false}
+            {name => 'bAppendChecksum', default => false},
+            {name => 'bPathSync', default => false},
         );
 
     # Set working variables
@@ -1416,7 +1486,7 @@ sub copy
                 $self->{oProtocol}->cmdWrite(
                     $strRemoteOp,
                     [undef, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, undef, undef, $strMode,
-                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum]);
+                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync]);
 
                 $bController = true;
             }
@@ -1429,7 +1499,7 @@ sub copy
             $self->{oProtocol}->cmdWrite(
                 $strRemoteOp,
                 [$strSourceOp, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, $bIgnoreMissingSource, undef,
-                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum]);
+                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync]);
 
             $bController = true;
         }
@@ -1587,7 +1657,7 @@ sub copy
             }
 
             # Move the file from tmp to final destination
-            fileMove($strDestinationTmpOp, $strDestinationOp, $bDestinationPathCreate);
+            fileMove($strDestinationTmpOp, $strDestinationOp, $bDestinationPathCreate, $bPathSync);
         }
     }
 

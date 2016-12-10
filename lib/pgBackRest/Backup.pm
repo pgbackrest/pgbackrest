@@ -273,7 +273,7 @@ sub processManifest
         # Create paths
         foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
         {
-            $oFileMaster->pathCreate(PATH_BACKUP_TMP, $strPath);
+            $oFileMaster->pathCreate(PATH_BACKUP_TMP, $strPath, undef, true);
         }
 
         if (optionGet(OPTION_REPO_LINK))
@@ -448,7 +448,7 @@ sub process
     my $bHardLink = optionGet(OPTION_HARDLINK);
 
     # Create the cluster backup and history path
-    $oFileLocal->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true);
+    $oFileLocal->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true, optionGet(OPTION_REPO_SYNC));
 
     # Load or build backup.info
     my $oBackupInfo = new pgBackRest::BackupInfo($oFileLocal->pathGet(PATH_BACKUP_CLUSTER));
@@ -891,6 +891,12 @@ sub process
     # Final save of the backup manifest
     $oBackupManifest->save();
 
+    # Sync all paths in the backup tmp path
+    if (optionGet(OPTION_REPO_SYNC))
+    {
+        $oFileLocal->pathSync(PATH_BACKUP_TMP, undef, true);
+    }
+
     &log(INFO, "new backup label = ${strBackupLabel}");
 
     # Make a compressed copy of the manifest for history
@@ -905,7 +911,7 @@ sub process
     # Copy manifest to history
     $oFileLocal->move(PATH_BACKUP_CLUSTER, "${strBackupLabel}/" . FILE_MANIFEST . '.gz',
                          PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4) .
-                         "/${strBackupLabel}.manifest.gz", true);
+                         "/${strBackupLabel}.manifest.gz", true, optionGet(OPTION_REPO_SYNC));
 
     # Create a link to the most recent backup
     $oFileLocal->remove(PATH_BACKUP_CLUSTER, LINK_LATEST);
@@ -917,6 +923,12 @@ sub process
 
     # Save backup info
     $oBackupInfo->add($oBackupManifest);
+
+    # Sync the cluster path
+    if (optionGet(OPTION_REPO_SYNC))
+    {
+        $oFileLocal->pathSync(PATH_BACKUP_CLUSTER);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

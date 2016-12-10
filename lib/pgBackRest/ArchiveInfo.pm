@@ -108,13 +108,15 @@ sub check
     (
         $strOperation,
         $strDbVersion,
-        $ullDbSysId
+        $ullDbSysId,
+        $bPathSync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->check', \@_,
             {name => 'strDbVersion'},
-            {name => 'ullDbSysId'}
+            {name => 'ullDbSysId'},
+            {name => 'bPathSync', default => false},
         );
 
     my $bSave = false;
@@ -162,6 +164,12 @@ sub check
     if ($bSave)
     {
         $self->save();
+
+        # Sync path if requested
+        if ($bPathSync)
+        {
+            filePathSync($self->{strArchiveClusterPath});
+        }
     }
 
     # Return from function and log return values if any

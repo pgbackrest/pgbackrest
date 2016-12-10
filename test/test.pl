@@ -301,7 +301,7 @@ eval
             }
 
             executeTest("sudo rm -rf ${strTestPath}/*");
-            filePathCreate($strTestPath);
+            filePathCreate($strTestPath, undef, true);
         }
 
         if ($bDryRun)
@@ -444,8 +444,6 @@ eval
                     if (!$bDryRun || $bVmOut)
                     {
                         my $fTestStartTime = gettimeofday();
-
-                        filePathCreate($strVmTestPath, '0777', undef, true);
 
                         # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
                         # Docker and the host VM.

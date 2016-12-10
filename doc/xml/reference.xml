@@ -219,6 +219,15 @@
 
                         <example>/backup/db/backrest</example>
                     </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-SYNC KEY -->
+                    <config-key id="repo-sync" name="Repository Sync">
+                        <summary>Sync directories in repository.</summary>
+
+                        <text>Syncs directories when writing to the repository.  Not all file systems support directory syncs (e.g., NTFS) so this option allows them to be disabled.</text>
+
+                        <example>n</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 
