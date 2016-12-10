@@ -29,7 +29,7 @@ repo-path=[TEST_PATH]/db-standby/repo
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-master/pgbackrest.conf
@@ -88,7 +88,7 @@ repo-path=[TEST_PATH]/db-standby/repo
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-master/pgbackrest.conf
@@ -139,7 +139,7 @@ repo-path=[TEST_PATH]/db-standby/repo
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-master/pgbackrest.conf

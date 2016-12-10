@@ -29,7 +29,7 @@ repo-path=[TEST_PATH]/backup/repo
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
@@ -52,11 +52,13 @@ db1-cmd=[BACKREST-BIN]
 db1-config=[TEST_PATH]/db-master/pgbackrest.conf
 db1-host=db-master
 db1-path=[TEST_PATH]/db-master/db/base
+db1-port=[PORT-1]
 db1-user=[USER-2]
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
 db2-host=db-standby
 db2-path=[TEST_PATH]/db-standby/db/base
+db2-port=[PORT-2]
 db2-user=[USER-2]
 
 [global]
@@ -110,7 +112,7 @@ repo-path=[TEST_PATH]/backup/repo
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 
 [db:restore]
@@ -135,11 +137,13 @@ db1-cmd=[BACKREST-BIN]
 db1-config=[TEST_PATH]/db-master/pgbackrest.conf
 db1-host=db-master
 db1-path=[TEST_PATH]/db-master/db/base
+db1-port=[PORT-1]
 db1-user=[USER-2]
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
 db2-host=db-standby
 db2-path=[TEST_PATH]/db-standby/db/base
+db2-port=[PORT-2]
 db2-user=[USER-2]
 
 [global]
@@ -183,7 +187,7 @@ repo-path=[TEST_PATH]/backup/repo
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 
 [db:restore]
@@ -208,11 +212,13 @@ db1-cmd=[BACKREST-BIN]
 db1-config=[TEST_PATH]/db-master/pgbackrest.conf
 db1-host=db-master
 db1-path=[TEST_PATH]/db-master/db/base
+db1-port=[PORT-1]
 db1-user=[USER-2]
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
 db2-host=db-standby
 db2-path=[TEST_PATH]/db-standby/db/base
+db2-port=[PORT-2]
 db2-user=[USER-2]
 
 [global]

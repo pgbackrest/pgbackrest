@@ -358,7 +358,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'USER', '[^ ]+\@db\-master', '^[^\@]+');
     $strLine = $self->regExpReplace($strLine, 'USER', '[\( ]{1}' . TEST_USER . '[\,\)]{1}', TEST_USER);
 
-    $strLine = $self->regExpReplace($strLine, 'PORT', 'db-port=[0-9]+', '[0-9]+$');
+    $strLine = $self->regExpReplace($strLine, 'PORT', 'db[1-9]{0,1}-port=[0-9]+', '[0-9]+$');
 
     # Replace year when it falls on a single line when executing ls -1R
     $strLine = $self->regExpReplace($strLine, 'YEAR', '^20[0-9]{2}$');

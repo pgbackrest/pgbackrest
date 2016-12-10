@@ -34,7 +34,7 @@ start-fast=y
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
@@ -93,7 +93,7 @@ start-fast=y
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 
 [db:restore]
@@ -144,7 +144,7 @@ start-fast=y
 -----------------------------------------------------------
 [db]
 db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-1]
+db-port=[PORT-2]
 db-socket-path=[TEST_PATH]/db-standby/db
 
 [db:restore]

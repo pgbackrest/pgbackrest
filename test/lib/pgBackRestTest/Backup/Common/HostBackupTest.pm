@@ -918,6 +918,12 @@ sub configCreate
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
+
+            # Port can't be configured for a synthetic host
+            if (!$self->synthetic())
+            {
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 1, $bForce)} = $oHostDb1->dbPort();
+            }
         }
 
         $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
@@ -929,6 +935,12 @@ sub configCreate
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDb2->backrestExe();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
             $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDb2->dbBasePath();
+
+            # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
+            if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
+            {
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 2)} = $oHostDb2->dbPort();
+            }
         }
     }
 

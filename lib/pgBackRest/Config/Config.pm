@@ -1520,7 +1520,6 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
-            &CMD_REMOTE => true,
         },
     },
 

@@ -2118,7 +2118,8 @@ sub backupTestRun
                     OPTION_DEFAULT_RESTORE_SET, undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
                     $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
                     ' --recovery-option=standby_mode=on' .
-                    ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER . ' port=' . HOST_DB_PORT . ' user=replicator"');
+                        ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
+                        ' port=' . $oHostDbMaster->dbPort() . ' user=replicator"');
 
                 $oHostDbStandby->clusterStart({bHotStandby => true});
 

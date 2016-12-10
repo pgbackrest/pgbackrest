@@ -35,6 +35,7 @@ db-cmd=[BACKREST-BIN]
 db-config=[TEST_PATH]/db-master/pgbackrest.conf
 db-host=db-master
 db-path=[TEST_PATH]/db-master/db/base
+db-port=[PORT-1]
 db-user=[USER-2]
 
 [global]
@@ -83,6 +84,7 @@ db-cmd=[BACKREST-BIN]
 db-config=[TEST_PATH]/db-master/pgbackrest.conf
 db-host=db-master
 db-path=[TEST_PATH]/db-master/db/base
+db-port=[PORT-1]
 db-user=[USER-2]
 
 [global]

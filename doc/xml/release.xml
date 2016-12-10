@@ -139,6 +139,10 @@
 
                 <release-bug-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="kulkarni.nikhilchandra"/>
+                        </release-item-contributor-list>
+
                         <p>Fixed an issue where options that were invalid for the specified command could be provided on the command-line without generating an error.  The options were ignored and did not cause any change in behavior, but it did lead to some confusion.  Invalid options will now generate an error.</p>
                     </release-item>
 
@@ -147,7 +151,19 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
                         <p>Fixed an issue that prevented errors from being output to the console before the logging system was initialized, i.e. while parsing options. Error codes were still being returned accurately so this would not have made a process look like it succeeded when it did not.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where the <br-option>db-port</br-option> option specified on the backup server would not be properly passed to the remote unless it was from the first configured database.</p>
                     </release-item>
                 </release-bug-list>
 

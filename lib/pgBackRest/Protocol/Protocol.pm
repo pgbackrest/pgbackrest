@@ -124,6 +124,7 @@ sub protocolGet
             my $strOptionConfig = OPTION_BACKUP_CONFIG;
             my $strOptionHost = OPTION_BACKUP_HOST;
             my $strOptionUser = OPTION_BACKUP_USER;
+            my $strOptionDbPort = undef;
             my $strOptionDbSocketPath = undef;
 
             if ($strRemoteType eq DB)
@@ -132,6 +133,14 @@ sub protocolGet
                 $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $iRemoteIdx);
                 $strOptionHost = optionIndex(OPTION_DB_HOST, $iRemoteIdx);
                 $strOptionUser = optionIndex(OPTION_DB_USER, $iRemoteIdx);
+            }
+
+            # Db socket is not valid in all contexts (restore, for instance)
+            if (optionValid(optionIndex(OPTION_DB_PORT, $iRemoteIdx)))
+            {
+                $strOptionDbPort =
+                    optionSource(optionIndex(OPTION_DB_PORT, $iRemoteIdx)) eq SOURCE_DEFAULT ?
+                        undef : optionGet(optionIndex(OPTION_DB_PORT, $iRemoteIdx));
             }
 
             # Db socket is not valid in all contexts (restore, for instance)
@@ -156,7 +165,13 @@ sub protocolGet
                         &OPTION_TYPE => {value => $strRemoteType},
                         &OPTION_LOG_PATH => {},
                         &OPTION_LOCK_PATH => {},
+                        &OPTION_DB_PORT => {value => $strOptionDbPort},
                         &OPTION_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
+
+                        # ??? Not very pretty but will work until there is nicer code in commandWrite to handle this case.  It
+                        # doesn't hurt to pass these params but it's messy and distracting for debugging.
+                        optionIndex(OPTION_DB_PORT, 2) => {},
+                        optionIndex(OPTION_DB_SOCKET_PATH, 2) => {},
 
                         # Set protocol options explicitly so values are not picked up from remote config files
                         &OPTION_BUFFER_SIZE =>  {value => optionGet(OPTION_BUFFER_SIZE)},

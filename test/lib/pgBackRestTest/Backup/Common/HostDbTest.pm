@@ -93,7 +93,7 @@ sub new
     $self->paramSet(HOST_PARAM_DB_BIN_PATH, $oHostGroup->paramGet(HOST_PARAM_DB_BIN_PATH));
     $self->paramSet(HOST_PARAM_DB_VERSION, $strDbVersion);
     $self->paramSet(HOST_PARAM_DB_SOCKET_PATH, $self->dbPath());
-    $self->paramSet(HOST_PARAM_DB_PORT, HOST_DB_PORT);
+    $self->paramSet(HOST_PARAM_DB_PORT, defined($$oParam{bStandby}) && $$oParam{bStandby} ? 6544 : 6543);
 
     $self->paramSet(HOST_PARAM_DB_LOG_PATH, $self->testPath());
     $self->paramSet(HOST_PARAM_DB_LOG_FILE, $self->dbLogPath() . '/postgresql.log');
