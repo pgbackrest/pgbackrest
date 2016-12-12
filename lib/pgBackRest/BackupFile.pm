@@ -10,7 +10,9 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
+use Storable qw(dclone);
 
+use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -32,6 +34,119 @@ use constant BACKUP_FILE_SKIP                                       => 3;
     push @EXPORT, qw(BACKUP_FILE_SKIP);
 
 ####################################################################################################################################
+# Load the C library if present
+####################################################################################################################################
+my $bLibC = false;
+
+eval
+{
+    # Load the C library only if page checksums are required
+    require pgBackRest::LibC;
+    pgBackRest::LibC->import(qw(:checksum));
+
+    $bLibC = true;
+
+    return 1;
+} or do {};
+
+####################################################################################################################################
+# isLibC
+#
+# Does the C library exist?
+####################################################################################################################################
+sub isLibC
+{
+    return $bLibC;
+}
+
+push @EXPORT, qw(isLibC);
+
+####################################################################################################################################
+# backupChecksumPage
+####################################################################################################################################
+sub backupChecksumPage
+{
+    my $tBufferRef = shift;
+    my $iBufferSize = shift;
+    my $iBufferOffset = shift;
+    my $hExtra = shift;
+
+    # Initialize the extra hash
+    if (!defined($hExtra->{bValid}))
+    {
+        $hExtra->{bValid} = true;
+    }
+
+    # Return when buffer is 0
+    if ($iBufferSize == 0)
+    {
+        # Make sure valid is set for 0 length files
+        if ($iBufferOffset == 0 && !defined($hExtra->{bValid}))
+        {
+            $hExtra->{bValid} = true;
+        }
+
+        return;
+    }
+
+    # Error if offset is not divisible by page size
+    if ($iBufferOffset % PG_PAGE_SIZE != 0)
+    {
+        confess &log(ASSERT, "should not be possible to see misaligned buffer offset ${iBufferOffset}, buffer size ${iBufferSize}");
+    }
+
+    # If the buffer is not divisible by 0 then it's not valid
+    if ($iBufferSize % PG_PAGE_SIZE != 0)
+    {
+        if (defined($hExtra->{bAlign}))
+        {
+            confess &log(ASSERT, "should not be possible to see two misaligned blocks in a row");
+        }
+
+        $hExtra->{bValid} = false;
+        $hExtra->{bAlign} = false;
+        delete($hExtra->{iyPageError});
+    }
+    elsif ($iBufferSize > 0)
+    {
+        if (!pageChecksumBuffer($$tBufferRef, $iBufferSize, int($iBufferOffset / PG_PAGE_SIZE), PG_PAGE_SIZE))
+        {
+            $hExtra->{bValid} = false;
+
+            # Now figure out exactly where the errors occurred.  It would be more efficient if the checksum function returned an
+            # array, but we're hoping there won't be that many errors to scan so this should work fine.
+            for (my $iBlockNo = 0; $iBlockNo < int($iBufferSize / PG_PAGE_SIZE); $iBlockNo++)
+            {
+                my $iBlockNoStart = int($iBufferOffset / PG_PAGE_SIZE) + $iBlockNo;
+
+                if (!pageChecksumTest(
+                        substr($$tBufferRef, $iBlockNo * PG_PAGE_SIZE, PG_PAGE_SIZE), $iBlockNoStart, PG_PAGE_SIZE))
+                {
+                    my $iLastIdx = defined($hExtra->{iyPageError}) ? @{$hExtra->{iyPageError}} - 1 : 0;
+                    my $iyLast = defined($hExtra->{iyPageError}) ? $hExtra->{iyPageError}[$iLastIdx] : undef;
+
+                    if (!defined($iyLast) || (!ref($iyLast) && $iyLast != $iBlockNoStart - 1) ||
+                        (ref($iyLast) && $iyLast->[1] != $iBlockNoStart - 1))
+                    {
+                        push(@{$hExtra->{iyPageError}}, $iBlockNoStart);
+                    }
+                    elsif (!ref($iyLast))
+                    {
+                        $hExtra->{iyPageError}[$iLastIdx] = undef;
+                        push(@{$hExtra->{iyPageError}[$iLastIdx]}, $iyLast);
+                        push(@{$hExtra->{iyPageError}[$iLastIdx]}, $iBlockNoStart);
+                    }
+                    else
+                    {
+                        $hExtra->{iyPageError}[$iLastIdx][1] = $iBlockNoStart;
+                    }
+                }
+            }
+        }
+    }
+}
+
+####################################################################################################################################
 # backupFile
 ####################################################################################################################################
 sub backupFile
@@ -45,6 +160,7 @@ sub backupFile
         $strRepoFile,                               # Location in the repository to copy to
         $lSizeFile,                                 # File size
         $strChecksum,                               # File checksum to be checked
+        $bChecksumPage,                             # Should page checksums be calculated?
         $bDestinationCompress,                      # Compress destination file
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
@@ -57,6 +173,7 @@ sub backupFile
             {name => 'strRepoFile', trace => true},
             {name => 'lSizeFile', trace => true},
             {name => 'strChecksum', required => false, trace => true},
+            {name => 'bChecksumPage', trace => true},
             {name => 'bDestinationCompress', trace => true},
             {name => 'lModificationTime', trace => true},
             {name => 'bIgnoreMissing', default => true, trace => true},
@@ -64,6 +181,7 @@ sub backupFile
 
     my $iCopyResult = BACKUP_FILE_COPY;             # Copy result
     my $strCopyChecksum;                            # Copy checksum
+    my $rExtra;                                     # Page checksum result
     my $lCopySize;                                  # Copy Size
     my $lRepoSize;                                  # Repo size
 
@@ -93,15 +211,18 @@ sub backupFile
     if ($bCopy)
     {
         # Copy the file from the database to the backup (will return false if the source file is missing)
-        (my $bCopyResult, $strCopyChecksum, $lCopySize) =
-            $oFile->copy(PATH_DB_ABSOLUTE, $strDbFile,
-                         PATH_BACKUP_TMP, $strFileOp,
-                         false,                   # Source is not compressed since it is the db directory
-                         $bDestinationCompress,   # Destination should be compressed based on backup settings
-                         $bIgnoreMissing,         # Ignore missing files
-                         $lModificationTime,      # Set modification time - this is required for resume
-                         undef,                   # Do not set original mode
-                         true);                   # Create the destination directory if it does not exist
+        (my $bCopyResult, $strCopyChecksum, $lCopySize, $rExtra) = $oFile->copy(
+            PATH_DB_ABSOLUTE, $strDbFile,
+            PATH_BACKUP_TMP, $strFileOp,
+            false,                                                  # Source is not compressed since it is the db directory
+            $bDestinationCompress,                                  # Destination should be compressed based on backup settings
+            $bIgnoreMissing,                                        # Ignore missing files
+            $lModificationTime,                                     # Set modification time - this is required for resume
+            undef,                                                  # Do not set original mode
+            true,                                                   # Create the destination directory if it does not exist
+            undef, undef, undef, undef,                             # Unused
+            $bChecksumPage ?                                        # Function to process page checksums
+                'pgBackRest::BackupFile::backupChecksumPage' : undef);
 
         # If source file is missing then assume the database removed it (else corruption and nothing we can do!)
         if (!$bCopyResult)
@@ -124,7 +245,8 @@ sub backupFile
         {name => 'iCopyResult', value => $iCopyResult, trace => true},
         {name => 'lCopySize', value => $lCopySize, trace => true},
         {name => 'lRepoSize', value => $lRepoSize, trace => true},
-        {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true}
+        {name => 'strCopyChecksum', value => $strCopyChecksum, trace => true},
+        {name => 'rExtra', value => $rExtra, trace => true},
     );
 }
 
@@ -146,10 +268,12 @@ sub backupManifestUpdate
         $strRepoFile,
         $lSize,
         $strChecksum,
+        $bChecksumPage,
         $iCopyResult,
         $lSizeCopy,
         $lSizeRepo,
         $strChecksumCopy,
+        $rExtra,
         $lSizeTotal,
         $lSizeCurrent,
         $lManifestSaveSize,
@@ -167,12 +291,14 @@ sub backupManifestUpdate
             {name => 'strRepoFile', trace => true},
             {name => 'lSize', required => false, trace => true},
             {name => 'strChecksum', required => false, trace => true},
+            {name => 'bChecksumPage', trace => true},
 
             # Results from backupFile()
             {name => 'iCopyResult', trace => true},
             {name => 'lSizeCopy', required => false, trace => true},
             {name => 'lSizeRepo', required => false, trace => true},
             {name => 'strChecksumCopy', required => false, trace => true},
+            {name => 'rExtra', required => false, trace => true},
 
             # Accumulators
             {name => 'lSizeTotal', trace => true},
@@ -215,6 +341,82 @@ sub backupManifestUpdate
         if ($lSizeCopy > 0)
         {
             $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksumCopy);
+        }
+
+        # If the file had page checksums calculated during the copy
+        if ($bChecksumPage)
+        {
+            # The valid flag should be set
+            if (defined($rExtra->{bValid}))
+            {
+                # Store the valid flag
+                $oManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $rExtra->{bValid});
+
+                # If the page was not valid
+                if (!$rExtra->{bValid})
+                {
+                    # Check for a page misalignment
+                    if ($lSizeCopy % PG_PAGE_SIZE != 0)
+                    {
+                        # Make sure the align flag was set, otherwise there is a bug
+                        if (!defined($rExtra->{bAlign}) || $rExtra->{bAlign})
+                        {
+                            confess &log(ASSERT, 'bAlign flag should have been set for misaligned page');
+                        }
+
+                        # Emit a warning so the user knows something is amiss
+                        &log(WARN,
+                            'page misalignment in file ' . (defined($strHost) ? "${strHost}:" : '') .
+                            "${strDbFile}: file size ${lSizeCopy} is not divisible by page size " . PG_PAGE_SIZE);
+                    }
+                    # Else process the page check errors
+                    else
+                    {
+                        $oManifest->set(
+                            MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
+                            dclone($rExtra->{iyPageError}));
+
+                        # Build a pretty list of the page errors
+                        my $strPageError;
+                        my $iPageErrorTotal = 0;
+
+                        foreach my $iyPage (@{$rExtra->{iyPageError}})
+                        {
+                            $strPageError .= (defined($strPageError) ? ', ' : '');
+
+                            # If a range of pages
+                            if (ref($iyPage))
+                            {
+                                $strPageError .= $$iyPage[0] . '-' . $$iyPage[1];
+                                $iPageErrorTotal += ($$iyPage[1] - $$iyPage[0]) + 1;
+                            }
+                            # Else a single page
+                            else
+                            {
+                                $strPageError .= $iyPage;
+                                $iPageErrorTotal += 1;
+                            }
+                        }
+
+                        # There should be at least one page in the error list
+                        if ($iPageErrorTotal == 0)
+                        {
+                            confess &log(ASSERT, 'page checksum error list should have at least one entry');
+                        }
+
+                        # Emit a warning so the user knows something is amiss
+                        &log(WARN,
+                            'invalid page checksum' . ($iPageErrorTotal > 1 ? 's' : '') .
+                            ' found in file ' . (defined($strHost) ? "${strHost}:" : '') . "${strDbFile} at page" .
+                            ($iPageErrorTotal > 1 ? 's' : '') . " ${strPageError}");
+                    }
+                }
+            }
+            # If it's not set that's a bug in the code
+            elsif (!$oManifest->test(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM_PAGE))
+            {
+                confess &log(ASSERT, "${strDbFile} should have calculated page checksums");
+            }
         }
     }
     # Else the file was removed during backup so remove from manifest

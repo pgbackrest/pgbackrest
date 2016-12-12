@@ -178,6 +178,21 @@ my $oConfigHelpData =
                     "at a time per process. An additional maximum of 256K per process may be used for zlib buffers."
         },
 
+        # CHECKSUM-PAGE Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'checksum-page' =>
+        {
+            section => 'general',
+            summary =>
+                "Validate data page checksums.",
+            description =>
+                "Directs pgBackRest to validate all data page checksums while backing up a cluster. This option will be " .
+                    "automatically enabled when the required C library is present and checksums are enabled on the cluster.\n" .
+                "\n" .
+                "Failures in checksum validation will not abort a backup. Rather, warnings will be emitted in the log (and to " .
+                    "the console with default settings) and the list of invalid pages will be stored in the backup manifest."
+        },
+
         # CMD-SSH Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'cmd-ssh' =>
@@ -886,6 +901,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-standby' => 'section',
                 'buffer-size' => 'section',
+                'checksum-page' => 'section',
                 'cmd-ssh' => 'section',
                 'compress' => 'section',
                 'compress-level' => 'section',

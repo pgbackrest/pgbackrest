@@ -501,6 +501,24 @@ sub backupCompare
                 $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_REPO_SIZE} = $lRepoSize;
             }
         }
+
+        # If the backup does not have page checksums then no need to compare
+        if (!$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE})
+        {
+            delete($oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_CHECKSUM_PAGE});
+            delete($oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR});
+        }
+        # Else make sure things that should have checks do have checks
+        elsif ($oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_CHECKSUM_PAGE) !=
+               isChecksumPage($strFileKey))
+        {
+            confess
+                "check-page actual for ${strFileKey} is " .
+                ($oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey,
+                    MANIFEST_SUBKEY_CHECKSUM_PAGE) ? 'set' : '[undef]') .
+                ' but isChecksumPage() says it should be ' .
+                (isChecksumPage($strFileKey) ? 'set' : 'undef') . '.';
+        }
     }
 
     $self->manifestDefault($oExpectedManifest);

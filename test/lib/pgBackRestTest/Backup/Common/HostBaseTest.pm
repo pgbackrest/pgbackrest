@@ -22,6 +22,7 @@ use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Host constants
@@ -87,6 +88,22 @@ sub new
 
     # Set permissions on the test path
     $self->executeSimple('chown -R ' . $self->userGet() . ':'. POSTGRES_GROUP . ' ' . $self->testPath(), undef, 'root');
+
+    # Install Perl C Library
+    my $oVm = vmGet();
+    my $strBuildPath = dirname(dirname($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE))) . "/test/.vagrant/libc/$self->{strOS}";
+    my $strPerlAutoPath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
+    my $strPerlModulePath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
+
+    $self->executeSimple(
+        "bash -c '" .
+        "mkdir -p -m 755 ${strPerlAutoPath} && " .
+        # "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.bs ${strPerlAutoPath} && " .
+        "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
+        "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
+        "mkdir -p -m 755 ${strPerlModulePath} && " .
+        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}'",
+        undef, 'root');
 
     # Return from function and log return values if any
     return logDebugReturn

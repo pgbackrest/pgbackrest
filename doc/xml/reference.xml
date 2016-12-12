@@ -132,6 +132,17 @@
                         <example>1</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - CHECKSUM-PAGE KEY -->
+                    <config-key id="checksum-page" name="Page Checksums">
+                        <summary>Validate data page checksums.</summary>
+
+                        <text>Directs <backrest/> to validate all data page checksums while backing up a cluster.  This option will be automatically enabled when the required C library is present and checksums are enabled on the cluster.
+
+                        Failures in checksum validation will not abort a backup.  Rather, warnings will be emitted in the log (and to the console with default settings) and the list of invalid pages will be stored in the backup manifest.</text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - DB-TIMEOUT KEY -->
                     <config-key id="db-timeout" name="Database Timeout">
                         <summary>Database query timeout.</summary>

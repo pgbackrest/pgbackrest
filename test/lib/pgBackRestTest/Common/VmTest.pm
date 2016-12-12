@@ -37,6 +37,8 @@ use constant VM_OS_REPO                                             => 'os-repo'
     push @EXPORT, qw(VM_OS_REPO);
 use constant VMDEF_PGSQL_BIN                                        => 'pgsql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
+use constant VMDEF_PERL_ARCH_PATH                                   => 'perl-arch-path';
+    push @EXPORT, qw(VMDEF_PERL_ARCH_PATH);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -82,6 +84,7 @@ my $oyVm =
         &VM_IMAGE => 'centos:6',
         &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
         &VM_DB =>
         [
@@ -114,6 +117,7 @@ my $oyVm =
         &VM_IMAGE => 'centos:7',
         &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
         &VM_DB =>
         [
@@ -139,6 +143,7 @@ my $oyVm =
         &VM_IMAGE => 'debian:8',
         &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
 
         &VM_DB =>
         [
@@ -167,6 +172,7 @@ my $oyVm =
         &VM_OS_REPO => 'precise',
         &VM_IMAGE => 'ubuntu:12.04',
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
 
         &VM_DB =>
         [
@@ -196,6 +202,7 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:14.04',
         &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
 
         &VM_DB =>
         [
@@ -228,6 +235,7 @@ my $oyVm =
         &VM_IMAGE => 'ubuntu:16.04',
         &VM_CONTROL_MASTER => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 
         &VM_DB =>
         [

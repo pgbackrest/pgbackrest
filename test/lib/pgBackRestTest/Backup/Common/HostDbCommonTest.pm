@@ -589,6 +589,47 @@ sub restoreCompare
 
     foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
+        # If synthetic match checksum errors since they can't be verified here
+        if ($self->synthetic)
+        {
+            my $bChecksumPage = $oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM_PAGE};
+
+            if (defined($bChecksumPage))
+            {
+                $oActualManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
+
+                if (!$bChecksumPage &&
+                    defined($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR}))
+                {
+                    $oActualManifest->set(
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
+                        $oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR});
+                }
+            }
+        }
+        # Else if page checksums are enabled make sure the correct files are being checksummed
+        else
+        {
+            if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE})
+            {
+                if (defined($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM_PAGE}) !=
+                    isChecksumPage($strName))
+                {
+                    confess
+                        "check-page actual for ${strName} is " .
+                        ($oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName,
+                            MANIFEST_SUBKEY_CHECKSUM_PAGE) ? 'set' : '[undef]') .
+                        ' but isChecksumPage() says it should be ' .
+                        (isChecksumPage($strName) ? 'set' : '[undef]') . '.';
+                }
+
+                # Because the page checksum flag is copied to incr and diff from the previous backup but further processing is not
+                # done, they can't be expected to match so delete them.
+                delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_CHECKSUM_PAGE});
+                $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE);
+            }
+        }
+
         if (!$self->synthetic())
         {
             $oActualManifest->set(
@@ -652,6 +693,9 @@ sub restoreCompare
 
     $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
                           ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_VERSION});
+
+    # This option won't be set in the actual manifest
+    delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE});
 
     if ($self->synthetic())
     {

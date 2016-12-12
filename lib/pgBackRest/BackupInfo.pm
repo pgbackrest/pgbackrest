@@ -64,8 +64,8 @@ use constant INFO_BACKUP_KEY_CONTROL                                => MANIFEST_
     push @EXPORT, qw(INFO_BACKUP_KEY_CONTROL);
 use constant INFO_BACKUP_KEY_COMPRESS                               => MANIFEST_KEY_COMPRESS;
     push @EXPORT, qw(INFO_BACKUP_KEY_COMPRESS);
-use constant INFO_BACKUP_KEY_CHECKSUM                               => INI_KEY_CHECKSUM;
-    push @EXPORT, qw(INFO_BACKUP_KEY_CHECKSUM);
+use constant INFO_BACKUP_KEY_CHECKSUM_PAGE                          => MANIFEST_KEY_CHECKSUM_PAGE;
+    push @EXPORT, qw(INFO_BACKUP_KEY_CHECKSUM_PAGE);
 use constant INFO_BACKUP_KEY_DB_VERSION                             => MANIFEST_KEY_DB_VERSION;
     push @EXPORT, qw(INFO_BACKUP_KEY_DB_VERSION);
 use constant INFO_BACKUP_KEY_FORMAT                                 => INI_KEY_FORMAT;
@@ -350,6 +350,8 @@ sub add
         $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_STOP, undef, false));
     $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_BACKUP_STANDBY,
         $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY));
+    $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_CHECKSUM_PAGE,
+        $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE));
     $self->boolSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_COMPRESS,
         $oBackupManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS));
     $self->numericSet(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_FORMAT,

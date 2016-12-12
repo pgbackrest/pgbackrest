@@ -100,6 +100,8 @@ use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-a
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_CHECK);
 use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-archive-copy';
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_COPY);
+use constant MANIFEST_KEY_CHECKSUM_PAGE                             => 'option-' . OPTION_CHECKSUM_PAGE;
+    push @EXPORT, qw(MANIFEST_KEY_CHECKSUM_PAGE);
 use constant MANIFEST_KEY_COMPRESS                                  => 'option-compress';
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
 use constant MANIFEST_KEY_ONLINE                                    => 'option-online';
@@ -122,6 +124,10 @@ use constant MANIFEST_KEY_DB_VERSION                                => 'db-versi
 # Subkeys used for path/file/link info
 use constant MANIFEST_SUBKEY_CHECKSUM                               => 'checksum';
     push @EXPORT, qw(MANIFEST_SUBKEY_CHECKSUM);
+use constant MANIFEST_SUBKEY_CHECKSUM_PAGE                          => 'checksum-page';
+    push @EXPORT, qw(MANIFEST_SUBKEY_CHECKSUM_PAGE);
+use constant MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR                    => 'checksum-page-error';
+    push @EXPORT, qw(MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR);
 use constant MANIFEST_SUBKEY_DESTINATION                            => 'destination';
     push @EXPORT, qw(MANIFEST_SUBKEY_DESTINATION);
 use constant MANIFEST_SUBKEY_FILE                                   => 'file';
@@ -189,6 +195,10 @@ use constant DB_FILE_BACKUPLABELOLD                                 => DB_FILE_B
     push @EXPORT, qw(DB_FILE_BACKUPLABELOLD);
 use constant DB_FILE_PGCONTROL                                      => DB_PATH_GLOBAL . '/pg_control';
     push @EXPORT, qw(DB_FILE_PGCONTROL);
+use constant DB_FILE_PGFILENODEMAP                                  => 'pg_filenode.map';
+    push @EXPORT, qw(DB_FILE_PGFILENODEMAP);
+use constant DB_FILE_PGINTERNALINIT                                 => 'pg_internal.init';
+    push @EXPORT, qw(DB_FILE_PGINTERNALINIT);
 use constant DB_FILE_PGVERSION                                      => 'PG_VERSION';
     push @EXPORT, qw(DB_FILE_PGVERSION);
 use constant DB_FILE_POSTGRESQLAUTOCONFTMP                          => 'postgresql.auto.conf.tmp';
@@ -888,6 +898,23 @@ sub build
                         MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
                         $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
                 }
+
+                # Copy checksum page from the previous manifest (if it exists)
+                my $bChecksumPage = $oLastManifest->get(
+                    MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+                if (defined($bChecksumPage))
+                {
+                    $self->boolSet(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
+
+                    if (!$bChecksumPage &&
+                        $oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR))
+                    {
+                        $self->set(
+                            MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
+                            $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
+                    }
+                }
             }
         }
 
@@ -1126,5 +1153,29 @@ sub validate
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }
+
+####################################################################################################################################
+# isChecksumPage
+#
+# Can this file have page checksums in PG >= 9.3?
+####################################################################################################################################
+sub isChecksumPage
+{
+    my $strFile = shift;
+
+    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE) &&
+            $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . ')$')) ||
+        ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_GLOBAL) &&
+            $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . '|' .
+            DB_FILE_PGCONTROL . ')$')) ||
+        ($strFile =~ ('^' . MANIFEST_TARGET_PGTBLSPC . '\/') && $strFile !~ (DB_FILE_PGVERSION . '$')))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+push @EXPORT, qw(isChecksumPage);
 
 1;

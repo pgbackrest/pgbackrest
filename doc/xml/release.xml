@@ -169,6 +169,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <p>Added the <br-option>--checksum-page</br-option> option to allow pgBackRest to validate page checksums in data files when checksums are enabled on <postgres/> >= 9.3.  Note that this functionality requires a C library which may not initially be available in OS packages.  The option will automatically be enabled when the library is present and checksums are enabled on the cluster.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added the <br-option>--repo-link</br-option> option to allow internal symlinks to be suppressed when the repository is located on a filesystem that does not support symlinks.  This does not affect any <backrest/> functionality, but the convenience link <path>latest</path> will not be created and neither will internal tablespace symlinks, which will affect the ability to bring up clusters in-place manually using filesystem snapshots.</p>
                     </release-item>
 

@@ -458,6 +458,26 @@ sub containerBuild
         # Write the image
         containerWrite($strTempPath, $strOS, 'Base (Pre-Installed)', $strImageParent, $strImage, $strScript, $bVmForce, false);
 
+        # Build image
+        ###########################################################################################################################
+        $strImageParent = containerNamespace() . "/${strOS}-base-pre";
+        $strImage = "${strOS}-build";
+
+        # Install Perl packages
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+        {
+            $strScript =
+                "RUN apt-get install -y gcc make\n";
+        }
+        else
+        {
+            $strScript =
+                "RUN yum install -y gcc make perl-ExtUtils-MakeMaker perl-Test-Simple\n";
+        }
+
+        # Write the image
+        containerWrite($strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strScript, $bVmForce, false);
+
         # Db image
         ###########################################################################################################################
         my @stryDbBuild;

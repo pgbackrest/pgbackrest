@@ -783,6 +783,7 @@ sub backupTestRun
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::true;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardLink ? JSON::PP::true : JSON::PP::false;
             $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
@@ -993,7 +994,7 @@ sub backupTestRun
                 $strType, 'create pg_stat link, pg_clog dir',
                 {oExpectedManifest => \%oManifest,
                  strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                    ' --no-' . OPTION_REPO_SYNC . ' --' . OPTION_BUFFER_SIZE . '=16384',
+                    ' --no-' . OPTION_REPO_SYNC . ' --' . OPTION_BUFFER_SIZE . '=16384 --' . OPTION_CHECKSUM_PAGE,
                  strTest => $strTestPoint,
                  fTestDelay => 0});
 
@@ -1118,7 +1119,8 @@ sub backupTestRun
 
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'resume',
-                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME, strOptionalParam => '--force'});
+                {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
+                    strOptionalParam => '--force --' . OPTION_CHECKSUM_PAGE});
 
             # Remove postmaster.pid so restore will succeed (the rest will be cleaned up)
             testFileRemove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
@@ -1651,6 +1653,8 @@ sub backupTestRun
                 \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT2', '7579ada0808d7f98087a0a586d0df9de009cdc33',
                 $lTime, undef, undef, false);
 
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::false;
+
             $strFullBackup = $oHostBackup->backup(
                 $strType, 'update file',
                 {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});
@@ -1682,8 +1686,13 @@ sub backupTestRun
                 \%oManifest, MANIFEST_TARGET_PGDATA, 'base/base2.txt', 'BASE2UPDT', 'cafac3c59553f2cfde41ce2e62e7662295f108c0',
                 $lTime, undef, undef, false);
 
+            # Munge the prior manifest so that option-checksum-page is missing to be sure the logic works for backups before page
+            # checksums were introduced
+            $oHostBackup->manifestMunge($strFullBackup, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, undef);
+
             $strBackup = $oHostBackup->backup(
-                $strType, 'add file', {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});
+                $strType, 'add file', {oExpectedManifest => \%oManifest,
+                    strOptionalParam => '--log-level-console=detail --' . OPTION_CHECKSUM_PAGE});
 
             # Selective Restore
             #-----------------------------------------------------------------------------------------------------------------------

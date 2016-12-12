@@ -46,6 +46,7 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::ListTest;
+use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::CommonTest;
 use pgBackRestTest::Config::ConfigTest;
 use pgBackRestTest::File::FileTest;
@@ -73,6 +74,7 @@ test.pl [options]
    --db-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --no-lint            Disable static source code analysis
+   --libc-only          Compile the C library and run tests only
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -116,6 +118,7 @@ my $strVm = 'all';
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
+my $bLibCOnly = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -137,9 +140,9 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-cleanup' => \$bNoCleanup,
             'db-version=s' => \$strDbVersion,
             'log-force' => \$bLogForce,
-            'no-lint' => \$bNoLint)
+            'no-lint' => \$bNoLint,
+            'libc-only' => \$bLibCOnly)
     or pod2usage(2);
-
 
 ####################################################################################################################################
 # Run in eval block to catch errors
@@ -243,7 +246,7 @@ eval
         if (!$bDryRun)
         {
             # Run Perl critic
-            if (!$bNoLint)
+            if (!$bNoLint && !$bLibCOnly)
             {
                 my $strBasePath = dirname(dirname(abs_path($0)));
 
@@ -270,6 +273,48 @@ eval
             logFileSet(cwd() . "/test");
         }
 
+        # Build the C Library in host
+        #-----------------------------------------------------------------------------------------------------------------------
+        {
+            my $bLogDetail = $strLogLevel eq 'detail';
+            my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/host";
+
+            &log(INFO, "Build/test/install C library for host (${strBuildPath})");
+
+            filePathCreate($strBuildPath, undef, true, true);
+            executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+
+            executeTest(
+                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
+                {bShowOutputAsync => $bLogDetail});
+            executeTest("make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+            executeTest("sudo make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+            executeTest("cd ${strBuildPath} && perl t/pgBackRest-LibC.t", {bShowOutputAsync => $bLogDetail});
+
+            # Load the module dynamically
+            require pgBackRest::LibC;
+            pgBackRest::LibC->import(qw(:debug));
+
+            # Do a basic test to make sure it installed correctly
+            if (&UVSIZE != 8)
+            {
+                confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+            }
+
+            # Also check the version number
+            my $strLibCVersion =
+                BACKREST_VERSION =~ /dev$/ ?
+                    substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
+
+            if (libCVersion() ne $strLibCVersion)
+            {
+                confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+            }
+
+            # Exit if only testing the C library
+            exit 0 if $bLibCOnly;
+        }
+
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet($strVm, $strModule, $strModuleTest, $iModuleTestRun, $strDbVersion, $iProcessMax);
@@ -293,7 +338,7 @@ eval
 
         if (!$bDryRun || $bVmOut)
         {
-            containerRemove('test-[0-9]+');
+            containerRemove('test-([0-9]+|build)');
 
             for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
             {
@@ -302,6 +347,41 @@ eval
 
             executeTest("sudo rm -rf ${strTestPath}/*");
             filePathCreate($strTestPath, undef, true);
+        }
+
+        # Build the C Library in container
+        #-----------------------------------------------------------------------------------------------------------------------
+        {
+            my $bLogDetail = $strLogLevel eq 'detail';
+            my @stryBuildVm = $strVm eq 'all' ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
+
+            foreach my $strBuildVM (sort(@stryBuildVm))
+            {
+                executeTest(
+                    "docker run -itd -h test-build --name=test-build" .
+                    " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
+
+                my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/${strBuildVM}";
+                &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
+
+                filePathCreate($strBuildPath, undef, true, true);
+                executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+
+                executeTest(
+                    "docker exec -i test-build " .
+                    "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'");
+                executeTest(
+                    "docker exec -i test-build " .
+                    "make -C ${strBuildPath}", {bSuppressStdErr => true});
+                executeTest(
+                    "docker exec -i test-build " .
+                    "make -C ${strBuildPath} test");
+                executeTest(
+                    "docker exec -i test-build " .
+                    "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+
+                executeTest("docker rm -f test-build");
+            }
         }
 
         if ($bDryRun)

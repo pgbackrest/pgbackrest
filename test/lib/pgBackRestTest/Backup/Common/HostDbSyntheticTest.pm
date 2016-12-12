@@ -217,6 +217,7 @@ sub manifestFileCreate
     my $lTime = shift;
     my $strMode = shift;
     my $bMaster = shift;
+    my $strChecksumPageError = shift;
 
     # Determine the manifest key
     my $strManifestKey = $self->manifestKeyGet($oManifestRef, $strTarget, $strFile);
@@ -236,6 +237,26 @@ sub manifestFileCreate
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
         defined($bMaster) ? ($bMaster ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
     delete(${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_REFERENCE});
+
+    my $bChecksumPage = defined($strChecksumPageError) ? false : (isChecksumPage($strManifestKey) ? true : undef);
+
+    if (defined($bChecksumPage))
+    {
+        $oManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM_PAGE} =
+            $bChecksumPage ? JSON::PP::true : JSON::PP::false;
+
+        if (!$bChecksumPage && $strChecksumPageError ne '0')
+        {
+            my @iyChecksumPageError = eval($strChecksumPageError);  ## no critic (BuiltinFunctions::ProhibitStringyEval)
+
+            $oManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR} =
+                \@iyChecksumPageError;
+        }
+        else
+        {
+            delete($oManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR});
+        }
+    }
 
     if (defined($strChecksum))
     {

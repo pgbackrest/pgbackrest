@@ -612,6 +612,22 @@ sub backupStart
         $bStartFast = false;
     }
 
+    # Determine if page checksums can be enabled
+    my $bChecksumPage =
+        $self->executeSqlOne("select count(*) = 1 from pg_settings where name = 'data_checksums' and setting = 'on'");
+
+    # If checksum page option is not explictly set then set it to whatever the database says
+    if (!optionTest(OPTION_CHECKSUM_PAGE))
+    {
+        optionSet(OPTION_CHECKSUM_PAGE, $bChecksumPage);
+    }
+    # Else if enabled make sure they are in the database as well, else throw a warning
+    elsif (optionGet(OPTION_CHECKSUM_PAGE) && !$bChecksumPage)
+    {
+        &log(WARN, 'unable to enable page checksums since they are not enabled in the database');
+        optionSet(OPTION_CHECKSUM_PAGE, false);
+    }
+
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
     # database cluster.  This lock helps make the stop-auto option safe.
     if (!$self->executeSqlOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))

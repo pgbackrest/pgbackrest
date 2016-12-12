@@ -139,6 +139,24 @@ sub fileNotInManifest
                         $hFile->{$strName}{modification_time})
                 {
                     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
+
+                    my $bChecksumPage =
+                        $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+                    if (defined($bChecksumPage))
+                    {
+                        $oManifest->boolSet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, $bChecksumPage);
+
+                        if (!$bChecksumPage &&
+                            $oAbortedManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR))
+                        {
+                            $oManifest->set(
+                                MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR,
+                                $oAbortedManifest->get(
+                                    MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR));
+                        }
+                    }
+
                     next;
                 }
             }
@@ -356,7 +374,8 @@ sub processManifest
         $oBackupProcess->queueJob(
             $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
             [$strDbFile, $strRepoFile, $lSize,
-                $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false), $bCompress,
+                $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
+                optionGet(OPTION_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $bCompress,
                 $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false),
                 $bIgnoreMissing]);
 
@@ -399,7 +418,7 @@ sub processManifest
         {
             ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
                 $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hJob->{iHostConfigIdx}), false), $hJob->{iProcessId},
-                @{$hJob->{rParam}}[0..3], @{$hJob->{rResult}},
+                @{$hJob->{rParam}}[0..4], @{$hJob->{rResult}},
                 $lSizeTotal, $lSizeCurrent, $lManifestSaveSize, $lManifestSaveCurrent);
         }
 
@@ -565,9 +584,31 @@ sub process
     my $hTablespaceMap = undef;
 	my $hDatabaseMap = undef;
 
-    # Don't start the backup but do check if PostgreSQL is running
+    # Only allow page checksums if the C library is available
+    if (!isLibC())
+    {
+        # Warn if page checksums were expicitly requested
+        if (optionTest(OPTION_CHECKSUM_PAGE) && optionGet(OPTION_CHECKSUM_PAGE))
+        {
+            &log(WARN, "page checksums disabled - pgBackRest::LibC module is not present");
+        }
+
+        # Disable page checksums
+        optionSet(OPTION_CHECKSUM_PAGE, false);
+    }
+
+    # If this is an offline backup
     if (!optionGet(OPTION_ONLINE))
     {
+        # If checksum-page is not explictly enabled then disable it.  Even if the version is high enough to have checksums we can't
+        # know if they are enabled without asking the database.  When pg_control can be reliably parsed then this decision could be
+        # based on that.
+        if (!optionTest(OPTION_CHECKSUM_PAGE))
+        {
+            optionSet(OPTION_CHECKSUM_PAGE, false);
+        }
+
+        # Check if Postgres is running and if so only continue when forced
         if ($oFileMaster->exists(PATH_DB_ABSOLUTE, $strDbMasterPath . '/' . DB_FILE_POSTMASTERPID))
         {
             if (optionGet(OPTION_FORCE))
@@ -624,6 +665,35 @@ sub process
             protocolDestroy(DB, $self->{iCopyRemoteIdx}, true);
         }
     }
+
+    # Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain files would
+    # be checksummed and the list could be incomplete during reporting.
+    if ($strType ne BACKUP_TYPE_FULL && defined($strBackupLastPath))
+    {
+        # If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
+        # false and move on without a warning.  Page checksums will start on the next full backup.
+        if (!$oLastManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE))
+        {
+            optionSet(OPTION_CHECKSUM_PAGE, false);
+        }
+        else
+        {
+            my $bChecksumPageLast =
+                $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE);
+
+            if ($bChecksumPageLast != optionGet(OPTION_CHECKSUM_PAGE))
+            {
+                &log(WARN,
+                    "${strType} backup cannot alter '" . OPTION_CHECKSUM_PAGE . "' option to '" .
+                        boolFormat(optionGet(OPTION_CHECKSUM_PAGE)) . "', reset to '" . boolFormat($bChecksumPageLast) .
+                        "' from ${strBackupLastPath}");
+                optionSet(OPTION_CHECKSUM_PAGE, $bChecksumPageLast);
+            }
+        }
+    }
+
+    # Record checksum-page option in the manifest
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, optionGet(OPTION_CHECKSUM_PAGE));
 
     # Build the manifest
     $oBackupManifest->build($oFileMaster, $strDbVersion, $strDbMasterPath, $oLastManifest, optionGet(OPTION_ONLINE),

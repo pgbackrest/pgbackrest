@@ -313,6 +313,8 @@ use constant OPTION_BACKUP_STANDBY                                  => 'backup-s
     push @EXPORT, qw(OPTION_BACKUP_STANDBY);
 use constant OPTION_BACKUP_USER                                     => 'backup-user';
     push @EXPORT, qw(OPTION_BACKUP_USER);
+use constant OPTION_CHECKSUM_PAGE                                   => 'checksum-page';
+    push @EXPORT, qw(OPTION_CHECKSUM_PAGE);
 use constant OPTION_HARDLINK                                        => 'hardlink';
     push @EXPORT, qw(OPTION_HARDLINK);
 use constant OPTION_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
@@ -1544,6 +1546,17 @@ my %oOptionRule =
         &OPTION_RULE_DEPEND =>
         {
             &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
+        }
+    },
+
+    &OPTION_CHECKSUM_PAGE =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_BACKUP => true
         }
     },
 

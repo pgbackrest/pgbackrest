@@ -37,6 +37,8 @@ use constant TEST_PROCESS                                           => 'process'
     push @EXPORT, qw(TEST_PROCESS);
 use constant TEST_VM                                                => 'os';
     push @EXPORT, qw(TEST_VM);
+use constant TEST_PERL_ARCH_PATH                                    => VMDEF_PERL_ARCH_PATH;
+    push @EXPORT, qw(TEST_PERL_ARCH_PATH);
 
 ####################################################################################################################################
 # testListGet
@@ -148,6 +150,7 @@ sub testListGet
                                             &TEST_VM => $strTestOS,
                                             &TEST_CONTAINER => $$oModule{&TESTDEF_TEST_CONTAINER},
                                             &TEST_PGSQL_BIN => $strPgSqlBin,
+                                            &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                             &TEST_MODULE => $$oModule{&TESTDEF_MODULE_NAME},
                                             &TEST_NAME => $$oTest{&TESTDEF_TEST_NAME},
                                             &TEST_RUN => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
