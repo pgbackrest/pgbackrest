@@ -22,7 +22,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000001.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000001.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -161,7 +161,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000001.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000001.partial.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -254,7 +254,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000002.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000002.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -283,7 +283,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000003.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000003.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -312,7 +312,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000004.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000004.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -341,7 +341,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000005.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000005.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -480,7 +480,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000005.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000005.partial.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -573,7 +573,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000006.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000006.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -602,7 +602,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000007.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000007.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -631,7 +631,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000008.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000008.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -660,7 +660,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000009.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000009.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
@@ -799,7 +799,7 @@ P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^0000000100
 P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     Archive->walFileName=>: strWalFileName = [undef]
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
-P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000009.partial.gz, strDestinationPathType = backup:archive, strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = true, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000009.partial.gz, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0

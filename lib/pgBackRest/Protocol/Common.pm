@@ -249,6 +249,7 @@ sub binaryXfer
     my $bSourceCompressed = shift;
     my $bDestinationCompress = shift;
     my $bProtocol = shift;
+    my $fnExtra = shift;
 
     # The input stream must be defined
     my $oIn;
@@ -294,9 +295,10 @@ sub binaryXfer
     $bProtocol = defined($bProtocol) ? $bProtocol : true;
     my $hMessage = undef;
 
-    # Checksum and size
+    # Checksum, size, and extra
     my $strChecksum = undef;
     my $iFileSize = undef;
+    my $rExtra = undef;
 
     # Read from the protocol stream
     if ($strRemote eq 'in')
@@ -405,6 +407,7 @@ sub binaryXfer
             {
                 $oSHA = Digest::SHA->new('sha1');
                 $iFileSize = 0;
+                $rExtra = defined($fnExtra) ? {} : undef;
             }
 
             do
@@ -412,17 +415,22 @@ sub binaryXfer
                 # Read a block from the protocol stream
                 ($iBlockSize, $hMessage) = $self->blockRead($oIn, \$tBuffer, $bProtocol);
 
-                # If the block contains data, write it
+                # Add data to checksum and size
+                if ($iBlockSize > 0 && !$bProtocol)
+                {
+                    $oSHA->add($tBuffer);
+                    $iFileSize += $iBlockSize;
+                }
+
+                # Do extra processing on the buffer if requested
+                if (!$bProtocol && defined($fnExtra))
+                {
+                    $fnExtra->(\$tBuffer, $iBlockSize, $iFileSize - $iBlockSize, $rExtra);
+                }
+
+                # Write buffer
                 if ($iBlockSize > 0)
                 {
-                    # Add data to checksum and size
-                    if (!$bProtocol)
-                    {
-                        $oSHA->add($tBuffer);
-                        $iFileSize += $iBlockSize;
-                    }
-
-                    # Write block
                     $oOut->bufferWrite(\$tBuffer, $iBlockSize);
                     undef($tBuffer);
                 }
@@ -455,6 +463,7 @@ sub binaryXfer
 
             # Initialize checksum
             my $oSHA = Digest::SHA->new('sha1');
+            $rExtra = defined($fnExtra) ? {} : undef;
 
             # Initialize inflate object and check for errors
             my ($oZLib, $iZLibStatus) =
@@ -473,12 +482,22 @@ sub binaryXfer
                 # Read a block from the stream
                 $iBlockSize = $oIn->bufferRead(\$tUncompressedBuffer, $self->{iBufferMax});
 
-                # If block size > 0 then compress
+                # If block size > 0 then update checksum and size
                 if ($iBlockSize > 0)
                 {
                     # Update checksum and filesize
                     $oSHA->add($tUncompressedBuffer);
+                }
 
+                # Do extra processing on the buffer if requested
+                if (defined($fnExtra))
+                {
+                    $fnExtra->(\$tUncompressedBuffer, $iBlockSize, $oZLib->total_in(), $rExtra);
+                }
+
+                # If block size > 0 then compress
+                if ($iBlockSize > 0)
+                {
                     # Compress the data
                     $iZLibStatus = $oZLib->deflate($tUncompressedBuffer, $tCompressedBuffer);
                     $iCompressedBufferSize = length($tCompressedBuffer);
@@ -531,7 +550,7 @@ sub binaryXfer
                 }
 
                 $self->blockWrite(
-                    $oOut, undef, 0, $bProtocol, {strChecksum => $strChecksum, iFileSize => $iFileSize});
+                    $oOut, undef, 0, $bProtocol, {strChecksum => $strChecksum, iFileSize => $iFileSize, rExtra => $rExtra});
             }
         }
         # If source is already compressed or transfer is not compressed then just read the stream
@@ -641,7 +660,7 @@ sub binaryXfer
                 # If protocol then create the message
                 if ($bProtocol)
                 {
-                    $hMessage = {strChecksum => $oSHA->hexdigest(), iFileSize => $iFileSize};
+                    $hMessage = {strChecksum => $oSHA->hexdigest(), iFileSize => $iFileSize, rExtra => $rExtra};
                 }
                 # Otherwise just set checksum
                 else
@@ -662,11 +681,11 @@ sub binaryXfer
     # If message is defined then the checksum, size, and extra should be in it
     if (defined($hMessage))
     {
-        return $hMessage->{strChecksum}, $hMessage->{iFileSize};
+        return $hMessage->{strChecksum}, $hMessage->{iFileSize}, $hMessage->{rExtra};
     }
 
     # Return the checksum and size if they are available
-    return $strChecksum, $iFileSize;
+    return $strChecksum, $iFileSize, $rExtra;
 }
 
 ####################################################################################################################################

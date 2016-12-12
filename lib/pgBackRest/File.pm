@@ -1341,6 +1341,7 @@ sub copy
         $strGroup,
         $bAppendChecksum,
         $bPathSync,
+        $strExtraFunction,
     ) =
         logDebugParam
         (
@@ -1359,6 +1360,7 @@ sub copy
             {name => 'strGroup', required => false},
             {name => 'bAppendChecksum', default => false},
             {name => 'bPathSync', default => false},
+            {name => 'strExtraFunction', required => false},
         );
 
     # Set working variables
@@ -1370,10 +1372,13 @@ sub copy
         $strDestinationPathType : $self->pathGet($strDestinationPathType, $strDestinationFile);
     my $strDestinationTmpOp = $strDestinationPathType eq PIPE_STDOUT ?
         undef : $self->pathGet($strDestinationPathType, $strDestinationFile, true);
+    my $fnExtra = defined($strExtraFunction) ?
+        eval("\\&${strExtraFunction}") : undef;                     ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
     # Checksum and size variables
     my $strChecksum = undef;
     my $iFileSize = undef;
+    my $rExtra = undef;
     my $bResult = true;
 
     # Open the source and destination files (if needed)
@@ -1469,7 +1474,9 @@ sub copy
 
             if ($strSourcePathType ne PIPE_STDIN)
             {
-                $self->{oProtocol}->cmdWrite($strRemoteOp, [$strSourceOp, undef, $bSourceCompressed, $bDestinationCompress]);
+                $self->{oProtocol}->cmdWrite($strRemoteOp,
+                    [$strSourceOp, undef, $bSourceCompressed, $bDestinationCompress, undef, undef, undef, undef, undef, undef,
+                        undef, undef, $strExtraFunction]);
 
                 $bController = true;
             }
@@ -1486,7 +1493,7 @@ sub copy
                 $self->{oProtocol}->cmdWrite(
                     $strRemoteOp,
                     [undef, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, undef, undef, $strMode,
-                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync]);
+                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync, $strExtraFunction]);
 
                 $bController = true;
             }
@@ -1499,7 +1506,7 @@ sub copy
             $self->{oProtocol}->cmdWrite(
                 $strRemoteOp,
                 [$strSourceOp, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, $bIgnoreMissingSource, undef,
-                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync]);
+                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync, $strExtraFunction]);
 
             $bController = true;
         }
@@ -1507,8 +1514,8 @@ sub copy
         # Transfer the file (skip this for copies where both sides are remote)
         if ($strRemoteOp ne OP_FILE_COPY)
         {
-            ($strChecksum, $iFileSize) =
-                $self->{oProtocol}->binaryXfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress);
+            ($strChecksum, $iFileSize, $rExtra) =
+                $self->{oProtocol}->binaryXfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress, undef, $fnExtra);
         }
 
         # If this is the controlling process then wait for OK from remote
@@ -1519,7 +1526,7 @@ sub copy
 
             eval
             {
-                ($bResult, my $strResultChecksum, my $iResultFileSize) =
+                ($bResult, my $strResultChecksum, my $iResultFileSize, my $rResultExtra) =
                     $self->{oProtocol}->outputRead(true, $bIgnoreMissingSource);
 
                 # Check the result of the remote call
@@ -1537,6 +1544,7 @@ sub copy
 
                         $strChecksum = $strResultChecksum;
                         $iFileSize = $iResultFileSize;
+                        $rExtra = $rResultExtra;
                     }
                 }
 
@@ -1570,25 +1578,25 @@ sub copy
         # If the source is not compressed and the destination is then compress
         if (!$bSourceCompressed && $bDestinationCompress)
         {
-            ($strChecksum, $iFileSize) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', false, true, false);
+            ($strChecksum, $iFileSize, $rExtra) =
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', false, true, false, $fnExtra);
         }
         # If the source is compressed and the destination is not then decompress
         elsif ($bSourceCompressed && !$bDestinationCompress)
         {
-            ($strChecksum, $iFileSize) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', true, false, false);
+            ($strChecksum, $iFileSize, $rExtra) =
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', true, false, false, $fnExtra);
         }
-        # Else both side are compressed, so copy capturing checksum
+        # Else both sides are compressed, so copy capturing checksum
         elsif ($bSourceCompressed)
         {
-            ($strChecksum, $iFileSize) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', true, true, false);
+            ($strChecksum, $iFileSize, $rExtra) =
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', true, true, false, $fnExtra);
         }
         else
         {
-            ($strChecksum, $iFileSize) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', false, true, false);
+            ($strChecksum, $iFileSize, $rExtra) =
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', false, true, false, $fnExtra);
         }
     }
 
@@ -1667,7 +1675,8 @@ sub copy
         $strOperation,
         {name => 'bResult', value => $bResult, trace => true},
         {name => 'strChecksum', value => $strChecksum, trace => true},
-        {name => 'iFileSize', value => $iFileSize, trace => true}
+        {name => 'iFileSize', value => $iFileSize, trace => true},
+        {name => '$rExtra', value => $rExtra, trace => true},
     );
 }
 

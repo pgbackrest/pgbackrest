@@ -158,7 +158,7 @@ P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRem
 P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00   INFO: new backup label = [BACKUP-FULL-1]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/backup/repo/temp/db.tmp to [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-1]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = false, strDestinationFile = backup.history/2016/[BACKUP-FULL-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1]/backup.manifest.gz, strSourcePathType = backup:cluster
@@ -486,7 +486,7 @@ P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_clo
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_stat, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
 P00   INFO: new backup label = [BACKUP-FULL-2]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/backup/repo/temp/db.tmp to [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-2], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2016/[BACKUP-FULL-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/backup.manifest.gz, strSourcePathType = backup:cluster
@@ -672,7 +672,7 @@ P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmast
 P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/PG_VERSION, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/backup.info, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = backup.info, strSourcePathType = backup:cluster, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/backup.info, strDestinationPathType = db:absolute, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.info, strSourcePathType = backup:cluster, strUser = [undef]
 P00  DEBUG:     BackupInfo->new(): bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->remove(): bIgnoreMissing = false, bPathSync = true, bTemp = [undef], strPath = [TEST_PATH]/db-master/db/base/backup.info, strPathType = db:absolute
 P00  DEBUG:     File->remove=>: bRemoved = true
@@ -681,7 +681,7 @@ P00  DEBUG:     BackupInfo->current=>: bTest = true
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00  DEBUG:     File->exists(): strPath = [BACKUP-FULL-2], strPathType = backup:cluster
 P00  DEBUG:     File->exists=>: bExists = true
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/backup.manifest, strDestinationPathType = db:absolute, strGroup = [undef], strMode = <0640>, strSourceFile = [BACKUP-FULL-2]/backup.manifest, strSourcePathType = backup:cluster, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = <false>, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/backup.manifest, strDestinationPathType = db:absolute, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [BACKUP-FULL-2]/backup.manifest, strSourcePathType = backup:cluster, strUser = [undef]
 P00  DEBUG:     Restore->manifestOwnershipCheck(): oManifest = [object]
 P00  DEBUG:     File->remove(): bIgnoreMissing = true, bPathSync = <false>, bTemp = true, strPath = [TEST_PATH]/db-master/db/base/global/pg_control, strPathType = db:absolute
 P00  DEBUG:     File->remove=>: bRemoved = false
@@ -1175,7 +1175,7 @@ P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1, s
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1/[TS_PATH-1], strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
 P00   INFO: new backup label = [BACKUP-INCR-1]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/backup/repo/temp/db.tmp to [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-1]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-INCR-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2016/[BACKUP-INCR-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1]/backup.manifest.gz, strSourcePathType = backup:cluster
@@ -1552,7 +1552,7 @@ P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/2, s
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/2/[TS_PATH-1], strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:tmp
 P00   INFO: new backup label = [BACKUP-INCR-2]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/backup/repo/temp/db.tmp to [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-INCR-2], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2016/[BACKUP-INCR-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2]/backup.manifest.gz, strSourcePathType = backup:cluster

@@ -195,6 +195,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>File copy protocol now accepts a function that can do additional processing on the copy buffers and return a result to the calling process.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improved <code>IO->bufferRead</code> to always return requested number of bytes until EOF.</p>
                     </release-item>
 
