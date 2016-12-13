@@ -161,14 +161,17 @@ sub backupTestRun
             &log(INFO, "Test ${strThisTest}\n");
         }
 
+        for (my $bRemote = false; $bRemote <= true; $bRemote++)
+        {
         if (testRun(++$iRun,
-            "local",
+            $bRemote ? "remote" : "local",
             $iProcessMax == 1 ? $strModule : undef,
             $iProcessMax == 1 ? $strThisTest: undef,
             \$oLogTest))
         {
             # Create hosts, file object, and config
-            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(true, $oLogTest);
+            my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = backupTestSetup(
+                true, $oLogTest, {bHostBackup => $bRemote});
 
             # Create the stanza
             $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
@@ -195,7 +198,7 @@ sub backupTestRun
             $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $oLogTest});
 
             # With data existing in the archive dir, remove the info file and confirm failure
-            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
             $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_STANZA_DIR_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
 
@@ -223,7 +226,7 @@ sub backupTestRun
                 DB_FILE_PGCONTROL);
 
             # Remove the archive info file
-            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
             # Run stanza-create with --force
             $oHostBackup->stanzaCreate('test force fails for database mismatch with directory',
@@ -244,18 +247,19 @@ sub backupTestRun
             # Remove the uncompressed WAL archive file and archive.info
             executeTest('sudo rm ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
                 substr($strArchiveFile, 0, 16) . "/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27");
-            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
             $oHostBackup->stanzaCreate('force with missing WAL archive file',
                 {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             # Remove the WAL archive directory
             executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .
                 substr($strArchiveFile, 0, 16));
-            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
             $oHostBackup->stanzaCreate('force with missing WAL archive directory',
                 {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             testCleanup(\$oLogTest);
+        }
         }
     }
 
