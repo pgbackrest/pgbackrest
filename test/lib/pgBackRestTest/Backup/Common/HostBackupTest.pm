@@ -762,7 +762,7 @@ sub stanzaCreate
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->check', \@_,
+            __PACKAGE__ . '->stanzaCreate', \@_,
             {name => 'strComment'},
             {name => 'oParam', required => false},
         );
@@ -775,10 +775,22 @@ sub stanzaCreate
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
-        ' --stanza=' . $self->stanza() . ' stanza-create',
+        ' --stanza=' . $self->stanza() .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        ' stanza-create',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
+
+    # If the info file was created, then add it to the expect log
+    if ($self->synthetic() && fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+    {
+        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+    }
+
+    if ($self->synthetic() && fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+    {
+        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

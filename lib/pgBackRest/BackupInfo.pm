@@ -21,6 +21,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Protocol;
 
 ####################################################################################################################################
 # File/path constants
@@ -94,6 +96,13 @@ use constant INFO_BACKUP_KEY_VERSION                                => INI_KEY_V
     push @EXPORT, qw(INFO_BACKUP_KEY_VERSION);
 
 ####################################################################################################################################
+# Global variables
+####################################################################################################################################
+my $strBackupInfoMissingMsg =
+    FILE_BACKUP_INFO . " does not exist and is required to perform a backup.\n" .
+    "HINT: has a stanza-create been performed?";
+
+####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -105,18 +114,27 @@ sub new
     (
         $strOperation,
         $strBackupClusterPath,
-        $bValidate
+        $bValidate,
+        $bRequired,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strBackupClusterPath'},
-            {name => 'bValidate', default => true}
+            {name => 'bValidate', default => true},
+            {name => 'bRequired', default => true},
         );
 
     # Build the backup info path/file name
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
     my $bExists = fileExists($strBackupInfoFile);
+
+    # If the backup info file does not exist and is required, then throw an error
+    # The backup.info is only allowed not to exist when running a stanza-create on a new install
+    if (!$bExists && $bRequired)
+    {
+        confess &log(ERROR, "${strBackupClusterPath}/$strBackupInfoMissingMsg", ERROR_FILE_MISSING);
+    }
 
     # Init object and store variables
     my $self = $class->SUPER::new($strBackupInfoFile, $bExists);
@@ -141,7 +159,7 @@ sub new
 ####################################################################################################################################
 # validate
 #
-# Compare the backup info against the actual backups in the repository.
+# Comfirm the file exists and reconstruct as necessary.
 ####################################################################################################################################
 sub validate
 {
@@ -150,9 +168,40 @@ sub validate
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->validate');
 
-    # Check for backups that are not in FILE_BACKUP_INFO
-    my $strPattern = backupRegExpGet(true, true, true);
+    # Confirm the info file exists with the DB section
+    $self->confirmExists();
 
+    $self->reconstruct();
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# reconstruct
+#
+# Compare the backup info against the actual backups in the repository. Reconstruct the file based on manifests missing or no
+# longer valid.
+####################################################################################################################################
+sub reconstruct
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bSave,
+        $bRequired,
+    ) =
+        logDebugParam
+    (
+        __PACKAGE__ . '->reconstruct', \@_,
+        {name => 'bSave', default => true},
+        {name => 'bRequired', default => true},
+    );
+
+    # Check for backups that are not in FILE_BACKUP_INFO
     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
     {
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
@@ -164,7 +213,8 @@ sub validate
         {
             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
-            $self->add($oManifest);
+
+            $self->add($oManifest, $bSave, $bRequired);
         }
     }
 
@@ -195,7 +245,7 @@ sub validate
 ####################################################################################################################################
 # check
 #
-# Check db info and make sure it matches what is already in the repository.
+# Check db info and make sure it matches what is already in the repository. Return the db-id if everything matches.
 ####################################################################################################################################
 sub check
 {
@@ -209,6 +259,7 @@ sub check
         $iControlVersion,
         $iCatalogVersion,
         $ullDbSysId,
+        $bRequired,
     ) =
         logDebugParam
         (
@@ -216,56 +267,40 @@ sub check
             {name => 'strDbVersion', trace => true},
             {name => 'iControlVersion', trace => true},
             {name => 'iCatalogVersion', trace => true},
-            {name => 'ullDbSysId', trace => true}
+            {name => 'ullDbSysId', trace => true},
+            {name => 'bRequired', default => true},
         );
 
-    # Initialize history id
-    my $iDbHistoryId = 1;
-
-    if (!$self->test(INFO_BACKUP_SECTION_DB))
+    # Confirm the info file exists with the DB section
+    if ($bRequired)
     {
-        # Fill db section
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId);
-        $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId);
-
-        # Fill db history
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
-        $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
-        $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
+        $self->confirmExists();
     }
-    else
+
+    if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId) ||
+        !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion))
     {
-        if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId) ||
-            !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion))
-        {
-            confess &log(ERROR, "database version = ${strDbVersion}, system-id ${ullDbSysId} does not match backup version = " .
-                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION) . ", system-id = " .
-                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID) . "\n" .
-                                "HINT: is this the correct stanza?", ERROR_BACKUP_MISMATCH);
-        }
+        confess &log(ERROR, "database version = ${strDbVersion}, system-id ${ullDbSysId} does not match backup version = " .
+                            $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION) . ", system-id = " .
+                            $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID) . "\n" .
+                            "HINT: is this the correct stanza?", ERROR_BACKUP_MISMATCH);
+    }
 
-        if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion) ||
-            !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion))
-        {
-            confess &log(ERROR, "database control-version = ${iControlVersion}, catalog-version ${iCatalogVersion}" .
-                                " does not match backup control-version = " .
-                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL) . ", catalog-version = " .
-                                $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG) . "\n" .
-                                "HINT: this may be a symptom of database or repository corruption!", ERROR_BACKUP_MISMATCH);
-        }
-
-        $iDbHistoryId = $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID);
+    if (!$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion) ||
+        !$self->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion))
+    {
+        confess &log(ERROR, "database control-version = ${iControlVersion}, catalog-version ${iCatalogVersion}" .
+                            " does not match backup control-version = " .
+                            $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL) . ", catalog-version = " .
+                            $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG) . "\n" .
+                            "HINT: this may be a symptom of database or repository corruption!", ERROR_BACKUP_MISMATCH);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iDbHistoryId', value => $iDbHistoryId}
+        {name => 'iDbHistoryId', value => $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID)}
     );
 }
 
@@ -282,25 +317,26 @@ sub add
     my
     (
         $strOperation,
-        $oBackupManifest
+        $oBackupManifest,
+        $bSave,
+        $bRequired,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->add', \@_,
-            {name => 'oBackupManifest', trace => true}
+            {name => 'oBackupManifest', trace => true},
+            {name => 'bSave', default => true, trace => true},
+            {name => 'bRequired', default => true, trace => true},
         );
+
+    # Confirm the info file exists with the DB section
+    if ($bRequired)
+    {
+        $self->confirmExists();
+    }
 
     # Get the backup label
     my $strBackupLabel = $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
-
-    # If the db section has not been created then create it
-    if (!$self->test(INFO_BACKUP_SECTION_DB))
-    {
-        $self->check($oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION),
-                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
-                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG),
-                     $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID));
-    }
 
     # Calculate backup sizes and references
     my $lBackupSize = 0;
@@ -381,7 +417,10 @@ sub add
                    \@stryReference);
     }
 
-    $self->save();
+    if ($bSave)
+    {
+        $self->save();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -466,7 +505,6 @@ sub list
     );
 }
 
-
 ####################################################################################################################################
 # last
 #
@@ -524,6 +562,147 @@ sub delete
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# create
+#
+# Create the info file. WARNING - this file should only be called from stanza-create.
+####################################################################################################################################
+sub create
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+        $iControlVersion,
+        $iCatalogVersion,
+        $bSave,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->create', \@_,
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'},
+            {name => 'iControlVersion'},
+            {name => 'iCatalogVersion'},
+            {name => 'bSave', default => true},
+        );
+
+    # Fill db section and db history section
+    $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false));
+
+    if ($bSave)
+    {
+        $self->save();
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# dbHistoryIdGet
+#
+# Get the db history ID
+####################################################################################################################################
+sub dbHistoryIdGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bFileRequired,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryIdGet',
+            {name => 'bFileRequired', default => true},
+        );
+
+    # Confirm the info file exists if it is required
+    if ($bFileRequired)
+    {
+        $self->confirmExists();
+    }
+
+    # If the DB section does not exist, initialize the history to one, else return the latest ID
+    my $iDbHistoryId = (!$self->test(INFO_BACKUP_SECTION_DB))
+                        ? 1 : $self->numericGet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# dbSectionSet
+#
+# Set the db and db:history sections.
+####################################################################################################################################
+sub dbSectionSet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $iControlVersion,
+        $iCatalogVersion,
+        $ullDbSysId,
+        $iDbHistoryId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->dbSectionSet', \@_,
+            {name => 'strDbVersion', trace => true},
+            {name => 'iControlVersion', trace => true},
+            {name => 'iCatalogVersion', trace => true},
+            {name => 'ullDbSysId', trace => true},
+            {name => 'iDbHistoryId', trace => true},
+        );
+
+    # Fill db section
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG, undef, $iCatalogVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CONTROL, undef, $iControlVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID, undef, $ullDbSysId);
+    $self->set(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef, $strDbVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId);
+
+    # Fill db history
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
+    $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# confirmExists
+#
+# Ensure that the backup.info file and the db section exist.
+####################################################################################################################################
+sub confirmExists
+{
+    my $self = shift;
+
+    # Confirm the file exists and the DB section is filled out
+    if (!$self->test(INFO_BACKUP_SECTION_DB) || !$self->{bExists})
+    {
+        confess &log(ERROR, $self->{strBackupClusterPath} . "/" . $strBackupInfoMissingMsg, ERROR_FILE_MISSING);
+    }
 }
 
 1;

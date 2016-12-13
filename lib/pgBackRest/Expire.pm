@@ -131,7 +131,7 @@ sub process
     my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
     my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
 
-    # Load or build backup.info
+    # Load the backup.info
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
 
     # Find all the expired full backups

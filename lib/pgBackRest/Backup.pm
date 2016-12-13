@@ -469,7 +469,7 @@ sub process
     # Create the cluster backup and history path
     $oFileLocal->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true, optionGet(OPTION_REPO_SYNC));
 
-    # Load or build backup.info
+    # Load the backup.info
     my $oBackupInfo = new pgBackRest::BackupInfo($oFileLocal->pathGet(PATH_BACKUP_CLUSTER));
 
     # Build backup tmp and config

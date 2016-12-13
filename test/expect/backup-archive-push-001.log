@@ -11,10 +11,92 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  ERROR: [130]: archive.info does not exist but is required to push/get WAL segments
+               HINT: is archive_command configured in postgresql.conf?
+               HINT: has a stanza-create been performed?
+               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: archive-push command end: aborted with exception [130]
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
+
+stanza-create db - create required data for stanza (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --no-online --force stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = stanza-create
+P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:cluster
+P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     BackupInfo->new(): bRequired = false, bValidate = false, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
+P00   INFO: successfully created stanza db
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: stanza-create command end: completed successfully
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
+---------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=6353949018581704918
+db-version="9.4"
+
+[db:history]
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+
++ supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
+-----------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[db]
+db-id=1
+db-system-id=6353949018581704918
+db-version="9.4"
+
+[db:history]
+1={"db-id":6353949018581704918,"db-version":"9.4"}
+
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --no-fork --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Archive->push(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -40,10 +122,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -63,10 +144,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -124,10 +204,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -157,10 +236,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -188,10 +266,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = false, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -217,10 +294,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -250,10 +326,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
@@ -281,10 +356,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strWalSegment = 000000010000000100000002, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strWalSegment = 000000010000000100000002, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000002
@@ -310,10 +384,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strWalSegment = 000000010000000100000003, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strWalSegment = 000000010000000100000003, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000003
@@ -339,10 +412,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004, strWalSegment = 000000010000000100000004, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004, strWalSegment = 000000010000000100000004, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000004
@@ -368,10 +440,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -397,10 +468,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -420,10 +490,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -443,10 +512,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -476,10 +544,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -507,10 +574,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = false, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -536,10 +602,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -569,10 +634,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000005
@@ -600,10 +664,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, strWalSegment = 000000010000000100000006, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, strWalSegment = 000000010000000100000006, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000006
@@ -629,10 +692,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007, strWalSegment = 000000010000000100000007, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007, strWalSegment = 000000010000000100000007, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000007
@@ -658,10 +720,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008, strWalSegment = 000000010000000100000008, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008, strWalSegment = 000000010000000100000008, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000008
@@ -687,10 +748,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -716,10 +776,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -739,10 +798,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -762,10 +820,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -795,10 +852,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -826,10 +882,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = false, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -855,10 +910,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009
@@ -888,10 +942,9 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = [undef], strPathType = backup:archive
-P00  DEBUG:     ArchiveInfo->new(): bRequired = <false>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     ArchiveInfo->check(): bPathSync = true, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     ArchiveInfo->check=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive->walFileName(): bPartial = true, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000009

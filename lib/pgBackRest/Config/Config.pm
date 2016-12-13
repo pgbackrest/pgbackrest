@@ -396,6 +396,8 @@ use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
 use constant OPTION_DEFAULT_LOCK                                    => true;
     push @EXPORT, qw(OPTION_DEFAULT_LOCK);
+use constant OPTION_DEFAULT_STANZA_CREATE_FORCE                     => false;
+    push @EXPORT, qw(OPTION_DEFAULT_STANZA_CREATE_FORCE);
 
 # Command-line only test
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -647,6 +649,11 @@ my %oOptionRule =
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_FORCE,
             },
 
+            &CMD_STANZA_CREATE =>
+            {
+                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STANZA_CREATE_FORCE,
+            },
+
             &CMD_STOP =>
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STOP_FORCE
@@ -674,6 +681,7 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_STANZA_CREATE => true,
         }
     },
 
@@ -1005,7 +1013,6 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
-            &CMD_STANZA_CREATE => true,
         },
     },
 
@@ -1062,7 +1069,7 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_EXPIRE => false,
-            &CMD_RESTORE => true
+            &CMD_RESTORE => true,
         }
     },
 
@@ -1162,13 +1169,14 @@ my %oOptionRule =
             &CMD_ARCHIVE_PUSH => true,
             &CMD_STANZA_CREATE => true,
             &CMD_BACKUP => true,
+            &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_LOCAL => true,
             &CMD_REMOTE => true,
             &CMD_RESTORE => true,
+            &CMD_STANZA_CREATE => true,
             &CMD_START => true,
             &CMD_STOP => true,
-            &CMD_EXPIRE => true
         },
     },
 
@@ -1522,6 +1530,7 @@ my %oOptionRule =
         {
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_STANZA_CREATE => true,
         },
     },
 
