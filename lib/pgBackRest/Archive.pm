@@ -1129,7 +1129,7 @@ sub check
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
-    # Check backup.info - if the archive check fails below (e.g --no-archive-check set) then at least know backup.info suceeded
+    # Check backup.info - if the archive check fails below (e.g --no-archive-check set) then at least know backup.info succeeded
     eval
     {
         # Check that the backup info file is written and is valid for the current database of the stanza

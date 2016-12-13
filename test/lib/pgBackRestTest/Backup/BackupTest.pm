@@ -205,7 +205,7 @@ sub backupTestRun
 
             # Force creation of the info file but fail on gunzip
             $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
-                {iExpectedExitStatus => ERROR_GUNZIP, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+                {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             # Change permissions back and force creation of archive info from the gz file
             executeTest('sudo chmod 640 ' . $oHostBackup->repoPath() . "/archive/${strStanza}/" . PG_VERSION_94 . '-1/' .

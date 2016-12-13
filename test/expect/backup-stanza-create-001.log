@@ -176,14 +176,14 @@ P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     ArchiveInfo->new(): bRequired = false, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  ERROR: [163]: gunzip failed with error: cannot open file '[TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz': Permission denied on file 9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
+P00  ERROR: [116]: unable to open [TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
 P00   WARN: the stanza db could not be created
-P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 163, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 116, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00   INFO: stanza-create command end: aborted with exception [163]
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 163
+P00   INFO: stanza-create command end: aborted with exception [116]
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 116
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------

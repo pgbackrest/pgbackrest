@@ -25,8 +25,6 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
-use IO::Uncompress::Gunzip qw($GunzipError);
-
 
 ####################################################################################################################################
 # Global variables

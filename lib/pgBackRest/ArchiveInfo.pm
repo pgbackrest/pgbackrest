@@ -288,24 +288,24 @@ sub reconstruct
         # If the file is a compressed file, unzip it, else open the first 8KB
         my $tBlock;
 
+        sysopen(my $hFile, $strArchiveFilePath, O_RDONLY)
+            or confess &log(ERROR, "unable to open ${strArchiveFilePath}", ERROR_FILE_OPEN);
+
         if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
         {
-            gunzip $strArchiveFilePath => \$tBlock
+            gunzip $hFile => \$tBlock
                 or confess &log(ERROR,
                     "gunzip failed with error: " . $GunzipError .
-                    " on file ${strVersionDir}/${strArchiveDir}/${strArchiveFile}", ERROR_GUNZIP);
+                    " on file ${strArchiveFilePath}", ERROR_FILE_READ);
         }
         else
         {
-            sysopen(my $hFile, $strArchiveFilePath, O_RDONLY)
-                or confess &log(ERROR, "unable to open ${strArchiveFilePath}", ERROR_FILE_OPEN);
-
             # Read part of the file
             sysread($hFile, $tBlock, 8192) == 8192
                 or confess &log(ERROR, "unable to read ${strArchiveFilePath}", ERROR_FILE_READ);
-
-            close($hFile);
         }
+
+        close($hFile);
 
         # Get the required data from the file that was pulled into scalar $tBlock
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);
