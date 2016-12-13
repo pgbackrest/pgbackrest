@@ -133,7 +133,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.12dev" title="UNDER DEVELOPMENT">
+        <release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">
             <release-core-list>
                  <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
 
@@ -169,6 +169,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
                         <p>Added the <br-option>--checksum-page</br-option> option to allow pgBackRest to validate page checksums in data files when checksums are enabled on <postgres/> >= 9.3.  Note that this functionality requires a C library which may not initially be available in OS packages.  The option will automatically be enabled when the library is present and checksums are enabled on the cluster.</p>
                     </release-item>
 
@@ -181,6 +185,10 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
                         <p>Added a predictable log entry to signal that a command has completed successfully. For example a backup ends successfully with: <code>INFO: backup command end: completed successfully</code>.</p>
                     </release-item>
                 </release-feature-list>
