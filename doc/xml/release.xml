@@ -133,6 +133,20 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.13dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed const assignment giving compiler warning in C library.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+        </release>
+
         <release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">
             <release-core-list>
                  <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>

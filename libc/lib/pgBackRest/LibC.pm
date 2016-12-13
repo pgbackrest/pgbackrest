@@ -11,7 +11,7 @@ use AutoLoader;
 our @ISA = qw(Exporter);
 
 # Library version (add .999 during development)
-our $VERSION = '1.12';
+our $VERSION = '1.13.999';
 
 sub libCVersion {return $VERSION};
 
