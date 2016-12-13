@@ -218,7 +218,7 @@ pageChecksumBuffer(const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlock
     // Loop through all pages in the buffer
     for (uint32 uiIndex = 0; uiIndex < uiBufferSize / uiPageSize; uiIndex++)
     {
-        char *szPage = szPageBuffer + (uiIndex * uiPageSize);
+        const char *szPage = szPageBuffer + (uiIndex * uiPageSize);
 
         // Return false if the checksums do not match
         if (((PageHeader)szPage)->pd_checksum != pageChecksum(szPage, uiBlockNoStart + uiIndex, uiPageSize))
