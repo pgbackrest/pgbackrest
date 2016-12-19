@@ -330,9 +330,6 @@ sub iniSave
         confess &log(ERROR, "unable to move ${strFileTemp} to ${strFileName}", ERROR_FILE_MOVE);
     }
 
-    # Sync the directory to make sure the changes stick
-    filePathSync(dirname($strFileName));
-
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }

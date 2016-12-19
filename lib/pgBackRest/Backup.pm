@@ -851,7 +851,7 @@ sub process
                 my $strFileName = $oFileLocal->pathGet(PATH_BACKUP_TMP, $strFile);
 
                 # Write content out to a file
-                fileStringWrite($strFileName, $$oFileHash{$strFile});
+                fileStringWrite($strFileName, $$oFileHash{$strFile}, false);
 
                 # Compress if required
                 if ($bCompress)

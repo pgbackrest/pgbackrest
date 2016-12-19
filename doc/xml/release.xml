@@ -143,6 +143,10 @@
 
                         <p>Fixed const assignment giving compiler warning in C library.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed a few directory syncs that were missed for the <br-option>--repo-sync</br-option> option.</p>
+                    </release-item>
                 </release-bug-list>
             </release-core-list>
         </release>
