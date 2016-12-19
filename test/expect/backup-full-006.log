@@ -115,6 +115,10 @@ repo-path=[TEST_PATH]/db-standby/repo
 archive-copy=y
 start-fast=y
 
+check db - verify check command on standby (db-standby host)
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
 incr backup - update during backup (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=24576 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------

@@ -1110,9 +1110,6 @@ sub check
     # Validate the database configuration
     $oDb->configValidate();
 
-    # Force archiving
-    my $strWalSegment = $oDb->xlogSwitch();
-
     # Get the timeout and error message to display - if it is 0 we are testing
     my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
 
@@ -1125,6 +1122,7 @@ sub check
 
     my $strArchiveId = undef;
     my $strArchiveFile = undef;
+    my $strWalSegment = undef;
 
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
@@ -1167,9 +1165,11 @@ sub check
         };
     }
 
-    # If able to get the archive id then check the archived WAL file with the time specified
-    if ($iResult == 0)
+    # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
+    if ($iResult == 0 && !$oDb->isStandby())
     {
+        $strWalSegment = $oDb->xlogSwitch();
+
         eval
         {
             $strArchiveFile = $self->walFileName($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
@@ -1195,17 +1195,29 @@ sub check
     # Else, log the error.
     if ($iResult == 0)
     {
-        &log(INFO,
-        "WAL segment ${strWalSegment} successfully stored in the archive at '" .
-        $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+        if (!$oDb->isStandby())
+        {
+            &log(INFO,
+            "WAL segment ${strWalSegment} successfully stored in the archive at '" .
+            $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+        }
+        else
+        {
+            &log(INFO, "switch xlog cannot be performed on the standby, all other checks passed successfully");
+        }
     }
     else
     {
         &log(ERROR, $strResultMessage, $iResult);
-        &log(WARN,
-            "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
-            "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
-            "HINT: Check the PostreSQL server log for errors.");
+
+        # If a switch xlog was attempted, then alert the user to the WAL that did not reach the archive
+        if (defined($strWalSegment))
+        {
+            &log(WARN,
+                "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
+                "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
+                "HINT: Check the PostreSQL server log for errors.");
+        }
     }
 
     # Return from function and log return values if any

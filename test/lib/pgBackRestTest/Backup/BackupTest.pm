@@ -2351,6 +2351,12 @@ sub backupTestRun
                 }
             }
 
+            if (defined($oHostDbStandby))
+            {
+                # Confirm the check command runs without error on a standby
+                $oHostDbStandby->check('verify check command on standby');
+            }
+
             # Execute stop and make sure the backup fails
             #-----------------------------------------------------------------------------------------------------------------------
             # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
