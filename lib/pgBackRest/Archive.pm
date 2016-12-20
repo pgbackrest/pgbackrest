@@ -431,7 +431,7 @@ sub getCheck
     }
     else
     {
-        # check that the archive info is compatible with the database and create the file if it does not exist
+        # check that the archive info is compatible with the database
         $strArchiveId =
             (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
     }
@@ -747,8 +747,7 @@ sub push
         {
             my ($strDbVersion, $ullDbSysId) = $self->walInfo($strSourceFile);
             ($strArchiveId, $strChecksum) = $self->pushCheck(
-                $oFile, substr(basename($strSourceFile), 0, 24), $bPartial, $strSourceFile, $strDbVersion, $ullDbSysId,
-                optionGet(OPTION_REPO_SYNC));
+                $oFile, substr(basename($strSourceFile), 0, 24), $bPartial, $strSourceFile, $strDbVersion, $ullDbSysId);
         }
         else
         {
@@ -803,7 +802,6 @@ sub pushCheck
         $strWalFile,
         $strDbVersion,
         $ullDbSysId,
-        $bPathSync,
     ) =
         logDebugParam
         (
@@ -814,7 +812,6 @@ sub pushCheck
             {name => 'strWalFile', required => false},
             {name => 'strDbVersion'},
             {name => 'ullDbSysId'},
-            {name => 'bPathSync'},
         );
 
     # Set operation and debug strings
@@ -825,16 +822,13 @@ sub pushCheck
     {
         # Execute the command
         ($strArchiveId, $strChecksum) = $oFile->{oProtocol}->cmdExecute(
-            OP_ARCHIVE_PUSH_CHECK, [$strWalSegment, $bPartial, undef, $strDbVersion, $ullDbSysId, $bPathSync], true);
+            OP_ARCHIVE_PUSH_CHECK, [$strWalSegment, $bPartial, undef, $strDbVersion, $ullDbSysId], true);
     }
     else
     {
-        # Create the archive path if it does not exist
-        $oFile->pathCreate(PATH_BACKUP_ARCHIVE, undef, undef, true, true);
-
-        # If the info file exists check db version and system-id, else create it
+        # If the info file exists check db version and system-id else error
         $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(
-            $strDbVersion, $ullDbSysId, $bPathSync);
+            $strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive
         $strChecksum = $self->walFileName($oFile, $strArchiveId, $strWalSegment, $bPartial);
@@ -1002,8 +996,7 @@ sub xfer
                 {
                     my ($strDbVersion, $ullDbSysId) = $self->walInfo($strArchiveFile);
                     ($strArchiveId, $strChecksum) = $self->pushCheck(
-                        $oFile, substr(basename($strArchiveFile), 0, 24), $bPartial, $strArchiveFile, $strDbVersion, $ullDbSysId,
-                        optionGet(OPTION_REPO_SYNC));
+                        $oFile, substr(basename($strArchiveFile), 0, 24), $bPartial, $strArchiveFile, $strDbVersion, $ullDbSysId);
                 }
                 else
                 {
@@ -1136,17 +1129,31 @@ sub check
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
-    # Wait for the archive.info to be written. If it does not get written within the timout period then report the last error.
-    do
+    # Check backup.info - if the archive check fails below (e.g --no-archive-check set) then at least know backup.info succeeded
+    eval
+    {
+        # Check that the backup info file is written and is valid for the current database of the stanza
+        $self->getBackupInfoCheck($oFile);
+        return true;
+    }
+    # If there is an unhandled error then confess
+    or do
+    {
+        # Confess unhandled errors
+        confess $EVAL_ERROR if (!isException($EVAL_ERROR));
+
+        # If this is a backrest error then capture the last code and message
+        $iResult = $EVAL_ERROR->code();
+        $strResultMessage = $EVAL_ERROR->message();
+    };
+
+    # Check archive.info
+    if ($iResult == 0)
     {
         eval
         {
-            # check that the archive info file is written and is valid for the current database of the stanza
+            # Check that the archive info file is written and is valid for the current database of the stanza
             $strArchiveId = $self->getCheck($oFile);
-
-            # Clear any previous errors if we've found the archive.info
-            $iResult = 0;
-
             return true;
         }
         or do
@@ -1158,9 +1165,9 @@ sub check
             $iResult = $EVAL_ERROR->code();
             $strResultMessage = $EVAL_ERROR->message();
         };
-    } while (!defined($strArchiveId) && waitMore($oWait));
+    }
 
-    # If able to get the archive id then check the archived WAL file with the time remaining
+    # If able to get the archive id then check the archived WAL file with the time specified
     if ($iResult == 0)
     {
         eval
@@ -1180,29 +1187,11 @@ sub check
         };
     }
 
-    # If the archive info was successful, then check the backup info
-    if ($iResult == 0)
-    {
-        # Check the backup info
-        eval
-        {
-            $self->getBackupInfoCheck($oFile);
-            return true;
-        }
-        or do
-        {
-            # If there is an error but it is not that the file is missing then confess
-            if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_PATH_MISSING)
-            {
-                confess $EVAL_ERROR;
-            }
-        };
-    }
 
     # Reset the console logging
     logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
-    # If the archive info was successful and backup.info check did not error in an unexpected way, then indicate success
+    # If the archiving was successful and backup.info check did not error in an unexpected way, then indicate success
     # Else, log the error.
     if ($iResult == 0)
     {
@@ -1214,7 +1203,7 @@ sub check
     {
         &log(ERROR, $strResultMessage, $iResult);
         &log(WARN,
-            "WAL segment ${strWalSegment} did not reach the archive:\n" .
+            "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
             "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
             "HINT: Check the PostreSQL server log for errors.");
     }

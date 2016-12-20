@@ -135,6 +135,8 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.13dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                 <p><b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
+
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -148,6 +150,16 @@
                         <p>Fixed a few directory syncs that were missed for the <br-option>--repo-sync</br-option> option.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Improved <cmd>stanza-create</cmd> command so that it can repair broken repositories in most cases and is robust enough to be made mandatory.</p>
+                    </release-item>
+                </release-feature-list>
             </release-core-list>
         </release>
 

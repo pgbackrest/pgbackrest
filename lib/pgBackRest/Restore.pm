@@ -539,7 +539,7 @@ sub clean
                 if (!$bDelta)
                 {
                     confess &log(ERROR, "cannot restore file '${strCheckFile}' that already exists - " .
-                                        'try using --delta if this is what you intended', ERROR_RESTORE_PATH_NOT_EMPTY);
+                                        'try using --delta if this is what you intended', ERROR_PATH_NOT_EMPTY);
                 }
 
                 # Mark that a file was found
@@ -578,7 +578,7 @@ sub clean
                 if (!$bDelta)
                 {
                     confess &log(ERROR, "cannot restore to path '${$self->{oTargetPath}}{$strTarget}' that contains files - " .
-                                        'try using --delta if this is what you intended', ERROR_RESTORE_PATH_NOT_EMPTY);
+                                        'try using --delta if this is what you intended', ERROR_PATH_NOT_EMPTY);
                 }
 
                 # Mark that some files were found

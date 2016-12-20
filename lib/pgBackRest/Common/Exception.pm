@@ -50,8 +50,8 @@ use constant ERROR_POSTMASTER_RUNNING                               => ERROR_MIN
     push @EXPORT, qw(ERROR_POSTMASTER_RUNNING);
 use constant ERROR_PROTOCOL                                         => ERROR_MINIMUM + 14;
     push @EXPORT, qw(ERROR_PROTOCOL);
-use constant ERROR_RESTORE_PATH_NOT_EMPTY                           => ERROR_MINIMUM + 15;
-    push @EXPORT, qw(ERROR_RESTORE_PATH_NOT_EMPTY);
+use constant ERROR_PATH_NOT_EMPTY                                   => ERROR_MINIMUM + 15;
+    push @EXPORT, qw(ERROR_PATH_NOT_EMPTY);
 use constant ERROR_FILE_OPEN                                        => ERROR_MINIMUM + 16;
     push @EXPORT, qw(ERROR_FILE_OPEN);
 use constant ERROR_FILE_READ                                        => ERROR_MINIMUM + 17;
@@ -144,10 +144,6 @@ use constant ERROR_LINK_OPEN                                        => ERROR_MIN
     push @EXPORT, qw(ERROR_LINK_OPEN);
 use constant ERROR_ARCHIVE_DISABLED                                 => ERROR_MINIMUM + 62;
     push @EXPORT, qw(ERROR_ARCHIVE_DISABLED);
-use constant ERROR_ARCHIVE_DIR_INVALID                              => ERROR_MINIMUM + 63;
-    push @EXPORT, qw(ERROR_ARCHIVE_DIR_INVALID);
-use constant ERROR_BACKUP_DIR_INVALID                               => ERROR_MINIMUM + 64;
-    push @EXPORT, qw(ERROR_BACKUP_DIR_INVALID);
 use constant ERROR_OPTION_COMMAND                                   => ERROR_MINIMUM + 65;
     push @EXPORT, qw(ERROR_OPTION_COMMAND);
 

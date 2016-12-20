@@ -1,6 +1,86 @@
 run 006 - rmt 1, cmp 0, arc_async 1
 ===================================
 
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --no-fork --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 asynchronously
+P00  DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000001, strDestinationPathType = backup:archive:out, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
+P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
+P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
+P00  DEBUG:     Archive->pushProcess: no fork on archive local for TESTING
+P00  DEBUG:     Archive->pushProcess: start async archive-push
+P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
+P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
+P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
+P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
+P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strRemoteType = backup, strUser = [USER-1]
+P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
+P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00   INFO: WAL segments to archive: total = 1, size = 16MB
+P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
+P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
+P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  ERROR: [130]: raised on backup host: archive.info does not exist but is required to push/get WAL segments
+               HINT: is archive_command configured in postgresql.conf?
+               HINT: has a stanza-create been performed?
+               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup
+P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
+P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: archive-push command end: aborted with exception [130]
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
+
+stanza-create db - create required data for stanza (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-2] --force --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: stanza-create command end: completed successfully
+
++ supplemental file: [TEST_PATH]/backup/repo/backup/db/backup.info
+------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=6353949018581704918
+db-version="9.4"
+
+[db:history]
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+
++ supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
+--------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[db]
+db-id=1
+db-system-id=6353949018581704918
+db-version="9.4"
+
+[db:history]
+1={"db-id":6353949018581704918,"db-version":"9.4"}
+
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-fork --stanza=db archive-push --cmd-ssh=/usr/bin/ssh [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --cmd-ssh=/usr/bin/ssh --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --no-fork --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo --spool-path=[TEST_PATH]/db-master/spool --stanza=db
@@ -29,7 +109,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000001, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -80,7 +160,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: raised on backup host: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -120,7 +200,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: raised on backup host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -227,7 +307,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -282,7 +362,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -324,7 +404,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000001.partial, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -375,7 +455,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -430,7 +510,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -472,7 +552,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000002, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000002, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000002, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -523,7 +603,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000003, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000003, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000003, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -574,7 +654,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000004, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000004, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000004, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -625,7 +705,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000005, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -676,7 +756,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: raised on backup host: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -716,7 +796,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: raised on backup host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -756,7 +836,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -811,7 +891,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -853,7 +933,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000005.partial, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -904,7 +984,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -959,7 +1039,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -1001,7 +1081,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000006, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000006, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000006, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -1052,7 +1132,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000007, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000007, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000007, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -1103,7 +1183,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000008, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000008, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000008, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -1154,7 +1234,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000009, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -1205,7 +1285,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: raised on backup host: WAL segment version 9.4 does not match archive version 8.0
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -1245,7 +1325,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  ERROR: [119]: raised on backup host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
                HINT: are you archiving to the correct stanza?
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
@@ -1285,7 +1365,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1340,7 +1420,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = false, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -1382,7 +1462,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef]
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = false, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 9.4-1/000000010000000100000009.partial, strDestinationPathType = backup:archive, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Archive->xfer=>: lFileTotal = 1
@@ -1433,7 +1513,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1488,7 +1568,7 @@ P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive->pushCheck(): bPartial = true, bPathSync = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive->pushCheck(): bPartial = true, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strWalSegment = 000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     File->hash(): bCompressed = [undef], strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = [undef], strPathType = db:absolute
 P00  DEBUG:     File->hashSize(): bCompressed = <false>, strFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, strHashType = <sha1>, strPathType = db:absolute
 P00  DEBUG:     File->hashSize=>: iSize = 16777216, strHash = 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27

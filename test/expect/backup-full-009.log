@@ -1,6 +1,10 @@
 run 009 - bkp 1, sby 0, dst backup, asy 1, cmp 0
 ================================================
 
+stanza-create db - main create stanza info files (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
 full backup - update during backup (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=16384 --type=full --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------

@@ -133,6 +133,10 @@ my $oTestDef =
                     &TESTDEF_TEST_TOTAL => 1
                 },
                 {
+                    &TESTDEF_TEST_NAME => 'stanza-create',
+                    &TESTDEF_TEST_TOTAL => 2
+                },
+                {
                     &TESTDEF_TEST_NAME => 'synthetic',
                     &TESTDEF_TEST_TOTAL => 8,
                     &TESTDEF_TEST_PROCESS => true
