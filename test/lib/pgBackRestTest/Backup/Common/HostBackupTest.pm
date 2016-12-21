@@ -783,14 +783,17 @@ sub stanzaCreate
          bLogOutput => $self->synthetic()});
 
     # If the info file was created, then add it to the expect log
-    if ($self->synthetic() && fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+    if (defined($self->{oLogTest}) && $self->synthetic())
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
-    }
+        if (fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        {
+            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        }
 
-    if ($self->synthetic() && fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
-    {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+        if (fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        {
+            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+        }
     }
 
     # Return from function and log return values if any

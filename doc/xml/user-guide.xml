@@ -427,7 +427,7 @@
 
                 <execute output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
-                    <exe-highlight>successfully created</exe-highlight>
+                    <exe-highlight>completed successfully</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -1617,12 +1617,13 @@
 
         <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single master.  The standbys are useful for balancing reads and to provide redundancy in case the master host fails.</p>
 
+        <!-- SECTION => REPLICATION - HOT-STANDBY -->
         <section id="hot-standby">
             <title>Hot Standby</title>
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <p>A new host named <host>db-standby</host> will be created to run the standby.  Follow the instructions in <link section="/installation">Installation</link> to install <backrest/>, <link section="/quickstart/setup-demo-cluster">Setup Demo Cluster</link> to setup the demo cluster, and <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository on the <host>db-standby</host> host.</p>
+            <p>A new host named <host>db-standby</host> will be created to run the standby.  Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/setup-demo-cluster">Setup Demo Cluster</link> to setup the demo cluster.</p>
 
             <host-add name="{[host-db-standby]}" user="{[host-db-standby-user]}" image="{[host-db-standby-image]}" os="{[host-os]}" mount="{[host-db-standby-mount]}">
                 <!-- Install packages -->
@@ -1657,17 +1658,6 @@
                 </execute>
                 <execute user="root">
                     <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
-                </execute>
-
-                <!-- Create repository -->
-                <execute user="root">
-                    <exe-cmd>mkdir {[backrest-repo-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chmod 750 {[backrest-repo-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chown postgres:postgres {[backrest-repo-path]}</exe-cmd>
                 </execute>
 
                 <!-- Start the cluster -->
@@ -1803,8 +1793,20 @@
                     <exe-highlight>{[test-table-data]}</exe-highlight>
                 </execute>
             </execute-list>
+
+            <p>Check the standby configuration for access to the repository.</p>
+
+            <execute-list host="{[host-db-standby]}">
+                <title>Check the configuration</title>
+
+                <execute output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>all other checks passed</exe-highlight>
+                </execute>
+            </execute-list>
         </section>
 
+        <!-- SECTION => REPLICATION - STREAMING -->
         <section id="streaming" depend="hot-standby">
             <title>Streaming Replication</title>
 

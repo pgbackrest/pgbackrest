@@ -159,6 +159,14 @@
 
                         <p>Improved <cmd>stanza-create</cmd> command so that it can repair broken repositories in most cases and is robust enough to be made mandatory.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Improved <cmd>check</cmd> command to run on a standby, though only basic checks are done because <code>pg_switch_xlog()</code> cannot be executed on a replica.</p>
+                    </release-item>
                 </release-feature-list>
             </release-core-list>
         </release>

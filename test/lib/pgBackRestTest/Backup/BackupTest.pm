@@ -2349,6 +2349,9 @@ sub backupTestRun
                 {
                     $strFullBackup = $strStandbyBackup;
                 }
+
+                # Confirm the check command runs without error on a standby
+                $oHostDbStandby->check('verify check command on standby');
             }
 
             # Execute stop and make sure the backup fails
