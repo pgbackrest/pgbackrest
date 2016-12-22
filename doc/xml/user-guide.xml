@@ -1063,6 +1063,48 @@
         </section>
     </section>
 
+    <!-- SECTION => PARALLEL BACKUP-RESTORE -->
+    <section id="paralell-backup-restore" depend="backup-host/install-config">
+        <title>Paralell Backup / Restore</title>
+
+        <p><backrest/> offers parallel processing to improve performance of compression and transfer. The number of processes to be used for this feature is set using the <br-option>--process-max</br-option> option.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Check the number of CPUs</title>
+
+            <execute user="root" output="y">
+                <exe-cmd>lscpu</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-backup]}">
+            <title>Perform a backup with single process</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-backup]}">
+            <title>Perform a backup with multiple processes</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full {[dash]}-process-max=3 backup</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-backup]}">
+            <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
+
+            <execute filter="n" output="y" user="backrest">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>start / stop timestamp</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>The performance of the last backup has improved over the prior backup by using multiple processes.</p>
+    </section>
+
     <!-- SECTION => PITR -->
     <section id="pitr" depend="quickstart/perform-backup">
         <title>Point-in-Time Recovery</title>
@@ -1406,7 +1448,7 @@
         </section>
 
         <!-- SECTION => BACKUP HOST - PERFORM BACKUP -->
-        <section id="perform-backup" depend="install-config">
+        <section id="perform-backup" depend="create-stanza">
             <title>Perform a Backup</title>
 
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command on the <host>backup</host> host.</p>
