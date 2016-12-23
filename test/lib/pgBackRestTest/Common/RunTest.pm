@@ -14,6 +14,7 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 
 use pgBackRestTest::Common::LogTest;
@@ -224,6 +225,64 @@ sub end
     {
         $self->expect()->logWrite($self->basePath(), $self->testPath());
         delete($self->{oExpect});
+    }
+}
+
+####################################################################################################################################
+# testResult
+####################################################################################################################################
+sub testResult
+{
+    my $self = shift;
+    my $fnSub = shift;
+    my $strExpected = shift;
+
+    my $strActual = $fnSub->();
+
+    if ($strActual ne $strExpected)
+    {
+        confess
+            'expected ' . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .
+            " but actual was " . (defined($strActual) ? "\"${strActual}\"" : '[undef]');
+    }
+}
+
+####################################################################################################################################
+# testException
+####################################################################################################################################
+sub testException
+{
+    my $self = shift;
+    my $fnSub = shift;
+    my $iCodeExpected = shift;
+    my $strMessageExpected = shift;
+
+    my $bError = false;
+    my $strError = "exception ${iCodeExpected}, \"${strMessageExpected}\" was expected";
+
+    eval
+    {
+        $fnSub->();
+        return true;
+    }
+    or do
+    {
+        if (!isException($EVAL_ERROR))
+        {
+            confess "${strError} but actual was standard Perl exception";
+        }
+
+        if (!($EVAL_ERROR->code() == $iCodeExpected && $EVAL_ERROR->message() eq $strMessageExpected))
+        {
+            confess "${strError} but actual was " . $EVAL_ERROR->code() . ", \"" . $EVAL_ERROR->message() . "\"";
+        }
+
+        $bError = true;
+    };
+
+    if (!$bError)
+    {
+        confess "${strError} but no exception was thrown";
     }
 }
 

@@ -156,8 +156,9 @@ sub run
                     &log(INFO, '        test archive when tmp file exists');
 
                     $strArchiveTmp =
-                        $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' .
-                        PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . "/${strArchiveFile}.pgbackrest.tmp";
+                        $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
+                        substr($strArchiveFile, 0, 16) . "/${strArchiveFile}" .
+                        ($bCompress ? ".$oFile->{strCompressExtension}" : '') . '.pgbackrest.tmp';
 
                     executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
                     fileStringWrite($strArchiveTmp, 'JUNK');

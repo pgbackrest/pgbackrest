@@ -72,7 +72,7 @@ sub new
     (
         my $strOperation,
         $self->{strStanza},
-        $self->{strBackupPath},
+        $self->{strRepoPath},
         $self->{oProtocol},
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
@@ -81,7 +81,7 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strStanza', required => false},
-            {name => 'strBackupPath'},
+            {name => 'strRepoPath'},
             {name => 'oProtocol'},
             {name => 'strDefaultPathMode', default => '0750'},
             {name => 'strDefaultFileMode', default => '0640'},
@@ -90,54 +90,11 @@ sub new
     # Default compression extension to gz
     $self->{strCompressExtension} = 'gz';
 
-    # Remote object must be set
-    if (!defined($self->{oProtocol}))
-    {
-        confess &log(ASSERT, 'oProtocol must be defined');
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
-    );
-}
-
-####################################################################################################################################
-# DESTROY
-####################################################################################################################################
-sub DESTROY
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
-
-    if (defined($self->{oProtocol}))
-    {
-        $self->{oProtocol} = undef;
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# stanza
-####################################################################################################################################
-sub stanza
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanza');
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strStanza', $self->{strStanza}, trace => true}
     );
 }
 
@@ -177,7 +134,7 @@ sub pathTypeGet
     {
         $strPath = PATH_BACKUP;
     }
-    # Else error when path type not recognized
+    # else error when path type not recognized
     else
     {
         confess &log(ASSERT, "no known path types in '${strType}'");
@@ -193,7 +150,6 @@ sub pathTypeGet
 
 ####################################################################################################################################
 # pathGet
-# ??? Need to tackle the return paths in this function (i.e. there are to many ways to return)
 ####################################################################################################################################
 sub pathGet
 {
@@ -215,6 +171,9 @@ sub pathGet
         {name => 'bTemp', default => false, trace => true}
     );
 
+    # Path to be returned
+    my $strPath;
+
     # Is this an absolute path type?
     my $bAbsolute = $strType =~ /.*absolute.*/;
 
@@ -224,120 +183,110 @@ sub pathGet
         # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, PATH_BACKUP_TMP and any absolute path
         if (!($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP || $bAbsolute))
         {
-            confess &log(ASSERT, 'temp file not supported for path type ' . $strType);
+            confess &log(ASSERT, "temp file not supported for path type '${strType}'");
         }
 
         # The file must be defined
         if (!defined($strFile))
         {
-            confess &log(ASSERT, 'strFile must be defined when temp file requested');
+            confess &log(ASSERT, 'strFile must be defined when temp file specified');
         }
     }
 
     # Get absolute path
     if ($bAbsolute)
     {
-        # Make sure that any absolute path starts with /, otherwise it will actually be relative
+        # File must defined when the path is absolute since in effect there is no path
+        if (!defined($strFile))
+        {
+            confess &log(ASSERT, 'strFile must be defined for absolute path');
+        }
+
+        # Make sure that the file starts with /, otherwise it will actually be relative
         if ($strFile !~ /^\/.*/)
         {
             confess &log(ASSERT, "absolute path ${strType}:${strFile} must start with /");
         }
+    }
+    # Else get backup path
+    elsif ($strType eq PATH_BACKUP)
+    {
+        $strPath = $self->{strRepoPath};
+    }
+    # Else process path types that require a stanza
+    else
+    {
+        # All paths in this section will in the repo path
+        $strPath = $self->{strRepoPath};
 
-        if ($bTemp)
+        # Make sure the stanza is defined since remaining path types require it
+        if (!defined($self->{strStanza}))
         {
-            return
-                ($strFile =~ "\.$self->{strCompressExtension}\$" ?
-                    substr($strFile, 0, length($strFile) - (length($self->{strCompressExtension}) + 1)) : $strFile) .
-                    '.' . BACKREST_EXE . '.tmp';
+            confess &log(ASSERT, 'strStanza not defined');
         }
 
-        return $strFile;
-    }
-
-    # Make sure the base backup path is defined (since all other path types are backup)
-    if (!defined($self->{strBackupPath}))
-    {
-        confess &log(ASSERT, 'strBackupPath not defined');
-    }
-
-    # Get base backup path
-    if ($strType eq PATH_BACKUP)
-    {
-        return $self->{strBackupPath} . (defined($strFile) ? "/${strFile}" : '');
-    }
-
-    # Make sure the cluster is defined
-    if (!defined($self->{strStanza}))
-    {
-        confess &log(ASSERT, 'strStanza not defined');
-    }
-
-    # Get the backup tmp path
-    if ($strType eq PATH_BACKUP_TMP)
-    {
-        # return
-        #     "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" . (defined($strFile) ? "/${strFile}" : '') .
-        #     ($bTemp ? '.' . BACKREST_EXE . '.tmp' : '');
-        return
-            "$self->{strBackupPath}/temp/$self->{strStanza}.tmp" .
-            # (defined($strFile) ?
-            #     '/' . ($strFile =~ "\.$self->{strCompressExtension}\$" ?
-            #     substr($strFile, 0, length($strFile) - (length($self->{strCompressExtension}) + 1)) : $strFile) : '') .
-            ($bTemp ?
-                '/' . ($strFile =~ "\.$self->{strCompressExtension}\$" ?
-                substr($strFile, 0, length($strFile) - (length($self->{strCompressExtension}) + 1)) : $strFile) .
-                '.' . BACKREST_EXE . '.tmp' :
-                (defined($strFile) ? "/${strFile}" : ''));
-    }
-
-    # Get the backup archive path
-    if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
-    {
-        my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
-
-        if (!defined($strFile))
+        # Get the backup tmp path
+        if ($strType eq PATH_BACKUP_TMP)
         {
-            return $strArchivePath;
+            $strPath .= "/temp/$self->{strStanza}.tmp";
         }
-
-        if ($strType eq PATH_BACKUP_ARCHIVE)
+        # Else get archive paths
+        elsif ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
         {
-            my $strArchiveId = (split('/', $strFile))[0];
-            my $strArchiveFile = (split('/', $strFile))[1];
+            $strPath .= "/archive/$self->{strStanza}";
 
-            if (!defined($strArchiveFile))
+            # Get archive path
+            if ($strType eq PATH_BACKUP_ARCHIVE)
             {
-                return "${strArchivePath}/${strFile}";
+                # If file is not defined nothing further to do
+                if (defined($strFile))
+                {
+                    my $strArchiveId = (split('/', $strFile))[0];
+
+                    # If file is defined after archive id path is split out
+                    if (defined((split('/', $strFile))[1]))
+                    {
+                        $strPath .= "/${strArchiveId}";
+                        $strFile = (split('/', $strFile))[1];
+
+                        # If this is a WAL segment then put it into a subdirectory
+                        if (substr(basename($strFile), 0, 24) =~ /^([0-F]){24}$/)
+                        {
+                            $strPath .= '/' . substr($strFile, 0, 16);
+                        }
+                    }
+                }
             }
-
-            my $strArchive = substr(basename($strArchiveFile), 0, 24);
-
-            if ($strArchive !~ /^([0-F]){24}$/)
+            # Else get archive out path
+            else
             {
-                return "${strArchivePath}/${strFile}";
+                $strPath .= '/out';
             }
-
-            $strArchivePath =
-                "${strArchivePath}/${strArchiveId}/" . substr($strArchive, 0, 16) .
-                ($bTemp ? "/${strArchive}." . BACKREST_EXE . '.tmp' : "/${strArchiveFile}");
         }
+        # Else get backup cluster
+        elsif ($strType eq PATH_BACKUP_CLUSTER)
+        {
+            $strPath .= "/backup/$self->{strStanza}";
+        }
+        # Else error when path type not recognized
         else
         {
-            $strArchivePath =
-                "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '') .
-                ($bTemp ? '.' . BACKREST_EXE . '.tmp' : '');
+            confess &log(ASSERT, "no known path types in '${strType}'");
         }
-
-        return $strArchivePath;
     }
 
-    if ($strType eq PATH_BACKUP_CLUSTER)
-    {
-        return $self->{strBackupPath} . "/backup/$self->{strStanza}" . (defined($strFile) ? "/${strFile}" : '');
-    }
+    # Combine path and file
+    $strPath .= (defined($strFile) ? (defined($strPath) ? '/' : '') . $strFile : '');
 
-    # Error when path type not recognized
-    confess &log(ASSERT, "no known path types in '${strType}'");
+    # Add temp extension
+    $strPath .= $bTemp ? '.' . BACKREST_EXE . '.tmp' : '';
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strPath', value => $strPath, trace => true}
+    );
 }
 
 ####################################################################################################################################

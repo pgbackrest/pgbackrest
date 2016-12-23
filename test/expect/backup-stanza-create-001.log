@@ -53,7 +53,7 @@ P00   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/0000000100000
 P00  DEBUG:     Archive->push(): bAsync = false, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strWalSegment = 000000010000000100000001, ullDbSysId = 6353949018581704918

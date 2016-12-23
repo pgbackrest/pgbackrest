@@ -46,7 +46,7 @@ P00   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/0000000100000
 P00  DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/spool, strStanza = db
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000001, strDestinationPathType = backup:archive:out, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -55,14 +55,14 @@ P00  DEBUG:     Archive->pushProcess: start async archive-push
 P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strRemoteType = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -75,7 +75,7 @@ P00  DEBUG:     Archive->pushProcess: transferred 1 WAL segment, calling Archive
 P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
@@ -97,7 +97,7 @@ P00   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/0000000100000
 P00  DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/spool, strStanza = db
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000002, strDestinationPathType = backup:archive:out, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -106,7 +106,7 @@ P00  DEBUG:     Archive->pushProcess: start async archive-push
 P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
@@ -128,7 +128,7 @@ P00   INFO: push WAL segment [TEST_PATH]/db-master/db/base/pg_xlog/0000000100000
 P00  DEBUG:     Archive->push(): bAsync = true, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/db-master/spool, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/spool, strStanza = db
 P00  DEBUG:     File->copy(): bAppendChecksum = true, bDestinationCompress = false, bDestinationPathCreate = true, bIgnoreMissingSource = <false>, bPathSync = true, bSourceCompressed = false, lModificationTime = [undef], strDestinationFile = 000000010000000100000003, strDestinationPathType = backup:archive:out, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourcePathType = db:absolute, strUser = [undef]
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = false, bRemote = <false>, iProcessIdx = [undef], strLockType = archive-push
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
@@ -137,7 +137,7 @@ P00  DEBUG:     Archive->pushProcess: start async archive-push
 P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
@@ -178,7 +178,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strRemoteType = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive->walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive->pushCheck(): bPartial = false, oFile = [object], strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, strWalSegment = 000000010000000100000005, ullDbSysId = 6353949018581704918
@@ -208,14 +208,14 @@ P00  DEBUG:     Archive->pushProcess: start async archive-push
 P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = backup
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strRemoteType = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::CommonMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00   INFO: WAL segments to archive: total = 2, size = 32MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = false, bSourceCompressed = false, strFile = 000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/spool/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -234,7 +234,7 @@ P00  DEBUG:     Archive->pushProcess: transferred 2 WAL segments, calling Archiv
 P00  DEBUG:     Archive->xfer(): strArchivePath = [TEST_PATH]/db-master/spool/archive/db/out, strStopFile = [TEST_PATH]/db-master/spool/stop/db-archive.stop
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strBackupPath = [TEST_PATH]/backup/repo, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strStanza = db
+P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/spool/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
