@@ -37,20 +37,12 @@ use pgBackRest::Version;
 
 use BackRestDoc::Custom::DocCustomRelease;
 
-use pgBackRestTest::Backup::BackupTest;
-use pgBackRestTest::Backup::Common::HostBackupTest;
-use pgBackRestTest::Backup::Common::HostBaseTest;
-use pgBackRestTest::Backup::Common::HostDbCommonTest;
-use pgBackRestTest::Backup::Common::HostDbTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::ListTest;
+use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
-use pgBackRestTest::CommonTest;
-use pgBackRestTest::Config::ConfigTest;
-use pgBackRestTest::File::FileTest;
-use pgBackRestTest::Help::HelpTest;
 
 ####################################################################################################################################
 # Usage
@@ -420,7 +412,7 @@ eval
 
                             my $fTestElapsedTime = ceil((gettimeofday() - $$oyProcess[$iVmIdx]{start_time}) * 100) / 100;
 
-                            if (!($iExitStatus == 0 || $iExitStatus == 255))
+                            if ($iExitStatus != 0)
                             {
                                 &log(ERROR, "${strTestDone} (err${iExitStatus}-${fTestElapsedTime}s)" .
                                      (defined($oExecDone->{strOutLog}) && !$bShowOutputAsync ?
@@ -576,53 +568,20 @@ eval
     ################################################################################################################################
     my $iRun = 0;
 
-    # Set parameters in host group
+    # Create host group for containers
     my $oHostGroup = hostGroupGet();
-    $oHostGroup->paramSet(HOST_PARAM_VM, $strVm);
-    $oHostGroup->paramSet(HOST_PARAM_VM_ID, $iVmId);
-    $oHostGroup->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
-    $oHostGroup->paramSet(HOST_PARAM_BACKREST_EXE, "${strBackRestBase}/bin/pgbackrest");
-    $oHostGroup->paramSet(HOST_PARAM_PROCESS_MAX, $iProcessMax);
-    $oHostGroup->paramSet(HOST_DB_USER, TEST_USER);
-    $oHostGroup->paramSet(HOST_BACKUP_USER, 'backrest');
 
-    if ($strDbVersion ne 'minimal')
-    {
-        $oHostGroup->paramSet(HOST_PARAM_DB_VERSION, $strDbVersion);
-        $oHostGroup->paramSet(HOST_PARAM_DB_BIN_PATH, $strPgSqlBin);
-    }
-
-    if (testSetup($strTestPath, $strPgSqlBin, $iModuleTestRun,
-                                 $bDryRun, $bNoCleanup, $bLogForce))
-    {
-        if (!$bVmOut &&
-            ($strModule eq 'all' ||
-             $strModule eq 'backup' && $strModuleTest eq 'all' ||
-             $strModule eq 'backup' && $strModuleTest eq 'full'))
-        {
-            &log(INFO, "TESTING psql-bin = $strPgSqlBin\n");
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'help')
-        {
-            helpTestRun($strModuleTest, $bVmOut);
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'config')
-        {
-            configTestRun($strModuleTest, $bVmOut);
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'file')
-        {
-            fileTestRun($strModuleTest, $bVmOut);
-        }
-
-        if ($strModule eq 'all' || $strModule eq 'backup')
-        {
-            backupTestRun($strModuleTest, $bVmOut);
-        }
-    }
+    # Run the test
+    testRun($strModule, $strModuleTest)->process(
+        $strVm, $iVmId,                                             # Vm info
+        $strBackRestBase,                                           # Base backrest directory
+        $strTestPath,                                               # Path where the tests will run
+        "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable
+        $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
+        $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
+        $strModule, $strModuleTest, $iModuleTestRun,                # Module info
+        $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
+        TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)
     {

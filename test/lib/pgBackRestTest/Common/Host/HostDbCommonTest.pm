@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # HostDbTest.pm - Database host
 ####################################################################################################################################
-package pgBackRestTest::Backup::Common::HostDbCommonTest;
-use parent 'pgBackRestTest::Backup::Common::HostBackupTest';
+package pgBackRestTest::Common::Host::HostDbCommonTest;
+use parent 'pgBackRestTest::Common::Host::HostBackupTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -29,38 +29,17 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
-use pgBackRestTest::Backup::Common::HostBackupTest;
-use pgBackRestTest::Backup::Common::HostBaseTest;
+use pgBackRestTest::Common::Host::HostBackupTest;
+use pgBackRestTest::Common::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 
 ####################################################################################################################################
-# Host constants
-####################################################################################################################################
-use constant HOST_DB_USER                                           => 'db-user';
-    push @EXPORT, qw(HOST_DB_USER);
-
-####################################################################################################################################
-# Host parameters
-####################################################################################################################################
-use constant HOST_PARAM_DB_BASE_PATH                                => 'db-base-path';
-    push @EXPORT, qw(HOST_PARAM_DB_BASE_PATH);
-use constant HOST_PARAM_DB_PATH                                     => 'db-path';
-    push @EXPORT, qw(HOST_PARAM_DB_PATH);
-use constant HOST_PARAM_SPOOL_PATH                                  => 'spool-path';
-    push @EXPORT, qw(HOST_PARAM_SPOOL_PATH);
-use constant HOST_PARAM_TABLESPACE_PATH                             => 'tablespace-path';
-    push @EXPORT, qw(HOST_PARAM_TABLESPACE_PATH);
-
-####################################################################################################################################
-# Host paths
+# Host defaults
 ####################################################################################################################################
 use constant HOST_PATH_SPOOL                                        => 'spool';
-    push @EXPORT, qw(HOST_PATH_SPOOL);
 use constant HOST_PATH_DB                                           => 'db';
-    push @EXPORT, qw(HOST_PATH_DB);
 use constant HOST_PATH_DB_BASE                                      => 'base';
-    push @EXPORT, qw(HOST_PATH_DB_BASE);
 
 ####################################################################################################################################
 # new
@@ -91,8 +70,6 @@ sub new
         {
             strName => $bStandby ? HOST_DB_STANDBY : HOST_DB_MASTER,
             strImage => $$oParam{strImage},
-            strUser => $oHostGroup->paramGet(HOST_DB_USER),
-            strVm => $oHostGroup->paramGet(HOST_PARAM_VM),
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
@@ -102,23 +79,23 @@ sub new
     # Set parameters
     $self->{bStandby} = $bStandby;
 
-    $self->paramSet(HOST_PARAM_DB_PATH, $self->testPath() . '/' . HOST_PATH_DB);
-    $self->paramSet(HOST_PARAM_DB_BASE_PATH, $self->dbPath() . '/' . HOST_PATH_DB_BASE);
-    $self->paramSet(HOST_PARAM_TABLESPACE_PATH, $self->dbPath() . '/tablespace');
+    $self->{strDbPath} = $self->testPath() . '/' . HOST_PATH_DB;
+    $self->{strDbBasePath} = $self->dbPath() . '/' . HOST_PATH_DB_BASE;
+    $self->{strTablespacePath} = $self->dbPath() . '/tablespace';
 
     filePathCreate($self->dbBasePath(), undef, undef, true);
 
     if ($$oParam{strBackupDestination} ne $self->nameGet())
     {
-        $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->testPath() . '/' . HOST_PATH_SPOOL);
-        $self->paramSet(HOST_PARAM_LOG_PATH, $self->spoolPath() . '/' . HOST_PATH_LOG);
-        $self->paramSet(HOST_PARAM_LOCK_PATH, $self->spoolPath() . '/' . HOST_PATH_LOCK);
+        $self->{strSpoolPath} = $self->testPath() . '/' . HOST_PATH_SPOOL;
+        $self->{strLogPath} = $self->spoolPath() . '/' . HOST_PATH_LOG;
+        $self->{strLockPath} = $self->spoolPath() . '/' . HOST_PATH_LOCK;
 
         filePathCreate($self->spoolPath());
     }
     else
     {
-        $self->paramSet(HOST_PARAM_SPOOL_PATH, $self->repoPath());
+        $self->{strSpoolPath} = $self->repoPath();
     }
 
     # Initialize linkRemap Hashes
@@ -495,10 +472,6 @@ sub restoreCompare
 
     my $strTestPath = $self->testPath();
 
-    # Load module dynamically
-    require pgBackRestTest::CommonTest;
-    pgBackRestTest::CommonTest->import();
-
     # Get the backup host
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = defined($oHostGroup->hostGet(HOST_BACKUP, true)) ? $oHostGroup->hostGet(HOST_BACKUP) : $self;
@@ -765,17 +738,17 @@ sub restoreCompare
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
-sub dbPath {return shift->paramGet(HOST_PARAM_DB_PATH);}
+sub dbPath {return shift->{strDbPath};}
 
 sub dbBasePath
 {
     my $self = shift;
     my $iIndex = shift;
 
-    return $self->paramGet(HOST_PARAM_DB_BASE_PATH) . (defined($iIndex) ? "-${iIndex}" : '');
+    return $self->{strDbBasePath} . (defined($iIndex) ? "-${iIndex}" : '');
 }
 
-sub spoolPath {return shift->paramGet(HOST_PARAM_SPOOL_PATH);}
+sub spoolPath {return shift->{strSpoolPath}}
 sub standby {return shift->{bStandby}}
 
 sub tablespacePath
@@ -785,7 +758,7 @@ sub tablespacePath
     my $iIndex = shift;
 
     return
-        $self->paramGet(HOST_PARAM_TABLESPACE_PATH) .
+        $self->{strTablespacePath} .
         (defined($iTablespace) ? "/ts${iTablespace}" .
         (defined($iIndex) ? "-${iIndex}" : '') : '');
 }

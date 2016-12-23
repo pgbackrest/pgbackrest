@@ -108,11 +108,14 @@ sub testListGet
                                 ($strDbVersion ne 'all' &&
                                     $strDbVersion eq ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx]))
                             {
-                                my $iTestRunMin = defined($iModuleTestRun) ?
-                                                      $iModuleTestRun : (defined($$oTest{&TESTDEF_TEST_TOTAL}) ? 1 : -1);
-                                my $iTestRunMax = defined($iModuleTestRun) ?
-                                                      $iModuleTestRun : (defined($$oTest{&TESTDEF_TEST_TOTAL}) ?
-                                                          $$oTest{&TESTDEF_TEST_TOTAL} : -1);
+                                # Individual tests will be each be run in a separate container.  This is the default.
+                                my $bTestIndividual =
+                                    !defined($$oTest{&TESTDEF_TEST_INDIVIDUAL}) || $$oTest{&TESTDEF_TEST_INDIVIDUAL} ? true : false;
+
+                                my $iTestRunMin = defined($iModuleTestRun) ? $iModuleTestRun : ($bTestIndividual ? 1 : -1);
+                                my $iTestRunMax =
+                                    defined($iModuleTestRun) ? $iModuleTestRun :
+                                        ($bTestIndividual ? $$oTest{&TESTDEF_TEST_TOTAL} : -1);
 
                                 if (defined($$oTest{total}) && $iTestRunMax > $$oTest{total})
                                 {

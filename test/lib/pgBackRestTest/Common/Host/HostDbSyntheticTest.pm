@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # HostDbTest.pm - Database host
 ####################################################################################################################################
-package pgBackRestTest::Backup::Common::HostDbSyntheticTest;
-use parent 'pgBackRestTest::Backup::Common::HostDbCommonTest';
+package pgBackRestTest::Common::Host::HostDbSyntheticTest;
+use parent 'pgBackRestTest::Common::Host::HostDbCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -27,13 +27,12 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
-use pgBackRestTest::Backup::Common::HostBackupTest;
-use pgBackRestTest::Backup::Common::HostBaseTest;
-use pgBackRestTest::Backup::Common::HostDbCommonTest;
+use pgBackRestTest::Common::Host::HostBackupTest;
+use pgBackRestTest::Common::Host::HostBaseTest;
+use pgBackRestTest::Common::Host::HostDbCommonTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::FileTest;
-use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::CommonTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # new
@@ -54,12 +53,9 @@ sub new
             {name => 'oParam', required => false, trace => true},
         );
 
-    # Get host group
-    my $oHostGroup = hostGroupGet();
-
     my $self = $class->SUPER::new(
         {
-            strImage => containerNamespace() . '/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-test-pre",
+            strImage => containerNamespace() . '/' . testRunGet()->vm() . "-db-test-pre",
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => true,

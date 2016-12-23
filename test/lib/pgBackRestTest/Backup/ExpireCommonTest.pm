@@ -1,7 +1,8 @@
 ####################################################################################################################################
 # ExpireCommonTest.pm - Common code for expire tests
 ####################################################################################################################################
-package pgBackRestTest::Backup::Common::ExpireCommonTest;
+package pgBackRestTest::Backup::ExpireCommonTest;
+use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -21,11 +22,9 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
-use pgBackRestTest::Backup::Common::HostBaseTest;
+use pgBackRestTest::Common::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
-use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
 # new
@@ -42,6 +41,7 @@ sub new
     (
         my $strOperation,
         $self->{oHostBackup},
+        $self->{strBackRestExe},
         $self->{oFile},
         $self->{oLogTest}
     ) =
@@ -49,6 +49,7 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'oHostBackup', trace => true},
+            {name => 'strBackRestExe', trace => true},
             {name => 'oFile', trace => true},
             {name => 'oLogTest', required => false, trace => true}
         );
@@ -403,8 +404,7 @@ sub process
 
     undef($$oStanza{strBackupDescription});
 
-    my $oHostGroup = hostGroupGet();
-    my $strCommand = $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE) .
+    my $strCommand = $self->{strBackRestExe} .
                      ' --' . OPTION_CONFIG . '="' . $self->{oHostBackup}->backrestConfig() . '"' .
                      ' --' . OPTION_STANZA . '=' . $strStanza .
                      ' --' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(DETAIL);

@@ -23,8 +23,12 @@ use constant TESTDEF_MODULE                                         => 'module';
 use constant TESTDEF_MODULE_NAME                                    => 'name';
     push @EXPORT, qw(TESTDEF_MODULE_NAME);
 
+use constant TESTDEF_EXPECT                                         => 'expect';
+    push @EXPORT, qw(TESTDEF_EXPECT);
 use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
+use constant TESTDEF_TEST_INDIVIDUAL                                => 'individual';
+    push @EXPORT, qw(TESTDEF_TEST_INDIVIDUAL);
 use constant TESTDEF_TEST_NAME                                      => 'name';
     push @EXPORT, qw(TESTDEF_TEST_NAME);
 use constant TESTDEF_TEST_TOTAL                                     => 'total';
@@ -47,11 +51,14 @@ my $oTestDef =
         {
             &TESTDEF_MODULE_NAME => 'help',
             &TESTDEF_TEST_CONTAINER => true,
+            &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'help'
+                    &TESTDEF_TEST_NAME => 'help',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 }
             ]
         },
@@ -63,10 +70,14 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'option'
+                    &TESTDEF_TEST_NAME => 'option',
+                    &TESTDEF_TEST_TOTAL => 34,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'config'
+                    &TESTDEF_TEST_NAME => 'config',
+                    &TESTDEF_TEST_TOTAL => 25,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 }
             ]
         },
@@ -78,34 +89,54 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'path_create'
+                    &TESTDEF_TEST_NAME => 'path-create',
+                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'move'
+                    &TESTDEF_TEST_NAME => 'move',
+                    &TESTDEF_TEST_TOTAL => 24,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'compress'
+                    &TESTDEF_TEST_NAME => 'compress',
+                    &TESTDEF_TEST_TOTAL => 4,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'wait'
+                    &TESTDEF_TEST_NAME => 'wait',
+                    &TESTDEF_TEST_TOTAL => 2,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'manifest'
+                    &TESTDEF_TEST_NAME => 'manifest',
+                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'list'
+                    &TESTDEF_TEST_NAME => 'list',
+                    &TESTDEF_TEST_TOTAL => 72,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'remove'
+                    &TESTDEF_TEST_NAME => 'remove',
+                    &TESTDEF_TEST_TOTAL => 32,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'hash'
+                    &TESTDEF_TEST_NAME => 'hash',
+                    &TESTDEF_TEST_TOTAL => 16,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'exists'
+                    &TESTDEF_TEST_NAME => 'exists',
+                    &TESTDEF_TEST_TOTAL => 6,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'copy'
+                    &TESTDEF_TEST_NAME => 'copy',
+                    &TESTDEF_TEST_TOTAL => 144,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
                 }
             ]
         },
@@ -113,6 +144,7 @@ my $oTestDef =
         {
             &TESTDEF_MODULE_NAME => 'backup',
             &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
             [
@@ -161,5 +193,47 @@ sub testDefGet
 }
 
 push @EXPORT, qw(testDefGet);
+
+####################################################################################################################################
+# testDefModuleGet
+####################################################################################################################################
+sub testDefModuleGet
+{
+    my $strModule = shift;
+
+    # Find the module
+    foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
+    {
+        if ($hModule->{&TESTDEF_MODULE_NAME} eq $strModule)
+        {
+            return $hModule;
+        }
+    }
+
+    confess &log(ASSERT, "unable to find module ${strModule}");
+}
+
+push @EXPORT, qw(testDefModuleGet);
+
+####################################################################################################################################
+# testDefModuleTestGet
+####################################################################################################################################
+sub testDefModuleTestGet
+{
+    my $hModule = shift;
+    my $strModuleTest = shift;
+
+    foreach my $hModuleTest (@{$hModule->{&TESTDEF_TEST}})
+    {
+        if ($hModuleTest->{&TESTDEF_TEST_NAME} eq $strModuleTest)
+        {
+            return $hModuleTest;
+        }
+    }
+
+    confess &log(ASSERT, "unable to find module test ${strModuleTest}");
+}
+
+push @EXPORT, qw(testDefModuleTestGet);
 
 1;

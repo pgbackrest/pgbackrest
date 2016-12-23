@@ -1,7 +1,8 @@
 ####################################################################################################################################
-# BackupCommonTest.pm - Common code for backup unit tests
+# BackupCommonTest.pm - Common code for backup tests
 ####################################################################################################################################
 package pgBackRestTest::Backup::BackupCommonTest;
+use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -15,20 +16,38 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::File;
+use pgBackRest::FileCommon;
 
-use pgBackRestTest::Backup::Common::HostBackupTest;
-use pgBackRestTest::Backup::Common::HostBaseTest;
-use pgBackRestTest::Backup::Common::HostDbCommonTest;
-use pgBackRestTest::Backup::Common::HostDbTest;
-use pgBackRestTest::Backup::Common::HostDbSyntheticTest;
+use pgBackRestTest::Common::Host::HostBackupTest;
+use pgBackRestTest::Common::Host::HostBaseTest;
+use pgBackRestTest::Common::Host::HostDbCommonTest;
+use pgBackRestTest::Common::Host::HostDbTest;
+use pgBackRestTest::Common::Host::HostDbSyntheticTest;
 use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::CommonTest;
 
 ####################################################################################################################################
-# backupTestSetup
+# Constants
 ####################################################################################################################################
-sub backupTestSetup
+use constant WAL_VERSION_94                                      => '94';
+    push @EXPORT, qw(WAL_VERSION_94);
+
+####################################################################################################################################
+# init
+####################################################################################################################################
+sub init
 {
+    # Set file and path modes
+    pathModeDefaultSet('0700');
+    fileModeDefaultSet('0600');
+}
+
+####################################################################################################################################
+# setup
+####################################################################################################################################
+sub setup
+{
+    my $self = shift;
     my $bSynthetic = shift;
     my $oLogTest = shift;
     my $oConfigParam = shift;
@@ -45,7 +64,7 @@ sub backupTestSetup
     {
         $strBackupDestination = defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_BACKUP;
 
-        $oHostBackup = new pgBackRestTest::Backup::Common::HostBackupTest(
+        $oHostBackup = new pgBackRestTest::Common::Host::HostBackupTest(
             {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest});
         $oHostGroup->hostAdd($oHostBackup);
     }
@@ -60,12 +79,12 @@ sub backupTestSetup
 
     if ($bSynthetic)
     {
-        $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbSyntheticTest(
+        $oHostDbMaster = new pgBackRestTest::Common::Host::HostDbSyntheticTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
     }
     else
     {
-        $oHostDbMaster = new pgBackRestTest::Backup::Common::HostDbTest(
+        $oHostDbMaster = new pgBackRestTest::Common::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
     }
 
@@ -76,7 +95,7 @@ sub backupTestSetup
 
     if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
     {
-        $oHostDbStandby = new pgBackRestTest::Backup::Common::HostDbTest(
+        $oHostDbStandby = new pgBackRestTest::Common::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest});
 
         $oHostGroup->hostAdd($oHostDbStandby);
@@ -130,6 +149,33 @@ sub backupTestSetup
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;
 }
 
-push @EXPORT, qw(backupTestSetup);
+####################################################################################################################################
+# archiveGenerate
+#
+# Generate an WAL segment for testing.
+####################################################################################################################################
+sub archiveGenerate
+{
+    my $self = shift;
+    my $oFile = shift;
+    my $strXlogPath = shift;
+    my $iSourceNo = shift;
+    my $iArchiveNo = shift;
+    my $strWalVersion = shift;
+    my $bPartial = shift;
+
+    my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
+                         (defined($bPartial) && $bPartial ? '.partial' : '');
+    my $strArchiveTestFile = $self->dataPath() . "/backup.wal${iSourceNo}_${strWalVersion}.bin";
+
+    my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
+
+    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
+                 false,                                 # Source is not compressed
+                 false);                                # Destination is not compressed
+
+    return $strArchiveFile, $strSourceFile;
+}
 
 1;

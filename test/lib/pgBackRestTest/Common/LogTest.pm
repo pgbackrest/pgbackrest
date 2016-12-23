@@ -44,7 +44,6 @@ sub new
         $self->{strCommandMain},
         $self->{strPgSqlBin},
         $self->{strTestPath},
-        $self->{strRepoPath}
     ) =
         logDebugParam
         (
@@ -57,12 +56,14 @@ sub new
             {name => 'strCommandMain', trace => true},
             {name => 'strPgSqlBin', required => false, trace => true},
             {name => 'strTestPath', trace => true},
-            {name => 'strRepoPath', trace => true}
         );
 
     # Initialize the test log
     $self->{strLog} = 'run ' . sprintf('%03d', $self->{iRun}) . ' - ' . $self->{strComment};
     $self->{strLog} .= "\n" . ('=' x length($self->{strLog})) . "\n";
+
+    # Initialize the filename
+    $self->{strFileName} = sprintf("expect/$self->{strModule}-$self->{strTest}-%03d.log", $self->{iRun});
 
     # Initialize the replacement hash
     $self->{oReplaceHash} = {};
@@ -180,8 +181,7 @@ sub logWrite
             __PACKAGE__ . '->logWrite', \@_,
             {name => 'strBasePath', trace => true},
             {name => 'strTestPath', trace => true},
-            {name => 'strFileName',
-             default => sprintf("expect/$self->{strModule}-$self->{strTest}-%03d.log", $self->{iRun}), trace => true}
+            {name => 'strFileName', default => $self->{strFileName}, trace => true}
         );
 
     my $strReferenceLogFile = "${strBasePath}/test/${strFileName}";
@@ -318,7 +318,17 @@ sub regExpReplaceAll
 
     my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
 
-    # Replace the exe path/file
+    # Replace the exe path/file with sh ' prepended
+    my $strLineBefore = $strLine;
+    $strLine =~ s/sh -c '$self->{strCommandMain}/[BACKREST-BIN]/g;
+
+    # Replace the final ' if the previous expression made changes
+    if ($strLine ne $strLineBefore)
+    {
+        $strLine =~ s/'$//g;
+    }
+
+    # Replace the exe path/file with sh ' prepended
     $strLine =~ s/$self->{strCommandMain}/[BACKREST-BIN]/g;
 
     # Replace the test path

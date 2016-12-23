@@ -45,6 +45,7 @@ use constant TEST_USER_ID                                           => $UID;
 use constant BACKREST_GROUP                                         => POSTGRES_GROUP;
 use constant BACKREST_GROUP_ID                                      => POSTGRES_GROUP_ID;
 use constant BACKREST_USER                                          => 'backrest';
+    push @EXPORT, qw(BACKREST_USER);
 use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
 
 ####################################################################################################################################

@@ -169,6 +169,14 @@
                     </release-item>
                 </release-feature-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Split test modules into separate files to make the code more maintainable.  Tests are dynamically loaded by name rather than requiring an if-else block.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">

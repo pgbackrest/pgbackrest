@@ -2,7 +2,6 @@
 # HostTest.pm - Encapsulate a docker host for testing
 ####################################################################################################################################
 package pgBackRestTest::Common::HostTest;
-use parent 'pgBackRestTest::Common::ParamTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -120,8 +119,10 @@ sub execute
         $strUser = $self->{strUser};
     }
 
+    $strCommand =~ s/'/'\\''/g;
+
     my $oExec = new pgBackRestTest::Common::ExecuteTest(
-        "docker exec -u ${strUser} $self->{strContainer} ${strCommand}" , $oParam);
+        "docker exec -u ${strUser} $self->{strContainer} sh -c '${strCommand}'" , $oParam);
 
     # Return from function and log return values if any
     return logDebugReturn

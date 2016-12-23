@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # HostDbTest.pm - Database host
 ####################################################################################################################################
-package pgBackRestTest::Backup::Common::HostDbTest;
-use parent 'pgBackRestTest::Backup::Common::HostDbCommonTest';
+package pgBackRestTest::Common::Host::HostDbTest;
+use parent 'pgBackRestTest::Common::Host::HostDbCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -25,37 +25,26 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
-use pgBackRestTest::Backup::Common::HostBackupTest;
-use pgBackRestTest::Backup::Common::HostBaseTest;
-use pgBackRestTest::Backup::Common::HostDbCommonTest;
+use pgBackRestTest::Common::Host::HostBackupTest;
+use pgBackRestTest::Common::Host::HostBaseTest;
+use pgBackRestTest::Common::Host::HostDbCommonTest;
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # Host parameters
 ####################################################################################################################################
-use constant HOST_PARAM_DB_BIN_PATH                                 => 'db-bin-path';
-    push @EXPORT, qw(HOST_PARAM_DB_BIN_PATH);
 use constant HOST_PARAM_DB_LOG_FILE                                 => 'db-log-file';
-    push @EXPORT, qw(HOST_PARAM_LOG_DB_FILE);
 use constant HOST_PARAM_DB_LOG_PATH                                 => 'db-log-path';
-    push @EXPORT, qw(HOST_PARAM_LOG_DB_PATH);
 use constant HOST_PARAM_DB_PORT                                     => 'db-port';
-    push @EXPORT, qw(HOST_PARAM_DB_PORT);
 use constant HOST_PARAM_DB_SOCKET_PATH                              => 'db-socket-path';
-    push @EXPORT, qw(HOST_PARAM_DB_SOCKET_PATH);
-use constant HOST_PARAM_DB_VERSION                                  => 'db-version';
-    push @EXPORT, qw(HOST_PARAM_DB_VERSION);
 
 ####################################################################################################################################
 # Db defaults
 ####################################################################################################################################
 use constant HOST_DB_PORT                                           => 6543;
-    push @EXPORT, qw(HOST_DB_PORT);
 use constant HOST_DB_DEFAULT                                        => 'postgres';
-    push @EXPORT, qw(HOST_DB_DEFAULT);
 use constant HOST_DB_TIMEOUT                                        => 30;
-    push @EXPORT, qw(HOST_DB_TIMEOUT);
 
 ####################################################################################################################################
 # new
@@ -77,12 +66,11 @@ sub new
         );
 
     # Get db version
-    my $oHostGroup = hostGroupGet();
-    my $strDbVersion = $oHostGroup->paramGet(HOST_PARAM_DB_VERSION);
+    my $strDbVersion = testRunGet()->pgVersion();
 
     my $self = $class->SUPER::new(
         {
-            strImage => containerNamespace() . '/' . $oHostGroup->paramGet(HOST_PARAM_VM) . "-db-${strDbVersion}-test-pre",
+            strImage => containerNamespace() . '/' . testRunGet()->vm() . "-db-${strDbVersion}-test-pre",
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bStandby => $$oParam{bStandby},
@@ -90,18 +78,16 @@ sub new
     bless $self, $class;
 
     # Set parameters
-    $self->paramSet(HOST_PARAM_DB_BIN_PATH, $oHostGroup->paramGet(HOST_PARAM_DB_BIN_PATH));
-    $self->paramSet(HOST_PARAM_DB_VERSION, $strDbVersion);
-    $self->paramSet(HOST_PARAM_DB_SOCKET_PATH, $self->dbPath());
-    $self->paramSet(HOST_PARAM_DB_PORT, defined($$oParam{bStandby}) && $$oParam{bStandby} ? 6544 : 6543);
+    $self->{strPgSocketPath} = $self->dbPath();
+    $self->{iPgPort} = defined($$oParam{bStandby}) && $$oParam{bStandby} ? 6544 : 6543;
 
-    $self->paramSet(HOST_PARAM_DB_LOG_PATH, $self->testPath());
-    $self->paramSet(HOST_PARAM_DB_LOG_FILE, $self->dbLogPath() . '/postgresql.log');
+    $self->{strPgLogPath} = $self->testPath();
+    $self->{strPgLogFile} = $self->pgLogPath() . '/postgresql.log';
 
     # Get Db version
     if (defined($strDbVersion))
     {
-        my $strOutLog = $self->executeSimple($self->dbBinPath() . '/postgres --version');
+        my $strOutLog = $self->executeSimple($self->pgBinPath() . '/postgres --version');
 
         my @stryVersionToken = split(/ /, $strOutLog);
         @stryVersionToken = split(/\./, $stryVersionToken[2]);
@@ -169,7 +155,7 @@ sub sqlConnect
             # Connect to the db (whether it is local or remote)
             $self->{db}{$strDb}{hDb} =
                 DBI->connect(
-                    "dbi:Pg:dbname=${strDb};port=" . $self->dbPort() . ';host=' . $self->dbSocketPath(),
+                    "dbi:Pg:dbname=${strDb};port=" . $self->pgPort() . ';host=' . $self->pgSocketPath(),
                     $self->userGet(), undef,
                     {AutoCommit => 0, RaiseError => 0, PrintError => 0});
 
@@ -358,12 +344,12 @@ sub clusterCreate
 
     # Don't link pg_xlog for versions < 9.2 because some recovery scenarios won't work.
     $self->executeSimple(
-        $self->dbBinPath() . '/initdb ' .
-        ($self->dbVersion() >= PG_VERSION_93 ? ' -k' : '') .
-        ($self->dbVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
+        $self->pgBinPath() . '/initdb ' .
+        ($self->pgVersion() >= PG_VERSION_93 ? ' -k' : '') .
+        ($self->pgVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
-    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_HOT_STANDBY)
+    if (!$self->standby() && $self->pgVersion() >= PG_VERSION_HOT_STANDBY)
     {
         $self->executeSimple(
             "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
@@ -373,7 +359,7 @@ sub clusterCreate
         {bHotStandby => $$hParam{bHotStandby}, bArchive => $$hParam{bArchive}, bArchiveAlways => $$hParam{bArchiveAlways},
          bArchiveInvalid => $$hParam{bArchiveInvalid}});
 
-    if (!$self->standby() && $self->dbVersion() >= PG_VERSION_HOT_STANDBY)
+    if (!$self->standby() && $self->pgVersion() >= PG_VERSION_HOT_STANDBY)
     {
         $self->sqlExecute("create user replicator replication", {bCommit =>true});
     }
@@ -409,12 +395,12 @@ sub clusterStart
 
     # Start the cluster
     my $strCommand =
-        $self->dbBinPath() . '/pg_ctl start -o "-c port=' . $self->dbPort() .
-        ($self->dbVersion() < PG_VERSION_95 ? ' -c checkpoint_segments=1' : '');
+        $self->pgBinPath() . '/pg_ctl start -o "-c port=' . $self->pgPort() .
+        ($self->pgVersion() < PG_VERSION_95 ? ' -c checkpoint_segments=1' : '');
 
     if ($bArchiveEnabled)
     {
-        if ($self->dbVersion() >= PG_VERSION_95 && $bArchiveAlways)
+        if ($self->pgVersion() >= PG_VERSION_95 && $bArchiveAlways)
         {
             $strCommand .= " -c archive_mode=always";
         }
@@ -437,7 +423,7 @@ sub clusterStart
         $strCommand .= " -c archive_command=true";
     }
 
-    if ($self->dbVersion() >= PG_VERSION_90)
+    if ($self->pgVersion() >= PG_VERSION_90)
     {
         $strCommand .= " -c wal_level=hot_standby";
 
@@ -448,15 +434,15 @@ sub clusterStart
     }
 
     $strCommand .=
-        ($self->dbVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
+        ($self->pgVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
         ' -c listen_addresses=\'*\'' .
-        ' -c log_directory=\'' . $self->dbLogPath() . "'" .
-        ' -c log_filename=\'' . basename($self->dbLogFile()) . "'" .
+        ' -c log_directory=\'' . $self->pgLogPath() . "'" .
+        ' -c log_filename=\'' . basename($self->pgLogFile()) . "'" .
         ' -c log_rotation_age=0' .
         ' -c log_rotation_size=0' .
         ' -c log_error_verbosity=verbose' .
-        ' -c unix_socket_director' . ($self->dbVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
-        ' -D ' . $self->dbBasePath() . ' -l ' . $self->dbLogFile() . ' -s';
+        ' -c unix_socket_director' . ($self->pgVersion() < PG_VERSION_93 ? 'y=\'' : 'ies=\'') . $self->dbPath() . '\'"' .
+        ' -D ' . $self->dbBasePath() . ' -l ' . $self->pgLogFile() . ' -s';
 
     $self->executeSimple($strCommand);
 
@@ -485,18 +471,18 @@ sub clusterStop
     if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMASTERPID)
     {
         $self->executeSimple(
-            $self->dbBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m ' .
+            $self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m ' .
             ($bImmediate ? 'immediate' : 'fast'));
     }
 
     # Grep for errors in postgresql.log
-    if (!$bIgnoreLogError && fileExists($self->dbLogFile()))
+    if (!$bIgnoreLogError && fileExists($self->pgLogFile()))
     {
-        $self->executeSimple('grep ERROR ' . $self->dbLogFile(), {iExpectedExitStatus => 1});
+        $self->executeSimple('grep ERROR ' . $self->pgLogFile(), {iExpectedExitStatus => 1});
     }
 
     # Remove the log file
-    fileRemove($self->dbLogFile(), true);
+    fileRemove($self->pgLogFile(), true);
 }
 
 ####################################################################################################################################
@@ -516,11 +502,11 @@ sub clusterRestart
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
-sub dbBinPath {return shift->paramGet(HOST_PARAM_DB_BIN_PATH);}
-sub dbLogFile {return shift->paramGet(HOST_PARAM_DB_LOG_FILE);}
-sub dbLogPath {return shift->paramGet(HOST_PARAM_DB_LOG_PATH);}
-sub dbPort {return shift->paramGet(HOST_PARAM_DB_PORT);}
-sub dbSocketPath {return shift->paramGet(HOST_PARAM_DB_SOCKET_PATH);}
-sub dbVersion {return shift->paramGet(HOST_PARAM_DB_VERSION);}
+sub pgBinPath {return testRunGet()->pgBinPath()}
+sub pgLogFile {return shift->{strPgLogFile}}
+sub pgLogPath {return shift->{strPgLogPath}}
+sub pgPort {return shift->{iPgPort}}
+sub pgSocketPath {return shift->{strPgSocketPath}}
+sub pgVersion {return testRunGet()->pgVersion()}
 
 1;

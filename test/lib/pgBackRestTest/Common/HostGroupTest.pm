@@ -2,7 +2,6 @@
 # HostGroupTest.pm - Encapsulate a group of docker containers for testing
 ####################################################################################################################################
 package pgBackRestTest::Common::HostGroupTest;
-use parent 'pgBackRestTest::Common::ParamTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -68,8 +67,8 @@ sub hostAdd
 
     $self->{host}{$oHost->{strName}} = $oHost;
 
-    $oHost->executeSimple("sh -c 'echo \"\" >> /etc/hosts\'", undef, 'root');
-    $oHost->executeSimple("sh -c 'echo \"# Test Hosts\" >> /etc/hosts'", undef, 'root');
+    $oHost->executeSimple("echo \"\" >> /etc/hosts", undef, 'root');
+    $oHost->executeSimple("echo \"# Test Hosts\" >> /etc/hosts", undef, 'root');
 
     # Iterate hosts to add IP mappings
     foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
@@ -79,10 +78,10 @@ sub hostAdd
         if ($strOtherHostName ne $oHost->{strName})
         {
             # Add this host IP to all hosts
-            $oOtherHost->executeSimple("sh -c 'echo \"$oHost->{strIP} $oHost->{strName}\" >> /etc/hosts'", undef, 'root');
+            $oOtherHost->executeSimple("echo \"$oHost->{strIP} $oHost->{strName}\" >> /etc/hosts", undef, 'root');
 
             # Add all other host IPs to this host
-            $oHost->executeSimple("sh -c 'echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts'", undef, 'root');
+            $oHost->executeSimple("echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts", undef, 'root');
         }
     }
 

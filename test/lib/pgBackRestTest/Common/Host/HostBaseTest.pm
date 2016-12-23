@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # HostBackupTest.pm - Backup host
 ####################################################################################################################################
-package pgBackRestTest::Backup::Common::HostBaseTest;
+package pgBackRestTest::Common::Host::HostBaseTest;
 use parent 'pgBackRestTest::Common::HostTest';
 
 ####################################################################################################################################
@@ -21,7 +21,7 @@ use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
@@ -35,18 +35,6 @@ use constant HOST_DB_STANDBY                                        => 'db-stand
     push @EXPORT, qw(HOST_DB_STANDBY);
 use constant HOST_BACKUP                                            => 'backup';
     push @EXPORT, qw(HOST_BACKUP);
-
-####################################################################################################################################
-# Host parameters
-####################################################################################################################################
-use constant HOST_PARAM_BACKREST_EXE                                => 'backrest-exe';
-    push @EXPORT, qw(HOST_PARAM_BACKREST_EXE);
-use constant HOST_PARAM_VM_ID                                       => 'vm-id';
-    push @EXPORT, qw(HOST_PARAM_VM_ID);
-use constant HOST_PARAM_TEST_PATH                                   => 'test-path';
-    push @EXPORT, qw(HOST_PARAM_TEST_PATH);
-use constant HOST_PARAM_VM                                          => 'vm';
-    push @EXPORT, qw(HOST_PARAM_VM);
 
 ####################################################################################################################################
 # new
@@ -69,40 +57,37 @@ sub new
             {name => 'oParam', required => false, trace => true},
         );
 
-    # Create the test path
-    my $oHostGroup = hostGroupGet();
-    my $strTestPath = $oHostGroup->paramGet(HOST_PARAM_TEST_PATH) . ($strName eq HOST_BASE ? '' : "/${strName}");
+    my $strTestPath = testRunGet()->testPath() . ($strName eq HOST_BASE ? '' : "/${strName}");
     filePathCreate($strTestPath, '0770');
 
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));
-    my $strContainer = 'test-' . $oHostGroup->paramGet(HOST_PARAM_VM_ID) . "-$strName";
+    my $strContainer = 'test-' . testRunGet()->vmId() . "-$strName";
 
     my $self = $class->SUPER::new(
-        $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, $$oParam{strVm},
+        $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
         ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}"]);
     bless $self, $class;
 
-    # Set parameters
-    $self->paramSet(HOST_PARAM_TEST_PATH, $strTestPath);
+    # Set test path
+    $self->{strTestPath} = $strTestPath;
 
     # Set permissions on the test path
     $self->executeSimple('chown -R ' . $self->userGet() . ':'. POSTGRES_GROUP . ' ' . $self->testPath(), undef, 'root');
 
     # Install Perl C Library
     my $oVm = vmGet();
-    my $strBuildPath = dirname(dirname($oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE))) . "/test/.vagrant/libc/$self->{strOS}";
+    my $strBuildPath = testRunGet()->basePath() . "/test/.vagrant/libc/$self->{strOS}";
     my $strPerlAutoPath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
     my $strPerlModulePath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
 
     $self->executeSimple(
-        "bash -c '" .
         "mkdir -p -m 755 ${strPerlAutoPath} && " .
         # "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.bs ${strPerlAutoPath} && " .
         "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
         "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
         "mkdir -p -m 755 ${strPerlModulePath} && " .
-        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}'",
+        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}",
         undef, 'root');
 
     # Return from function and log return values if any
@@ -116,6 +101,6 @@ sub new
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
-sub testPath {return shift->paramGet(HOST_PARAM_TEST_PATH);}
+sub testPath {return shift->{strTestPath}}
 
 1;

@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # HostBackupTest.pm - Backup host
 ####################################################################################################################################
-package pgBackRestTest::Backup::Common::HostBackupTest;
-use parent 'pgBackRestTest::Backup::Common::HostBaseTest';
+package pgBackRestTest::Common::Host::HostBackupTest;
+use parent 'pgBackRestTest::Common::Host::HostBaseTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -25,57 +25,23 @@ use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
-use pgBackRestTest::Backup::Common::HostBaseTest;
+use pgBackRestTest::Common::Host::HostBaseTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::CommonTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
-# Host constants
-####################################################################################################################################
-use constant HOST_BACKUP_USER                                       => 'backup-user';
-    push @EXPORT, qw(HOST_BACKUP_USER);
-
-####################################################################################################################################
-# Host parameters
-####################################################################################################################################
-use constant HOST_PARAM_BACKREST_CONFIG                             => 'backrest-config';
-    push @EXPORT, qw(HOST_PARAM_BACKREST_CONFIG);
-use constant HOST_PARAM_LOCK_PATH                                   => 'lock-path';
-    push @EXPORT, qw(HOST_PARAM_LOCK_PATH);
-use constant HOST_PARAM_LOG_PATH                                    => 'log-path';
-    push @EXPORT, qw(HOST_PARAM_LOG_PATH);
-use constant HOST_PARAM_REPO_PATH                                   => 'repo-path';
-    push @EXPORT, qw(HOST_PARAM_REPO_PATH);
-use constant HOST_PARAM_STANZA                                      => 'stanza';
-    push @EXPORT, qw(HOST_PARAM_STANZA);
-use constant HOST_PARAM_PROCESS_MAX                                 => 'process-max';
-    push @EXPORT, qw(HOST_PARAM_PROCESS_MAX);
-
-####################################################################################################################################
-# Host paths
+# Host defaults
 ####################################################################################################################################
 use constant HOST_PATH_LOCK                                         => 'lock';
     push @EXPORT, qw(HOST_PATH_LOCK);
 use constant HOST_PATH_LOG                                          => 'log';
     push @EXPORT, qw(HOST_PATH_LOG);
 use constant HOST_PATH_REPO                                         => 'repo';
-    push @EXPORT, qw(HOST_PATH_REPO);
 
-####################################################################################################################################
-# Backup Defaults
-####################################################################################################################################
-use constant HOST_STANZA                                            => 'db';
-    push @EXPORT, qw(HOST_STANZA);
 use constant HOST_PROTOCOL_TIMEOUT                                  => 10;
     push @EXPORT, qw(HOST_PROTOCOL_TIMEOUT);
-
-####################################################################################################################################
-# Cached data sections
-####################################################################################################################################
-use constant SECTION_FILE_NAME                                      => 'strFileName';
-    push @EXPORT, qw(SECTION_FILE_NAME);
 
 ####################################################################################################################################
 # new
@@ -98,42 +64,37 @@ sub new
 
     # If params are not passed
     my $oHostGroup = hostGroupGet();
-    my ($strName, $strImage, $strUser, $strVm);
+
+    my ($strName, $strImage, $strUser);
 
     if (!defined($$oParam{strName}) || $$oParam{strName} eq HOST_BACKUP)
     {
         $strName = HOST_BACKUP;
-        $strImage = containerNamespace() . '/' . $oHostGroup->paramGet(HOST_PARAM_VM) . '-backup-test-pre';
-        $strUser = $oHostGroup->paramGet(HOST_BACKUP_USER);
-        $strVm = $oHostGroup->paramGet(HOST_PARAM_VM);
+        $strImage = containerNamespace() . '/' . testRunGet()->vm() . '-backup-test-pre';
+        $strUser = testRunGet()->backrestUser();
     }
     else
     {
         $strName = $$oParam{strName};
         $strImage = $$oParam{strImage};
-        $strUser = $$oParam{strUser};
-        $strVm = $$oParam{strVm};
+        $strUser = testRunGet()->pgUser();
     }
 
     # Create the host
-    my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser, strVm => $strVm});
+    my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser});
     bless $self, $class;
 
     # Set parameters
-    $self->paramSet(
-        HOST_PARAM_REPO_PATH, $oHostGroup->paramGet(HOST_PARAM_TEST_PATH) . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO);
+    $self->{strRepoPath} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO;
 
     if ($$oParam{strBackupDestination} eq $self->nameGet())
     {
-        $self->paramSet(HOST_PARAM_LOG_PATH, $self->repoPath() . '/' . HOST_PATH_LOG);
-        $self->paramSet(HOST_PARAM_LOCK_PATH, $self->repoPath() . '/' . HOST_PATH_LOCK);
+        $self->{strLogPath} = $self->repoPath() . '/' . HOST_PATH_LOG;
+        $self->{strLockPath} = $self->repoPath() . '/' . HOST_PATH_LOCK;
         filePathCreate($self->repoPath(), '0770');
     }
 
-    $self->paramSet(HOST_PARAM_BACKREST_CONFIG, $self->testPath() . '/' . BACKREST_CONF);
-    $self->paramSet(HOST_PARAM_BACKREST_EXE, $oHostGroup->paramGet(HOST_PARAM_BACKREST_EXE));
-    $self->paramSet(HOST_PARAM_STANZA, HOST_STANZA);
-    $self->paramSet(HOST_PARAM_PROCESS_MAX, $oHostGroup->paramGet(HOST_PARAM_PROCESS_MAX));
+    $self->{strBackRestConfig} =  $self->testPath() . '/' . BACKREST_CONF;
 
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};
@@ -783,17 +744,16 @@ sub stanzaCreate
          bLogOutput => $self->synthetic()});
 
     # If the info file was created, then add it to the expect log
-    if (defined($self->{oLogTest}) && $self->synthetic())
+    if (defined($self->{oLogTest}) && $self->synthetic() &&
+        fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
     {
-        if (fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
-        {
-            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
-        }
+        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+    }
 
-        if (fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
-        {
-            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
-        }
+    if (defined($self->{oLogTest}) && $self->synthetic() &&
+        fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+    {
+        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
     }
 
     # Return from function and log return values if any
@@ -956,7 +916,7 @@ sub configCreate
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
             {
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 1, $bForce)} = $oHostDb1->dbPort();
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 1, $bForce)} = $oHostDb1->pgPort();
             }
         }
 
@@ -973,7 +933,7 @@ sub configCreate
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 2)} = $oHostDb2->dbPort();
+                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 2)} = $oHostDb2->pgPort();
             }
         }
     }
@@ -985,8 +945,8 @@ sub configCreate
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->dbSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->dbPort();
+            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->pgSocketPath();
+            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->pgPort();
         }
 
         if ($bArchiveAsync)
@@ -1078,18 +1038,8 @@ sub manifestMunge
         }
     }
 
-    # Remove the old checksum
-    delete($oManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
-
-    my $oSHA = Digest::SHA->new('sha1');
-    my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
-    $oSHA->add($oJSON->encode(\%oManifest));
-
-    # Set the new checksum
-    $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
-
     # Resave the manifest
-    iniSave($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strManifestFile), \%oManifest);
+    $self->iniSaveChecksum($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strManifestFile), \%oManifest, true);
 }
 
 ####################################################################################################################################
@@ -1139,7 +1089,7 @@ sub infoMunge
     }
 
     # Save the munged data to the file
-    testIniSave($strFileName, \%{$hContent}, true);
+    $self->iniSaveChecksum($strFileName, \%{$hContent}, true);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1185,21 +1135,48 @@ sub infoRestore
 }
 
 ####################################################################################################################################
+# iniSaveChecksum
+#
+# Save an ini file an optionall recalculate the checksum so it's valid.
+####################################################################################################################################
+sub iniSaveChecksum
+{
+    my $self = shift;
+    my $strFileName = shift;
+    my $oIniRef = shift;
+    my $bChecksum = shift;
+
+    # Calculate a new checksum if requested
+    if (defined($bChecksum) && $bChecksum)
+    {
+        delete($$oIniRef{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
+
+        my $oSHA = Digest::SHA->new('sha1');
+        my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
+        $oSHA->add($oJSON->encode($oIniRef));
+
+        $$oIniRef{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
+    }
+
+    iniSave($strFileName, $oIniRef);
+}
+
+####################################################################################################################################
 # Getters
 ####################################################################################################################################
-sub backrestConfig {return shift->paramGet(HOST_PARAM_BACKREST_CONFIG);}
-sub backupDestination {return shift->{strBackupDestination};}
-sub backrestExe {return shift->paramGet(HOST_PARAM_BACKREST_EXE);}
-sub hardLink {return shift->{bHardLink};}
-sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet();}
-sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER;}
-sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY;}
-sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostDbStandby();}
-sub lockPath {return shift->paramGet(HOST_PARAM_LOCK_PATH);}
-sub logPath {return shift->paramGet(HOST_PARAM_LOG_PATH);}
-sub repoPath {return shift->paramGet(HOST_PARAM_REPO_PATH);}
-sub stanza {return shift->paramGet(HOST_PARAM_STANZA);}
-sub processMax {return shift->paramGet(HOST_PARAM_PROCESS_MAX);}
-sub synthetic {return shift->{bSynthetic};}
+sub backrestConfig {return shift->{strBackRestConfig}}
+sub backupDestination {return shift->{strBackupDestination}}
+sub backrestExe {return testRunGet()->backrestExe()}
+sub hardLink {return shift->{bHardLink}}
+sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
+sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
+sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}
+sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostDbStandby()}
+sub lockPath {return shift->{strLockPath}}
+sub logPath {return shift->{strLogPath}}
+sub repoPath {return shift->{strRepoPath}}
+sub stanza {return testRunGet()->stanza()}
+sub processMax {return testRunGet()->processMax()}
+sub synthetic {return shift->{bSynthetic}}
 
 1;
