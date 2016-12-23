@@ -1534,6 +1534,59 @@
         </section>
     </section>
 
+    <!-- SECTION => PARALLEL BACKUP-RESTORE -->
+    <section id="parallel-backup-restore" depend="backup-host/install-config">
+        <title>Parallel Backup / Restore</title>
+
+        <p><backrest/> offers parallel processing to improve performance of compression and transfer. The number of processes to be used for this feature is set using the <br-option>--process-max</br-option> option.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Check the number of CPUs</title>
+
+            <execute user="root" output="y">
+                <exe-cmd>lscpu</exe-cmd>
+                <exe-highlight>^CPU\(s\)\:</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>It is usually best not to use more than 25% of the available CPUs for the <cmd>backup</cmd> command.  Backups don't have to run that fast as long as they are performed regularly and the backup process should not impact database performance, if at all possible.</p>
+
+        <p>The restore command can and should use all available CPUs because during a restore the <postgres/> cluster is shut down and there is generally no other important work being done on the host.  If the host contains multiple clusters then that should be considered when setting restore parallelism.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Perform a backup with single process</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
+            <title>Configure <backrest/> to use multiple <cmd>backup</cmd> processes</title>
+
+            <backrest-config-option section="global" key="process-max">3</backrest-config-option>
+        </backrest-config>
+
+        <execute-list host="{[host-backup]}">
+            <title>Perform a backup with multiple processes</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-backup]}">
+            <title>Get backup info for the {[postgres-cluster-demo]} cluster</title>
+
+            <execute filter="n" output="y" user="backrest">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>start / stop timestamp</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>The performance of the last backup should be improved by using multiple processes.  For very small backups the difference may not be very apparent, but as the size of the database increases so will time savings.</p>
+    </section>
+
     <!-- SECTION => START/STOP -->
     <section id="start-stop" depend="/backup-host/install-config">
         <title>Starting and Stopping</title>
