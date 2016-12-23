@@ -180,7 +180,13 @@ sub begin
     else
     {
         my $hModule = testDefModuleGet($self->{strModule});
-        $self->{bExpect} = $hModule->{&TESTDEF_EXPECT} ? true : false;
+        my $hModuleTest = testDefModuleTestGet($hModule, $self->{strModuleTest});
+        $self->{bExpect} =
+            defined($hModuleTest->{&TESTDEF_EXPECT}) ?
+                ($hModuleTest->{&TESTDEF_EXPECT} ? true : false) :
+                (defined($hModule->{&TESTDEF_EXPECT}) ?
+                    ($hModule->{&TESTDEF_EXPECT} ? true : false) :
+                    false);
     }
 
     # Increment the run counter;

@@ -171,12 +171,18 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Refactor <code>File</code> module to improve test coverage.</p>
+                        <p>Refactor <code>File</code> and <code>BackupCommon</code> modules to improve test coverage.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
 
             <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Added unit tests for low-level functions in the <code>File</code> and <code>BackupCommon</code> modules.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Split test modules into separate files to make the code more maintainable.  Tests are dynamically loaded by name rather than requiring an if-else block.</p>
