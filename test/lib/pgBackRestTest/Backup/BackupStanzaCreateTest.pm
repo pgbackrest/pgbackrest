@@ -60,6 +60,9 @@ sub run
 
         $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
+        # Rerun stanza-create and confirm success without the need to use force on empty directories
+        $oHostBackup->stanzaCreate('successful rerun of stanza-create', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
         filePathCreate($strXlogPath, undef, false, true);
@@ -90,8 +93,15 @@ sub run
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-        # Run force again to ensure the format is still valid
-        $oHostBackup->stanzaCreate('repeat force', {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+        # Rerun without the force to ensure the format is still valid - this will hash check the info files and indicate the
+        # stanza already exists
+        $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
+        # Remove the backup info file and confirm success with backup dir empty
+        # Backup Full tests will confirm failure when backup dir not empty
+        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+        $oHostBackup->stanzaCreate('force not needed when backup dir empty, archive.info exists but backup.info is missing',
+            {strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Change the database version by copying a new pg_control file
         executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
