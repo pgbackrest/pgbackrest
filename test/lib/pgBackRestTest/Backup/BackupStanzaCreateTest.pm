@@ -103,6 +103,21 @@ sub run
         $oHostBackup->stanzaCreate('force not needed when backup dir empty, archive.info exists but backup.info is missing',
             {strOptionalParam => '--no-' . OPTION_ONLINE});
 
+        # Remove the backup.info file then munge and save the archive info file
+        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+        $oHostBackup->infoMunge(
+            $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
+
+        $oHostBackup->stanzaCreate('hash check fails requiring force',
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+
+        $oHostBackup->stanzaCreate('use force to overwrite the invalid file',
+            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+        # Cleanup the global hash but don't save the file (permission issues may prevent it anyway)
+        $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), false);
+
         # Change the database version by copying a new pg_control file
         executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
         executeTest('cp ' . $self->dataPath() . '/backup.pg_control_93.bin ' . $oHostDbMaster->dbBasePath() . '/' .

@@ -293,9 +293,10 @@ sub infoFileCreate
             {
                 if (!optionGet(OPTION_FORCE))
                 {
-                    $iResult = ERROR_PATH_NOT_EMPTY;
+                    $iResult = ERROR_FILE_INVALID;
                     $strResultMessage =
-                        ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') . $strStanzaCreateErrorMsg;
+                        ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') .
+                        ' invalid; to correct, use --force';
                 }
             }
             # If the hashes are the same, then don't save the file since it already exists and is valid
