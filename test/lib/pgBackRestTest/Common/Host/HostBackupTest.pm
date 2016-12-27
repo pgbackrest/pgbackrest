@@ -1109,18 +1109,23 @@ sub infoRestore
     my
     (
         $strOperation,
-        $strFileName
+        $strFileName,
+        $bSave,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->infoRestore', \@_,
-            {name => 'strFileName'}
+            {name => 'strFileName'},
+            {name => 'bSave', default => true, required => false},
         );
 
     # If the original file content exists in the global hash, then save it to the file
     if (defined($self->{hInfoFile}{$strFileName}))
     {
-        iniSave($strFileName, $self->{hInfoFile}{$strFileName});
+        if ($bSave)
+        {
+            iniSave($strFileName, $self->{hInfoFile}{$strFileName});
+        }
     }
     else
     {
