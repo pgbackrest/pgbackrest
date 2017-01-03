@@ -167,7 +167,6 @@ sub stanzaCreate
         confess &log(ERROR, $strResultMessage, $iResult);
     }
 
-
     # Return from function and log return values if any
     return logDebugReturn
     (
