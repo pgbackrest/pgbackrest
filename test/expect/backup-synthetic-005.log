@@ -2691,7 +2691,7 @@ stanza-create db - fail on backup directory not empty and missing backup.info (b
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base-2 --db-user=[USER-1] --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db
-P00  ERROR: [115]: backup directory and archive directory not empty, stanza-create has already been attempted
+P00  ERROR: [115]: backup directory and/or archive directory not empty
                HINT: Use --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [115]
 
