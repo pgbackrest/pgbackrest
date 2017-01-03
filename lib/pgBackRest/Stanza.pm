@@ -83,14 +83,23 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
-    # Error if any other command other than stanza-create is found
-    if (!commandTest(CMD_STANZA_CREATE))
+    my $iResult = 0;
+
+    # Process stanza create
+    if (commandTest(CMD_STANZA_CREATE))
+    {
+        $iResult = $self->stanzaCreate();
+    }
+    # Process stanza upgrade
+    elsif (commandTest(CMD_STANZA_UPGRADE))
+    {
+        $iResult = $self->stanzaUpgrade();
+    }
+    # Else error if any other command is found
+    else
     {
         confess &log(ASSERT, "Stanza->process() called with invalid command: " . commandGet());
     }
-
-    # Process stanza create
-    my $iResult = $self->stanzaCreate();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -166,6 +175,36 @@ sub stanzaCreate
         &log(WARN, "unable to create stanza '" . optionGet(OPTION_STANZA) . "'");
         confess &log(ERROR, $strResultMessage, $iResult);
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => $iResult, trace => true}
+    );
+}
+
+####################################################################################################################################
+# stanzaUpgrade
+#
+#
+####################################################################################################################################
+sub stanzaUpgrade
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
+
+    # Initialize default file object with protocol set to NONE meaning strictly local
+    my $oFile = new pgBackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_PATH),
+        protocolGet(NONE)
+    );
+
+    my $iResult = 0;
 
     # Return from function and log return values if any
     return logDebugReturn
