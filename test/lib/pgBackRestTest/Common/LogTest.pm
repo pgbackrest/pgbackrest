@@ -349,6 +349,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'CONTAINER-EXEC', '^docker exec -u [a-z]*', '^docker exec -u [a-z]*', false);
 
     $strLine = $self->regExpReplace($strLine, 'PROCESS-ID', 'sent term signal to process [0-9]+', '[0-9]+$', false);
+    $strLine = $self->regExpReplace($strLine, 'YEAR', ' \= backup\.history\/20[0-9]{2}', '20[0-9]{2}$');
 
     $strLine = $self->regExpReplace($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
     $strLine = $self->regExpReplace($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
