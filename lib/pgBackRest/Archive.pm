@@ -343,7 +343,7 @@ sub get
     );
 
     # Construct absolute path to the WAL file when it is relative
-    $strDestinationFile = walPath($strDestinationFile, optionGet(OPTION_DB_PATH, false), commandGet())
+    $strDestinationFile = walPath($strDestinationFile, optionGet(OPTION_DB_PATH, false), commandGet());
 
     # Get the wal segment filename
     my $strArchiveId = $self->getCheck($oFile);
@@ -699,7 +699,7 @@ sub push
     lockStopTest();
 
     # Construct absolute path to the WAL file when it is relative
-    $strSourceFile = walPath($strSourceFile, optionGet(OPTION_DB_PATH, false), commandGet())
+    $strSourceFile = walPath($strSourceFile, optionGet(OPTION_DB_PATH, false), commandGet());
 
     # Get the destination file
     my $strDestinationFile = basename($strSourceFile);
