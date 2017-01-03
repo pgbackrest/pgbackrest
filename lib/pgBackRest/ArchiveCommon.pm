@@ -11,8 +11,9 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::DbVersion;
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
-
+use pgBackRest::Config::Config;
 
 ####################################################################################################################################
 # RegEx constants
@@ -134,5 +135,53 @@ sub lsnFileRange
 }
 
 push @EXPORT, qw(lsnFileRange);
+
+####################################################################################################################################
+# walPath
+#
+# Generates the location of the pg_xlog directory using a relative xlog path and the supplied db path.
+####################################################################################################################################
+sub walPath
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strWalFile,
+        $strDbPath,
+        $strCommand,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . 'walPath', \@_,
+            {name => 'strWalFile', trace => true},
+            {name => 'strDbPath', trace => true, required => false},
+            {name => 'strCommand', trace => true},
+        );
+
+    if (index($strWalFile, '/') != 0)
+    {
+        if (!defined($strDbPath))
+        {
+            confess &log(ERROR,
+                "option 'db-path' must be specified when relative xlog paths are used\n" .
+                "HINT: Is \%f passed to ${strCommand} instead of \%p?\n" .
+                "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.",
+                ERROR_OPTION_REQUIRED);
+        }
+
+        $strWalFile = "${strDbPath}/${strWalFile}";
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strWalFile', value => $strWalFile, trace => true}
+    );
+
+}
+
+push @EXPORT, qw(walPath);
 
 1;

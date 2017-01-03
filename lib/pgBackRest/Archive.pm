@@ -342,20 +342,8 @@ sub get
         protocolGet(BACKUP)
     );
 
-    # If the destination file path is not absolute then it is relative to the db data path
-    if (index($strDestinationFile, '/',) != 0)
-    {
-        if (!optionTest(OPTION_DB_PATH))
-        {
-            confess &log(
-                ERROR, "option db-path must be set when relative xlog paths are used\n" .
-                "HINT: Are \%f and \%p swapped when passed to archive-get?\n" .
-                'HINT: PostgreSQL generally passes an absolute path to archive-push but in some environments does not, in which' .
-                " case the 'db-path' option must be specified (this is rare).");
-        }
-
-        $strDestinationFile = optionGet(OPTION_DB_PATH) . "/${strDestinationFile}";
-    }
+    # Construct absolute path to the WAL file when it is relative
+    $strDestinationFile = walPath($strDestinationFile, optionGet(OPTION_DB_PATH, false), commandGet())
 
     # Get the wal segment filename
     my $strArchiveId = $self->getCheck($oFile);
@@ -710,20 +698,8 @@ sub push
 
     lockStopTest();
 
-    # If the source file path is not absolute then it is relative to the data path
-    if (index($strSourceFile, '/') != 0)
-    {
-        if (!optionTest(OPTION_DB_PATH))
-        {
-            confess &log(
-                ERROR, "option 'db-path' must be set when relative xlog paths are used\n" .
-                "HINT: Is \%f passed to archive-push instead of \%p?\n" .
-                'HINT: PostgreSQL generally passes an absolute path to archive-push but in some environments does not, in which' .
-                " case the 'db-path' option must be specified (this is rare).");
-        }
-
-        $strSourceFile = optionGet(OPTION_DB_PATH) . "/${strSourceFile}";
-    }
+    # Construct absolute path to the WAL file when it is relative
+    $strSourceFile = walPath($strSourceFile, optionGet(OPTION_DB_PATH, false), commandGet())
 
     # Get the destination file
     my $strDestinationFile = basename($strSourceFile);
