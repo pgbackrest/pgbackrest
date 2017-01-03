@@ -223,7 +223,7 @@ P00   INFO: new backup label = [BACKUP-FULL-1]
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
-P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = false, strDestinationFile = backup.history/2016/[BACKUP-FULL-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1]/backup.manifest.gz, strSourcePathType = backup:cluster
+P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = false, strDestinationFile = backup.history/2017/[BACKUP-FULL-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = false
 P00  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
@@ -757,7 +757,7 @@ P00   INFO: new backup label = [BACKUP-FULL-2]
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-2], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
-P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2016/[BACKUP-FULL-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/backup.manifest.gz, strSourcePathType = backup:cluster
+P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2017/[BACKUP-FULL-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = true
 P00  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2], strSourcePathType = backup:cluster
@@ -1640,7 +1640,7 @@ P00   INFO: new backup label = [BACKUP-INCR-1]
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-INCR-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
-P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2016/[BACKUP-INCR-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1]/backup.manifest.gz, strSourcePathType = backup:cluster
+P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2017/[BACKUP-INCR-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = true
 P00  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1], strSourcePathType = backup:cluster
@@ -1965,7 +1965,7 @@ P00   INFO: new backup label = [BACKUP-INCR-2]
 P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
 P00  DEBUG:     Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
 P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-INCR-2], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
-P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2016/[BACKUP-INCR-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2]/backup.manifest.gz, strSourcePathType = backup:cluster
+P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/2017/[BACKUP-INCR-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = true
 P00  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2], strSourcePathType = backup:cluster
@@ -2729,7 +2729,7 @@ stanza-create db - fail on backup directory not empty and missing backup.info (d
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [115]: backup directory and archive directory not empty, stanza-create has already been attempted
+P00  ERROR: [115]: backup directory and/or archive directory not empty
                HINT: Use --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [115]
 
