@@ -186,6 +186,12 @@
                         <p>Added documentation to the User Guide for the <br-option>process-max</br-option> option.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Update LICENSE.txt for 2017.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-doc-list>
 
             <release-test-list>
