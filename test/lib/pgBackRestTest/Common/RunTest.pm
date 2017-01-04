@@ -91,7 +91,7 @@ sub process
         $self->{strPgVersion},
         $self->{strModule},
         $self->{strModuleTest},
-        $self->{iModuleTestRun},
+        $self->{iyModuleTestRun},
         $self->{iProcessMax},
         $self->{bOutput},
         $self->{bDryRun},
@@ -193,7 +193,7 @@ sub begin
     $self->{iRun}++;
 
     # Return if this test should not be run
-    if (defined($self->moduleTestRun()) && $self->moduleTestRun() != $self->runCurrent())
+    if (@{$self->{iyModuleTestRun}} != 0 && !grep(/^$self->{iRun}$/i, @{$self->{iyModuleTestRun}}))
     {
         return false;
     }
@@ -379,7 +379,6 @@ sub isDryRun {return shift->{bDryRun}}
 sub expect {return shift->{oExpect}}
 sub module {return shift->{strModule}}
 sub moduleTest {return shift->{strModuleTest}}
-sub moduleTestRun {return shift->{iModuleTestRun}}
 sub pgBinPath {return shift->{strPgBinPath}}
 sub pgUser {return shift->{strPgUser}}
 sub pgVersion {return shift->{strPgVersion}}

@@ -207,6 +207,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow multiple <setting>--module</setting>, <setting>--test</setting>, and <setting>--run</setting> options to be used for <file>test.pl</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added expect log expression to replace year subdirectories in <path>backup.history</path>.</p>
                     </release-item>
                 </release-refactor-list>

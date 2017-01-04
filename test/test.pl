@@ -91,9 +91,9 @@ test.pl [options]
 ####################################################################################################################################
 my $strLogLevel = 'info';
 my $bVmOut = false;
-my $strModule = 'all';
-my $strModuleTest = 'all';
-my $iModuleTestRun = undef;
+my @stryModule;
+my @stryModuleTest;
+my @iyModuleTestRun;
 my $iProcessMax = undef;
 my $iVmMax = 1;
 my $iVmId = undef;
@@ -122,9 +122,9 @@ GetOptions ('q|quiet' => \$bQuiet,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
             'vm-force' => \$bVmForce,
-            'module=s' => \$strModule,
-            'test=s' => \$strModuleTest,
-            'run=s' => \$iModuleTestRun,
+            'module=s@' => \@stryModule,
+            'test=s@' => \@stryModuleTest,
+            'run=s@' => \@iyModuleTestRun,
             'process-max=s' => \$iProcessMax,
             'vm-id=s' => \$iVmId,
             'vm-max=s' => \$iVmMax,
@@ -175,14 +175,14 @@ eval
 
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
 
-    if ($strModuleTest ne 'all' && $strModule eq 'all')
+    if (@stryModuleTest != 0 && @stryModule != 1)
     {
-        confess "--module must be provided for --test=\"${strModuleTest}\"";
+        confess "Only one --module can be provided when --test is specified";
     }
 
-    if (defined($iModuleTestRun) && $strModuleTest eq 'all')
+    if (@iyModuleTestRun != 0 && @stryModuleTest != 1)
     {
-        confess "--test must be provided for --run=\"${iModuleTestRun}\"";
+        confess "Only one --test can be provided when --run is specified";
     }
 
     # Check process total
@@ -267,6 +267,7 @@ eval
 
         # Build the C Library in host
         #-----------------------------------------------------------------------------------------------------------------------
+        if (!$bDryRun)
         {
             my $bLogDetail = $strLogLevel eq 'detail';
             my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/host";
@@ -309,7 +310,7 @@ eval
 
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
-        my $oyTestRun = testListGet($strVm, $strModule, $strModuleTest, $iModuleTestRun, $strDbVersion, $iProcessMax);
+        my $oyTestRun = testListGet($strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax);
 
         if (@{$oyTestRun} == 0)
         {
@@ -343,6 +344,7 @@ eval
 
         # Build the C Library in container
         #-----------------------------------------------------------------------------------------------------------------------
+        if (!$bDryRun)
         {
             my $bLogDetail = $strLogLevel eq 'detail';
             my @stryBuildVm = $strVm eq 'all' ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
@@ -463,7 +465,7 @@ eval
                                           'vm=' . $$oTest{&TEST_VM} .
                                           ', module=' . $$oTest{&TEST_MODULE} .
                                           ', test=' . $$oTest{&TEST_NAME} .
-                                          (defined($$oTest{&TEST_RUN}) ? ', run=' . $$oTest{&TEST_RUN} : '') .
+                                          (defined($$oTest{&TEST_RUN}) ? ', run=' . join(',', @{$$oTest{&TEST_RUN}}) : '') .
                                           (defined($$oTest{&TEST_PROCESS}) ? ', process-max=' . $$oTest{&TEST_PROCESS} : '') .
                                           (defined($$oTest{&TEST_DB}) ? ', db=' . $$oTest{&TEST_DB} : '');
 
@@ -494,6 +496,15 @@ eval
                         }
                     }
 
+                    # Create run parameters
+                    my $strCommandRunParam = '';
+
+                    foreach my $iRunIdx (@{$$oTest{&TEST_RUN}})
+                    {
+                        $strCommandRunParam .= ' --run=' . $iRunIdx;
+                    }
+
+                    # Create command
                     my $strCommand =
                         ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') . abs_path($0) .
                         " --test-path=${strVmTestPath}" .
@@ -501,7 +512,7 @@ eval
                         " --vm-id=${iVmIdx}" .
                         " --module=" . $$oTest{&TEST_MODULE} .
                         ' --test=' . $$oTest{&TEST_NAME} .
-                        (defined($$oTest{&TEST_RUN}) ? ' --run=' . $$oTest{&TEST_RUN} : '') .
+                        $strCommandRunParam .
                         (defined($$oTest{&TEST_DB}) ? ' --db-version=' . $$oTest{&TEST_DB} : '') .
                         (defined($$oTest{&TEST_PROCESS}) ? ' --process-max=' . $$oTest{&TEST_PROCESS} : '') .
                         ($strLogLevel ne lc(INFO) ? " --log-level=${strLogLevel}" : '') .
@@ -572,14 +583,14 @@ eval
     my $oHostGroup = hostGroupGet();
 
     # Run the test
-    testRun($strModule, $strModuleTest)->process(
+    testRun($stryModule[0], $stryModuleTest[0])->process(
         $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable
         $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
-        $strModule, $strModuleTest, $iModuleTestRun,                # Module info
+        $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 

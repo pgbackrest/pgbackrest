@@ -46,9 +46,9 @@ use constant TEST_PERL_ARCH_PATH                                    => VMDEF_PER
 sub testListGet
 {
     my $strVm = shift;
-    my $strModule = shift;
-    my $strModuleTest = shift;
-    my $iModuleTestRun = shift;
+    my $stryModule = shift;
+    my $stryModuleTest = shift;
+    my $iyModuleTestRun = shift;
     my $strDbVersion = shift;
     my $iProcessMax = shift;
 
@@ -76,11 +76,11 @@ sub testListGet
     {
         foreach my $oModule (@{$$oTestDef{&TESTDEF_MODULE}})
         {
-            if ($strModule eq $$oModule{&TESTDEF_MODULE_NAME} || $strModule eq 'all')
+            if (@{$stryModule} == 0 || grep(/^$$oModule{&TESTDEF_MODULE_NAME}$/i, @{$stryModule}))
             {
                 foreach my $oTest (@{$$oModule{test}})
                 {
-                    if ($strModuleTest eq $$oTest{&TESTDEF_TEST_NAME} || $strModuleTest eq 'all')
+                    if (@{$stryModuleTest} == 0 || grep(/^$$oTest{&TESTDEF_TEST_NAME}$/i, @{$stryModuleTest}))
                     {
                         my $iDbVersionMin = -1;
                         my $iDbVersionMax = -1;
@@ -112,18 +112,16 @@ sub testListGet
                                 my $bTestIndividual =
                                     !defined($$oTest{&TESTDEF_TEST_INDIVIDUAL}) || $$oTest{&TESTDEF_TEST_INDIVIDUAL} ? true : false;
 
-                                my $iTestRunMin = defined($iModuleTestRun) ? $iModuleTestRun : ($bTestIndividual ? 1 : -1);
-                                my $iTestRunMax =
-                                    defined($iModuleTestRun) ? $iModuleTestRun :
-                                        ($bTestIndividual ? $$oTest{&TESTDEF_TEST_TOTAL} : -1);
-
-                                if (defined($$oTest{total}) && $iTestRunMax > $$oTest{total})
-                                {
-                                    confess &log(ERROR, "invalid run - must be >= 1 and <= $$oTest{total}")
-                                }
+                                my $iTestRunMin = $bTestIndividual ? 1 : -1;
+                                my $iTestRunMax = $bTestIndividual ? $$oTest{&TESTDEF_TEST_TOTAL} : -1;
 
                                 for (my $iTestRunIdx = $iTestRunMin; $iTestRunIdx <= $iTestRunMax; $iTestRunIdx++)
                                 {
+                                    # Skip this run if a list was provided and this test is not in the list
+                                    next if (
+                                        $bTestIndividual && @{$iyModuleTestRun} != 0 &&
+                                            !grep(/^$iTestRunIdx$/i, @{$iyModuleTestRun}));
+
                                     my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];
 
                                     if (defined($$oTest{&TESTDEF_TEST_PROCESS}) && $$oTest{&TESTDEF_TEST_PROCESS} &&
@@ -156,7 +154,9 @@ sub testListGet
                                             &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                             &TEST_MODULE => $$oModule{&TESTDEF_MODULE_NAME},
                                             &TEST_NAME => $$oTest{&TESTDEF_TEST_NAME},
-                                            &TEST_RUN => $iTestRunIdx == -1 ? undef : $iTestRunIdx,
+                                            &TEST_RUN =>
+                                                $iTestRunIdx == -1 ? (@{$iyModuleTestRun} == 0 ? undef : $iyModuleTestRun) :
+                                                    [$iTestRunIdx],
                                             &TEST_PROCESS => $iProcessTestMax,
                                             &TEST_DB => $strDbVersion
                                         };
