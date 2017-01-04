@@ -205,6 +205,10 @@
                     <release-item>
                         <p>Split test modules into separate files to make the code more maintainable.  Tests are dynamically loaded by name rather than requiring an if-else block.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added expect log expression to replace year subdirectories in <path>backup.history</path>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
