@@ -102,6 +102,11 @@
             <contributor-id type="github">cmwshang</contributor-id>
         </contributor>
 
+        <contributor id="sharma.yogesh">
+            <contributor-name-display>Yogesh Sharma</contributor-name-display>
+            <contributor-id type="github">sharmay</contributor-id>
+        </contributor>
+
         <contributor id="smith.greg">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
@@ -172,6 +177,14 @@
                 <release-refactor-list>
                     <release-item>
                         <p>Refactor <code>File</code> and <code>BackupCommon</code> modules to improve test coverage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sharma.yogesh"/>
+                        </release-item-contributor-list>
+
+                        <p>Return proper error code when unable to convert a relative path to an absolute path.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
