@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# BackupSyntheticTest.pm - Tests for all commands that can be run against synthetic data
+# FullSyntheticTest.pm - Tests for all commands that can be run against synthetic data
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupSyntheticTest;
-use parent 'pgBackRestTest::Backup::BackupCommonTest';
+package pgBackRestTest::Full::FullSyntheticTest;
+use parent 'pgBackRestTest::Full::FullCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -30,9 +30,8 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Backup::BackupCommonTest;
+use pgBackRestTest::Full::FullCommonTest;
 use pgBackRestTest::Common::Host::HostBackupTest;
-use pgBackRestTest::Backup::ExpireCommonTest;
 
 ####################################################################################################################################
 # run

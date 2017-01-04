@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# BackupStanzaCreateTest.pm - Tests for stanza-create command
+# StanzaCreateTest.pm - Tests for stanza-create command
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupStanzaCreateTest;
-use parent 'pgBackRestTest::Backup::BackupCommonTest';
+package pgBackRestTest::Stanza::StanzaCreateTest;
+use parent 'pgBackRestTest::Full::FullCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -27,8 +27,7 @@ use pgBackRest::Manifest;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Backup::BackupCommonTest;
-use pgBackRestTest::Backup::ExpireCommonTest;
+use pgBackRestTest::Full::FullCommonTest;
 
 ####################################################################################################################################
 # run

@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# BackupArchiveGetTest.pm - Tests for archive-get command
+# ArchiveGetTest.pm - Tests for archive-get command
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupArchiveGetTest;
-use parent 'pgBackRestTest::Backup::BackupCommonTest';
+package pgBackRestTest::Archive::ArchiveGetTest;
+use parent 'pgBackRestTest::Full::FullCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -27,7 +27,7 @@ use pgBackRest::Manifest;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Backup::BackupCommonTest;
+use pgBackRestTest::Full::FullCommonTest;
 
 ####################################################################################################################################
 # run

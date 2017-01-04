@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# BackupFullTest.pm - Tests for all commands against a real database
+# FullRealTest.pm - Tests for all commands against a real database
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupFullTest;
-use parent 'pgBackRestTest::Backup::BackupCommonTest';
+package pgBackRestTest::Full::FullRealTest;
+use parent 'pgBackRestTest::Full::FullCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -31,11 +31,10 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Backup::BackupCommonTest;
+use pgBackRestTest::Full::FullCommonTest;
 use pgBackRestTest::Common::Host::HostBaseTest;
 use pgBackRestTest::Common::Host::HostBackupTest;
 use pgBackRestTest::Common::Host::HostDbTest;
-use pgBackRestTest::Backup::ExpireCommonTest;
 
 ####################################################################################################################################
 # run

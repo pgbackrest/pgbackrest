@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# BackupArchiveStopTest.pm - Tests for archive-push command to make sure aync queue limits are implemented correctly
+# ArchiveStopTest.pm - Tests for archive-push command to make sure aync queue limits are implemented correctly
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupArchiveStopTest;
-use parent 'pgBackRestTest::Backup::BackupCommonTest';
+package pgBackRestTest::Archive::ArchiveStopTest;
+use parent 'pgBackRestTest::Full::FullCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -27,7 +27,7 @@ use pgBackRest::Manifest;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Backup::BackupCommonTest;
+use pgBackRestTest::Full::FullCommonTest;
 
 ####################################################################################################################################
 # run

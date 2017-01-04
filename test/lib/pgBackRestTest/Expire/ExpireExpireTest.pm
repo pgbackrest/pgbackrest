@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# BackupExpireTest.pm - Tests for expire command
+# ExpireExpireTest.pm - Tests for expire command
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupExpireTest;
-use parent 'pgBackRestTest::Backup::BackupCommonTest';
+package pgBackRestTest::Expire::ExpireExpireTest;
+use parent 'pgBackRestTest::Full::FullCommonTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -27,8 +27,8 @@ use pgBackRest::Manifest;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Backup::BackupCommonTest;
-use pgBackRestTest::Backup::ExpireCommonTest;
+use pgBackRestTest::Full::FullCommonTest;
+use pgBackRestTest::Expire::ExpireCommonTest;
 
 ####################################################################################################################################
 # run
@@ -43,7 +43,7 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
 
         # Create the test object
-        my $oExpireTest = new pgBackRestTest::Backup::ExpireCommonTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect());
+        my $oExpireTest = new pgBackRestTest::Expire::ExpireCommonTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect());
 
         # ??? This function creates data elements in the $oExpireTest object that are used by the $oExpireTest functions. But
         # should probably change to use the stanza-create command especially with stanza-upgrade.

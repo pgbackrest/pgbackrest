@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# BackupCommonTest.pm - Common code for backup tests
+# FullCommonTest.pm - Common code for backup tests
 ####################################################################################################################################
-package pgBackRestTest::Backup::BackupCommonTest;
+package pgBackRestTest::Full::FullCommonTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################

@@ -145,11 +145,47 @@ my $oTestDef =
                 }
             ]
         },
+        # Stanza tests
+        {
+            &TESTDEF_MODULE_NAME => 'stanza',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_TEST_NAME => 'create',
+                    &TESTDEF_TEST_TOTAL => 2
+                },
+            ]
+        },
+        # Archive tests
+        {
+            &TESTDEF_MODULE_NAME => 'archive',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_TEST_NAME => 'push',
+                    &TESTDEF_TEST_TOTAL => 8
+                },
+                {
+                    &TESTDEF_TEST_NAME => 'stop',
+                    &TESTDEF_TEST_TOTAL => 6
+                },
+                {
+                    &TESTDEF_TEST_NAME => 'get',
+                    &TESTDEF_TEST_TOTAL => 8
+                },
+            ]
+        },
         # Backup tests
         {
             &TESTDEF_MODULE_NAME => 'backup',
             &TESTDEF_TEST_CONTAINER => false,
-            &TESTDEF_EXPECT => true,
+            &TESTDEF_EXPECT => false,
 
             &TESTDEF_TEST =>
             [
@@ -157,41 +193,44 @@ my $oTestDef =
                     &TESTDEF_TEST_NAME => 'unit',
                     &TESTDEF_TEST_TOTAL => 1,
                     &TESTDEF_TEST_INDIVIDUAL => false,
-                    &TESTDEF_EXPECT => false,
                 },
-                {
-                    &TESTDEF_TEST_NAME => 'archive-push',
-                    &TESTDEF_TEST_TOTAL => 8
-                },
-                {
-                    &TESTDEF_TEST_NAME => 'archive-stop',
-                    &TESTDEF_TEST_TOTAL => 6
-                },
-                {
-                    &TESTDEF_TEST_NAME => 'archive-get',
-                    &TESTDEF_TEST_TOTAL => 8
-                },
+            ]
+        },
+        # Expire tests
+        {
+            &TESTDEF_MODULE_NAME => 'expire',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
                 {
                     &TESTDEF_TEST_NAME => 'expire',
                     &TESTDEF_TEST_TOTAL => 1
                 },
-                {
-                    &TESTDEF_TEST_NAME => 'stanza-create',
-                    &TESTDEF_TEST_TOTAL => 2
-                },
+            ]
+        },
+        # Full tests
+        {
+            &TESTDEF_MODULE_NAME => 'full',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
                 {
                     &TESTDEF_TEST_NAME => 'synthetic',
                     &TESTDEF_TEST_TOTAL => 8,
                     &TESTDEF_TEST_PROCESS => true
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'full',
+                    &TESTDEF_TEST_NAME => 'real',
                     &TESTDEF_TEST_TOTAL => 11,
                     &TESTDEF_TEST_PROCESS => true,
                     &TESTDEF_TEST_DB => true
                 }
             ]
-        }
+        },
     ]
 };
 
