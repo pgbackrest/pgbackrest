@@ -866,53 +866,76 @@ sub owner
             __PACKAGE__ . '->owner', \@_,
             {name => 'strPathType'},
             {name => 'strFile'},
-            {name => 'strUser'},
-            {name => 'strGroup'}
+            {name => 'strUser', required => false},
+            {name => 'strGroup', required => false}
         );
 
     # Set operation variables
     my $strFileOp = $self->pathGet($strPathType, $strFile);
 
+    # Run remotely
     if ($self->isRemote($strPathType))
     {
         confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
+    # Run locally
     else
     {
         my $iUserId;
         my $iGroupId;
-        my $oStat;
 
-        if (!defined($strUser) || !defined($strGroup))
+        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
+        # both user and group be set.
+        if (!(defined($strUser) && defined($strGroup)))
         {
-            $oStat = stat($strFileOp);
+            my $oStat = fileStat($strFileOp);
 
-            if (!defined($oStat))
+            if (!defined($strUser))
             {
-                confess &log(ERROR, 'unable to stat ${strFileOp}');
+                $iUserId = $oStat->uid;
+            }
+
+            if (!defined($strGroup))
+            {
+                $iGroupId = $oStat->gid;
             }
         }
 
+        # Lookup user if specified
         if (defined($strUser))
         {
             $iUserId = getpwnam($strUser);
-        }
-        else
-        {
-            $iUserId = $oStat->uid;
+
+            if (!defined($iUserId))
+            {
+                confess &log(ERROR, "user '${strUser}' does not exist", ERROR_USER_MISSING);
+            }
         }
 
+        # Lookup group if specified
         if (defined($strGroup))
         {
             $iGroupId = getgrnam($strGroup);
-        }
-        else
-        {
-            $iGroupId = $oStat->gid;
+
+            if (!defined($iGroupId))
+            {
+                confess &log(ERROR, "group '${strGroup}' does not exist", ERROR_GROUP_MISSING);
+            }
         }
 
-        chown($iUserId, $iGroupId, $strFileOp)
-            or confess &log(ERROR, "unable to set ownership for ${strFileOp}");
+        # Set ownership on the file
+        if (!chown($iUserId, $iGroupId, $strFileOp))
+        {
+            my $strError = $!;
+
+            if (fileExists($strFileOp))
+            {
+                confess &log(ERROR,
+                    "unable to set ownership for '${strFileOp}'" . (defined($strError) ? ": $strError" : ''), ERROR_FILE_OWNER);
+            }
+
+            confess &log(ERROR, "${strFile} does not exist", ERROR_FILE_MISSING);
+        }
     }
 
     # Return from function and log return values if any

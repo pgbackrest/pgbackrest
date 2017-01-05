@@ -17,6 +17,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="avellar.leonardo">
+            <contributor-name-display>Leonardo Avellar</contributor-name-display>
+            <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
         <contributor id="barber.chris">
             <contributor-name-display>Chris Barber</contributor-name-display>
             <contributor-id type="github">gamerscomplete</contributor-id>
@@ -153,6 +158,14 @@
 
                     <release-item>
                         <p>Fixed a few directory syncs that were missed for the <br-option>--repo-sync</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="avellar.leonardo"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where a missing user/group on restore could cause an <quote>uninitialized value</quote> error in <code>File->owner()</code>.</p>
                     </release-item>
                 </release-bug-list>
 

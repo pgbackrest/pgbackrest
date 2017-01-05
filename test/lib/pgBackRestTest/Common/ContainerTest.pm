@@ -247,7 +247,8 @@ sub sudoSetup
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\nRUN sed -i 's/^\\\%admin.*\$/\\\%${strGroup} ALL\\=\\(ALL\\) NOPASSWD\\: ALL/' /etc/sudoers";
+            "\nRUN apt-get -y install sudo\n" .
+            "\nRUN echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
     }
     else
     {
@@ -568,7 +569,7 @@ sub containerBuild
             containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
         }
 
-        # Db test image (for sythetic tests)
+        # Db test image (for synthetic tests)
         ########################################################################################################################
         $strImageParent = containerNamespace() . "/${strOS}-base";
         $strImage = "${strOS}-db-test";
@@ -599,6 +600,9 @@ sub containerBuild
         $strScript .=
             "\n\n# Make " . TEST_USER . " home dir readable\n" .
             'RUN chmod g+r,g+x /home/' . TEST_USER;
+
+        # Setup sudo
+        $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
         # Write the image
         containerWrite($strTempPath, $strOS, 'Loop Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);

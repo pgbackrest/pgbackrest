@@ -144,8 +144,14 @@ use constant ERROR_LINK_OPEN                                        => ERROR_MIN
     push @EXPORT, qw(ERROR_LINK_OPEN);
 use constant ERROR_ARCHIVE_DISABLED                                 => ERROR_MINIMUM + 62;
     push @EXPORT, qw(ERROR_ARCHIVE_DISABLED);
+use constant ERROR_FILE_OWNER                                       => ERROR_MINIMUM + 63;
+    push @EXPORT, qw(ERROR_FILE_OWNER);
+use constant ERROR_USER_MISSING                                     => ERROR_MINIMUM + 64;
+    push @EXPORT, qw(ERROR_USER_MISSING);
 use constant ERROR_OPTION_COMMAND                                   => ERROR_MINIMUM + 65;
     push @EXPORT, qw(ERROR_OPTION_COMMAND);
+use constant ERROR_GROUP_MISSING                                    => ERROR_MINIMUM + 66;
+    push @EXPORT, qw(ERROR_GROUP_MISSING);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

@@ -245,7 +245,8 @@ sub testResult
 
     my $strActual = $fnSub->();
 
-    if ($strActual ne $strExpected)
+    if (!defined($strExpected) && defined($strActual) || defined($strExpected) && !defined($strActual) ||
+        $strActual ne $strExpected)
     {
         confess
             'expected ' . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .

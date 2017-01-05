@@ -94,6 +94,11 @@ my $oTestDef =
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
+                    &TESTDEF_TEST_NAME => 'owner',
+                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+                {
                     &TESTDEF_TEST_NAME => 'path-create',
                     &TESTDEF_TEST_TOTAL => 8,
                     &TESTDEF_TEST_INDIVIDUAL => false,
