@@ -48,6 +48,7 @@ sub new
 
     # Initialize the database object
     $self->{oDb} = dbMasterGet();
+    $self->dbInfoGet();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -112,8 +113,6 @@ sub stanzaCreate
         optionGet(OPTION_REPO_PATH),
         protocolGet(NONE)
     );
-
-    $self->dbInfoGet();
 
     # Get the parent paths (create if not exist)
     my $strParentPathArchive = $self->parentPathGet($oFile, PATH_BACKUP_ARCHIVE);
@@ -189,73 +188,26 @@ sub stanzaUpgrade
     );
 
     my $iResult = 0;
-    my $strResultMessage = undef;
+    my $strResultMessageBackup = undef;
 
     # Create the archive info and backup info objects
     my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER), false, false);
 
-# CSHANG If the parent path does not exist or it does exist but the directories are empty or the info files do not exist
-# then do we tell them to just run stanza create or should we just run it for them? Or tell them to use --force?
-    if ((!fileExists($oBackupInfo->{strBackupClusterPath}) || !fileExists($oArchiveInfo->{strArchiveClusterPath})) ||
-        (!fileList($oBackupInfo->{strBackupClusterPath}, undef, 'forward', true) &&
-         !fileList($oArchiveInfo->{strArchiveClusterPath}, undef, 'forward', true)) ||
-         !$oBackupInfo->{bExists} || !$oArchiveInfo->{bExists})
+    # If the info either info file does not exist then indicate that a stanza create must be performed.
+    if (!($oBackupInfo->{bExists} && $oArchiveInfo->{bExists}))
     {
-        confess &log(ERROR, "the stanza does not properly exist\n" .
+        confess &log(ERROR, "upgrade is not necessary - the stanza does not exist\n" .
             "HINT: Run stanza-create to create the stanza.", ERROR_FILE_INVALID);
     }
-    # If the info file exists,
-    # then  if the contents are the same as the current DB
-    #       then there is no need to upgrade,
-    #       else upgrade
 
-
-    $self->dbInfoGet();
-
-    # if the file exists then determine if an upgrade is needed
-    if ($oBackupInfo->{bExists})
+    # If the DB section does not match, then upgrade
+    if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH) ||
+        $self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
     {
-        # Turn off console logging to control when to display the error
-        logLevelSet(undef, OFF);
-
-        eval
-        {
-            $oBackupInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                                $self->{oDb}{ullDbSysId}, false);
-            return true;
-        }
-        or do
-        {
-            # Confess unhandled errors
-            confess $EVAL_ERROR if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != ERROR_BACKUP_MISMATCH);
-
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
-        };
-
-        # Reset the console logging
-        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
-
-        # if the DB section does not match, then upgrade
-        if ($iResult == ERROR_BACKUP_MISMATCH)
-        {
-            $self->infoFileUpgrade();
-        }
-# CSHANG If matches should indicate no upgrade needed? Maybe wait for both backup and archive to be looked at.
+        $self->infoFileUpgrade($oBackupInfo, $oArchiveInfo);
     }
 
-    #     else
-    #     {
-    #         # if the directory is not empty, then reconstruct the info file if they've used force and then check the reconstructed file
-    #         ->{strBackupClusterPath}
-    # #       if the contents are the same as the current DB
-    # #       then there is no need to upgrade,
-    # #       else upgrade
-    # #   else directory is empty so just create the files
-
-#     $oArchiveInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -485,6 +437,71 @@ sub dbInfoGet
     return logDebugReturn($strOperation);
 }
 
+####################################################################################################################################
+# upgradeCheck
+#
+# Checks the info file to see if an upgrade is necessary.
+####################################################################################################################################
+sub upgradeCheck
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oInfo,
+        $strPathType,
+        $iExpectedError,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->upgradeCheck', \@_,
+            {name => 'oInfo', trace => true},
+            {name => 'strPathType'},
+            {name => 'iExpectedError'},
+        );
+
+    my $iResult = 0;
+    my $strResultMessage = undef;
+
+    # Turn off console logging to control when to display the error
+    logLevelSet(undef, OFF);
+
+    eval
+    {
+        ($strPathType eq PATH_BACKUP_CLUSTER)
+            ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+                $self->{oDb}{ullDbSysId}, true)
+            : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, true);
+        return true;
+    }
+    or do
+    {
+        # Confess unhandled errors
+        confess $EVAL_ERROR if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != $iExpectedError);
+
+        # If this is a backrest error then capture the last code and message
+        $iResult = $EVAL_ERROR->code();
+        $strResultMessage = $EVAL_ERROR->message();
+    };
+
+    # Reset the console logging
+    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+
+    # Throw an error if the result is not the expected value passed
+    if ($iResult != 0 && $iResult != $iExpectedError)
+    {
+        confess &log(ERROR, $strResultMessage, $iResult);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => ($iResult != 0 ? true : false)},
+    );
+}
 
 ####################################################################################################################################
 # infoFileUpgrade
