@@ -194,7 +194,7 @@ sub stanzaUpgrade
     my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER), false, false);
 
-    # If the info either info file does not exist then indicate that a stanza create must be performed.
+    # If either info file does not exist then indicate that a stanza create must be performed.
     if (!($oBackupInfo->{bExists} && $oArchiveInfo->{bExists}))
     {
         confess &log(ERROR, "upgrade is not necessary - the stanza does not exist\n" .
@@ -205,7 +205,13 @@ sub stanzaUpgrade
     if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH) ||
         $self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
     {
-        $self->infoFileUpgrade($oBackupInfo, $oArchiveInfo);
+        # $self->infoFileUpgrade($oBackupInfo, $oArchiveInfo);
+        $oBackupInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+            $self->{oDb}{ullDbSysId}, $oBackupInfo->dbHistoryIdGet() + 1);
+        $oBackupInfo->save();
+
+        $oArchiveInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
+        $oArchiveInfo->save();
     }
 
     # Return from function and log return values if any
