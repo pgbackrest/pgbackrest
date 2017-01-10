@@ -287,38 +287,60 @@ eval
         if (!$bDryRun)
         {
             my $bLogDetail = $strLogLevel eq 'detail';
-            my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/host";
+            my $strBuildBasePath = "${strBackRestBase}/test/.vagrant/libc";
+            my $strBuildPath = "${strBuildBasePath}/host";
+            my $strMakeFile = "${strBuildPath}/Makefile.PL";
+            my $strLibCPath = "${strBackRestBase}/libc";
 
-            &log(INFO, "Build/test/install C library for host (${strBuildPath})");
+            # Find the lastest modified time in the libc dir
+            my $hManifest = fileManifest($strLibCPath);
+            my $lTimestampLast = 0;
 
-            filePathCreate($strBuildPath, undef, true, true);
-            executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
-
-            executeTest(
-                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
-                {bShowOutputAsync => $bLogDetail});
-            executeTest("make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-            executeTest("sudo make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
-            executeTest("cd ${strBuildPath} && perl t/pgBackRest-LibC.t", {bShowOutputAsync => $bLogDetail});
-
-            # Load the module dynamically
-            require pgBackRest::LibC;
-            pgBackRest::LibC->import(qw(:debug));
-
-            # Do a basic test to make sure it installed correctly
-            if (&UVSIZE != 8)
+            foreach my $strFile (sort(keys(%{$hManifest})))
             {
-                confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                {
+                    $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                }
             }
 
-            # Also check the version number
-            my $strLibCVersion =
-                BACKREST_VERSION =~ /dev$/ ?
-                    substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
-
-            if (libCVersion() ne $strLibCVersion)
+            # Rebuild if the modification time of the makefile does not equal the latest file in libc
+            if (!fileExists($strMakeFile) || fileStat($strMakeFile)->mtime != $lTimestampLast)
             {
-                confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+                &log(INFO, "Build/test/install C library for host (${strBuildPath})");
+
+                executeTest("sudo rm -rf ${strBuildBasePath}");
+                filePathCreate($strBuildPath, undef, true, true);
+                executeTest("cp -rp ${strLibCPath}/* ${strBuildPath}");
+                utime($lTimestampLast, $lTimestampLast, $strMakeFile) or
+                    confess "unable to set time for ${strMakeFile}" . (defined($!) ? ":$!" : '');
+
+                executeTest(
+                    "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
+                    {bShowOutputAsync => $bLogDetail});
+                executeTest("make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                executeTest("sudo make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+                executeTest("cd ${strBuildPath} && perl t/pgBackRest-LibC.t", {bShowOutputAsync => $bLogDetail});
+
+                # Load the module dynamically
+                require pgBackRest::LibC;
+                pgBackRest::LibC->import(qw(:debug));
+
+                # Do a basic test to make sure it installed correctly
+                if (&UVSIZE != 8)
+                {
+                    confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                }
+
+                # Also check the version number
+                my $strLibCVersion =
+                    BACKREST_VERSION =~ /dev$/ ?
+                        substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
+
+                if (libCVersion() ne $strLibCVersion)
+                {
+                    confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+                }
             }
 
             # Exit if only testing the C library
@@ -370,30 +392,34 @@ eval
 
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
-                executeTest(
-                    "docker run -itd -h test-build --name=test-build" .
-                    " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
-
                 my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/${strBuildVM}";
-                &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
-                filePathCreate($strBuildPath, undef, true, true);
-                executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+                if (!fileExists($strBuildPath))
+                {
+                    executeTest(
+                        "docker run -itd -h test-build --name=test-build" .
+                        " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
 
-                executeTest(
-                    "docker exec -i test-build " .
-                    "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'");
-                executeTest(
-                    "docker exec -i test-build " .
-                    "make -C ${strBuildPath}", {bSuppressStdErr => true});
-                executeTest(
-                    "docker exec -i test-build " .
-                    "make -C ${strBuildPath} test");
-                executeTest(
-                    "docker exec -i test-build " .
-                    "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+                    &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
-                executeTest("docker rm -f test-build");
+                    filePathCreate($strBuildPath, undef, true, true);
+                    executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'");
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath}", {bSuppressStdErr => true});
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath} test");
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+
+                    executeTest("docker rm -f test-build");
+                }
             }
         }
 

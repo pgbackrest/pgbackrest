@@ -203,6 +203,10 @@
                     <release-item>
                         <p>Moved <code>File->manifest()</code> into the <code>FileCommon.pm</code> module.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>C Library builds only run when C library has actually changed.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
