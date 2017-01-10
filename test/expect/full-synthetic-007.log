@@ -414,16 +414,6 @@ P00   WARN: aborted backup of same type exists, will be cleaned to remove invali
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
 P00 DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
 P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/base, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/1, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/32768, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/global, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_clog, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_stat, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_tblspc, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     Backup->fileNotInManifest=>: stryFile = (file.tmp.gz, pg_data/PG_VERSION.gz)
 P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/pg_data/PG_VERSION.gz
 P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tmp/file.tmp.gz
@@ -504,16 +494,6 @@ P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/base, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/1, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_data/base/32768, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/global, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_clog, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_stat, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_data/pg_tblspc, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base, strPathType = backup:tmp
@@ -728,19 +708,10 @@ P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_stat exists
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
 P00 DETAIL: check [TEST_PATH]/db-master/db/pg_config exists
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_config, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
@@ -750,24 +721,14 @@ P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_co
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_config, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_config, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_config, strPathType = db:absolute
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/pg_stat
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/pg_stat, strPathType = db:absolute
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = deleteme, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/recovery.done
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
@@ -877,14 +838,6 @@ P00  DEBUG:     File->remove=>: bRemoved = true
 P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = base, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/1, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/16384, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = base/32768, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = global, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_clog, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [TEST_PATH]/db-master/db/base/base, strPathType = db:absolute
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [TEST_PATH]/db-master/db/base/base/1, strPathType = db:absolute
@@ -1164,12 +1117,6 @@ P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc, strPathType = backup:tmp
@@ -1415,12 +1362,6 @@ P00   WARN: aborted backup of same type exists, will be cleaned to remove invali
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
 P00 DETAIL: clean backup temp path: [TEST_PATH]/backup/repo/temp/db.tmp
 P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     Backup->fileNotInManifest=>: stryFile = ()
 P00  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = incr
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
@@ -1471,15 +1412,6 @@ P00  DEBUG:     Protocol::CommonMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_data, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 1, oManifestHashRef = [hash], strPathFileOp = pg_tblspc, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/1/[TS_PATH-1]/16384, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 2, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/2, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 3, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/2/[TS_PATH-1], strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
-P00  DEBUG:     File->manifestRecurse(): iDepth = 4, oManifestHashRef = [hash], strPathFileOp = pg_tblspc/2/[TS_PATH-1]/32768, strPathOp = [TEST_PATH]/backup/repo/temp/db.tmp, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc, strPathType = backup:tmp

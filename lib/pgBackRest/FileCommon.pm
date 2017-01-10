@@ -12,7 +12,7 @@ use Digest::SHA;
 use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl qw(:mode :flock O_RDONLY O_WRONLY O_CREAT O_TRUNC);
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 use File::Path qw(make_path);
 use File::stat;
 use IO::Handle;
@@ -282,6 +282,207 @@ sub fileList
 }
 
 push @EXPORT, qw(fileList);
+
+####################################################################################################################################
+# fileManifest
+#
+# Generate a complete list of all directories/links/files in a directory/subdirectories.
+####################################################################################################################################
+sub fileManifest
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileManifest', \@_,
+            {name => 'strPath', trace => true},
+        );
+
+    # Generate the manifest
+    my $hManifest = {};
+    fileManifestRecurse($strPath, undef, 0, $hManifest);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hManifest', value => $hManifest, trace => true}
+    );
+}
+
+push @EXPORT, qw(fileManifest);
+
+sub fileManifestRecurse
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+        $strSubPath,
+        $iDepth,
+        $hManifest,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileManifestRecurse', \@_,
+            {name => 'strPath', trace => true},
+            {name => 'strSubPath', required => false, trace => true},
+            {name => 'iDepth', default => 0, trace => true},
+            {name => 'hManifest', required => false, trace => true},
+        );
+
+    # Set operation and debug strings
+    my $strPathRead = $strPath . (defined($strSubPath) ? "/${strSubPath}" : '');
+    my $hPath;
+    my $strFilter;
+
+    # If this is the top level stat the path to discover if it is actually a file
+    if ($iDepth == 0 && !S_ISDIR((fileStat($strPathRead))->mode))
+    {
+        $strFilter = basename($strPathRead);
+        $strPathRead = dirname($strPathRead);
+    }
+
+    # Open the path
+    if (!opendir($hPath, $strPathRead))
+    {
+        my $strError = "${strPathRead} could not be read: " . $!;
+        my $iErrorCode = ERROR_PATH_OPEN;
+
+        # If the path does not exist and is not the root path requested then return, else error
+        # It's OK for paths to go away during execution (databases are a dynamic thing!)
+        if (!fileExists($strPathRead))
+        {
+            if ($iDepth != 0)
+            {
+                return;
+            }
+
+            $strError = "${strPathRead} does not exist";
+            $iErrorCode = ERROR_PATH_MISSING;
+        }
+
+        confess &log(ERROR, $strError, $iErrorCode);
+    }
+
+    # Get a list of all files in the path (except ..)
+    my @stryFileList = grep(!/^\..$/i, readdir($hPath));
+
+    close($hPath);
+
+    # Loop through all subpaths/files in the path
+    foreach my $strFile (sort(@stryFileList))
+    {
+        # Skip this file if it does not match the filter
+        if (defined($strFilter) && $strFile ne $strFilter)
+        {
+            next;
+        }
+
+        my $strPathFile = "${strPathRead}/$strFile";
+        my $bCurrentDir = $strFile eq '.';
+
+        # Create the file and path names
+        if ($iDepth != 0)
+        {
+            if ($bCurrentDir)
+            {
+                $strFile = $strSubPath;
+                $strPathFile = $strPathRead;
+            }
+            else
+            {
+                $strFile = "${strSubPath}/${strFile}";
+            }
+        }
+
+        # Stat the path/file
+        my $oStat = lstat($strPathFile);
+
+        # Check for errors in stat
+        if (!defined($oStat))
+        {
+            my $strError = "${strPathFile} could not be read: " . $!;
+            my $iErrorCode = ERROR_FILE_READ;
+
+            # If the file does not exist then go to the next file, else error
+            # It's OK for files to go away during execution (databases are a dynamic thing!)
+            if (fileExists($strPathFile))
+            {
+                next;
+            }
+
+            confess &log(ERROR, $strError, $iErrorCode);
+        }
+
+        # Check for regular file
+        if (S_ISREG($oStat->mode))
+        {
+            $hManifest->{$strFile}{type} = 'f';
+
+            # Get inode
+            $hManifest->{$strFile}{inode} = $oStat->ino;
+
+            # Get size
+            $hManifest->{$strFile}{size} = $oStat->size;
+
+            # Get modification time
+            $hManifest->{$strFile}{modification_time} = $oStat->mtime;
+        }
+        # Check for directory
+        elsif (S_ISDIR($oStat->mode))
+        {
+            $hManifest->{$strFile}{type} = 'd';
+        }
+        # Check for link
+        elsif (S_ISLNK($oStat->mode))
+        {
+            $hManifest->{$strFile}{type} = 'l';
+
+            # Get link destination
+            $hManifest->{$strFile}{link_destination} = readlink($strPathFile);
+
+            if (!defined($hManifest->{$strFile}{link_destination}))
+            {
+                if (-e $strPathFile)
+                {
+                    confess &log(ERROR, "${strPathFile} error reading link: " . $!, ERROR_LINK_OPEN);
+                }
+            }
+        }
+        # Not a recognized type
+        else
+        {
+            confess &log(ERROR, "${strPathFile} is not of type directory, file, or link", ERROR_FILE_INVALID);
+        }
+
+        # Get user name
+        $hManifest->{$strFile}{user} = getpwuid($oStat->uid);
+
+        # Get group name
+        $hManifest->{$strFile}{group} = getgrgid($oStat->gid);
+
+        # Get mode
+        if ($hManifest->{$strFile}{type} ne 'l')
+        {
+            $hManifest->{$strFile}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
+        }
+
+        # Recurse into directories
+        if ($hManifest->{$strFile}{type} eq 'd' && !$bCurrentDir)
+        {
+            fileManifestRecurse($strPath, $strFile, $iDepth + 1, $hManifest);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
 # fileMode

@@ -199,6 +199,10 @@
 
                         <p>Return proper error code when unable to convert a relative path to an absolute path.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Moved <code>File->manifest()</code> into the <code>FileCommon.pm</code> module.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

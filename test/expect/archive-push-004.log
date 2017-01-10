@@ -19,7 +19,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -93,7 +92,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -116,7 +114,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -145,7 +142,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -180,7 +176,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -215,7 +210,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -242,7 +236,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -271,7 +264,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -314,7 +306,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -337,7 +328,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -366,7 +356,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -393,7 +382,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -422,7 +410,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000001.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -465,7 +452,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -488,7 +474,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -517,7 +502,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -540,7 +524,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -569,7 +552,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -592,7 +574,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -621,7 +602,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -644,7 +624,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -673,7 +652,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -708,7 +686,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -743,7 +720,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -770,7 +746,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -799,7 +774,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -842,7 +816,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -865,7 +838,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -894,7 +866,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -921,7 +892,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -950,7 +920,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000005.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -993,7 +962,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1016,7 +984,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1045,7 +1012,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1068,7 +1034,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1097,7 +1062,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1120,7 +1084,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1149,7 +1112,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1172,7 +1134,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1201,7 +1162,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1236,7 +1196,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1271,7 +1230,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1298,7 +1256,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1327,7 +1284,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
@@ -1370,7 +1326,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1393,7 +1348,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1422,7 +1376,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7
@@ -1449,7 +1402,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00  DEBUG:     Archive->xfer: no WAL segments to archive
 P00  DEBUG:     Archive->pushProcess: transfer found 0 WAL segments - exiting
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
@@ -1478,7 +1430,6 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
-P00  DEBUG:     File->manifestRecurse(): iDepth = 0, oManifestHashRef = [hash], strPathFileOp = [undef], strPathOp = [TEST_PATH]/db-master/repo/archive/db/out, strPathType = db:absolute
 P00   INFO: WAL segments to archive: total = 1, size = 16MB
 P00  DEBUG:     Archive->xfer: bArchiveFile = true, bDestinationCompress = true, bSourceCompressed = false, strFile = 000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P00  DEBUG:     Archive->walInfo(): strWalFile = [TEST_PATH]/db-master/repo/archive/db/out/000000010000000100000009.partial-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
