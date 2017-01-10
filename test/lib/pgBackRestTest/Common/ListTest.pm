@@ -51,6 +51,7 @@ sub testListGet
     my $iyModuleTestRun = shift;
     my $strDbVersion = shift;
     my $iProcessMax = shift;
+    my $bCoverage = shift;
 
     my $oTestDef = testDefGet();
     my $oyVm = vmGet();
@@ -121,6 +122,13 @@ sub testListGet
                                     next if (
                                         $bTestIndividual && @{$iyModuleTestRun} != 0 &&
                                             !grep(/^$iTestRunIdx$/i, @{$iyModuleTestRun}));
+
+                                    # Skip this run if coverage is requested and this test does not provide coverage
+                                    next if (
+                                        $bCoverage &&
+                                        (($bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}{$iTestRunIdx})) ||
+                                         (!$bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL}))) &&
+                                        !defined($oModule->{&TESTDEF_TEST_COVERAGE}));
 
                                     my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];
 

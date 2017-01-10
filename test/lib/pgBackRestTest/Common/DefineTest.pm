@@ -27,6 +27,10 @@ use constant TESTDEF_EXPECT                                         => 'expect';
     push @EXPORT, qw(TESTDEF_EXPECT);
 use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
+use constant TESTDEF_TEST_ALL                                       => 'all';
+    push @EXPORT, qw(TESTDEF_TEST_ALL);
+use constant TESTDEF_TEST_COVERAGE                                  => 'coverage';
+    push @EXPORT, qw(TESTDEF_TEST_COVERAGE);
 use constant TESTDEF_TEST_INDIVIDUAL                                => 'individual';
     push @EXPORT, qw(TESTDEF_TEST_INDIVIDUAL);
 use constant TESTDEF_TEST_NAME                                      => 'name';
@@ -39,6 +43,16 @@ use constant TESTDEF_TEST_PROCESS                                   => 'process'
     push @EXPORT, qw(TESTDEF_TEST_PROCESS);
 use constant TESTDEF_TEST_DB                                        => 'db';
     push @EXPORT, qw(TESTDEF_TEST_DB);
+
+use constant TESTDEF_COVERAGE_FULL                                  => true;
+    push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
+use constant TESTDEF_COVERAGE_PARTIAL                               => false;
+    push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
+
+use constant TESTDEF_MODULE_FILE                                    => 'File';
+    push @EXPORT, qw(TESTDEF_MODULE_FILE);
+use constant TESTDEF_MODULE_FILE_COMMON                             => TESTDEF_MODULE_FILE . 'Common';
+    push @EXPORT, qw(TESTDEF_MODULE_FILE_COMMON);
 
 ################################################################################################################################
 # Define tests
@@ -85,6 +99,12 @@ my $oTestDef =
         {
             &TESTDEF_MODULE_NAME => 'file',
             &TESTDEF_TEST_CONTAINER => true,
+
+            &TESTDEF_TEST_COVERAGE =>
+            {
+                &TESTDEF_MODULE_FILE => TESTDEF_COVERAGE_FULL,
+                &TESTDEF_MODULE_FILE_COMMON => TESTDEF_COVERAGE_FULL,
+            },
 
             &TESTDEF_TEST =>
             [

@@ -254,9 +254,9 @@ local $EVAL_ERROR = undef; eval
     lockRelease();
     exitSafe(0);
 
-    # It shouldn't be possible to get here
+    # uncoverable statement - exit should happen above
     &log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
-    exit ERROR_ASSERT;
+    exit ERROR_ASSERT;                                              # uncoverable statement
 }
 
 ####################################################################################################################################
@@ -267,6 +267,6 @@ or do
     exitSafe(undef, $EVAL_ERROR);
 };
 
-# It shouldn't be possible to get here
+# uncoverable statement - errors should be handled in the do block above
 &log(ASSERT, 'execution reached invalid location in ' . __FILE__ . ', line ' . __LINE__);
-exit ERROR_ASSERT;
+exit ERROR_ASSERT;                                                  # uncoverable statement

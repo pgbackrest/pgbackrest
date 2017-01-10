@@ -66,6 +66,7 @@ sub exitSafe
     {
         lockRelease(false);
     }
+    # uncoverable branch false - this eval exists only to suppress lock errors so original error will not be lost
     or do {};
 
     # If exit code is not defined then try to get it from the exception

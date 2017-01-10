@@ -286,7 +286,8 @@ sub perlInstall
     elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
     {
         return $strImage .
-            "RUN apt-get install -y libdbd-pg-perl libdbi-perl";
+            "RUN apt-get install -y libdbd-pg-perl libdbi-perl" .
+            ($strOS eq VM_U16 ? ' libdevel-cover-perl' : '');
     }
 
     confess &log(ERROR, "unable to install perl for os '${strOS}'");
@@ -413,7 +414,9 @@ sub containerBuild
         # Create test user
         $strScript .=
             "\n\n# Create test user\n" .
-            userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
+            userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . "\n" .
+            'RUN mkdir -m 750 /home/' . TEST_USER . "/test\n" .
+            'RUN chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . '/test';
 
         # Suppress dpkg interactive output
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)

@@ -223,6 +223,10 @@
             <release-test-list>
                 <release-feature-list>
                     <release-item>
+                        <p>Added integration for testing coverage with <code>Devel::Cover</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added unit tests for low-level functions in the <code>File</code> and <code>BackupCommon</code> modules.</p>
                     </release-item>
                 </release-feature-list>

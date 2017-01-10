@@ -708,7 +708,7 @@ sub remoteTypeTest
     my $self = shift;
     my $strRemoteType = shift;
 
-    return $self->{strRemoteType} eq $strRemoteType ? true : false;
+    return $self->remoteType() eq $strRemoteType ? true : false;
 }
 
 ####################################################################################################################################

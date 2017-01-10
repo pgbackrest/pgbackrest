@@ -65,8 +65,9 @@ test.pl [options]
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --db-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
-   --no-lint            Disable static source code analysis
-   --libc-only          Compile the C library and run tests only
+   --no-lint            disable static source code analysis
+   --libc-only          compile the C library and run tests only
+   --coverage           perform coverage analysis
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -106,11 +107,12 @@ my $bHelp = false;
 my $bQuiet = false;
 my $strDbVersion = 'minimal';
 my $bLogForce = false;
-my $strVm = 'all';
+my $strVm = VM_ALL;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
 my $bLibCOnly = false;
+my $bCoverage = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -133,7 +135,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'db-version=s' => \$strDbVersion,
             'log-force' => \$bLogForce,
             'no-lint' => \$bNoLint,
-            'libc-only' => \$bLibCOnly)
+            'libc-only' => \$bLibCOnly,
+            'coverage' => \$bCoverage)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -195,6 +198,20 @@ eval
     if (!defined($strTestPath))
     {
         $strTestPath = cwd() . '/test';
+    }
+
+    # Coverage can only be run with u16 containers due to version compatibility issues
+    if ($bCoverage)
+    {
+        if ($strVm eq VM_ALL)
+        {
+            &log(INFO, 'Set --vm=' . VM_U16 . ' for coverage testing');
+            $strVm = VM_U16;
+        }
+        elsif ($strVm ne VM_U16)
+        {
+            confess &log(ERROR, 'only --vm=' . VM_U16 . ' can be used for coverage testing');
+        }
     }
 
     # Get the base backrest path
@@ -310,7 +327,8 @@ eval
 
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
-        my $oyTestRun = testListGet($strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax);
+        my $oyTestRun = testListGet(
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverage);
 
         if (@{$oyTestRun} == 0)
         {
@@ -328,6 +346,7 @@ eval
         #-----------------------------------------------------------------------------------------------------------------------
         my $iTestFail = 0;
         my $oyProcess = [];
+        my $strCoveragePath = "${strTestPath}/cover_db";
 
         if (!$bDryRun || $bVmOut)
         {
@@ -339,7 +358,7 @@ eval
             }
 
             executeTest("sudo rm -rf ${strTestPath}/*");
-            filePathCreate($strTestPath, undef, true);
+            filePathCreate($strCoveragePath, '0770', true, true);
         }
 
         # Build the C Library in container
@@ -347,7 +366,7 @@ eval
         if (!$bDryRun)
         {
             my $bLogDetail = $strLogLevel eq 'detail';
-            my @stryBuildVm = $strVm eq 'all' ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
+            my @stryBuildVm = $strVm eq VM_ALL ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
 
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
@@ -490,8 +509,10 @@ eval
                         {
                             executeTest(
                                 'docker run -itd -h ' . $$oTest{&TEST_VM} . "-test --name=${strImage}" .
+                                " -v ${strCoveragePath}:${strCoveragePath} " .
                                 " -v ${strHostTestPath}:${strVmTestPath}" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . '/' . $$oTest{&TEST_VM} .
+                                " -v ${strBackRestBase}:${strBackRestBase} " .
+                                containerNamespace() . '/' . $$oTest{&TEST_VM} .
                                 "-loop-test-pre");
                         }
                     }
@@ -506,7 +527,11 @@ eval
 
                     # Create command
                     my $strCommand =
-                        ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') . abs_path($0) .
+                        ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                        ($bCoverage ? testRunExe(
+                            abs_path($0), dirname($strCoveragePath), $strBackRestBase, $$oTest{&TEST_MODULE},
+                            $$oTest{&TEST_NAME}, defined($$oTest{&TEST_RUN}) ? $$oTest{&TEST_RUN} : 'all') :
+                            abs_path($0)) .
                         " --test-path=${strVmTestPath}" .
                         " --vm=$$oTest{&TEST_VM}" .
                         " --vm-id=${iVmIdx}" .
@@ -517,6 +542,7 @@ eval
                         (defined($$oTest{&TEST_PROCESS}) ? ' --process-max=' . $$oTest{&TEST_PROCESS} : '') .
                         ($strLogLevel ne lc(INFO) ? " --log-level=${strLogLevel}" : '') .
                         ' --pgsql-bin=' . $$oTest{&TEST_PGSQL_BIN} .
+                        ($bCoverage ? ' --coverage' : '') .
                         ($bLogForce ? ' --log-force' : '') .
                         ($bDryRun ? ' --dry-run' : '') .
                         ($bVmOut ? ' --vm-out' : '') .
@@ -559,6 +585,20 @@ eval
         }
         while ($iVmTotal > 0);
 
+        # Write out coverage info
+        #-----------------------------------------------------------------------------------------------------------------------
+        if ($bCoverage)
+        {
+            &log(INFO, 'Writing coverage report');
+            executeTest("rm -rf ${strBackRestBase}/test/coverage");
+            executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+            executeTest("cover -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest("rm -rf ${strCoveragePath}_temp");
+            executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+            executeTest("cover -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest("rm -rf ${strCoveragePath}_temp");
+        }
+
         # Print test info and exit
         #-----------------------------------------------------------------------------------------------------------------------
         if ($bDryRun)
@@ -592,6 +632,7 @@ eval
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
+        $bCoverage,                                                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)
