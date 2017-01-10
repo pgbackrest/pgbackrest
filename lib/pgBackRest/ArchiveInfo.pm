@@ -248,7 +248,12 @@ sub reconstruct
     );
 
     my $strInvalidFileStructure = undef;
-
+# CSHANG This functions is in trouble with 10.x - the order of the upper dirs will be off so need to sort
+# vagrant@vagrant:~$ ls -l
+# total 2304
+# drwxr-xr-x 2 vagrant postgres    4096 Jan  9 20:45 10.0-3
+# drwxr-xr-x 2 vagrant postgres    4096 Jan  9 21:39 9.4-1
+# drwxr-xr-x 2 vagrant postgres    4096 Jan  9 20:45 9.5-2
     # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
     {
@@ -320,9 +325,8 @@ sub reconstruct
         $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
 
-    # ??? This is a precursor for stanza-upgrade: If the DB section does not exist, then there were no valid directories to read
-    # from so create the file. Can't raise warning b/c log-log-level console in calling routine is turned off -- determine how to
-    # handle cases above where directory structure or files are causing errors
+    # If the DB section does not exist, then there were no valid directories to read from so create the DB and History sections but
+    # don't save the file.
     if (!$self->test(INFO_ARCHIVE_SECTION_DB))
     {
         $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
@@ -335,6 +339,34 @@ sub reconstruct
         {name => 'strInvalidFileStructure', value => $strInvalidFileStructure}
     );
 }
+
+# CSHANG Maybe use for constructing list for expiring archive? Need upper level dirs (9.4-1) to get the system id
+# ####################################################################################################################################
+# # validate
+# #
+# # Validate that the info file reconstructed from the existing directories and files is the
+# ####################################################################################################################################
+# sub validate
+# {
+#     my $self = shift;
+#
+#     # Assign function parameters, defaults, and log debug info
+#     my
+#     (
+#         $strOperation,
+#         $oFile,
+#         $strCurrentDbVersion,
+#         $ullCurrentDbSysId,
+#     ) =
+#         logDebugParam
+#     (
+#         __PACKAGE__ . '->reconstruct', \@_,
+#         {name => 'oFile'},
+#         {name => 'strCurrentDbVersion'},
+#         {name => 'ullCurrentDbSysId'},
+#     );
+#
+
 
 ####################################################################################################################################
 # dbHistoryIdGet

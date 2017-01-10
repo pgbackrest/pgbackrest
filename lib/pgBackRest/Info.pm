@@ -18,6 +18,7 @@ use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
@@ -48,7 +49,7 @@ use constant INFO_STANZA_STATUS_NO_BACKUP_MESSAGE                   => 'no valid
 use constant INFO_KEY_CODE                                          => 'code';
 use constant INFO_KEY_DELTA                                         => 'delta';
 use constant INFO_KEY_FORMAT                                        => 'format';
-use constant INFO_KEY_ID                                            => 'id';
+use constant INFO_KEY_ID                                            => INFO_HISTORY_ID;
 use constant INFO_KEY_LABEL                                         => 'label';
 use constant INFO_KEY_MESSAGE                                       => 'message';
 use constant INFO_KEY_PRIOR                                         => 'prior';
@@ -56,9 +57,9 @@ use constant INFO_KEY_REFERENCE                                     => 'referenc
 use constant INFO_KEY_SIZE                                          => 'size';
 use constant INFO_KEY_START                                         => 'start';
 use constant INFO_KEY_STOP                                          => 'stop';
-use constant INFO_KEY_SYSTEM_ID                                     => 'system-id';
+use constant INFO_KEY_SYSTEM_ID                                     => INFO_SYSTEM_ID;
 use constant INFO_KEY_TYPE                                          => 'type';
-use constant INFO_KEY_VERSION                                       => 'version';
+use constant INFO_KEY_VERSION                                       => INFO_DB_VERSION;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -308,21 +309,7 @@ sub backupList
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"), false, false);
 
     # Build the db list
-    my @oyDbList;
-
-    foreach my $iHistoryId ($oBackupInfo->keys(INFO_BACKUP_SECTION_DB_HISTORY))
-    {
-        my $oDbHash =
-        {
-            &INFO_KEY_ID => $iHistoryId,
-            &INFO_KEY_VERSION =>
-                $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
-            &INFO_KEY_SYSTEM_ID =>
-                $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
-        };
-
-        push(@oyDbList, $oDbHash);
-    }
+    my @oyDbList = $oBackupInfo->dbHistoryList();
 
     # Build the backup list
     my @oyBackupList;

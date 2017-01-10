@@ -156,7 +156,7 @@ sub stanzaCreate
     if ($iResult != 0)
     {
         &log(WARN, "unable to create stanza '" . optionGet(OPTION_STANZA) . "'");
-        confess &log(ERROR, $strResultMessage, $iResult);
+        &log(ERROR, $strResultMessage, $iResult);
     }
 
     # Return from function and log return values if any
@@ -187,38 +187,29 @@ sub stanzaUpgrade
         protocolGet(NONE)
     );
 
-    my $iResult = 0;
-    my $strResultMessageBackup = undef;
-
-    # Create the archive info and backup info objects
-    my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), false);
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER), false, false);
-
-    # If either info file does not exist then indicate that a stanza create must be performed.
-    if (!($oBackupInfo->{bExists} && $oArchiveInfo->{bExists}))
-    {
-        confess &log(ERROR, "upgrade is not necessary - the stanza does not exist\n" .
-            "HINT: Run stanza-create to create the stanza.", ERROR_FILE_INVALID);
-    }
+    # Get the archive info and backup info files; if either does not exist an error will be thrown
+    my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE));
+    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
 
     # If the DB section does not match, then upgrade
     if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH) ||
         $self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
     {
-        # $self->infoFileUpgrade($oBackupInfo, $oArchiveInfo);
         $oBackupInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
             $self->{oDb}{ullDbSysId}, $oBackupInfo->dbHistoryIdGet() + 1);
         $oBackupInfo->save();
 
         $oArchiveInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
         $oArchiveInfo->save();
+
+# CSHANG Maybe should always just reconstruct the file? But can't do that with archiveInfo can we? B/c the directory may not exist -it only gets created with the switch-xlog or archive push so if we did it now, we'd just wind up reverting the file so maybe validate could only go so far and then we check the db section based on the current DB?
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iResult', value => $iResult, trace => true}
+        {name => 'iResult', value => 0, trace => true}
     );
 }
 

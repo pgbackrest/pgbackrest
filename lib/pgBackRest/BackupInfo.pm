@@ -20,6 +20,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
@@ -641,6 +642,35 @@ sub dbHistoryIdGet
         $strOperation,
         {name => 'iDbHistoryId', value => $iDbHistoryId}
     );
+}
+
+####################################################################################################################################
+# dbHistoryList
+#
+# Get the data from the db history section.
+####################################################################################################################################
+sub dbHistoryList
+{
+    my $self = shift;
+
+    my @oyDbList;
+
+    foreach my $iHistoryId ($self->keys(INFO_BACKUP_SECTION_DB_HISTORY))
+    {
+        my $oDbHash =
+        {
+            &INFO_HISTORY_ID => $iHistoryId,
+            &INFO_DB_VERSION =>
+                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
+            &INFO_SYSTEM_ID =>
+                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
+        };
+
+        push(@oyDbList, $oDbHash);
+    }
+
+    # Return from function and log return values if any
+    return @oyDbList;
 }
 
 ####################################################################################################################################
