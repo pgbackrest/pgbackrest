@@ -207,6 +207,10 @@
                     <release-item>
                         <p>C Library builds only run when C library has actually changed.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

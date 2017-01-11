@@ -5,7 +5,7 @@
 # regarding the stanza database version, database WAL segment system id and other information to ensure that archiving is being
 # performed on the proper database.
 ####################################################################################################################################
-package pgBackRest::ArchiveInfo;
+package pgBackRest::Archive::ArchiveInfo;
 use parent 'pgBackRest::Common::Ini';
 
 use strict;
@@ -21,7 +21,7 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::ArchiveCommon;
+use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;

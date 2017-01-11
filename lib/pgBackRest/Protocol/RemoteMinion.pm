@@ -12,7 +12,7 @@ use File::Basename qw(dirname);
 
 use pgBackRest::BackupFile;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive;
+use pgBackRest::Archive::Archive;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
@@ -78,7 +78,7 @@ sub init
         $self
     );
 
-    my $oArchive = new pgBackRest::Archive();
+    my $oArchive = new pgBackRest::Archive::Archive();
     my $oInfo = new pgBackRest::Info();
     my $oDb = new pgBackRest::Db();
 

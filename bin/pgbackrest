@@ -18,7 +18,7 @@ use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
 
-use pgBackRest::Archive;
+use pgBackRest::Archive::Archive;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
@@ -131,7 +131,7 @@ local $EVAL_ERROR = undef; eval
             confess &log(ERROR, commandGet() . ' command must be run on the db host', ERROR_HOST_INVALID);
         }
 
-        exitSafe(new pgBackRest::Archive()->process());
+        exitSafe(new pgBackRest::Archive::Archive()->process());
     }
 
     ################################################################################################################################
@@ -139,7 +139,7 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     if (commandTest(CMD_CHECK))
     {
-        exitSafe(new pgBackRest::Archive()->check());
+        exitSafe(new pgBackRest::Archive::Archive()->check());
     }
 
     ################################################################################################################################

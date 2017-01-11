@@ -14,7 +14,7 @@ use Scalar::Util qw(looks_like_number);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
-use pgBackRest::ArchiveCommon;
+use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
@@ -280,7 +280,7 @@ sub process
                                        $strArchiveRetentionBackup, INFO_BACKUP_KEY_ARCHIVE_START))
                 {
                     # Get archive info
-                    my $oArchive = new pgBackRest::Archive();
+                    my $oArchive = new pgBackRest::Archive::Archive();
                     my $strArchiveId = $oArchive->getArchiveId($oFile);
 
                     my $strArchiveExpireMax;

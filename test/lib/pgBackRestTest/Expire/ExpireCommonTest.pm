@@ -110,7 +110,7 @@ sub stanzaCreate
     filePathCreate($strArchiveClusterPath, undef, undef, true);
 
     # Create the archive info object
-    $$oStanza{oArchiveInfo} = new pgBackRest::ArchiveInfo($strArchiveClusterPath, false);
+    $$oStanza{oArchiveInfo} = new pgBackRest::Archive::ArchiveInfo($strArchiveClusterPath, false);
     $$oStanza{oArchiveInfo}->create($$oStanza{strDbVersion}, $$oStanza{ullDbSysId});
 
     # Create the stanza archive version path

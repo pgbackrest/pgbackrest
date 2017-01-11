@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ARCHIVE MODULE
 ####################################################################################################################################
-package pgBackRest::Archive;
+package pgBackRest::Archive::Archive;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -17,8 +17,8 @@ use Scalar::Util qw(blessed);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
-use pgBackRest::ArchiveCommon;
-use pgBackRest::ArchiveInfo;
+use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
@@ -421,7 +421,7 @@ sub getCheck
     {
         # check that the archive info is compatible with the database
         $strArchiveId =
-            (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
+            (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
     }
 
     # Return from function and log return values if any
@@ -512,7 +512,7 @@ sub getArchiveId
     }
     else
     {
-        $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->archiveId();
+        $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->archiveId();
     }
 
     # Return from function and log return values if any
@@ -803,7 +803,7 @@ sub pushCheck
     else
     {
         # If the info file exists check db version and system-id else error
-        $strArchiveId = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(
+        $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(
             $strDbVersion, $ullDbSysId);
 
         # Check if the WAL segment already exists in the archive

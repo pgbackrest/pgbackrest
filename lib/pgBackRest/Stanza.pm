@@ -16,8 +16,8 @@ use Exporter qw(import);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Archive;
-use pgBackRest::ArchiveInfo;
+use pgBackRest::Archive::Archive;
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupInfo;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
@@ -150,7 +150,7 @@ sub stanzaCreate
 
     # Create the archive.info file and local variables
     my ($iResult, $strResultMessage) =
-        $self->infoFileCreate((new pgBackRest::ArchiveInfo($strParentPathArchive, false)), $oFile,
+        $self->infoFileCreate((new pgBackRest::Archive::ArchiveInfo($strParentPathArchive, false)), $oFile,
             PATH_BACKUP_ARCHIVE, $strParentPathArchive, \@stryFileListArchive);
 
     if ($iResult == 0)
@@ -285,7 +285,7 @@ sub infoFileCreate
         {
             my $oInfoOnDisk =
                 ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::BackupInfo($strParentPath)
-                : new pgBackRest::ArchiveInfo($strParentPath));
+                : new pgBackRest::Archive::ArchiveInfo($strParentPath));
 
             # If force was not used and the hashes are different then error
             if ($oInfoOnDisk->hash() ne $oInfo->hash())
