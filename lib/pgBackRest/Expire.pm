@@ -15,6 +15,7 @@ use Scalar::Util qw(looks_like_number);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
@@ -279,15 +280,13 @@ sub process
                 if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                        $strArchiveRetentionBackup, INFO_BACKUP_KEY_ARCHIVE_START))
                 {
-                    # Get archive info
-                    my $oArchive = new pgBackRest::Archive::Archive();
-                    my $strArchiveId = $oArchive->getArchiveId($oFile);
-
-                    my $strArchiveExpireMax;
+                    # Get archive id
+                    my $strArchiveId = new pgBackRest::Archive::ArchiveGet()->getArchiveId($oFile);
 
                     # Get archive ranges to preserve.  Because archive retention can be less than total retention it is important
                     # to preserve archive that is required to make the older backups consistent even though they cannot be played
                     # any further forward with PITR.
+                    my $strArchiveExpireMax;
                     my @oyArchiveRange;
 
                     foreach my $strBackup ($oBackupInfo->list())

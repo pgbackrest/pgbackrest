@@ -209,7 +209,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory.</p>
+                        <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory and split the <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands into separate modules.</p>
                     </release-item>
 
                     <release-item>

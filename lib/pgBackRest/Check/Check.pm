@@ -8,6 +8,9 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::ArchiveGet;
+use pgBackRest::BackupInfo;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
@@ -61,9 +64,6 @@ sub process
         protocolGet(isRepoLocal() ? DB : BACKUP)
     );
 
-    # Initialize the archive object
-    my $oArchive = new pgBackRest::Archive::Archive();
-
     # Initialize the database object
     my $oDb = dbMasterGet();
 
@@ -111,7 +111,7 @@ sub process
         eval
         {
             # Check that the archive info file is written and is valid for the current database of the stanza
-            $strArchiveId = $oArchive->getCheck($oFile);
+            $strArchiveId = new pgBackRest::Archive::ArchiveGet()->getCheck($oFile);
             return true;
         }
         or do
@@ -132,7 +132,7 @@ sub process
 
         eval
         {
-            $strArchiveFile = $oArchive->walFileName($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
+            $strArchiveFile = walFind($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
             return true;
         }
         # If this is a backrest error then capture the code and message else confess

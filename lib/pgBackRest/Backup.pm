@@ -18,7 +18,7 @@ use pgBackRest::Common::Exit;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Archive::Archive;
+use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupFile;
@@ -891,14 +891,12 @@ sub process
 
         # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
-        my $oArchive = new pgBackRest::Archive::Archive();
-        my $strArchiveId = $oArchive->getArchiveId($oFileLocal);
+        my $strArchiveId = new pgBackRest::Archive::ArchiveGet()->getArchiveId($oFileLocal);
         my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion);
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile =
-                $oArchive->walFileName($oFileLocal, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
+            my $strArchiveFile = walFind($oFileLocal, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
             $strArchive = substr($strArchiveFile, 0, 24);
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))

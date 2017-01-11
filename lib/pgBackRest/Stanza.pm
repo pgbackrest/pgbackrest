@@ -16,7 +16,6 @@ use Exporter qw(import);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Archive::Archive;
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupInfo;
 use pgBackRest::Db;

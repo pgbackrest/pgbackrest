@@ -18,7 +18,6 @@ use File::Basename qw(dirname);
 
 use lib dirname($0) . '/../lib';
 
-use pgBackRest::Archive::Archive;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
@@ -122,16 +121,35 @@ local $EVAL_ERROR = undef; eval
     }
 
     ################################################################################################################################
+    # Archive commands must run on the db host
+    ################################################################################################################################
+    if ((commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET)) && !isDbLocal())
+    {
+        confess &log(ERROR, commandGet() . ' command must be run on the db host', ERROR_HOST_INVALID);
+    }
+
+    ################################################################################################################################
+    # Process archive-push command
+    ################################################################################################################################
+    if (commandTest(CMD_ARCHIVE_PUSH))
+    {
+        # Load module dynamically
+        require pgBackRest::Archive::ArchivePush;
+        pgBackRest::Archive::ArchivePush->import();
+
+        exitSafe(new pgBackRest::Archive::ArchivePush()->process());
+    }
+
+    ################################################################################################################################
     # Process archive commands
     ################################################################################################################################
-    if (commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET))
+    if (commandTest(CMD_ARCHIVE_GET))
     {
-        if (!isDbLocal())
-        {
-            confess &log(ERROR, commandGet() . ' command must be run on the db host', ERROR_HOST_INVALID);
-        }
+        # Load module dynamically
+        require pgBackRest::Archive::ArchiveGet;
+        pgBackRest::Archive::ArchiveGet->import();
 
-        exitSafe(new pgBackRest::Archive::Archive()->process());
+        exitSafe(new pgBackRest::Archive::ArchiveGet()->process());
     }
 
     ################################################################################################################################
