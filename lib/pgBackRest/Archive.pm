@@ -524,70 +524,42 @@ sub getArchiveId
 }
 
 ####################################################################################################################################
-# dbHistoryListArchiveGet
+# dbHistoryArchiveList
 #
-# Returns a list of the db-id, db version, and corresponding system ids.
+# Get the data from the db history section.
 ####################################################################################################################################
-# sub dbHistoryArchiveList
-# {
-#     my $self = shift;
-#     my $oFile = shift;
-#
-#     # Assign function parameters, defaults, and log debug info
-#     my ($strOperation) = logDebugParam(__PACKAGE__ . '->listArchiveDir');
-#
-#     my $strArchiveId, $strSystemId;
-#
-#         # List of archiveIds and corresponding system ids
-#         my %stryBackup = {};
-#
-#     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
-#     {
-#         $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
-#     }
-#     else
-#     {
-#         # Get the archive info - it must exist
-#         my $oArchiveInfo = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)));
-#
-#         # List the directories of the archive dir (e.g. 9.4-1)
-#         # CSHANG This is a problem with 10.x
-#         my @stryArchiveId = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
-#
-#         # Get the history list
-#         # CSHANG Need an array of hashes : [1] {9.4-1, 123456}
-#         my @iyHistory = $oArchiveInfo->historyList();
-#
-#         # If the number of items in the archive.info history section does not equal the number of directories on disk, then error
-#         if (@stryArchiveId = @iyHistoryId)
-#         {
-#             foreach my $iHistoryId (@stryArchiveId)
-#             {
-#                 # Get the db-version and db-id (history id) from the directory name
-#                 my $strSystemId = $iyHistory[
-#
-#         }
-#         else
-#         {
-#             confess &log(ERROR, "CSHANG PUT AND ERROR STATEMENT AND CODE HERE");
-#         }
-#
-#         foreach my $strArchiveId (fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
-#         {
-#             # Get the db-version and db-id (history id) from the directory name
-#             my $strSystemId = $oArchiveInfo->archiveIdSystem($strArchiveId);
-#
-#
-#     }
-#
-#     # Return from function and log return values if any
-#     return logDebugReturn
-#     (
-#         $strOperation,
-#         {name => 'oyDbList', value => \@oyDbList, trace => true}
-#     );
-# }
-#
+sub dbHistoryArchiveList
+{
+    my $self = shift;
+
+    my
+    (
+        $strOperation,
+        $oFile,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryArchiveList',
+            {name => 'oFile'},
+        );
+
+    my @oyDbList;
+
+    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
+    {
+        @oyDbList = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_DB_HISTORY_LIST, undef, true);
+    }
+    else
+    {
+        @oyDbList = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->dbHistoryList();
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oyDbList', value => @oyDbList, trace => true}
+    );
+}
 
 ####################################################################################################################################
 # pushProcess

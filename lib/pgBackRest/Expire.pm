@@ -299,7 +299,7 @@ sub process
 
                     # Build the db list from the history in the backup info file which was updated and saved earlier
                     my @oyDbListBackup = $oBackupInfo->dbHistoryList();
-                    # my @oyDbListArchive = $oArchive->dbHistoryListArchiveGet
+                    my @oyDbListArchive = $oArchive->dbHistoryArchiveList($oFile);
 
                     foreach my $strBackup ($oBackupInfo->list())
                     {
@@ -330,11 +330,11 @@ sub process
                             {
                                 if ($$oDbList{&INFO_HISTORY_ID} eq $iDbId)
                                 {
-                                    #CSHANG Update this to xref from the archiveInfo db history list
-                                    $$oArchiveRange{archiveId} =
-                                        $$oDbList{&INFO_DB_VERSION} . "-" . $$oDbList{&INFO_HISTORY_ID};
-                                    # $$oArchiveRange{dbVersion} = $$oDbList{&INFO_DB_VERSION};
-                                    # $$oArchiveRange{dbSystemId} = $$oDbList{&INFO_SYSTEM_ID};
+                                    # #CSHANG Update this to xref from the archiveInfo db history list
+                                    # $$oArchiveRange{archiveId} =
+                                    #     $$oDbList{&INFO_DB_VERSION} . "-" . $$oDbList{&INFO_HISTORY_ID};
+                                    $$oArchiveRange{dbVersion} = $$oDbList{&INFO_DB_VERSION};
+                                    $$oArchiveRange{dbSystemId} = $$oDbList{&INFO_SYSTEM_ID};
                                 }
                             }
 

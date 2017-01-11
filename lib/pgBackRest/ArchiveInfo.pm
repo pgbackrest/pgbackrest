@@ -41,7 +41,7 @@ use constant ARCHIVE_INFO_FILE                                      => 'archive.
 use constant INFO_ARCHIVE_SECTION_DB                                => INFO_BACKUP_SECTION_DB;
     push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
 use constant INFO_ARCHIVE_SECTION_DB_HISTORY                        => INFO_BACKUP_SECTION_DB_HISTORY;
-    push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
+    push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB_HISTORY);
 
 use constant INFO_ARCHIVE_KEY_DB_VERSION                            => MANIFEST_KEY_DB_VERSION;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_VERSION);
@@ -404,6 +404,46 @@ sub dbHistoryIdGet
     (
         $strOperation,
         {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# dbHistoryList
+#
+# Get the data from the db history section.
+####################################################################################################################################
+sub dbHistoryList
+{
+    my $self = shift;
+    my
+    (
+        $strOperation,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryList',
+        );
+
+    my @oyDbList;
+
+    foreach my $iHistoryId ($self->keys(INFO_ARCHIVE_SECTION_DB_HISTORY))
+    {
+        my $oDbHash =
+        {
+            &INFO_HISTORY_ID => $iHistoryId,
+            &INFO_DB_VERSION =>
+                $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_VERSION),
+            &INFO_SYSTEM_ID =>
+                $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_SYSTEM_ID)
+        };
+
+        push(@oyDbList, $oDbHash);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oyDbList', value => @oyDbList}
     );
 }
 

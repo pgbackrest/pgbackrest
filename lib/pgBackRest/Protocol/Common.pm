@@ -49,6 +49,8 @@ use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveC
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
+use constant OP_ARCHIVE_DB_HISTORY_LIST                             => 'dbHistoryArchiveList';
+    push @EXPORT, qw(OP_ARCHIVE_DB_HISTORY_LIST);
 
 # Db Module
 use constant OP_DB_CONNECT                                          => 'dbConnect';

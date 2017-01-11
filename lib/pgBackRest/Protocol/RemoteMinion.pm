@@ -90,6 +90,7 @@ sub init
         &OP_ARCHIVE_GET_BACKUP_INFO_CHECK => sub {$oArchive->getBackupInfoCheck($oFile, @{shift()})},
         &OP_ARCHIVE_GET_CHECK => sub {$oArchive->getCheck($oFile, @{shift()})},
         &OP_ARCHIVE_PUSH_CHECK => sub {$oArchive->pushCheck($oFile, @{shift()})},
+        &OP_ARCHIVE_DB_HISTORY_LIST => sub {$oArchive->dbHistoryArchiveList($oFile)},
 
         # Db commands
         &OP_DB_CONNECT => sub {$oDb->connect()},

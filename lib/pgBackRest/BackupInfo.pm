@@ -652,6 +652,13 @@ sub dbHistoryIdGet
 sub dbHistoryList
 {
     my $self = shift;
+    my
+    (
+        $strOperation,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryList',
+        );
 
     my @oyDbList;
 
@@ -670,7 +677,11 @@ sub dbHistoryList
     }
 
     # Return from function and log return values if any
-    return @oyDbList;
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oyDbList', value => \@oyDbList}
+    );
 }
 
 ####################################################################################################################################
