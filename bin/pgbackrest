@@ -139,7 +139,11 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     if (commandTest(CMD_CHECK))
     {
-        exitSafe(new pgBackRest::Archive::Archive()->check());
+        # Load module dynamically
+        require pgBackRest::Check::Check;
+        pgBackRest::Check::Check->import();
+
+        exitSafe(new pgBackRest::Check::Check()->process());
     }
 
     ################################################################################################################################

@@ -211,6 +211,10 @@
                     <release-item>
                         <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Split the <cmd>check</cmd> command out of the <code>Archive.pm</code> module.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
