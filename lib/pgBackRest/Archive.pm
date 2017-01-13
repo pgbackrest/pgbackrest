@@ -528,38 +528,38 @@ sub getArchiveId
 #
 # Get the data from the db history section.
 ####################################################################################################################################
-sub dbHistoryArchiveList
-{
-    my $self = shift;
-
-    my
-    (
-        $strOperation,
-        $oFile,
-    ) = logDebugParam
-        (
-            __PACKAGE__ . '->dbHistoryArchiveList',
-            {name => 'oFile'},
-        );
-
-    my @oyDbList;
-
-    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
-    {
-        @oyDbList = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_DB_HISTORY_LIST, undef, true);
-    }
-    else
-    {
-        @oyDbList = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->dbHistoryList();
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oyDbList', value => @oyDbList, trace => true}
-    );
-}
+# sub dbHistoryArchiveList
+# {
+#     my $self = shift;
+#
+#     my
+#     (
+#         $strOperation,
+#         $oFile,
+#     ) = logDebugParam
+#         (
+#             __PACKAGE__ . '->dbHistoryArchiveList',
+#             {name => 'oFile'},
+#         );
+#
+#     my @oyDbList;
+#
+#     if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
+#     {
+#         @oyDbList = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_DB_HISTORY_LIST, undef, true);
+#     }
+#     else
+#     {
+#         @oyDbList = (new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->dbHistoryList();
+#     }
+#
+#     # Return from function and log return values if any
+#     return logDebugReturn
+#     (
+#         $strOperation,
+#         {name => 'oyDbList', value => @oyDbList, trace => true}
+#     );
+# }
 
 ####################################################################################################################################
 # pushProcess

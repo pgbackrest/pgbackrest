@@ -660,27 +660,21 @@ sub dbHistoryList
             __PACKAGE__ . '->dbHistoryList',
         );
 
-    my @oyDbList;
+    my %hDbHash;
 
     foreach my $iHistoryId ($self->keys(INFO_BACKUP_SECTION_DB_HISTORY))
     {
-        my $oDbHash =
-        {
-            &INFO_HISTORY_ID => $iHistoryId,
-            &INFO_DB_VERSION =>
-                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
-            &INFO_SYSTEM_ID =>
-                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
-        };
-
-        push(@oyDbList, $oDbHash);
+        $hDbHash{$iHistoryId}{&INFO_DB_VERSION} =
+            $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION);
+        $hDbHash{$iHistoryId}{&INFO_SYSTEM_ID} =
+            $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oyDbList', value => \@oyDbList}
+        {name => 'hDbHash', value => \%hDbHash}
     );
 }
 

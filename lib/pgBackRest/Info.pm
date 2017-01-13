@@ -309,7 +309,21 @@ sub backupList
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"), false, false);
 
     # Build the db list
-    my @oyDbList = $oBackupInfo->dbHistoryList();
+    my @oyDbList;
+
+    foreach my $iHistoryId ($self->keys(INFO_BACKUP_SECTION_DB_HISTORY))
+    {
+        my $oDbHash =
+        {
+            &INFO_HISTORY_ID => $iHistoryId,
+            &INFO_DB_VERSION =>
+                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
+            &INFO_SYSTEM_ID =>
+                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
+        };
+
+        push(@oyDbList, $oDbHash);
+    }
 
     # Build the backup list
     my @oyBackupList;

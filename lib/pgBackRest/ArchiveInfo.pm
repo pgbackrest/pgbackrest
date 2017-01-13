@@ -27,6 +27,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -248,12 +249,7 @@ sub reconstruct
     );
 
     my $strInvalidFileStructure = undef;
-# CSHANG This functions is in trouble with 10.x - the order of the upper dirs will be off so need to sort
-# vagrant@vagrant:~$ ls -l
-# total 2304
-# drwxr-xr-x 2 vagrant postgres    4096 Jan  9 20:45 10.0-3
-# drwxr-xr-x 2 vagrant postgres    4096 Jan  9 21:39 9.4-1
-# drwxr-xr-x 2 vagrant postgres    4096 Jan  9 20:45 9.5-2
+
     # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
     {
@@ -423,27 +419,21 @@ sub dbHistoryList
             __PACKAGE__ . '->dbHistoryList',
         );
 
-    my @oyDbList;
+    my %hDbHash;
 
     foreach my $iHistoryId ($self->keys(INFO_ARCHIVE_SECTION_DB_HISTORY))
     {
-        my $oDbHash =
-        {
-            &INFO_HISTORY_ID => $iHistoryId,
-            &INFO_DB_VERSION =>
-                $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_VERSION),
-            &INFO_SYSTEM_ID =>
-                $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_SYSTEM_ID)
-        };
-
-        push(@oyDbList, $oDbHash);
+        $hDbHash{$iHistoryId}{&INFO_DB_VERSION} =
+            $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_VERSION);
+        $hDbHash{$iHistoryId}{&INFO_SYSTEM_ID} =
+            $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_ID);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oyDbList', value => @oyDbList}
+        {name => 'hDbHash', value => \%hDbHash}
     );
 }
 
