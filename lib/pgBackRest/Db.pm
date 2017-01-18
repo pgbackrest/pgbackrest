@@ -655,7 +655,7 @@ sub backupStart
         # generated later on.
         else
         {
-            &log(WARN, OPTION_STOP_AUTO . 'option is only available in PostgreSQL >= ' . PG_VERSION_93);
+            &log(WARN, OPTION_STOP_AUTO . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
         }
     }
 
