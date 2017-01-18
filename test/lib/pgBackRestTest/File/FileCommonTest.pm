@@ -47,7 +47,7 @@ sub init
     $self->{oRemote} = new pgBackRest::Protocol::RemoteMaster(
         BACKUP,
         OPTION_DEFAULT_CMD_SSH,
-        $self->backrestExe() . ' --stanza=' . $self->stanza() .
+        $self->backrestExeOriginal() . ' --stanza=' . $self->stanza() .
             " --type=backup --repo-path=${strRepoPath} --no-config --command=test remote",
         262144,
         OPTION_DEFAULT_COMPRESS_LEVEL,

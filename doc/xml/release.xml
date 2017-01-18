@@ -17,6 +17,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="avellar.leonardo">
+            <contributor-name-display>Leonardo Avellar</contributor-name-display>
+            <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
         <contributor id="barber.chris">
             <contributor-name-display>Chris Barber</contributor-name-display>
             <contributor-id type="github">gamerscomplete</contributor-id>
@@ -102,6 +107,11 @@
             <contributor-id type="github">cmwshang</contributor-id>
         </contributor>
 
+        <contributor id="sharma.yogesh">
+            <contributor-name-display>Yogesh Sharma</contributor-name-display>
+            <contributor-id type="github">sharmay</contributor-id>
+        </contributor>
+
         <contributor id="smith.greg">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
@@ -149,6 +159,14 @@
                     <release-item>
                         <p>Fixed a few directory syncs that were missed for the <br-option>--repo-sync</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="avellar.leonardo"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where a missing user/group on restore could cause an <quote>uninitialized value</quote> error in <code>File->owner()</code>.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -172,6 +190,30 @@
                 <release-refactor-list>
                     <release-item>
                         <p>Refactor <code>File</code> and <code>BackupCommon</code> modules to improve test coverage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sharma.yogesh"/>
+                        </release-item-contributor-list>
+
+                        <p>Return proper error code when unable to convert a relative path to an absolute path.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Moved <code>File->manifest()</code> into the <code>FileCommon.pm</code> module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>C Library builds only run when C library has actually changed.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory and split the <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands into separate modules.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Split the <cmd>check</cmd> command out of the <code>Archive.pm</code> module.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
@@ -197,6 +239,10 @@
             <release-test-list>
                 <release-feature-list>
                     <release-item>
+                        <p>Added integration for testing coverage with <code>Devel::Cover</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added unit tests for low-level functions in the <code>File</code> and <code>BackupCommon</code> modules.</p>
                     </release-item>
                 </release-feature-list>
@@ -204,6 +250,14 @@
                 <release-refactor-list>
                     <release-item>
                         <p>Split test modules into separate files to make the code more maintainable.  Tests are dynamically loaded by name rather than requiring an if-else block.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow multiple <setting>--module</setting>, <setting>--test</setting>, and <setting>--run</setting> options to be used for <file>test.pl</file>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added expect log expression to replace year subdirectories in <path>backup.history</path>.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

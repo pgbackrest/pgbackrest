@@ -66,7 +66,8 @@ sub new
 
     my $self = $class->SUPER::new(
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
-        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}"]);
+        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}"
+        ,dirname(dirname($strTestPath)) . '/cover_db:' . dirname(dirname($strTestPath)) . '/cover_db']);
     bless $self, $class;
 
     # Set test path

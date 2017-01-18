@@ -65,8 +65,9 @@ test.pl [options]
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --db-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
-   --no-lint            Disable static source code analysis
-   --libc-only          Compile the C library and run tests only
+   --no-lint            disable static source code analysis
+   --libc-only          compile the C library and run tests only
+   --coverage           perform coverage analysis
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -91,9 +92,9 @@ test.pl [options]
 ####################################################################################################################################
 my $strLogLevel = 'info';
 my $bVmOut = false;
-my $strModule = 'all';
-my $strModuleTest = 'all';
-my $iModuleTestRun = undef;
+my @stryModule;
+my @stryModuleTest;
+my @iyModuleTestRun;
 my $iProcessMax = undef;
 my $iVmMax = 1;
 my $iVmId = undef;
@@ -106,11 +107,12 @@ my $bHelp = false;
 my $bQuiet = false;
 my $strDbVersion = 'minimal';
 my $bLogForce = false;
-my $strVm = 'all';
+my $strVm = VM_ALL;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
 my $bLibCOnly = false;
+my $bCoverage = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -122,9 +124,9 @@ GetOptions ('q|quiet' => \$bQuiet,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
             'vm-force' => \$bVmForce,
-            'module=s' => \$strModule,
-            'test=s' => \$strModuleTest,
-            'run=s' => \$iModuleTestRun,
+            'module=s@' => \@stryModule,
+            'test=s@' => \@stryModuleTest,
+            'run=s@' => \@iyModuleTestRun,
             'process-max=s' => \$iProcessMax,
             'vm-id=s' => \$iVmId,
             'vm-max=s' => \$iVmMax,
@@ -133,7 +135,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'db-version=s' => \$strDbVersion,
             'log-force' => \$bLogForce,
             'no-lint' => \$bNoLint,
-            'libc-only' => \$bLibCOnly)
+            'libc-only' => \$bLibCOnly,
+            'coverage' => \$bCoverage)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -175,14 +178,14 @@ eval
 
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF);
 
-    if ($strModuleTest ne 'all' && $strModule eq 'all')
+    if (@stryModuleTest != 0 && @stryModule != 1)
     {
-        confess "--module must be provided for --test=\"${strModuleTest}\"";
+        confess "Only one --module can be provided when --test is specified";
     }
 
-    if (defined($iModuleTestRun) && $strModuleTest eq 'all')
+    if (@iyModuleTestRun != 0 && @stryModuleTest != 1)
     {
-        confess "--test must be provided for --run=\"${iModuleTestRun}\"";
+        confess "Only one --test can be provided when --run is specified";
     }
 
     # Check process total
@@ -195,6 +198,20 @@ eval
     if (!defined($strTestPath))
     {
         $strTestPath = cwd() . '/test';
+    }
+
+    # Coverage can only be run with u16 containers due to version compatibility issues
+    if ($bCoverage)
+    {
+        if ($strVm eq VM_ALL)
+        {
+            &log(INFO, 'Set --vm=' . VM_U16 . ' for coverage testing');
+            $strVm = VM_U16;
+        }
+        elsif ($strVm ne VM_U16)
+        {
+            confess &log(ERROR, 'only --vm=' . VM_U16 . ' can be used for coverage testing');
+        }
     }
 
     # Get the base backrest path
@@ -267,40 +284,63 @@ eval
 
         # Build the C Library in host
         #-----------------------------------------------------------------------------------------------------------------------
+        if (!$bDryRun)
         {
             my $bLogDetail = $strLogLevel eq 'detail';
-            my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/host";
+            my $strBuildBasePath = "${strBackRestBase}/test/.vagrant/libc";
+            my $strBuildPath = "${strBuildBasePath}/host";
+            my $strMakeFile = "${strBuildPath}/Makefile.PL";
+            my $strLibCPath = "${strBackRestBase}/libc";
 
-            &log(INFO, "Build/test/install C library for host (${strBuildPath})");
+            # Find the lastest modified time in the libc dir
+            my $hManifest = fileManifest($strLibCPath);
+            my $lTimestampLast = 0;
 
-            filePathCreate($strBuildPath, undef, true, true);
-            executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
-
-            executeTest(
-                "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
-                {bShowOutputAsync => $bLogDetail});
-            executeTest("make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-            executeTest("sudo make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
-            executeTest("cd ${strBuildPath} && perl t/pgBackRest-LibC.t", {bShowOutputAsync => $bLogDetail});
-
-            # Load the module dynamically
-            require pgBackRest::LibC;
-            pgBackRest::LibC->import(qw(:debug));
-
-            # Do a basic test to make sure it installed correctly
-            if (&UVSIZE != 8)
+            foreach my $strFile (sort(keys(%{$hManifest})))
             {
-                confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                {
+                    $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                }
             }
 
-            # Also check the version number
-            my $strLibCVersion =
-                BACKREST_VERSION =~ /dev$/ ?
-                    substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
-
-            if (libCVersion() ne $strLibCVersion)
+            # Rebuild if the modification time of the makefile does not equal the latest file in libc
+            if (!fileExists($strMakeFile) || fileStat($strMakeFile)->mtime != $lTimestampLast)
             {
-                confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+                &log(INFO, "Build/test/install C library for host (${strBuildPath})");
+
+                executeTest("sudo rm -rf ${strBuildBasePath}");
+                filePathCreate($strBuildPath, undef, true, true);
+                executeTest("cp -rp ${strLibCPath}/* ${strBuildPath}");
+                utime($lTimestampLast, $lTimestampLast, $strMakeFile) or
+                    confess "unable to set time for ${strMakeFile}" . (defined($!) ? ":$!" : '');
+
+                executeTest(
+                    "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
+                    {bShowOutputAsync => $bLogDetail});
+                executeTest("make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                executeTest("sudo make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+                executeTest("cd ${strBuildPath} && perl t/pgBackRest-LibC.t", {bShowOutputAsync => $bLogDetail});
+
+                # Load the module dynamically
+                require pgBackRest::LibC;
+                pgBackRest::LibC->import(qw(:debug));
+
+                # Do a basic test to make sure it installed correctly
+                if (&UVSIZE != 8)
+                {
+                    confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                }
+
+                # Also check the version number
+                my $strLibCVersion =
+                    BACKREST_VERSION =~ /dev$/ ?
+                        substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
+
+                if (libCVersion() ne $strLibCVersion)
+                {
+                    confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+                }
             }
 
             # Exit if only testing the C library
@@ -309,7 +349,8 @@ eval
 
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
-        my $oyTestRun = testListGet($strVm, $strModule, $strModuleTest, $iModuleTestRun, $strDbVersion, $iProcessMax);
+        my $oyTestRun = testListGet(
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverage);
 
         if (@{$oyTestRun} == 0)
         {
@@ -327,6 +368,7 @@ eval
         #-----------------------------------------------------------------------------------------------------------------------
         my $iTestFail = 0;
         my $oyProcess = [];
+        my $strCoveragePath = "${strTestPath}/cover_db";
 
         if (!$bDryRun || $bVmOut)
         {
@@ -338,41 +380,46 @@ eval
             }
 
             executeTest("sudo rm -rf ${strTestPath}/*");
-            filePathCreate($strTestPath, undef, true);
+            filePathCreate($strCoveragePath, '0770', true, true);
         }
 
         # Build the C Library in container
         #-----------------------------------------------------------------------------------------------------------------------
+        if (!$bDryRun)
         {
             my $bLogDetail = $strLogLevel eq 'detail';
-            my @stryBuildVm = $strVm eq 'all' ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
+            my @stryBuildVm = $strVm eq VM_ALL ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
 
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
-                executeTest(
-                    "docker run -itd -h test-build --name=test-build" .
-                    " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
-
                 my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/${strBuildVM}";
-                &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
-                filePathCreate($strBuildPath, undef, true, true);
-                executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+                if (!fileExists($strBuildPath))
+                {
+                    executeTest(
+                        "docker run -itd -h test-build --name=test-build" .
+                        " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
 
-                executeTest(
-                    "docker exec -i test-build " .
-                    "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'");
-                executeTest(
-                    "docker exec -i test-build " .
-                    "make -C ${strBuildPath}", {bSuppressStdErr => true});
-                executeTest(
-                    "docker exec -i test-build " .
-                    "make -C ${strBuildPath} test");
-                executeTest(
-                    "docker exec -i test-build " .
-                    "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+                    &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
-                executeTest("docker rm -f test-build");
+                    filePathCreate($strBuildPath, undef, true, true);
+                    executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'");
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath}", {bSuppressStdErr => true});
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath} test");
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+
+                    executeTest("docker rm -f test-build");
+                }
             }
         }
 
@@ -463,7 +510,7 @@ eval
                                           'vm=' . $$oTest{&TEST_VM} .
                                           ', module=' . $$oTest{&TEST_MODULE} .
                                           ', test=' . $$oTest{&TEST_NAME} .
-                                          (defined($$oTest{&TEST_RUN}) ? ', run=' . $$oTest{&TEST_RUN} : '') .
+                                          (defined($$oTest{&TEST_RUN}) ? ', run=' . join(',', @{$$oTest{&TEST_RUN}}) : '') .
                                           (defined($$oTest{&TEST_PROCESS}) ? ', process-max=' . $$oTest{&TEST_PROCESS} : '') .
                                           (defined($$oTest{&TEST_DB}) ? ', db=' . $$oTest{&TEST_DB} : '');
 
@@ -488,24 +535,40 @@ eval
                         {
                             executeTest(
                                 'docker run -itd -h ' . $$oTest{&TEST_VM} . "-test --name=${strImage}" .
+                                " -v ${strCoveragePath}:${strCoveragePath} " .
                                 " -v ${strHostTestPath}:${strVmTestPath}" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . '/' . $$oTest{&TEST_VM} .
+                                " -v ${strBackRestBase}:${strBackRestBase} " .
+                                containerNamespace() . '/' . $$oTest{&TEST_VM} .
                                 "-loop-test-pre");
                         }
                     }
 
+                    # Create run parameters
+                    my $strCommandRunParam = '';
+
+                    foreach my $iRunIdx (@{$$oTest{&TEST_RUN}})
+                    {
+                        $strCommandRunParam .= ' --run=' . $iRunIdx;
+                    }
+
+                    # Create command
                     my $strCommand =
-                        ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') . abs_path($0) .
+                        ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                        ($bCoverage ? testRunExe(
+                            abs_path($0), dirname($strCoveragePath), $strBackRestBase, $$oTest{&TEST_MODULE},
+                            $$oTest{&TEST_NAME}, defined($$oTest{&TEST_RUN}) ? $$oTest{&TEST_RUN} : 'all') :
+                            abs_path($0)) .
                         " --test-path=${strVmTestPath}" .
                         " --vm=$$oTest{&TEST_VM}" .
                         " --vm-id=${iVmIdx}" .
                         " --module=" . $$oTest{&TEST_MODULE} .
                         ' --test=' . $$oTest{&TEST_NAME} .
-                        (defined($$oTest{&TEST_RUN}) ? ' --run=' . $$oTest{&TEST_RUN} : '') .
+                        $strCommandRunParam .
                         (defined($$oTest{&TEST_DB}) ? ' --db-version=' . $$oTest{&TEST_DB} : '') .
                         (defined($$oTest{&TEST_PROCESS}) ? ' --process-max=' . $$oTest{&TEST_PROCESS} : '') .
                         ($strLogLevel ne lc(INFO) ? " --log-level=${strLogLevel}" : '') .
                         ' --pgsql-bin=' . $$oTest{&TEST_PGSQL_BIN} .
+                        ($bCoverage ? ' --coverage' : '') .
                         ($bLogForce ? ' --log-force' : '') .
                         ($bDryRun ? ' --dry-run' : '') .
                         ($bVmOut ? ' --vm-out' : '') .
@@ -548,6 +611,20 @@ eval
         }
         while ($iVmTotal > 0);
 
+        # Write out coverage info
+        #-----------------------------------------------------------------------------------------------------------------------
+        if ($bCoverage)
+        {
+            &log(INFO, 'Writing coverage report');
+            executeTest("rm -rf ${strBackRestBase}/test/coverage");
+            executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+            executeTest("cover -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest("rm -rf ${strCoveragePath}_temp");
+            executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+            executeTest("cover -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest("rm -rf ${strCoveragePath}_temp");
+        }
+
         # Print test info and exit
         #-----------------------------------------------------------------------------------------------------------------------
         if ($bDryRun)
@@ -572,15 +649,16 @@ eval
     my $oHostGroup = hostGroupGet();
 
     # Run the test
-    testRun($strModule, $strModuleTest)->process(
+    testRun($stryModule[0], $stryModuleTest[0])->process(
         $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable
         $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
-        $strModule, $strModuleTest, $iModuleTestRun,                # Module info
+        $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
+        $bCoverage,                                                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)

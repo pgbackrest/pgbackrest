@@ -13,6 +13,7 @@ use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(dirname);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
@@ -25,7 +26,6 @@ use pgBackRestTest::Common::DefineTest;
 ####################################################################################################################################
 use constant BOGUS =>                                               'bogus';
     push @EXPORT, qw(BOGUS);
-
 
 ####################################################################################################################################
 # The current test run that is executung.  Only a single run should ever occur in a process to prevent various cleanup issues from
@@ -86,17 +86,18 @@ sub process
         $self->{iVmId},
         $self->{strBasePath},
         $self->{strTestPath},
-        $self->{strBackRestExe},
+        $self->{strBackRestExeOriginal},
         $self->{strPgBinPath},
         $self->{strPgVersion},
         $self->{strModule},
         $self->{strModuleTest},
-        $self->{iModuleTestRun},
+        $self->{iyModuleTestRun},
         $self->{iProcessMax},
         $self->{bOutput},
         $self->{bDryRun},
         $self->{bCleanup},
         $self->{bLogForce},
+        $self->{bCoverage},
         $self->{strPgUser},
         $self->{strBackRestUser},
         $self->{strGroup},
@@ -108,7 +109,7 @@ sub process
             {name => 'iVmId'},
             {name => 'strBasePath'},
             {name => 'strTestPath'},
-            {name => 'strBackRestExe'},
+            {name => 'strBackRestExeOriginal'},
             {name => 'strPgBinPath', required => false},
             {name => 'strPgVersion', required => false},
             {name => 'strModule'},
@@ -119,6 +120,7 @@ sub process
             {name => 'bDryRun'},
             {name => 'bCleanup'},
             {name => 'bLogForce'},
+            {name => 'bCoverage'},
             {name => 'strPgUser'},
             {name => 'strBackRestUser'},
             {name => 'strGroup'},
@@ -193,7 +195,7 @@ sub begin
     $self->{iRun}++;
 
     # Return if this test should not be run
-    if (defined($self->moduleTestRun()) && $self->moduleTestRun() != $self->runCurrent())
+    if (@{$self->{iyModuleTestRun}} != 0 && !grep(/^$self->{iRun}$/i, @{$self->{iyModuleTestRun}}))
     {
         return false;
     }
@@ -206,15 +208,26 @@ sub begin
         return false;
     }
 
-    # If the module is defined then create a ExpectTest object
-    if ($self->doExpect())
+    my $strExe = $self->backrestExeOriginal();
+
+    # If coverage is requested then prepend the coverage code
+    if ($self->coverage())
+    {
+        $strExe = testRunExe(
+            $strExe, dirname($self->testPath()), $self->basePath(), $self->module(), $self->moduleTest(), $self->runCurrent(),
+            true);
+    }
+    # Else if the module is defined then create a ExpectTest object
+    elsif ($self->doExpect())
     {
         $self->{oExpect} = new pgBackRestTest::Common::LogTest(
-            $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription, $self->backrestExe(),
+            $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription, $strExe,
             $self->pgBinPath(), $self->testPath());
 
         &log(INFO, '          expect log: ' . $self->{oExpect}->{strFileName});
     }
+
+    $self->{strBackRestExe} = $strExe;
 
     return true;
 }
@@ -245,7 +258,8 @@ sub testResult
 
     my $strActual = $fnSub->();
 
-    if ($strActual ne $strExpected)
+    if (!defined($strExpected) && defined($strActual) || defined($strExpected) && !defined($strActual) ||
+        $strActual ne $strExpected)
     {
         confess
             'expected ' . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .
@@ -365,11 +379,79 @@ sub testRunGet
 push @EXPORT, qw(testRunGet);
 
 ####################################################################################################################################
+# testExe
+####################################################################################################################################
+sub testRunExe
+{
+    my $strExe = shift;
+    my $strCoveragePath = shift;
+    my $strBackRestBasePath = shift;
+    my $strModule = shift;
+    my $strTest = shift;
+    my $iRun = shift;
+    my $bLog = shift;
+
+    # Limit Perl modules tested to what is defined in the test coverage (if it exists)
+    my $strPerlModule;
+    my $strPerlModuleLog;
+    my $hTestCoverage;
+    my $hTestDef = testDefGet();
+
+    foreach my $hTestModule (@{$hTestDef->{&TESTDEF_MODULE}})
+    {
+        if ($hTestModule->{&TESTDEF_MODULE_NAME} eq $strModule)
+        {
+            $hTestCoverage = $hTestModule->{&TESTDEF_TEST_COVERAGE};
+
+            foreach my $hTest (@{$hTestModule->{&TESTDEF_TEST}})
+            {
+                if (defined($strTest) && $hTest->{&TESTDEF_TEST_NAME} eq $strTest)
+                {
+                    $hTestCoverage =
+                        defined($hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}) ? $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}: $hTestCoverage;
+                }
+            }
+        }
+    }
+
+    if (defined($hTestCoverage))
+    {
+        foreach my $strCoverageModule (sort(keys(%{$hTestCoverage})))
+        {
+            $strPerlModule .= ',.*/' . $strCoverageModule . '\.p.$';
+            $strPerlModuleLog .= (defined($strPerlModuleLog) ? ', ' : '') . $strCoverageModule;
+        }
+    }
+
+    # Build the exe
+    if (defined($strPerlModule))
+    {
+        $strExe =
+            'perl -MDevel::Cover=-silent,1,-dir,' . $strCoveragePath . ',-subs_only,1' .
+            ",-select${strPerlModule},+inc," . $strBackRestBasePath .
+            ',-coverage,statement,branch,condition,path,subroutine' . " ${strExe}";
+
+        if (defined($bLog) && $bLog)
+        {
+            &log(INFO, "          coverage: ${strPerlModuleLog}");
+        }
+    }
+
+    return $strExe;
+}
+
+push(@EXPORT, qw(testRunExe));
+
+####################################################################################################################################
+
+####################################################################################################################################
 # Getters
 ####################################################################################################################################
 sub backrestExe {return shift->{strBackRestExe}}
+sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
+sub coverage {return shift->{bCoverage}}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}
@@ -379,7 +461,6 @@ sub isDryRun {return shift->{bDryRun}}
 sub expect {return shift->{oExpect}}
 sub module {return shift->{strModule}}
 sub moduleTest {return shift->{strModuleTest}}
-sub moduleTestRun {return shift->{iModuleTestRun}}
 sub pgBinPath {return shift->{strPgBinPath}}
 sub pgUser {return shift->{strPgUser}}
 sub pgVersion {return shift->{strPgVersion}}

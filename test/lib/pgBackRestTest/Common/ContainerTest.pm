@@ -247,7 +247,8 @@ sub sudoSetup
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\nRUN sed -i 's/^\\\%admin.*\$/\\\%${strGroup} ALL\\=\\(ALL\\) NOPASSWD\\: ALL/' /etc/sudoers";
+            "\nRUN apt-get -y install sudo\n" .
+            "\nRUN echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
     }
     else
     {
@@ -285,7 +286,8 @@ sub perlInstall
     elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
     {
         return $strImage .
-            "RUN apt-get install -y libdbd-pg-perl libdbi-perl";
+            "RUN apt-get install -y libdbd-pg-perl libdbi-perl" .
+            ($strOS eq VM_U16 ? ' libdevel-cover-perl' : '');
     }
 
     confess &log(ERROR, "unable to install perl for os '${strOS}'");
@@ -412,7 +414,9 @@ sub containerBuild
         # Create test user
         $strScript .=
             "\n\n# Create test user\n" .
-            userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP);
+            userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . "\n" .
+            'RUN mkdir -m 750 /home/' . TEST_USER . "/test\n" .
+            'RUN chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . '/test';
 
         # Suppress dpkg interactive output
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -568,7 +572,7 @@ sub containerBuild
             containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
         }
 
-        # Db test image (for sythetic tests)
+        # Db test image (for synthetic tests)
         ########################################################################################################################
         $strImageParent = containerNamespace() . "/${strOS}-base";
         $strImage = "${strOS}-db-test";
@@ -599,6 +603,9 @@ sub containerBuild
         $strScript .=
             "\n\n# Make " . TEST_USER . " home dir readable\n" .
             'RUN chmod g+r,g+x /home/' . TEST_USER;
+
+        # Setup sudo
+        $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
         # Write the image
         containerWrite($strTempPath, $strOS, 'Loop Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);

@@ -866,53 +866,76 @@ sub owner
             __PACKAGE__ . '->owner', \@_,
             {name => 'strPathType'},
             {name => 'strFile'},
-            {name => 'strUser'},
-            {name => 'strGroup'}
+            {name => 'strUser', required => false},
+            {name => 'strGroup', required => false}
         );
 
     # Set operation variables
     my $strFileOp = $self->pathGet($strPathType, $strFile);
 
+    # Run remotely
     if ($self->isRemote($strPathType))
     {
         confess &log(ASSERT, "${strOperation}: remote operation not supported");
     }
+    # Run locally
     else
     {
         my $iUserId;
         my $iGroupId;
-        my $oStat;
 
-        if (!defined($strUser) || !defined($strGroup))
+        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
+        # both user and group be set.
+        if (!(defined($strUser) && defined($strGroup)))
         {
-            $oStat = stat($strFileOp);
+            my $oStat = fileStat($strFileOp);
 
-            if (!defined($oStat))
+            if (!defined($strUser))
             {
-                confess &log(ERROR, 'unable to stat ${strFileOp}');
+                $iUserId = $oStat->uid;
+            }
+
+            if (!defined($strGroup))
+            {
+                $iGroupId = $oStat->gid;
             }
         }
 
+        # Lookup user if specified
         if (defined($strUser))
         {
             $iUserId = getpwnam($strUser);
-        }
-        else
-        {
-            $iUserId = $oStat->uid;
+
+            if (!defined($iUserId))
+            {
+                confess &log(ERROR, "user '${strUser}' does not exist", ERROR_USER_MISSING);
+            }
         }
 
+        # Lookup group if specified
         if (defined($strGroup))
         {
             $iGroupId = getgrnam($strGroup);
-        }
-        else
-        {
-            $iGroupId = $oStat->gid;
+
+            if (!defined($iGroupId))
+            {
+                confess &log(ERROR, "group '${strGroup}' does not exist", ERROR_GROUP_MISSING);
+            }
         }
 
-        chown($iUserId, $iGroupId, $strFileOp)
-            or confess &log(ERROR, "unable to set ownership for ${strFileOp}");
+        # Set ownership on the file
+        if (!chown($iUserId, $iGroupId, $strFileOp))
+        {
+            my $strError = $!;
+
+            if (fileExists($strFileOp))
+            {
+                confess &log(ERROR,
+                    "unable to set ownership for '${strFileOp}'" . (defined($strError) ? ": $strError" : ''), ERROR_FILE_OWNER);
+            }
+
+            confess &log(ERROR, "${strFile} does not exist", ERROR_FILE_MISSING);
+        }
     }
 
     # Return from function and log return values if any
@@ -1048,7 +1071,7 @@ sub manifest
 
     # Set operation variables
     my $strPathOp = $self->pathGet($strPathType, $strPath);
-    my $hManifest = {};
+    my $hManifest;
 
     # Run remotely
     if ($self->isRemote($strPathType))
@@ -1058,7 +1081,7 @@ sub manifest
     # Run locally
     else
     {
-        $self->manifestRecurse($strPathType, $strPathOp, undef, 0, $hManifest);
+        $hManifest = fileManifest($strPathOp);
     }
 
     # Return from function and log return values if any
@@ -1067,194 +1090,6 @@ sub manifest
         $strOperation,
         {name => 'hManifest', value => $hManifest, trace => true}
     );
-}
-
-sub manifestRecurse
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathType,
-        $strPathOp,
-        $strPathFileOp,
-        $iDepth,
-        $oManifestHashRef
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->manifestRecurse', \@_,
-            {name => 'strPathType'},
-            {name => 'strPathOp'},
-            {name => 'strPathFileOp', required => false},
-            {name => 'iDepth'},
-            {name => 'oManifestHashRef', required => false}
-        );
-
-    # Set operation and debug strings
-    my $strPathRead = $strPathOp . (defined($strPathFileOp) ? "/${strPathFileOp}" : '');
-    my $hPath;
-    my $strFilter;
-
-    # If this is the top level stat the path to discover if it is actually a file
-    if ($iDepth == 0 && !S_ISDIR((fileStat($strPathRead))->mode))
-    {
-        $strFilter = basename($strPathRead);
-        $strPathRead = dirname($strPathRead);
-    }
-
-    # Open the path
-    if (!opendir($hPath, $strPathRead))
-    {
-        my $strError = "${strPathRead} could not be read: " . $!;
-        my $iErrorCode = ERROR_PATH_OPEN;
-
-        # If the path does not exist and is not the root path requested then return, else error
-        # It's OK for paths to go away during execution (databases are a dynamic thing!)
-        if (!$self->exists(PATH_ABSOLUTE, $strPathRead))
-        {
-            if ($iDepth != 0)
-            {
-                return;
-            }
-
-            $strError = "${strPathRead} does not exist";
-            $iErrorCode = ERROR_PATH_MISSING;
-        }
-
-        confess &log(ERROR, $strError, $iErrorCode);
-    }
-
-    # Get a list of all files in the path (except ..)
-    my @stryFileList = grep(!/^\..$/i, readdir($hPath));
-
-    close($hPath);
-
-    # Loop through all subpaths/files in the path
-    foreach my $strFile (sort(@stryFileList))
-    {
-        # Skip this file if it does not match the filter
-        if (defined($strFilter) && $strFile ne $strFilter)
-        {
-            next;
-        }
-
-        my $strPathFile = "${strPathRead}/$strFile";
-        my $bCurrentDir = $strFile eq '.';
-
-        # Create the file and path names
-        if ($iDepth != 0)
-        {
-            if ($bCurrentDir)
-            {
-                $strFile = $strPathFileOp;
-                $strPathFile = $strPathRead;
-            }
-            else
-            {
-                $strFile = "${strPathFileOp}/${strFile}";
-            }
-        }
-
-        # Stat the path/file
-        my $oStat = lstat($strPathFile);
-
-        # Check for errors in stat
-        if (!defined($oStat))
-        {
-            my $strError = "${strPathFile} could not be read: " . $!;
-            my $iErrorCode = ERROR_FILE_READ;
-
-            # If the file does not exist then go to the next file, else error
-            # It's OK for files to go away during execution (databases are a dynamic thing!)
-            if (!$self->exists(PATH_ABSOLUTE, $strPathFile))
-            {
-                next;
-            }
-
-            confess &log(ERROR, $strError, $iErrorCode);
-        }
-
-        # Check for regular file
-        if (S_ISREG($oStat->mode))
-        {
-            ${$oManifestHashRef}{$strFile}{type} = 'f';
-
-            # Get inode
-            ${$oManifestHashRef}{$strFile}{inode} = $oStat->ino;
-
-            # Get size
-            ${$oManifestHashRef}{$strFile}{size} = $oStat->size;
-
-            # Get modification time
-            ${$oManifestHashRef}{$strFile}{modification_time} = $oStat->mtime;
-        }
-        # Check for directory
-        elsif (S_ISDIR($oStat->mode))
-        {
-            ${$oManifestHashRef}{$strFile}{type} = 'd';
-        }
-        # Check for link
-        elsif (S_ISLNK($oStat->mode))
-        {
-            ${$oManifestHashRef}{$strFile}{type} = 'l';
-
-            # Get link destination
-            ${$oManifestHashRef}{$strFile}{link_destination} = readlink($strPathFile);
-
-            if (!defined(${$oManifestHashRef}{$strFile}{link_destination}))
-            {
-                if (-e $strPathFile)
-                {
-                    my $strError = "${strPathFile} error reading link: " . $!;
-
-                    if ($strPathType eq PATH_ABSOLUTE)
-                    {
-                        print $strError;
-                        exit ERROR_LINK_OPEN;
-                    }
-
-                    confess &log(ERROR, $strError);
-                }
-            }
-        }
-        # Not a recognized type
-        else
-        {
-            my $strError = "${strPathFile} is not of type directory, file, or link";
-
-            if ($strPathType eq PATH_ABSOLUTE)
-            {
-                print $strError;
-                exit ERROR_FILE_INVALID;
-            }
-
-            confess &log(ERROR, $strError);
-        }
-
-        # Get user name
-        ${$oManifestHashRef}{$strFile}{user} = getpwuid($oStat->uid);
-
-        # Get group name
-        ${$oManifestHashRef}{$strFile}{group} = getgrgid($oStat->gid);
-
-        # Get mode
-        if (${$oManifestHashRef}{$strFile}{type} ne 'l')
-        {
-            ${$oManifestHashRef}{$strFile}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
-        }
-
-        # Recurse into directories
-        if (${$oManifestHashRef}{$strFile}{type} eq 'd' && !$bCurrentDir)
-        {
-            $self->manifestRecurse($strPathType, $strPathOp, $strFile, $iDepth + 1, $oManifestHashRef);
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################

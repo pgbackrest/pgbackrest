@@ -311,15 +311,15 @@ sub backupList
     # Build the db list
     my @oyDbList;
 
-    foreach my $iHistoryId ($self->keys(INFO_BACKUP_SECTION_DB_HISTORY))
+    foreach my $iHistoryId ($oBackupInfo->keys(INFO_BACKUP_SECTION_DB_HISTORY))
     {
         my $oDbHash =
         {
             &INFO_HISTORY_ID => $iHistoryId,
             &INFO_DB_VERSION =>
-                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
+                $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
             &INFO_SYSTEM_ID =>
-                $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
+                $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
         };
 
         push(@oyDbList, $oDbHash);

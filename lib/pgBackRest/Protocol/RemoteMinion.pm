@@ -12,7 +12,9 @@ use File::Basename qw(dirname);
 
 use pgBackRest::BackupFile;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive;
+use pgBackRest::Archive::ArchiveGet;
+use pgBackRest::Archive::ArchivePush;
+use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
@@ -78,19 +80,24 @@ sub init
         $self
     );
 
-    my $oArchive = new pgBackRest::Archive();
+    my $oArchivePush = new pgBackRest::Archive::ArchivePush();
+    my $oArchiveGet = new pgBackRest::Archive::ArchiveGet();
+    my $oCheck = new pgBackRest::Check::Check();
     my $oInfo = new pgBackRest::Info();
     my $oDb = new pgBackRest::Db();
 
     # Create anonymous subs for each command
     my $hCommandMap =
     {
-        # Archive commands
-        &OP_ARCHIVE_GET_ARCHIVE_ID => sub {$oArchive->getArchiveId($oFile)},
-        &OP_ARCHIVE_GET_BACKUP_INFO_CHECK => sub {$oArchive->getBackupInfoCheck($oFile, @{shift()})},
-        &OP_ARCHIVE_GET_CHECK => sub {$oArchive->getCheck($oFile, @{shift()})},
-        &OP_ARCHIVE_PUSH_CHECK => sub {$oArchive->pushCheck($oFile, @{shift()})},
-        &OP_ARCHIVE_DB_HISTORY_LIST => sub {$oArchive->dbHistoryArchiveList($oFile)},
+        # ArchiveGet commands
+        &OP_ARCHIVE_GET_ARCHIVE_ID => sub {$oArchiveGet->getArchiveId($oFile)},
+        &OP_ARCHIVE_GET_CHECK => sub {$oArchiveGet->getCheck($oFile, @{shift()})},
+
+        # ArchivePush commands
+        &OP_ARCHIVE_PUSH_CHECK => sub {$oArchivePush->pushCheck($oFile, @{shift()})},
+
+        # Check commands
+        &OP_CHECK_BACKUP_INFO_CHECK => sub {$oCheck->backupInfoCheck($oFile, @{shift()})},
 
         # Db commands
         &OP_DB_CONNECT => sub {$oDb->connect()},

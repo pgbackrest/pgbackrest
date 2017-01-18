@@ -27,6 +27,10 @@ use constant TESTDEF_EXPECT                                         => 'expect';
     push @EXPORT, qw(TESTDEF_EXPECT);
 use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
+use constant TESTDEF_TEST_ALL                                       => 'all';
+    push @EXPORT, qw(TESTDEF_TEST_ALL);
+use constant TESTDEF_TEST_COVERAGE                                  => 'coverage';
+    push @EXPORT, qw(TESTDEF_TEST_COVERAGE);
 use constant TESTDEF_TEST_INDIVIDUAL                                => 'individual';
     push @EXPORT, qw(TESTDEF_TEST_INDIVIDUAL);
 use constant TESTDEF_TEST_NAME                                      => 'name';
@@ -39,6 +43,16 @@ use constant TESTDEF_TEST_PROCESS                                   => 'process'
     push @EXPORT, qw(TESTDEF_TEST_PROCESS);
 use constant TESTDEF_TEST_DB                                        => 'db';
     push @EXPORT, qw(TESTDEF_TEST_DB);
+
+use constant TESTDEF_COVERAGE_FULL                                  => true;
+    push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
+use constant TESTDEF_COVERAGE_PARTIAL                               => false;
+    push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
+
+use constant TESTDEF_MODULE_FILE                                    => 'File';
+    push @EXPORT, qw(TESTDEF_MODULE_FILE);
+use constant TESTDEF_MODULE_FILE_COMMON                             => TESTDEF_MODULE_FILE . 'Common';
+    push @EXPORT, qw(TESTDEF_MODULE_FILE_COMMON);
 
 ################################################################################################################################
 # Define tests
@@ -86,11 +100,22 @@ my $oTestDef =
             &TESTDEF_MODULE_NAME => 'file',
             &TESTDEF_TEST_CONTAINER => true,
 
+            &TESTDEF_TEST_COVERAGE =>
+            {
+                &TESTDEF_MODULE_FILE => TESTDEF_COVERAGE_FULL,
+                &TESTDEF_MODULE_FILE_COMMON => TESTDEF_COVERAGE_FULL,
+            },
+
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_TEST_NAME => 'unit',
                     &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+                {
+                    &TESTDEF_TEST_NAME => 'owner',
+                    &TESTDEF_TEST_TOTAL => 8,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
@@ -145,9 +170,23 @@ my $oTestDef =
                 }
             ]
         },
-        # Backup tests
+        # Stanza tests
         {
-            &TESTDEF_MODULE_NAME => 'backup',
+            &TESTDEF_MODULE_NAME => 'stanza',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_TEST_NAME => 'create',
+                    &TESTDEF_TEST_TOTAL => 2
+                },
+            ]
+        },
+        # Archive tests
+        {
+            &TESTDEF_MODULE_NAME => 'archive',
             &TESTDEF_TEST_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
@@ -166,38 +205,69 @@ my $oTestDef =
                     &TESTDEF_EXPECT => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'archive-push',
+                    &TESTDEF_TEST_NAME => 'push',
                     &TESTDEF_TEST_TOTAL => 8
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'archive-stop',
+                    &TESTDEF_TEST_NAME => 'stop',
                     &TESTDEF_TEST_TOTAL => 6
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'archive-get',
+                    &TESTDEF_TEST_NAME => 'get',
                     &TESTDEF_TEST_TOTAL => 8
                 },
+            ]
+        },
+        # Backup tests
+        {
+            &TESTDEF_MODULE_NAME => 'backup',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => false,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_TEST_NAME => 'unit',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+            ]
+        },
+        # Expire tests
+        {
+            &TESTDEF_MODULE_NAME => 'expire',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
                 {
                     &TESTDEF_TEST_NAME => 'expire',
                     &TESTDEF_TEST_TOTAL => 1
                 },
-                {
-                    &TESTDEF_TEST_NAME => 'stanza-create',
-                    &TESTDEF_TEST_TOTAL => 2
-                },
+            ]
+        },
+        # Full tests
+        {
+            &TESTDEF_MODULE_NAME => 'full',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST =>
+            [
                 {
                     &TESTDEF_TEST_NAME => 'synthetic',
                     &TESTDEF_TEST_TOTAL => 8,
                     &TESTDEF_TEST_PROCESS => true
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'full',
+                    &TESTDEF_TEST_NAME => 'real',
                     &TESTDEF_TEST_TOTAL => 11,
                     &TESTDEF_TEST_PROCESS => true,
                     &TESTDEF_TEST_DB => true
                 }
             ]
-        }
+        },
     ]
 };
 
