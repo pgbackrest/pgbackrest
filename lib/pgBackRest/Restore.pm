@@ -310,6 +310,14 @@ sub manifestLoad
         }
     }
 
+    # Issue a warning message when we remap tablespaces in postgre < 9.2
+    if ($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) < PG_VERSION_92 &&
+       (optionTest(OPTION_TABLESPACE_MAP) || optionTest(OPTION_TABLESPACE_MAP_ALL)))
+    {
+        &log(WARN, "pg_tablespace.spclocation should be updated to reflect the new tablespace location in PostgreSQL < " .
+             PG_VERSION_92)
+    }
+
     # Alter manifest for remapped tablespaces
     if (defined($oTablespaceRemap))
     {
