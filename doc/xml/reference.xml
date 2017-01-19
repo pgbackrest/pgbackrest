@@ -1020,9 +1020,9 @@
 
             <!-- OPERATION - STANZA-UPGRADE COMMAND -->
             <command id="stanza-upgrade" name="Stanza Upgrade">
-                <summary>CSHANG -TODO</summary>
+                <summary>Upgrade a stanza.</summary>
 
-                <text>CSHANG -TODO</text>
+                <text>Immediately after upgrading <postgres/> to a newer version, the <br-option>db-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the backup host.</text>
 
                 <command-example-list>
                     <command-example title="Upgrade a stanza">
@@ -1030,7 +1030,7 @@
                             {[backrest-exe]} --stanza=db stanza-upgrade
                         </code-block>
 
-                        CSHANG -TODO</text>
+                        </text>
                     </command-example>
                 </command-example-list>
             </command>

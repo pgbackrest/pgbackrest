@@ -200,8 +200,10 @@ sub stanzaUpgrade
 
         $oArchiveInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
         $oArchiveInfo->save();
-
-# CSHANG Maybe should always just reconstruct the file? But can't do that with archiveInfo can we? B/c the directory may not exist -it only gets created with the switch-xlog or archive push so if we did it now, we'd just wind up reverting the file so maybe validate could only go so far and then we check the db section based on the current DB?
+    }
+    else
+    {
+        &log(INFO, "the stanza data is already up to date");
     }
 
     # Return from function and log return values if any
@@ -497,20 +499,6 @@ sub upgradeCheck
         $strOperation,
         {name => 'bResult', value => ($iResult != 0 ? true : false)},
     );
-}
-
-####################################################################################################################################
-# infoFileUpgrade
-####################################################################################################################################
-sub infoFileUpgrade
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->infoFileUpgrade');
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 1;

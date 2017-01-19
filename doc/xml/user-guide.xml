@@ -12,6 +12,7 @@
         <variable key="user-guide-os" keyword="co6">RHEL/CentOS 6</variable>
 
         <variable key="pg-version">9.4</variable>
+        <variable key="pg-version-upgrade">9.5</variable>
 
         <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
@@ -25,6 +26,9 @@
 
         <variable key="db-path" keyword="default">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
         <variable key="db-path" keyword="co6">/var/lib/pgsql/{[pg-version]}/data</variable>
+
+        <variable key="db-path-upgrade" keyword="default">/var/lib/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}</variable>
+        <variable key="db-path-upgrade" keyword="co6">/var/lib/pgsql/{[pg-version-upgrade]}/data</variable>
 
         <variable key="spool-path">/var/spool/pgbackrest</variable>
 
@@ -1373,7 +1377,7 @@
                 </execute>
             </execute-list>
 
-            <p>Commands are run the same as on a single host configuration except that the <cmd>backup</cmd> and <cmd>expire</cmd> command are run from the <host>backup</host> host and all other commands are run from the <host>database</host> host.</p>
+            <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>backup</host> host instead of the <host>database</host> host.</p>
 
             <p>Create the stanza in the new repository.</p>
 
@@ -2052,4 +2056,6 @@
 
         <p><backrest/> creates a standby backup that is identical to a backup performed on the master.  It does this by starting/stopping the backup on the <host>db-master</host> host, copying only files that are replicated from the <host>db-standby</host> host, then copying the remaining few files from the <host>db-master</host> host.  This means that logs and statistics from the master database will be included in the backup.</p>
     </section>
+
+
 </doc>
