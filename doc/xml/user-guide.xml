@@ -2057,5 +2057,64 @@
         <p><backrest/> creates a standby backup that is identical to a backup performed on the master.  It does this by starting/stopping the backup on the <host>db-master</host> host, copying only files that are replicated from the <host>db-standby</host> host, then copying the remaining few files from the <host>db-master</host> host.  This means that logs and statistics from the master database will be included in the backup.</p>
     </section>
 
+    <!-- SECTION => STANZA UPGRADE -->
+    <section id="upgrade-stanza" depend="backup-host">
+        <title>Upgrade the Stanza</title>
+        <cmd-description key="stanza-upgrade"/>
 
+        <p>Upgrade the database.</p>
+
+        <execute-list host="{[host-db-master]}" keyword="default">
+            <title>Install new <postgres/> version.</title>
+
+            <execute user="root" err-suppress="y">
+                <exe-cmd>apt-get install postgresql-{[pg-version-upgrade]}</exe-cmd>
+                <exe-cmd-extra>-y</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-db-master]}" keyword="default">
+            <title>Upgrade <postgres/></title>
+
+            <execute user="postgres" err-suppress="y">
+                <exe-cmd>pg_upgradecluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Reconfigure <backrest/> database path.</p>
+
+        <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
+            <title>Reconfigure <br-option>db1-path</br-option></title>
+
+            <backrest-config-option section="demo" key="db1-path">{[db-path-upgrade]}</backrest-config-option>
+        </backrest-config>
+
+        <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
+            <title>Reconfigure <br-option>db-path</br-option></title>
+
+            <backrest-config-option section="demo" key="db-path">{[db-path-upgrade]}</backrest-config-option>
+        </backrest-config>
+
+        <p>Upgrade the stanza.</p>
+
+        <execute-list host="{[host-backup]}" keyword="default">
+            <title>Upgrade the stanza.</title>
+
+            <execute user="backrest" output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info
+                    stanza-upgrade</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-backup]}" keyword="co6">
+            <title>Upgrade the stanza.</title>
+
+            <execute user="backrest" output="n">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info
+                    stanza-upgrade</exe-cmd>
+            </execute>
+        </execute-list>
+
+    </section>
 </doc>

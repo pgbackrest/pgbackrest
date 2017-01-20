@@ -187,7 +187,7 @@ sub stanzaUpgrade
     );
 
     # Get the archive info and backup info files; if either does not exist an error will be thrown
-    my $oArchiveInfo = new pgBackRest::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE));
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE));
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
 
     # If the DB section does not match, then upgrade
