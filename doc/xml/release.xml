@@ -172,6 +172,10 @@
 
                         <p>Fixed an issue where a missing user/group on restore could cause an <quote>uninitialized value</quote> error in <code>File->owner()</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where protocol mismatch errors did not output the expected value.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
