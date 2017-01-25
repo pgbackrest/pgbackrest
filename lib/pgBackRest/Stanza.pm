@@ -22,6 +22,7 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
@@ -288,26 +289,20 @@ sub infoFileCreate
     my $strWarningMsgArchive = undef;
     my $bSave = true;
 
+
+    # If force was not used and the info file does not exist and the directory is not empty, then error
+    # This should also be performed by the calling routine before this function is called, so this is just a safety check
+    if (!optionGet(OPTION_FORCE) && !$oInfo->{bExists} && @$stryFileList)
+    {
+        confess &log(ERROR, ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') .
+            $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
+    }
+
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
     eval
     {
-        # ??? File init will need to be addressed with stanza-upgrade since there could then be more than one DB and db-id
-        # so the DB section, esp for backup.info, cannot be initialized before we attempt to reconstruct the file from the
-        # directories since the history id would be wrong. Also need to handle if the reconstruction fails - if any file in
-        # the backup directory or archive directory are missing or mal-formed, then currently an error will be thrown, which
-        # may not be desireable.
-
-        # If the info file does not exist, initialize it internally but do not save until complete reconstruction
-        if (!$oInfo->{bExists})
-        {
-            ($strPathType eq PATH_BACKUP_CLUSTER)
-                ? $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
-                    $self->{oDb}{iCatalogVersion}, false)
-                : $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
-        }
-
         # Reconstruct the file from the data in the directory if there is any
         if ($strPathType eq PATH_BACKUP_CLUSTER)
         {
@@ -318,6 +313,49 @@ sub infoFileCreate
         {
             $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
         }
+
+        my $hDbList = $oInfo->dbHistoryList();
+        my $iDbId = 0;
+        my $iDbIdMax = 0;
+
+        # Get the db-id from the reconstructed history that corresponds to the current db-version and db-system-id
+        foreach my $iDbHistoryId (keys %{$hDbList})
+        {
+            if ($$hDbList{$iDbHistoryId}{&INFO_SYSTEM_ID} == $self->{oDb}{ullDbSysId} &&
+                $$hDbList{$iDbHistoryId}{&INFO_DB_VERSION} eq $self->{oDb}{strDbVersion})
+            {
+                $iDbId = $iDbHistoryId;
+            }
+
+            # If the current history ID is greater than the running max, then set it to the current id
+            if ($iDbIdMax < $iDbHistoryId)
+            {
+                $iDbIdMax = $iDbHistoryId;
+            }
+
+        }
+
+        # If a corresponding db-id was not found, then check to see if there was any history
+        if ($iDbId == 0)
+        {
+            # If there is history then get the last key and increment it to set the proper key for the DB section
+            if ($iDbIdMax > 0)
+            {
+                $iDbId = $iDbIdMax + 1;
+            }
+            # Else initialize the db-id
+            else
+            {
+                $iDbId = 1;
+            }
+        }
+
+        # Make sure the db section is properly up to date
+        ($strPathType eq PATH_BACKUP_CLUSTER)
+            ? $oInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+                $self->{oDb}{ullDbSysId}, $iDbId)
+            : $oInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $iDbId);
+
 
         # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
         if ($oInfo->{bExists})
@@ -344,24 +382,8 @@ sub infoFileCreate
             }
         }
 
-        # If force was not used and the info file does not exist and the directory is not empty, then error
-        # This should also be performed by the calling routine before this function is called, so this is just a safety check
-        if ($iResult == 0 && !optionGet(OPTION_FORCE) && !$oInfo->{bExists} && @$stryFileList)
-        {
-            $iResult = ERROR_PATH_NOT_EMPTY;
-            $strResultMessage =
-                ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') . $strStanzaCreateErrorMsg;
-        }
-
         if ($iResult == 0)
         {
-            # ??? With stanza-upgrade we will want ability to force the DB section to match but for now, if it doesn't match,
-            # then something is wrong.
-            ($strPathType eq PATH_BACKUP_CLUSTER)
-                ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                    $self->{oDb}{ullDbSysId}, false)
-                : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
-
             # Save the reconstructed file
             if ($bSave)
             {

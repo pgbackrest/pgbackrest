@@ -339,7 +339,7 @@ sub process
             }
 
             # If the archive directory is not the current database version and it does not have an associated current backup
-            # then this is an orphaned archive directory so delete it and reconstruct the archive info
+            # then this is archive directory is no longer needed so delete it and reconstruct the archive info
 # CSHANG Wait - what if an upgrade of the database was performed but a stanza-upgrade was not performed. If someone manually calls expire after a WAL has been pushed to the new archive dir (can this happen?) then would we delete the new WAL? We shouldn't since archive info is required to exist meaning they had to upgrade the stanza or it will error. and if they've upgraded the DB and not performed a stanza-upgrade, but did upgrade the pgbackrest.conf what happens then?
             if (!($bCurrentDb || $bArchiveHasBackup))
             {
@@ -348,7 +348,7 @@ sub process
                 remove_tree($strFullPath) > 0
                     or confess &log(ERROR, "unable to remove orphaned ${strFullPath}", ERROR_PATH_REMOVE);
 
-                &log(WARN, "removed orphaned archive path: ${strFullPath}");
+                &log(INFO, "removed orphaned archive path: ${strFullPath}");
 
                 # Delete this archive from the hash
                 delete $$hDbListArchive{$iDbIdArchive};
@@ -361,7 +361,7 @@ sub process
                 $hDbIdArchiveIdMap{$iDbId} =  $strDbVersionArchive . "-" . $iDbIdArchive;
             }
         }
-
+# CSHANG This does not appear to have worked!
         # If any orphaned directories were removed, then reconstruct the archive info file and reload the array list
         if ($bReconstruct)
         {

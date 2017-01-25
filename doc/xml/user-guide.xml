@@ -35,6 +35,9 @@
         <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[db-path]}/postgresql.conf</variable>
 
+        <variable key="postgres-config-demo-upgrade" keyword="default">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo-upgrade" keyword="co6">{[db-path-upgrade]}/postgresql.conf</variable>
+
         <variable key="postgres-hba-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
         <variable key="postgres-hba-demo" keyword="co6">{[db-path]}/pg_hba.conf</variable>
 
@@ -83,8 +86,14 @@
         <variable key="db-cluster-create" keyword="default">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
         <variable key="db-cluster-create" keyword="co6">service postgresql-{[pg-version]} initdb</variable>
 
+        <variable key="db-cluster-create-upgrade" keyword="default">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
+        <variable key="db-cluster-create-upgrade" keyword="co6">service postgresql-{[pg-version-upgrade]} initdb</variable>
+
         <variable key="db-cluster-start" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
         <variable key="db-cluster-start" keyword="co6">service postgresql-{[pg-version]} start</variable>
+
+        <variable key="db-cluster-start-upgrade" keyword="default">pg_ctlcluster {[pg-version-upgrade]} {[postgres-cluster-demo]} start</variable>
+        <variable key="db-cluster-start-upgrade" keyword="co6">service postgresql-{[pg-version-upgrade]} start</variable>
 
         <variable key="db-cluster-stop" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
         <variable key="db-cluster-stop" keyword="co6">service postgresql-{[pg-version]} stop</variable>
@@ -2058,14 +2067,14 @@
     </section>
 
     <!-- SECTION => STANZA UPGRADE -->
-    <section id="upgrade-stanza" depend="backup-host">
+    <section id="upgrade-stanza" depend="replication">
         <title>Upgrade the Stanza</title>
         <cmd-description key="stanza-upgrade"/>
 
-        <p>Upgrade the database.</p>
+        <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they will outline the general process for upgrading a master and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
 
         <execute-list host="{[host-db-master]}" keyword="default">
-            <title>Install new <postgres/> version.</title>
+            <title>Install new <postgres/> version on the master</title>
 
             <execute user="root" err-suppress="y">
                 <exe-cmd>apt-get install postgresql-{[pg-version-upgrade]}</exe-cmd>
@@ -2073,46 +2082,182 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-db-master]}" keyword="default">
-            <title>Upgrade <postgres/></title>
+        <p>If the <postgres/> install creates a default cluster, then remove it.</p>
 
-            <execute user="postgres" err-suppress="y">
-                <exe-cmd>pg_upgradecluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
+        <execute-list host="{[host-db-master]}" keyword="default">
+            <title>Drop default cluster and create the new demo cluster</title>
+
+            <execute user="root">
+                <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
+            </execute>
+
+            <execute user="postgres">
+                <exe-cmd>
+                    /usr/lib/postgresql/{[pg-version-upgrade]}/bin/initdb
+                        -D {[db-path-upgrade]} -k -A peer</exe-cmd>
+            </execute>
+
+            <execute user="root" output="y" filter="n">
+                <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>Reconfigure <backrest/> database path.</p>
+        <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster to ensure the database system id is identical on both the master and standby. Install the new <postgres/> binaries on the standby and create the cluster.</p>
 
-        <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
-            <title>Reconfigure <br-option>db1-path</br-option></title>
+        <execute-list host="{[host-db-standby]}"  keyword="default">
+            <title>Stop old cluster</title>
 
-            <backrest-config-option section="demo" key="db1-path">{[db-path-upgrade]}</backrest-config-option>
-        </backrest-config>
+            <execute user="postgres">
+                <exe-cmd>/usr/lib/postgresql/{[pg-version]}/bin/pg_ctl stop
+                    -D {[db-path]} -s -w</exe-cmd>
+            </execute>
+
+            <execute user="root" err-suppress="y">
+                <exe-cmd>apt-get install postgresql-{[pg-version-upgrade]}</exe-cmd>
+                <exe-cmd-extra>-y</exe-cmd-extra>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
+            </execute>
+
+            <execute user="postgres">
+                <exe-cmd>
+                    /usr/lib/postgresql/{[pg-version-upgrade]}/bin/initdb
+                        -D {[db-path-upgrade]} -k -A peer</exe-cmd>
+            </execute>
+
+            <execute user="root" output="y" filter="n">
+                <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Stop the old cluster on the master and perform the upgrade.</p>
+
+        <execute-list host="{[host-db-master]}"  keyword="default">
+            <title>Stop old cluster and perform the upgrade</title>
+
+            <execute user="postgres">
+                <exe-cmd>/usr/lib/postgresql/{[pg-version]}/bin/pg_ctl stop
+                    -D {[db-path]} -s -w</exe-cmd>
+            </execute>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>sh -c 'cd /var/lib/postgresql &amp;&amp;
+                        /usr/lib/postgresql/{[pg-version-upgrade]}/bin/pg_upgrade
+                            {[dash]}-old-bindir=/usr/lib/postgresql/{[pg-version]}/bin
+                            {[dash]}-new-bindir=/usr/lib/postgresql/{[pg-version-upgrade]}/bin
+                            {[dash]}-old-datadir={[db-path]}
+                            {[dash]}-new-datadir={[db-path-upgrade]}
+                            {[dash]}-old-options=" -c config_file={[postgres-config-demo]}"
+                            {[dash]}-new-options=" -c config_file={[postgres-config-demo-upgrade]}"'
+                </exe-cmd>
+                <exe-highlight>Upgrade Complete</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>Configure the new cluster settings and port.</p>
+
+        <postgres-config host="{[host-db-master]}" file="{[postgres-config-demo-upgrade]}">
+            <title>Configure <postgres/></title>
+
+            <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
+            <postgres-config-option key="archive_mode">on</postgres-config-option>
+            <postgres-config-option key="wal_level">hot_standby</postgres-config-option>
+            <postgres-config-option key="max_wal_senders">3</postgres-config-option>
+            <postgres-config-option key="listen_addresses">'*'</postgres-config-option>
+            <postgres-config-option key="log_line_prefix">''</postgres-config-option>
+            <postgres-config-option key="port">5432</postgres-config-option>
+        </postgres-config>
+
+        <p>Update the <backrest/> configuration on all systems to point to the new cluster.</p>
 
         <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
-            <title>Reconfigure <br-option>db-path</br-option></title>
+            <title>Upgrade the <br-option>db-path</br-option></title>
 
             <backrest-config-option section="demo" key="db-path">{[db-path-upgrade]}</backrest-config-option>
         </backrest-config>
 
-        <p>Upgrade the stanza.</p>
+        <backrest-config host="{[host-db-standby]}" file="{[backrest-config-demo]}">
+            <title>Upgrade the <br-option>db-path</br-option></title>
+
+            <backrest-config-option section="demo" key="db-path">{[db-path-upgrade]}</backrest-config-option>
+        </backrest-config>
+
+        <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}" reset="y">
+            <title>Upgrade the <br-option>db1-path</br-option> and confirm <backrest/> is configured to backup from the master only</title>
+
+            <backrest-config-option section="demo" key="db1-path">{[db-path-upgrade]}</backrest-config-option>
+            <backrest-config-option section="demo" key="db1-host">{[host-db-master]}</backrest-config-option>
+            <backrest-config-option section="demo" key="db1-user">postgres</backrest-config-option>
+
+            <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
+            <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
+
+            <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+        </backrest-config>
+
+        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run on the server where the <backrest/> repository is located.</p>
 
         <execute-list host="{[host-backup]}" keyword="default">
-            <title>Upgrade the stanza.</title>
+            <title>Upgrade the stanza</title>
 
             <execute user="backrest" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info
-                    stanza-upgrade</exe-cmd>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-no-online
+                    {[dash]}-log-level-console=info stanza-upgrade</exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-backup]}" keyword="co6">
-            <title>Upgrade the stanza.</title>
+        <p>Remove the old cluster, configure and start the new cluster.</p>
 
-            <execute user="backrest" output="n">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info
-                    stanza-upgrade</exe-cmd>
+        <execute-list host="{[host-db-master]}">
+            <title>Remove old cluster</title>
+
+            <execute user="root">
+                <exe-cmd>rm -rf {[db-path]}</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>rm -rf /usr/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>rm -rf /etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Start new cluster</title>
+
+            <execute user="root" output="y">
+                <exe-cmd>{[db-cluster-start-upgrade]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Check the configuration</title>
+
+            <execute output="y" filter="n" >
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-backup]}">
+            <title>Check the configuration</title>
+
+            <execute user="backrest" output="y" filter="n" >
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Run a full backup on the new cluster.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Run a full backup</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
             </execute>
         </execute-list>
 

@@ -250,6 +250,16 @@ sub reconstruct
 
     my $strInvalidFileStructure = undef;
 
+    # Remove any existing DB or History information
+    if ($self->test(INFO_ARCHIVE_SECTION_DB))
+    {
+        $self->remove(INFO_ARCHIVE_SECTION_DB);
+    }
+    if ($self->test(INFO_ARCHIVE_SECTION_DB_HISTORY))
+    {
+        $self->remove(INFO_ARCHIVE_SECTION_DB_HISTORY);
+    }
+
     # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
     {
@@ -321,8 +331,7 @@ sub reconstruct
         $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
 
-    # If the DB section does not exist, then there were no valid directories to read from so create the DB and History sections but
-    # don't save the file.
+    # If the DB section does not exist, then there were no valid directories to read from so create the DB and History sections.
     if (!$self->test(INFO_ARCHIVE_SECTION_DB))
     {
         $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
