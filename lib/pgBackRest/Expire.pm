@@ -255,7 +255,6 @@ sub process
         my $hDbListArchive = $oArchiveInfo->dbHistoryList();
         my @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
         my %hDbIdArchiveIdMap;
-        my $bReconstruct = false;
 
         # Make sure the current database versions match between the two files
         if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
@@ -264,35 +263,22 @@ sub process
                 ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID)))))
         {
             confess &log(ERROR, "archive and backup database versions do not match\n" .
-                "HINT: has a stanza-create been performed?", ERROR_FILE_INVALID);
+                "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
         }
 
-        # Make sure major WAL archive directories on disk match what is in the archive info file before proceeding
-        my $bError = false;
-        if (keys %{$hDbListArchive} != @stryListArchiveDisk)
+        # Make sure major WAL archive directories are present in the archive info file before proceeding
+        foreach my $strArchiveDisk (@stryListArchiveDisk)
         {
-            $bError = true;
-        }
-        else
-        {
-            foreach my $strArchiveDisk (@stryListArchiveDisk)
+            # Get the db-version and db-id (history id) from the directory name
+            my ($strDbVersionDisk, $iDbIdDisk) = split("-", $strArchiveDisk);
+
+            # If this directory version/db-id does not have a corresponding entry in the archive info file then error
+            if (!defined($$hDbListArchive{$iDbIdDisk}{&INFO_SYSTEM_ID}) ||
+                (defined($$hDbListArchive{$iDbIdDisk}{&INFO_SYSTEM_ID}) && $$hDbListArchive{$iDbIdDisk}{&INFO_DB_VERSION} ne $strDbVersionDisk))
             {
-                # Get the db-version and db-id (history id) from the directory name
-                my ($strDbVersionDisk, $iDbIdDisk) = split("-", $strArchiveDisk);
-
-                # If this directory version/db-id does not have a corresponding entry in the archive info file then error
-                if (!defined($$hDbListArchive{$iDbIdDisk}{&INFO_SYSTEM_ID}) ||
-                    (defined($$hDbListArchive{$iDbIdDisk}{&INFO_SYSTEM_ID}) && $$hDbListArchive{$iDbIdDisk}{&INFO_DB_VERSION} ne $strDbVersionDisk))
-                {
-                    $bError = true;
-                }
+                confess &log(ERROR, "archive info history does not match with the directories on disk\n" .
+                    "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
             }
-        }
-
-        if ($bError)
-        {
-            confess &log(ERROR, "archive info history does not match with the directories on disk\n" .
-                "HINT: has a stanza-create been performed?", ERROR_FILE_INVALID);
         }
 
         # Clean up any orphaned directories
@@ -312,7 +298,7 @@ sub process
 
             my $iDbId = undef;
 
-            # Get the db-id from backup info that corresponds to the archive db-version and db-system-id
+            # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
             foreach my $iDbIdBackup (keys %{$hDbListBackup})
             {
                 if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
@@ -324,8 +310,8 @@ sub process
             }
 
             my $bArchiveHasBackup = false;
-            # If backup db-id corresponding to the archive info history db-version and db-system-id could not be found for any
-            # backup in the backup:current section, then this is an orphaned archive directory
+            # If backup db-id corresponding to the archive db-version and db-system-id was found then check to see if there is a
+            # current backup associated with this db-version and system-id.
             if (defined($iDbId))
             {
                 foreach my $strBackup ($oBackupInfo->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
@@ -338,9 +324,9 @@ sub process
                 }
             }
 
-            # If the archive directory is not the current database version and it does not have an associated current backup
-            # then this is archive directory is no longer needed so delete it and reconstruct the archive info
 # CSHANG Wait - what if an upgrade of the database was performed but a stanza-upgrade was not performed. If someone manually calls expire after a WAL has been pushed to the new archive dir (can this happen?) then would we delete the new WAL? We shouldn't since archive info is required to exist meaning they had to upgrade the stanza or it will error. and if they've upgraded the DB and not performed a stanza-upgrade, but did upgrade the pgbackrest.conf what happens then?
+            # If the archive directory is not the current database version and it does not have an associated current backup
+            # then this archive directory is no longer needed so delete it
             if (!($bCurrentDb || $bArchiveHasBackup))
             {
                 my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveDir);
@@ -352,25 +338,26 @@ sub process
 
                 # Delete this archive from the hash
                 delete $$hDbListArchive{$iDbIdArchive};
-
-                $bReconstruct = true;
             }
             else
             {
-                # Map the backup db-id to the archiveId
-                $hDbIdArchiveIdMap{$iDbId} =  $strDbVersionArchive . "-" . $iDbIdArchive;
+                if (defined($iDbId))
+                {
+                    # Map the backup db-id to the archiveId
+                    $hDbIdArchiveIdMap{$iDbId} =  $strDbVersionArchive . "-" . $iDbIdArchive;
+                }
+                else
+                {
+# CSHANG This should never happen unless the backup.info file is corrupt so maybe make this a stronger message?
+                    confess &log(ERROR, "the current database ${strDbVersionArchive} is not listed in the backup history\n" .
+                        "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
+                }
             }
         }
-# CSHANG This does not appear to have worked!
-        # If any orphaned directories were removed, then reconstruct the archive info file and reload the array list
-        if ($bReconstruct)
-        {
-            $oArchiveInfo->reconstruct($oFile, $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION),
-                $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID));
-            $oArchiveInfo->save();
-            @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
-        }
 
+        # Regenerate the array list in the event an orphaned directory was removed
+        @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
+        
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
         if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)

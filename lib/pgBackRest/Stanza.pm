@@ -328,7 +328,7 @@ sub infoFileCreate
             }
 
             # If the current history ID is greater than the running max, then set it to the current id
-            if ($iDbIdMax < $iDbHistoryId)
+            if ($iDbHistoryId > $iDbIdMax)
             {
                 $iDbIdMax = $iDbHistoryId;
             }

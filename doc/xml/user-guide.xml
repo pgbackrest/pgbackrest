@@ -2068,13 +2068,13 @@
 
     <!-- SECTION => STANZA UPGRADE -->
     <section id="upgrade-stanza" depend="replication">
-        <title>Upgrade the Stanza</title>
+        <title>Upgrading <postgres/></title>
         <cmd-description key="stanza-upgrade"/>
 
         <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they will outline the general process for upgrading a master and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
 
         <execute-list host="{[host-db-master]}" keyword="default">
-            <title>Install new <postgres/> version on the master</title>
+            <title>Install new <postgres/> version</title>
 
             <execute user="root" err-suppress="y">
                 <exe-cmd>apt-get install postgresql-{[pg-version-upgrade]}</exe-cmd>
@@ -2082,7 +2082,7 @@
             </execute>
         </execute-list>
 
-        <p>If the <postgres/> install creates a default cluster, then remove it.</p>
+        <p>Create the new cluster. If the <postgres/> install creates a default cluster, then remove it to avoid confusion.</p>
 
         <execute-list host="{[host-db-master]}" keyword="default">
             <title>Drop default cluster and create the new demo cluster</title>
@@ -2215,6 +2215,11 @@
             <title>Remove old cluster</title>
 
             <execute user="root">
+                <exe-cmd>cp /etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/pg_hba.conf
+                    /etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/pg_hba.conf</exe-cmd>
+            </execute>
+
+            <execute user="root">
                 <exe-cmd>rm -rf {[db-path]}</exe-cmd>
             </execute>
 
@@ -2251,7 +2256,7 @@
             </execute>
         </execute-list>
 
-        <p>Run a full backup on the new cluster.</p>
+        <p>Run a full backup on the new cluster and then restore the standby from the backup.</p>
 
         <execute-list host="{[host-backup]}">
             <title>Run a full backup</title>
@@ -2261,5 +2266,61 @@
             </execute>
         </execute-list>
 
+        <execute-list host="{[host-db-standby]}">
+            <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
+
+            <execute>
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <postgres-config host="{[host-db-standby]}" file="{[postgres-config-demo-upgrade]}">
+            <title>Configure <postgres/></title>
+
+            <postgres-config-option key="hot_standby">on</postgres-config-option>
+            <postgres-config-option key="port">5432</postgres-config-option>
+        </postgres-config>
+
+        <postgres-config host="{[host-db-standby]}" file="{[postgres-config-demo-upgrade]}" show="n">
+            <title>Configure <postgres/></title>
+
+            <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
+            <postgres-config-option key="log_line_prefix">''</postgres-config-option>
+            <postgres-config-option key="ssl">true</postgres-config-option>
+            <postgres-config-option key="ssl_cert_file">'/etc/ssl/certs/ssl-cert-snakeoil.pem'</postgres-config-option>
+            <postgres-config-option key="ssl_key_file">'/etc/ssl/private/ssl-cert-snakeoil.key'</postgres-config-option>
+        </postgres-config>
+
+        <execute-list host="{[host-db-standby]}">
+            <title>Start <postgres/></title>
+
+            <execute user="root" show="n">
+                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>{[db-cluster-start-upgrade]}</exe-cmd>
+            </execute>
+
+            <execute show="n">
+                <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-db-standby]}">
+            <title>Remove the old cluster</title>
+
+            <execute user="root">
+                <exe-cmd>rm -rf {[db-path]}</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>rm -rf /usr/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>rm -rf /etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</exe-cmd>
+            </execute>
+        </execute-list>
     </section>
 </doc>
