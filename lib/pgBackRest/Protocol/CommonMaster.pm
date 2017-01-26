@@ -193,7 +193,7 @@ sub greetingRead
 
             confess &log(ERROR,
                 'found name \'' . (defined($hGreeting->{$hParam->{strName}}) ? $hGreeting->{$hParam->{strName}} : '[undef]') .
-                "' in protocol greeting instead of expected '$hParam->{strName}'", ERROR_HOST_CONNECT);
+                "' in protocol greeting instead of expected '$hParam->{strExpected}'", ERROR_HOST_CONNECT);
         }
     }
 

@@ -82,6 +82,11 @@
             <contributor-id type="github">slardiere</contributor-id>
         </contributor>
 
+        <contributor id="lobréau.benoit">
+            <contributor-name-display>blogh</contributor-name-display>
+            <contributor-id type="github">blogh</contributor-id>
+        </contributor>
+
         <contributor id="odonnell.jason">
             <contributor-name-display>Jason O'Donnell</contributor-name-display>
             <contributor-id type="github">Dwaligon</contributor-id>
@@ -167,6 +172,10 @@
 
                         <p>Fixed an issue where a missing user/group on restore could cause an <quote>uninitialized value</quote> error in <code>File->owner()</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where protocol mismatch errors did not output the expected value.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -184,6 +193,14 @@
                         </release-item-contributor-list>
 
                         <p>Improved <cmd>check</cmd> command to run on a standby, though only basic checks are done because <code>pg_switch_xlog()</code> cannot be executed on a replica.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="lobréau.benoit"/>
+                        </release-item-contributor-list>
+
+                        <p>Added warning to update <code>pg_tablespace.spclocation</code> when remapping tablespaces in <postgres/> &lt; 9.2.</p>
                     </release-item>
                 </release-feature-list>
 
