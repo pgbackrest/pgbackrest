@@ -147,7 +147,7 @@ sub process
         {
             my $oException = $@;
 
-            if (isException($oException) && $oException->code() == ERROR_FILE_INVALID)
+            if (exceptionCode($oException) == ERROR_FILE_INVALID)
             {
                 my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, $strPageId);
                 $self->{oManifest}->cacheReset($$oRenderOut{source});

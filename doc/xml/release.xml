@@ -248,6 +248,10 @@
                     <release-item>
                         <p>Clean up <code>optionValid()</code>/<code>optionTest()</code> logic in <code>Lock.pm</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added <code>Exception::exceptionCode()</code> and <code>Exception::exceptionMessage()</code> to simplify error handling logic.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

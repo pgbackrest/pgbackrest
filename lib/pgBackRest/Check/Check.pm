@@ -97,12 +97,9 @@ sub process
     # If there is an unhandled error then confess
     or do
     {
-        # Confess unhandled errors
-        confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-        # If this is a backrest error then capture the last code and message
-        $iResult = $EVAL_ERROR->code();
-        $strResultMessage = $EVAL_ERROR->message();
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
     };
 
     # Check archive.info
@@ -116,12 +113,9 @@ sub process
         }
         or do
         {
-            # Confess unhandled errors
-            confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
+            # Capture error information
+            $iResult = exceptionCode($EVAL_ERROR);
+            $strResultMessage = exceptionMessage($EVAL_ERROR->message());
         };
     }
 
@@ -138,12 +132,9 @@ sub process
         # If this is a backrest error then capture the code and message else confess
         or do
         {
-            # Confess unhandled errors
-            confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
+            # Capture error information
+            $iResult = exceptionCode($EVAL_ERROR);
+            $strResultMessage = exceptionMessage($EVAL_ERROR->message());
         };
     }
 

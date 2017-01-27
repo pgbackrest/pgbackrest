@@ -1340,8 +1340,7 @@ sub copy
                 my $oException = $EVAL_ERROR;
 
                 # Ignore error if source file was missing and missing file exception was returned and bIgnoreMissingSource is set
-                if ($bIgnoreMissingSource && $strRemote eq 'in' && isException($oException) &&
-                    $oException->code() == ERROR_FILE_MISSING)
+                if ($bIgnoreMissingSource && $strRemote eq 'in' && exceptionCode($oException) == ERROR_FILE_MISSING)
                 {
                     close($hDestinationFile)
                         or confess &log(ERROR, "cannot close file ${strDestinationTmpOp}");
