@@ -88,7 +88,7 @@ sub new
         );
 
     # Default compression extension to gz
-    $self->{strCompressExtension} = 'gz';
+    $self->{strCompressExtension} = COMPRESS_EXT;
 
     # Return from function and log return values if any
     return logDebugReturn

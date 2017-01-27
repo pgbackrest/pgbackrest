@@ -222,10 +222,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>C Library builds only run when C library has actually changed.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory and split the <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands into separate modules.</p>
                     </release-item>
 
@@ -251,6 +247,10 @@
 
                     <release-item>
                         <p>Added <code>Exception::exceptionCode()</code> and <code>Exception::exceptionMessage()</code> to simplify error handling logic.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Represent <file>.gz</file> extension with a constant.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
@@ -281,6 +281,10 @@
 
                     <release-item>
                         <p>Added unit tests for low-level functions in the <code>File</code> and <code>BackupCommon</code> modules.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>C Library builds only run when C library has actually changed.</p>
                     </release-item>
 
                     <release-item>
