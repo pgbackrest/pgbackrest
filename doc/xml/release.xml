@@ -252,6 +252,10 @@
                     <release-item>
                         <p>Represent <file>.gz</file> extension with a constant.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow empty files to be created with <code>FileCommon::fileStringWrite()</code> and use temp files to avoid partial reads.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
