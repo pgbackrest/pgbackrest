@@ -149,7 +149,10 @@ sub hostConnect
         # If there a no jobs in the queue for this host then no need to connect
         if (!defined($hHost->{hyQueue}))
         {
-            &log(INFO, "no jobs for host $self->{strHostType}-$hHost->{iHostConfigIdx}");
+            logDebugMisc(
+                $strOperation, "no jobs for host",
+                {name => 'strHostType', value => $self->{strHostType}},
+                {name => 'iHostConfigIdx', value => $hHost->{iHostConfigIdx}});
             next;
         }
 
@@ -160,14 +163,11 @@ sub hostConnect
 
             logDebugMisc(
                 $strOperation, 'start local process',
-                {name => 'iHostIdx', value => $iHostIdx},
+                {name => 'strHostType', value => $self->{strHostType}},
                 {name => 'iHostProcessIdx', value => $iHostProcessIdx},
                 {name => 'iHostConfigIdx', value => $hHost->{iHostConfigIdx}},
+                {name => 'iHostIdx', value => $iHostIdx},
                 {name => 'iProcessId', value => $iProcessId});
-
-            &log(INFO,
-                "local process ${iProcessId} start for host $self->{strHostType}-$hHost->{iHostConfigIdx}",
-                undef, undef, undef, $iProcessId);
 
             my $oLocal = new pgBackRest::Protocol::LocalMaster
             (
@@ -381,12 +381,10 @@ sub process
                 {
                     logDebugMisc(
                         $strOperation, 'no jobs found, stop local',
+                        {name => 'strHostType', value => $hLocal->{strHostType}},
+                        {name => 'iHostConfigIdx', value => $hLocal->{iHostConfigIdx}},
                         {name => 'iHostIdx', value => $hLocal->{iHostIdx}},
                         {name => 'iProcessId', value => $hLocal->{iProcessId}});
-
-                    &log(INFO,
-                        "local process $hLocal->{iProcessId} stop for $self->{strHostType}-$hHost->{iHostConfigIdx}",
-                        undef, undef, undef, $hLocal->{iProcessId});
 
                     # Remove input handle from the select object
                     my $iHandleTotal = $self->{oSelect}->count();

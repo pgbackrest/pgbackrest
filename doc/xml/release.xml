@@ -256,6 +256,10 @@
                     <release-item>
                         <p>Allow empty files to be created with <code>FileCommon::fileStringWrite()</code> and use temp files to avoid partial reads.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Refactor process IO and process master/minion code out from the common protocol code.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

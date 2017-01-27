@@ -2,7 +2,7 @@
 # PROTOCOL LOCAL MINION MODULE
 ####################################################################################################################################
 package pgBackRest::Protocol::LocalMinion;
-use parent 'pgBackRest::Protocol::CommonMinion';
+use parent 'pgBackRest::Protocol::CommandMinion';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,8 +12,8 @@ use pgBackRest::BackupFile;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::Protocol::CommandMinion;
 use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::CommonMinion;
 use pgBackRest::Protocol::Protocol;
 use pgBackRest::RestoreFile;
 
