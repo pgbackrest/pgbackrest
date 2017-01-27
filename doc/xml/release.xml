@@ -236,6 +236,18 @@
                     <release-item>
                         <p>Allow logging to be suppressed via <code>logDisable()</code> and <code>logEnable()</code>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow for locks to be taken more than once in the same process without error.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Lock directories can be created when more than one directory level is required.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Clean up <code>optionValid()</code>/<code>optionTest()</code> logic in <code>Lock.pm</code>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
