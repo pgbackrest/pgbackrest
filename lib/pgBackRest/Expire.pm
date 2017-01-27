@@ -357,7 +357,7 @@ sub process
 
         # Regenerate the array list in the event an orphaned directory was removed
         @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
-        
+
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
         if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
