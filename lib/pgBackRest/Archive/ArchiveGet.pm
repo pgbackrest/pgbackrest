@@ -98,8 +98,14 @@ sub get
     $strDestinationFile = walPath($strDestinationFile, optionGet(OPTION_DB_PATH, false), commandGet());
 
     # Get the wal segment filename
-    my $strArchiveId = $self->getCheck($oFile);
-    my $strArchiveFile = walFind($oFile, $strArchiveId, $strSourceArchive, false);
+    my ($strArchiveId, $strArchiveFile) = $self->getCheck(
+        $oFile, undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef);
+
+    if (!defined($strArchiveFile) && !walIsSegment($strSourceArchive) &&
+        $oFile->exists(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSourceArchive}"))
+    {
+        $strArchiveFile = $strSourceArchive;
+    }
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned

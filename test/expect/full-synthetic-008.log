@@ -112,7 +112,7 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false
 P00  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = full
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
-P00  DEBUG:     Protocol::LocalProcess->new(): iSelectTimeout = <915>, strHostType = db
+P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
@@ -419,7 +419,7 @@ P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tm
 P00  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = full
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
-P00  DEBUG:     Protocol::LocalProcess->new(): iSelectTimeout = <915>, strHostType = db
+P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
@@ -761,7 +761,7 @@ P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/base/32768, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     build level 3 paths/links
-P00  DEBUG:     Protocol::LocalProcess->new(): iSelectTimeout = <915>, strHostType = backup
+P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = backup
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, 65536, [MODIFICATION-TIME-1], 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 0, 0, pg_data/base/32768/33001, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33001, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, 24576, [MODIFICATION-TIME-1], 826512f67291135871eb54e133afd076c859a224, 0, 0, pg_data/base/32768/33000, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33000, strOp = restoreFile, strQueue = pg_data
@@ -1068,7 +1068,7 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false
 P00  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = incr
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
-P00  DEBUG:     Protocol::LocalProcess->new(): iSelectTimeout = <915>, strHostType = db
+P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
@@ -1402,7 +1402,7 @@ P00  DEBUG:     Backup->tmpClean: remove file [TEST_PATH]/backup/repo/temp/db.tm
 P00  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strType = incr
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: found cached protocol
-P00  DEBUG:     Protocol::LocalProcess->new(): iSelectTimeout = <915>, strHostType = db
+P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp

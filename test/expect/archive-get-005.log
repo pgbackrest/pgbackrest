@@ -11,7 +11,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strRemoteType = backup, strUser = [USER-1]
 P00  DEBUG:     Protocol::CommandMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
-P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
@@ -130,7 +130,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::RemoteMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strRemoteType = backup, strUser = [USER-1]
 P00  DEBUG:     Protocol::CommandMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --protocol-timeout=1830 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup remote', strId = backup, strName = remote, strRemoteType = backup
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
-P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], ullDbSysId = [undef]
+P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], strWalFile = 000000090000000900000009, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
@@ -138,10 +138,7 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive::ArchiveCommon::walFind(): bPartial = false, iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000090000000900000009
-P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000090000000900000009(-[0-f]+){0,1}(\.gz){0,1}$, strPath = [TEST_PATH]/backup/repo/archive/db/9.4-1/0000000900000009, strPathType = backup:absolute, strSortOrder = <forward>
-P00  DEBUG:     File->list=>: stryFileList = ()
-P00  DEBUG:     Archive::ArchiveCommon::walFind=>: strWalFileName = [undef]
+P00  DEBUG:     Archive::Archive->getCheck=>: strArchiveFile = [undef], strArchiveId = 9.4-1
 P00   INFO: unable to find 000000090000000900000009 in the archive
 P00  DEBUG:     Archive::ArchiveGet->get=>: iResult = 1
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 1, oException = [undef], strSignal = [undef]

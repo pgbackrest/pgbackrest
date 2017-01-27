@@ -896,7 +896,7 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = walFind($oFileLocal, $strArchiveId, $strArchive, false, optionGet(OPTION_ARCHIVE_TIMEOUT));
+            my $strArchiveFile = walSegmentFind($oFileLocal, $strArchiveId, $strArchive, optionGet(OPTION_ARCHIVE_TIMEOUT));
             $strArchive = substr($strArchiveFile, 0, 24);
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))

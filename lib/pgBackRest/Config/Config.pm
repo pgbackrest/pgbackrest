@@ -238,8 +238,6 @@ use constant OPTION_TEST                                            => 'test';
     push @EXPORT, qw(OPTION_TEST);
 use constant OPTION_TEST_DELAY                                      => 'test-delay';
     push @EXPORT, qw(OPTION_TEST_DELAY);
-use constant OPTION_TEST_FORK                                       => 'fork';
-    push @EXPORT, qw(OPTION_TEST_FORK);
 use constant OPTION_TEST_POINT                                      => 'test-point';
     push @EXPORT, qw(OPTION_TEST_POINT);
 
@@ -294,8 +292,11 @@ use constant OPTION_LOG_LEVEL_STDERR                                => 'log-leve
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant OPTION_ARCHIVE_ASYNC                                   => 'archive-async';
     push @EXPORT, qw(OPTION_ARCHIVE_ASYNC);
+# Deprecated and to be removed
 use constant OPTION_ARCHIVE_MAX_MB                                  => 'archive-max-mb';
     push @EXPORT, qw(OPTION_ARCHIVE_MAX_MB);
+use constant OPTION_ARCHIVE_QUEUE_MAX                               => 'archive-queue-max';
+    push @EXPORT, qw(OPTION_ARCHIVE_QUEUE_MAX);
 
 # BACKUP Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -405,8 +406,6 @@ use constant OPTION_DEFAULT_TEST                                    => false;
     push @EXPORT, qw(OPTION_DEFAULT_TEST);
 use constant OPTION_DEFAULT_TEST_DELAY                              => 5;
     push @EXPORT, qw(OPTION_DEFAULT_TEST_DELAY);
-use constant OPTION_DEFAULT_TEST_FORK                               => true;
-    push @EXPORT, qw(OPTION_DEFAULT_TEST_FORK);
 
 # GENERAL Section
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -990,17 +989,6 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_TEST_FORK =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_FORK,
-        &OPTION_RULE_NEGATE => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true
-        }
-    },
-
     # GENERAL Section
     #-------------------------------------------------------------------------------------------------------------------------------
     &OPTION_ARCHIVE_TIMEOUT =>
@@ -1011,6 +999,7 @@ my %oOptionRule =
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN, OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX],
         &OPTION_RULE_COMMAND =>
         {
+            &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
         },
@@ -1295,6 +1284,7 @@ my %oOptionRule =
         &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_PROCESS_MAX_MIN, OPTION_DEFAULT_PROCESS_MAX_MAX],
         &OPTION_RULE_COMMAND =>
         {
+            &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_RESTORE => true
         }
@@ -1404,6 +1394,7 @@ my %oOptionRule =
         }
     },
 
+    # Deprecated and to be removed
     &OPTION_ARCHIVE_MAX_MB =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1413,6 +1404,17 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_PUSH => true
         }
+    },
+
+    &OPTION_ARCHIVE_QUEUE_MAX =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_PUSH => true,
+        },
     },
 
     # BACKUP Section
@@ -1817,6 +1819,7 @@ my %oOptionRule =
         &OPTION_RULE_REQUIRED => false,
         &OPTION_RULE_COMMAND =>
         {
+            &CMD_ARCHIVE_PUSH => true,
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_EXPIRE => true,
@@ -2168,6 +2171,12 @@ sub configLoad
                         &OPTION_RETENTION_DIFF . "' to the maximum.");
             }
         }
+    }
+
+    # Warn if ARCHIVE_MAX_MB is present
+    if (optionValid(OPTION_ARCHIVE_MAX_MB) && optionTest(OPTION_ARCHIVE_MAX_MB))
+    {
+        &log(WARN, "'" . OPTION_ARCHIVE_MAX_MB . "' is no longer not longer valid, use '" . OPTION_ARCHIVE_QUEUE_MAX . "' instead");
     }
 
     return true;
@@ -3054,7 +3063,7 @@ sub commandWrite
     my $oOptionOverride = shift;
 
     # Set defaults
-    $strExeString = defined($strExeString) ? $strExeString : abs_path($0);
+    $strExeString = defined($strExeString) ? $strExeString : BACKREST_BIN;
     $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
     $bIncludeCommand = defined($bIncludeCommand) ? $bIncludeCommand : true;
 

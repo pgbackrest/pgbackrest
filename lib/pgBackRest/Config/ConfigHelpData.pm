@@ -64,30 +64,27 @@ my $oConfigHelpData =
                     "cluster to a consistent state."
         },
 
-        # ARCHIVE-MAX-MB Option Help
+        # ARCHIVE-QUEUE-MAX Option Help
         #---------------------------------------------------------------------------------------------------------------------------
-        'archive-max-mb' =>
+        'archive-queue-max' =>
         {
             section => 'archive',
             summary =>
-                "Limit size of the local asynchronous archive queue when archive-async=y.",
+                "Limit size (in bytes) of the PostgreSQL archive queue.",
             description =>
                 "After the limit is reached, the following will happen:\n" .
                 "\n" .
-                "* pgBackRest will notify Postgres that the archive was successfully backed up, then DROP IT.\n" .
-                "* An error will be logged to the console and also to the Postgres log.\n" .
-                "* A stop file will be written in the lock directory and no more archive files will be backed up until it is " .
-                    "removed.\n" .
+                "* pgBackRest will notify PostgreSQL that the WAL was successfully archived, then DROP IT.\n" .
+                "* A warning will be output to the Postgres log.\n" .
                 "\n" .
                 "If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point. " .
                     "A new backup will be required to regain full restore capability.\n" .
                 "\n" .
-                "The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop " .
-                    "completely. Better to lose the backup than have PostgreSQL go down.\n" .
+                "In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the " .
+                    "queue limit is exceeded again.\n" .
                 "\n" .
-                "To start normal archiving again you'll need to remove the stop file which will be located at " .
-                    "\${repo-path}/lock/\${stanza}-archive.stop where \${repo-path} is the path set in the general section, and " .
-                    "\${stanza} is the backup stanza."
+                "The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop " .
+                    "completely. Better to lose the backup than have PostgreSQL go down."
         },
 
         # ARCHIVE-TIMEOUT Option Help
@@ -855,7 +852,8 @@ my $oConfigHelpData =
             option =>
             {
                 'archive-async' => 'section',
-                'archive-max-mb' => 'section',
+                'archive-queue-max' => 'section',
+                'archive-timeout' => 'section',
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
@@ -866,6 +864,7 @@ my $oConfigHelpData =
                 'compress-level' => 'section',
                 'compress-level-network' => 'section',
                 'config' => 'default',
+                'db-host' => 'section',
                 'db-path' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
@@ -873,6 +872,7 @@ my $oConfigHelpData =
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
+                'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-sync' => 'section',

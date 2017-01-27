@@ -77,9 +77,6 @@ sub process
     my $iResult = 0;
     my $strResultMessage = undef;
 
-    # Record the start time to wait for the archive.info file to be written
-    my $oWait = waitInit($iArchiveTimeout);
-
     my $strArchiveId = undef;
     my $strArchiveFile = undef;
     my $strWalSegment = undef;
@@ -108,7 +105,7 @@ sub process
         eval
         {
             # Check that the archive info file is written and is valid for the current database of the stanza
-            $strArchiveId = new pgBackRest::Archive::ArchiveGet()->getCheck($oFile);
+            ($strArchiveId) = new pgBackRest::Archive::ArchiveGet()->getCheck($oFile);
             return true;
         }
         or do
@@ -126,7 +123,7 @@ sub process
 
         eval
         {
-            $strArchiveFile = walFind($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
+            $strArchiveFile = walSegmentFind($oFile, $strArchiveId, $strWalSegment, $iArchiveTimeout);
             return true;
         }
         # If this is a backrest error then capture the code and message else confess

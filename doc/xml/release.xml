@@ -150,7 +150,11 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.13dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                 <p><b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
+                <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.
+
+                To prevent this outcome, stop archiving by setting <setting>archive_command = false</setting>. Next, drain the async queue by running <code>pgbackrest --stanza=[stanza-name] archive-push</code> and wait for the process to complete.  Check that the queue in <path>[spool-path]/archive/[stanza-name]/out</path> is empty. Finally, install <code>1.13</code> and restore the original <setting>archive_command</setting>.
+
+                <b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
 
                 <release-bug-list>
                     <release-item>
@@ -179,6 +183,10 @@
                 </release-bug-list>
 
                 <release-feature-list>
+                    <release-item>
+                        <p>Improved, multi-process implementation of asynchronous archiving.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>

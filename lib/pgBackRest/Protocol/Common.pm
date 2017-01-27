@@ -48,6 +48,14 @@ use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveC
 use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
 
+# Archive Push Async Module
+use constant OP_ARCHIVE_PUSH_ASYNC                                  => 'archivePushAsync';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH_ASYNC);
+
+# Archive File Module
+use constant OP_ARCHIVE_PUSH_FILE                                   => 'archivePushFile';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH_FILE);
+
 # Check Module
 use constant OP_CHECK_BACKUP_INFO_CHECK                             => 'backupInfoCheck';
     push @EXPORT, qw(OP_CHECK_BACKUP_INFO_CHECK);

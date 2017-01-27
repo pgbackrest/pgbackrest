@@ -8,9 +8,11 @@ package pgBackRest::Protocol::LocalProcess;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use IO::Select;
 
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::LocalMaster;
@@ -31,12 +33,16 @@ sub new
         my $strOperation,
         $self->{strHostType},
         $self->{iSelectTimeout},
+        $self->{strBackRestBin},
+        $self->{bConfessError},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strHostType'},
             {name => 'iSelectTimeout', default => int(optionGet(OPTION_PROTOCOL_TIMEOUT) / 2)},
+            {name => 'strBackRestBin', default => BACKREST_BIN},
+            {name => 'bConfessError', default => true},
         );
 
     # Declare host map and array
@@ -75,6 +81,9 @@ sub reset
 
     # Set the processing flag to false
     $self->{bProcessing} = false;
+
+    # Initialize job total to 0
+    $self->{iQueued} = 0;
 
     # Initialize running job total to 0
     $self->{iRunning} = 0;
@@ -172,7 +181,7 @@ sub hostConnect
             my $oLocal = new pgBackRest::Protocol::LocalMaster
             (
                 commandWrite(
-                    CMD_LOCAL, true, BACKREST_BIN, undef,
+                    CMD_LOCAL, true, $self->{strBackRestBin}, undef,
                     {
                         &OPTION_COMMAND => {value => commandGet()},
                         &OPTION_PROCESS => {value => $iProcessId},
@@ -250,9 +259,6 @@ sub init
                 {name => 'iDirection', value => $hLocal->{iDirection}},
                 {name => 'iQueueIdx', value => $hLocal->{iQueueIdx}},
                 {name => 'iQueueLastIdx', value => $hLocal->{iQueueLastIdx}});
-
-            # Queue map is no longer needed
-            undef($hHost->{hQueueMap});
         }
 
         $self->{bProcessing} = true;
@@ -262,7 +268,7 @@ sub init
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bResult', value => $self->{bProcessing}}
+        {name => 'bResult', value => $self->processing()}
     );
 }
 
@@ -279,7 +285,7 @@ sub process
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     # Initialize processing
-    if (!$self->{bProcessing})
+    if (!$self->processing())
     {
         if (!$self->init())
         {
@@ -315,7 +321,37 @@ sub process
 
             # Get the job result
             my $hJob = $hLocal->{hJob};
-            $hJob->{rResult} = $hLocal->{oLocal}->outputRead(true, undef, undef, true);
+
+            eval
+            {
+                $hJob->{rResult} = $hLocal->{oLocal}->outputRead(true, undef, undef, true);
+                return true;
+            }
+            or do
+            {
+                my $oException = $EVAL_ERROR;
+
+                # If not a backrest exception then always confess it - something has gone very wrong
+                confess $oException if (!isException($oException));
+
+                # If the process is has terminated throw the exception
+                if (!defined($hLocal->{oLocal}->{io}->processId()))
+                {
+                    confess logException($oException);
+                }
+
+                # If errors should be confessed then do so
+                if ($self->{bConfessError})
+                {
+                    confess logException($oException);
+                }
+                # Else store exception so caller can process it
+                else
+                {
+                    $hJob->{oException} = $oException;
+                }
+            };
+
             $hJob->{iProcessId} = $hLocal->{iProcessId};
             push(@hyResult, $hJob);
 
@@ -414,6 +450,7 @@ sub process
                 $hLocal->{hJob} = $hJob;
                 $bFound = true;
                 $self->{iRunning}++;
+                $self->{iQueued}--;
 
                 logDebugMisc(
                     $strOperation, 'get job from queue',
@@ -470,7 +507,7 @@ sub queueJob
         );
 
     # Don't add jobs while in the middle of processing the current queue
-    if ($self->{bProcessing})
+    if ($self->processing())
     {
         confess &log(ASSERT, 'new jobs cannot be added until processing is complete');
     }
@@ -505,9 +542,104 @@ sub queueJob
     }
 
     push(@{$hHost->{hyQueue}[$iQueueIdx]}, $hJob);
+    $self->{iQueued}++;
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# dequeueJobs
+#
+# Dequeue all jobs from a queue.
+####################################################################################################################################
+sub dequeueJobs
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $iHostConfigIdx,
+        $strQueue,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->dequeueJobs', \@_,
+            {name => 'iHostConfigIdx'},
+            {name => 'strQueue'},
+        );
+
+    # Don't add jobs while in the middle of processing the current queue
+    if (!$self->processing())
+    {
+        confess &log(ASSERT, 'unable to dequeue a job when not processing');
+    }
+
+    # Get the host that contains the queue to clear
+    my $iHostIdx = $self->{hHostMap}{$iHostConfigIdx};
+
+    if (!defined($iHostIdx))
+    {
+        confess &log(ASSERT, "iHostConfigIdx = $iHostConfigIdx does not exist");
+    }
+
+    my $hHost = $self->{hyHost}[$iHostIdx];
+
+    # Get the queue to clear
+    my $iQueueIdx = $hHost->{hQueueMap}{$strQueue};
+
+    if (!defined($iQueueIdx))
+    {
+        confess &log(ASSERT, "unable to find queue '${strQueue}'");
+    }
+
+    $hHost->{hyQueue}[$iQueueIdx] = [];
+    $self->{iQueued} = 0;
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# jobTotal
+#
+# Total jobs in the queue.
+####################################################################################################################################
+sub jobTotal
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->jobTotal');
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iJobTotal', value => $self->{iQueued} + $self->{iRunning}}
+    );
+}
+
+####################################################################################################################################
+# processing
+#
+# Are jobs being processed?
+####################################################################################################################################
+sub processing
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->processing');
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bProcessing', value => $self->{bProcessing}, trace => true}
+    );
 }
 
 1;

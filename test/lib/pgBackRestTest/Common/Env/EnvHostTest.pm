@@ -31,6 +31,8 @@ use pgBackRestTest::Common::HostGroupTest;
 ####################################################################################################################################
 use constant WAL_VERSION_94                                      => '94';
     push @EXPORT, qw(WAL_VERSION_94);
+use constant WAL_VERSION_94_SYS_ID                               => 6353949018581704918;
+    push @EXPORT, qw(WAL_VERSION_94_SYS_ID);
 
 ####################################################################################################################################
 # initModule
@@ -176,6 +178,64 @@ sub archiveGenerate
                  false);                                # Destination is not compressed
 
     return $strArchiveFile, $strSourceFile;
+}
+
+####################################################################################################################################
+# walSegment
+#
+# Generate name of WAL segment from component parts.
+####################################################################################################################################
+sub walSegment
+{
+    my $self = shift;
+    my $iTimeline = shift;
+    my $iMajor = shift;
+    my $iMinor = shift;
+
+    return uc(sprintf('%08x%08x%08x', $iTimeline, $iMajor, $iMinor));
+}
+
+####################################################################################################################################
+# walGenerate
+#
+# Generate a WAL segment and ready file for testing.
+####################################################################################################################################
+sub walGenerate
+{
+    my $self = shift;
+    my $oFile = shift;
+    my $strWalPath = shift;
+    my $strPgVersion = shift;
+    my $iSourceNo = shift;
+    my $strWalSegment = shift;
+    my $bPartial = shift;
+
+    my $strWalFile = "${strWalPath}/${strWalSegment}" . (defined($bPartial) && $bPartial ? '.partial' : '');
+    my $strArchiveTestFile = $self->dataPath() . "/backup.wal${iSourceNo}_${strPgVersion}.bin";
+
+    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
+                 PATH_DB_ABSOLUTE, $strWalFile,         # Destination file
+                 false,                                 # Source is not compressed
+                 false);                                # Destination is not compressed
+
+    fileStringWrite("${strWalPath}/archive_status/${strWalSegment}.ready");
+
+    return $strWalFile;
+}
+
+####################################################################################################################################
+# walRemove
+#
+# Remove WAL file and ready file.
+####################################################################################################################################
+sub walRemove
+{
+    my $self = shift;
+    my $strWalPath = shift;
+    my $strWalFile = shift;
+
+    fileRemove("$self->{strWalPath}/${strWalFile}");
+    fileRemove("$self->{strWalPath}/archive_status/${strWalFile}.ready");
 }
 
 1;
