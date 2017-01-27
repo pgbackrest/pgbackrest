@@ -2,7 +2,7 @@
 # ArchiveUnitTest.pm - Tests for ArchiveCommon module
 ####################################################################################################################################
 package pgBackRestTest::Archive::ArchiveUnitTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes

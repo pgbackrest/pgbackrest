@@ -6,6 +6,7 @@ test/.vagrant
 test/package
 test/nytprof.out
 test/nytprof/*
+test/scratch.txt
 test/coverage*
 doc/output/*
 doc/doc/output/*

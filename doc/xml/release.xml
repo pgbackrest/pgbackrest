@@ -232,6 +232,10 @@
                     <release-item>
                         <p>Split the <cmd>check</cmd> command out of the <code>Archive.pm</code> module.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow logging to be suppressed via <code>logDisable()</code> and <code>logEnable()</code>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
@@ -262,6 +266,18 @@
                     <release-item>
                         <p>Added unit tests for low-level functions in the <code>File</code> and <code>BackupCommon</code> modules.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added more flexibility in initializing and cleaning up after modules and tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>testResult()</code> suppresses logging and reports exceptions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>testException()</code> allows messages to be matched with regular expressions.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>
@@ -275,6 +291,10 @@
 
                     <release-item>
                         <p>Added expect log expression to replace year subdirectories in <path>backup.history</path>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor name/locations of common modules that setup test environments.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

@@ -22,11 +22,11 @@ use pgBackRestTest::Common::Host::HostBackupTest;
 use pgBackRestTest::Common::ExecuteTest;
 
 ####################################################################################################################################
-# init
+# initModule
 #
 # Common objects and variables used by all tests.
 ####################################################################################################################################
-sub init
+sub initModule
 {
     my $self = shift;
 
@@ -57,13 +57,12 @@ sub init
         HOST_PROTOCOL_TIMEOUT);
 }
 
-
 ####################################################################################################################################
-# final
+# cleanModule
 #
 # Close objects created for tests.
 ####################################################################################################################################
-sub final
+sub cleanModule
 {
     my $self = shift;
 

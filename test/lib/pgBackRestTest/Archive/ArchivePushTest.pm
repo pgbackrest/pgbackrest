@@ -2,7 +2,7 @@
 # ArchivePushTest.pm - Tests for archive-push command
 ####################################################################################################################################
 package pgBackRestTest::Archive::ArchivePushTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -25,9 +25,9 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Full::FullCommonTest;
 
 ####################################################################################################################################
 # archiveCheck

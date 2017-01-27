@@ -2,7 +2,7 @@
 # ConfigConfigTest.pm - Tests for mixed command line and config file options in Config.pm
 ####################################################################################################################################
 package pgBackRestTest::Config::ConfigConfigTest;
-use parent 'pgBackRestTest::Config::ConfigCommonTest';
+use parent 'pgBackRestTest::Config::ConfigEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -349,5 +349,11 @@ sub run
         $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_MULTIPLE_VALUE, OPTION_REPO_PATH);
     }
 }
+
+####################################################################################################################################
+# Getters
+####################################################################################################################################
+# Change this from the default so the same stanza is not used in all tests.
+sub stanza {return 'main'};
 
 1;

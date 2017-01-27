@@ -17,9 +17,11 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::Wait;
 
-use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::DefineTest;
+use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::LogTest;
 
 ####################################################################################################################################
 # Constant to use when bogus data is required
@@ -59,18 +61,37 @@ sub new
 }
 
 ####################################################################################################################################
-# init
+# initModule
 #
 # Empty init sub in case the ancestor class does not delare one.
 ####################################################################################################################################
-sub init {}
+sub initModule {}
 
 ####################################################################################################################################
-# final
+# initTest
+#
+# Empty init sub in case the ancestor class does not delare one.
+####################################################################################################################################
+sub initTest {}
+
+####################################################################################################################################
+# cleanTest
+#
+# Delete all files in test directory.
+####################################################################################################################################
+sub cleanTest
+{
+    my $self = shift;
+
+    executeTest('sudo rm -rf ' . $self->testPath() . '/*');
+}
+
+####################################################################################################################################
+# cleanModule
 #
 # Empty final sub in case the ancestor class does not delare one.
 ####################################################################################################################################
-sub final {}
+sub cleanModule {}
 
 ####################################################################################################################################
 # process
@@ -126,11 +147,14 @@ sub process
             {name => 'strGroup'},
         );
 
+    # Init will only be run on first test, clean/init on subsequent tests
+    $self->{bFirstTest} = true;
+
     # Init, run, and end the test(s)
-    $self->init();
+    $self->initModule();
     $self->run();
-    $self->final();
     $self->end();
+    $self->cleanModule();
 
     # Make sure the correct number of tests ran
     my $hModule = testDefModuleGet($self->{strModule});
@@ -229,6 +253,14 @@ sub begin
 
     $self->{strBackRestExe} = $strExe;
 
+    if (!$self->{bFirstTest})
+    {
+        $self->cleanTest();
+    }
+
+    $self->initTest();
+    $self->{bFirstTest} = false;
+
     return true;
 }
 
@@ -255,16 +287,60 @@ sub testResult
     my $self = shift;
     my $fnSub = shift;
     my $strExpected = shift;
+    my $strDescription = shift;
+    my $iWaitSeconds = shift;
 
-    my $strActual = $fnSub->();
+    &log(INFO, '    ' . (defined($strDescription) ? $strDescription : 'no description'));
+    my $strActual;
 
-    if (!defined($strExpected) && defined($strActual) || defined($strExpected) && !defined($strActual) ||
-        $strActual ne $strExpected)
+    my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 0);
+    my $bDone = false;
+
+    do
     {
-        confess
-            'expected ' . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .
-            " but actual was " . (defined($strActual) ? "\"${strActual}\"" : '[undef]');
-    }
+        eval
+        {
+            logDisable();
+            my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
+
+            if (@stryResult <= 1)
+            {
+                $strActual = ${logDebugBuild($stryResult[0])};
+            }
+            else
+            {
+                $strActual = ${logDebugBuild(\@stryResult)};
+            }
+
+            logEnable();
+            return true;
+        }
+        or do
+        {
+            logEnable();
+
+            if (!isException($EVAL_ERROR))
+            {
+                confess "unexpected standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
+            }
+
+            confess &logException($EVAL_ERROR);
+        };
+
+        if ($strActual ne (defined($strExpected) ? $strExpected : "[undef]"))
+        {
+            if (!waitMore($oWait))
+            {
+                confess
+                    'expected ' . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .
+                    " but actual was " . (defined($strActual) ? "\"${strActual}\"" : '[undef]');
+            }
+        }
+        else
+        {
+            $bDone = true;
+        }
+    } while (!$bDone);
 }
 
 ####################################################################################################################################
@@ -277,22 +353,31 @@ sub testException
     my $iCodeExpected = shift;
     my $strMessageExpected = shift;
 
+    # Output first line of the error message
+    my @stryErrorMessage = split('\n', $strMessageExpected);
+    &log(INFO, "    [${iCodeExpected}] " . $stryErrorMessage[0]);
+
     my $bError = false;
     my $strError = "exception ${iCodeExpected}, \"${strMessageExpected}\" was expected";
 
     eval
     {
+        logDisable();
         $fnSub->();
+        logEnable();
         return true;
     }
     or do
     {
+        logEnable();
+
         if (!isException($EVAL_ERROR))
         {
-            confess "${strError} but actual was standard Perl exception";
+            confess "${strError} but actual was standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
         }
 
-        if (!($EVAL_ERROR->code() == $iCodeExpected && $EVAL_ERROR->message() eq $strMessageExpected))
+        if (!($EVAL_ERROR->code() == $iCodeExpected &&
+            ($EVAL_ERROR->message() eq $strMessageExpected || $EVAL_ERROR->message() =~ $strMessageExpected)))
         {
             confess "${strError} but actual was " . $EVAL_ERROR->code() . ", \"" . $EVAL_ERROR->message() . "\"";
         }
@@ -408,7 +493,13 @@ sub testRunExe
                 if (defined($strTest) && $hTest->{&TESTDEF_TEST_NAME} eq $strTest)
                 {
                     $hTestCoverage =
-                        defined($hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}) ? $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}: $hTestCoverage;
+                        defined($hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}) ? $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun} :
+                            $hTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL};
+
+                    if (!defined($hTestCoverage))
+                    {
+                        $hTestCoverage = $hTestModule->{&TESTDEF_TEST_COVERAGE};
+                    }
                 }
             }
         }

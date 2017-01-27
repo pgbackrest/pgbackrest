@@ -2,7 +2,7 @@
 # FullSyntheticTest.pm - Tests for all commands that can be run against synthetic data
 ####################################################################################################################################
 package pgBackRestTest::Full::FullSyntheticTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -27,10 +27,10 @@ use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Full::FullCommonTest;
 use pgBackRestTest::Common::Host::HostBackupTest;
 
 ####################################################################################################################################

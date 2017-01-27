@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ConfigCommonTest.pm - Common code for Config unit tests
 ####################################################################################################################################
-package pgBackRestTest::Config::ConfigCommonTest;
+package pgBackRestTest::Config::ConfigEnvTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
@@ -43,6 +43,16 @@ sub commandSetTest
     my $strCommand = shift;
 
     $$oOption{command} = $strCommand;
+}
+
+sub optionReset
+{
+    my $self = shift;
+    my $oOption = shift;
+    my $strKey = shift;
+
+    delete($$oOption{option}{$strKey});
+    delete($$oOption{boolean}{$strKey});
 }
 
 # sub optionRemoveTest
@@ -235,11 +245,5 @@ sub optionTestExpect
         confess "expected option ${strOption} to be [undef], but " . optionGet($strOption) . ' found instead';
     }
 }
-
-####################################################################################################################################
-# Getters
-####################################################################################################################################
-# Change this from the default so the same stanza is not used in all tests.
-sub stanza {return 'main'};
 
 1;
