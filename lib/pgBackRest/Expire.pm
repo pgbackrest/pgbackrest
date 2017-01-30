@@ -240,15 +240,6 @@ sub process
     }
     else
     {
-# Get a list of upper directories in the archive dir (Dave says should do this in a loop even if always redundant
-# Get the history from the archive info file
-# Find the system-id in the history list - if does not exist, then error
-# Get the history from the backup.info
-# Map the system-id and version from the archive file to the backup id
-# Get a list of all backups in backup::current to determin retention
-# Parse the list to indicate which DB-ID (or archiveid?) the backup belongs to
-# When processing, do each archive dir in isolation.
-
         # Build the db list from the history in the backup info and archive info file
         my $hDbListBackup = $oBackupInfo->dbHistoryList();
         my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true);
@@ -265,6 +256,10 @@ sub process
             confess &log(ERROR, "archive and backup database versions do not match\n" .
                 "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
         }
+
+        # Get the current database archive id (e.g. 9.4-1)
+        my $strCurrentDbArchiveId = $oArchiveInfo->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
+            $oArchiveInfo->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID);
 
         # Make sure major WAL archive directories are present in the archive info file before proceeding
         foreach my $strArchiveDisk (@stryListArchiveDisk)
@@ -284,19 +279,13 @@ sub process
         # Clean up any orphaned directories
         foreach my $strArchiveDir (@stryListArchiveDisk)
         {
+            my $iDbId = undef;
+
             # Get the db-version and db-id (history id) from the directory name
             my ($strDbVersionArchive, $iDbIdArchive) = split("-", $strArchiveDir);
 
             # Get the DB system ID to map back to the backup info
             my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
-
-            # Determine if this is the current database
-            my $bCurrentDb =
-                ($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef, $strDbVersionArchive) &&
-                 $oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef, $ullDbSysIdArchive))
-                 ? true : false;
-
-            my $iDbId = undef;
 
             # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
             foreach my $iDbIdBackup (keys %{$hDbListBackup})
@@ -324,10 +313,9 @@ sub process
                 }
             }
 
-# CSHANG Wait - what if an upgrade of the database was performed but a stanza-upgrade was not performed. If someone manually calls expire after a WAL has been pushed to the new archive dir (can this happen?) then would we delete the new WAL? We shouldn't since archive info is required to exist meaning they had to upgrade the stanza or it will error. and if they've upgraded the DB and not performed a stanza-upgrade, but did upgrade the pgbackrest.conf what happens then?
             # If the archive directory is not the current database version and it does not have an associated current backup
             # then this archive directory is no longer needed so delete it
-            if (!($bCurrentDb || $bArchiveHasBackup))
+            if (!(($strCurrentDbArchiveId eq $strArchiveDir) || $bArchiveHasBackup))
             {
                 my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveDir);
 
@@ -348,9 +336,9 @@ sub process
                 }
                 else
                 {
-# CSHANG This should never happen unless the backup.info file is corrupt so maybe make this a stronger message?
-                    confess &log(ERROR, "the current database ${strDbVersionArchive} is not listed in the backup history\n" .
-                        "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
+                    # This should never happen unless the backup.info file is corrupt
+                    confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
+                        ERROR_FILE_INVALID);
                 }
             }
         }
@@ -401,8 +389,7 @@ sub process
                 if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                        $strArchiveRetentionBackup, INFO_BACKUP_KEY_ARCHIVE_START))
                 {
-
-                    # For each archiveId, only remove WAL for a retained backup for that archiveId
+                    # For each archiveId, remove WAL that are not part of retention
                     foreach my $strArchiveId (@stryListArchiveDisk)
                     {
                         # Get archive ranges to preserve for this archiveID.  Because archive retention can be less than total
@@ -410,9 +397,11 @@ sub process
                         # though they cannot be played any further forward with PITR.
                         my $strArchiveExpireMax;
                         my @oyArchiveRange;
+                        my $strArchiveIdExpireMax = '000000000000000000000000';
 
                         foreach my $strBackup ($oBackupInfo->list())
                         {
+                            # If the backup has an archive start
                             if ($strBackup le $strArchiveRetentionBackup &&
                                 $oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_ARCHIVE_START))
                             {
@@ -433,6 +422,10 @@ sub process
                                     {
                                         $$oArchiveRange{stop} = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                                                                    $strBackup, INFO_BACKUP_KEY_ARCHIVE_STOP);
+                                        if ($$oArchiveRange{start} gt $strArchiveIdExpireMax)
+                                        {
+                                            $strArchiveIdExpireMax = $$oArchiveRange{start};
+                                        }
                                     }
                                     else
                                     {
@@ -448,10 +441,25 @@ sub process
                             }
                         }
 
+                        # If the max backup selected for retention is not within this ArchiveId then set the max retention from the
+                        # WAL for this ArchiveId
+                        if (!defined($strArchiveExpireMax) && defined($strArchiveIdExpireMax))
+                        {
+                            $strArchiveExpireMax = $strArchiveIdExpireMax;
+                        }
+
                         # Get all major archive paths (timeline and first 64 bits of LSN)
                         foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
                         {
                             logDebugMisc($strOperation, "found major WAL path: ${strArchiveId} / ${strPath}");
+
+                            # If the @oyArchiveRange is empty and this is the current database, then skip so don't remove the
+                            # current database WAL directory
+                            if (!@oyArchiveRange && ($strCurrentDbArchiveId eq $strArchiveId))
+                            {
+                                last;
+                            }
+
                             $bRemove = true;
 
                             # Keep the path if it falls in the range of any backup in retention
