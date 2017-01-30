@@ -311,9 +311,7 @@ eval
 
                 executeTest("sudo rm -rf ${strBuildBasePath}");
                 filePathCreate($strBuildPath, undef, true, true);
-                executeTest("cp -rp ${strLibCPath}/* ${strBuildPath}");
-                utime($lTimestampLast, $lTimestampLast, $strMakeFile) or
-                    confess "unable to set time for ${strMakeFile}" . (defined($!) ? ":$!" : '');
+                executeTest("cp -r ${strLibCPath}/* ${strBuildPath}");
 
                 executeTest(
                     "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
@@ -341,6 +339,9 @@ eval
                 {
                     confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
                 }
+
+                utime($lTimestampLast, $lTimestampLast, $strMakeFile) or
+                    confess "unable to set time for ${strMakeFile}" . (defined($!) ? ":$!" : '');
             }
 
             # Exit if only testing the C library
@@ -403,7 +404,7 @@ eval
                     &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
                     filePathCreate($strBuildPath, undef, true, true);
-                    executeTest("cp -rp ${strBackRestBase}/libc/* ${strBuildPath}");
+                    executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
 
                     executeTest(
                         "docker exec -i test-build " .
