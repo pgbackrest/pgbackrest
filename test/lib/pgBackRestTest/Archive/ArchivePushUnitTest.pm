@@ -239,7 +239,7 @@ sub run
 
         $self->testResult(
             sub {$oPushAsync->readyList()}, '()',
-            'ignore files without .ready extenstion');
+            'ignore files without .ready extension');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->walGenerate(

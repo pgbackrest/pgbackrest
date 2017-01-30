@@ -93,7 +93,7 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("${strModule}::walFind()"))
+    if ($self->begin("${strModule}::walSegmentFind()"))
     {
         my $strArchiveId = '9.4-1';
         my $oFile = new pgBackRest::File(
