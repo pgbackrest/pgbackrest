@@ -268,6 +268,10 @@
                     <release-item>
                         <p>Refactor process IO and process master/minion code out from the common protocol code.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Reduced the likelihood of torn pages causing a false positive in page checksums by filtering on start backup LSN.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

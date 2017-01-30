@@ -600,7 +600,6 @@ sub pathCreate
     );
 }
 
-
 ####################################################################################################################################
 # pathSync
 ####################################################################################################################################
@@ -1126,6 +1125,7 @@ sub copy
         $bAppendChecksum,
         $bPathSync,
         $strExtraFunction,
+        $rExtraParam,
     ) =
         logDebugParam
         (
@@ -1145,6 +1145,7 @@ sub copy
             {name => 'bAppendChecksum', default => false},
             {name => 'bPathSync', default => false},
             {name => 'strExtraFunction', required => false},
+            {name => 'rExtraParam', required => false},
         );
 
     # Set working variables
@@ -1260,7 +1261,7 @@ sub copy
             {
                 $self->{oProtocol}->cmdWrite($strRemoteOp,
                     [$strSourceOp, undef, $bSourceCompressed, $bDestinationCompress, undef, undef, undef, undef, undef, undef,
-                        undef, undef, $strExtraFunction]);
+                        undef, undef, $strExtraFunction, $rExtraParam]);
 
                 $bController = true;
             }
@@ -1277,7 +1278,8 @@ sub copy
                 $self->{oProtocol}->cmdWrite(
                     $strRemoteOp,
                     [undef, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, undef, undef, $strMode,
-                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync, $strExtraFunction]);
+                        $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync, $strExtraFunction,
+                        $rExtraParam]);
 
                 $bController = true;
             }
@@ -1290,7 +1292,8 @@ sub copy
             $self->{oProtocol}->cmdWrite(
                 $strRemoteOp,
                 [$strSourceOp, $strDestinationOp, $bSourceCompressed, $bDestinationCompress, $bIgnoreMissingSource, undef,
-                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync, $strExtraFunction]);
+                    $strMode, $bDestinationPathCreate, $strUser, $strGroup, $bAppendChecksum, $bPathSync, $strExtraFunction,
+                    $rExtraParam]);
 
             $bController = true;
         }
@@ -1299,7 +1302,8 @@ sub copy
         if ($strRemoteOp ne OP_FILE_COPY)
         {
             ($strChecksum, $iFileSize, $rExtra) =
-                $self->{oProtocol}->binaryXfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress, undef, $fnExtra);
+                $self->{oProtocol}->binaryXfer($hIn, $hOut, $strRemote, $bSourceCompressed, $bDestinationCompress, undef, $fnExtra,
+                $rExtraParam);
         }
 
         # If this is the controlling process then wait for OK from remote
@@ -1362,24 +1366,24 @@ sub copy
         if (!$bSourceCompressed && $bDestinationCompress)
         {
             ($strChecksum, $iFileSize, $rExtra) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', false, true, false, $fnExtra);
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', false, true, false, $fnExtra, $rExtraParam);
         }
         # If the source is compressed and the destination is not then decompress
         elsif ($bSourceCompressed && !$bDestinationCompress)
         {
             ($strChecksum, $iFileSize, $rExtra) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', true, false, false, $fnExtra);
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', true, false, false, $fnExtra, $rExtraParam);
         }
         # Else both sides are compressed, so copy capturing checksum
         elsif ($bSourceCompressed)
         {
             ($strChecksum, $iFileSize, $rExtra) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', true, true, false, $fnExtra);
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'out', true, true, false, $fnExtra, $rExtraParam);
         }
         else
         {
             ($strChecksum, $iFileSize, $rExtra) =
-                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', false, true, false, $fnExtra);
+                $self->{oProtocol}->binaryXfer($hSourceFile, $hDestinationFile, 'in', false, true, false, $fnExtra, $rExtraParam);
         }
     }
 

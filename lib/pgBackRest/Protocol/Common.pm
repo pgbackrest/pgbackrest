@@ -260,6 +260,7 @@ sub binaryXfer
     my $bDestinationCompress = shift;
     my $bProtocol = shift;
     my $fnExtra = shift;
+    my $rExtraParam = shift;
 
     # The input stream must be defined
     my $oIn;
@@ -435,7 +436,7 @@ sub binaryXfer
                 # Do extra processing on the buffer if requested
                 if (!$bProtocol && defined($fnExtra))
                 {
-                    $fnExtra->(\$tBuffer, $iBlockSize, $iFileSize - $iBlockSize, $rExtra);
+                    $fnExtra->($rExtraParam, \$tBuffer, $iBlockSize, $iFileSize - $iBlockSize, $rExtra);
                 }
 
                 # Write buffer
@@ -502,7 +503,7 @@ sub binaryXfer
                 # Do extra processing on the buffer if requested
                 if (defined($fnExtra))
                 {
-                    $fnExtra->(\$tUncompressedBuffer, $iBlockSize, $oZLib->total_in(), $rExtra);
+                    $fnExtra->($rExtraParam, \$tUncompressedBuffer, $iBlockSize, $oZLib->total_in(), $rExtra);
                 }
 
                 # If block size > 0 then compress

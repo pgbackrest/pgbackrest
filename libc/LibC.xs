@@ -30,8 +30,10 @@ pageChecksumTest(page, blockNo, pageSize)
     U32 pageSize
 
 bool
-pageChecksumBuffer(pageBuffer, bufferSize, blockNoStart, pageSize)
+pageChecksumBuffer(pageBuffer, bufferSize, blockNoStart, pageSize, iIgnoreWalId, iIgnoreWalOffset)
     const char *pageBuffer
     U32 bufferSize
     U32 blockNoStart
     U32 pageSize
+    U32 iIgnoreWalId
+    U32 iIgnoreWalOffset

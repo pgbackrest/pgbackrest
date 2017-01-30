@@ -11,7 +11,7 @@ WriteMakefile
 (
     NAME              => 'pgBackRest::LibC',
     VERSION_FROM      => 'lib/pgBackRest/LibC.pm', # finds $VERSION, requires EU::MM from perl >= 5.5
-    AUTHOR            => 'vagrant <vagrant@>',
+    AUTHOR            => 'David Steele <david@pgbackrest.org>',
     CCFLAGS           => '-std=c99 -msse4.1 -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=2',
     LIBS              => [''], # e.g., '-lm'
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
@@ -25,7 +25,6 @@ if  (eval {require ExtUtils::Constant; 1})
     my @names =
     (
         qw(UVSIZE),
-    #   {name => 'SAMPLESTRING', type => 'PV'},
     );
 
     ExtUtils::Constant::WriteConstants

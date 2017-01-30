@@ -9,7 +9,7 @@ use English '-no_match_vars';
 use Fcntl qw(O_RDONLY);
 
 # Set number of tests
-use Test::More tests => 9;
+use Test::More tests => 10;
 
 # Make sure the module loads without errors
 BEGIN {use_ok('pgBackRest::LibC')};
@@ -20,6 +20,19 @@ pgBackRest::LibC->import(qw(:debug :checksum));
 
 # UVSIZE determines the pointer and long long int size.  This needs to be 8 to indicate 64-bit types are available.
 ok (&UVSIZE == 8, 'UVSIZE == 8');
+
+sub pageBuild
+{
+    my $tPageSource = shift;
+    my $iWalId = shift;
+    my $iWalOffset = shift;
+    my $iBlockNo = shift;
+
+    my $tPage = pack('I', $iWalId) . pack('I', $iWalOffset) . substr($tPageSource, 8);
+    my $iChecksum = pageChecksum($tPage, $iBlockNo, length($tPage));
+
+    return substr($tPage, 0, 8) . pack('S', $iChecksum) . substr($tPage, 10);
+}
 
 # Test page-level checksums
 {
@@ -73,15 +86,18 @@ ok (&UVSIZE == 8, 'UVSIZE == 8');
         substr($tBuffer, 0, 8) . pack('S', $iPageChecksum + 2) . substr($tBuffer, 10) .
         substr($tBuffer, 0, 8) . pack('S', $iPageChecksum + 3) . substr($tBuffer, 10);
 
-    ok (pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize), 'pass valid page buffer');
+    ok (pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'pass valid page buffer');
 
-    # Reject an invalid page buffer (second block will error because he checksum will not contain the correct block no)
+    # Allow page with an invalid checksum because LSN >= ignore LSN
     $tBufferMulti =
-        $tBuffer .
-        $tBuffer .
-        substr($tBuffer, 0, 8) . pack('S', $iPageChecksum - 2) . substr($tBuffer, 10);
+        pageBuild($tBuffer, 0, 0, 0) .
+        pageBuild($tBuffer, 0xFFFF, 0xFFFE, 0) .
+        pageBuild($tBuffer, 0, 0, 2);
 
-    ok (!pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize), 'reject invalid page buffer');
+    ok (pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFE), 'skip invalid checksum');
+
+    # Reject an invalid page buffer (second block will error because the checksum will not contain the correct block no)
+    ok (!pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'reject invalid page buffer');
 
     # Find the rejected page in the buffer
     my $iRejectedBlockNo = -1;
@@ -98,11 +114,13 @@ ok (&UVSIZE == 8, 'UVSIZE == 8');
     ok ($iRejectedBlockNo == $iExpectedBlockNo, "rejected blockno ${iRejectedBlockNo} equals expected ${iExpectedBlockNo}");
 
     # Reject an misaligned page buffer
-    $tBufferMulti = $tBuffer . substr($tBuffer, 1);
+    $tBufferMulti =
+        pageBuild($tBuffer, 0, 0, 0) .
+        substr(pageBuild($tBuffer, 0, 0, 1), 1);
 
     eval
     {
-        pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize);
+        pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF);
         ok (0, 'misaligned test should have failed');
     }
     or do

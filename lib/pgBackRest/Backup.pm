@@ -249,7 +249,8 @@ sub processManifest
         $strDbVersion,
         $bCompress,
         $bHardLink,
-        $oBackupManifest                            # Manifest for the current backup
+        $oBackupManifest,
+        $strLsnStart,
     ) =
         logDebugParam
     (
@@ -262,6 +263,7 @@ sub processManifest
         {name => 'bCompress'},
         {name => 'bHardLink'},
         {name => 'oBackupManifest'},
+        {name => 'strLsnStart', required => false},
     );
 
     # Start backup test point
@@ -306,6 +308,13 @@ sub processManifest
             }
         }
     }
+
+    # Build the lsn start parameter to pass to the extra function
+    my $hStartLsnParam =
+    {
+        iWalId => defined($strLsnStart) ? hex((split('/', $strLsnStart))[0]) : 0xFFFF,
+        iWalOffset => defined($strLsnStart) ? hex((split('/', $strLsnStart))[1]) : 0xFFFF,
+    };
 
     # Iterate all files in the manifest
     foreach my $strRepoFile (
@@ -377,7 +386,7 @@ sub processManifest
                 $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
                 optionGet(OPTION_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $bCompress,
                 $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false),
-                $bIgnoreMissing]);
+                $bIgnoreMissing, optionGet(OPTION_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
 
         # Size and checksum will be removed and then verified later as a sanity check
         $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
@@ -824,7 +833,8 @@ sub process
     # Perform the backup
     my $lBackupSizeTotal =
         $self->processManifest(
-            $oFileMaster, $strDbMasterPath, $strDbCopyPath, $strType, $strDbVersion, $bCompress, $bHardLink, $oBackupManifest);
+            $oFileMaster, $strDbMasterPath, $strDbCopyPath, $strType, $strDbVersion, $bCompress, $bHardLink, $oBackupManifest,
+            $strLsnStart);
     &log(INFO, "${strType} backup size = " . fileSizeFormat($lBackupSizeTotal));
 
     # Master file object no longer needed

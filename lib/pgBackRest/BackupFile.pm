@@ -66,6 +66,7 @@ push @EXPORT, qw(isLibC);
 ####################################################################################################################################
 sub backupChecksumPage
 {
+    my $rExtraParam = shift;
     my $tBufferRef = shift;
     my $iBufferSize = shift;
     my $iBufferOffset = shift;
@@ -109,7 +110,9 @@ sub backupChecksumPage
     }
     elsif ($iBufferSize > 0)
     {
-        if (!pageChecksumBuffer($$tBufferRef, $iBufferSize, int($iBufferOffset / PG_PAGE_SIZE), PG_PAGE_SIZE))
+        if (!pageChecksumBuffer(
+                $$tBufferRef, $iBufferSize, int($iBufferOffset / PG_PAGE_SIZE), PG_PAGE_SIZE, $rExtraParam->{iWalId},
+                $rExtraParam->{iWalOffset}))
         {
             $hExtra->{bValid} = false;
 
@@ -164,6 +167,7 @@ sub backupFile
         $bDestinationCompress,                      # Compress destination file
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
+        $hExtraParam,                               # Parameter to pass to the extra function
     ) =
         logDebugParam
         (
@@ -177,6 +181,7 @@ sub backupFile
             {name => 'bDestinationCompress', trace => true},
             {name => 'lModificationTime', trace => true},
             {name => 'bIgnoreMissing', default => true, trace => true},
+            {name => 'hExtraParam', required => false, trace => true},
         );
 
     my $iCopyResult = BACKUP_FILE_COPY;             # Copy result
@@ -222,7 +227,8 @@ sub backupFile
             true,                                                   # Create the destination directory if it does not exist
             undef, undef, undef, undef,                             # Unused
             $bChecksumPage ?                                        # Function to process page checksums
-                'pgBackRest::BackupFile::backupChecksumPage' : undef);
+                'pgBackRest::BackupFile::backupChecksumPage' : undef,
+            $hExtraParam);                                          # Start LSN to pass to extra function
 
         # If source file is missing then assume the database removed it (else corruption and nothing we can do!)
         if (!$bCopyResult)
