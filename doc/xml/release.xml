@@ -272,6 +272,14 @@
                     <release-item>
                         <p>Reduced the likelihood of torn pages causing a false positive in page checksums by filtering on start backup LSN.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove Intel-specific optimization from C library build flags.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
