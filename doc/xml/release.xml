@@ -180,6 +180,10 @@
                     <release-item>
                         <p>Fixed an issue where protocol mismatch errors did not output the expected value.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed a spurious <cmd>archive-get</cmd> log message that indicated an exit code of 1 was an abnormal termination.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
