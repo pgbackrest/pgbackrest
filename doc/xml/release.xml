@@ -284,6 +284,10 @@
 
                         <p>Remove Intel-specific optimization from C library build flags.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Removed <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
