@@ -1013,7 +1013,7 @@
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
-                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>db-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the backup host.</text>
+                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>db-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the backup host. If the database is offline use the <setting>--no-online</setting> option.</text>
 
                 <command-example-list>
                     <command-example title="Upgrade a stanza">
