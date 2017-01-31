@@ -332,7 +332,7 @@ sub process
                 if (defined($iDbId))
                 {
                     # Map the backup db-id to the archiveId
-                    $hDbIdArchiveIdMap{$iDbId} =  $strDbVersionArchive . "-" . $iDbIdArchive;
+                    $hDbIdArchiveIdMap{$iDbId} =  $strArchiveDir;
                 }
                 else
                 {
@@ -368,6 +368,7 @@ sub process
         {
             # See if enough backups exist for expiration to start
             my $strArchiveRetentionBackup = $stryPath[$iArchiveRetention - 1];
+            my $iRetentionBackupIndex;
 
             if (!defined($strArchiveRetentionBackup))
             {
@@ -375,34 +376,58 @@ sub process
                 {
                     &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for archive retention");
                     $strArchiveRetentionBackup = $stryPath[scalar @stryPath - 1];
+                    $iRetentionBackupIndex = scalar @stryPath - 1;
                 }
+            }
+            else
+            {
+                $iRetentionBackupIndex = $iArchiveRetention - 1;
             }
 
             # If a backup has been selected for retention then continue
             if (defined($strArchiveRetentionBackup))
             {
-                logDebugMisc($strOperation, "backup selected for retention ${strArchiveRetentionBackup}");
-                my $bRemove;
+                my %hDbIdArchiveRetentionBackupMap;
+                my $iDbId =
+                    $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strArchiveRetentionBackup, INFO_BACKUP_KEY_HISTORY_ID);
+                $hDbIdArchiveRetentionBackupMap{$hDbIdArchiveIdMap{$iDbId}} = $strArchiveRetentionBackup;
+                logDebugMisc($strOperation, "initial backup selected for retention ${strArchiveRetentionBackup} for " .
+                    $hDbIdArchiveIdMap{$iDbId});
 
-                # Only expire if the selected backup has archive info - backups performed with --no-online will
-                # not have archive info and cannot be used for expiration.
-                if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
-                                       $strArchiveRetentionBackup, INFO_BACKUP_KEY_ARCHIVE_START))
+                # If there are backups within retention that are on different databases then set the latest one for retention over
+                # that database's archiveId (e.g. 9.4-1)
+                for (my $i = $iRetentionBackupIndex; $i >= 0; $i--)
                 {
-                    # For each archiveId, remove WAL that are not part of retention
-                    foreach my $strArchiveId (@stryListArchiveDisk)
+                    my $iDbIdNext = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $stryPath[$i], INFO_BACKUP_KEY_HISTORY_ID);
+                    if ($iDbIdNext != $iDbId)
+                    {
+                        $hDbIdArchiveRetentionBackupMap{$hDbIdArchiveIdMap{$iDbIdNext}} = $stryPath[$i];
+                        $iDbId = $iDbIdNext;
+                        logDebugMisc($strOperation, "backup selected for retention  $stryPath[$i] for " .
+                            $hDbIdArchiveIdMap{$iDbId});
+                    }
+                }
+
+                # For each archiveId, remove WAL that are not part of retention
+                foreach my $strArchiveId (@stryListArchiveDisk)
+                {
+                    my $bRemove;
+
+                    # Only expire if the selected backup of this ArchiveId has archive info - backups performed with --no-online
+                    # will not have archive info and cannot be used for expiration.
+                    if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
+                                            $hDbIdArchiveRetentionBackupMap{$strArchiveId}, INFO_BACKUP_KEY_ARCHIVE_START))
                     {
                         # Get archive ranges to preserve for this archiveID.  Because archive retention can be less than total
                         # retention it is important to preserve archive that is required to make the older backups consistent even
                         # though they cannot be played any further forward with PITR.
                         my $strArchiveExpireMax;
                         my @oyArchiveRange;
-                        my $strArchiveIdExpireMax = '000000000000000000000000';
 
                         foreach my $strBackup ($oBackupInfo->list())
                         {
-                            # If the backup has an archive start
-                            if ($strBackup le $strArchiveRetentionBackup &&
+                            # If the backup has an archive start and the backup is earlier than the retention backup
+                            if ($strBackup le $hDbIdArchiveRetentionBackupMap{$strArchiveId} &&
                                 $oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_ARCHIVE_START))
                             {
                                 # Get the db-id of this current backup
@@ -418,14 +443,10 @@ sub process
                                     $$oArchiveRange{start} = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                                                                $strBackup, INFO_BACKUP_KEY_ARCHIVE_START);
 
-                                    if ($strBackup ne $strArchiveRetentionBackup)
+                                    if ($strBackup ne $hDbIdArchiveRetentionBackupMap{$strArchiveId})
                                     {
                                         $$oArchiveRange{stop} = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                                                                    $strBackup, INFO_BACKUP_KEY_ARCHIVE_STOP);
-                                        if ($$oArchiveRange{start} gt $strArchiveIdExpireMax)
-                                        {
-                                            $strArchiveIdExpireMax = $$oArchiveRange{start};
-                                        }
                                     }
                                     else
                                     {
@@ -439,13 +460,6 @@ sub process
                                     push(@oyArchiveRange, $oArchiveRange);
                                 }
                             }
-                        }
-
-                        # If the max backup selected for retention is not within this ArchiveId then set the max retention from the
-                        # WAL for this ArchiveId
-                        if (!defined($strArchiveExpireMax) && defined($strArchiveIdExpireMax))
-                        {
-                            $strArchiveExpireMax = $strArchiveIdExpireMax;
                         }
 
                         # Get all major archive paths (timeline and first 64 bits of LSN)
