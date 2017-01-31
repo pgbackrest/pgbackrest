@@ -782,15 +782,6 @@
                         <example>y</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - LOCK OPTION -->
-                    <option id="lock" name="Lock">
-                        <summary>Create a lock so restores on a stanza cannot run simultaneously.</summary>
-
-                        <text>Locking during restores is enabled by default but can be disabled using --no-lock.  Be <i>very</i> careful when disabling this option because simultaneous restores to a single path might result in a corrupt cluster.</text>
-
-                        <example>n</example>
-                    </option>
-
                     <!-- OPERATION - RESTORE COMMAND - TYPE OPTION -->
                     <option id="type" name="Type">
                         <summary>Recovery type.</summary>

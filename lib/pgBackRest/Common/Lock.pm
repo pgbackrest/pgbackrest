@@ -77,57 +77,51 @@ sub lockAcquire
             {name => 'iProcessIdx', required => false}
         );
 
-    my $bResult = true;
+    my $bResult = false;
 
-    # Acquire if locking is enabled
-    if (!optionValid(OPTION_LOCK) || optionGet(OPTION_LOCK))
+    # Cannot proceed if a lock is currently held
+    if (defined($strCurrentLockType))
     {
-        $bResult = false;
-
-        # Cannot proceed if a lock is currently held
-        if (defined($strCurrentLockType))
+        if (!defined($bFailOnNoLock) || $bFailOnNoLock)
         {
+            confess &log(ASSERT, "${strCurrentLockType} lock is already held");
+        }
+    }
+    else
+    {
+        # Check if processes are currently stopped
+        lockStopTest();
+
+        # Create the lock path
+        lockPathCreate();
+
+        # Attempt to open the lock file
+        $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA, false), $bRemote, $iProcessIdx);
+
+        sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640))
+            or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
+
+        # Attempt to lock the lock file
+        if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
+        {
+            close($hCurrentLockHandle);
+
             if (!defined($bFailOnNoLock) || $bFailOnNoLock)
             {
-                confess &log(ASSERT, "${strCurrentLockType} lock is already held");
+                confess &log(ERROR, "unable to acquire ${strLockType} lock on file ${strCurrentLockFile}", ERROR_LOCK_ACQUIRE);
             }
         }
         else
         {
-            # Check if processes are currently stopped
-            lockStopTest();
+            # Write pid into the lock file.  This is used stop terminate processes on a stop --force.
+            syswrite($hCurrentLockHandle, "$$\n")
+                or confess(ERROR, "unable to write process id into lock file ${strCurrentLockFile}", ERROR_FILE_WRITE);
 
-            # Create the lock path
-            lockPathCreate();
+            # Set current lock type so we know we have a lock
+            $strCurrentLockType = $strLockType;
 
-            # Attempt to open the lock file
-            $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA, false), $bRemote, $iProcessIdx);
-
-            sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640))
-                or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
-
-            # Attempt to lock the lock file
-            if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
-            {
-                close($hCurrentLockHandle);
-
-                if (!defined($bFailOnNoLock) || $bFailOnNoLock)
-                {
-                    confess &log(ERROR, "unable to acquire ${strLockType} lock on file ${strCurrentLockFile}", ERROR_LOCK_ACQUIRE);
-                }
-            }
-            else
-            {
-                # Write pid into the lock file.  This is used stop terminate processes on a stop --force.
-                syswrite($hCurrentLockHandle, "$$\n")
-                    or confess(ERROR, "unable to write process id into lock file ${strCurrentLockFile}", ERROR_FILE_WRITE);
-
-                # Set current lock type so we know we have a lock
-                $strCurrentLockType = $strLockType;
-
-                # Lock was successful
-                $bResult = true;
-            }
+            # Lock was successful
+            $bResult = true;
         }
     }
 
@@ -158,27 +152,23 @@ sub lockRelease
             {name => 'bFailOnNoLock', default => true}
         );
 
-    # Release if locking is enabled
-    if (!optionValid(OPTION_LOCK) || optionGet(OPTION_LOCK))
+    # Fail if there is no lock
+    if (!defined($strCurrentLockType))
     {
-        # Fail if there is no lock
-        if (!defined($strCurrentLockType))
+        if ($bFailOnNoLock)
         {
-            if ($bFailOnNoLock)
-            {
-                confess &log(ASSERT, 'no lock is currently held');
-            }
+            confess &log(ASSERT, 'no lock is currently held');
         }
-        else
-        {
-            # Remove the file
-            unlink($strCurrentLockFile);
-            close($hCurrentLockHandle);
+    }
+    else
+    {
+        # Remove the file
+        unlink($strCurrentLockFile);
+        close($hCurrentLockHandle);
 
-            # Undef lock variables
-            undef($strCurrentLockType);
-            undef($hCurrentLockHandle);
-        }
+        # Undef lock variables
+        undef($strCurrentLockType);
+        undef($hCurrentLockHandle);
     }
 
     # Return from function and log return values if any

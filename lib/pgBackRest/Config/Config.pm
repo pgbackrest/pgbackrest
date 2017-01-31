@@ -216,8 +216,6 @@ use constant OPTION_TYPE                                            => 'type';
     push @EXPORT, qw(OPTION_TYPE);
 use constant OPTION_OUTPUT                                          => 'output';
     push @EXPORT, qw(OPTION_OUTPUT);
-use constant OPTION_LOCK                                            => 'lock';
-    push @EXPORT, qw(OPTION_LOCK);
 
 # Command-line only help/version
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -398,8 +396,6 @@ use constant OPTION_DEFAULT_RESTORE_TARGET_ACTION                   => RECOVERY_
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_ACTION);
 use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_TYPE_DEFAULT;
     push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
-use constant OPTION_DEFAULT_LOCK                                    => true;
-    push @EXPORT, qw(OPTION_DEFAULT_LOCK);
 use constant OPTION_DEFAULT_STANZA_CREATE_FORCE                     => false;
     push @EXPORT, qw(OPTION_DEFAULT_STANZA_CREATE_FORCE);
 
@@ -583,7 +579,7 @@ use constant OPTION_DEFAULT_DB_USER                                 => 'postgres
 #   OPTION_RULE_COMMAND section.
 #
 # OPTION_RULE_NEGATE:
-#   The option can be negated with "no" e.g. --no-lock.
+#   The option can be negated with "no" e.g. --no-compress.
 #
 # OPTION_RULE_DEPEND:
 #   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
@@ -661,17 +657,6 @@ my %oOptionRule =
             {
                 &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STOP_FORCE
             }
-        }
-    },
-
-    &OPTION_LOCK =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOCK,
-        &OPTION_RULE_NEGATE => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
         }
     },
 

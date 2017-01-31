@@ -180,6 +180,10 @@
                     <release-item>
                         <p>Fixed an issue where protocol mismatch errors did not output the expected value.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed a spurious <cmd>archive-get</cmd> log message that indicated an exit code of 1 was an abnormal termination.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -271,6 +275,18 @@
 
                     <release-item>
                         <p>Reduced the likelihood of torn pages causing a false positive in page checksums by filtering on start backup LSN.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove Intel-specific optimization from C library build flags.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Removed <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>

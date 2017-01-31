@@ -148,5 +148,5 @@ P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 1, oException = [undef], s
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00   INFO: archive-get command end: aborted with exception [1]
+P00   INFO: archive-get command end: completed successfully
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 1

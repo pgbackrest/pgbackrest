@@ -95,7 +95,7 @@ sub exitSafe
     }
 
     # Log command end
-    commandEnd($iExitCode, $strSignal);
+    commandEnd(defined($oException) || $iExitCode == ERROR_TERM ? $iExitCode : undef, $strSignal);
 
     # Log return values if any
     logDebugReturn
