@@ -271,23 +271,23 @@ sub perlInstall
     if ($strOS eq VM_CO6)
     {
         return $strImage .
-            "RUN yum install -y perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg";
+            'RUN yum install -y perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg';
     }
     elsif ($strOS eq VM_CO7)
     {
         return $strImage .
-            "RUN yum install -y perl perl-JSON-PP perl-Digest-SHA perl-DBD-Pg";
+            'RUN yum install -y perl perl-JSON-PP perl-Digest-SHA perl-DBD-Pg';
     }
     elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
     {
         return $strImage .
-            "RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl";
+            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl';
     }
     elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
     {
         return $strImage .
-            "RUN apt-get install -y libdbd-pg-perl libdbi-perl" .
-            ($strOS eq VM_U16 ? ' libdevel-cover-perl' : '');
+            'RUN apt-get install -y libdbd-pg-perl libdbi-perl' .
+            ($strOS eq VM_U16 ? ' libdevel-cover-perl libtest-pod-coverage-perl' : '');
     }
 
     confess &log(ERROR, "unable to install perl for os '${strOS}'");

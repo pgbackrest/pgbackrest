@@ -403,12 +403,9 @@ sub infoFileCreate
     }
     or do
     {
-        # Confess unhandled errors
-        confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-        # If this is a backrest error then capture the last code and message
-        $iResult = $EVAL_ERROR->code();
-        $strResultMessage = $EVAL_ERROR->message();
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
     };
 
     # Reset the console logging

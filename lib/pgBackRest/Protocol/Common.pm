@@ -16,7 +16,7 @@ use JSON::PP;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::IO;
+use pgBackRest::Protocol::IO::ProcessIO;
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -47,6 +47,14 @@ use constant OP_ARCHIVE_GET_CHECK                                   => 'archiveC
     push @EXPORT, qw(OP_ARCHIVE_GET_CHECK);
 use constant OP_ARCHIVE_PUSH_CHECK                                  => 'archivePushCheck';
     push @EXPORT, qw(OP_ARCHIVE_PUSH_CHECK);
+
+# Archive Push Async Module
+use constant OP_ARCHIVE_PUSH_ASYNC                                  => 'archivePushAsync';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH_ASYNC);
+
+# Archive File Module
+use constant OP_ARCHIVE_PUSH_FILE                                   => 'archivePushFile';
+    push @EXPORT, qw(OP_ARCHIVE_PUSH_FILE);
 
 # Check Module
 use constant OP_CHECK_BACKUP_INFO_CHECK                             => 'backupInfoCheck';
@@ -252,6 +260,7 @@ sub binaryXfer
     my $bDestinationCompress = shift;
     my $bProtocol = shift;
     my $fnExtra = shift;
+    my $rExtraParam = shift;
 
     # The input stream must be defined
     my $oIn;
@@ -262,7 +271,7 @@ sub binaryXfer
     }
     else
     {
-        $oIn = new pgBackRest::Protocol::IO(
+        $oIn = new pgBackRest::Protocol::IO::ProcessIO(
             $hIn, undef, $self->{io}->{hErr}, $self->{io}->{pid}, $self->{io}->{strId}, $self->{iProtocolTimeout},
             $self->{iBufferMax});
     }
@@ -276,7 +285,7 @@ sub binaryXfer
     }
     elsif ($hOut ne 'none')
     {
-        $oOut = new pgBackRest::Protocol::IO(
+        $oOut = new pgBackRest::Protocol::IO::ProcessIO(
             undef, $hOut, $self->{io}->{hErr}, $self->{io}->{pid}, $self->{io}->{strId}, $self->{iProtocolTimeout},
             $self->{iBufferMax});
     }
@@ -427,7 +436,7 @@ sub binaryXfer
                 # Do extra processing on the buffer if requested
                 if (!$bProtocol && defined($fnExtra))
                 {
-                    $fnExtra->(\$tBuffer, $iBlockSize, $iFileSize - $iBlockSize, $rExtra);
+                    $fnExtra->($rExtraParam, \$tBuffer, $iBlockSize, $iFileSize - $iBlockSize, $rExtra);
                 }
 
                 # Write buffer
@@ -494,7 +503,7 @@ sub binaryXfer
                 # Do extra processing on the buffer if requested
                 if (defined($fnExtra))
                 {
-                    $fnExtra->(\$tUncompressedBuffer, $iBlockSize, $oZLib->total_in(), $rExtra);
+                    $fnExtra->($rExtraParam, \$tUncompressedBuffer, $iBlockSize, $oZLib->total_in(), $rExtra);
                 }
 
                 # If block size > 0 then compress

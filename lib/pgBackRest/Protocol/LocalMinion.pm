@@ -2,18 +2,19 @@
 # PROTOCOL LOCAL MINION MODULE
 ####################################################################################################################################
 package pgBackRest::Protocol::LocalMinion;
-use parent 'pgBackRest::Protocol::CommonMinion';
+use parent 'pgBackRest::Protocol::CommandMinion';
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use pgBackRest::Archive::ArchivePushFile;
 use pgBackRest::BackupFile;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::Protocol::CommandMinion;
 use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::CommonMinion;
 use pgBackRest::Protocol::Protocol;
 use pgBackRest::RestoreFile;
 
@@ -71,6 +72,7 @@ sub init
     # Create anonymous subs for each command
     my $hCommandMap =
     {
+        &OP_ARCHIVE_PUSH_FILE => sub {archivePushFile($oFile, @{shift()})},
         &OP_BACKUP_FILE => sub {backupFile($oFile, @{shift()})},
         &OP_RESTORE_FILE => sub {restoreFile($oFile, @{shift()})},
 

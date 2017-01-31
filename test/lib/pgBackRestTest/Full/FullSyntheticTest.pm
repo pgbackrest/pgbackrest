@@ -2,7 +2,7 @@
 # FullSyntheticTest.pm - Tests for all commands that can be run against synthetic data
 ####################################################################################################################################
 package pgBackRestTest::Full::FullSyntheticTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -23,15 +23,32 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Full::FullCommonTest;
 use pgBackRestTest::Common::Host::HostBackupTest;
+
+####################################################################################################################################
+# Build PostgreSQL pages for testing
+####################################################################################################################################
+sub pageBuild
+{
+    my $tPageSource = shift;
+    my $iBlockNo = shift;
+    my $iWalId = shift;
+    my $iWalOffset = shift;
+
+    my $tPage = defined($iWalId) ? pack('I', $iWalId) . pack('I', $iWalOffset) . substr($tPageSource, 8) : $tPageSource;
+    my $iChecksum = pageChecksum($tPage, $iBlockNo, length($tPage));
+
+    return substr($tPage, 0, 8) . pack('S', $iChecksum) . substr($tPage, 10);
+}
 
 ####################################################################################################################################
 # run
@@ -128,22 +145,24 @@ sub run
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768');
 
         my $tPageValid =
-            $tBasePage .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 1) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum - 2) . substr($tBasePage, 10);
+            pageBuild($tBasePage, 0) .
+            pageBuild($tBasePage, 1) .
+            pageBuild($tBasePage, 2) .
+            pageBuild($tBasePage, 0, 0xFFFF, 0xFFFF);
 
-        $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid,
-                                              '826512f67291135871eb54e133afd076c859a224', $lTime);
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f',
+            $lTime);
 
         my $tPageInvalid33001 =
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 1) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 1) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum - 2) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 2) . substr($tBasePage, 10) .
-            substr($tBasePage, 0, 8) . pack('S', $iBasePageChecksum + 0) . substr($tBasePage, 10);
+            pageBuild($tBasePage, 1) .
+            pageBuild($tBasePage, 1) .
+            pageBuild($tBasePage, 2) .
+            pageBuild($tBasePage, 0) .
+            pageBuild($tBasePage, 0) .
+            pageBuild($tBasePage, 0) .
+            pageBuild($tBasePage, 6) .
+            pageBuild($tBasePage, 0);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33001', $tPageInvalid33001,
@@ -1025,7 +1044,7 @@ sub run
 
         # Restore checksum values for next test
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
-            '826512f67291135871eb54e133afd076c859a224';
+            '4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f';
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33001'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '6bf316f11d28c28914ea9be92c00de9bea6d9a6b';
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2.txt'}

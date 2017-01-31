@@ -150,7 +150,11 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.13dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                 <p><b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
+                <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.
+
+                To prevent this outcome, stop archiving by setting <setting>archive_command = false</setting>. Next, drain the async queue by running <code>pgbackrest --stanza=[stanza-name] archive-push</code> and wait for the process to complete.  Check that the queue in <path>[spool-path]/archive/[stanza-name]/out</path> is empty. Finally, install <code>1.13</code> and restore the original <setting>archive_command</setting>.
+
+                <b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
 
                 <release-bug-list>
                     <release-item>
@@ -179,6 +183,10 @@
                 </release-bug-list>
 
                 <release-feature-list>
+                    <release-item>
+                        <p>Improved, multi-process implementation of asynchronous archiving.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -222,15 +230,47 @@
                     </release-item>
 
                     <release-item>
-                        <p>C Library builds only run when C library has actually changed.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Moved the <code>Archive</code> modules to the <path>Archive</path> directory and split the <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands into separate modules.</p>
                     </release-item>
 
                     <release-item>
                         <p>Split the <cmd>check</cmd> command out of the <code>Archive.pm</code> module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow logging to be suppressed via <code>logDisable()</code> and <code>logEnable()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow for locks to be taken more than once in the same process without error.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Lock directories can be created when more than one directory level is required.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Clean up <code>optionValid()</code>/<code>optionTest()</code> logic in <code>Lock.pm</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <code>Exception::exceptionCode()</code> and <code>Exception::exceptionMessage()</code> to simplify error handling logic.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Represent <file>.gz</file> extension with a constant.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow empty files to be created with <code>FileCommon::fileStringWrite()</code> and use temp files to avoid partial reads.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor process IO and process master/minion code out from the common protocol code.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Reduced the likelihood of torn pages causing a false positive in page checksums by filtering on start backup LSN.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
@@ -262,6 +302,22 @@
                     <release-item>
                         <p>Added unit tests for low-level functions in the <code>File</code> and <code>BackupCommon</code> modules.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>C Library builds only run when C library has actually changed.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added more flexibility in initializing and cleaning up after modules and tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>testResult()</code> suppresses logging and reports exceptions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><code>testException()</code> allows messages to be matched with regular expressions.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>
@@ -275,6 +331,10 @@
 
                     <release-item>
                         <p>Added expect log expression to replace year subdirectories in <path>backup.history</path>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor name/locations of common modules that setup test environments.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

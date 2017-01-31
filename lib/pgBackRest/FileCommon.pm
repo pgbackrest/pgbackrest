@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# FILE COMMON    MODULE
+# FILE COMMON MODULE
 ####################################################################################################################################
 package pgBackRest::FileCommon;
 
@@ -19,12 +19,19 @@ use IO::Handle;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # Default modes
 ####################################################################################################################################
 my $strPathModeDefault = '0750';
 my $strFileModeDefault = '0640';
+
+####################################################################################################################################
+# Compression extension
+####################################################################################################################################
+use constant COMPRESS_EXT                                           => 'gz';
+    push @EXPORT, qw(COMPRESS_EXT);
 
 ####################################################################################################################################
 # fileExists
@@ -868,7 +875,7 @@ push @EXPORT, qw(fileStringRead);
 ####################################################################################################################################
 # fileStringWrite
 #
-# Write a string to the specified file.
+# Create/overwrite a file with a string.
 ####################################################################################################################################
 sub fileStringWrite
 {
@@ -878,23 +885,28 @@ sub fileStringWrite
         $strOperation,
         $strFileName,
         $strContent,
-        $bSync
+        $bSync,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileStringWrite', \@_,
             {name => 'strFileName', trace => true},
-            {name => 'strContent', trace => true},
+            {name => 'strContent', trace => true, required => false},
             {name => 'bSync', default => true, trace => true},
         );
 
-    # Open the file for writing
-    sysopen(my $hFile, $strFileName, O_WRONLY | O_CREAT | O_TRUNC, oct(640))
-        or confess &log(ERROR, "unable to open ${strFileName}");
+    # Generate temp filename
+    my $strFileNameTemp = $strFileName . '.' . BACKREST_EXE . '.tmp';
 
-    # Write the string
-    syswrite($hFile, $strContent)
-        or confess &log(ERROR, "unable to write string to ${strFileName}: $!", ERROR_FILE_WRITE);
+    # Open file for writing
+    my $hFile = fileOpen($strFileNameTemp, O_WRONLY | O_CREAT | O_TRUNC, $strFileModeDefault);
+
+    # Write content
+    if (defined($strContent) && length($strContent) > 0)
+    {
+        syswrite($hFile, $strContent)
+            or confess &log(ERROR, "unable to write string to ${strFileName}: $!", ERROR_FILE_WRITE);
+    }
 
     # Sync file
     $hFile->sync() if $bSync;
@@ -902,8 +914,8 @@ sub fileStringWrite
     # Close file
     close($hFile);
 
-    # Sync directory
-    filePathSync(dirname($strFileName)) if $bSync;
+    # Move file to final location
+    fileMove($strFileNameTemp, $strFileName, undef, $bSync);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

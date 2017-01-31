@@ -2,7 +2,7 @@
 # ArchiveStopTest.pm - Tests for archive-push command to make sure aync queue limits are implemented correctly
 ####################################################################################################################################
 package pgBackRestTest::Archive::ArchiveStopTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -25,9 +25,9 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Full::FullCommonTest;
 
 ####################################################################################################################################
 # run
@@ -91,26 +91,15 @@ sub run
             $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
         }
 
-        # Remove the stop file
-        fileRemove($oHostDbMaster->spoolPath() . '/stop/db-archive.stop');
-
         # Check the dir to be sure that segment 2 and 3 were not pushed yet
         executeTest(
             'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-1/0000000100000001",
             {oLogTest => $self->expect(), bRemote => $bRemote});
 
         # Push segment 5
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5, undef, false);
+        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5);
 
         # Check that 5 is pushed
-        executeTest(
-            'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-1/0000000100000001",
-            {oLogTest => $self->expect(), bRemote => $bRemote});
-
-        # Call push without a segment
-        $oHostDbMaster->archivePush($strXlogPath);
-
-        # Check the dir to be sure that segment 2 and 3 were pushed
         executeTest(
             'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-1/0000000100000001",
             {oLogTest => $self->expect(), bRemote => $bRemote});

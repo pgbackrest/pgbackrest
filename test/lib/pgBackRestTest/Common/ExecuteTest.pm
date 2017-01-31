@@ -19,7 +19,7 @@ use Symbol 'gensym';
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Protocol::IO;
+use pgBackRest::Protocol::IO::ProcessIO;
 
 ####################################################################################################################################
 # new
@@ -99,7 +99,7 @@ sub begin
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
     # Create select objects
-    $self->{oIO} = new pgBackRest::Protocol::IO($self->{hOut}, undef, $self->{hError}, undef, undef, 30, 65536);
+    $self->{oIO} = new pgBackRest::Protocol::IO::ProcessIO($self->{hOut}, undef, $self->{hError}, undef, undef, 30, 65536);
 
     if (!defined($self->{hError}))
     {

@@ -2,7 +2,7 @@
 # ConfigOptionTest.pm - Tests for command line options in Config.pm
 ####################################################################################################################################
 package pgBackRestTest::Config::ConfigOptionTest;
-use parent 'pgBackRestTest::Config::ConfigCommonTest';
+use parent 'pgBackRestTest::Config::ConfigEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -344,7 +344,7 @@ sub run
 
         my $strCommand = commandWrite(CMD_ARCHIVE_GET);
         my $strExpectedCommand = abs_path($0) . " --backup-host=db.mydomain.com \"--db-path=/db path/main\"" .
-                                 " --repo-path=/repo --stanza=main " . CMD_ARCHIVE_GET;
+                                 " --repo-path=/repo --stanza=app " . CMD_ARCHIVE_GET;
 
         if ($strCommand ne $strExpectedCommand)
         {
@@ -379,5 +379,11 @@ sub run
         $self->optionTestExpect(OPTION_PROTOCOL_TIMEOUT, OPTION_DEFAULT_PROTOCOL_TIMEOUT + 60);
     }
 }
+
+####################################################################################################################################
+# Getters
+####################################################################################################################################
+# Change this from the default so the same stanza is not used in all tests.
+sub stanza {return 'app'};
 
 1;

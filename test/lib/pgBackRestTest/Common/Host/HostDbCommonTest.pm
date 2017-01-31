@@ -149,12 +149,16 @@ sub archivePush
             false,                                                      # Destination is not compressed
             undef, undef, undef,                                        # Unused params
             true);                                                      # Create path if it does not exist
+
+        filePathCreate("${strXlogPath}/archive_status/", undef, true, true);
+        fileStringWrite("${strXlogPath}/archive_status/" . uc(sprintf('0000000100000001%08x', $iArchiveNo)) . '.ready');
     }
 
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
-        ' --archive-max-mb=24 --no-fork --stanza=' . $self->stanza() .
+        ' --log-level-console=warn --archive-queue-max=' . int(2 * PG_WAL_SIZE) .
+        ' --stanza=' . $self->stanza() .
         (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ? ' --backup-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .
         " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : ''),

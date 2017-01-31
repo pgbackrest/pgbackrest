@@ -54,6 +54,17 @@ use constant TESTDEF_MODULE_FILE                                    => 'File';
 use constant TESTDEF_MODULE_FILE_COMMON                             => TESTDEF_MODULE_FILE . 'Common';
     push @EXPORT, qw(TESTDEF_MODULE_FILE_COMMON);
 
+use constant TESTDEF_MODULE_ARCHIVE                                 => 'Archive';
+    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE);
+use constant TESTDEF_MODULE_ARCHIVE_COMMON                          => TESTDEF_MODULE_ARCHIVE . '/ArchiveCommon';
+    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_COMMON);
+use constant TESTDEF_MODULE_ARCHIVE_PUSH                            => TESTDEF_MODULE_ARCHIVE . '/ArchivePush';
+    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH);
+use constant TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC                      => TESTDEF_MODULE_ARCHIVE_PUSH . 'Async';
+    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC);
+use constant TESTDEF_MODULE_ARCHIVE_PUSH_FILE                       => TESTDEF_MODULE_ARCHIVE_PUSH . 'File';
+    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_FILE);
+
 ################################################################################################################################
 # Define tests
 ################################################################################################################################
@@ -200,13 +211,40 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_TOTAL => 4,
+                    &TESTDEF_TEST_CONTAINER => true,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                     &TESTDEF_EXPECT => false,
+
+                    &TESTDEF_TEST_COVERAGE =>
+                    {
+                        &TESTDEF_TEST_ALL =>
+                        {
+                            &TESTDEF_MODULE_ARCHIVE_COMMON => TESTDEF_COVERAGE_PARTIAL,
+                        }
+                    },
+                },
+                {
+                    &TESTDEF_TEST_NAME => 'push-unit',
+                    &TESTDEF_TEST_TOTAL => 7,
+                    &TESTDEF_TEST_CONTAINER => true,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_EXPECT => false,
+
+                    &TESTDEF_TEST_COVERAGE =>
+                    {
+                        &TESTDEF_TEST_ALL =>
+                        {
+                            &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
+                            &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
+                            &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_PARTIAL,
+                        }
+                    },
                 },
                 {
                     &TESTDEF_TEST_NAME => 'push',
-                    &TESTDEF_TEST_TOTAL => 8
+                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_PROCESS => true,
                 },
                 {
                     &TESTDEF_TEST_NAME => 'stop',

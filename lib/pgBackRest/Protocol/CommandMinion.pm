@@ -1,65 +1,59 @@
 ####################################################################################################################################
-# PROTOCOL REMOTE MASTER MODULE
+# PROTOCOL COMMAND MINION MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::RemoteMaster;
-use parent 'pgBackRest::Protocol::CommandMaster';
+package pgBackRest::Protocol::CommandMinion;
+use parent 'pgBackRest::Protocol::CommonMinion';
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
-use File::Basename qw(dirname);
+use JSON::PP;
 
+use pgBackRest::Common::Exception;
+use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Config::Config;
-use pgBackRest::Protocol::CommandMaster;
+use pgBackRest::Common::String;
+use pgBackRest::Protocol::CommonMinion;
+use pgBackRest::Protocol::IO::ProcessIO;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
 {
-    my $class = shift;
+    my $class = shift;                  # Class name
 
     # Assign function parameters, defaults, and log debug info
     my
     (
         $strOperation,
-        $strRemoteType,                             # Type of remote (DB or BACKUP)
-        $strCommandSSH,                             # SSH client
-        $strCommand,                                # Command to execute on local/remote
+        $strName,                                   # Name of the protocol
+        $strCommand,                                # Command the master process is running
         $iBufferMax,                                # Maximum buffer size
         $iCompressLevel,                            # Set compression level
         $iCompressLevelNetwork,                     # Set compression level for network only compression
-        $strHost,                                   # Host to connect to for remote (optional as this can also be used for local)
-        $strUser,                                   # User to connect to for remote (must be set if strHost is set)
-        $iProtocolTimeout                           # Protocol timeout
+        $iProtocolTimeout,                          # Protocol timeout
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strRemoteType'},
-            {name => 'strCommandSSH'},
+            {name => 'strName'},
             {name => 'strCommand'},
             {name => 'iBufferMax'},
             {name => 'iCompressLevel'},
             {name => 'iCompressLevelNetwork'},
-            {name => 'strHost'},
-            {name => 'strUser'},
-            {name => 'iProtocolTimeout'}
+            {name => 'iProtocolTimeout'},
         );
 
-    # Create SSH command
-    $strCommand =
-        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
-
-    # Init object and store variables
+    # Create the class hash
     my $self = $class->SUPER::new(
-        $strRemoteType, 'remote', $strHost, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
+        $strName, $strCommand,
+        new pgBackRest::Protocol::IO::ProcessIO(*STDIN, *STDOUT, *STDERR, undef, undef, $iProtocolTimeout, $iBufferMax),
+        $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
-
-    # Store the host
-    $self->{strHost} = $strHost;
 
     # Return from function and log return values if any
     return logDebugReturn

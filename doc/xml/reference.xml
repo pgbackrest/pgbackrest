@@ -382,22 +382,22 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-MAX-MB KEY -->
-                    <config-key id="archive-max-mb" name="Maximum Archive MB">
-                        <summary>Limit size of the local asynchronous archive queue when <setting>archive-async=y</setting>.</summary>
+                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
+                    <config-key id="archive-queue-max" name="Maximum Archive Queue Size">
+                        <summary>Limit size (in bytes) of the <postgres/> archive queue.</summary>
 
                         <text>After the limit is reached, the following will happen:
                         <ol>
-                            <li><backrest/> will notify Postgres that the archive was successfully backed up, then DROP IT.</li>
-                            <li>An error will be logged to the console and also to the Postgres log.</li>
-                            <li>A stop file will be written in the lock directory and no more archive files will be backed up until it is removed.</li>
+                            <li><backrest/> will notify <postgres/> that the WAL was successfully archived, then <b>DROP IT</b>.</li>
+                            <li>A warning will be output to the Postgres log.</li>
+
                         </ol>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point.  A new backup will be required to regain full restore capability.
 
-                        The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.
+                        In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.
 
-                        To start normal archiving again you'll need to remove the stop file which will be located at <file>${repo-path}/lock/${stanza}-archive.stop</file> where <code>${repo-path}</code> is the path set in the <setting>general</setting> section, and <code>${stanza}</code> is the backup stanza.</text>
+                        The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.</text>
 
-                        <example>1024</example>
+                        <example>1073741824</example>
                     </config-key>
                 </config-key-list>
             </config-section>

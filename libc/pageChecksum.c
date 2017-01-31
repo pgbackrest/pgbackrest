@@ -207,7 +207,9 @@ pageChecksumBuffer
 Test checksums for all pages in a buffer.
 ***********************************************************************************************************************************/
 bool
-pageChecksumBuffer(const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize)
+pageChecksumBuffer(
+    const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 iIgnoreWalId,
+    uint32 iIgnoreWalOffset)
 {
     // If the buffer does not represent an even number of pages then error
     if (uiBufferSize % uiPageSize != 0 || uiBufferSize / uiPageSize == 0)
@@ -221,7 +223,8 @@ pageChecksumBuffer(const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlock
         const char *szPage = szPageBuffer + (uiIndex * uiPageSize);
 
         // Return false if the checksums do not match
-        if (((PageHeader)szPage)->pd_checksum != pageChecksum(szPage, uiBlockNoStart + uiIndex, uiPageSize))
+        if (!(((PageHeader)szPage)->pd_lsn.xlogid >= iIgnoreWalId && ((PageHeader)szPage)->pd_lsn.xrecoff >= iIgnoreWalOffset) &&
+            ((PageHeader)szPage)->pd_checksum != pageChecksum(szPage, uiBlockNoStart + uiIndex, uiPageSize))
             return false;
     }
 

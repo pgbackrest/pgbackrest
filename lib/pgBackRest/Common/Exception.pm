@@ -255,4 +255,32 @@ sub isException
 
 push @EXPORT, qw(isException);
 
+####################################################################################################################################
+# exceptionCode
+#
+# Extract the error code from an exception - if a Perl exception return ERROR_UNKNOWN.
+####################################################################################################################################
+sub exceptionCode
+{
+    my $oException = shift;
+
+    return isException($oException) ? $oException->code() : ERROR_UNKNOWN;
+}
+
+push @EXPORT, qw(exceptionCode);
+
+####################################################################################################################################
+# exceptionMessage
+#
+# Extract the error message from an exception - if a Perl exception return bare exception.
+####################################################################################################################################
+sub exceptionMessage
+{
+    my $oException = shift;
+
+    return isException($oException) ? $oException->message() : $oException;
+}
+
+push @EXPORT, qw(exceptionMessage);
+
 1;

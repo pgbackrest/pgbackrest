@@ -2,7 +2,7 @@
 # StanzaCreateTest.pm - Tests for stanza-create command
 ####################################################################################################################################
 package pgBackRestTest::Stanza::StanzaCreateTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -25,9 +25,9 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Full::FullCommonTest;
 
 ####################################################################################################################################
 # run
@@ -69,7 +69,7 @@ sub run
         # Generate WAL then push to get valid archive data in the archive directory
         my ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($oFile, $strXlogPath, 1, 1, WAL_VERSION_94);
         my $strCommand = $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
-            ' --no-fork --stanza=db archive-push';
+            ' --stanza=db archive-push';
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
 
         # With data existing in the archive dir, remove the info file and confirm failure

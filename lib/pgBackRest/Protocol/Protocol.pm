@@ -156,7 +156,8 @@ sub protocolGet
                 $strRemoteType,
                 optionGet(OPTION_CMD_SSH),
                 commandWrite(
-                    CMD_REMOTE, true, optionGet($strOptionCmd), undef,
+                    CMD_REMOTE, true,
+                    defined($oParam->{strBackRestBin}) ? $oParam->{strBackRestBin} : optionGet($strOptionCmd), undef,
                     {
                         &OPTION_COMMAND => {value => commandGet()},
                         &OPTION_PROCESS => {value => $$oParam{iProcessIdx}},

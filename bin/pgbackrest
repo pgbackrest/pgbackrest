@@ -137,7 +137,7 @@ local $EVAL_ERROR = undef; eval
         require pgBackRest::Archive::ArchivePush;
         pgBackRest::Archive::ArchivePush->import();
 
-        exitSafe(new pgBackRest::Archive::ArchivePush()->process());
+        exitSafe(new pgBackRest::Archive::ArchivePush()->process($ARGV[1]));
     }
 
     ################################################################################################################################

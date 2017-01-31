@@ -2,7 +2,7 @@
 # FullRealTest.pm - Tests for all commands against a real database
 ####################################################################################################################################
 package pgBackRestTest::Full::FullRealTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -28,10 +28,10 @@ use pgBackRest::Manifest;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Full::FullCommonTest;
 use pgBackRestTest::Common::Host::HostBaseTest;
 use pgBackRestTest::Common::Host::HostBackupTest;
 use pgBackRestTest::Common::Host::HostDbTest;

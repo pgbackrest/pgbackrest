@@ -157,7 +157,8 @@ sub testListGet
                                         my $oTestRun =
                                         {
                                             &TEST_VM => $strTestOS,
-                                            &TEST_CONTAINER => $$oModule{&TESTDEF_TEST_CONTAINER},
+                                            &TEST_CONTAINER => defined($oTest->{&TESTDEF_TEST_CONTAINER}) ?
+                                                $oTest->{&TESTDEF_TEST_CONTAINER} : $oModule->{&TESTDEF_TEST_CONTAINER},
                                             &TEST_PGSQL_BIN => $strPgSqlBin,
                                             &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                             &TEST_MODULE => $$oModule{&TESTDEF_MODULE_NAME},

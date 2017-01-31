@@ -77,9 +77,6 @@ sub process
     my $iResult = 0;
     my $strResultMessage = undef;
 
-    # Record the start time to wait for the archive.info file to be written
-    my $oWait = waitInit($iArchiveTimeout);
-
     my $strArchiveId = undef;
     my $strArchiveFile = undef;
     my $strWalSegment = undef;
@@ -97,12 +94,9 @@ sub process
     # If there is an unhandled error then confess
     or do
     {
-        # Confess unhandled errors
-        confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-        # If this is a backrest error then capture the last code and message
-        $iResult = $EVAL_ERROR->code();
-        $strResultMessage = $EVAL_ERROR->message();
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
     };
 
     # Check archive.info
@@ -111,17 +105,14 @@ sub process
         eval
         {
             # Check that the archive info file is written and is valid for the current database of the stanza
-            $strArchiveId = new pgBackRest::Archive::ArchiveGet()->getCheck($oFile);
+            ($strArchiveId) = new pgBackRest::Archive::ArchiveGet()->getCheck($oFile);
             return true;
         }
         or do
         {
-            # Confess unhandled errors
-            confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
+            # Capture error information
+            $iResult = exceptionCode($EVAL_ERROR);
+            $strResultMessage = exceptionMessage($EVAL_ERROR->message());
         };
     }
 
@@ -132,18 +123,15 @@ sub process
 
         eval
         {
-            $strArchiveFile = walFind($oFile, $strArchiveId, $strWalSegment, false, $iArchiveTimeout);
+            $strArchiveFile = walSegmentFind($oFile, $strArchiveId, $strWalSegment, $iArchiveTimeout);
             return true;
         }
         # If this is a backrest error then capture the code and message else confess
         or do
         {
-            # Confess unhandled errors
-            confess $EVAL_ERROR if (!isException($EVAL_ERROR));
-
-            # If this is a backrest error then capture the last code and message
-            $iResult = $EVAL_ERROR->code();
-            $strResultMessage = $EVAL_ERROR->message();
+            # Capture error information
+            $iResult = exceptionCode($EVAL_ERROR);
+            $strResultMessage = exceptionMessage($EVAL_ERROR->message());
         };
     }
 

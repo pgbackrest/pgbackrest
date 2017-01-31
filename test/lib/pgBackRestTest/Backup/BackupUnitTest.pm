@@ -2,7 +2,7 @@
 # BackupUnitTest.pm - Tests for Backup module
 ####################################################################################################################################
 package pgBackRestTest::Backup::BackupUnitTest;
-use parent 'pgBackRestTest::Full::FullCommonTest';
+use parent 'pgBackRestTest::Common::Env::EnvHostTest';
 
 ####################################################################################################################################
 # Perl includes
