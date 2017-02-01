@@ -13,9 +13,9 @@ use File::Path qw(remove_tree);
 use Scalar::Util qw(looks_like_number);
 
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
@@ -240,210 +240,167 @@ sub process
     }
     else
     {
-        # Build the db list from the history in the backup info and archive info file
-        my $hDbListBackup = $oBackupInfo->dbHistoryList();
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true);
-        my $hDbListArchive = $oArchiveInfo->dbHistoryList();
-        my @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
-        my %hDbIdArchiveIdMap;
-
-        # Make sure the current database versions match between the two files
-        if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION))) ||
-            $oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef,
-                ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID)))))
-        {
-            confess &log(ERROR, "archive and backup database versions do not match\n" .
-                "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
-        }
-
-        # Get the current database archive id (e.g. 9.4-1)
-        my $strCurrentDbArchiveId = $oArchiveInfo->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
-            $oArchiveInfo->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID);
-
-        # Make sure major WAL archive directories are present in the archive info file before proceeding
-        foreach my $strArchiveDisk (@stryListArchiveDisk)
-        {
-            # Get the db-version and db-id (history id) from the directory name
-            my ($strDbVersionDisk, $iDbIdDisk) = split("-", $strArchiveDisk);
-
-            # If this directory version/db-id does not have a corresponding entry in the archive info file then error
-            if (!defined($$hDbListArchive{$iDbIdDisk}{&INFO_SYSTEM_ID}) ||
-                (defined($$hDbListArchive{$iDbIdDisk}{&INFO_SYSTEM_ID}) && $$hDbListArchive{$iDbIdDisk}{&INFO_DB_VERSION} ne $strDbVersionDisk))
-            {
-                confess &log(ERROR, "archive info history does not match with the directories on disk\n" .
-                    "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
-            }
-        }
-
-        # Clean up any orphaned directories
-        foreach my $strArchiveDir (@stryListArchiveDisk)
-        {
-            my $iDbId = undef;
-
-            # Get the db-version and db-id (history id) from the directory name
-            my ($strDbVersionArchive, $iDbIdArchive) = split("-", $strArchiveDir);
-
-            # Get the DB system ID to map back to the backup info
-            my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
-
-            # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
-            foreach my $iDbIdBackup (keys %{$hDbListBackup})
-            {
-                if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
-                    $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
-                {
-                    $iDbId = $iDbIdBackup;
-                    last;
-                }
-            }
-
-            my $bArchiveHasBackup = false;
-            # If backup db-id corresponding to the archive db-version and db-system-id was found then check to see if there is a
-            # current backup associated with this db-version and system-id.
-            if (defined($iDbId))
-            {
-                foreach my $strBackup ($oBackupInfo->keys(INFO_BACKUP_SECTION_BACKUP_CURRENT))
-                {
-                    if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID, $iDbId))
-                    {
-                        $bArchiveHasBackup = true;
-                        last;
-                    }
-                }
-            }
-
-            # If the archive directory is not the current database version and it does not have an associated current backup
-            # then this archive directory is no longer needed so delete it
-            if (!(($strCurrentDbArchiveId eq $strArchiveDir) || $bArchiveHasBackup))
-            {
-                my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveDir);
-
-                remove_tree($strFullPath) > 0
-                    or confess &log(ERROR, "unable to remove orphaned ${strFullPath}", ERROR_PATH_REMOVE);
-
-                &log(INFO, "removed orphaned archive path: ${strFullPath}");
-
-                # Delete this archive from the hash
-                delete $$hDbListArchive{$iDbIdArchive};
-            }
-            else
-            {
-                if (defined($iDbId))
-                {
-                    # Map the backup db-id to the archiveId
-                    $hDbIdArchiveIdMap{$iDbId} =  $strArchiveDir;
-                }
-                else
-                {
-                    # This should never happen unless the backup.info file is corrupt
-                    confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
-                        ERROR_FILE_INVALID);
-                }
-            }
-        }
-
-        # Regenerate the array list in the event an orphaned directory was removed
-        @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
+        my @stryGlobalBackupRetention;
 
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
         if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
         {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
+            @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
         }
         elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
         {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true, true), 'reverse');
+            @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true, true), 'reverse');
         }
         elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
         {
-            @stryPath = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
+            @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
         }
 
         # If no backups were found then preserve current archive logs - too soon to expire them
-        my $iBackupTotal = scalar @stryPath;
+        my $iBackupTotal = scalar @stryGlobalBackupRetention;
 
         if ($iBackupTotal > 0)
         {
-            # See if enough backups exist for expiration to start
-            my $strArchiveRetentionBackup = $stryPath[$iArchiveRetention - 1];
-            my $iRetentionBackupIndex;
+            # Build the db list from the history in the backup info and archive info file
+            my $hDbListBackup = $oBackupInfo->dbHistoryList();
+            my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true);
+            my $hDbListArchive = $oArchiveInfo->dbHistoryList();
+            my @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
+            my $iDbHistoryId = undef;
 
-            if (!defined($strArchiveRetentionBackup))
+            # Make sure the current database versions match between the two files
+            if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                    ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION))) ||
+                $oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef,
+                    ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID)))))
             {
-                if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryPath > 0)
-                {
-                    &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for archive retention");
-                    $strArchiveRetentionBackup = $stryPath[scalar @stryPath - 1];
-                    $iRetentionBackupIndex = scalar @stryPath - 1;
-                }
+                confess &log(ERROR, "archive and backup database versions do not match\n" .
+                    "HINT: has a stanza-upgrade been performed?", ERROR_FILE_INVALID);
             }
-            else
-            {
-                $iRetentionBackupIndex = $iArchiveRetention - 1;
-            }
 
-            # If a backup has been selected for retention then continue
-            if (defined($strArchiveRetentionBackup))
-            {
-                my %hDbIdArchiveRetentionBackupMap;
-                my $iDbId =
-                    $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strArchiveRetentionBackup, INFO_BACKUP_KEY_HISTORY_ID);
-                $hDbIdArchiveRetentionBackupMap{$hDbIdArchiveIdMap{$iDbId}} = $strArchiveRetentionBackup;
-                logDebugMisc($strOperation, "initial backup selected for retention ${strArchiveRetentionBackup} for " .
-                    $hDbIdArchiveIdMap{$iDbId});
+            # Get the list of backups that are part of archive retention
+            my @stryTmp = @stryGlobalBackupRetention;
+            my @stryGlobalBackupArchiveRetention = splice(@stryTmp, 0, $iArchiveRetention);
 
-                # If there are backups within retention that are on different databases then set the latest one for retention over
-                # that database's archiveId (e.g. 9.4-1)
-                for (my $i = $iRetentionBackupIndex; $i >= 0; $i--)
+            # For each archiveId, remove WAL that are not part of retention
+            foreach my $strArchiveId (@stryListArchiveDisk)
+            {
+                # Get the db-version and db-id (history id) from the directory name
+                my ($strDbVersionArchive, $iDbIdArchive) = split("-", $strArchiveId);
+
+                # Get the DB system ID to map back to the backup info
+                my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
+
+                # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
+                foreach my $iDbIdBackup (keys %{$hDbListBackup})
                 {
-                    my $iDbIdNext = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $stryPath[$i], INFO_BACKUP_KEY_HISTORY_ID);
-                    if ($iDbIdNext != $iDbId)
+                    if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
+                        $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
                     {
-                        $hDbIdArchiveRetentionBackupMap{$hDbIdArchiveIdMap{$iDbIdNext}} = $stryPath[$i];
-                        $iDbId = $iDbIdNext;
-                        logDebugMisc($strOperation, "backup selected for retention  $stryPath[$i] for " .
-                            $hDbIdArchiveIdMap{$iDbId});
+                        $iDbHistoryId = $iDbIdBackup;
+                        last;
                     }
                 }
 
-                # For each archiveId, remove WAL that are not part of retention
-                foreach my $strArchiveId (@stryListArchiveDisk)
+                if (defined($iDbHistoryId))
                 {
-                    my $bRemove;
+                    my @stryLocalBackupRetention;
 
-                    # Only expire if the selected backup of this ArchiveId has archive info - backups performed with --no-online
-                    # will not have archive info and cannot be used for expiration.
-                    if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
-                                            $hDbIdArchiveRetentionBackupMap{$strArchiveId}, INFO_BACKUP_KEY_ARCHIVE_START))
+                    # From the full list of backups to retain, create a list of backups associated with this archiveId (e.g. 9.4-1)
+                    foreach my $strGlobalBackupRetention (@stryGlobalBackupRetention)
                     {
-                        # Get archive ranges to preserve for this archiveID.  Because archive retention can be less than total
-                        # retention it is important to preserve archive that is required to make the older backups consistent even
-                        # though they cannot be played any further forward with PITR.
-                        my $strArchiveExpireMax;
-                        my @oyArchiveRange;
-
-                        foreach my $strBackup ($oBackupInfo->list())
+                        # From the backup.info current backup section, get the db-id for the backup and if it is the same as the one
+                        # associated with this archiveId then add the backup to the local retention list
+                        if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strGlobalBackupRetention,
+                            INFO_BACKUP_KEY_HISTORY_ID, $iDbHistoryId))
                         {
-                            # If the backup has an archive start and the backup is earlier than the retention backup
-                            if ($strBackup le $hDbIdArchiveRetentionBackupMap{$strArchiveId} &&
-                                $oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_ARCHIVE_START))
-                            {
-                                # Get the db-id of this current backup
-                                my $iBackupDbId =
-                                    $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID);
+                            push(@stryLocalBackupRetention, $strGlobalBackupRetention);
+                        }
+                    }
 
-                                # If the db-id is mapped to this archive database version directory then build a list of archive
-                                # ranges for only the backups to retain that are associated with this archiveId.
-                                if ($hDbIdArchiveIdMap{$iBackupDbId} eq $strArchiveId)
+                    # If no backup to retain was found
+                    if (!@stryLocalBackupRetention)
+                    {
+                        # If this is not the current database, then delete the archive directory else do nothing since the current
+                        # DB archive directory must not be deleted
+                        if (!$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId))
+                        {
+                            my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId);
+
+                            remove_tree($strFullPath) > 0
+                                or confess &log(ERROR, "unable to remove orphaned ${strFullPath}", ERROR_PATH_REMOVE);
+
+                            &log(INFO, "removed orphaned archive path: ${strFullPath}");
+                        }
+
+                        # Continue to next directory
+                        next;
+                    }
+
+                    my @stryLocalBackupArchiveRentention;
+
+                    if (@stryGlobalBackupArchiveRetention)
+                    {
+                        # From the full list of backups in archive retention, find the intersection of local backups to retain
+                        foreach my $strGlobalBackupArchiveRetention (@stryGlobalBackupArchiveRetention)
+                        {
+                            foreach my $strLocalBackupRetention (@stryLocalBackupRetention)
+                            {
+                                if ($strLocalBackupRetention eq $strGlobalBackupArchiveRetention)
+                                {
+                                    push(@stryLocalBackupArchiveRentention, $strLocalBackupRetention);
+                                }
+                            }
+                        }
+                    }
+                    # If there are not enough backups yet globally to start archive expiration then set the archive retention
+                    # to the oldest backup so anything prior to that will be removed as it is not needed but everything else is
+                    else
+                    {
+                        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
+                        {
+                            &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for archive retention");
+                            $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[-1];
+                        }
+                    }
+
+                    # If no backups were found as part of retention then set the backup archive retention to the newest backup
+                    # so that the database is fully recoverable (can be recovered from the last backup through pitr)
+                    if (!@stryLocalBackupArchiveRentention)
+                    {
+                        $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[0];
+                    }
+
+                    my $strArchiveRetentionBackup = $stryLocalBackupArchiveRentention[0];
+
+                    # If a backup has been selected for retention then continue
+                    if (defined($strArchiveRetentionBackup))
+                    {
+                        my $bRemove;
+
+                        # Only expire if the selected backup has archive info - backups performed with --no-online will
+                        # not have archive info and cannot be used for expiration.
+                        if ($oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT,
+                                               $strArchiveRetentionBackup, INFO_BACKUP_KEY_ARCHIVE_START))
+                        {
+                            # Get archive ranges to preserve.  Because archive retention can be less than total retention it is
+                            # important to preserve archive that is required to make the older backups consistent even though they
+                            # cannot be played any further forward with PITR.
+                            my $strArchiveExpireMax;
+                            my @oyArchiveRange;
+
+                            foreach my $strBackup (@stryLocalBackupRetention)
+                            {
+                                if ($strBackup le $strArchiveRetentionBackup &&
+                                    $oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_ARCHIVE_START))
                                 {
                                     my $oArchiveRange = {};
 
                                     $$oArchiveRange{start} = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                                                                $strBackup, INFO_BACKUP_KEY_ARCHIVE_START);
 
-                                    if ($strBackup ne $hDbIdArchiveRetentionBackupMap{$strArchiveId})
+                                    if ($strBackup ne $strArchiveRetentionBackup)
                                     {
                                         $$oArchiveRange{stop} = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
                                                                                    $strBackup, INFO_BACKUP_KEY_ARCHIVE_STOP);
@@ -453,101 +410,96 @@ sub process
                                         $strArchiveExpireMax = $$oArchiveRange{start};
                                     }
 
-                                    &log(DETAIL, "archive retention on backup ${strBackup} for ${strArchiveId}, " .
-                                        "start = $$oArchiveRange{start}" . (defined($$oArchiveRange{stop}) ? ", stop = " .
-                                        "$$oArchiveRange{stop}" : ''));
+                                    &log(DETAIL, "archive retention on backup ${strBackup}, start = $$oArchiveRange{start}" .
+                                         (defined($$oArchiveRange{stop}) ? ", stop = $$oArchiveRange{stop}" : ''));
 
                                     push(@oyArchiveRange, $oArchiveRange);
                                 }
                             }
-                        }
 
-                        # Get all major archive paths (timeline and first 64 bits of LSN)
-                        foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
-                        {
-                            logDebugMisc($strOperation, "found major WAL path: ${strArchiveId} / ${strPath}");
-
-                            # If the @oyArchiveRange is empty and this is the current database, then skip so don't remove the
-                            # current database WAL directory
-                            if (!@oyArchiveRange && ($strCurrentDbArchiveId eq $strArchiveId))
+                            # Get all major archive paths (timeline and first 64 bits of LSN)
+                            foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
                             {
-                                last;
-                            }
+                                logDebugMisc($strOperation, "found major WAL path: ${strPath}");
+                                $bRemove = true;
 
-                            $bRemove = true;
-
-                            # Keep the path if it falls in the range of any backup in retention
-                            foreach my $oArchiveRange (@oyArchiveRange)
-                            {
-                                logDebugMisc($strOperation, "archive retention on range for ${strArchiveId}, start =  $$oArchiveRange{start}" . (defined($$oArchiveRange{stop}) ? ", stop = $$oArchiveRange{stop}" : ''));
-
-                                if ($strPath ge substr($$oArchiveRange{start}, 0, 16) &&
-                                    (!defined($$oArchiveRange{stop}) || $strPath le substr($$oArchiveRange{stop}, 0, 16)))
+                                # Keep the path if it falls in the range of any backup in retention
+                                foreach my $oArchiveRange (@oyArchiveRange)
                                 {
-                                    $bRemove = false;
-                                    last;
-                                }
-                            }
-
-                            # Remove the entire directory if all archive is expired
-                            if ($bRemove)
-                            {
-                                my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId) . "/${strPath}";
-
-                                remove_tree($strFullPath) > 0
-                                    or confess &log(ERROR, "unable to remove ${strFullPath}", ERROR_PATH_REMOVE);
-
-                                # Log expire info
-                                logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
-                                $self->logExpire($strPath);
-                            }
-                            # Else delete individual files instead if the major path is less than or equal to the most recent
-                            # retention backup.  This optimization prevents scanning though major paths that could not possibly have
-                            # anything to expire.
-                            elsif ($strPath le substr($strArchiveExpireMax, 0, 16))
-                            {
-                                # Look for files in the archive directory
-                                foreach my $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE,
-                                                                     "${strArchiveId}/${strPath}", "^[0-F]{24}.*\$"))
-                                {
-                                    $bRemove = true;
-
-                                    # Determine if the individual archive log is used in a backup
-                                    foreach my $oArchiveRange (@oyArchiveRange)
+                                    if ($strPath ge substr($$oArchiveRange{start}, 0, 16) &&
+                                        (!defined($$oArchiveRange{stop}) || $strPath le substr($$oArchiveRange{stop}, 0, 16)))
                                     {
-                                        if (substr($strSubPath, 0, 24) ge $$oArchiveRange{start} &&
-                                           (!defined($$oArchiveRange{stop}) || substr($strSubPath, 0, 24) le $$oArchiveRange{stop}))
+                                        $bRemove = false;
+                                        last;
+                                    }
+                                }
+
+                                # Remove the entire directory if all archive is expired
+                                if ($bRemove)
+                                {
+                                    my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId) . "/${strPath}";
+
+                                    remove_tree($strFullPath) > 0
+                                        or confess &log(ERROR, "unable to remove ${strFullPath}", ERROR_PATH_REMOVE);
+
+                                    # Log expire info
+                                    logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
+                                    $self->logExpire($strPath);
+                                }
+                                # Else delete individual files instead if the major path is less than or equal to the most recent
+                                # retention backup.  This optimization prevents scanning though major paths that could not possibly
+                                # have anything to expire.
+                                elsif ($strPath le substr($strArchiveExpireMax, 0, 16))
+                                {
+                                    # Look for files in the archive directory
+                                    foreach my $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE,
+                                                                         "${strArchiveId}/${strPath}", "^[0-F]{24}.*\$"))
+                                    {
+                                        $bRemove = true;
+
+                                        # Determine if the individual archive log is used in a backup
+                                        foreach my $oArchiveRange (@oyArchiveRange)
                                         {
-                                            $bRemove = false;
-                                            last;
+                                            if (substr($strSubPath, 0, 24) ge $$oArchiveRange{start} &&
+                                                (!defined($$oArchiveRange{stop}) || substr($strSubPath, 0, 24) le $$oArchiveRange{stop}))
+                                            {
+                                                $bRemove = false;
+                                                last;
+                                            }
+                                        }
+
+                                        # Remove archive log if it is not used in a backup
+                                        if ($bRemove)
+                                        {
+                                            fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"));
+
+                                            logDebugMisc($strOperation, "remove WAL segment: ${strSubPath}");
+
+                                            # Log expire info
+                                            $self->logExpire(substr($strSubPath, 0, 24));
+                                        }
+                                        else
+                                        {
+                                            # Log that the file was not expired
+                                            $self->logExpire();
                                         }
                                     }
-
-                                    # Remove archive log if it is not used in a backup
-                                    if ($bRemove)
-                                    {
-                                        fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"));
-
-                                        logDebugMisc($strOperation, "remove WAL segment: ${strSubPath}");
-
-                                        # Log expire info
-                                        $self->logExpire(substr($strSubPath, 0, 24));
-                                    }
-                                    else
-                                    {
-                                        # Log that the file was not expired
-                                        $self->logExpire();
-                                    }
                                 }
+                            }
+
+                            # Log if no archive was expired
+                            if ($self->{iArchiveExpireTotal} == 0)
+                            {
+                                &log(DETAIL, 'no archive to remove');
                             }
                         }
                     }
-
-                    # Log if no archive was expired
-                    if ($self->{iArchiveExpireTotal} == 0)
-                    {
-                        &log(DETAIL, 'no archive to remove');
-                    }
+                }
+                else
+                {
+                    # This should never happen unless the backup.info file is corrupt
+                    confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
+                        ERROR_FILE_INVALID);
                 }
             }
         }
