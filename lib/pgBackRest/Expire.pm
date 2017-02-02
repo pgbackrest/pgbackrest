@@ -303,7 +303,13 @@ sub process
                     }
                 }
 
-                if (defined($iDbHistoryId))
+                if (!defined($iDbHistoryId))
+                {
+                    # This should never happen unless the backup.info file is corrupt
+                    confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
+                        ERROR_FILE_INVALID);
+                }
+                else
                 {
                     my @stryLocalBackupRetention;
 
@@ -494,12 +500,6 @@ sub process
                             }
                         }
                     }
-                }
-                else
-                {
-                    # This should never happen unless the backup.info file is corrupt
-                    confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
-                        ERROR_FILE_INVALID);
                 }
             }
         }
