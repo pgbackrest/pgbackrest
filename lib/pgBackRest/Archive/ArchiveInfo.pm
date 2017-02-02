@@ -22,7 +22,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
@@ -46,7 +45,7 @@ use constant INFO_ARCHIVE_SECTION_DB_HISTORY                        => INFO_BACK
 
 use constant INFO_ARCHIVE_KEY_DB_VERSION                            => MANIFEST_KEY_DB_VERSION;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_VERSION);
-use constant INFO_ARCHIVE_KEY_DB_ID                                 => INFO_BACKUP_KEY_HISTORY_ID;
+use constant INFO_ARCHIVE_KEY_DB_ID                                 => MANIFEST_KEY_DB_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_ID);
 use constant INFO_ARCHIVE_KEY_DB_SYSTEM_ID                          => MANIFEST_KEY_SYSTEM_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_SYSTEM_ID);

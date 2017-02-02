@@ -13,6 +13,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
 
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupCommon;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -38,10 +39,6 @@ use constant INFO_BACKUP_SECTION_BACKUP                             => MANIFEST_
     push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP);
 use constant INFO_BACKUP_SECTION_BACKUP_CURRENT                     => INFO_BACKUP_SECTION_BACKUP . ':current';
     push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP_CURRENT);
-use constant INFO_BACKUP_SECTION_DB                                 => 'db';
-    push @EXPORT, qw(INFO_BACKUP_SECTION_DB);
-use constant INFO_BACKUP_SECTION_DB_HISTORY                         => INFO_BACKUP_SECTION_DB . ':history';
-    push @EXPORT, qw(INFO_BACKUP_SECTION_DB_HISTORY);
 
 use constant INFO_BACKUP_KEY_ARCHIVE_CHECK                          => MANIFEST_KEY_ARCHIVE_CHECK;
     push @EXPORT, qw(INFO_BACKUP_KEY_ARCHIVE_CHECK);
@@ -503,6 +500,118 @@ sub list
     (
         $strOperation,
         {name => 'stryBackup', value => \@stryBackup}
+    );
+}
+
+####################################################################################################################################
+# backupArchiveDbHistoryId
+#
+# Gets the backup.info db-id for the archiveId passed.
+####################################################################################################################################
+sub backupArchiveDbHistoryId
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchiveId,
+        $strPathBackupArchive,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->backupArchiveDbHistoryId', \@_,
+            {name => 'strArchiveId'},
+            {name => 'strPathBackupArchive'},
+        );
+
+    # List of backups associated with the db-id provided
+    my @stryArchiveBackup;
+
+    # Build the db list from the history in the backup info and archive info file
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($strPathBackupArchive, true);
+    my $hDbListArchive = $oArchiveInfo->dbHistoryList();
+    my $hDbListBackup = $self->dbHistoryList();
+    my $iDbHistoryId = undef;
+
+    # Get the db-version and db-id (history id) from the archiveId
+    my ($strDbVersionArchive, $iDbIdArchive) = split("-", $strArchiveId);
+
+    # Get the DB system ID to map back to the backup info
+    my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
+
+    # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
+    foreach my $iDbIdBackup (keys %{$hDbListBackup})
+    {
+        if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
+            $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
+        {
+            $iDbHistoryId = $iDbIdBackup;
+            last;
+        }
+    }
+
+    if (!defined($iDbHistoryId))
+    {
+        # This should never happen unless the backup.info file is corrupt
+        confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
+            ERROR_FILE_INVALID);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# listByArchiveId
+#
+# Filters a list of backups by the archiveId passed.
+####################################################################################################################################
+sub listByArchiveId
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchiveId,
+        $strPathBackupArchive,
+        $stryBackup,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->listByArchiveId', \@_,
+            {name => 'strArchiveId'},
+            {name => 'strPathBackupArchive'},
+            {name => 'stryBackup'},
+        );
+
+    # List of backups associated with the db-id provided
+    my @stryArchiveBackup;
+
+    my $iDbHistoryId = $self->backupArchiveDbHistoryId($strArchiveId, $strPathBackupArchive);
+
+    # Iterate through the backups and filter
+    foreach my $strBackup (@$stryBackup)
+    {
+        # From the backup.info current backup section, get the db-id for the backup and if it is the same, add to the list
+        if ($self->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID, $iDbHistoryId))
+        {
+            push(@stryArchiveBackup, $strBackup);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryArchiveBackup', value => \@stryArchiveBackup}
     );
 }
 

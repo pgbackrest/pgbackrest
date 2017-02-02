@@ -1,5 +1,6 @@
 ####################################################################################################################################
 # INFO MODULE
+# Constants, variables and functions common to the info files
 ####################################################################################################################################
 package pgBackRest::InfoCommon;
 
@@ -9,6 +10,14 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+
+####################################################################################################################################
+# DB section constants
+####################################################################################################################################
+use constant INFO_BACKUP_SECTION_DB                                 => 'db';
+    push @EXPORT, qw(INFO_BACKUP_SECTION_DB);
+use constant INFO_BACKUP_SECTION_DB_HISTORY                         => INFO_BACKUP_SECTION_DB . ':history';
+    push @EXPORT, qw(INFO_BACKUP_SECTION_DB_HISTORY);
 
 ####################################################################################################################################
 # History section constants
