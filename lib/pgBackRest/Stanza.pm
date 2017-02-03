@@ -314,49 +314,6 @@ sub infoFileCreate
             $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
         }
 
-        my $hDbList = $oInfo->dbHistoryList();
-        my $iDbId = 0;
-        my $iDbIdMax = 0;
-
-        # Get the db-id from the reconstructed history that corresponds to the current db-version and db-system-id
-        foreach my $iDbHistoryId (keys %{$hDbList})
-        {
-            if ($$hDbList{$iDbHistoryId}{&INFO_SYSTEM_ID} == $self->{oDb}{ullDbSysId} &&
-                $$hDbList{$iDbHistoryId}{&INFO_DB_VERSION} eq $self->{oDb}{strDbVersion})
-            {
-                $iDbId = $iDbHistoryId;
-            }
-
-            # If the current history ID is greater than the running max, then set it to the current id
-            if ($iDbHistoryId > $iDbIdMax)
-            {
-                $iDbIdMax = $iDbHistoryId;
-            }
-
-        }
-
-        # If a corresponding db-id was not found, then check to see if there was any history
-        if ($iDbId == 0)
-        {
-            # If there is history then get the last key and increment it to set the proper key for the DB section
-            if ($iDbIdMax > 0)
-            {
-                $iDbId = $iDbIdMax + 1;
-            }
-            # Else initialize the db-id
-            else
-            {
-                $iDbId = 1;
-            }
-        }
-
-        # Make sure the db section is properly up to date
-        ($strPathType eq PATH_BACKUP_CLUSTER)
-            ? $oInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                $self->{oDb}{ullDbSysId}, $iDbId)
-            : $oInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $iDbId);
-
-
         # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
         if ($oInfo->{bExists})
         {

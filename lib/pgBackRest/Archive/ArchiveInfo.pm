@@ -259,11 +259,20 @@ sub reconstruct
         $self->remove(INFO_ARCHIVE_SECTION_DB_HISTORY);
     }
 
-    # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
-    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
+    my @stryArchiveId = fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
+    my %hDbHistoryVersion;
+
+    # Get the db-version and db-id (history id) from the upper level directory names, e.g. 9.4-1
+    foreach my $strArchiveId (@stryArchiveId)
     {
-        # Get the db-version and db-id (history id) from the directory name
-        my ($strDbVersion, $iDbHistoryId) = split("-", $strVersionDir);
+        my ($strDbVersion, $iDbHistoryId) = split("-", $strArchiveId);
+        $hDbHistoryVersion{$iDbHistoryId} = $strDbVersion;
+    }
+
+    # Loop through the DBs in the order they were created as indicated by the db-id so that the last one is set in the db section
+    foreach my $iDbHistoryId (sort {$a <=> $b} keys %hDbHistoryVersion)
+    {
+        my $strDbVersion = $hDbHistoryVersion{$iDbHistoryId};
 
         # Get the name of the first archive directory
         my $strArchiveDir =

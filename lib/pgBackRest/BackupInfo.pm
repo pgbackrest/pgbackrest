@@ -209,6 +209,33 @@ sub reconstruct
 
         if (!$self->current($strBackup) && fileExists($strManifestFile))
         {
+            # If we are reconstructing, then we need to be sure this db-id and version is in the history section. Also if it
+            # has a db-id greater than anything in the history section, then add it to the db section.
+            if (!$bRequired)
+            {
+                my $hDbList = $self->dbHistoryList();
+                my $iDbId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID);
+                my $iDbIdMax = 0;
+                my $ullDbSysId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID)
+                my $strDbVersion = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
+
+                # If this is the max history id then set the db section
+                foreach my $iDbHistoryId (keys %{$hDbList})
+                {
+                    # If the current history ID is greater than the running max, then set it to the current id
+                    if ($iDbHistoryId > $iDbIdMax)
+                    {
+                        $iDbIdMax = $iDbHistoryId;
+                    }
+                }
+
+                if ($iDbId >= $iDbIdMax)
+                {
+                    $self->dbSectionSet($strDbVersion, $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
+                        $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG), $ullDbSysId, $iDbId);
+                }
+            }
+
             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
 
@@ -402,8 +429,18 @@ sub add
         $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE));
     $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_VERSION,
         $oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
-    $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HISTORY_ID,
-        $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID));
+
+    if ($bRequired)
+    {
+        $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HISTORY_ID,
+            $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID));
+    }
+    # If we are reconstructing, then the history id must be taken from the manifest
+    else
+    {
+        $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HISTORY_ID,
+            $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID));
+    }
 
     if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, BACKUP_TYPE_FULL))
     {
