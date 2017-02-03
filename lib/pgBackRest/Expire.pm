@@ -361,6 +361,7 @@ sub process
                         my @oyArchiveRange;
                         my @stryBackupList = $oBackupInfo->list();
 
+                        # With the full list of backups, loop through only those associated with this archiveId
                         foreach my $strBackup ($oBackupInfo->listByArchiveId($strArchiveId,
                                                     $oFile->pathGet(PATH_BACKUP_ARCHIVE), \@stryBackupList))
                         {
