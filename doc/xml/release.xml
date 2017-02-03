@@ -318,6 +318,12 @@
             </release-doc-list>
 
             <release-test-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed <br-option>--no-online</br-option> tests to suppress expected errors.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>Added integration for testing coverage with <code>Devel::Cover</code>.</p>
