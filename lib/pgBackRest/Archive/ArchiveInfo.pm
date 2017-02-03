@@ -22,11 +22,11 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -41,11 +41,11 @@ use constant ARCHIVE_INFO_FILE                                      => 'archive.
 use constant INFO_ARCHIVE_SECTION_DB                                => INFO_BACKUP_SECTION_DB;
     push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
 use constant INFO_ARCHIVE_SECTION_DB_HISTORY                        => INFO_BACKUP_SECTION_DB_HISTORY;
-    push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
+    push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB_HISTORY);
 
 use constant INFO_ARCHIVE_KEY_DB_VERSION                            => MANIFEST_KEY_DB_VERSION;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_VERSION);
-use constant INFO_ARCHIVE_KEY_DB_ID                                 => INFO_BACKUP_KEY_HISTORY_ID;
+use constant INFO_ARCHIVE_KEY_DB_ID                                 => MANIFEST_KEY_DB_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_ID);
 use constant INFO_ARCHIVE_KEY_DB_SYSTEM_ID                          => MANIFEST_KEY_SYSTEM_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
@@ -249,6 +249,16 @@ sub reconstruct
 
     my $strInvalidFileStructure = undef;
 
+    # Remove any existing DB or History information
+    if ($self->test(INFO_ARCHIVE_SECTION_DB))
+    {
+        $self->remove(INFO_ARCHIVE_SECTION_DB);
+    }
+    if ($self->test(INFO_ARCHIVE_SECTION_DB_HISTORY))
+    {
+        $self->remove(INFO_ARCHIVE_SECTION_DB_HISTORY);
+    }
+
     # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
     foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
     {
@@ -320,9 +330,7 @@ sub reconstruct
         $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
 
-    # ??? This is a precursor for stanza-upgrade: If the DB section does not exist, then there were no valid directories to read
-    # from so create the file. Can't raise warning b/c log-log-level console in calling routine is turned off -- determine how to
-    # handle cases above where directory structure or files are causing errors
+    # If the DB section does not exist, then there were no valid directories to read from so create the DB and History sections.
     if (!$self->test(INFO_ARCHIVE_SECTION_DB))
     {
         $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
@@ -372,6 +380,40 @@ sub dbHistoryIdGet
     (
         $strOperation,
         {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# dbHistoryList
+#
+# Get the data from the db history section.
+####################################################################################################################################
+sub dbHistoryList
+{
+    my $self = shift;
+    my
+    (
+        $strOperation,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryList',
+        );
+
+    my %hDbHash;
+
+    foreach my $iHistoryId ($self->keys(INFO_ARCHIVE_SECTION_DB_HISTORY))
+    {
+        $hDbHash{$iHistoryId}{&INFO_DB_VERSION} =
+            $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_VERSION);
+        $hDbHash{$iHistoryId}{&INFO_SYSTEM_ID} =
+            $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_ID);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hDbHash', value => \%hDbHash}
     );
 }
 
