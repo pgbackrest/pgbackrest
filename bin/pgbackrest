@@ -84,8 +84,12 @@ local $EVAL_ERROR = undef; eval
             optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
 
-        # Acquire a remote lock
-        lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
+        # Acquire a remote lock (except for commands that are read-only)
+        if (!(optionTest(OPTION_COMMAND, CMD_ARCHIVE_GET) || optionTest(OPTION_COMMAND, CMD_INFO) ||
+              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK)))
+        {
+            lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
+        }
 
         # Process remote requests
         exitSafe($oRemote->process());

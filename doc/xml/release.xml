@@ -214,6 +214,14 @@
 
                         <p>Added warning to update <code>pg_tablespace.spclocation</code> when remapping tablespaces in <postgres/> &lt; 9.2.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove remote lock requirements for the <cmd>archive-get</cmd>, <cmd>restore</cmd>, <cmd>info</cmd>, and <cmd>check</cmd> commands since they are read-only operations.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>
