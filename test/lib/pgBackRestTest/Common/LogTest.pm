@@ -114,15 +114,22 @@ sub logAdd
         # Do replacements on each line of the log
         foreach my $strLine (split("\n", $strLog))
         {
+            # Remove timestamp from log line
             $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} //;
 
+            # Don't include test points in the final log
             if ($strLine !~ /^  TEST/)
             {
+                # Remove spaces that provided padding for the timetamp
                 $strLine =~ s/^                            //;
+
+                # Remove any final CRs
                 $strLine =~ s/\r$//;
 
+                # Do other replacements
                 $strLine = $self->regExpReplaceAll($strLine);
 
+                # Add to the log
                 $self->{strLog} .= "${strLine}\n";
             }
         }

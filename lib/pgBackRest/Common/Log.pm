@@ -71,6 +71,7 @@ my $strLogFileCache = undef;
 my $strLogLevelFile = OFF;
 my $strLogLevelConsole = OFF;
 my $strLogLevelStdErr = WARN;
+my $bLogTimestamp = true;
 
 # Flags to limit banner printing until there is actual output
 my $bLogFileExists;
@@ -166,6 +167,7 @@ sub logLevelSet
     my $strLevelFileParam = shift;
     my $strLevelConsoleParam = shift;
     my $strLevelStdErrParam = shift;
+    my $bLogTimestampParam = shift;
 
     # Load FileCommon module
     require pgBackRest::FileCommon;
@@ -199,6 +201,11 @@ sub logLevelSet
         }
 
         $strLogLevelStdErr = uc($strLevelStdErrParam);
+    }
+
+    if (defined($bLogTimestampParam))
+    {
+        $bLogTimestamp = $bLogTimestampParam;
     }
 }
 
@@ -630,8 +637,8 @@ sub log
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
     $strMessageFormat =
-        timestampFormat() . sprintf('.%03d P%02d', (gettimeofday() - int(gettimeofday())) * 1000,
-        (defined($iProcessId) ? $iProcessId : 0)) .
+        ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
+        sprintf('P%02d', defined($iProcessId) ? $iProcessId : 0) .
         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Skip output if disabled

@@ -233,31 +233,12 @@ sub execute
 
                     # Trim off extra linefeeds before and after
                     $strOutput =~ s/^\n+|\n$//g;
-
-                    if ($strCommand =~ / pgbackrest /)
-                    {
-                        $strOutput =~ s/^                             //smg;
-                        $strOutput =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} //smg;
-                    }
-
-                    # my @stryOutput = split("\n", $strOutput);
-                    # $$hCacheValue{stdout} = \@stryOutput;
                 }
 
                 if (defined($$hCacheKey{'err-expect'}) && defined($oExec->{strErrorLog}) && $oExec->{strErrorLog} ne '')
                 {
-                    # my $strError = $oExec->{strErrorLog};
-                    # $strError =~ s/^\n+|\n$//g;
-                    # my @stryError = split("\n", $strError);
-                    # $$hCacheValue{stderr} = \@stryError;
-
                     $strOutput .= $oExec->{strErrorLog};
                 }
-
-                # if (defined($$hCacheValue{stderr}))
-                # {
-                #     $strOutput .= join("\n", @{$$hCacheValue{stderr}});
-                # }
 
                 if ($$hCacheKey{output} && defined($$hCacheKey{highlight}) && $$hCacheKey{highlight}{filter} && defined($strOutput))
                 {
@@ -583,6 +564,7 @@ sub backrestConfig
             # ??? This is not very pretty and should be replaced with a general way to hide config options
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_TIMESTAMP});
 
             if (keys(%{$$oConfigClean{&CONFIG_SECTION_GLOBAL}}) == 0)
             {

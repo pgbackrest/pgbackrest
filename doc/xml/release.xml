@@ -308,6 +308,10 @@
                     <release-item>
                         <p>Removed <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging.  This is primarily used to avoid filters in the automated documentation.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

@@ -330,7 +330,9 @@
                 <title>Configure the <postgres/> cluster data directory</title>
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
+
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
@@ -1350,6 +1352,7 @@
                 <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p>The database host must be configured with the backup host/user.  The default for the <br-option>backup-user</br-option> option is <id>backrest</id>.  If the <id>postgres</id> user does restores on the backup host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>backrest</id> user.</p>
@@ -1367,6 +1370,7 @@
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p>The repository directory will also be removed from the database host.  It will not be used anymore so leaving it around may be confusing later on.</p>
@@ -1733,11 +1737,12 @@
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
-
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
-                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
 
                 <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
+
+                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
