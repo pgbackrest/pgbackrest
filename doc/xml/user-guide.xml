@@ -1364,6 +1364,8 @@
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
                 <backrest-config-option section="global" key="backup-user">backrest</backrest-config-option>
 
+                <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
+
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
             </backrest-config>
 
@@ -1482,19 +1484,35 @@
                 </execute>
             </execute-list>
 
-            <p>The spool path must be configured and asynchronous archiving enabled.</p>
+            <p>The spool path must be configured and asynchronous archiving enabled.  Asynchronous archiving automatically confers some benefit by reducing the number of ssh connections made to the backup server, but setting <br-option>process-max</br-option> can drastically improve performance.  Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the spool path and asynchronous archiving</title>
 
                 <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
                 <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+                <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
             </backrest-config>
 
-            <p>The <cmd>check</cmd> command ensures that asynchronous archiving is working.</p>
+            <p>The <file>archive-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 
             <execute-list host="{[host-db-master]}">
-                <title>Check asynchronous archiving</title>
+                <title>Test parallel asynchronous archiving</title>
+
+                <execute output="n" show="n">
+                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                </execute>
+
+                <execute output="n">
+                    <exe-cmd>
+                        psql -c "
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();"
+                    </exe-cmd>
+                </execute>
 
                 <execute>
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
@@ -1502,37 +1520,14 @@
                 </execute>
             </execute-list>
 
-            <!-- DEBUG test to ensure async archiving is working in batch until better tests can be written -->
-            <execute-list host="{[host-db-master]}" keyword="debug">
-                <title>DEBUG asynchronous archiving</title>
+            <p>Now the log file will contain parallel, asynchronous activity.</p>
 
-                <execute output="n">
-                    <exe-cmd>rm /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
-                </execute>
-
-                <execute output="n">
-                    <exe-cmd>
-                        psql -c "
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();"
-                    </exe-cmd>
-                </execute>
-
-                <execute output="n">
-                    <exe-cmd>sleep 5</exe-cmd>
-                </execute>
+            <execute-list host="{[host-db-master]}">
+                <title>Check results in the log</title>
 
                 <execute output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
-                    <exe-highlight>WAL segments to archive</exe-highlight>
+                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
                 </execute>
             </execute-list>
         </section>

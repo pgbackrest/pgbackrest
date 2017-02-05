@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
-    <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and multi-processing.</description>
+    <description>{[project]} provides fast, reliable backup and restore for {[postgres]} and seamlessly scales to terabyte scale databases by implementing stream compression and parallel processing.</description>
 
     <variable-list>
         <!-- Variables used by the rest of the script -->
@@ -40,10 +40,10 @@
     <section id="features">
         <title>Features</title>
 
-        <section id="multi-process">
-            <title>Multi-process Backup &amp; Restore</title>
+        <section id="parallel-backup-restore">
+            <title>Parallel Backup &amp; Restore</title>
 
-            <p>Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process.  <backrest/> solves the compression bottleneck with multi-processing.</p>
+            <p>Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process.  <backrest/> solves the compression bottleneck with parallel processing.</p>
 
             <p>Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link.  More cores and a larger pipe lead to even higher throughput.</p>
         </section>
@@ -93,17 +93,17 @@
         <section id="delta-restore">
             <title>Delta Restore</title>
 
-            <p>The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously.  On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files.  Files that match the backup are left in place and the rest of the files are restored as usual.  Multi-processing can lead to a dramatic reduction in restore times.</p>
+            <p>The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously.  On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files.  Files that match the backup are left in place and the rest of the files are restored as usual.  Parallel processing can lead to a dramatic reduction in restore times.</p>
         </section>
 
-        <section id="advanced-archiving">
-            <title>Advanced Archiving</title>
+        <section id="parallel-archiving">
+            <title>Parallel WAL Archiving</title>
 
             <p>Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.</p>
 
             <p>The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised.  The push and get commands both ensure that the database and repository match by comparing <postgres/> versions and system identifiers.  This precludes the possibility of misconfiguring the WAL archive location.</p>
 
-            <p>Asynchronous archiving allows compression and transfer to be offloaded to another process which maintains a continuous connection to the remote server, improving throughput significantly.  This can be a critical feature for databases with extremely high write volume.</p>
+            <p>Asynchronous archiving allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput.  This can be a critical feature for databases with extremely high write volume.</p>
         </section>
 
         <section id="tablespace-link-support">

@@ -215,8 +215,8 @@ sub processQueue
     if ($self->{oArchiveProcess}->jobTotal() > 0)
     {
         &log(INFO,
-            @{$stryWalFile} . " new WAL file(s) to archive: " .
-                ${$stryWalFile}[0] . (@{$stryWalFile} > 1 ? " ... ${$stryWalFile}[-1]" : ''));
+            'push ' . @{$stryWalFile} . ' WAL file(s) to archive: ' .
+                ${$stryWalFile}[0] . (@{$stryWalFile} > 1 ? "...${$stryWalFile}[-1]" : ''));
 
         eval
         {
@@ -248,7 +248,7 @@ sub processQueue
 
                         $iOkTotal++;
 
-                        &log(DETAIL, "pushed WAL file ${strWalFile} to archive");
+                        &log(DETAIL, "pushed WAL file ${strWalFile} to archive", undef, undef, undef, $hJob->{iProcessId});
                     }
                 }
 
