@@ -393,7 +393,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'SIZE', "size\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = $self->regExpReplace($strLine, 'DELTA', "delta\"[ ]{0,1}:[ ]{0,1}[0-9]+", '[0-9]+$', false);
     $strLine = $self->regExpReplace(
-        $strLine, 'TIMESTAMP-STR', " timestamp: $strTimestampRegExp / $strTimestampRegExp",
+        $strLine, 'TIMESTAMP-STR', "timestamp start\/stop: $strTimestampRegExp / $strTimestampRegExp",
         "${strTimestampRegExp} / ${strTimestampRegExp}\$", false);
     $strLine = $self->regExpReplace($strLine, 'CHECKSUM', 'checksum=[\"]{0,1}[0-f]{40}', '[0-f]{40}$', false);
 

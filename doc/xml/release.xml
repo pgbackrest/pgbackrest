@@ -208,6 +208,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Added archive and backup WAL ranges to the <cmd>info</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="lobréau.benoit"/>
                         </release-item-contributor-list>

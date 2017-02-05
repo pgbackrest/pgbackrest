@@ -71,6 +71,8 @@ sub new
 
 ####################################################################################################################################
 # process
+#
+# Fork and run the async process if it is not already running.
 ####################################################################################################################################
 sub process
 {
@@ -96,7 +98,7 @@ sub process
         logDebugMisc($strOperation, 'async archive-push process is already running');
     }
 
-    # Run async process.
+    # Run async process
     if (!$bClient)
     {
         # uncoverable branch false - reacquire the lock since it was released by the client process above
@@ -138,6 +140,8 @@ sub process
 
 ####################################################################################################################################
 # initServer
+#
+# Create the spool directory and initialize the archive process.
 ####################################################################################################################################
 sub initServer
 {
@@ -149,7 +153,7 @@ sub initServer
     # Create the spool path
     filePathCreate($self->{strSpoolPath}, undef, true, true);
 
-    # Initialize the backup process
+    # Initialize the archive process
     $self->{oArchiveProcess} = new pgBackRest::Protocol::LocalProcess(
         BACKUP, optionGet(OPTION_PROTOCOL_TIMEOUT) < 60 ? optionGet(OPTION_PROTOCOL_TIMEOUT) / 2 : 30,
         $self->{strBackRestBin}, false);
@@ -161,6 +165,8 @@ sub initServer
 
 ####################################################################################################################################
 # processServer
+#
+# Setup the server and process the queue.  This function is separate from processQueue() for testing purposes.
 ####################################################################################################################################
 sub processServer
 {
@@ -169,6 +175,8 @@ sub processServer
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->processServer');
 
+    # There is no loop here because it seems wise to let the async process exit periodically.  As the queue grows each async
+    # execution will naturally run longer.  This behavior is also far easier to test.
     $self->initServer();
     $self->processQueue();
 
@@ -178,6 +186,8 @@ sub processServer
 
 ####################################################################################################################################
 # processQueue
+#
+# Push WAL to the archive.
 ####################################################################################################################################
 sub processQueue
 {
@@ -293,6 +303,8 @@ sub processQueue
 
 ####################################################################################################################################
 # walStatusWrite
+#
+# Write out a status file to the spool path with information about the success or failure of an archive push.
 ####################################################################################################################################
 sub walStatusWrite
 {

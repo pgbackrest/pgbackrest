@@ -35,6 +35,8 @@ use constant WAL_STATUS_OK                                          => 'ok';
 
 ####################################################################################################################################
 # process
+#
+# Push a WAL segment.  The WAL can be pushed in sync or async mode.
 ####################################################################################################################################
 sub process
 {
@@ -153,6 +155,8 @@ sub process
 
 ####################################################################################################################################
 # walStatus
+#
+# Read a WAL status file and return success or raise a warning or error.
 ####################################################################################################################################
 sub walStatus
 {
@@ -248,6 +252,9 @@ sub walStatus
 
 ####################################################################################################################################
 # readyList
+#
+# Determine which WAL PostgreSQL has marked as ready to be archived.  This is the heart of the "look ahead" functionality in async
+# archiving.
 ####################################################################################################################################
 sub readyList
 {
@@ -309,7 +316,11 @@ sub readyList
 }
 
 ####################################################################################################################################
-# dropQueue
+# dropList
+#
+# Determine if the queue of WAL ready to be archived has grown larger the the user-configurable setting.  If so, return the list of
+# WAL that should be dropped to allow PostgreSQL to continue running.  For the moment this is the entire list of ready WAL,
+# otherwise the process may archive small spurts of WAL when at queue max which is not likely to be useful.
 ####################################################################################################################################
 sub dropList
 {
