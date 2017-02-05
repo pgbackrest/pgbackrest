@@ -72,6 +72,10 @@ my $strLogLevelFile = OFF;
 my $strLogLevelConsole = OFF;
 my $strLogLevelStdErr = WARN;
 
+# Flags to limit banner printing until there is actual output
+my $bLogFileExists;
+my $bLogFileFirst;
+
 # Allow log to be globally enabled or disabled with logEnable() and logDisable()
 my $bLogDisable = 0;
 
@@ -116,25 +120,15 @@ sub logFileSet
         filePathCreate(dirname($strFile), '0770', true, true);
 
         $strFile .= '.log';
-        my $bExists = false;
-
-        if (-e $strFile)
-        {
-            $bExists = true;
-        }
+        $bLogFileExists = -e $strFile ? true : false;
+        $bLogFileFirst = true;
 
         $hLogFile = fileOpen($strFile, O_WRONLY | O_CREAT | O_APPEND, '0660');
-
-        if ($bExists)
-        {
-            syswrite($hLogFile, "\n");
-        }
-
-        syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
 
         # Write out anything that was cached before the file was opened
         if (defined($strLogFileCache))
         {
+            logBanner();
             syswrite($hLogFile, $strLogFileCache);
             undef($strLogFileCache);
         }
@@ -142,6 +136,27 @@ sub logFileSet
 }
 
 push @EXPORT, qw(logFileSet);
+
+
+####################################################################################################################################
+# logBanner
+#
+# Output a banner on the first log entry written to a file
+####################################################################################################################################
+sub logBanner
+{
+    if ($bLogFileFirst)
+    {
+        if ($bLogFileExists)
+        {
+            syswrite($hLogFile, "\n");
+        }
+
+        syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
+    }
+
+    $bLogFileFirst = false;
+}
 
 ####################################################################################################################################
 # logLevelSet - set the log level for file and console
@@ -660,6 +675,7 @@ sub log
                 {
                     if (defined($hLogFile))
                     {
+                        logBanner();
                         syswrite($hLogFile, $strMessageFormat);
                     }
                     else

@@ -242,6 +242,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Log file banner is not output until the first log entry is written.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Moved <code>File->manifest()</code> into the <code>FileCommon.pm</code> module.</p>
                     </release-item>
 
