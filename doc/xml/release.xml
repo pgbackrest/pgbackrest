@@ -148,7 +148,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.13dev" title="UNDER DEVELOPMENT">
+        <release date="2017-02-05" version="1.13" title="Parallel Archiving, Stanza Create, Improved Info and Check">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.
 
