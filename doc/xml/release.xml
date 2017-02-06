@@ -312,6 +312,10 @@
                     <release-item>
                         <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging.  This is primarily used to avoid filters in the automated documentation.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed alignment issues with multiline logging.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

@@ -623,7 +623,7 @@
     </section>
 
     <!-- SECTION => BACKUP -->
-    <section id="backup" depend="/quickstart/configure-archiving">
+    <section id="backup" depend="/quickstart/create-stanza">
         <title>Backup</title>
 
         <p>The Backup section introduces additional <cmd>backup</cmd> command features.</p>

@@ -615,9 +615,13 @@ sub log
     }
     else
     {
-        $strMessageFormat =~ s/\n/\n                                    /g;
+        # Indent subsequent message lines so they align
+        $bLogTimestamp ?
+            $strMessageFormat =~ s/\n/\n                                        /g :
+            $strMessageFormat =~ s/\n/\n            /g
     }
 
+    # Indent TRACE and debug levels so they are distinct from normal messages
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
         $strMessageFormat =~ s/\n/\n        /g;
@@ -627,10 +631,6 @@ sub log
     {
         $strMessageFormat =~ s/\n/\n    /g;
         $strMessageFormat = '    ' . $strMessageFormat;
-    }
-    elsif ($strLevel eq ERROR || $strLevel eq ASSERT)
-    {
-        $strMessageFormat =~ s/\n/\n       /g;
     }
 
     # Format the message text
