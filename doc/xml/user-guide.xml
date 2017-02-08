@@ -1473,9 +1473,11 @@
         <section id="async-archiving" depend="install-config">
             <title>Asynchronous Archiving</title>
 
-            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process to improve throughput. WAL segments are temporarily stored in a local queue on the database server, specified by the <br-option>spool-path</br-option> option, before being transferred to the repository on the backup server.</p>
+            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
 
-            <p>The spool directory is created to hold the WAL segments while they are waiting to be (optionally) compressed and transferred.</p>
+            <p>The spool directory is created to hold the current status of WAL archiving.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
+
+            <p><b>NOTE:</b> In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <id>v1.12</id> or prior, read the <id>v1.13</id> release notes carefully before upgrading.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create the spool directory</title>

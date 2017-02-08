@@ -148,6 +148,20 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.14dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Updated async archiving documentation to more accurately describe how the new method works and how it differs from the old method.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-doc-list>
+        </release>
+
         <release date="2017-02-05" version="1.13" title="Parallel Archiving, Stanza Create, Improved Info and Check">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.
