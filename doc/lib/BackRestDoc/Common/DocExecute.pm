@@ -558,7 +558,9 @@ sub backrestConfig
             # Save the ini file
             iniSave($strLocalFile, $self->{config}{$strHostName}{$$hCacheKey{file}}, true);
 
-            $oHost->copyTo($strLocalFile, $$hCacheKey{file}, $oConfig->paramGet('owner', false, 'postgres:postgres'), '640');
+            $oHost->copyTo(
+                $strLocalFile, $$hCacheKey{file},
+                $self->{oManifest}->variableReplace($oConfig->paramGet('owner', false, 'postgres:postgres')), '640');
 
             # Remove the log-console-stderr option before pushing into the cache
             # ??? This is not very pretty and should be replaced with a general way to hide config options
@@ -764,6 +766,11 @@ sub hostKey
         image => $self->{oManifest}->variableReplace($oHost->paramGet('image')),
     };
 
+    if (defined($oHost->paramGet('option', false)))
+    {
+        $$hCacheKey{option} = $self->{oManifest}->variableReplace($oHost->paramGet('option'));
+    }
+
     if (defined($oHost->paramGet('os', false)))
     {
         $$hCacheKey{os} = $self->{oManifest}->variableReplace($oHost->paramGet('os'));
@@ -958,7 +965,7 @@ sub sectionChildProcess
 
                 my $oHost = new pgBackRestTest::Common::HostTest(
                     $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os},
-                    defined($$hCacheKey{mount}) ? [$$hCacheKey{mount}] : undef);
+                    defined($$hCacheKey{mount}) ? [$$hCacheKey{mount}] : undef, $$hCacheKey{option});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);

@@ -158,6 +158,18 @@
 
                         <p>Updated async archiving documentation to more accurately describe how the new method works and how it differs from the old method.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Documentation can now be built with reusable blocks to reduce duplication.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added ability to pass options to containers within the documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>proper</code> tag to slightly emphasize proper nouns.</p>
+                    </release-item>
                 </release-feature-list>
             </release-doc-list>
         </release>

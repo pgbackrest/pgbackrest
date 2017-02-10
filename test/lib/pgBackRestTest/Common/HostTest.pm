@@ -38,7 +38,8 @@ sub new
         $self->{strImage},
         $self->{strUser},
         $self->{strOS},
-        $self->{stryMount}
+        $self->{stryMount},
+        $self->{strOption},
     ) =
         logDebugParam
         (
@@ -48,12 +49,14 @@ sub new
             {name => 'strImage', trace => true},
             {name => 'strUser', trace => true},
             {name => 'strOS', trace => true},
-            {name => 'stryMount', required => false, trace => true}
+            {name => 'stryMount', required => false, trace => true},
+            {name => 'strOption', required => false, trace => true},
         );
 
     executeTest("docker rm -f $self->{strContainer}", {bSuppressError => true});
 
     executeTest("docker run -itd -h $self->{strName} --name=$self->{strContainer}" .
+                (defined($self->{strOption}) ? ' ' . $self->{strOption} : '') .
                 (defined($self->{stryMount}) ? ' -v ' . join(' -v ', @{$self->{stryMount}}) : '') .
                 " $self->{strImage}");
 

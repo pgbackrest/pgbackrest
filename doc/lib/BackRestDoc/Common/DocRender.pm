@@ -9,6 +9,8 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use JSON::PP;
+use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -48,6 +50,7 @@ my $oRenderTag =
         # 'code-block' => ['```', '```'],
         # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
+        'proper' => ['', ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -73,6 +76,7 @@ my $oRenderTag =
         'code-block' => ['', ''],
         'exe' => [undef, ''],
         'backrest' => [undef, ''],
+        'proper' => ['', ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -103,6 +107,7 @@ my $oRenderTag =
         # 'code-block' => ['', ''],
         # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
+        'proper' => ['\textnormal{\texttt{', '}}'],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -130,6 +135,7 @@ my $oRenderTag =
         'exe' => [undef, ''],
         'setting' => ['<span class="br-setting">', '</span>'], # ??? This will need to be fixed
         'backrest' => [undef, ''],
+        'proper' => ['<span class="host">', '</span>'],
         'postgres' => ['<span class="postgres">PostgreSQL</span>', '']
     }
 };
@@ -159,6 +165,9 @@ sub new
             {name => 'oManifest'},
             {name => 'strRenderOutKey', required => false}
         );
+
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Initialize project tags
     $$oRenderTag{markdown}{backrest}[0] = "{[project]}";
@@ -371,6 +380,56 @@ sub build
             &log(DEBUG, "modify link section from '" . $oNode->paramGet('section') . "' to '${strNewPath}'");
 
             $oNode->paramSet('section', $strNewPath);
+        }
+    }
+    # Store block defines
+    elsif ($strName eq 'block-define')
+    {
+        my $strBlockId = $oNode->paramGet('id');
+
+        if (defined($self->{oyBlockDefine}{$strBlockId}))
+        {
+            confess &log(ERROR, "block ${strBlockId} is already defined");
+        }
+
+        $self->{oyBlockDefine}{$strBlockId} = dclone($oNode->{oDoc}{children});
+        $oParent->nodeRemove($oNode);
+        # use Data::Dumper; confess "DATA" . Dumper($self->{oyBlockDefine});
+        # confess "GOT HERE";
+    }
+    # Copy blocks
+    elsif ($strName eq 'block')
+    {
+        my $strBlockId = $oNode->paramGet('id');
+
+        if (!defined($self->{oyBlockDefine}{$strBlockId}))
+        {
+            confess &log(ERROR, "block ${strBlockId} is not defined");
+        }
+
+        my $strNodeJSON = $self->{oJSON}->encode($self->{oyBlockDefine}{$strBlockId});
+
+        foreach my $oVariable ($oNode->nodeList('block-variable-replace'))
+        {
+            my $strVariableKey = $oVariable->paramGet('key');
+            my $strVariableReplace = $oVariable->valueGet();
+
+            $strNodeJSON =~ s/\{\[$strVariableKey\]\}/$strVariableReplace/g;
+        }
+
+        my ($iReplaceIdx, $iReplaceTotal) = $oParent->nodeReplace($oNode, $self->{oJSON}->decode($strNodeJSON));
+
+        # Build any new children that were added
+        my $iChildIdx = 0;
+
+        foreach my $oChild ($oParent->nodeList(undef, false))
+        {
+            if ($iChildIdx >= $iReplaceIdx && $iChildIdx < ($iReplaceIdx + $iReplaceTotal))
+            {
+                $self->build($oChild, $oParent, $strPath, $strPathPrefix);
+            }
+
+            $iChildIdx++;
         }
     }
 
