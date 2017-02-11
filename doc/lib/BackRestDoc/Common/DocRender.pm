@@ -239,6 +239,11 @@ sub new
                 confess &log(ERROR, "path ${strPath} must begin with a /");
             }
 
+            if (!defined($self->{oSection}->{$strPath}))
+            {
+                confess &log(ERROR, "required section '${strPath}' does not exist");
+            }
+
             if (defined(${$self->{oSection}}{$strPath}))
             {
                 $self->required($strPath);
@@ -340,7 +345,8 @@ sub build
     # Build section
     if ($strName eq 'section')
     {
-        &log(DEBUG, 'build section [' . $oNode->paramGet('id') . ']');
+        my $strSectionId = $oNode->paramGet('id');
+        &log(DEBUG, "build section [${strSectionId}]");
 
         # Set path and parent-path for this section
         if (defined($strPath))
@@ -353,6 +359,78 @@ sub build
         &log(DEBUG, "            path ${strPath}");
         ${$self->{oSection}}{$strPath} = $oNode;
         $oNode->paramSet('path', $strPath);
+
+        # If depend is not set then set it to the last section
+        my $strDepend = $oNode->paramGet('depend', false);
+
+        my $oContainerNode = defined($oParent) ? $oParent : $self->{oDoc};
+        my $oLastChild;
+        my $strDependPrev;
+
+        foreach my $oChild ($oContainerNode->nodeList('section', false))
+        {
+            if ($oChild->paramGet('id') eq $oNode->paramGet('id'))
+            {
+                if (defined($oLastChild))
+                {
+                    $strDependPrev = $oLastChild->paramGet('id');
+                }
+                elsif (defined($oParent->paramGet('depend', false)))
+                {
+                    $strDependPrev = $oParent->paramGet('depend');
+                }
+
+                last;
+            }
+
+            $oLastChild = $oChild;
+        }
+
+        if (defined($strDepend))
+        {
+            if (defined($strDependPrev) && $strDepend eq $strDependPrev && !$oNode->paramTest('depend-default'))
+            {
+                &log(WARN,
+                    "section '${strPath}' depend is set to '${strDepend}' which is the default, best to remove" .
+                    " because it may become obsolete if a new section is added in between");
+            }
+        }
+        else
+        {
+            $strDepend = $strDependPrev;
+        }
+
+        # If depend is defined make sure it exists
+        if (defined($strDepend))
+        {
+            # If this is a relative depend then prepend the parent section
+            if (index($strDepend, '/') != 0)
+            {
+                if (defined($oParent->paramGet('path', false)))
+                {
+                    $strDepend = $oParent->paramGet('path') . '/' . $strDepend;
+                }
+                else
+                {
+                    $strDepend = "/${strDepend}";
+                }
+            }
+
+            if (!defined($self->{oSection}->{$strDepend}))
+            {
+                confess &log(ERROR, "section '${strSectionId}' depend '${strDepend}' is not valid");
+            }
+        }
+
+        if (defined($strDepend))
+        {
+            $oNode->paramSet('depend', $strDepend);
+        }
+
+        if (defined($strDependPrev))
+        {
+            $oNode->paramSet('depend-default', $strDependPrev);
+        }
 
         # If section content is being pulled from elsewhere go get the content
         if ($oNode->paramTest('source'))
@@ -394,8 +472,6 @@ sub build
 
         $self->{oyBlockDefine}{$strBlockId} = dclone($oNode->{oDoc}{children});
         $oParent->nodeRemove($oNode);
-        # use Data::Dumper; confess "DATA" . Dumper($self->{oyBlockDefine});
-        # confess "GOT HERE";
     }
     # Copy blocks
     elsif ($strName eq 'block')
@@ -484,7 +560,7 @@ sub required
             {
                 if (!defined(${$self->{oSectionRequired}}{$strChildPath}))
                 {
-                    &log(INFO, "        require section: ${strChildPath}");
+                    &log(INFO, ('    ' x (scalar(split('/', $strChildPath)) - 2)) . "        require section: ${strChildPath}");
 
                     ${$self->{oSectionRequired}}{$strChildPath} = true;
                 }

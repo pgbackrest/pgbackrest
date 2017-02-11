@@ -263,13 +263,13 @@
     </section>
 
     <!-- SECTION => QUICKSTART -->
-    <section id="quickstart" depend="installation">
+    <section id="quickstart">
         <title>Quick Start</title>
 
         <p>The Quick Start section will cover basic configuration of <backrest/> and <postgres/> and introduce the <cmd>backup</cmd>, <cmd>restore</cmd>, and <cmd>info</cmd> commands.</p>
 
         <!-- SECTION => QUICKSTART - SETUP DEMO CLUSTER -->
-        <section id="setup-demo-cluster">
+        <section id="setup-demo-cluster" depend="/quickstart">
             <title>Setup Demo Cluster</title>
 
             <p>Creating the demo cluster is optional but is strongly recommended, especially for new users, since the example commands in the user guide reference the demo cluster; the examples assume the demo cluster is running on the default port (i.e. 5432). The cluster will not be started until a later section because there is still some configuration to do.</p>
@@ -313,7 +313,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CONFIGURE STANZA -->
-        <section id="configure-stanza" depend="setup-demo-cluster">
+        <section id="configure-stanza">
             <title>Configure Cluster Stanza</title>
 
             <option-description key="stanza"/>
@@ -339,7 +339,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->
-        <section id="create-repository" depend="configure-stanza">
+        <section id="create-repository">
             <title>Create the Repository</title>
 
             <option-description key="repo-path"/>
@@ -370,7 +370,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CONFIGURE ARCHIVING -->
-        <section id="configure-archiving" depend="create-repository">
+        <section id="configure-archiving">
             <title>Configure Archiving</title>
 
             <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.  Note that <i>at least</i> one WAL segment will be created during the backup process even if no explicit writes are made to the cluster.</p>
@@ -404,7 +404,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - RETENTION -->
-        <section id="retention" depend="configure-archiving">
+        <section id="retention">
             <title>Configure Retention</title>
 
             <p><backrest/> expires backups based on retention options.</p>
@@ -419,7 +419,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
-        <section id="create-stanza" depend="retention">
+        <section id="create-stanza">
             <title>Create the Stanza</title>
 
             <p>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
@@ -435,7 +435,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CHECK CONFIGURATION -->
-        <section id="check-configuration" depend="create-stanza">
+        <section id="check-configuration">
             <title>Check the Configuration</title>
             <cmd-description key="check"/>
 
@@ -460,7 +460,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM BACKUP -->
-        <section id="perform-backup" depend="check-configuration">
+        <section id="perform-backup">
             <title>Perform a Backup</title>
 
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command.</p>
@@ -784,7 +784,7 @@
         </section>
 
         <!-- SECTION => RETENTION - DIFF -->
-        <section id="diff" depend="full">
+        <section id="diff">
             <title>Differential Backup Retention</title>
 
             <p>Set <br-option>retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
@@ -827,7 +827,7 @@
         </section>
 
         <!-- SECTION => RETENTION - ARCHIVE -->
-        <section id="archive" depend="diff">
+        <section id="archive">
             <title>Archive Retention</title>
 
             <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
@@ -1412,11 +1412,10 @@
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
                 </execute>
             </execute-list>
-
         </section>
 
         <!-- SECTION => BACKUP HOST - PERFORM BACKUP -->
-        <section id="perform-backup" depend="install-config">
+        <section id="perform-backup">
             <title>Perform a Backup</title>
 
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command on the <host>backup</host> host.</p>
@@ -1433,7 +1432,7 @@
         </section>
 
         <!-- SECTION => BACKUP HOST - PERFORM RESTORE -->
-        <section id="perform-restore" depend="perform-backup">
+        <section id="perform-restore">
             <title>Restore a Backup</title>
 
             <p>To perform a restore of the <postgres/> cluster run <backrest/> with the <cmd>restore</cmd> command on the <host>database</host> host.</p>
@@ -1866,7 +1865,7 @@
         </section>
 
         <!-- SECTION => REPLICATION - STREAMING -->
-        <section id="streaming" depend="hot-standby">
+        <section id="streaming">
             <title>Streaming Replication</title>
 
             <p>Instead of relying solely on the WAL archive, streaming replication makes a direct connection to the master and applies changes as soon as they are made on the master.  This results in much less lag between the master and standby.</p>

@@ -164,6 +164,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improved support for <setting>--require</setting> option and section depends now default to the previous section.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added ability to pass options to containers within the documentation.</p>
                     </release-item>
 

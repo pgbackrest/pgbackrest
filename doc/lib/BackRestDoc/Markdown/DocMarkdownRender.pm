@@ -176,7 +176,7 @@ sub sectionProcess
             {name => 'iDepth'}
         );
 
-    &log($iDepth == 1 ? INFO : DEBUG, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('id'));
+    &log(INFO, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('path'));
 
     if ($iDepth > 3)
     {
