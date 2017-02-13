@@ -167,6 +167,16 @@
                         <p>Fixed a race condition in parallel archiving where creation of new paths generated an error when multiple processes attempted to do so at the same time.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Improved performance of <id>wal archive min/max</id> provided by the <cmd>info</cmd> command.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>

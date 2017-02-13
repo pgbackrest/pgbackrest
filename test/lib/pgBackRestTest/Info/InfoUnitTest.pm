@@ -114,7 +114,7 @@ sub run
             "        wal start/stop: n/a\n" .
             "        database size: 0B, backup size: 0B\n" .
             "        repository size: 0B, repository backup size: 0B",
-            "backup text output");
+            "full backup text output");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
@@ -130,7 +130,23 @@ sub run
             "        wal start/stop: 000000010000000000000000 / 000000010000000000000002\n" .
             "        database size: 0B, backup size: 0B\n" .
             "        repository size: 0B, repository backup size: 0B",
-            "backup text output");
+            "diff backup text output");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 256);
+        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+
+        $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
+            "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000100000008",
+            "stanza text output");
+
+        $self->testResult(sub {$oInfo->formatTextBackup(@{$hyStanza}[-1]->{&INFO_BACKUP_SECTION_BACKUP}[-1])},
+            "    incr backup: 20161206-155728F_20161208-155728I\n" .
+            "        timestamp start/stop: 2016-12-08 15:57:28 / 2016-12-08 15:57:28\n" .
+            "        wal start/stop: 000000010000000000000006 / 000000010000000100000005\n" .
+            "        database size: 0B, backup size: 0B\n" .
+            "        repository size: 0B, repository backup size: 0B",
+            "incr backup text output");
     }
 }
 

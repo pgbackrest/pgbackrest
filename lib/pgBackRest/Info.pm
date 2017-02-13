@@ -388,22 +388,34 @@ sub stanzaList
 
                 if ($oFile->exists(PATH_BACKUP, $strArchivePath))
                 {
-                    my $hWalManifest = $oFile->manifest(PATH_BACKUP, $strArchivePath);
+                    my @stryWalMajor = $oFile->list(PATH_BACKUP, $strArchivePath, '^[0-F]{16}$');
 
-                    foreach my $strWalFile (sort(keys(%{$hWalManifest})))
+                    # Get first WAL segment
+                    foreach my $strWalMajor (@stryWalMajor)
                     {
-                        if ($strWalFile eq '.' || $strWalFile eq '..' ||
-                            $strWalFile !~ ("^[0-F]{16}\/[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"))
-                        {
-                            next;
-                        }
+                        my @stryWalFile = $oFile->list(
+                            PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
+                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$");
 
-                        if (!defined($strArchiveStart))
+                        if (@stryWalFile > 0)
                         {
-                            $strArchiveStart = substr((split('/', $strWalFile))[1], 0, 24);
+                            $strArchiveStart = substr($stryWalFile[0], 0, 24);
+                            last;
                         }
+                    }
 
-                        $strArchiveStop = substr((split('/', $strWalFile))[1], 0, 24);
+                    # Get last WAL segment
+                    foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
+                    {
+                        my @stryWalFile = $oFile->list(
+                            PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
+                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", 'reverse');
+
+                        if (@stryWalFile > 0)
+                        {
+                            $strArchiveStop = substr($stryWalFile[0], 0, 24);
+                            last;
+                        }
                     }
                 }
             }
