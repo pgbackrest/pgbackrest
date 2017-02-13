@@ -268,15 +268,10 @@ sub fileList
     {
         my $strError = $!;
 
-        # If path exists then throw the error
-        if (fileExists($strPath))
+        # Ignore the error is the file is missing and missing files should be ignored
+        if (!($!{ENOENT} && $bIgnoreMissing))
         {
             confess &log(ERROR, "unable to read ${strPath}" . (defined($strError) ? ": $strError" : ''), ERROR_PATH_OPEN);
-        }
-        # Else throw an error unless missing paths are ignored
-        elsif (!$bIgnoreMissing)
-        {
-            confess &log(ERROR, "${strPath} does not exist", ERROR_PATH_MISSING);
         }
     }
 
