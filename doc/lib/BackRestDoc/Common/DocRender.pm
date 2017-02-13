@@ -560,7 +560,9 @@ sub required
             {
                 if (!defined(${$self->{oSectionRequired}}{$strChildPath}))
                 {
-                    &log(INFO, ('    ' x (scalar(split('/', $strChildPath)) - 2)) . "        require section: ${strChildPath}");
+                    my @stryChildPath = split('/', $strChildPath);
+
+                    &log(INFO, ('    ' x (scalar(@stryChildPath) - 2)) . "        require section: ${strChildPath}");
 
                     ${$self->{oSectionRequired}}{$strChildPath} = true;
                 }
