@@ -85,11 +85,12 @@ sub process
         # Loop to check for status files and launch async process
         my $bPushed = false;
         my $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+        $self->{bConfessOnError} = false;
 
         do
         {
             # Check WAL status
-            $bPushed = $self->walStatus($self->{strSpoolPath}, $strWalFile);
+            $bPushed = $self->walStatus($self->{strSpoolPath}, $strWalFile, $self->{bConfessOnError});
 
             # If not found then launch async process
             if (!$bPushed)
@@ -99,6 +100,8 @@ sub process
                 $bClient = (new pgBackRest::Archive::ArchivePushAsync(
                     $strWalPath, $self->{strSpoolPath}, $self->{strBackRestBin}))->process();
             }
+
+            $self->{bConfessOnError} = true;
         }
         while ($bClient && !$bPushed && waitMore($oWait));
 
@@ -168,12 +171,14 @@ sub walStatus
         $strOperation,
         $strSpoolPath,
         $strWalFile,
+        $bConfessOnError,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->walStatus', \@_,
             {name => 'strSpoolPath'},
             {name => 'strWalFile'},
+            {name => 'bConfessOnError', default => true},
         );
 
     # Default result is false
@@ -225,9 +230,11 @@ sub walStatus
 
                 &log(WARN, $strMessage);
             }
+
+            $bResult = true;
         }
         # Process error files
-        else
+        elsif ($bConfessOnError)
         {
             # Error files must have content
             if (@stryWalStatus == 0)
@@ -235,11 +242,8 @@ sub walStatus
                 confess &log(ASSERT, "$stryStatusFile[0] has no content");
             }
 
-            # Confess the error
             confess &log(ERROR, $strMessage, $iCode);
         }
-
-        $bResult = true;
     }
 
     # Return from function and log return values if any

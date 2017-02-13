@@ -149,6 +149,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.14dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where an archive-push error would not be retried and would instead return errors to <postgres/> indefinitely (unless the <file>.error</file> file was manually deleted).</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-feature-list>
                     <release-item>
