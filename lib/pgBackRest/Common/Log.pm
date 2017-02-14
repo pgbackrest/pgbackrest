@@ -528,16 +528,11 @@ push @EXPORT, qw(logException);
 ####################################################################################################################################
 sub logErrorResult
 {
-    my $oResult = shift;
     my $iCode = shift;
     my $strMessage = shift;
+    my $strResult = shift;
 
-    if (!$oResult)
-    {
-        confess &log(ERROR, $strMessage . (defined($!) ? ": $!" : ''), $iCode);
-    }
-
-    return $oResult;
+    confess &log(ERROR, $strMessage . (defined($strResult) ? ": $strResult" : ''), $iCode);
 }
 
 push @EXPORT, qw(logErrorResult);

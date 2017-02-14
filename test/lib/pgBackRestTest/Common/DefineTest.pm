@@ -153,8 +153,18 @@ my $oTestDef =
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
+                    &TESTDEF_TEST_NAME => 'link',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+                {
+                    &TESTDEF_TEST_NAME => 'stat',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+                {
                     &TESTDEF_TEST_NAME => 'manifest',
-                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_TOTAL => 4,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {

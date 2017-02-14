@@ -62,6 +62,11 @@
             <contributor-id type="github">sfrost</contributor-id>
         </contributor>
 
+        <contributor id="golpayegani.navid">
+            <contributor-name-display>Navid Golpayegani</contributor-name-display>
+            <contributor-id type="github">golpa</contributor-id>
+        </contributor>
+
         <contributor id="gunduz.devrim">
             <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
             <contributor-id type="github">devrimgunduz</contributor-id>
@@ -148,6 +153,34 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.15dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="golpayegani.navid"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed a regression introduced in <id>v1.13</id> that could cause backups to fail if files were removed (e.g. tables dropped) while the manifest was being built.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Refactor <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> to be more modular to allow complete branch/statement level coverage testing.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Complete branch/statement level coverage testing for <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> functions and helper functions.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-test-list>
+        </release>
+
         <release date="2017-02-13" version="1.14" title="Bug Fixes">
             <release-core-list>
                 <release-bug-list>

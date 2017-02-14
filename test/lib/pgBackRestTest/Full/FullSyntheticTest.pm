@@ -696,8 +696,8 @@ sub run
             testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbBasePath() . '_tbs');
 
             $oHostBackup->backup(
-                $strType, '$PGDATA is a substring of valid tblspc excluding / (file open err expected)',
-                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_OPEN,
+                $strType, '$PGDATA is a substring of valid tblspc excluding / (file missing err expected)',
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_FILE_MISSING,
                     strOptionalParam => '--log-level-console=detail'});
 
             testFileRemove("${strTblSpcPath}/99999");

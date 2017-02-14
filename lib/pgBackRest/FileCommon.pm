@@ -212,6 +212,45 @@ sub fileHashSize
 push @EXPORT, qw(fileHashSize);
 
 ####################################################################################################################################
+# fileLinkDestination
+#
+# Return the destination of a symlink.
+####################################################################################################################################
+sub fileLinkDestination
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strLink,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileLinkDestination', \@_,
+            {name => 'strFile', trace => true},
+        );
+
+    # Get link destination
+    my $strLinkDestination = readlink($strLink);
+
+    # Check for errors
+    if (!defined($strLinkDestination))
+    {
+        logErrorResult(
+            $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to get destination for link ${strLink}", $OS_ERROR);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strLinkDestination', value => $strLinkDestination, trace => true}
+    );
+}
+
+push @EXPORT, qw(fileLinkDestination);
+
+####################################################################################################################################
 # fileList
 #
 # List a directory with filters and ordering.
@@ -350,35 +389,12 @@ sub fileManifestRecurse
         $strPathRead = dirname($strPathRead);
     }
 
-    # Open the path
-    if (!opendir($hPath, $strPathRead))
-    {
-        my $strError = "${strPathRead} could not be read: " . $!;
-        my $iErrorCode = ERROR_PATH_OPEN;
-
-        # If the path does not exist and is not the root path requested then return, else error
-        # It's OK for paths to go away during execution (databases are a dynamic thing!)
-        if (!fileExists($strPathRead))
-        {
-            if ($iDepth != 0)
-            {
-                return;
-            }
-
-            $strError = "${strPathRead} does not exist";
-            $iErrorCode = ERROR_PATH_MISSING;
-        }
-
-        confess &log(ERROR, $strError, $iErrorCode);
-    }
-
-    # Get a list of all files in the path (except ..)
-    my @stryFileList = grep(!/^\..$/i, readdir($hPath));
-
-    close($hPath);
+    # Get a list of all files in the path (including .)
+    my @stryFileList = fileList($strPathRead, undef, undef, $iDepth != 0);
+    unshift(@stryFileList, '.');
 
     # Loop through all subpaths/files in the path
-    foreach my $strFile (sort(@stryFileList))
+    foreach my $strFile (@stryFileList)
     {
         # Skip this file if it does not match the filter
         if (defined($strFilter) && $strFile ne $strFilter)
@@ -403,77 +419,7 @@ sub fileManifestRecurse
             }
         }
 
-        # Stat the path/file
-        my $oStat = lstat($strPathFile);
-
-        # Check for errors in stat
-        if (!defined($oStat))
-        {
-            my $strError = "${strPathFile} could not be read: " . $!;
-            my $iErrorCode = ERROR_FILE_READ;
-
-            # If the file does not exist then go to the next file, else error
-            # It's OK for files to go away during execution (databases are a dynamic thing!)
-            if (fileExists($strPathFile))
-            {
-                next;
-            }
-
-            confess &log(ERROR, $strError, $iErrorCode);
-        }
-
-        # Check for regular file
-        if (S_ISREG($oStat->mode))
-        {
-            $hManifest->{$strFile}{type} = 'f';
-
-            # Get inode
-            $hManifest->{$strFile}{inode} = $oStat->ino;
-
-            # Get size
-            $hManifest->{$strFile}{size} = $oStat->size;
-
-            # Get modification time
-            $hManifest->{$strFile}{modification_time} = $oStat->mtime;
-        }
-        # Check for directory
-        elsif (S_ISDIR($oStat->mode))
-        {
-            $hManifest->{$strFile}{type} = 'd';
-        }
-        # Check for link
-        elsif (S_ISLNK($oStat->mode))
-        {
-            $hManifest->{$strFile}{type} = 'l';
-
-            # Get link destination
-            $hManifest->{$strFile}{link_destination} = readlink($strPathFile);
-
-            if (!defined($hManifest->{$strFile}{link_destination}))
-            {
-                if (-e $strPathFile)
-                {
-                    confess &log(ERROR, "${strPathFile} error reading link: " . $!, ERROR_LINK_OPEN);
-                }
-            }
-        }
-        # Not a recognized type
-        else
-        {
-            confess &log(ERROR, "${strPathFile} is not of type directory, file, or link", ERROR_FILE_INVALID);
-        }
-
-        # Get user name
-        $hManifest->{$strFile}{user} = getpwuid($oStat->uid);
-
-        # Get group name
-        $hManifest->{$strFile}{group} = getgrgid($oStat->gid);
-
-        # Get mode
-        if ($hManifest->{$strFile}{type} ne 'l')
-        {
-            $hManifest->{$strFile}{mode} = sprintf('%04o', S_IMODE($oStat->mode));
-        }
+        $hManifest->{$strFile} = fileManifestStat($strPathFile);
 
         # Recurse into directories
         if ($hManifest->{$strFile}{type} eq 'd' && !$bCurrentDir)
@@ -484,6 +430,77 @@ sub fileManifestRecurse
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+sub fileManifestStat
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFile,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileManifestRecurse', \@_,
+            {name => 'strFile', trace => true},
+        );
+
+    # Stat the path/file, ignoring any that are missing
+    my $oStat = fileStat($strFile, true);
+
+    # Generate file data if stat succeeded (i.e. file exists)
+    my $hFile;
+
+    if (defined($oStat))
+    {
+        # Check for regular file
+        if (S_ISREG($oStat->mode))
+        {
+            $hFile->{type} = 'f';
+
+            # Get size
+            $hFile->{size} = $oStat->size;
+
+            # Get modification time
+            $hFile->{modification_time} = $oStat->mtime;
+        }
+        # Check for directory
+        elsif (S_ISDIR($oStat->mode))
+        {
+            $hFile->{type} = 'd';
+        }
+        # Check for link
+        elsif (S_ISLNK($oStat->mode))
+        {
+            $hFile->{type} = 'l';
+            $hFile->{link_destination} = fileLinkDestination($strFile);
+        }
+        # Not a recognized type
+        else
+        {
+            confess &log(ERROR, "${strFile} is not of type directory, file, or link", ERROR_FILE_INVALID);
+        }
+
+        # Get user name
+        $hFile->{user} = getpwuid($oStat->uid);
+
+        # Get group name
+        $hFile->{group} = getgrgid($oStat->gid);
+
+        # Get mode
+        if ($hFile->{type} ne 'l')
+        {
+            $hFile->{mode} = sprintf('%04o', S_IMODE($oStat->mode));
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hFile', value => $hFile, trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -786,22 +803,26 @@ sub fileStat
     my
     (
         $strOperation,
-        $strFile
+        $strFile,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileStat', \@_,
-            {name => 'strFile', required => true, trace => true}
+            {name => 'strFile', trace => true},
+            {name => 'bIgnoreMissing', default => false, trace => true},
         );
 
-    # Stat the file/path to determine if it exists
+    # Stat the file/path
     my $oStat = lstat($strFile);
 
-    # Evaluate error
+    # Check for errors
     if (!defined($oStat))
     {
-        my $strError = $!;
-        confess &log(ERROR, "unable to read ${strFile}" . (defined($strError) ? ": $strError" : ''), ERROR_FILE_OPEN);
+        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+        {
+            logErrorResult($OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to stat ${strFile}", $OS_ERROR);
+        }
     }
 
     # Return from function and log return values if any

@@ -1335,7 +1335,7 @@ P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to
 P00  ERROR: [146]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
 P00   INFO: backup command end: aborted with exception [146]
 
-incr backup - $PGDATA is a substring of valid tblspc excluding / (file open err expected) (db-master host)
+incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing err expected) (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
@@ -1343,8 +1343,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [116]: unable to read [TEST_PATH]/db-master/db/base_tbs: No such file or directory
-P00   INFO: backup command end: aborted with exception [116]
+P00  ERROR: [130]: unable to stat [TEST_PATH]/db-master/db/base_tbs: No such file or directory
+P00   INFO: backup command end: aborted with exception [130]
 
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
