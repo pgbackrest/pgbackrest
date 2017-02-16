@@ -62,6 +62,11 @@
             <contributor-id type="github">sfrost</contributor-id>
         </contributor>
 
+        <contributor id="golpayegani.navid">
+            <contributor-name-display>Navid Golpayegani</contributor-name-display>
+            <contributor-id type="github">golpa</contributor-id>
+        </contributor>
+
         <contributor id="gunduz.devrim">
             <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
             <contributor-id type="github">devrimgunduz</contributor-id>
@@ -148,7 +153,95 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.13dev" title="UNDER DEVELOPMENT">
+        <release date="2017-02-13" version="1.15" title="Refactoring and Bug Fixes">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="golpayegani.navid"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed a regression introduced in <id>v1.13</id> that could cause backups to fail if files were removed (e.g. tables dropped) while the manifest was being built.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Refactor <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> to be more modular to allow complete branch/statement level coverage testing.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Complete branch/statement level coverage testing for <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> functions and helper functions.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-test-list>
+        </release>
+
+        <release date="2017-02-13" version="1.14" title="Refactoring and Bug Fixes">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where an archive-push error would not be retried and would instead return errors to <postgres/> indefinitely (unless the <file>.error</file> file was manually deleted).</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed a race condition in parallel archiving where creation of new paths generated an error when multiple processes attempted to do so at the same time.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Improved performance of <id>wal archive min/max</id> provided by the <cmd>info</cmd> command.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Updated async archiving documentation to more accurately describe how the new method works and how it differs from the old method.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Documentation can now be built with reusable blocks to reduce duplication.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved support for <setting>--require</setting> option and section depends now default to the previous section.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added ability to pass options to containers within the documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>proper</code> tag to slightly emphasize proper nouns.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-doc-list>
+        </release>
+
+        <release date="2017-02-05" version="1.13" title="Parallel Archiving, Stanza Create, Improved Info and Check">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.
 
@@ -208,11 +301,23 @@
                     </release-item>
 
                     <release-item>
+                        <p>Added archive and backup WAL ranges to the <cmd>info</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="lobréau.benoit"/>
                         </release-item-contributor-list>
 
                         <p>Added warning to update <code>pg_tablespace.spclocation</code> when remapping tablespaces in <postgres/> &lt; 9.2.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vitale.michael"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove remote lock requirements for the <cmd>archive-get</cmd>, <cmd>restore</cmd>, <cmd>info</cmd>, and <cmd>check</cmd> commands since they are read-only operations.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -227,6 +332,14 @@
                         </release-item-contributor-list>
 
                         <p>Return proper error code when unable to convert a relative path to an absolute path.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Log file banner is not output until the first log entry is written.</p>
                     </release-item>
 
                     <release-item>
@@ -288,6 +401,14 @@
                     <release-item>
                         <p>Removed <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging.  This is primarily used to avoid filters in the automated documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed alignment issues with multiline logging.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
@@ -310,6 +431,12 @@
             </release-doc-list>
 
             <release-test-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed <br-option>--no-online</br-option> tests to suppress expected errors.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>Added integration for testing coverage with <code>Devel::Cover</code>.</p>

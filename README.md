@@ -6,13 +6,13 @@ pgBackRest aims to be a simple, reliable backup and restore system that can seam
 
 Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges. The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.
 
-pgBackRest [v1.12](https://github.com/pgbackrest/pgbackrest/releases/tag/release/1.12) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v1.15](https://github.com/pgbackrest/pgbackrest/releases/tag/release/1.15) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 ## Features
 
-### Multi-process Backup & Restore
+### Parallel Backup & Restore
 
-Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process. pgBackRest solves the compression bottleneck with multi-processing.
+Compression is usually the bottleneck during backup operations but, even with now ubiquitous multi-core servers, most database backup solutions are still single-process. pgBackRest solves the compression bottleneck with parallel processing.
 
 Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw throughput even on a 1Gb/s link. More cores and a larger pipe lead to even higher throughput.
 
@@ -48,15 +48,15 @@ If the repository is on a backup server, compression is performed on the databas
 
 ### Delta Restore
 
-The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Multi-processing can lead to a dramatic reduction in restore times.
+The manifest contains checksums for every file in the backup so that during a restore it is possible to use these checksums to speed processing enormously. On a delta restore any files not present in the backup are first removed and then checksums are taken for the remaining files. Files that match the backup are left in place and the rest of the files are restored as usual. Parallel processing can lead to a dramatic reduction in restore times.
 
-### Advanced Archiving
+### Parallel WAL Archiving
 
 Dedicated commands are included for both pushing WAL to the archive and retrieving WAL from the archive.
 
 The push command automatically detects WAL segments that are pushed multiple times and de-duplicates when the segment is identical, otherwise an error is raised. The push and get commands both ensure that the database and repository match by comparing PostgreSQL versions and system identifiers. This precludes the possibility of misconfiguring the WAL archive location.
 
-Asynchronous archiving allows compression and transfer to be offloaded to another process which maintains a continuous connection to the remote server, improving throughput significantly. This can be a critical feature for databases with extremely high write volume.
+Asynchronous archiving allows transfer to be offloaded to another process which compresses WAL segments in parallel for maximum throughput. This can be a critical feature for databases with extremely high write volume.
 
 ### Tablespace & Link Support
 

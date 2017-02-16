@@ -518,11 +518,73 @@ sub nodeRemove
 
     if (!$bRemove)
     {
-        confess &log(ERROR, "child was not found in node");
+        confess &log(ERROR, "child was not found in node, could not be removed");
     }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# nodeReplace
+#
+# Replace a child node with one or more child nodes.
+####################################################################################################################################
+sub nodeReplace
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oChildRemove,
+        $oyChildReplace,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->nodeReplace', \@_,
+            {name => 'oChildRemove', trace => true},
+            {name => 'oChildReplace', trace => true},
+        );
+
+    my $bReplace = false;
+    my $iReplaceIdx = undef;
+    my $iReplaceTotal = undef;
+    my $oDoc = $self->{oDoc};
+
+    # Error if there are no children
+    if (!defined($$oDoc{children}))
+    {
+        confess &log(ERROR, "node has no children");
+    }
+
+    for (my $iIndex = 0; $iIndex < @{$$oDoc{children}}; $iIndex++)
+    {
+        if ($$oDoc{children}[$iIndex] == $oChildRemove->{oDoc})
+        {
+            splice(@{$$oDoc{children}}, $iIndex, 1);
+            splice(@{$$oDoc{children}}, $iIndex, 0, @{$oyChildReplace});
+
+            $iReplaceIdx = $iIndex;
+            $iReplaceTotal = scalar(@{$oyChildReplace});
+            $bReplace = true;
+            last;
+        }
+    }
+
+    if (!$bReplace)
+    {
+        confess &log(ERROR, "child was not found in node, could not be replaced");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iReplaceIdx', value => $iReplaceIdx, trace => true},
+        {name => 'iReplaceTotal', value => $iReplaceTotal, trace => true},
+    );
 }
 
 ####################################################################################################################################

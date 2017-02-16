@@ -233,31 +233,12 @@ sub execute
 
                     # Trim off extra linefeeds before and after
                     $strOutput =~ s/^\n+|\n$//g;
-
-                    if ($strCommand =~ / pgbackrest /)
-                    {
-                        $strOutput =~ s/^                             //smg;
-                        $strOutput =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} //smg;
-                    }
-
-                    # my @stryOutput = split("\n", $strOutput);
-                    # $$hCacheValue{stdout} = \@stryOutput;
                 }
 
                 if (defined($$hCacheKey{'err-expect'}) && defined($oExec->{strErrorLog}) && $oExec->{strErrorLog} ne '')
                 {
-                    # my $strError = $oExec->{strErrorLog};
-                    # $strError =~ s/^\n+|\n$//g;
-                    # my @stryError = split("\n", $strError);
-                    # $$hCacheValue{stderr} = \@stryError;
-
                     $strOutput .= $oExec->{strErrorLog};
                 }
-
-                # if (defined($$hCacheValue{stderr}))
-                # {
-                #     $strOutput .= join("\n", @{$$hCacheValue{stderr}});
-                # }
 
                 if ($$hCacheKey{output} && defined($$hCacheKey{highlight}) && $$hCacheKey{highlight}{filter} && defined($strOutput))
                 {
@@ -577,12 +558,15 @@ sub backrestConfig
             # Save the ini file
             iniSave($strLocalFile, $self->{config}{$strHostName}{$$hCacheKey{file}}, true);
 
-            $oHost->copyTo($strLocalFile, $$hCacheKey{file}, $oConfig->paramGet('owner', false, 'postgres:postgres'), '640');
+            $oHost->copyTo(
+                $strLocalFile, $$hCacheKey{file},
+                $self->{oManifest}->variableReplace($oConfig->paramGet('owner', false, 'postgres:postgres')), '640');
 
             # Remove the log-console-stderr option before pushing into the cache
             # ??? This is not very pretty and should be replaced with a general way to hide config options
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_TIMESTAMP});
 
             if (keys(%{$$oConfigClean{&CONFIG_SECTION_GLOBAL}}) == 0)
             {
@@ -782,6 +766,11 @@ sub hostKey
         image => $self->{oManifest}->variableReplace($oHost->paramGet('image')),
     };
 
+    if (defined($oHost->paramGet('option', false)))
+    {
+        $$hCacheKey{option} = $self->{oManifest}->variableReplace($oHost->paramGet('option'));
+    }
+
     if (defined($oHost->paramGet('os', false)))
     {
         $$hCacheKey{os} = $self->{oManifest}->variableReplace($oHost->paramGet('os'));
@@ -976,7 +965,7 @@ sub sectionChildProcess
 
                 my $oHost = new pgBackRestTest::Common::HostTest(
                     $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os},
-                    defined($$hCacheKey{mount}) ? [$$hCacheKey{mount}] : undef);
+                    defined($$hCacheKey{mount}) ? [$$hCacheKey{mount}] : undef, $$hCacheKey{option});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);

@@ -19,9 +19,9 @@ P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, 
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
 P00  ERROR: [130]: archive.info does not exist but is required to push/get WAL segments
-               HINT: is archive_command configured in postgresql.conf?
-               HINT: has a stanza-create been performed?
-               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+            HINT: is archive_command configured in postgresql.conf?
+            HINT: has a stanza-create been performed?
+            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0

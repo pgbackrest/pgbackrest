@@ -285,13 +285,13 @@
     </section>
 
     <!-- SECTION => QUICKSTART -->
-    <section id="quickstart" depend="installation">
+    <section id="quickstart">
         <title>Quick Start</title>
 
         <p>The Quick Start section will cover basic configuration of <backrest/> and <postgres/> and introduce the <cmd>backup</cmd>, <cmd>restore</cmd>, and <cmd>info</cmd> commands.</p>
 
         <!-- SECTION => QUICKSTART - SETUP DEMO CLUSTER -->
-        <section id="setup-demo-cluster">
+        <section id="setup-demo-cluster" depend="/quickstart">
             <title>Setup Demo Cluster</title>
 
             <p>Creating the demo cluster is optional but is strongly recommended, especially for new users, since the example commands in the user guide reference the demo cluster; the examples assume the demo cluster is running on the default port (i.e. 5432). The cluster will not be started until a later section because there is still some configuration to do.</p>
@@ -335,7 +335,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CONFIGURE STANZA -->
-        <section id="configure-stanza" depend="setup-demo-cluster">
+        <section id="configure-stanza">
             <title>Configure Cluster Stanza</title>
 
             <option-description key="stanza"/>
@@ -352,14 +352,16 @@
                 <title>Configure the <postgres/> cluster data directory</title>
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
+
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p><backrest/> configuration files follow the Windows INI convention.  Sections are denoted by text in brackets and key/value pairs are contained in each section.  Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->
-        <section id="create-repository" depend="configure-stanza">
+        <section id="create-repository">
             <title>Create the Repository</title>
 
             <option-description key="repo-path"/>
@@ -390,7 +392,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CONFIGURE ARCHIVING -->
-        <section id="configure-archiving" depend="create-repository">
+        <section id="configure-archiving">
             <title>Configure Archiving</title>
 
             <p>Backing up a running <postgres/> cluster requires WAL archiving to be enabled.  Note that <i>at least</i> one WAL segment will be created during the backup process even if no explicit writes are made to the cluster.</p>
@@ -424,7 +426,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - RETENTION -->
-        <section id="retention" depend="configure-archiving">
+        <section id="retention">
             <title>Configure Retention</title>
 
             <p><backrest/> expires backups based on retention options.</p>
@@ -439,7 +441,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
-        <section id="create-stanza" depend="retention">
+        <section id="create-stanza">
             <title>Create the Stanza</title>
 
             <p>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
@@ -455,7 +457,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CHECK CONFIGURATION -->
-        <section id="check-configuration" depend="create-stanza">
+        <section id="check-configuration">
             <title>Check the Configuration</title>
             <cmd-description key="check"/>
 
@@ -480,7 +482,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM BACKUP -->
-        <section id="perform-backup" depend="check-configuration">
+        <section id="perform-backup">
             <title>Perform a Backup</title>
 
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command.</p>
@@ -550,9 +552,13 @@
                 </execute>
             </execute-list>
 
+            <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option.  The stanza '<id>status</id>' gives a brief indication of the stanza's health.  If this is '<id>ok</id>' then <backrest/> is functioning normally.  The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive.  Note that there may be gaps due to archive retention policies or other reasons.</p>
+
             <p>The backups are displayed oldest to newest.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
-            <p>The '<id>start / stop timestamp</id>' defines the time period when the backup ran.  The '<id>stop timestamp</id>' can be used to determine the backup to use when performing Point-In-Time Recovery.  More information about Point-In-Time Recovery can be found in the <link section="/pitr">Point-In-Time Recovery</link> section.</p>
+            <p>The '<id>timestamp start/stop</id>' defines the time period when the backup ran.  The '<id>timestamp stop</id>' can be used to determine the backup to use when performing Point-In-Time Recovery.  More information about Point-In-Time Recovery can be found in the <link section="/pitr">Point-In-Time Recovery</link> section.</p>
+
+            <p>The '<id>wal start/stop</id>' defines the WAL range that is required to make the database consistent when restoring.  The <cmd>backup</cmd> command will ensure that this WAL range is in the archive before completing.</p>
 
             <p>The '<id>database size</id>' is the full uncompressed size of the database while '<id>backup size</id>' is the amount of data actually backed up (these will be the same for full backups).  The '<id>repository size</id>' includes all the files from this backup and any referenced backups that are required to restore the database while '<id>repository backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.</p>
 
@@ -800,7 +806,7 @@
         </section>
 
         <!-- SECTION => RETENTION - DIFF -->
-        <section id="diff" depend="full">
+        <section id="diff">
             <title>Differential Backup Retention</title>
 
             <p>Set <br-option>retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
@@ -843,7 +849,7 @@
         </section>
 
         <!-- SECTION => RETENTION - ARCHIVE -->
-        <section id="archive" depend="diff">
+        <section id="archive">
             <title>Archive Retention</title>
 
             <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
@@ -1368,6 +1374,7 @@
                 <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p>The database host must be configured with the backup host/user.  The default for the <br-option>backup-user</br-option> option is <id>backrest</id>.  If the <id>postgres</id> user does restores on the backup host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>backrest</id> user.</p>
@@ -1382,7 +1389,10 @@
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
                 <backrest-config-option section="global" key="backup-user">backrest</backrest-config-option>
 
+                <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
+
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p>The repository directory will also be removed from the database host.  It will not be used anymore so leaving it around may be confusing later on.</p>
@@ -1424,11 +1434,10 @@
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
                 </execute>
             </execute-list>
-
         </section>
 
         <!-- SECTION => BACKUP HOST - PERFORM BACKUP -->
-        <section id="perform-backup" depend="install-config">
+        <section id="perform-backup">
             <title>Perform a Backup</title>
 
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command on the <host>backup</host> host.</p>
@@ -1445,7 +1454,7 @@
         </section>
 
         <!-- SECTION => BACKUP HOST - PERFORM RESTORE -->
-        <section id="perform-restore" depend="perform-backup">
+        <section id="perform-restore">
             <title>Restore a Backup</title>
 
             <p>To perform a restore of the <postgres/> cluster run <backrest/> with the <cmd>restore</cmd> command on the <host>database</host> host.</p>
@@ -1485,9 +1494,11 @@
         <section id="async-archiving" depend="install-config">
             <title>Asynchronous Archiving</title>
 
-            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process to improve throughput. WAL segments are temporarily stored in a local queue on the database server, specified by the <br-option>spool-path</br-option> option, before being transferred to the repository on the backup server.</p>
+            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
 
-            <p>The spool directory is created to hold the WAL segments while they are waiting to be (optionally) compressed and transferred.</p>
+            <p>The spool directory is created to hold the current status of WAL archiving.  Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
+
+            <p><b>NOTE:</b> In the original implementation of asynchronous archiving, WAL segments were copied to the spool directory before compression and transfer.  The new implementation copies WAL directly from the <path>pg_xlog</path> directory.  If asynchronous archiving was utilized in <id>v1.12</id> or prior, read the <id>v1.13</id> release notes carefully before upgrading.</p>
 
             <execute-list host="{[host-db-master]}">
                 <title>Create the spool directory</title>
@@ -1500,19 +1511,35 @@
                 </execute>
             </execute-list>
 
-            <p>The spool path must be configured and asynchronous archiving enabled.</p>
+            <p>The spool path must be configured and asynchronous archiving enabled.  Asynchronous archiving automatically confers some benefit by reducing the number of ssh connections made to the backup server, but setting <br-option>process-max</br-option> can drastically improve performance.  Be sure not to set <br-option>process-max</br-option> so high that it affects normal database operations.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the spool path and asynchronous archiving</title>
 
                 <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
                 <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+                <backrest-config-option section="global:archive-push" key="process-max">2</backrest-config-option>
             </backrest-config>
 
-            <p>The <cmd>check</cmd> command ensures that asynchronous archiving is working.</p>
+            <p>The <file>archive-async.log</file> file can be used to monitor the activity of the asynchronous process.  A good way to test this is to quickly push a number of WAL segments.</p>
 
             <execute-list host="{[host-db-master]}">
-                <title>Check asynchronous archiving</title>
+                <title>Test parallel asynchronous archiving</title>
+
+                <execute output="n" show="n">
+                    <exe-cmd>rm -f /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
+                </execute>
+
+                <execute output="n">
+                    <exe-cmd>
+                        psql -c "
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();
+                            select pg_create_restore_point('test async push'); select pg_switch_xlog();"
+                    </exe-cmd>
+                </execute>
 
                 <execute>
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info check</exe-cmd>
@@ -1520,37 +1547,14 @@
                 </execute>
             </execute-list>
 
-            <!-- DEBUG test to ensure async archiving is working in batch until better tests can be written -->
-            <execute-list host="{[host-db-master]}" keyword="debug">
-                <title>DEBUG asynchronous archiving</title>
+            <p>Now the log file will contain parallel, asynchronous activity.</p>
 
-                <execute output="n">
-                    <exe-cmd>rm /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
-                </execute>
-
-                <execute output="n">
-                    <exe-cmd>
-                        psql -c "
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();
-                            select pg_create_restore_point('test asynchronous archiving');
-                            select pg_switch_xlog();"
-                    </exe-cmd>
-                </execute>
-
-                <execute output="n">
-                    <exe-cmd>sleep 5</exe-cmd>
-                </execute>
+            <execute-list host="{[host-db-master]}">
+                <title>Check results in the log</title>
 
                 <execute output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-async.log</exe-cmd>
-                    <exe-highlight>WAL segments to archive</exe-highlight>
+                    <exe-highlight> WAL file\(s\) to archive|pushed WAL file 0000000</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -1602,7 +1606,7 @@
 
             <execute filter="n" output="y" user="backrest">
                 <exe-cmd>{[project-exe]} info</exe-cmd>
-                <exe-highlight>start / stop timestamp</exe-highlight>
+                <exe-highlight>timestamp start/stop</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1756,11 +1760,12 @@
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
-
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
-                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
 
                 <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
+
+                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
@@ -1882,7 +1887,7 @@
         </section>
 
         <!-- SECTION => REPLICATION - STREAMING -->
-        <section id="streaming" depend="hot-standby">
+        <section id="streaming">
             <title>Streaming Replication</title>
 
             <p>Instead of relying solely on the WAL archive, streaming replication makes a direct connection to the master and applies changes as soon as they are made on the master.  This results in much less lag between the master and standby.</p>

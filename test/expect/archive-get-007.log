@@ -20,9 +20,9 @@ P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  ERROR: [130]: raised on backup host: archive.info does not exist but is required to push/get WAL segments
-               HINT: is archive_command configured in postgresql.conf?
-               HINT: has a stanza-create been performed?
-               HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
+            HINT: is archive_command configured in postgresql.conf?
+            HINT: has a stanza-create been performed?
+            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = backup

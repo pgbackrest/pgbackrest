@@ -491,6 +491,18 @@ my $oConfigHelpData =
                     "log path is required."
         },
 
+        # LOG-TIMESTAMP Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'log-timestamp' =>
+        {
+            section => 'log',
+            summary =>
+                "Enable timestamp in logging.",
+            description =>
+                "Enables the timestamp in console and file logging. This option is disabled in special situations such as " .
+                    "generating documentation."
+        },
+
         # MANIFEST-SAVE-THRESHOLD Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'manifest-save-threshold' =>
@@ -832,6 +844,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
@@ -871,6 +884,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
@@ -939,6 +953,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'manifest-save-threshold' => 'section',
                 'neutral-umask' => 'section',
                 'online' => 'default',
@@ -1018,6 +1033,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
                 'online' => 'default',
                 'protocol-timeout' => 'section',
@@ -1050,6 +1066,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'repo-path' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
@@ -1103,6 +1120,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
 
                 # OUTPUT Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -1176,6 +1194,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
@@ -1317,6 +1336,7 @@ my $oConfigHelpData =
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
                 'online' => 'default',
                 'protocol-timeout' => 'section',
@@ -1353,6 +1373,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }
@@ -1401,6 +1422,7 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-level-stderr' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'repo-path' => 'section',
                 'stanza' => 'default'
             }

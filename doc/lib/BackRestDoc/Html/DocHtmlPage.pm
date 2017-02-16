@@ -126,7 +126,7 @@ sub process
     {
         my $oMenuBody = $oHtmlBuilder->bodyGet()->addNew(HTML_DIV, 'page-menu')->addNew(HTML_DIV, 'menu-body');
 
-        if ($self->{strRenderOutKey} ne 'index')
+        if ($self->{strRenderOutKey} ne 'index' && defined($self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, 'index', true)))
         {
             my $oRenderOut = $self->{oManifest}->renderOutGet(RENDER_TYPE_HTML, 'index');
 
@@ -219,7 +219,7 @@ sub sectionProcess
             {name => 'iDepth'}
         );
 
-    &log($iDepth == 1 ? INFO : DEBUG, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('id'));
+    &log(INFO, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('path'));
 
     if ($iDepth > 3)
     {

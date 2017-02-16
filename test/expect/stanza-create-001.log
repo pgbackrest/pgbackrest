@@ -119,7 +119,7 @@ stanza-create db - fail on archive info file missing from non-empty dir (db-mast
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [115]: backup directory and/or archive directory not empty
-               HINT: Use --force to force the stanza data to be created.
+            HINT: Use --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [115]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -345,8 +345,8 @@ stanza-create db - test force fails for database mismatch with directory (db-mas
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
 P00  ERROR: [119]: WAL segment version 9.3 does not match archive version 9.4
-               WAL segment system-id 6156904820763115222 does not match archive system-id 6353949018581704918
-               HINT: are you archiving to the correct stanza?
+            WAL segment system-id 6156904820763115222 does not match archive system-id 6353949018581704918
+            HINT: are you archiving to the correct stanza?
 P00   INFO: stanza-create command end: aborted with exception [119]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info

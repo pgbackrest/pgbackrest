@@ -9,6 +9,8 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use JSON::PP;
+use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
@@ -48,6 +50,7 @@ my $oRenderTag =
         # 'code-block' => ['```', '```'],
         # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
+        'proper' => ['', ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -73,6 +76,7 @@ my $oRenderTag =
         'code-block' => ['', ''],
         'exe' => [undef, ''],
         'backrest' => [undef, ''],
+        'proper' => ['', ''],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -103,6 +107,7 @@ my $oRenderTag =
         # 'code-block' => ['', ''],
         # 'exe' => [undef, ''],
         'backrest' => [undef, ''],
+        'proper' => ['\textnormal{\texttt{', '}}'],
         'postgres' => ['PostgreSQL', '']
     },
 
@@ -130,6 +135,7 @@ my $oRenderTag =
         'exe' => [undef, ''],
         'setting' => ['<span class="br-setting">', '</span>'], # ??? This will need to be fixed
         'backrest' => [undef, ''],
+        'proper' => ['<span class="host">', '</span>'],
         'postgres' => ['<span class="postgres">PostgreSQL</span>', '']
     }
 };
@@ -159,6 +165,9 @@ sub new
             {name => 'oManifest'},
             {name => 'strRenderOutKey', required => false}
         );
+
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Initialize project tags
     $$oRenderTag{markdown}{backrest}[0] = "{[project]}";
@@ -228,6 +237,11 @@ sub new
             if (substr($strPath, 0, 1) ne '/')
             {
                 confess &log(ERROR, "path ${strPath} must begin with a /");
+            }
+
+            if (!defined($self->{oSection}->{$strPath}))
+            {
+                confess &log(ERROR, "required section '${strPath}' does not exist");
             }
 
             if (defined(${$self->{oSection}}{$strPath}))
@@ -331,7 +345,8 @@ sub build
     # Build section
     if ($strName eq 'section')
     {
-        &log(DEBUG, 'build section [' . $oNode->paramGet('id') . ']');
+        my $strSectionId = $oNode->paramGet('id');
+        &log(DEBUG, "build section [${strSectionId}]");
 
         # Set path and parent-path for this section
         if (defined($strPath))
@@ -344,6 +359,78 @@ sub build
         &log(DEBUG, "            path ${strPath}");
         ${$self->{oSection}}{$strPath} = $oNode;
         $oNode->paramSet('path', $strPath);
+
+        # If depend is not set then set it to the last section
+        my $strDepend = $oNode->paramGet('depend', false);
+
+        my $oContainerNode = defined($oParent) ? $oParent : $self->{oDoc};
+        my $oLastChild;
+        my $strDependPrev;
+
+        foreach my $oChild ($oContainerNode->nodeList('section', false))
+        {
+            if ($oChild->paramGet('id') eq $oNode->paramGet('id'))
+            {
+                if (defined($oLastChild))
+                {
+                    $strDependPrev = $oLastChild->paramGet('id');
+                }
+                elsif (defined($oParent->paramGet('depend', false)))
+                {
+                    $strDependPrev = $oParent->paramGet('depend');
+                }
+
+                last;
+            }
+
+            $oLastChild = $oChild;
+        }
+
+        if (defined($strDepend))
+        {
+            if (defined($strDependPrev) && $strDepend eq $strDependPrev && !$oNode->paramTest('depend-default'))
+            {
+                &log(WARN,
+                    "section '${strPath}' depend is set to '${strDepend}' which is the default, best to remove" .
+                    " because it may become obsolete if a new section is added in between");
+            }
+        }
+        else
+        {
+            $strDepend = $strDependPrev;
+        }
+
+        # If depend is defined make sure it exists
+        if (defined($strDepend))
+        {
+            # If this is a relative depend then prepend the parent section
+            if (index($strDepend, '/') != 0)
+            {
+                if (defined($oParent->paramGet('path', false)))
+                {
+                    $strDepend = $oParent->paramGet('path') . '/' . $strDepend;
+                }
+                else
+                {
+                    $strDepend = "/${strDepend}";
+                }
+            }
+
+            if (!defined($self->{oSection}->{$strDepend}))
+            {
+                confess &log(ERROR, "section '${strSectionId}' depend '${strDepend}' is not valid");
+            }
+        }
+
+        if (defined($strDepend))
+        {
+            $oNode->paramSet('depend', $strDepend);
+        }
+
+        if (defined($strDependPrev))
+        {
+            $oNode->paramSet('depend-default', $strDependPrev);
+        }
 
         # If section content is being pulled from elsewhere go get the content
         if ($oNode->paramTest('source'))
@@ -371,6 +458,54 @@ sub build
             &log(DEBUG, "modify link section from '" . $oNode->paramGet('section') . "' to '${strNewPath}'");
 
             $oNode->paramSet('section', $strNewPath);
+        }
+    }
+    # Store block defines
+    elsif ($strName eq 'block-define')
+    {
+        my $strBlockId = $oNode->paramGet('id');
+
+        if (defined($self->{oyBlockDefine}{$strBlockId}))
+        {
+            confess &log(ERROR, "block ${strBlockId} is already defined");
+        }
+
+        $self->{oyBlockDefine}{$strBlockId} = dclone($oNode->{oDoc}{children});
+        $oParent->nodeRemove($oNode);
+    }
+    # Copy blocks
+    elsif ($strName eq 'block')
+    {
+        my $strBlockId = $oNode->paramGet('id');
+
+        if (!defined($self->{oyBlockDefine}{$strBlockId}))
+        {
+            confess &log(ERROR, "block ${strBlockId} is not defined");
+        }
+
+        my $strNodeJSON = $self->{oJSON}->encode($self->{oyBlockDefine}{$strBlockId});
+
+        foreach my $oVariable ($oNode->nodeList('block-variable-replace'))
+        {
+            my $strVariableKey = $oVariable->paramGet('key');
+            my $strVariableReplace = $oVariable->valueGet();
+
+            $strNodeJSON =~ s/\{\[$strVariableKey\]\}/$strVariableReplace/g;
+        }
+
+        my ($iReplaceIdx, $iReplaceTotal) = $oParent->nodeReplace($oNode, $self->{oJSON}->decode($strNodeJSON));
+
+        # Build any new children that were added
+        my $iChildIdx = 0;
+
+        foreach my $oChild ($oParent->nodeList(undef, false))
+        {
+            if ($iChildIdx >= $iReplaceIdx && $iChildIdx < ($iReplaceIdx + $iReplaceTotal))
+            {
+                $self->build($oChild, $oParent, $strPath, $strPathPrefix);
+            }
+
+            $iChildIdx++;
         }
     }
 
@@ -425,7 +560,9 @@ sub required
             {
                 if (!defined(${$self->{oSectionRequired}}{$strChildPath}))
                 {
-                    &log(INFO, "        require section: ${strChildPath}");
+                    my @stryChildPath = split('/', $strChildPath);
+
+                    &log(INFO, ('    ' x (scalar(@stryChildPath) - 2)) . "        require section: ${strChildPath}");
 
                     ${$self->{oSectionRequired}}{$strChildPath} = true;
                 }

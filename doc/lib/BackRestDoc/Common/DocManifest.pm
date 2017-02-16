@@ -577,8 +577,6 @@ sub renderOutGet
             {name => 'bIgnoreMissing', default => false, trace => true},
         );
 
-    # use Data::Dumper; print Dumper(${$self->{oManifest}}{render});
-
     if (!defined(${$self->{oManifest}}{render}{$strType}{out}{$strKey}) && !$bIgnoreMissing)
     {
         confess &log(ERROR, "render out ${strKey} does not exist");

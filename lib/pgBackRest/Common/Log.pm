@@ -71,6 +71,11 @@ my $strLogFileCache = undef;
 my $strLogLevelFile = OFF;
 my $strLogLevelConsole = OFF;
 my $strLogLevelStdErr = WARN;
+my $bLogTimestamp = true;
+
+# Flags to limit banner printing until there is actual output
+my $bLogFileExists;
+my $bLogFileFirst;
 
 # Allow log to be globally enabled or disabled with logEnable() and logDisable()
 my $bLogDisable = 0;
@@ -116,25 +121,15 @@ sub logFileSet
         filePathCreate(dirname($strFile), '0770', true, true);
 
         $strFile .= '.log';
-        my $bExists = false;
-
-        if (-e $strFile)
-        {
-            $bExists = true;
-        }
+        $bLogFileExists = -e $strFile ? true : false;
+        $bLogFileFirst = true;
 
         $hLogFile = fileOpen($strFile, O_WRONLY | O_CREAT | O_APPEND, '0660');
-
-        if ($bExists)
-        {
-            syswrite($hLogFile, "\n");
-        }
-
-        syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
 
         # Write out anything that was cached before the file was opened
         if (defined($strLogFileCache))
         {
+            logBanner();
             syswrite($hLogFile, $strLogFileCache);
             undef($strLogFileCache);
         }
@@ -142,6 +137,27 @@ sub logFileSet
 }
 
 push @EXPORT, qw(logFileSet);
+
+
+####################################################################################################################################
+# logBanner
+#
+# Output a banner on the first log entry written to a file
+####################################################################################################################################
+sub logBanner
+{
+    if ($bLogFileFirst)
+    {
+        if ($bLogFileExists)
+        {
+            syswrite($hLogFile, "\n");
+        }
+
+        syswrite($hLogFile, "-------------------PROCESS START-------------------\n");
+    }
+
+    $bLogFileFirst = false;
+}
 
 ####################################################################################################################################
 # logLevelSet - set the log level for file and console
@@ -151,6 +167,7 @@ sub logLevelSet
     my $strLevelFileParam = shift;
     my $strLevelConsoleParam = shift;
     my $strLevelStdErrParam = shift;
+    my $bLogTimestampParam = shift;
 
     # Load FileCommon module
     require pgBackRest::FileCommon;
@@ -184,6 +201,11 @@ sub logLevelSet
         }
 
         $strLogLevelStdErr = uc($strLevelStdErrParam);
+    }
+
+    if (defined($bLogTimestampParam))
+    {
+        $bLogTimestamp = $bLogTimestampParam;
     }
 }
 
@@ -506,16 +528,11 @@ push @EXPORT, qw(logException);
 ####################################################################################################################################
 sub logErrorResult
 {
-    my $oResult = shift;
     my $iCode = shift;
     my $strMessage = shift;
+    my $strResult = shift;
 
-    if (!$oResult)
-    {
-        confess &log(ERROR, $strMessage . (defined($!) ? ": $!" : ''), $iCode);
-    }
-
-    return $oResult;
+    confess &log(ERROR, $strMessage . (defined($strResult) ? ": $strResult" : ''), $iCode);
 }
 
 push @EXPORT, qw(logErrorResult);
@@ -593,9 +610,13 @@ sub log
     }
     else
     {
-        $strMessageFormat =~ s/\n/\n                                    /g;
+        # Indent subsequent message lines so they align
+        $bLogTimestamp ?
+            $strMessageFormat =~ s/\n/\n                                        /g :
+            $strMessageFormat =~ s/\n/\n            /g
     }
 
+    # Indent TRACE and debug levels so they are distinct from normal messages
     if ($strLevel eq TRACE || $strLevel eq TEST)
     {
         $strMessageFormat =~ s/\n/\n        /g;
@@ -606,17 +627,13 @@ sub log
         $strMessageFormat =~ s/\n/\n    /g;
         $strMessageFormat = '    ' . $strMessageFormat;
     }
-    elsif ($strLevel eq ERROR || $strLevel eq ASSERT)
-    {
-        $strMessageFormat =~ s/\n/\n       /g;
-    }
 
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
     $strMessageFormat =
-        timestampFormat() . sprintf('.%03d P%02d', (gettimeofday() - int(gettimeofday())) * 1000,
-        (defined($iProcessId) ? $iProcessId : 0)) .
+        ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
+        sprintf('P%02d', defined($iProcessId) ? $iProcessId : 0) .
         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
     # Skip output if disabled
@@ -660,6 +677,7 @@ sub log
                 {
                     if (defined($hLogFile))
                     {
+                        logBanner();
                         syswrite($hLogFile, $strMessageFormat);
                     }
                     else

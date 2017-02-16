@@ -55,6 +55,9 @@ sub initModule
         $self->host(),
         $self->backrestUser(),
         HOST_PROTOCOL_TIMEOUT);
+
+    rmdir($strRepoPath)
+        or confess "Unable to remove repo directory: ${strRepoPath}";
 }
 
 ####################################################################################################################################

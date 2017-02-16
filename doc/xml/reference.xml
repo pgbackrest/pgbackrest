@@ -68,6 +68,15 @@
 
                         <example>error</example>
                     </config-key>
+
+                    <!-- CONFIG - LOG SECTION - LOG-TIMESTAMP KEY -->
+                    <config-key id="log-timestamp" name="Log Timestamp">
+                        <summary>Enable timestamp in logging.</summary>
+
+                        <text>Enables the timestamp in console and file logging.  This option is disabled in special situations such as generating documentation.</text>
+
+                        <example>n</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 

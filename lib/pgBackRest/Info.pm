@@ -18,6 +18,7 @@ use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
+use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
@@ -51,6 +52,8 @@ use constant INFO_KEY_DELTA                                         => 'delta';
 use constant INFO_KEY_FORMAT                                        => 'format';
 use constant INFO_KEY_ID                                            => INFO_HISTORY_ID;
 use constant INFO_KEY_LABEL                                         => 'label';
+use constant INFO_KEY_MAX                                           => 'max';
+use constant INFO_KEY_MIN                                           => 'min';
 use constant INFO_KEY_MESSAGE                                       => 'message';
 use constant INFO_KEY_PRIOR                                         => 'prior';
 use constant INFO_KEY_REFERENCE                                     => 'reference';
@@ -109,52 +112,7 @@ sub process
 
     if (optionTest(OPTION_OUTPUT, INFO_OUTPUT_TEXT))
     {
-        my $strOutput;
-
-        foreach my $oStanzaInfo (@{$oyStanzaList})
-        {
-            # Add an LF between stanzas
-            $strOutput .= defined($strOutput) ? "\n" : '';
-
-            # Output stanza name and status
-            $strOutput .=
-                'stanza: ' . $$oStanzaInfo{&INFO_STANZA_NAME} . "\n" .
-                '    status: ' . ($$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
-                INFO_STANZA_STATUS_ERROR . ' (' . $$oStanzaInfo{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')') . "\n";
-
-            # Output information for each stanza backup, from oldest to newest
-            foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
-            {
-                $strOutput .=
-                    "\n".
-                    '    ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
-
-                    '        start / stop timestamp: ' .
-                    timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
-                    ' / ' .
-                    timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP}) . "\n" .
-
-                    '        database size: ' .
-                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
-                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '') .
-                    ', backup size: ' .
-                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
-                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '') . "\n" .
-
-                    '        repository size: ' .
-                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
-                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '') .
-                    ', repository backup size: ' .
-                    (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) ?
-                        fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) : '') . "\n";
-
-                # List the backup reference chain, if any, for this backup
-                if (defined($$oBackupInfo{&INFO_KEY_REFERENCE}))
-                {
-                    $strOutput .= '        backup reference list: ' . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}})) . "\n";
-                }
-            }
-        }
+        my $strOutput = $self->formatText($oyStanzaList);
 
         if (defined($strOutput))
         {
@@ -189,6 +147,170 @@ sub process
     (
         $strOperation,
         {name => 'iResult', value => 0, trace => true}
+    );
+}
+
+####################################################################################################################################
+# formatText
+#
+# Format --output=text info.
+####################################################################################################################################
+sub formatText
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oyStanzaList,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->formatText', \@_,
+            {name => 'oyStanzaList', trace => true},
+        );
+
+    my $strOutput;
+
+    foreach my $oStanzaInfo (@{$oyStanzaList})
+    {
+        # Output stanza name and status
+        $strOutput .= (defined($strOutput) ? "\n" : '')  . $self->formatTextStanza($oStanzaInfo) . "\n";
+
+        # Output information for each stanza backup, from oldest to newest
+        foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
+        {
+            $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strOutput', value => $strOutput, trace => true}
+    );
+}
+
+####################################################################################################################################
+# formatTextStanza
+#
+# Format --output=text stanza info.
+####################################################################################################################################
+sub formatTextStanza
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStanzaInfo,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->formatTextStanza', \@_,
+            {name => 'oStanzaInfo', trace => true},
+        );
+
+    # Output stanza name and status
+    my $strOutput =
+        'stanza: ' . $oStanzaInfo->{&INFO_STANZA_NAME} . "\n" .
+        "    status: " . ($oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
+        INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')');
+
+    # Output archive start / stop values
+    $strOutput .=
+        "\n    wal archive min/max: ";
+
+    if (defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MIN}) &&
+        defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MAX}))
+    {
+        $strOutput .=
+            $oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MIN} . ' / ' . $oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MAX};
+    }
+    else
+    {
+        $strOutput .= 'none present';
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strOutput', value => $strOutput, trace => true}
+    );
+}
+
+####################################################################################################################################
+# formatTextBackup
+#
+# Format --output=text backup info.
+####################################################################################################################################
+sub formatTextBackup
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oBackupInfo,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->formatTextBackup', \@_,
+            {name => 'oBackupInfo', trace => true},
+        );
+
+    my $strOutput .=
+        '    ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
+
+        '        timestamp start/stop: ' .
+        timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
+        ' / ' .
+        timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP}) . "\n" .
+
+        "        wal start/stop: ";
+
+    if (defined($oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_START}) &&
+        defined($oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_STOP}))
+    {
+        $strOutput .=
+            $oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_START} . ' / ' . $oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_STOP};
+    }
+    else
+    {
+        $strOutput .= 'n/a';
+    }
+
+    $strOutput .=
+        "\n        database size: " .
+        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
+            fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '') .
+        ', backup size: ' .
+        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
+            fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '') . "\n" .
+
+        '        repository size: ' .
+        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
+            fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '') .
+        ', repository backup size: ' .
+        (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) ?
+            fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_DELTA}) : '');
+
+    # List the backup reference chain, if any, for this backup
+    if (defined($oBackupInfo->{&INFO_KEY_REFERENCE}) && @{$oBackupInfo->{&INFO_KEY_REFERENCE}} > 0)
+    {
+        $strOutput .= "\n        backup reference list: " . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}}));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strOutput', value => $strOutput, trace => true}
     );
 }
 
@@ -237,6 +359,7 @@ sub stanzaList
             ($$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}, $$oStanzaInfo{&INFO_BACKUP_SECTION_DB}) =
                 $self->backupList($oFile, $strStanzaFound);
 
+            # If there are no backups then set status to no backup
             if (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} == 0)
             {
                 $$oStanzaInfo{&INFO_SECTION_STATUS} =
@@ -245,6 +368,7 @@ sub stanzaList
                     &INFO_KEY_MESSAGE => INFO_STANZA_STATUS_NO_BACKUP_MESSAGE
                 };
             }
+            # Else status is OK
             else
             {
                 $$oStanzaInfo{&INFO_SECTION_STATUS} =
@@ -253,6 +377,55 @@ sub stanzaList
                     &INFO_KEY_MESSAGE => INFO_STANZA_STATUS_OK_MESSAGE
                 };
             }
+
+            # Get the first/last WAL
+            my $strArchiveStart;
+            my $strArchiveStop;
+            my $hDbInfo = @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}}[0];
+
+            if (defined($hDbInfo->{&INFO_KEY_ID}) && defined($hDbInfo->{&INFO_KEY_VERSION}))
+            {
+                my $strArchivePath = "archive/${strStanzaFound}/" . $hDbInfo->{&INFO_KEY_VERSION} . '-' . $hDbInfo->{&INFO_KEY_ID};
+
+                if ($oFile->exists(PATH_BACKUP, $strArchivePath))
+                {
+                    my @stryWalMajor = $oFile->list(PATH_BACKUP, $strArchivePath, '^[0-F]{16}$');
+
+                    # Get first WAL segment
+                    foreach my $strWalMajor (@stryWalMajor)
+                    {
+                        my @stryWalFile = $oFile->list(
+                            PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
+                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$");
+
+                        if (@stryWalFile > 0)
+                        {
+                            $strArchiveStart = substr($stryWalFile[0], 0, 24);
+                            last;
+                        }
+                    }
+
+                    # Get last WAL segment
+                    foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
+                    {
+                        my @stryWalFile = $oFile->list(
+                            PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
+                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", 'reverse');
+
+                        if (@stryWalFile > 0)
+                        {
+                            $strArchiveStop = substr($stryWalFile[0], 0, 24);
+                            last;
+                        }
+                    }
+                }
+            }
+
+            $oStanzaInfo->{&INFO_SECTION_ARCHIVE} =
+            {
+                &INFO_KEY_MIN => $strArchiveStart,
+                &INFO_KEY_MAX => $strArchiveStop,
+            };
 
             push @oyStanzaList, $oStanzaInfo;
         }

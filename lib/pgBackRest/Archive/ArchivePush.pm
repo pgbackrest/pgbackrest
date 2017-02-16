@@ -35,6 +35,8 @@ use constant WAL_STATUS_OK                                          => 'ok';
 
 ####################################################################################################################################
 # process
+#
+# Push a WAL segment.  The WAL can be pushed in sync or async mode.
 ####################################################################################################################################
 sub process
 {
@@ -83,11 +85,12 @@ sub process
         # Loop to check for status files and launch async process
         my $bPushed = false;
         my $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+        $self->{bConfessOnError} = false;
 
         do
         {
             # Check WAL status
-            $bPushed = $self->walStatus($self->{strSpoolPath}, $strWalFile);
+            $bPushed = $self->walStatus($self->{strSpoolPath}, $strWalFile, $self->{bConfessOnError});
 
             # If not found then launch async process
             if (!$bPushed)
@@ -97,6 +100,8 @@ sub process
                 $bClient = (new pgBackRest::Archive::ArchivePushAsync(
                     $strWalPath, $self->{strSpoolPath}, $self->{strBackRestBin}))->process();
             }
+
+            $self->{bConfessOnError} = true;
         }
         while ($bClient && !$bPushed && waitMore($oWait));
 
@@ -153,6 +158,8 @@ sub process
 
 ####################################################################################################################################
 # walStatus
+#
+# Read a WAL status file and return success or raise a warning or error.
 ####################################################################################################################################
 sub walStatus
 {
@@ -164,12 +171,14 @@ sub walStatus
         $strOperation,
         $strSpoolPath,
         $strWalFile,
+        $bConfessOnError,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->walStatus', \@_,
             {name => 'strSpoolPath'},
             {name => 'strWalFile'},
+            {name => 'bConfessOnError', default => true},
         );
 
     # Default result is false
@@ -221,9 +230,11 @@ sub walStatus
 
                 &log(WARN, $strMessage);
             }
+
+            $bResult = true;
         }
         # Process error files
-        else
+        elsif ($bConfessOnError)
         {
             # Error files must have content
             if (@stryWalStatus == 0)
@@ -231,11 +242,8 @@ sub walStatus
                 confess &log(ASSERT, "$stryStatusFile[0] has no content");
             }
 
-            # Confess the error
             confess &log(ERROR, $strMessage, $iCode);
         }
-
-        $bResult = true;
     }
 
     # Return from function and log return values if any
@@ -248,6 +256,9 @@ sub walStatus
 
 ####################################################################################################################################
 # readyList
+#
+# Determine which WAL PostgreSQL has marked as ready to be archived.  This is the heart of the "look ahead" functionality in async
+# archiving.
 ####################################################################################################################################
 sub readyList
 {
@@ -309,7 +320,11 @@ sub readyList
 }
 
 ####################################################################################################################################
-# dropQueue
+# dropList
+#
+# Determine if the queue of WAL ready to be archived has grown larger the the user-configurable setting.  If so, return the list of
+# WAL that should be dropped to allow PostgreSQL to continue running.  For the moment this is the entire list of ready WAL,
+# otherwise the process may archive small spurts of WAL when at queue max which is not likely to be useful.
 ####################################################################################################################################
 sub dropList
 {

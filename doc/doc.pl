@@ -155,6 +155,12 @@ eval
             or confess "--require ${strError}";
     }
 
+    # one --include must be specified when --required is
+    if (@stryRequire && @stryInclude != 1)
+    {
+        confess "one --include is required when --require is specified";
+    }
+
     # Set console log level
     if ($bQuiet)
     {

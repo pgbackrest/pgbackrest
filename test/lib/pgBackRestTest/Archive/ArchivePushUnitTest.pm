@@ -700,9 +700,24 @@ sub run
         $self->optionSetTest($oOption, OPTION_SPOOL_PATH, $self->{strRepoPath});
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
 
-        # Write an OK file so the async process is not actually started
+        # Write an error file and verify that it doesn't error the first time around
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         filePathCreate($self->{strSpoolPath}, undef, undef, true);
+        fileStringWrite("$self->{strSpoolPath}/${strSegment}.error", ERROR_ARCHIVE_TIMEOUT . "\ntest error");
+
+        $self->testException(
+            sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_ARCHIVE_TIMEOUT,
+            "test error");
+
+        $self->testResult($oPush->{bConfessOnError}, true, "went through error loop");
+
+        $self->testResult(
+            sub {walSegmentFind($self->{oFile}, $self->{strArchiveId}, $strSegment)}, '[undef]',
+            "${strSegment} WAL not in archive");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Write an OK file so the async process is not actually started
+        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         fileStringWrite("$self->{strSpoolPath}/${strSegment}.ok");
 
         $self->testResult(

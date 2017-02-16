@@ -11,6 +11,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupCommon;
 use pgBackRest::BackupInfo;
 use pgBackRest::Common::Ini;
@@ -48,7 +49,7 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'oHostBackup', trace => true},
+            {name => 'oHostBackup', required => false, trace => true},
             {name => 'strBackRestExe', trace => true},
             {name => 'oFile', trace => true},
             {name => 'oLogTest', required => false, trace => true}
@@ -96,7 +97,7 @@ sub stanzaCreate
     $$oStanza{iControlVersion} = $strDbVersionTemp . '1';
 
     # Create the stanza backup path
-    my $strBackupClusterPath = $self->{oHostBackup}->repoPath() . "/backup/${strStanza}";
+    my $strBackupClusterPath = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER);
     filePathCreate("${strBackupClusterPath}/" . PATH_BACKUP_HISTORY, undef, undef, true);
 
     $$oStanza{strBackupClusterPath} = $strBackupClusterPath;
@@ -106,7 +107,7 @@ sub stanzaCreate
         $strDbVersion, $$oStanza{ullDbSysId}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion});
 
     # Create the stanza archive path
-    my $strArchiveClusterPath = $self->{oHostBackup}->repoPath() . "/archive/${strStanza}";
+    my $strArchiveClusterPath = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE);
     filePathCreate($strArchiveClusterPath, undef, undef, true);
 
     # Create the archive info object
@@ -154,7 +155,12 @@ sub backupCreate
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
 
-    my ($strArchiveStart, $strArchiveStop) = $self->archiveCreate($strStanza, $iArchiveBackupTotal);
+    my ($strArchiveStart, $strArchiveStop);
+
+    if ($iArchiveBackupTotal != -1)
+    {
+        ($strArchiveStart, $strArchiveStop) = $self->archiveCreate($strStanza, $iArchiveBackupTotal);
+    }
 
     # Create the manifest
     my $oLastManifest = $strType ne BACKUP_TYPE_FULL ? $$oStanza{oManifest} : undef;
@@ -222,9 +228,12 @@ sub backupCreate
     $$oStanza{strBackupDescription} .=
         "* ${strType} backup: label = ${strBackupLabel}" .
         (defined($oLastManifest) ? ', prior = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) : '') .
-        ", start = ${strArchiveStart}, stop = ${strArchiveStop}";
+        (defined($strArchiveStart) ? ", start = ${strArchiveStart}, stop = ${strArchiveStop}" : ', not online');
 
-    $self->archiveCreate($strStanza, $iArchiveBetweenTotal);
+    if ($iArchiveBetweenTotal != -1)
+    {
+        $self->archiveCreate($strStanza, $iArchiveBetweenTotal);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

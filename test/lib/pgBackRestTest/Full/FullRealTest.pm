@@ -823,28 +823,6 @@ sub run
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
         }
 
-        # Incr backup - make sure a --no-online backup fails
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
-        {
-            $strType = BACKUP_TYPE_INCR;
-
-            $oHostBackup->backup(
-                $strType, 'fail on --no-' . OPTION_ONLINE,
-                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-' . OPTION_ONLINE});
-        }
-
-        # Incr backup - allow --no-online backup to succeed with --force
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
-        {
-            $strType = BACKUP_TYPE_INCR;
-
-            $oHostBackup->backup(
-                $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
-                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
-        }
-
         # Stop clusters to catch any errors in the postgres log
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->clusterStop({bImmediate => true});
@@ -852,6 +830,30 @@ sub run
         if (defined($oHostDbStandby))
         {
             $oHostDbStandby->clusterStop({bImmediate => true});
+        }
+
+        # Test no-online backups
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($bTestExtra)
+        {
+            # Create a postmaster.pid file so it appears that the server is running
+            fileStringWrite($oHostDbMaster->dbBasePath() . '/postmaster.pid', '99999');
+
+            # Incr backup - make sure a --no-online backup fails
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_INCR;
+
+            $oHostBackup->backup(
+                $strType, 'fail on --no-' . OPTION_ONLINE,
+                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-' . OPTION_ONLINE});
+
+            # Incr backup - allow --no-online backup to succeed with --force
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strType = BACKUP_TYPE_INCR;
+
+            $oHostBackup->backup(
+                $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
+                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
         }
     }
     }
