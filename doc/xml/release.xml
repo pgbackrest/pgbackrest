@@ -153,6 +153,16 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.16dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Container executions now load the user's environment.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+        </release>
+
         <release date="2017-02-13" version="1.15" title="Refactoring and Bug Fixes">
             <release-core-list>
                 <release-bug-list>

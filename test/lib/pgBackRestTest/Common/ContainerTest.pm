@@ -361,6 +361,10 @@ sub containerBuild
             $strScript .=
                 "RUN apt-get update\n" .
                 "RUN apt-get -y install openssh-server wget\n";
+
+            $strScript .=
+                "\n# Fix root tty\n" .
+                "RUN sed -i 's/^mesg n/tty -s \\&\\& mesg n/g' /root/.profile\n";
         }
 
         # Add PostgreSQL packages

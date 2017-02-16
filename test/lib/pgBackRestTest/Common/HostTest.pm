@@ -125,7 +125,7 @@ sub execute
     $strCommand =~ s/'/'\\''/g;
 
     my $oExec = new pgBackRestTest::Common::ExecuteTest(
-        "docker exec -u ${strUser} $self->{strContainer} sh -c '${strCommand}'" , $oParam);
+        "docker exec -u ${strUser} $self->{strContainer} bash -l -c '${strCommand}'" , $oParam);
 
     # Return from function and log return values if any
     return logDebugReturn

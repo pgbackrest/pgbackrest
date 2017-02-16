@@ -971,15 +971,15 @@ sub sectionChildProcess
                 $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);
                 $$hCacheValue{ip} = $oHost->{strIP};
 
-                # Execute cleanup commands
+                # Add to the host group
+                my $oHostGroup = hostGroupGet();
+                $oHostGroup->hostAdd($oHost);
+
+                # Execute initialize commands
                 foreach my $oExecute ($oChild->nodeList('execute', false))
                 {
                     $self->execute($oSection, $$hCacheKey{name}, $oExecute, $iDepth + 1, false);
                 }
-
-                # Add to the host group
-                my $oHostGroup = hostGroupGet();
-                $oHostGroup->hostAdd($oHost);
 
                 $self->cachePush($strCacheType, $hCacheKey, $hCacheValue);
             }

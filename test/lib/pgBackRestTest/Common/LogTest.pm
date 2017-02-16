@@ -327,7 +327,7 @@ sub regExpReplaceAll
 
     # Replace the exe path/file with sh ' prepended
     my $strLineBefore = $strLine;
-    $strLine =~ s/sh -c '$self->{strCommandMain}/[BACKREST-BIN]/g;
+    $strLine =~ s/bash -l -c '$self->{strCommandMain}/[BACKREST-BIN]/g;
 
     # Replace the final ' if the previous expression made changes
     if ($strLine ne $strLineBefore)
