@@ -273,10 +273,11 @@ sub reconstruct
     foreach my $iDbHistoryId (sort {$a <=> $b} keys %hDbHistoryVersion)
     {
         my $strDbVersion = $hDbHistoryVersion{$iDbHistoryId};
+        my $strVersionDir = $strDbVersion . "-" . $iDbHistoryId;
 
         # Get the name of the first archive directory
         my $strArchiveDir =
-            (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL, 'forward', true))[0];
+            (fileList($self->{strArchiveClusterPath} . "/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL, 'forward', true))[0];
 
         # Continue if any file structure or missing files info
         if (!defined($strArchiveDir))
@@ -334,7 +335,6 @@ sub reconstruct
             confess &log(ERROR, "unable to read database system identifier", ERROR_FILE_READ);
         }
 
-        # ??? For stanza-upgrade, need to test that the history does not already exist
         # Fill db section and db history section
         $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
@@ -343,6 +343,12 @@ sub reconstruct
     if (!$self->test(INFO_ARCHIVE_SECTION_DB))
     {
         $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
+    }
+    # Else if it does exist but does not match the current DB, then update the DB section
+    # CSHANG but what if they reverted, say we have 9.3-1, 9.4-2 and now 9.3-3 -- is that OK? Will it work (ULL should be different...)
+    else
+    {
+        $self->dbSectionSet($strCurrentDbVersion, $ullCurrentDbSysId, $self->dbHistoryIdGet(false)+1);
     }
 
     # Return from function and log return values if any

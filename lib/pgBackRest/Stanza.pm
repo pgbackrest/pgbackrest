@@ -297,16 +297,18 @@ sub infoFileCreate
         confess &log(ERROR, ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') .
             $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
     }
-
+print "DV: ". $self->{oDb}{strDbVersion}.", Ull: ". $self->{oDb}{ullDbSysId}."ConV: ". $self->{oDb}{iControlVersion}."Cat: ".
+    $self->{oDb}{iCatalogVersion}."\n";
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
     eval
     {
-        # Reconstruct the file from the data in the directory if there is any
+        # Reconstruct the file from the data in the directory if there is any else initialize the file
         if ($strPathType eq PATH_BACKUP_CLUSTER)
         {
-            $oInfo->reconstruct(false, false);
+            $oInfo->reconstruct(false, false, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+                $self->{oDb}{iCatalogVersion});
         }
         # If this is the archive.info reconstruction then catch any warnings
         else

@@ -126,6 +126,7 @@ sub run
         # Remove the archive info file
         $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
+# CSHANG Is the force test valid with stanza upgrade??? Don't think so - see notes in archiveInfo and backupInfo
         # Run stanza-create with --force
         $oHostBackup->stanzaCreate('test force fails for database mismatch with directory',
             {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .

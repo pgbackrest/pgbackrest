@@ -190,18 +190,30 @@ sub reconstruct
     (
         $strOperation,
         $bSave,
-        $bRequired,
+        $bRequired,             # If false then must be creating or reconstructing so the DB info must be supplied
+        $strDbVersion,
+        $ullDbSysId,
+        $iControlVersion,
+        $iCatalogVersion,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
         {name => 'bSave', default => true},
         {name => 'bRequired', default => true},
+        {name => 'strDbVersion', required => false},
+        {name => 'ullDbSysId', required => false},
+        {name => 'iControlVersion', required => false},
+        {name => 'iCatalogVersion', required => false},
     );
+
+
+    my $bBackupExists = false;
 
     # Check for backups that are not in FILE_BACKUP_INFO
     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
     {
+        $backupExists = true;
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
 
         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
@@ -209,6 +221,8 @@ sub reconstruct
 
         if (!$self->current($strBackup) && fileExists($strManifestFile))
         {
+            my $oManifest = pgBackRest::Manifest->new($strManifestFile);
+
             # If we are reconstructing, then we need to be sure this db-id and version is in the history section. Also if it
             # has a db-id greater than anything in the history section, then add it to the db section.
             if (!$bRequired)
@@ -216,8 +230,8 @@ sub reconstruct
                 my $hDbList = $self->dbHistoryList();
                 my $iDbId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID);
                 my $iDbIdMax = 0;
-                my $ullDbSysId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID)
-                my $strDbVersion = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
+                my $ullDbSysId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
+                my $strDbVersion = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
 
                 # If this is the max history id then set the db section
                 foreach my $iDbHistoryId (keys %{$hDbList})
@@ -237,9 +251,33 @@ sub reconstruct
             }
 
             &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
-            my $oManifest = pgBackRest::Manifest->new($strManifestFile);
 
             $self->add($oManifest, $bSave, $bRequired);
+        }
+    }
+
+    # # If there are no backups in the directory, the backup.info file does not yet exist and we are reconstructing, then create
+    # # the DB section
+    # if (!($bBackupExists && $bRequired && $self->{bExists}))
+    # If reconstructing
+    if (!$bRequired)
+    {
+        # If any database info is missing, then assert
+        if (!defined($strDbVersion) || !defined($ullDbSysId) || !defined($iControlVersion) || !defined($iCatalogVersion))
+        {
+            confess &log(ASSERT, "backup info cannot be reconstructed without database information");
+        }
+        # If the DB section does not exist then create the db and history section
+        elsif (!$self->test(INFO_BACKUP_SECTION_DB))
+        {
+            $self->create($strDbVersion, $ullDbSysId, $iControlVersion, $iCatalogVersion, $bSave);
+        }
+        # Else update the DB section if it does not match the current database and the current database is not already in the list
+        # CSHANG Since the manifest reconstruction only adds the database info to the DB section if it's DB-id is greater then if
+        # they reverted then is it OK to have 9.3-1, 9.4-2, 9.3-3? The system ULL should be different so this should be OK, but what about archive.info
+        else
+        {
+            # CSHANG ???
         }
     }
 
