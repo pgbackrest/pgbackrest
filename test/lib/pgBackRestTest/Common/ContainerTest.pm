@@ -476,12 +476,14 @@ sub containerBuild
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript =
-                "RUN apt-get install -y gcc make\n";
+                "# Install package build tools and package source\n" .
+                "RUN apt-get install -y devscripts build-essential lintian git libxml-checker-perl txt2man debhelper\n" .
+                "RUN git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src\n";
         }
         else
         {
             $strScript =
-                "RUN yum install -y gcc make perl-ExtUtils-MakeMaker perl-Test-Simple\n";
+                "RUN yum install -y gcc make perl-ExtUtils-MakeMaker perl-Test-Simple git\n";
         }
 
         # Write the image

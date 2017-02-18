@@ -18,7 +18,7 @@ use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Cwd qw(abs_path cwd);
 use Pod::Usage qw(pod2usage);
-use POSIX qw(ceil);
+use POSIX qw(ceil strftime);
 use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/lib';
@@ -66,8 +66,11 @@ test.pl [options]
    --db-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --no-lint            disable static source code analysis
-   --libc-only          compile the C library and run tests only
+   --build-only         compile the C library / packages and run tests only
    --coverage           perform coverage analysis
+   --smart              perform libc/package builds only when source timestamps have changed
+   --no-package         do not build packages
+   --dev                enables --no-lint --smart --log-force --no-package
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -111,8 +114,11 @@ my $strVm = VM_ALL;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
-my $bLibCOnly = false;
+my $bBuildOnly = false;
 my $bCoverage = false;
+my $bSmart = false;
+my $bNoPackage = false;
+my $bDev = false;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -135,8 +141,11 @@ GetOptions ('q|quiet' => \$bQuiet,
             'db-version=s' => \$strDbVersion,
             'log-force' => \$bLogForce,
             'no-lint' => \$bNoLint,
-            'libc-only' => \$bLibCOnly,
-            'coverage' => \$bCoverage)
+            'build-only' => \$bBuildOnly,
+            'no-package' => \$bNoPackage,
+            'coverage' => \$bCoverage,
+            'smart' => \$bSmart,
+            'dev' => \$bDev)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -162,6 +171,17 @@ eval
     {
         syswrite(*STDOUT, "invalid parameter\n\n");
         pod2usage();
+    }
+
+    ################################################################################################################################
+    # Update options for --dev
+    ################################################################################################################################
+    if ($bDev)
+    {
+        $bNoLint = true;
+        $bSmart = true;
+        $bLogForce = true;
+        $bNoPackage = true;
     }
 
     ################################################################################################################################
@@ -239,10 +259,15 @@ eval
         my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
         my $oRelease = (new BackRestDoc::Custom::DocCustomRelease(new BackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
         my $strVersion = $oRelease->paramGet('version');
+        my $bVersionDev = false;
+        my $strVersionBase = $strVersion;
 
-        if ($strVersion =~ /dev$/ && BACKREST_VERSION !~ /dev$/)
+        if ($strVersion =~ /dev$/)
         {
-            if ($oRelease->nodeTest('release-core-list'))
+            $bVersionDev = true;
+            $strVersionBase = substr($strVersion, 0, length($strVersion) - 3);
+
+            if (BACKREST_VERSION !~ /dev$/ && $oRelease->nodeTest('release-core-list'))
             {
                 confess "dev release ${strVersion} must match the program version when core changes have been made";
             }
@@ -255,7 +280,7 @@ eval
         if (!$bDryRun)
         {
             # Run Perl critic
-            if (!$bNoLint && !$bLibCOnly)
+            if (!$bNoLint && !$bBuildOnly)
             {
                 my $strBasePath = dirname(dirname(abs_path($0)));
 
@@ -282,70 +307,234 @@ eval
             logFileSet(cwd() . "/test");
         }
 
-        # Build the C Library in host
+        # Clean up
+        #-----------------------------------------------------------------------------------------------------------------------
+        my $iTestFail = 0;
+        my $oyProcess = [];
+        my $strCoveragePath = "${strTestPath}/cover_db";
+
+        if (!$bDryRun || $bVmOut)
+        {
+            containerRemove('test-([0-9]+|build)');
+
+            for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
+            {
+                push(@{$oyProcess}, undef);
+            }
+
+            executeTest("sudo rm -rf ${strTestPath}/*");
+            filePathCreate($strCoveragePath, '0770', true, true);
+        }
+
+        # Build the C Library and Packages
         #-----------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
-            my $bLogDetail = $strLogLevel eq 'detail';
-            my $strBuildBasePath = "${strBackRestBase}/test/.vagrant/libc";
-            my $strBuildPath = "${strBuildBasePath}/host";
-            my $strMakeFile = "${strBuildPath}/Makefile.PL";
-            my $strLibCPath = "${strBackRestBase}/libc";
+            # Paths
+            my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
+            my $strPackagePath = "${strVagrantPath}/package";
+            my $strPackageSmart = "${strPackagePath}/build.timestamp";
+            my $strLibCPath = "${strVagrantPath}/libc";
+            my $strLibCSmart = "${strLibCPath}/build.timestamp";
+
+            # VM Info
+            my $oVm = vmGet();
 
             # Find the lastest modified time in the libc dir
-            my $hManifest = fileManifest($strLibCPath);
-            my $lTimestampLast = 0;
+            my $lTimestampLibCLast = 0;
+
+            my $hManifest = fileManifest("${strBackRestBase}/libc");
 
             foreach my $strFile (sort(keys(%{$hManifest})))
             {
-                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLibCLast)
                 {
-                    $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                    $lTimestampLibCLast = $hManifest->{$strFile}{modification_time};
                 }
             }
 
             # Rebuild if the modification time of the makefile does not equal the latest file in libc
-            if (!fileExists($strMakeFile) || fileStat($strMakeFile)->mtime != $lTimestampLast)
+            if (!$bSmart || !fileExists($strLibCSmart) || fileStat($strLibCSmart)->mtime != $lTimestampLibCLast)
             {
-                &log(INFO, "Build/test/install C library for host (${strBuildPath})");
-
-                executeTest("sudo rm -rf ${strBuildBasePath}");
-                filePathCreate($strBuildPath, undef, true, true);
-                executeTest("cp -r ${strLibCPath}/* ${strBuildPath}");
-
-                executeTest(
-                    "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none",
-                    {bShowOutputAsync => $bLogDetail});
-                executeTest("make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-                executeTest("sudo make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
-                executeTest("cd ${strBuildPath} && perl t/pgBackRest-LibC.t", {bShowOutputAsync => $bLogDetail});
-
-                # Load the module dynamically
-                require pgBackRest::LibC;
-                pgBackRest::LibC->import(qw(:debug));
-
-                # Do a basic test to make sure it installed correctly
-                if (&UVSIZE != 8)
+                if ($bSmart)
                 {
-                    confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                    &log(INFO, 'libC code has changed, library will be rebuilt');
                 }
 
-                # Also check the version number
-                my $strLibCVersion =
-                    BACKREST_VERSION =~ /dev$/ ?
-                        substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
-
-                if (libCVersion() ne $strLibCVersion)
-                {
-                    confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
-                }
-
-                utime($lTimestampLast, $lTimestampLast, $strMakeFile) or
-                    confess "unable to set time for ${strMakeFile}" . (defined($!) ? ":$!" : '');
+                executeTest("sudo rm -rf ${strLibCPath}");
+                executeTest('sudo rm -rf ' . $oVm->{&VM_U16}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
+                executeTest('sudo rm -rf ' . $oVm->{&VM_U16}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
             }
 
-            # Exit if only testing the C library
-            exit 0 if $bLibCOnly;
+            # Find the lastest modified time in the bin, lib dirs
+            my $lTimestampPackageLast = $lTimestampLibCLast;
+
+            $hManifest = fileManifest("${strBackRestBase}/bin");
+
+            foreach my $strFile (sort(keys(%{$hManifest})))
+            {
+                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampPackageLast)
+                {
+                    $lTimestampPackageLast = $hManifest->{$strFile}{modification_time};
+                }
+            }
+
+            $hManifest = fileManifest("${strBackRestBase}/lib");
+
+            foreach my $strFile (sort(keys(%{$hManifest})))
+            {
+                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampPackageLast)
+                {
+                    $lTimestampPackageLast = $hManifest->{$strFile}{modification_time};
+                }
+            }
+
+            # Rebuild if the modification time of the makefile does not equal the latest file in libc
+            if (!$bNoPackage &&
+                (!$bSmart || !fileExists($strPackageSmart) || fileStat($strPackageSmart)->mtime != $lTimestampPackageLast))
+            {
+                if ($bSmart)
+                {
+                    &log(INFO, 'libC or Perl code has changed, packages will be rebuilt');
+                }
+
+                executeTest("sudo rm -rf ${strPackagePath}");
+            }
+
+            # Loop through VMs to do the C Library builds
+            my $bLogDetail = $strLogLevel eq 'detail';
+            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm eq VM_HOST ? ($strVm) : ($strVm, VM_HOST));
+
+            foreach my $strBuildVM (sort(@stryBuildVm))
+            {
+                my $strBuildPath = "${strLibCPath}/${strBuildVM}";
+
+                if (!fileExists($strBuildPath))
+                {
+                    &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
+
+                    executeTest(
+                        "docker run -itd -h test-build --name=test-build" .
+                        " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
+
+                    filePathCreate($strBuildPath, undef, true, true);
+                    executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
+
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'",
+                        {bShowOutputAsync => $bLogDetail});
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath} test", {bShowOutputAsync => $bLogDetail});
+                    executeTest(
+                        "docker exec -i test-build " .
+                        "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+
+                    executeTest("docker rm -f test-build");
+
+                    if ($strBuildVM eq VM_HOST)
+                    {
+                        executeTest("sudo make -C ${strBuildPath} install");
+
+                        # Load the module dynamically
+                        require pgBackRest::LibC;
+                        pgBackRest::LibC->import(qw(:debug));
+
+                        # Do a basic test to make sure it installed correctly
+                        if (&UVSIZE != 8)
+                        {
+                            confess &log(ERROR, 'UVSIZE in C library does not equal 8');
+                        }
+
+                        # Also check the version number
+                        my $strLibCVersion =
+                            BACKREST_VERSION =~ /dev$/ ?
+                                substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
+
+                        if (libCVersion() ne $strLibCVersion)
+                        {
+                            confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+                        }
+                    }
+                }
+            }
+
+            # Write files to indicate the last time a build was successful
+            fileStringWrite($strLibCSmart, undef, false);
+            utime($lTimestampLibCLast, $lTimestampLibCLast, $strLibCSmart) or
+                confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
+
+            # Loop through VMs to do the package builds
+            if (!$bNoPackage)
+            {
+                my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
+
+                foreach my $strBuildVM (sort(@stryBuildVm))
+                {
+                    my $strBuildPath = "${strPackagePath}/${strBuildVM}/src";
+
+                    if (!fileExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                    {
+                        &log(INFO, "Build package for ${strBuildVM} (${strBuildPath})");
+
+                        executeTest(
+                            "docker run -itd -h test-build --name=test-build" .
+                            " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
+
+                        filePathCreate($strBuildPath, undef, true, true);
+                        executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
+                        executeTest(
+                            "docker exec -i test-build " .
+                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER . " ${strBuildPath}");
+
+                        # If dev build then override then disable static release date used for reproducibility.
+                        if ($bVersionDev)
+                        {
+                            my $strRules = fileStringRead("${strBuildPath}/debian/rules");
+
+                            $strRules =~ s/release-date-static\=y/release-date-static\=n/g;
+
+                            fileStringWrite("${strBuildPath}/debian/rules", $strRules, false);
+                        }
+
+                        # Update changelog to add experimental version
+                        fileStringWrite("${strBuildPath}/debian/changelog",
+                            "pgbackrest (${strVersionBase}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%e%H%M%S", gmtime) .
+                                ") experimental; urgency=medium\n" .
+                            "\n" .
+                            '  * Automated experimental ' . ($bVersionDev ? 'development' : 'production') . " build.\n" .
+                            "\n" .
+                            ' -- David Steele <david@pgbackrest.org>  ' . strftime("%a, %e %b %Y %H:%M:%S %z", gmtime) . "\n\n" .
+                            fileStringRead("${strBuildPath}/debian/changelog"), false);
+
+                        executeTest(
+                            "docker exec -i test-build " .
+                            "bash -c 'cd ${strBuildPath} && debuild -i -us -uc -b'");
+
+                        executeTest(
+                            "docker exec -i test-build " .
+                            "bash -c 'rm -f ${strPackagePath}/${strBuildVM}/*.build ${strPackagePath}/${strBuildVM}/*.changes" .
+                            " ${strPackagePath}/${strBuildVM}/pgbackrest-doc*'");
+
+                        executeTest("docker rm -f test-build");
+                    }
+                }
+
+                # Write files to indicate the last time a build was successful
+                if (!$bNoPackage)
+                {
+                    fileStringWrite($strPackageSmart, undef, false);
+                    utime($lTimestampPackageLast, $lTimestampPackageLast, $strPackageSmart) or
+                        confess "unable to set time for ${strPackageSmart}" . (defined($!) ? ":$!" : '');
+                }
+            }
+
+            # Exit if only testing builds
+            exit 0 if $bBuildOnly;
         }
 
         # Determine which tests to run
@@ -365,65 +554,7 @@ eval
             confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
         }
 
-        # Execute tests
-        #-----------------------------------------------------------------------------------------------------------------------
-        my $iTestFail = 0;
-        my $oyProcess = [];
-        my $strCoveragePath = "${strTestPath}/cover_db";
-
-        if (!$bDryRun || $bVmOut)
-        {
-            containerRemove('test-([0-9]+|build)');
-
-            for (my $iVmIdx = 0; $iVmIdx < 8; $iVmIdx++)
-            {
-                push(@{$oyProcess}, undef);
-            }
-
-            executeTest("sudo rm -rf ${strTestPath}/*");
-            filePathCreate($strCoveragePath, '0770', true, true);
-        }
-
-        # Build the C Library in container
-        #-----------------------------------------------------------------------------------------------------------------------
-        if (!$bDryRun)
-        {
-            my $bLogDetail = $strLogLevel eq 'detail';
-            my @stryBuildVm = $strVm eq VM_ALL ? (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12) : ($strVm);
-
-            foreach my $strBuildVM (sort(@stryBuildVm))
-            {
-                my $strBuildPath = "${strBackRestBase}/test/.vagrant/libc/${strBuildVM}";
-
-                if (!fileExists($strBuildPath))
-                {
-                    executeTest(
-                        "docker run -itd -h test-build --name=test-build" .
-                        " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
-
-                    &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
-
-                    filePathCreate($strBuildPath, undef, true, true);
-                    executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
-
-                    executeTest(
-                        "docker exec -i test-build " .
-                        "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'");
-                    executeTest(
-                        "docker exec -i test-build " .
-                        "make -C ${strBuildPath}", {bSuppressStdErr => true});
-                    executeTest(
-                        "docker exec -i test-build " .
-                        "make -C ${strBuildPath} test");
-                    executeTest(
-                        "docker exec -i test-build " .
-                        "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
-
-                    executeTest("docker rm -f test-build");
-                }
-            }
-        }
-
+        # Excecute tests
         if ($bDryRun)
         {
             $iVmMax = 1;
