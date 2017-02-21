@@ -189,6 +189,10 @@
                     <release-item>
                         <p>The <setting>--libc-only</setting> option has been changed to <setting>--build-only</setting> now that packages builds have been added.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improved formatting of <code>testResult()</code> output.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

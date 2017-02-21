@@ -27,6 +27,7 @@ use pgBackRest::FileCommon;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # new
