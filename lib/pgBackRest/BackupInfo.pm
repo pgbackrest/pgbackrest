@@ -7,6 +7,7 @@ use parent 'pgBackRest::Common::Ini';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -207,13 +208,9 @@ sub reconstruct
         {name => 'iCatalogVersion', required => false},
     );
 
-
-    my $bBackupExists = false;
-
     # Check for backups that are not in FILE_BACKUP_INFO
     foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
     {
-        $backupExists = true;
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
 
         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
@@ -256,10 +253,7 @@ sub reconstruct
         }
     }
 
-    # # If there are no backups in the directory, the backup.info file does not yet exist and we are reconstructing, then create
-    # # the DB section
-    # if (!($bBackupExists && $bRequired && $self->{bExists}))
-    # If reconstructing
+    # If reconstructing, make sure the DB section is correct
     if (!$bRequired)
     {
         # If any database info is missing, then assert
@@ -272,12 +266,28 @@ sub reconstruct
         {
             $self->create($strDbVersion, $ullDbSysId, $iControlVersion, $iCatalogVersion, $bSave);
         }
-        # Else update the DB section if it does not match the current database and the current database is not already in the list
-        # CSHANG Since the manifest reconstruction only adds the database info to the DB section if it's DB-id is greater then if
-        # they reverted then is it OK to have 9.3-1, 9.4-2, 9.3-3? The system ULL should be different so this should be OK, but what about archive.info
+        # Else update the DB section if it does not match the current database
         else
         {
-            # CSHANG ???
+            # Turn off console logging to control when to display the error
+            logLevelSet(undef, OFF);
+
+            eval
+            {
+                $self->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $bRequired);
+                return true;
+            }
+            or do
+            {
+                # Confess unhandled errors
+                confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_BACKUP_MISMATCH);
+
+                # Update the DB section if it does not match the current database
+                $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false)+1);
+            };
+
+            # Reset the console logging
+            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
         }
     }
 

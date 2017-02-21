@@ -123,14 +123,8 @@ sub run
         executeTest('cp ' . $self->dataPath() . '/backup.pg_control_93.bin ' . $oHostDbMaster->dbBasePath() . '/' .
             DB_FILE_PGCONTROL);
 
-        # Remove the archive info file
-        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-
-# CSHANG Is the force test valid with stanza upgrade??? Don't think so - see notes in archiveInfo and backupInfo
-        # Run stanza-create with --force
-        $oHostBackup->stanzaCreate('test force fails for database mismatch with directory',
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .
-            ' --' . OPTION_FORCE});
+        $oHostBackup->stanzaCreate('fail on database mismatch without force option',
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Restore pg_control
         executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);

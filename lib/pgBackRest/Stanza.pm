@@ -156,7 +156,7 @@ sub stanzaCreate
     if ($iResult != 0)
     {
         &log(WARN, "unable to create stanza '" . optionGet(OPTION_STANZA) . "'");
-        &log(ERROR, $strResultMessage, $iResult);
+        confess &log(ERROR, $strResultMessage, $iResult);
     }
 
     # Return from function and log return values if any
@@ -297,8 +297,7 @@ sub infoFileCreate
         confess &log(ERROR, ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') .
             $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
     }
-print "DV: ". $self->{oDb}{strDbVersion}.", Ull: ". $self->{oDb}{ullDbSysId}."ConV: ". $self->{oDb}{iControlVersion}."Cat: ".
-    $self->{oDb}{iCatalogVersion}."\n";
+
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
@@ -330,8 +329,8 @@ print "DV: ". $self->{oDb}{strDbVersion}.", Ull: ". $self->{oDb}{ullDbSysId}."Co
                 {
                     $iResult = ERROR_FILE_INVALID;
                     $strResultMessage =
-                        ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') .
-                        ' invalid; to correct, use --force';
+                        ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') . "invalid\n" .
+                        'HINT: use stanza-upgrade if the database has been upgraded or use --force';
                 }
             }
             # If the hashes are the same, then don't save the file since it already exists and is valid

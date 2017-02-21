@@ -11,6 +11,7 @@ use parent 'pgBackRest::Common::Ini';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
 use File::Basename qw(dirname basename);
@@ -345,10 +346,30 @@ sub reconstruct
         $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
     }
     # Else if it does exist but does not match the current DB, then update the DB section
-    # CSHANG but what if they reverted, say we have 9.3-1, 9.4-2 and now 9.3-3 -- is that OK? Will it work (ULL should be different...)
     else
     {
-        $self->dbSectionSet($strCurrentDbVersion, $ullCurrentDbSysId, $self->dbHistoryIdGet(false)+1);
+        # Turn off console logging to control when to display the error
+        logLevelSet(undef, OFF);
+
+        eval
+        {
+            $self->check($strCurrentDbVersion, $ullCurrentDbSysId, false);
+            return true;
+        }
+        or do
+        {
+            # Reset the console logging
+            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+
+            # Confess unhandled errors
+            confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_ARCHIVE_MISMATCH);
+
+            # Update the DB section if it does not match the current database
+            $self->dbSectionSet($strCurrentDbVersion, $ullCurrentDbSysId, $self->dbHistoryIdGet(false)+1);
+        };
+
+        # Reset the console logging
+        logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
     }
 
     # Return from function and log return values if any
