@@ -493,6 +493,7 @@ eval
             if (!$bNoPackage)
             {
                 my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
+                filePathCreate($strPackagePath, undef, true, true);
 
                 foreach my $strBuildVM (sort(@stryBuildVm))
                 {
@@ -519,7 +520,8 @@ eval
                         {
                             my $strRules = fileStringRead("${strBuildPath}/debian/rules");
 
-                            $strRules =~ s/release-date-static\=y/release-date-static\=n/g;
+                            $strRules =~ s/\-\-var\=release-date-static\=y/\-\-var\=release-date-static\=n/g;
+                            $strRules =~ s/\-\-out\=html \-\-cache\-only/\-\-out\=html \-\-no\-exe/g;
 
                             fileStringWrite("${strBuildPath}/debian/rules", $strRules, false);
                         }

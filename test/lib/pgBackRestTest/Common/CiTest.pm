@@ -116,6 +116,7 @@ sub process
 
         # Add config options for tests that are not the very first one
         my $strConfigNotFirst = '--no-lint';
+        my $strConfigNotFirstOS = '--no-package';
 
         $strConfig .=
             "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\" PGB_TEST_PARAM=\"--module=" .
@@ -143,14 +144,14 @@ sub process
                     $strConfig .=
                         "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=${strDbVersion}\"" .
                             " PGB_TEST_PARAM=\"--module=full --test=real --db=${strDbVersion}" .
-                            " --process-max=2 ${strConfigNotFirst}\"\n";
+                            " --process-max=2 ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
                 }
             }
             else
             {
                 $strConfig .=
                     "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\"" .
-                        " PGB_TEST_PARAM=\"--module=full --test=${strTest} ${strConfigNotFirst}\"\n";
+                        " PGB_TEST_PARAM=\"--module=full --test=${strTest} ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
             }
         }
 
@@ -176,7 +177,7 @@ sub process
         "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?} \${PGB_BUILD_PARAM?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} --no-package \${PGB_TEST_PARAM?}\n";
+        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
 
     fileStringWrite("$self->{strBackRestBase}/.travis.yml", $strConfig, false);
 
