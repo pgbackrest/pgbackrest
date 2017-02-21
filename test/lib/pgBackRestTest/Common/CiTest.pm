@@ -89,6 +89,8 @@ sub process
         "\n" .
         "env:\n";
 
+    my $bFirst = true;
+
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
@@ -112,9 +114,13 @@ sub process
             }
         }
 
+        # Add config options for tests that are not the very first one
+        my $strConfigNotFirst = '--no-lint';
+
         $strConfig .=
             "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\" PGB_TEST_PARAM=\"--module=" .
-                join(' --module=', @stryModule) . "\"\n";
+                join(' --module=', @stryModule) . ($bFirst ? '' : " ${strConfigNotFirst}") . "\"\n";
+        $bFirst = false;
 
         # Now generate full tests
         my $hRealTest = undef;
@@ -137,14 +143,14 @@ sub process
                     $strConfig .=
                         "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=${strDbVersion}\"" .
                             " PGB_TEST_PARAM=\"--module=full --test=real --db=${strDbVersion}" .
-                            " --process-max=2\"\n";
+                            " --process-max=2 ${strConfigNotFirst}\"\n";
                 }
             }
             else
             {
                 $strConfig .=
                     "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\"" .
-                        " PGB_TEST_PARAM=\"--module=full --test=${strTest}\"\n";
+                        " PGB_TEST_PARAM=\"--module=full --test=${strTest} ${strConfigNotFirst}\"\n";
             }
         }
 
