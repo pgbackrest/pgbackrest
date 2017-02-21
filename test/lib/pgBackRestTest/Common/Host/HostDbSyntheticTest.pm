@@ -55,7 +55,7 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strImage => containerNamespace() . '/' . testRunGet()->vm() . "-db-test-pre",
+            strImage => containerRepo() . ':' . testRunGet()->vm() . "-db-test-pre",
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => true,

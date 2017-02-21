@@ -78,8 +78,8 @@ use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 
 # Defines the host VM (the VM that the containers run in)
-use constant VM_HOST                                                => VM_U16;
-    push @EXPORT, qw(VM_HOST);
+use constant VM_HOST_DEFAULT                                        => VM_U16;
+    push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # Lists valid VMs
 use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12);

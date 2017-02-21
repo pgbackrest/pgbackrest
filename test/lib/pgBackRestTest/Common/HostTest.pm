@@ -58,7 +58,8 @@ sub new
     executeTest("docker run -itd -h $self->{strName} --name=$self->{strContainer}" .
                 (defined($self->{strOption}) ? ' ' . $self->{strOption} : '') .
                 (defined($self->{stryMount}) ? ' -v ' . join(' -v ', @{$self->{stryMount}}) : '') .
-                " $self->{strImage}");
+                " $self->{strImage}",
+                {bSuppressStdErr => true});
 
     # Get IP Address
     $self->{strIP} = trim(executeTest("docker inspect --format '\{\{ .NetworkSettings.IPAddress \}\}' $self->{strContainer}"));

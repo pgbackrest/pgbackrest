@@ -316,7 +316,7 @@ pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee87
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -326,7 +326,7 @@ pg_data/pg_stat={"destination":"../pg_stat"}
 pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -341,7 +341,7 @@ pg_data/pg_stat={}
 pg_data/pg_tblspc={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -622,7 +622,7 @@ pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee87
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -632,7 +632,7 @@ pg_data/pg_stat={"destination":"../pg_stat"}
 pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -647,7 +647,7 @@ pg_data/pg_stat={}
 pg_data/pg_tblspc={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -761,17 +761,17 @@ P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     build level 3 paths/links
 P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = backup
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, 65536, [MODIFICATION-TIME-1], 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 0, 0, pg_data/base/32768/33001, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33001, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, 32768, [MODIFICATION-TIME-1], 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 0, 0, pg_data/base/32768/33000, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33000, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, 16384, [MODIFICATION-TIME-1], e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 0, 0, pg_data/base/16384/17000, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/16384/17000, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest, 8192, [MODIFICATION-TIME-2], 89373d9f2973502940de06bc5212489df3f8a912, 0, 0, pg_data/global/pg_control, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/global/pg_control, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, 8192, [MODIFICATION-TIME-1], 22c98d248ff548311eda88559e4a8405ed77c003, 0, 0, pg_data/base/1/12000, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/1/12000, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, 21, [MODIFICATION-TIME-2], 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, 0, pg_data/postgresql.conf, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/postgresql.conf, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, 5, [MODIFICATION-TIME-2], e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, 0, pg_data/pg_stat/global.stat, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/pg_stat/global.stat, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/32768/PG_VERSION, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/PG_VERSION, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/16384/PG_VERSION, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/16384/PG_VERSION, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/1/PG_VERSION, [undef], 0660, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/1/PG_VERSION, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/PG_VERSION, [undef], 0600, [USER-1], postgres, [TIMESTAMP], 1, [BACKUP-FULL-2], 1), strKey = pg_data/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, 65536, [MODIFICATION-TIME-1], 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 0, 0, pg_data/base/32768/33001, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33001, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, 32768, [MODIFICATION-TIME-1], 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 0, 0, pg_data/base/32768/33000, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33000, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, 16384, [MODIFICATION-TIME-1], e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 0, 0, pg_data/base/16384/17000, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/16384/17000, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest, 8192, [MODIFICATION-TIME-2], 89373d9f2973502940de06bc5212489df3f8a912, 0, 0, pg_data/global/pg_control, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/global/pg_control, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, 8192, [MODIFICATION-TIME-1], 22c98d248ff548311eda88559e4a8405ed77c003, 0, 0, pg_data/base/1/12000, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/1/12000, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, 21, [MODIFICATION-TIME-2], 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, 0, pg_data/postgresql.conf, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/postgresql.conf, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, 5, [MODIFICATION-TIME-2], e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, 0, pg_data/pg_stat/global.stat, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/pg_stat/global.stat, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/32768/PG_VERSION, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/16384/PG_VERSION, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/16384/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/1/PG_VERSION, [undef], 0660, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/1/PG_VERSION, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/PG_VERSION, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/PG_VERSION, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = backup
 P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --cmd-ssh=/usr/bin/ssh --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/spool/lock --log-path=[TEST_PATH]/db-master/spool/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup local
 P00  DEBUG:     Protocol::CommandMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --cmd-ssh=/usr/bin/ssh --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/spool/lock --log-path=[TEST_PATH]/db-master/spool/log --process=1 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=backup local, strId = local-1, strName = local, strRemoteType = none
@@ -906,7 +906,7 @@ restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.ma
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --repo-path=[TEST_PATH]/backup/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
-P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-3]
+P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
 P00   WARN: user bogus in manifest cannot be used for restore, set to [USER-1]
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
 P00   WARN: file link postgresql.conf will be restored as a file at the same location
@@ -1239,7 +1239,7 @@ pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -1248,7 +1248,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -1267,7 +1267,7 @@ pg_tblspc/1/[TS_PATH-1]={}
 pg_tblspc/1/[TS_PATH-1]/16384={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -1537,7 +1537,7 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -1547,7 +1547,7 @@ pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -1569,7 +1569,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -1708,7 +1708,7 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -1718,7 +1718,7 @@ pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -1740,7 +1740,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -1879,7 +1879,7 @@ pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -1889,7 +1889,7 @@ pg_data/pg_tblspc/1={"destination":"[TEST_PATH]/db-master/db/tablespace/ts1"}
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -1911,7 +1911,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -2145,7 +2145,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -2154,7 +2154,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -2173,7 +2173,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -2354,7 +2354,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"reference":"[BACKUP-INCR-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -2363,7 +2363,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -2382,7 +2382,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -2528,7 +2528,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -2537,7 +2537,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -2556,7 +2556,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -2695,7 +2695,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -2704,7 +2704,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -2723,7 +2723,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -2867,7 +2867,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -2876,7 +2876,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -2895,7 +2895,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -3045,7 +3045,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -3054,7 +3054,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -3073,7 +3073,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 
@@ -3556,7 +3556,7 @@ pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
-group="postgres"
+group="[GROUP-1]"
 master=false
 mode="0600"
 user="[USER-1]"
@@ -3565,7 +3565,7 @@ user="[USER-1]"
 pg_data/pg_tblspc/2={"destination":"[TEST_PATH]/db-master/db/tablespace/ts2-2"}
 
 [target:link:default]
-group="postgres"
+group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
@@ -3584,7 +3584,7 @@ pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
 
 [target:path:default]
-group="postgres"
+group="[GROUP-1]"
 mode="0700"
 user="[USER-1]"
 

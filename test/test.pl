@@ -38,8 +38,10 @@ use pgBackRest::Version;
 use BackRestDoc::Custom::DocCustomRelease;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::CiTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::JobTest;
 use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
@@ -70,7 +72,7 @@ test.pl [options]
    --coverage           perform coverage analysis
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
-   --dev                enables --no-lint --smart --log-force --no-package
+   --dev                enable --no-lint --smart --no-package --vm-out --process-max=1
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -93,7 +95,7 @@ test.pl [options]
 ####################################################################################################################################
 # Command line parameters
 ####################################################################################################################################
-my $strLogLevel = 'info';
+my $strLogLevel = lc(INFO);
 my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
@@ -111,6 +113,7 @@ my $bQuiet = false;
 my $strDbVersion = 'minimal';
 my $bLogForce = false;
 my $strVm = VM_ALL;
+my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
@@ -127,6 +130,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'test-path=s' => \$strTestPath,
             'log-level=s' => \$strLogLevel,
             'vm=s' => \$strVm,
+            'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
             'vm-force' => \$bVmForce,
@@ -180,8 +184,9 @@ eval
     {
         $bNoLint = true;
         $bSmart = true;
-        $bLogForce = true;
         $bNoPackage = true;
+        $bVmOut = true;
+        $iProcessMax = 1;
     }
 
     ################################################################################################################################
@@ -225,17 +230,22 @@ eval
     {
         if ($strVm eq VM_ALL)
         {
-            &log(INFO, 'Set --vm=' . VM_U16 . ' for coverage testing');
-            $strVm = VM_U16;
+            &log(INFO, "Set --vm=${strVmHost} for coverage testing");
+            $strVm = $strVmHost;
         }
-        elsif ($strVm ne VM_U16)
+        elsif ($strVm ne $strVmHost)
         {
-            confess &log(ERROR, 'only --vm=' . VM_U16 . ' can be used for coverage testing');
+            confess &log(ERROR, "only --vm=${strVmHost} can be used for coverage testing");
         }
     }
 
     # Get the base backrest path
     my $strBackRestBase = dirname(dirname(abs_path($0)));
+
+    ################################################################################################################################
+    # Build CI configuration
+    ################################################################################################################################
+    (new pgBackRestTest::Common::CiTest($strBackRestBase))->process();
 
     ################################################################################################################################
     # Build Docker containers
@@ -310,6 +320,7 @@ eval
         # Clean up
         #-----------------------------------------------------------------------------------------------------------------------
         my $iTestFail = 0;
+        my $iTestRetry = 0;
         my $oyProcess = [];
         my $strCoveragePath = "${strTestPath}/cover_db";
 
@@ -362,8 +373,8 @@ eval
                 }
 
                 executeTest("sudo rm -rf ${strLibCPath}");
-                executeTest('sudo rm -rf ' . $oVm->{&VM_U16}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
-                executeTest('sudo rm -rf ' . $oVm->{&VM_U16}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
+                executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
+                executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
             }
 
             # Find the lastest modified time in the bin, lib dirs
@@ -403,40 +414,50 @@ eval
 
             # Loop through VMs to do the C Library builds
             my $bLogDetail = $strLogLevel eq 'detail';
-            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm eq VM_HOST ? ($strVm) : ($strVm, VM_HOST));
+            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm eq $strVmHost ? ($strVm) : ($strVm, $strVmHost));
 
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
                 my $strBuildPath = "${strLibCPath}/${strBuildVM}";
+                my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
 
                 if (!fileExists($strBuildPath))
                 {
                     &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
-                    executeTest(
-                        "docker run -itd -h test-build --name=test-build" .
-                        " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
+                    if ($bContainerExists)
+                    {
+                        executeTest(
+                            "docker run -itd -h test-build --name=test-build" .
+                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                            {bSuppressStdErr => true});
+                    }
 
                     filePathCreate($strBuildPath, undef, true, true);
                     executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
 
                     executeTest(
-                        "docker exec -i test-build " .
-                        "bash -c 'cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'",
+                        ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
+                        "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
+                        ($bContainerExists ? "'" : ''),
                         {bShowOutputAsync => $bLogDetail});
                     executeTest(
-                        "docker exec -i test-build " .
-                        "make -C ${strBuildPath}", {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                        ($bContainerExists ? 'docker exec -i test-build ' : '') .
+                        "make -C ${strBuildPath}",
+                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
                     executeTest(
-                        "docker exec -i test-build " .
+                        ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath} test", {bShowOutputAsync => $bLogDetail});
                     executeTest(
-                        "docker exec -i test-build " .
+                        ($bContainerExists ? 'docker exec -i test-build ' : 'sudo ') .
                         "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
 
-                    executeTest("docker rm -f test-build");
+                    if ($bContainerExists)
+                    {
+                        executeTest("docker rm -f test-build");
+                    }
 
-                    if ($strBuildVM eq VM_HOST)
+                    if ($strBuildVM eq $strVmHost)
                     {
                         executeTest("sudo make -C ${strBuildPath} install");
 
@@ -483,13 +504,15 @@ eval
 
                         executeTest(
                             "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerNamespace() . "/${strBuildVM}-build");
+                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                            {bSuppressStdErr => true});
 
                         filePathCreate($strBuildPath, undef, true, true);
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
                             "docker exec -i test-build " .
-                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER . " ${strBuildPath}");
+                            "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
+                            " ${strBuildPath}");
 
                         # If dev build then override then disable static release date used for reproducibility.
                         if ($bVersionDev)
@@ -576,45 +599,27 @@ eval
                 {
                     if (defined($$oyProcess[$iVmIdx]))
                     {
-                        my $oExecDone = $$oyProcess[$iVmIdx]{exec};
-                        my $strTestDone = $$oyProcess[$iVmIdx]{test};
-                        my $iTestDoneIdx = $$oyProcess[$iVmIdx]{idx};
+                        my ($bDone, $bFail) = $$oyProcess[$iVmIdx]->end();
 
-                        my $iExitStatus = $oExecDone->end(undef, $iVmMax == 1);
-
-                        if (defined($iExitStatus))
+                        if ($bDone)
                         {
-                            if ($bShowOutputAsync)
+                            if ($bFail)
                             {
-                                syswrite(*STDOUT, "\n");
-                            }
-
-                            my $fTestElapsedTime = ceil((gettimeofday() - $$oyProcess[$iVmIdx]{start_time}) * 100) / 100;
-
-                            if ($iExitStatus != 0)
-                            {
-                                &log(ERROR, "${strTestDone} (err${iExitStatus}-${fTestElapsedTime}s)" .
-                                     (defined($oExecDone->{strOutLog}) && !$bShowOutputAsync ?
-                                        ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
-                                $iTestFail++;
+                                if ($oyProcess->[$iVmIdx]->run())
+                                {
+                                    $iTestRetry++;
+                                    $iVmTotal++;
+                                }
+                                else
+                                {
+                                    $iTestFail++;
+                                    $$oyProcess[$iVmIdx] = undef;
+                                }
                             }
                             else
                             {
-                                &log(INFO, "${strTestDone} (${fTestElapsedTime}s)".
-                                     ($bVmOut && !$bShowOutputAsync ?
-                                         ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
+                                $$oyProcess[$iVmIdx] = undef;
                             }
-
-                            if (!$bNoCleanup)
-                            {
-                                my $strImage = 'test-' . $iVmIdx;
-                                my $strHostTestPath = "${strTestPath}/${strImage}";
-
-                                containerRemove("test-${iVmIdx}");
-                                executeTest("sudo rm -rf ${strHostTestPath}");
-                            }
-
-                            $$oyProcess[$iVmIdx] = undef;
                         }
                         else
                         {
@@ -634,107 +639,14 @@ eval
             {
                 if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
-                    my $oTest = $$oyTestRun[$iTestIdx];
+                    my $oJob = new pgBackRestTest::Common::JobTest(
+                        $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
+                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bCoverage, $bNoCleanup);
                     $iTestIdx++;
 
-                    my $strTest = sprintf('P%0' . length($iVmMax) . 'd-T%0' . length($iTestMax) . 'd/%0' .
-                                          length($iTestMax) . "d - ", $iVmIdx, $iTestIdx, $iTestMax) .
-                                          'vm=' . $$oTest{&TEST_VM} .
-                                          ', module=' . $$oTest{&TEST_MODULE} .
-                                          ', test=' . $$oTest{&TEST_NAME} .
-                                          (defined($$oTest{&TEST_RUN}) ? ', run=' . join(',', @{$$oTest{&TEST_RUN}}) : '') .
-                                          (defined($$oTest{&TEST_PROCESS}) ? ', process-max=' . $$oTest{&TEST_PROCESS} : '') .
-                                          (defined($$oTest{&TEST_DB}) ? ', db=' . $$oTest{&TEST_DB} : '');
-
-                    my $strImage = 'test-' . $iVmIdx;
-                    my $strDbVersion = (defined($$oTest{&TEST_DB}) ? $$oTest{&TEST_DB} : PG_VERSION_94);
-                    $strDbVersion =~ s/\.//;
-
-                    &log($bDryRun && !$bVmOut || $bShowOutputAsync ? INFO : DETAIL, "${strTest}" .
-                         ($bVmOut || $bShowOutputAsync ? "\n" : ''));
-
-                    my $strVmTestPath = '/home/' . TEST_USER . "/test/${strImage}";
-                    my $strHostTestPath = "${strTestPath}/${strImage}";
-
-                    # Don't create the container if this is a dry run unless output from the VM is required.  Ouput can be requested
-                    # to get more information about the specific tests that will be run.
-                    if (!$bDryRun || $bVmOut)
+                    if ($oJob->run())
                     {
-                        # Create host test directory
-                        filePathCreate($strHostTestPath, '0770');
-
-                        if ($$oTest{&TEST_CONTAINER})
-                        {
-                            executeTest(
-                                'docker run -itd -h ' . $$oTest{&TEST_VM} . "-test --name=${strImage}" .
-                                " -v ${strCoveragePath}:${strCoveragePath} " .
-                                " -v ${strHostTestPath}:${strVmTestPath}" .
-                                " -v ${strBackRestBase}:${strBackRestBase} " .
-                                containerNamespace() . '/' . $$oTest{&TEST_VM} .
-                                "-loop-test-pre");
-                        }
-                    }
-
-                    # Create run parameters
-                    my $strCommandRunParam = '';
-
-                    foreach my $iRunIdx (@{$$oTest{&TEST_RUN}})
-                    {
-                        $strCommandRunParam .= ' --run=' . $iRunIdx;
-                    }
-
-                    # Create command
-                    my $strCommand =
-                        ($$oTest{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-                        ($bCoverage ? testRunExe(
-                            abs_path($0), dirname($strCoveragePath), $strBackRestBase, $$oTest{&TEST_MODULE},
-                            $$oTest{&TEST_NAME}, defined($$oTest{&TEST_RUN}) ? $$oTest{&TEST_RUN} : 'all') :
-                            abs_path($0)) .
-                        " --test-path=${strVmTestPath}" .
-                        " --vm=$$oTest{&TEST_VM}" .
-                        " --vm-id=${iVmIdx}" .
-                        " --module=" . $$oTest{&TEST_MODULE} .
-                        ' --test=' . $$oTest{&TEST_NAME} .
-                        $strCommandRunParam .
-                        (defined($$oTest{&TEST_DB}) ? ' --db-version=' . $$oTest{&TEST_DB} : '') .
-                        (defined($$oTest{&TEST_PROCESS}) ? ' --process-max=' . $$oTest{&TEST_PROCESS} : '') .
-                        ($strLogLevel ne lc(INFO) ? " --log-level=${strLogLevel}" : '') .
-                        ' --pgsql-bin=' . $$oTest{&TEST_PGSQL_BIN} .
-                        ($bCoverage ? ' --coverage' : '') .
-                        ($bLogForce ? ' --log-force' : '') .
-                        ($bDryRun ? ' --dry-run' : '') .
-                        ($bVmOut ? ' --vm-out' : '') .
-                        ($bNoCleanup ? " --no-cleanup" : '');
-
-                    &log(DETAIL, $strCommand);
-
-                    if (!$bDryRun || $bVmOut)
-                    {
-                        my $fTestStartTime = gettimeofday();
-
-                        # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
-                        # Docker and the host VM.
-                        if ($$oTest{&TEST_CONTAINER})
-                        {
-                            executeTest("docker exec ${strImage} chown " . TEST_USER . ":postgres -R ${strVmTestPath}");
-                        }
-
-                        my $oExec = new pgBackRestTest::Common::ExecuteTest(
-                            $strCommand,
-                            {bSuppressError => true, bShowOutputAsync => $bShowOutputAsync});
-
-                        $oExec->begin();
-
-                        my $oProcess =
-                        {
-                            exec => $oExec,
-                            test => $strTest,
-                            idx => $iTestIdx,
-                            container => $$oTest{&TEST_CONTAINER},
-                            start_time => $fTestStartTime
-                        };
-
-                        $$oyProcess[$iVmIdx] = $oProcess;
+                        $$oyProcess[$iVmIdx] = $oJob;
                     }
 
                     $iVmTotal++;
@@ -766,10 +678,11 @@ eval
         else
         {
             &log(INFO, 'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' : "WITH ${iTestFail} FAILURE(S)") .
+                       ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
                        ' (' . (time() - $lStartTime) . 's)');
         }
 
-        exit 0;
+        exit $iTestFail == 0 ? 0 : 1;
     }
 
     ################################################################################################################################

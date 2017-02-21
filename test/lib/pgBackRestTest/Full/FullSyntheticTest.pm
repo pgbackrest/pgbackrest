@@ -484,7 +484,7 @@ sub run
         # Fix permissions on the restore log & remove lock files
         if ($bNeutralTest && !$bRemote)
         {
-            executeTest('sudo chown -R ' . TEST_USER . ':' . POSTGRES_GROUP . ' ' . $oHostBackup->logPath());
+            executeTest('sudo chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath());
             executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
         }
 

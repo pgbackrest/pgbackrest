@@ -165,6 +165,10 @@
             <release-test-list>
                 <release-feature-list>
                     <release-item>
+                        <p>Continuous integration using <id>travis-ci</id>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Automated builds of Debian packages for all supported distributions.</p>
                     </release-item>
 

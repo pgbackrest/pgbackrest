@@ -21,6 +21,7 @@ use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 
@@ -74,7 +75,7 @@ sub new
     $self->{strTestPath} = $strTestPath;
 
     # Set permissions on the test path
-    $self->executeSimple('chown -R ' . $self->userGet() . ':'. POSTGRES_GROUP . ' ' . $self->testPath(), undef, 'root');
+    $self->executeSimple('chown -R ' . $self->userGet() . ':'. TEST_GROUP . ' ' . $self->testPath(), undef, 'root');
 
     # Install Perl C Library
     my $oVm = vmGet();
