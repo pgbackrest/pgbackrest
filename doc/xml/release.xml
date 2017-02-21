@@ -154,6 +154,14 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.16dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improved the code and tests for <code>fileManifest()</code> to prevent a possible race condition when files are removed by the database while the manifest is being built.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-refactor-list>
                     <release-item>

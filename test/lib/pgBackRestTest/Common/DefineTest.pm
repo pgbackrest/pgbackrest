@@ -164,7 +164,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_TEST_NAME => 'manifest',
-                    &TESTDEF_TEST_TOTAL => 4,
+                    &TESTDEF_TEST_TOTAL => 5,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {
