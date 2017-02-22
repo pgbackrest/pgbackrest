@@ -122,7 +122,7 @@ my $bCoverage = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bDev = false;
-my $iRetry = 1;
+my $iRetry = 0;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
