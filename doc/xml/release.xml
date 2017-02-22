@@ -185,6 +185,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Added <setting>--retry</setting> option.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Added <setting>--no-package</setting> option to skip package builds.</p>
                     </release-item>
 

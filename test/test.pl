@@ -72,7 +72,7 @@ test.pl [options]
    --coverage           perform coverage analysis
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
-   --dev                enable --no-lint --smart --no-package --vm-out --process-max=1
+   --dev                enable --no-lint --smart --no-package --vm-out --process-max=1 --retry=0
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -122,6 +122,7 @@ my $bCoverage = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bDev = false;
+my $iRetry = 1;
 
 GetOptions ('q|quiet' => \$bQuiet,
             'version' => \$bVersion,
@@ -149,7 +150,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-package' => \$bNoPackage,
             'coverage' => \$bCoverage,
             'smart' => \$bSmart,
-            'dev' => \$bDev)
+            'dev' => \$bDev,
+            'retry=s' => \$iRetry)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -643,7 +645,8 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
-                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bCoverage, $bNoCleanup);
+                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bCoverage, $bNoCleanup,
+                        $iRetry);
                     $iTestIdx++;
 
                     if ($oJob->run())

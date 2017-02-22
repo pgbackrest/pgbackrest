@@ -58,6 +58,7 @@ sub new
         $self->{bShowOutputAsync},
         $self->{bCoverage},
         $self->{bNoCleanup},
+        $self->{iRetry},
     ) =
         logDebugParam
         (
@@ -77,6 +78,7 @@ sub new
             {name => 'bShowOutputAsync'},
             {name => 'bCoverage'},
             {name => 'bNoCleanup'},
+            {name => 'iRetry'},
         );
 
     # Set try to 0
@@ -106,9 +108,9 @@ sub run
     # Should the job be run?
     $self->{iTry}++;
 
-    if ($self->{iTry} <= 2)
+    if ($self->{iTry} <= ($self->{iRetry} + 1))
     {
-        if ($self->{iTry} > 1)
+        if ($self->{iTry} != 1 && $self->{iTry} == ($self->{iRetry} + 1))
         {
             $self->{strLogLevel} = lc(DEBUG);
         }
