@@ -299,7 +299,7 @@ sub infoFileCreate
     }
 
     # Turn off console logging to control when to display the error
-    logLevelSet(undef, OFF);
+    logDisable();
 
     eval
     {
@@ -356,18 +356,17 @@ sub infoFileCreate
                     defined($oInfo->{strArchiveClusterPath}) ? $oInfo->{strArchiveClusterPath} : $oInfo->{strBackupClusterPath});
             }
         }
-
+        # Reset the console logging
+        logEnable();
         return true;
     }
     or do
     {
-        # Capture error information
+        # Reset sonsole logging and capture error information
+        logEnable();
         $iResult = exceptionCode($EVAL_ERROR);
         $strResultMessage = exceptionMessage($EVAL_ERROR->message());
     };
-
-    # Reset the console logging
-    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # If a warning was issued, raise it
     if (defined($strWarningMsgArchive))
@@ -441,7 +440,7 @@ sub upgradeCheck
     my $strResultMessage = undef;
 
     # Turn off console logging to control when to display the error
-    logLevelSet(undef, OFF);
+    logDisable();
 
     eval
     {
@@ -449,10 +448,12 @@ sub upgradeCheck
             ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
                 $self->{oDb}{ullDbSysId}, true)
             : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, true);
+        logEnable();
         return true;
     }
     or do
     {
+        logEnable();
         # Confess unhandled errors
         confess $EVAL_ERROR if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != $iExpectedError);
 
@@ -460,9 +461,6 @@ sub upgradeCheck
         $iResult = $EVAL_ERROR->code();
         $strResultMessage = $EVAL_ERROR->message();
     };
-
-    # Reset the console logging
-    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # Throw an error if the result is not the expected value passed
     if ($iResult != 0 && $iResult != $iExpectedError)

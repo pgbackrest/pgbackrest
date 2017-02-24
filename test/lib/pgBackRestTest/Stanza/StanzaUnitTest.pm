@@ -114,26 +114,51 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaUpgrade"))
     {
-
         my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
-        $oArchiveInfo->create('93', '6999999999999999999', true);
+        $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
         my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
-        $oBackupInfo->create('93', '6999999999999999999', '937', '201306121', true);
+        $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
 
-        #logDisable();
-        $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); #logEnable();
-
-        #---------------------------------------------------------------------------------------------------------------------------
-
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
         my $oStanza = new pgBackRest::Stanza();
 
-        $self->testResult(
-            sub {$oStanza->stanzaUpgrade}, 0, 'success');
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oStanza->stanzaUpgrade()}, 0, 'successfully upgraded');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oStanza->stanzaUpgrade()}, 0, 'upgrade not required');
     }
 
     ################################################################################################################################
+    if ($self->begin("Stanza::upgradeCheck"))
+    {
+        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
+        $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
+        my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
+        $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
+
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+        my $oStanza = new pgBackRest::Stanza();
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
+            'archive upgrade needed');
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, true,
+            'backup upgrade needed');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oStanza->stanzaUpgrade();
+
+        $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath});
+        $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath});
+
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
+            'archive upgrade not necessary');
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, false,
+            'backup upgrade not necessary');
+    }
 }
 
 1;
