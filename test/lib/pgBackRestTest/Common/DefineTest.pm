@@ -68,6 +68,9 @@ use constant TESTDEF_MODULE_ARCHIVE_PUSH_FILE                       => TESTDEF_M
 use constant TESTDEF_MODULE_INFO                                    => 'Info';
     push @EXPORT, qw(TESTDEF_MODULE_INFO);
 
+use constant TESTDEF_MODULE_STANZA                                  => 'Stanza';
+    push @EXPORT, qw(TESTDEF_MODULE_STANZA);
+
 ################################################################################################################################
 # Define tests
 ################################################################################################################################
@@ -200,8 +203,20 @@ my $oTestDef =
             &TESTDEF_TEST_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
+            &TESTDEF_TEST_COVERAGE =>
+            {
+                &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_FULL,
+            },
+
             &TESTDEF_TEST =>
             [
+                {
+                    &TESTDEF_TEST_NAME => 'unit',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_CONTAINER => true,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_EXPECT => false,
+                },
                 {
                     &TESTDEF_TEST_NAME => 'create',
                     &TESTDEF_TEST_TOTAL => 2
