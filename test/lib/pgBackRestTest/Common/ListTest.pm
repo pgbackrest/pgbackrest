@@ -62,18 +62,14 @@ sub testListGet
         confess &log(ERROR, "${strVm} is not a valid VM");
     }
 
-    my $stryTestOS = [];
+    my @stryTestOS = VM_LIST;
 
-    if ($strVm eq 'all')
+    if ($strVm ne 'all')
     {
-        $stryTestOS = [VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12];
-    }
-    else
-    {
-        $stryTestOS = [$strVm];
+        @stryTestOS = ($strVm);
     }
 
-    foreach my $strTestOS (@{$stryTestOS})
+    foreach my $strTestOS (@stryTestOS)
     {
         foreach my $oModule (@{$$oTestDef{&TESTDEF_MODULE}})
         {

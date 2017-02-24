@@ -327,7 +327,7 @@ sub regExpReplaceAll
 
     # Replace the exe path/file with sh ' prepended
     my $strLineBefore = $strLine;
-    $strLine =~ s/sh -c '$self->{strCommandMain}/[BACKREST-BIN]/g;
+    $strLine =~ s/bash -l -c '$self->{strCommandMain}/[BACKREST-BIN]/g;
 
     # Replace the final ' if the previous expression made changes
     if ($strLine ne $strLineBefore)
@@ -364,12 +364,16 @@ sub regExpReplaceAll
 
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
+    $strLine = $self->regExpReplace($strLine, 'GROUP', 'group=\"[^"]+', '[^"]+$');
+    $strLine = $self->regExpReplace($strLine, 'GROUP', 'group for .* was not mapped to a name\, set to .+$', '[^ ]+$');
+    $strLine = $self->regExpReplace($strLine, 'GROUP', 'set ownership [^\:]+:[^ ]+', '[^\:]+$');
+    $strLine = $self->regExpReplace($strLine, 'GROUP', TEST_USER . '\, ' . TEST_GROUP, '[^ ]+$');
 
     $strLine = $self->regExpReplace($strLine, 'USER', 'strUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user=\"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', '^db-user=.+$', '[^=]+$');
-    $strLine = $self->regExpReplace($strLine, 'USER', 'was not mapped to a name\, set to .+$', '[^ ]+$');
+    $strLine = $self->regExpReplace($strLine, 'USER', 'user for .* was not mapped to a name\, set to .+$', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'set ownership [^\:]+', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'cannot be used for restore\, set to .+$', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', '-user=[a-z0-9_]+', '[^=]+$');

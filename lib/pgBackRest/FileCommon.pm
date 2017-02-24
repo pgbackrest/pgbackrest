@@ -392,9 +392,10 @@ sub fileManifestRecurse
     # Get a list of all files in the path (including .)
     my @stryFileList = fileList($strPathRead, undef, undef, $iDepth != 0);
     unshift(@stryFileList, '.');
+    my $hFileStat = fileManifestList($strPathRead, \@stryFileList);
 
     # Loop through all subpaths/files in the path
-    foreach my $strFile (@stryFileList)
+    foreach my $strFile (keys(%{$hFileStat}))
     {
         # Skip this file if it does not match the filter
         if (defined($strFilter) && $strFile ne $strFilter)
@@ -402,34 +403,54 @@ sub fileManifestRecurse
             next;
         }
 
-        my $strPathFile = "${strPathRead}/$strFile";
-        my $bCurrentDir = $strFile eq '.';
-
-        # Create the file and path names
-        if ($iDepth != 0)
-        {
-            if ($bCurrentDir)
-            {
-                $strFile = $strSubPath;
-                $strPathFile = $strPathRead;
-            }
-            else
-            {
-                $strFile = "${strSubPath}/${strFile}";
-            }
-        }
-
-        $hManifest->{$strFile} = fileManifestStat($strPathFile);
+        my $strManifestFile = $iDepth == 0 ? $strFile : ($strSubPath . ($strFile eq qw(.) ? '' : "/${strFile}"));
+        $hManifest->{$strManifestFile} = $hFileStat->{$strFile};
 
         # Recurse into directories
-        if ($hManifest->{$strFile}{type} eq 'd' && !$bCurrentDir)
+        if ($hManifest->{$strManifestFile}{type} eq 'd' && $strFile ne qw(.))
         {
-            fileManifestRecurse($strPath, $strFile, $iDepth + 1, $hManifest);
+            fileManifestRecurse($strPath, $strManifestFile, $iDepth + 1, $hManifest);
         }
     }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+sub fileManifestList
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+        $stryFile,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::fileManifestList', \@_,
+            {name => 'strPath', trace => true},
+            {name => 'stryFile', trace => true},
+        );
+
+    my $hFileStat = {};
+
+    foreach my $strFile (@{$stryFile})
+    {
+        $hFileStat->{$strFile} = fileManifestStat("${strPath}" . ($strFile eq qw(.) ? '' : "/${strFile}"));
+
+        if (!defined($hFileStat->{$strFile}))
+        {
+            delete($hFileStat->{$strFile});
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hFileStat', value => $hFileStat, trace => true}
+    );
 }
 
 sub fileManifestStat

@@ -58,7 +58,8 @@ sub new
     executeTest("docker run -itd -h $self->{strName} --name=$self->{strContainer}" .
                 (defined($self->{strOption}) ? ' ' . $self->{strOption} : '') .
                 (defined($self->{stryMount}) ? ' -v ' . join(' -v ', @{$self->{stryMount}}) : '') .
-                " $self->{strImage}");
+                " $self->{strImage}",
+                {bSuppressStdErr => true});
 
     # Get IP Address
     $self->{strIP} = trim(executeTest("docker inspect --format '\{\{ .NetworkSettings.IPAddress \}\}' $self->{strContainer}"));
@@ -125,7 +126,7 @@ sub execute
     $strCommand =~ s/'/'\\''/g;
 
     my $oExec = new pgBackRestTest::Common::ExecuteTest(
-        "docker exec -u ${strUser} $self->{strContainer} sh -c '${strCommand}'" , $oParam);
+        "docker exec -u ${strUser} $self->{strContainer} bash -l -c '${strCommand}'" , $oParam);
 
     # Return from function and log return values if any
     return logDebugReturn

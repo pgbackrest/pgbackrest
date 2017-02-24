@@ -70,7 +70,7 @@ sub new
 
     my $self = $class->SUPER::new(
         {
-            strImage => containerNamespace() . '/' . testRunGet()->vm() . "-db-${strDbVersion}-test-pre",
+            strImage => containerRepo() . ':' . testRunGet()->vm() . "-db-${strDbVersion}-test-pre",
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bStandby => $$oParam{bStandby},

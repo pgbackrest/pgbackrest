@@ -332,8 +332,8 @@ sub testResult
             if (!waitMore($oWait))
             {
                 confess
-                    'expected ' . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .
-                    " but actual was " . (defined($strActual) ? "\"${strActual}\"" : '[undef]');
+                    "expected:\n" . (defined($strExpected) ? "\"${strExpected}\"" : '[undef]') .
+                    "\nbut actual was:\n" . (defined($strActual) ? "\"${strActual}\"" : '[undef]');
             }
         }
         else

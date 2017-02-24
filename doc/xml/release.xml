@@ -153,6 +153,62 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.16dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improved the code and tests for <code>fileManifest()</code> to prevent a possible race condition when files are removed by the database while the manifest is being built.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Container executions now load the user's environment.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Continuous integration using <id>travis-ci</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Automated builds of Debian packages for all supported distributions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>--dev</setting> option to aggregate commonly used dev options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>--retry</setting> option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <setting>--no-package</setting> option to skip package builds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>C library and packages are built by default, added <setting>-smart</setting> option to rebuild only when file changes are detected.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>The <setting>--libc-only</setting> option has been changed to <setting>--build-only</setting> now that packages builds have been added.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved formatting of <code>testResult()</code> output.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
         <release date="2017-02-13" version="1.15" title="Refactoring and Bug Fixes">
             <release-core-list>
                 <release-bug-list>

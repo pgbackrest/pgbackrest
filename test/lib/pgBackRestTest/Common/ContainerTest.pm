@@ -35,28 +35,26 @@ use constant POSTGRES_GROUP_ID                                      => getgrnam(
 use constant POSTGRES_USER                                          => POSTGRES_GROUP;
 use constant POSTGRES_USER_ID                                       => POSTGRES_GROUP_ID;
 
-use constant TEST_GROUP                                             => POSTGRES_GROUP;
+use constant TEST_GROUP                                             => getgrgid($UID) . '';
     push @EXPORT, qw(TEST_GROUP);
-use constant TEST_GROUP_ID                                          => POSTGRES_GROUP_ID;
+use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
 
-use constant BACKREST_GROUP                                         => POSTGRES_GROUP;
-use constant BACKREST_GROUP_ID                                      => POSTGRES_GROUP_ID;
 use constant BACKREST_USER                                          => 'backrest';
     push @EXPORT, qw(BACKREST_USER);
 use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
 
 ####################################################################################################################################
-# Container namespace
+# Container repo
 ####################################################################################################################################
-sub containerNamespace
+sub containerRepo
 {
-    return BACKREST_EXE . qw(/) . TEST_USER;
+    return BACKREST_EXE . qw(/) . 'test';
 }
 
-push @EXPORT, qw(containerNamespace);
+push @EXPORT, qw(containerRepo);
 
 ####################################################################################################################################
 # User/group creation
@@ -67,7 +65,7 @@ sub groupCreate
     my $strName = shift;
     my $iId = shift;
 
-    return "RUN groupadd -g${iId} ${strName}";
+    return "groupadd -g${iId} ${strName}";
 }
 
 sub userCreate
@@ -81,11 +79,11 @@ sub userCreate
 
     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        return "RUN adduser -g${strGroup} -u${iId} -n ${strName}";
+        return "adduser -g${strGroup} -u${iId} -n ${strName}";
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
-        return "RUN adduser --uid=${iId} --ingroup=${strGroup} --disabled-password --gecos \"\" ${strName}";
+        return "adduser --uid=${iId} --ingroup=${strGroup} --disabled-password --gecos \"\" ${strName}";
     }
 
     confess &log(ERROR, "unable to create user for os '${strOS}'");
@@ -96,7 +94,7 @@ sub postgresGroupCreate
     my $strOS = shift;
 
     return "# Create PostgreSQL group\n" .
-           groupCreate($strOS, POSTGRES_GROUP, POSTGRES_GROUP_ID);
+           'RUN ' . groupCreate($strOS, POSTGRES_GROUP, POSTGRES_GROUP_ID);
 }
 
 sub postgresUserCreate
@@ -104,15 +102,16 @@ sub postgresUserCreate
     my $strOS = shift;
 
     return "# Create PostgreSQL user\n" .
-           userCreate($strOS, POSTGRES_USER, POSTGRES_USER_ID, POSTGRES_GROUP);
+           'RUN ' . userCreate($strOS, POSTGRES_USER, POSTGRES_USER_ID, POSTGRES_GROUP);
 }
 
 sub backrestUserCreate
 {
     my $strOS = shift;
+    my $strGroup = shift;
 
     return "# Create BackRest group\n" .
-           userCreate($strOS, BACKREST_USER, BACKREST_USER_ID, BACKREST_GROUP);
+           'RUN ' . userCreate($strOS, BACKREST_USER, BACKREST_USER_ID, $strGroup);
 }
 
 ####################################################################################################################################
@@ -125,9 +124,9 @@ sub backrestConfigCreate
     my $strGroup = shift;
 
     return "# Create pgbackrest.conf\n" .
-           "RUN touch /etc/pgbackrest.conf\n" .
-           "RUN chmod 640 /etc/pgbackrest.conf\n" .
-           "RUN chown ${strUser}:${strGroup} /etc/pgbackrest.conf";
+           "RUN touch /etc/pgbackrest.conf && \\\n" .
+           "    chmod 640 /etc/pgbackrest.conf && \\\n" .
+           "    chown ${strUser}:${strGroup} /etc/pgbackrest.conf";
 }
 
 ####################################################################################################################################
@@ -161,7 +160,8 @@ sub containerWrite
         }
     }
 
-    &log(INFO, "Building ${strImage} image...");
+    my $strTag = containerRepo() . ":${strImage}";
+    &log(INFO, "Building ${strTag} image...");
 
     $strScript =
         "# ${strTitle} Container\n" .
@@ -171,7 +171,7 @@ sub containerWrite
     # Write the image
     fileStringWrite("${strTempPath}/${strImage}", trim($strScript) . "\n", false);
     executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
-                " -f ${strTempPath}/${strImage} -t " . containerNamespace() . "/${strImage} ${strTempPath}",
+                " -f ${strTempPath}/${strImage} -t ${strTag} ${strTempPath}",
                 {bSuppressStdErr => true});
 }
 
@@ -187,24 +187,23 @@ sub sshSetup
 
     my $strScript =
         "# Setup SSH\n" .
-        "RUN mkdir /home/${strUser}/.ssh\n" .
-        "COPY id_rsa  /home/${strUser}/.ssh/id_rsa\n" .
-        "COPY id_rsa.pub  /home/${strUser}/.ssh/authorized_keys\n" .
-        "RUN echo 'Host *' > /home/${strUser}/.ssh/config\n" .
-        "RUN echo '    StrictHostKeyChecking no' >> /home/${strUser}/.ssh/config\n";
+        "RUN mkdir /home/${strUser}/.ssh && \\\n" .
+        "    cp /root/.ssh/id_rsa  /home/${strUser}/.ssh/id_rsa && \\\n" .
+        "    cp /root/.ssh/authorized_keys  /home/${strUser}/.ssh/authorized_keys && \\\n" .
+        "    cp /root/.ssh/config /home/${strUser}/.ssh/config && \\\n";
 
     if ($bControlMaster)
     {
         $strScript .=
-            "RUN echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config\n" .
-            "RUN echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config\n" .
-            "RUN echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config\n";
+            "    echo '    ControlMaster auto' >> /home/${strUser}/.ssh/config && \\\n" .
+            "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> /home/${strUser}/.ssh/config && \\\n" .
+            "    echo '    ControlPersist 30' >> /home/${strUser}/.ssh/config && \\\n";
     }
 
     $strScript .=
-        "RUN chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh\n" .
-        "RUN chmod 700 /home/${strUser}/.ssh\n" .
-        "RUN chmod 600 /home/${strUser}/.ssh/*";
+        "    chown -R ${strUser}:${strGroup} /home/${strUser}/.ssh && \\\n" .
+        "    chmod 700 /home/${strUser}/.ssh && \\\n" .
+        "    chmod 600 /home/${strUser}/.ssh/*";
 
     return $strScript;
 }
@@ -219,9 +218,9 @@ sub repoSetup
     my $strGroup = shift;
 
     return "# Setup repository\n" .
-           "RUN mkdir /var/lib/pgbackrest\n" .
-           "RUN chown -R ${strUser}:${strGroup} /var/lib/pgbackrest\n" .
-           "RUN chmod 750 /var/lib/pgbackrest";
+           "RUN mkdir /var/lib/pgbackrest && \\\n" .
+           "    chown -R ${strUser}:${strGroup} /var/lib/pgbackrest && \\\n" .
+           "    chmod 750 /var/lib/pgbackrest";
 }
 
 ####################################################################################################################################
@@ -240,15 +239,15 @@ sub sudoSetup
     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
         $strScript .=
-            "\nRUN yum -y install sudo\n" .
-            "\nRUN echo '%${strGroup}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/${strGroup}" .
-            "\nRUN sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
+            "\nRUN yum -y install sudo && \\" .
+            "\n    echo '%${strGroup}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/${strGroup} && \\" .
+            "\n    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\nRUN apt-get -y install sudo\n" .
-            "\nRUN echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
+            "\nRUN apt-get -y install sudo && \\\n" .
+            "\n    echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
     }
     else
     {
@@ -309,7 +308,7 @@ sub containerBuild
     # Remove old images on force
     if ($bVmForce)
     {
-        my $strRegExp = '^' . containerNamespace() . '/';
+        my $strRegExp = '^' . containerRepo();
 
         if ($strVm ne 'all')
         {
@@ -359,8 +358,12 @@ sub containerBuild
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
-                "RUN apt-get update\n" .
-                "RUN apt-get -y install openssh-server wget\n";
+                "RUN apt-get update && \\\n" .
+                "    apt-get -y install openssh-server wget\n";
+
+            $strScript .=
+                "\n# Fix root tty\n" .
+                "RUN sed -i 's/^mesg n/tty -s \\&\\& mesg n/g' /root/.profile\n";
         }
 
         # Add PostgreSQL packages
@@ -369,44 +372,54 @@ sub containerBuild
         if ($strOS eq VM_CO6)
         {
             $strScript .=
-                "RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
+                "RUN rpm -ivh http://yum.postgresql.org/9.0/redhat/rhel-6-x86_64/pgdg-centos90-9.0-5.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-3.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
         }
         elsif ($strOS eq VM_CO7)
         {
             $strScript .=
-                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm\n" .
-                "RUN rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
+                "RUN rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-7-x86_64/pgdg-centos93-9.3-3.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-3.noarch.rpm && \\\n" .
+                "    rpm -ivh http://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
                 "RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main' >> /etc/apt/sources.list.d/pgdg.list\n" .
-                "RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -\n" .
-                "RUN apt-get update";
+                $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
+                "    apt-get update";
         }
 
         $strScript .=
             "\n\n# Regenerate SSH keys\n" .
-            "RUN rm -f /etc/ssh/ssh_host_rsa_key*\n" .
-            "RUN ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
+            "RUN rm -f /etc/ssh/ssh_host_rsa_key* && \\\n" .
+            "    ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
 
         $strScript .=
             "\n\n# Add banner to make sure protocol ignores it\n" .
-            "RUN echo '***********************************************' >  /etc/issue.net\n" .
-            "RUN echo 'Sample banner to make sure banners are skipped.' >> /etc/issue.net\n" .
-            "RUN echo ''                                                >> /etc/issue.net\n" .
-            "RUN echo 'More banner after a blank line.'                 >> /etc/issue.net\n" .
-            "RUN echo '***********************************************' >> /etc/issue.net\n" .
-            "RUN echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
+            "RUN echo '***********************************************' >  /etc/issue.net && \\\n" .
+            "    echo 'Sample banner to make sure banners are skipped.' >> /etc/issue.net && \\\n" .
+            "    echo ''                                                >> /etc/issue.net && \\\n" .
+            "    echo 'More banner after a blank line.'                 >> /etc/issue.net && \\\n" .
+            "    echo '***********************************************' >> /etc/issue.net && \\\n" .
+            "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
+
+        # Copy ssh keys
+        $strScript .=
+            "\n\n# Copy ssh keys to root\n" .
+            "RUN mkdir -m 700 -p /root/.ssh\n" .
+            "COPY id_rsa  /root/.ssh/id_rsa\n" .
+            "COPY id_rsa.pub  /root/.ssh/authorized_keys\n" .
+            "RUN echo 'Host *' > /root/.ssh/config && \\\n" .
+            "    echo '    StrictHostKeyChecking no' >> /root/.ssh/config && \\\n" .
+            "    chmod 600 /root/.ssh/*";
 
         # Create PostgreSQL Group
         $strScript .= "\n\n" . postgresGroupCreate($strOS);
@@ -414,9 +427,10 @@ sub containerBuild
         # Create test user
         $strScript .=
             "\n\n# Create test user\n" .
-            userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . "\n" .
-            'RUN mkdir -m 750 /home/' . TEST_USER . "/test\n" .
-            'RUN chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . '/test';
+            'RUN ' . groupCreate($strOS, TEST_GROUP, TEST_GROUP_ID) . " && \\\n" .
+            '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . " && \\\n" .
+            '    mkdir -m 750 /home/' . TEST_USER . "/test && \\\n" .
+            '    chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . '/test';
 
         # Suppress dpkg interactive output
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -453,7 +467,7 @@ sub containerBuild
 
         # Base pre image
         ###########################################################################################################################
-        $strImageParent = containerNamespace() . "/${strOS}-base";
+        $strImageParent = containerRepo() . ":${strOS}-base";
         $strImage = "${strOS}-base-pre";
 
         # Install Perl packages
@@ -465,19 +479,22 @@ sub containerBuild
 
         # Build image
         ###########################################################################################################################
-        $strImageParent = containerNamespace() . "/${strOS}-base-pre";
+        $strImageParent = containerRepo() . ":${strOS}-base-pre";
         $strImage = "${strOS}-build";
 
         # Install Perl packages
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript =
-                "RUN apt-get install -y gcc make\n";
+                "# Install package build tools and package source\n" .
+                "RUN apt-get install -y devscripts build-essential lintian git libxml-checker-perl txt2man debhelper && \\\n" .
+                "    git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src\n";
         }
         else
         {
             $strScript =
-                "RUN yum install -y gcc make perl-ExtUtils-MakeMaker perl-Test-Simple\n";
+                "# Install package build tools and package source\n" .
+                "RUN yum install -y gcc make perl-ExtUtils-MakeMaker perl-Test-Simple git\n";
         }
 
         # Write the image
@@ -496,17 +513,20 @@ sub containerBuild
         {
             push(@stryDbBuild, @{$$oOS{&VM_DB_MINIMAL}});
         }
-        else
+        elsif ($strDbVersionBuild ne 'none')
         {
             push(@stryDbBuild, $strDbVersionBuild);
         }
 
         # Merge db versions required for docs
-        if (defined($$oOS{&VM_DB_DOC}))
+        if ($strDbVersionBuild eq 'all' || $strDbVersionBuild eq 'minimal')
         {
-            @stryDbBuild = keys %{{map {($_ => 1)}                  ## no critic (BuiltinFunctions::ProhibitVoidMap)
-                (@stryDbBuild, @{$$oOS{&VM_DB_DOC}})}};
-            $bDocBuild = true;
+            if (defined($$oOS{&VM_DB_DOC}))
+            {
+                @stryDbBuild = keys %{{map {($_ => 1)}                  ## no critic (BuiltinFunctions::ProhibitVoidMap)
+                    (@stryDbBuild, @{$$oOS{&VM_DB_DOC}})}};
+                $bDocBuild = true;
+            }
         }
 
         foreach my $strDbVersion (sort(@stryDbBuild))
@@ -517,7 +537,7 @@ sub containerBuild
 
             my $bDocBuildVersion = ($bDocBuild && grep(/^$strDbVersion$/, @{$$oOS{&VM_DB_DOC}}));
 
-            $strImageParent = containerNamespace() . "/${strOS}-base";
+            $strImageParent = containerRepo() . ":${strOS}-base";
             $strImage = "${strOS}-db-${strDbVersion}";
 
             # Create PostgreSQL User
@@ -530,8 +550,8 @@ sub containerBuild
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 $strScript .=
-                    "\nRUN apt-get install -y postgresql-${strDbVersion}" .
-                    "\nRUN pg_dropcluster --stop ${strDbVersion} main";
+                    "\nRUN apt-get install -y postgresql-${strDbVersion} && \\" .
+                    "\n    pg_dropcluster --stop ${strDbVersion} main";
             }
             elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
@@ -547,7 +567,7 @@ sub containerBuild
             ########################################################################################################################
             if ($bDocBuildVersion)
             {
-                $strImageParent = containerNamespace() . "/${strOS}-db-${strDbVersion}";
+                $strImageParent = containerRepo() . ":${strOS}-db-${strDbVersion}";
                 $strImage = "${strOS}-db-${strDbVersion}-doc";
 
                 # Install SSH key
@@ -562,7 +582,7 @@ sub containerBuild
 
             # Db test image
             ########################################################################################################################
-            $strImageParent = containerNamespace() . "/${strOS}-db-${strDbVersion}";
+            $strImageParent = containerRepo() . ":${strOS}-db-${strDbVersion}";
             $strImage = "${strOS}-db-${strDbVersion}-test";
 
             # Install SSH key
@@ -574,7 +594,7 @@ sub containerBuild
 
         # Db test image (for synthetic tests)
         ########################################################################################################################
-        $strImageParent = containerNamespace() . "/${strOS}-base";
+        $strImageParent = containerRepo() . ":${strOS}-base";
         $strImage = "${strOS}-db-test";
 
         # Install SSH key
@@ -585,15 +605,15 @@ sub containerBuild
 
         # Loop test image
         ########################################################################################################################
-        $strImageParent = containerNamespace() . "/${strOS}-base";
+        $strImageParent = containerRepo() . ":${strOS}-base";
         $strImage = "${strOS}-loop-test";
 
         # Create BackRest User
-        $strScript = backrestUserCreate($strOS);
+        $strScript = backrestUserCreate($strOS, TEST_GROUP);
 
         # Install SSH key
         $strScript .=
-            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+            "\n\n" . sshSetup($strOS, BACKREST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
         # Install SSH key
         $strScript .=
@@ -612,34 +632,29 @@ sub containerBuild
 
         # Backup image
         ###########################################################################################################################
-        $strImageParent = containerNamespace() . "/${strOS}-base";
-        $strImage = "${strOS}-backup";
         my $strTitle = "Backup";
-
-        # Create BackRest User
-        $strScript = backrestUserCreate($strOS);
-
-        # Install SSH key
-        $strScript .=
-            "\n\n" . sshSetup($strOS, BACKREST_USER, BACKREST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
-
-        # Write the image
-        containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bVmForce,
-                       $bDocBuild ? undef : true, $bDocBuild ? undef : true);
 
         # Backup Doc image
         ###########################################################################################################################
         if ($bDocBuild)
         {
-            $strImageParent = containerNamespace() . "/${strOS}-backup";
+            $strImageParent = containerRepo() . ":${strOS}-base";
             $strImage = "${strOS}-backup-doc";
 
+            # Create BackRest User
+            $strScript = backrestUserCreate($strOS, POSTGRES_GROUP);
+
+            # Install SSH key
+            $strScript .=
+                "\n\n" . sshSetup($strOS, BACKREST_USER, POSTGRES_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+
             # Create configuration file
-            $strScript = backrestConfigCreate($strOS, BACKREST_USER, BACKREST_GROUP);
+            $strScript .=
+                "\n\n" . backrestConfigCreate($strOS, BACKREST_USER, POSTGRES_GROUP);
 
             # Setup repository
             $strScript .=
-                "\n\n" . repoSetup($strOS, BACKREST_USER, BACKREST_GROUP);
+                "\n\n" . repoSetup($strOS, BACKREST_USER, POSTGRES_GROUP);
 
             # Setup sudo
             $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
@@ -650,12 +665,19 @@ sub containerBuild
 
         # Backup Test image
         ###########################################################################################################################
-        $strImageParent = containerNamespace() . "/${strOS}-backup";
+        $strImageParent = containerRepo() . ":${strOS}-base";
         $strImage = "${strOS}-backup-test";
 
+        # Create BackRest User
+        $strScript = backrestUserCreate($strOS, TEST_GROUP);
+
+        # Install SSH key
+        $strScript .=
+            "\n\n" . sshSetup($strOS, BACKREST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+
         # Make test user home readable
-        $strScript =
-            "# Make " . TEST_USER . " home dir readable\n" .
+        $strScript .=
+            "\n\n# Make " . TEST_USER . " home dir readable\n" .
             'RUN chmod g+r,g+x /home/' . TEST_USER;
 
         # Write the image
