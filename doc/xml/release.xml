@@ -205,6 +205,10 @@
                     <release-item>
                         <p>Improved formatting of <code>testResult()</code> output.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Temporarily disable flapping keep-alive test.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
