@@ -72,7 +72,8 @@ test.pl [options]
    --coverage           perform coverage analysis
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
-   --dev                enable --no-lint --smart --no-package --vm-out --process-max=1 --retry=0
+   --no-ci-config       don't overwrite the current continuous integration config
+   --dev                --no-lint --smart --no-package --vm-out --process-max=1 --retry=0 --ci-no-config
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -121,6 +122,7 @@ my $bBuildOnly = false;
 my $bCoverage = false;
 my $bSmart = false;
 my $bNoPackage = false;
+my $bNoCiConfig = false;
 my $bDev = false;
 my $iRetry = 0;
 
@@ -148,6 +150,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-lint' => \$bNoLint,
             'build-only' => \$bBuildOnly,
             'no-package' => \$bNoPackage,
+            'no-ci-config' => \$bNoCiConfig,
             'coverage' => \$bCoverage,
             'smart' => \$bSmart,
             'dev' => \$bDev,
@@ -187,6 +190,7 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
+        $bNoCiConfig = true;
         $bVmOut = true;
         $iProcessMax = 1;
     }
@@ -245,11 +249,6 @@ eval
     my $strBackRestBase = dirname(dirname(abs_path($0)));
 
     ################################################################################################################################
-    # Build CI configuration
-    ################################################################################################################################
-    (new pgBackRestTest::Common::CiTest($strBackRestBase))->process();
-
-    ################################################################################################################################
     # Build Docker containers
     ################################################################################################################################
     if ($bVmBuild)
@@ -263,6 +262,12 @@ eval
     ################################################################################################################################
     if (!defined($iVmId))
     {
+        # Build CI configuration
+        if (!$bNoCiConfig)
+        {
+            (new pgBackRestTest::Common::CiTest($strBackRestBase))->process();
+        }
+
         # Load the doc module dynamically since it is not supported on all systems
         require BackRestDoc::Common::Doc;
         BackRestDoc::Common::Doc->import();
