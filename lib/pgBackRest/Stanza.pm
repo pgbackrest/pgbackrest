@@ -363,7 +363,7 @@ sub infoFileCreate
     }
     or do
     {
-        # Reset sonsole logging and capture error information
+        # Reset console logging and capture error information
         logEnable();
         $iResult = exceptionCode($EVAL_ERROR);
         $strResultMessage = exceptionMessage($EVAL_ERROR->message());
@@ -455,25 +455,20 @@ sub upgradeCheck
     or do
     {
         logEnable();
+
         # Confess unhandled errors
-        confess $EVAL_ERROR if (!isException($EVAL_ERROR) || $EVAL_ERROR->code() != $iExpectedError);
+        confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != $iExpectedError);
 
-        # If this is a backrest error then capture the last code and message
-        $iResult = $EVAL_ERROR->code();
-        $strResultMessage = $EVAL_ERROR->message();
+        # Capture the result which will be the expected error, meaning an upgrade is needed
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
     };
-
-    # Throw an error if the result is not the expected value passed
-    if ($iResult != 0 && $iResult != $iExpectedError)
-    {
-        confess &log(ERROR, $strResultMessage, $iResult);
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bResult', value => ($iResult != 0 ? true : false)},
+        {name => 'bResult', value => ($iResult == $iExpectedError ? true : false)},
     );
 }
 

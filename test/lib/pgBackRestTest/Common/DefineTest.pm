@@ -221,6 +221,10 @@ my $oTestDef =
                     &TESTDEF_TEST_NAME => 'create',
                     &TESTDEF_TEST_TOTAL => 2
                 },
+                # {
+                #     &TESTDEF_TEST_NAME => 'upgrade',
+                #     &TESTDEF_TEST_TOTAL => 2
+                # },
             ]
         },
         # Archive tests
