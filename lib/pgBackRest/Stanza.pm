@@ -356,6 +356,7 @@ sub infoFileCreate
                     defined($oInfo->{strArchiveClusterPath}) ? $oInfo->{strArchiveClusterPath} : $oInfo->{strBackupClusterPath});
             }
         }
+
         # Reset the console logging
         logEnable();
         return true;
@@ -431,7 +432,7 @@ sub upgradeCheck
         logDebugParam
         (
             __PACKAGE__ . '->upgradeCheck', \@_,
-            {name => 'oInfo', trace => true},
+            {name => 'oInfo'},
             {name => 'strPathType'},
             {name => 'iExpectedError'},
         );

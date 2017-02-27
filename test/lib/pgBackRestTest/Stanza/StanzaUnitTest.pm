@@ -133,23 +133,44 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::upgradeCheck"))
     {
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
-        $oArchiveInfo->create('9.3', '6999999999999999999', true);
-
-        my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
-        $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
-
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
         my $oStanza = new pgBackRest::Stanza();
 
-        #---------------------------------------------------------------------------------------------------------------------------
+        # Create the archive file with current data
+        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
+        $oArchiveInfo->create('9.4', 6353949018581704918, true);
+
+        # Create the backup file with outdated data
+        my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
+        $oBackupInfo->create('9.3', 6999999999999999999, '937', '201306121', true);
+
+        # Confirm upgrade is needed for backup
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, true,
+            'backup upgrade needed');
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
+            'archive upgrade not needed');
+
+        # Change archive file to contain outdated data
+        $oArchiveInfo->create('9.3', 6999999999999999999, true);
+
+        # Confirm upgrade is needed for both
         $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
             'archive upgrade needed');
         $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, true,
             'backup upgrade needed');
 
+        # Change the backup file to contain current data
+        $oBackupInfo->create('9.4', 6353949018581704918, '942', '201409291', true);
+
+        # Confirm upgrade is needed for archive
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, false,
+            'backup upgrade not needed');
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
+            'archive upgrade needed');
+
         #---------------------------------------------------------------------------------------------------------------------------
-        $oStanza->stanzaUpgrade();
+        # Perform an upgrade and then confirm upgrade is not necessary
+        $oStanza->process();
 
         $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath});
         $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath});
@@ -158,6 +179,20 @@ sub run
             'archive upgrade not necessary');
         $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, false,
             'backup upgrade not necessary');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Change the DB data
+        $oStanza->{oDb}{strDbVersion} = '9.3';
+        $oStanza->{oDb}{ullDbSysId} = 6999999999999999999;
+
+        # Pass an expected error that is different than the actual error and confirm an error is thrown
+        $self->testException(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ASSERT)}, ERROR_ARCHIVE_MISMATCH,
+            "WAL segment version 9.3 does not match archive version 9.4\n" .
+            "WAL segment system-id 6999999999999999999 does not match archive system-id 6353949018581704918\n" .
+            "HINT: are you archiving to the correct stanza?");
+        $self->testException(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_ASSERT)}, ERROR_BACKUP_MISMATCH,
+            "database version = 9.3, system-id 6999999999999999999 does not match backup version = 9.4, " .
+            "system-id = 6353949018581704918\nHINT: is this the correct stanza?");
     }
 }
 
