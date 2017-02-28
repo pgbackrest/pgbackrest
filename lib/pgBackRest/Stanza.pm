@@ -190,19 +190,27 @@ sub stanzaUpgrade
     # Get the archive info and backup info files; if either does not exist an error will be thrown
     my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE));
     my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    my $bBackupUpgraded = false;
+    my $bArchiveUpgraded = false;
 
     # If the DB section does not match, then upgrade
-    if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH) ||
-        $self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
+    if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH))
     {
         $oBackupInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
             $self->{oDb}{ullDbSysId}, $oBackupInfo->dbHistoryIdGet() + 1);
         $oBackupInfo->save();
+        $bBackupUpgraded = true;
+    }
 
+    if ($self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
+    {
         $oArchiveInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
         $oArchiveInfo->save();
+        $bArchiveUpgraded = true;
     }
-    else
+
+    # If neither file needed upgrading then provide informational meesage that an upgrade was not necessary
+    if (!($bBackupUpgraded || $bArchiveUpgraded))
     {
         &log(INFO, "the stanza data is already up to date");
     }
