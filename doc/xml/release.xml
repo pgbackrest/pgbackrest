@@ -155,6 +155,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.16dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where tables over 1GB would report page checksum errors after the first segment.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Improved the code and tests for <code>fileManifest()</code> to prevent a possible race condition when files are removed by the database while the manifest is being built.</p>

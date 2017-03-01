@@ -154,6 +154,18 @@ sub run
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f',
             $lTime);
 
+        my $iBlockOffset = 32767 * 131072;
+
+        my $tPageValidSeg32767 =
+            pageBuild($tBasePage, $iBlockOffset + 0) .
+            pageBuild($tBasePage, $iBlockOffset + 1) .
+            pageBuild($tBasePage, $iBlockOffset + 2) .
+            pageBuild($tBasePage, 0, 0xFFFF, 0xFFFF);
+
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
+            '9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164', $lTime);
+
         my $tPageInvalid33001 =
             pageBuild($tBasePage, 1) .
             pageBuild($tBasePage, 1) .
