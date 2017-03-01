@@ -80,7 +80,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
@@ -209,7 +209,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -380,7 +380,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -449,7 +449,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -506,7 +506,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -567,7 +567,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -651,7 +651,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
@@ -735,7 +735,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
@@ -872,7 +872,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1393,7 +1393,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1494,7 +1494,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1675,7 +1675,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -1795,7 +1795,7 @@ P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [u
 P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>
+P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
@@ -4323,6 +4323,3 @@ diff backup - protocol shutdown timeout (backup host)
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   TEST:         PgBaCkReStTeSt-BACKUP-STOP-PgBaCkReStTeSt
-P00  ERROR: [141]: remote process terminated on db-master host: unable to read line after 2 second(s)
-P00   WARN: unable to shutdown protocol [141]: remote process terminated on db-master host: unable to read line after 2 second(s)
-            HINT: the process completed all operations successfully but protocol-timeout may need to be increased.

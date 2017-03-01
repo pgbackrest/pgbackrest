@@ -23,6 +23,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
 use pgBackRest::Version;
@@ -247,10 +248,11 @@ sub run
         {
             $strOptionalParam .= ' --protocol-timeout=2 --db-timeout=1';
 
-            if ($self->processMax() > 1)
-            {
-                $strTestPoint = TEST_KEEP_ALIVE;
-            }
+            # ??? This test is flapping and needs to implemented as a unit test instead
+            # if ($self->processMax() > 1)
+            # {
+            #     $strTestPoint = TEST_KEEP_ALIVE;
+            # }
         }
 
         # Create the archive info file

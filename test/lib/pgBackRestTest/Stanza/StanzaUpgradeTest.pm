@@ -110,8 +110,9 @@ sub run
         # Create the tablespace directory and perform a backup
         filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
         $oHostBackup->backup('full', 'Create full backup', {strOptionalParam => '--no-' . OPTION_ONLINE}, false);
-# CSHANG no .backup is created in archive dir - why?
-# CSHANG the full synthetic tests fail - are we still running them?
+# CSHANG no .backup file is created in archive dir - why? Won't this be required for expiring archive?
+
+--retention-full=1
     }
 }
 
