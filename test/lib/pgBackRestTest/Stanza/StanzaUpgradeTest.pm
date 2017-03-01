@@ -1,5 +1,10 @@
 ####################################################################################################################################
 # StanzaUpgradeTest.pm - Tests for stanza-upgrade command
+#
+# db-catalog-version=201510051
+# db-control-version=942
+# db-system-id=6392579261579036436
+# db-version="9.5"
 ####################################################################################################################################
 package pgBackRestTest::Stanza::StanzaUpgradeTest;
 use parent 'pgBackRestTest::Common::Env::EnvHostTest';
@@ -81,8 +86,32 @@ sub run
                 {'1' =>
                     {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
 
-        # Perform a successful stanza upgrade
+        # Perform a successful stanza upgrade noting additional history line in archive.info for new version of the database
         $oHostBackup->stanzaUpgrade('successfully upgrade mismatched files', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
+        # Create the xlog path
+        my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        filePathCreate($strXlogPath, undef, false, true);
+
+        my $strArchiveTestFile = $self->dataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
+
+        # Push a WAL segment
+        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
+
+        # Check that WAL is in the archive at -2
+        executeTest(
+            'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-2/0000000100000001",
+            {oLogTest => $self->expect(), bRemote => $bRemote});
+
+        # Change the pushed WAL segment to done
+        fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
+            "${strXlogPath}/archive_status/000000010000000100000001.done");
+
+        # Create the tablespace directory and perform a backup
+        filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
+        $oHostBackup->backup('full', 'Create full backup', {strOptionalParam => '--no-' . OPTION_ONLINE}, false);
+# CSHANG no .backup is created in archive dir - why?
+# CSHANG the full synthetic tests fail - are we still running them?
     }
 }
 

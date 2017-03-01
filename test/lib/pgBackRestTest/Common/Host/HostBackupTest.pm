@@ -209,6 +209,7 @@ sub backupEnd
         $strType,
         $oExecuteBackup,
         $oParam,
+        $bManifestCompare,
     ) =
         logDebugParam
         (
@@ -216,6 +217,7 @@ sub backupEnd
             {name => 'strType', trace => true},
             {name => 'oExecuteBackup', trace => true},
             {name => 'oParam', required => false, trace => true},
+            {name => 'bManifestCompare', required => false, default => true},
         );
 
     # Set defaults
@@ -333,10 +335,14 @@ sub backupEnd
     # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
     if ($self->synthetic())
     {
-        # Set backup type in the expected manifest
-        ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
+        # Compare only if expected to do so
+        if ($bManifestCompare)
+        {
+            # Set backup type in the expected manifest
+            ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
 
-        $self->backupCompare($strBackup, $oExpectedManifest);
+            $self->backupCompare($strBackup, $oExpectedManifest);
+        }
     }
 
     # Add files to expect log
@@ -388,6 +394,7 @@ sub backup
         $strType,
         $strComment,
         $oParam,
+        $bManifestCompare,
     ) =
         logDebugParam
         (
@@ -395,10 +402,11 @@ sub backup
             {name => 'strType'},
             {name => 'strComment'},
             {name => 'oParam', required => false},
+            {name => 'bManifestCompare', required => false, default => true},
         );
 
     my $oExecuteBackup = $self->backupBegin($strType, $strComment, $oParam);
-    my $strBackup = $self->backupEnd($strType, $oExecuteBackup, $oParam);
+    my $strBackup = $self->backupEnd($strType, $oExecuteBackup, $oParam, $bManifestCompare);
 
     # Return from function and log return values if any
     return logDebugReturn
