@@ -227,8 +227,8 @@ sub endRetry
             {
                 confess &log(ERROR, "command '$self->{strCommand}' returned " . $iExitStatus .
                              ($self->{iExpectedExitStatus} != 0 ? ", but $self->{iExpectedExitStatus} was expected" : '') . "\n" .
-                             ($self->{strOutLog} ne '' ? "STDOUT (last 20,000 characters):\n" . substr($self->{strOutLog},
-                                 length($self->{strOutLog}) - 20000) : '') .
+                             ($self->{strOutLog} ne '' ? "STDOUT (last 10,000 characters):\n" . substr($self->{strOutLog},
+                                 length($self->{strOutLog}) > 10000 ? length($self->{strOutLog}) - 10000 : 0) : '') .
                              ($self->{strErrorLog} ne '' ? "STDERR:\n$self->{strErrorLog}" : ''));
             }
         }

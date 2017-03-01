@@ -217,6 +217,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improved truncation when outputting errors logs in the <code>ExecuteTest</code> module.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Temporarily disable flapping keep-alive test.</p>
                     </release-item>
                 </release-refactor-list>
