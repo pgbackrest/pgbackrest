@@ -221,6 +221,14 @@
                     </release-item>
 
                     <release-item>
+                        <p>Fixed flapping archive-stop test with <code>testResult()</code> retries.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added final test of archive contents to archive-push test.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Temporarily disable flapping keep-alive test.</p>
                     </release-item>
                 </release-refactor-list>
