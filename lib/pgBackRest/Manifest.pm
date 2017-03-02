@@ -1163,12 +1163,11 @@ sub isChecksumPage
 {
     my $strFile = shift;
 
-    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE) &&
+    if (($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_BASE . '|^' . MANIFEST_TARGET_PGTBLSPC . '\/') &&
             $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . ')$')) ||
         ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/' . DB_PATH_GLOBAL) &&
             $strFile !~ ('(' . DB_FILE_PGFILENODEMAP . '|' . DB_FILE_PGINTERNALINIT . '|' . DB_FILE_PGVERSION . '|' .
-            DB_FILE_PGCONTROL . ')$')) ||
-        ($strFile =~ ('^' . MANIFEST_TARGET_PGTBLSPC . '\/') && $strFile !~ (DB_FILE_PGVERSION . '$')))
+            DB_FILE_PGCONTROL . ')$')))
     {
         return true;
     }

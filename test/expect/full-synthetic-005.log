@@ -1760,6 +1760,7 @@ P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam =
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, 4, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, strOp = backupFile, strQueue = pg_tblspc/2
 P00  DEBUG:     Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
@@ -1774,18 +1775,21 @@ P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (2, 11, 11, f927212cd08d11a42a666b2f04235398e9ceeb51, [undef]), strKey = pg_data/badchecksum.txt
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strQueueIdx = 1
 P00   WARN: resumed backup file pg_data/badchecksum.txt should have checksum bogus but actually has checksum f927212cd08d11a42a666b2f04235398e9ceeb51. The file will be recopied and backup will continue but this may be an issue unless the backup temp path is known to be corrupted.
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 7, 7, dc7f76e43c46101b47acc55ae4d593a9e6983578, {bAlign => 0, bValid => 0}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt
-P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 2
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, strQueueIdx = 1
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 62%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 4, 4, bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b, [undef]), strKey = pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init
+P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strQueueIdx = 2
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 75%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0, 7, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, [undef]), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt
 P00  DEBUG:     Protocol::LocalProcess->process: no jobs found, stop local: iHostConfigIdx = [undef], iHostIdx = 0, iProcessId = 1, strHostType = [undef]
 P00  DEBUG:     Protocol::CommandMaster->close=>: iExitStatus = 0
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
-P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 25
-P00   INFO: incr backup size = 25B
+P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 29
+P00   INFO: incr backup size = 29B
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
 P00  DEBUG:     Protocol::CommandMaster->close=>: iExitStatus = 0
@@ -1932,6 +1936,7 @@ pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
@@ -2006,12 +2011,13 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: aborted backup exists, but cannot be resumed (new backup-type 'diff' does not match aborted backup-type 'incr') - will be dropped and recreated
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 62%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 75%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
-P00   INFO: diff backup size = 25B
+P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
@@ -2109,6 +2115,7 @@ pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
@@ -2180,12 +2187,13 @@ P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   WARN: aborted backup exists, but cannot be resumed (resume is disabled) - will be dropped and recreated
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 44%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 72%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 62%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 75%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
-P00   INFO: diff backup size = 25B
+P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
@@ -2283,6 +2291,7 @@ pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912"
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
@@ -2393,6 +2402,7 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION (
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 99%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -2431,6 +2441,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION -
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init - exists and matches backup (4B, 99%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 100%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
@@ -2553,6 +2564,7 @@ pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","c
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -2798,6 +2810,7 @@ pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","c
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -2865,16 +2878,17 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 28%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 48%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 25%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000 (8B, 44%) checksum 9a53d532e27785e681766c98516a5e93f096a501
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 61%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base2.txt (5B, 55%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/base/base2.txt: file size 5 is not divisible by page size 8192
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 82%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 74%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 90%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P00   INFO: diff backup size = 39B
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 100%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
+P00   INFO: diff backup size = 43B
 P00   INFO: new backup label = [BACKUP-DIFF-3]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
@@ -2975,6 +2989,7 @@ pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","c
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -3145,6 +3160,7 @@ pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","c
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"reference":"[BACKUP-DIFF-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -3215,13 +3231,14 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 35%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/badchecksum.txt (11B, 31%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
 P00 DETAIL: skip file removed by database db-master:[TEST_PATH]/db-master/db/base-2/base/base2.txt
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 77%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 68%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 88%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
-P00   INFO: diff backup size = 31B
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 100%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
+P00   INFO: diff backup size = 35B
 P00   INFO: new backup label = [BACKUP-DIFF-4]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --repo-path=[TEST_PATH]/backup/repo --stanza=db
@@ -3320,6 +3337,7 @@ pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -3402,7 +3420,8 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/16384/PG_
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 100%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P00   INFO: full backup size = 144KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
 P00   INFO: backup command end: completed successfully
@@ -3502,6 +3521,7 @@ pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -3581,8 +3601,8 @@ stanza: db
     diff backup: [BACKUP-DIFF-2]
         timestamp start/stop: [TIMESTAMP-STR]
         wal start/stop: n/a
-        database size: 160KB, backup size: 25B
-        repository size: 160KB, repository backup size: 25B
+        database size: 160KB, backup size: 29B
+        repository size: 160KB, repository backup size: 29B
         backup reference list: [BACKUP-FULL-2]
 
     incr backup: [BACKUP-INCR-3]
@@ -3602,8 +3622,8 @@ stanza: db
     diff backup: [BACKUP-DIFF-3]
         timestamp start/stop: [TIMESTAMP-STR]
         wal start/stop: n/a
-        database size: 144KB, backup size: 39B
-        repository size: 144KB, repository backup size: 39B
+        database size: 144KB, backup size: 43B
+        repository size: 144KB, repository backup size: 43B
         backup reference list: [BACKUP-FULL-2]
 
     incr backup: [BACKUP-INCR-5]
@@ -3616,8 +3636,8 @@ stanza: db
     diff backup: [BACKUP-DIFF-4]
         timestamp start/stop: [TIMESTAMP-STR]
         wal start/stop: n/a
-        database size: 144KB, backup size: 30B
-        repository size: 144KB, repository backup size: 30B
+        database size: 144KB, backup size: 34B
+        repository size: 144KB, repository backup size: 34B
         backup reference list: [BACKUP-FULL-2]
 
     full backup: [BACKUP-FULL-3]
@@ -4023,6 +4043,7 @@ pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","s
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
@@ -4108,7 +4129,8 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION -
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%)
-P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%)
+P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%)
+P01 DETAIL: restore zeroed file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 100%)
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
 P00   INFO: restore command end: completed successfully
@@ -4145,7 +4167,8 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/PG_VERSION -
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 100%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
 P00   INFO: restore command end: completed successfully
@@ -4200,7 +4223,8 @@ P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/16384/PG_VERS
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 99%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init (4B, 100%) checksum bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b
 P00   INFO: write [TEST_PATH]/db-master/db/base-2/base/recovery.conf
 P00   INFO: restore global/pg_control (copied last to ensure aborted restores cannot be started)
 P00   INFO: restore command end: completed successfully

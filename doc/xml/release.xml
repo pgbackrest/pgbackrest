@@ -163,6 +163,14 @@
 
                         <p>Fixed an issue where tables over 1GB would report page checksum errors after the first segment.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lobréau.benoit"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where databases created with a non-default tablespace would raise bogus warnings about <file>pg_filenode.map</file> and <file>pg_internal.init</file> not being page aligned.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-refactor-list>

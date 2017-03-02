@@ -773,6 +773,10 @@ sub run
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
             'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime, undef, undef, false);
 
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/' . DB_FILE_PGINTERNALINIT, 'INIT',
+            'bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b', $lTime);
+
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
         if ($bNeutralTest)
         {
