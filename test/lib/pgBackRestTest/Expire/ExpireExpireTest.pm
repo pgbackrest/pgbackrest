@@ -12,6 +12,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use File::Basename qw(dirname);
+use Storable qw(dclone);
 
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupInfo;
@@ -39,14 +40,30 @@ sub run
 
     if ($self->begin("local"))
     {
+
+
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
 
-        # Create the test object
-        my $oExpireTest = new pgBackRestTest::Expire::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect());
+        # Set up the configuration needed for stanza object
+        my $oOption = {};
 
-        # ??? This function creates data elements in the $oExpireTest object that are used by the $oExpireTest functions. But
-        # should probably change to use the stanza-create command especially with stanza-upgrade.
+        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+        $self->optionSetTest($oOption, OPTION_DB_PATH, $oHostDbMaster->dbBasePath());
+        $self->optionSetTest($oOption, OPTION_REPO_PATH, $oHostBackup->{strRepoPath});
+        $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
+
+        $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+
+        $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
+        $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+
+        $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+
+        # Create the test object
+        my $oExpireTest = new pgBackRestTest::Expire::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
+            $self);
+
         $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
         use constant SECONDS_PER_DAY => 86400;
         my $lBaseTime = time() - (SECONDS_PER_DAY * 56);

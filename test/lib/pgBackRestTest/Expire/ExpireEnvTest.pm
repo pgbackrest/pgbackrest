@@ -21,6 +21,7 @@ use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Stanza;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::Host::HostBaseTest;
@@ -44,7 +45,8 @@ sub new
         $self->{oHostBackup},
         $self->{strBackRestExe},
         $self->{oFile},
-        $self->{oLogTest}
+        $self->{oLogTest},
+        $self->{oRunTest},
     ) =
         logDebugParam
         (
@@ -52,7 +54,8 @@ sub new
             {name => 'oHostBackup', required => false, trace => true},
             {name => 'strBackRestExe', trace => true},
             {name => 'oFile', trace => true},
-            {name => 'oLogTest', required => false, trace => true}
+            {name => 'oLogTest', required => false, trace => true},
+            {name => 'oRunTest', required => false, trace => true},
         );
 
     # Return from function and log return values if any
@@ -84,41 +87,35 @@ sub stanzaCreate
             {name => 'strDbVersion'}
         );
 
-    # Assign variables
-    my $oStanza = {};
-    $$oStanza{strDbVersion} = $strDbVersion;
-    $$oStanza{iDbId} = 1;
-
-    # Create the system id
     my $strDbVersionTemp = $strDbVersion;
     $strDbVersionTemp =~ s/\.//;
-    $$oStanza{ullDbSysId} = $strDbVersionTemp . '000000000000000' . $$oStanza{iDbId};
-    $$oStanza{iCatalogVersion} = '20' . $strDbVersionTemp . '0101';
-    $$oStanza{iControlVersion} = $strDbVersionTemp . '1';
 
-    # Create the stanza backup path
-    my $strBackupClusterPath = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER);
-    filePathCreate("${strBackupClusterPath}/" . PATH_BACKUP_HISTORY, undef, undef, true);
+    # Create the test path for pg_control
+    filePathCreate((optionGet(OPTION_DB_PATH) . '/' . DB_PATH_GLOBAL), undef, false, true);
 
-    $$oStanza{strBackupClusterPath} = $strBackupClusterPath;
+    # Copy pg_control for stanza-create
+    executeTest(
+        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
+        '/' . DB_FILE_PGCONTROL);
 
-    # Create the backup info object
-    my $oBackupInfo = (new pgBackRest::BackupInfo($$oStanza{strBackupClusterPath}, false, false))->create(
-        $strDbVersion, $$oStanza{ullDbSysId}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion});
+    # Create the stanza
+    $self->{oHostBackup}->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-    # Create the stanza archive path
-    my $strArchiveClusterPath = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE);
-    filePathCreate($strArchiveClusterPath, undef, undef, true);
+    # Assign variables
+    my $oStanza = {};
 
-    # Create the archive info object
-    $$oStanza{oArchiveInfo} = new pgBackRest::Archive::ArchiveInfo($strArchiveClusterPath, false);
-    $$oStanza{oArchiveInfo}->create($$oStanza{strDbVersion}, $$oStanza{ullDbSysId});
+    # Get the database info for the stanza
+    my $oStanzaCreate = new pgBackRest::Stanza();
+    $$oStanza{strDbVersion} = $strDbVersion;
+    $$oStanza{ullDbSysId} = $oStanzaCreate->{oDb}{ullDbSysId};
+    $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
+    $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
-    # Create the stanza archive version path
-    $strArchiveClusterPath .= '/' . $$oStanza{strDbVersion} . '-' . $$oStanza{iDbId};
-    filePathCreate($strArchiveClusterPath, undef, undef, true);
-
-    $$oStanza{strArchiveClusterPath} = $strArchiveClusterPath;
+    # Get the archive and directory paths for the stanza
+    $$oStanza{strArchiveClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE) . '/' .
+        (new pgBackRest::Archive::ArchiveInfo($self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE))->archiveId());
+    $$oStanza{strBackupClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER);
+    filePathCreate($$oStanza{strArchiveClusterPath}, undef, undef, true);
 
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
