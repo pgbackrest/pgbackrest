@@ -33,6 +33,10 @@ use constant WAL_VERSION_94                                      => '94';
     push @EXPORT, qw(WAL_VERSION_94);
 use constant WAL_VERSION_94_SYS_ID                               => 6353949018581704918;
     push @EXPORT, qw(WAL_VERSION_94_SYS_ID);
+use constant WAL_VERSION_95                                      => '95';
+    push @EXPORT, qw(WAL_VERSION_95);
+use constant WAL_VERSION_95_SYS_ID                               => 6392579261579036436;
+    push @EXPORT, qw(WAL_VERSION_95_SYS_ID);
 
 ####################################################################################################################################
 # initModule

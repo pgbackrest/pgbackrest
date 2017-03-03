@@ -60,24 +60,31 @@ sub run
             DB_FILE_PGCONTROL);
 
         # Attempt an upgrade before stanza-create has been performed
+        #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since archive.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Create the stanza
+        # Create the stanza successfully without force
+        #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Perform a stanza upgrade which will indicate already up to date
+        #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('already up to date', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Remove backup.info
+        # Fail upgrade when backup.info missing
+        #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
-
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since backup.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
+        # Create the stanza successfully with force
+        #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('use force to recreate the stanza',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
+        # Perform a successful stanza upgrade noting additional history line in archive.info for new version of the database
+        #--------------------------------------------------------------------------------------------------------------------------
         # Modify archive.info to an older database version causing a mismatch between the archive and backup info histories
         $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
             {&INFO_ARCHIVE_SECTION_DB =>
@@ -86,33 +93,34 @@ sub run
                 {'1' =>
                     {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
 
-        # Perform a successful stanza upgrade noting additional history line in archive.info for new version of the database
         $oHostBackup->stanzaUpgrade('successfully upgrade mismatched files', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Create the xlog path
+        # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
+        #--------------------------------------------------------------------------------------------------------------------------
+        # Create the xlog path and copy a WAL file
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
         filePathCreate($strXlogPath, undef, false, true);
-
         my $strArchiveTestFile = $self->dataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
 
         # Push a WAL segment
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
 
-        # Check that WAL is in the archive at -2
-        executeTest(
-            'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-2/0000000100000001",
-            {oLogTest => $self->expect(), bRemote => $bRemote});
+        $self->testResult(
+            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-2/0000000100000001')},
+            "000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7.$oFile->{strCompressExtension}",
+            'check that WAL is in the archive at -2');
 
         # Change the pushed WAL segment to done
         fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
             "${strXlogPath}/archive_status/000000010000000100000001.done");
 
+        # Confirm successful backup at db-1 although archive at db-2
+        #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
         filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
-        $oHostBackup->backup('full', 'Create full backup', {strOptionalParam => '--no-' . OPTION_ONLINE}, false);
-# CSHANG no .backup file is created in archive dir - why? Won't this be required for expiring archive?
-
---retention-full=1
+        
+        $oHostBackup->backup('full', 'create full backup ', {strOptionalParam => '--retention-full=1 --no-' .
+            OPTION_ONLINE . ' --log-level-console=detail'}, false);
     }
 }
 

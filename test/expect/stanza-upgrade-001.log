@@ -191,124 +191,18 @@ db-version="9.4"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 
-> ls -1R [TEST_PATH]/db-master/repo/archive/db/9.4-2/0000000100000001
+full backup - create full backup  (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=1 --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-[TEST_PATH]/db-master/repo/archive/db/9.4-2/0000000100000001:
-000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
-
-full backup - Create full backup (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
-P00   WARN: option retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, iProcessIdx = [undef], strLockType = backup
-P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
-P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
-P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = true, strMode = <0750>, strPath = backup.history, strPathType = backup:cluster
-P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
-P00  DEBUG:     Db->new(): iRemoteIdx = 1
-P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
-P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
-P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
-P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     BackupInfo->check(): bRequired = <true>, iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
-P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
-P00  DEBUG:     File->exists=>: bExists = false
-P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oFile = [object], oLastManifest = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPathType = db:absolute
-P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/base, strPathType = db:absolute
-P00  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
-P00  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     Backup->processManifest(): bCompress = true, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = full
-P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
-P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
-P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_xlog, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_xlog/archive_status, strPathType = backup:tmp
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, pg_data/pg_xlog/000000010000000100000001, 16777216, [undef], 0, 1, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/pg_xlog/000000010000000100000001, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, [undef], 0, 1, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.done, pg_data/pg_xlog/archive_status/000000010000000100000001.done, 0, [undef], 0, 1, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/pg_xlog/archive_status/000000010000000100000001.done, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
-P00  DEBUG:     Protocol::LocalMaster->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::CommandMaster->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
-P00  DEBUG:     Protocol::LocalProcess->hostConnect=>: bResult = true
-P00  DEBUG:     Protocol::LocalProcess->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
-P00  DEBUG:     Protocol::LocalProcess->init=>: bResult = true
-P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_xlog/000000010000000100000001, strQueueIdx = 0
-P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 16777216, 16382, 72b9da071c13957fb4ca31f05dbd5c644297c2f7, [undef]), strKey = pg_data/pg_xlog/000000010000000100000001
-P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/global/pg_control, strQueueIdx = 0
+P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --retention-full=1 --stanza=db --start-fast --type=full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 8192, 165, 89373d9f2973502940de06bc5212489df3f8a912, [undef]), strKey = pg_data/global/pg_control
-P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/pg_xlog/archive_status/000000010000000100000001.done, strQueueIdx = 0
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
-P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 0, 20, da39a3ee5e6b4b0d3255bfef95601890afd80709, [undef]), strKey = pg_data/pg_xlog/archive_status/000000010000000100000001.done
-P00  DEBUG:     Protocol::LocalProcess->process: no jobs found, stop local: iHostConfigIdx = [undef], iHostIdx = 0, iProcessId = 1, strHostType = [undef]
-P00  DEBUG:     Protocol::CommandMaster->close=>: iExitStatus = 0
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.done (0B, 100%)
-P00  DEBUG:     Protocol::LocalProcess->process: all jobs complete
-P00  DEBUG:     Backup->processManifest=>: lSizeTotal = 16785408
 P00   INFO: full backup size = 16MB
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
-P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_xlog, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_xlog/archive_status, strPathType = backup:tmp
 P00   INFO: new backup label = [BACKUP-FULL-1]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
-P00  DEBUG:     Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
-P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
-P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/[YEAR-1]/[BACKUP-FULL-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1]/backup.manifest.gz, strSourcePathType = backup:cluster
-P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
-P00  DEBUG:     File->remove=>: bRemoved = false
-P00  DEBUG:     File->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationFile = latest, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1], strSourcePathType = backup:cluster
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:cluster
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = <1>, oParam = [undef], strRemoteType = none
-P00  DEBUG:     Protocol::Protocol::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     BackupInfo->new(): bRequired = <true>, bValidate = <true>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
-P00  DEBUG:     BackupInfo->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
-P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
-P00  DEBUG:     BackupInfo->current=>: bTest = true
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
-P00  DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
-P00  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-1])
-P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-1]
-P00  DEBUG:     BackupInfo->current=>: bTest = true
-P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
-P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
-P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
-P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive=1 --retention-full=1 --stanza=db
 P00   INFO: expire command end: completed successfully
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
@@ -361,14 +255,14 @@ option-online=false
 pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
 
 [target:file]
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","mode":"0644","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/pg_xlog/000000010000000100000001={"checksum":"72b9da071c13957fb4ca31f05dbd5c644297c2f7","mode":"0640","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_xlog/archive_status/000000010000000100000001.done={"mode":"0600","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_xlog/archive_status/000000010000000100000001.done={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
 group="[GROUP-1]"
 master=true
-mode="0644"
+mode="0600"
 user="[USER-1]"
 
 [target:path]

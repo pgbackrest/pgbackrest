@@ -259,26 +259,39 @@ sub run
             # Remove the backup info file
             executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
 
-            # Change the database version by copying a new pg_control file
+            # Change the database version by copying a new pg_control file WAL_VERSION_94
             executeTest('sudo mv ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL .
                 ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL . 'save');
-            executeTest(
-                'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-                DB_FILE_PGCONTROL);
 
-            # Run stanza-create with --force
+            if ($self->pgVersion() eq PG_VERSION_94)
+            {
+                executeTest(
+                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
+                    DB_FILE_PGCONTROL);
+            } else
+            {
+                executeTest(
+                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
+                    DB_FILE_PGCONTROL);
+            }
+
+            # Run stanza-create online with --force
             $oHostBackup->stanzaCreate('test force fails on database mismatch with directory',
-                {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .
-                ' --' . OPTION_FORCE});
+                {iExpectedExitStatus => ERROR_DB_MISMATCH});
+
+            # Run stanza-create offline with --force to create invalid files
+            $oHostBackup->stanzaCreate('restore stanza files',
+                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
             # Restore the database version
             executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
             executeTest('sudo mv ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL . 'save' .
                 ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
-            # Run stanza-create offline with --force
-            $oHostBackup->stanzaCreate('restore stanza files',
-                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
+            #-----------------------------------------------------------------------------------------------------------------------
+            # Run stanza-upgrade online to correct the info files
+            $oHostBackup->stanzaUpgrade('upgrade stanza files online');
         }
 
         # Full backup

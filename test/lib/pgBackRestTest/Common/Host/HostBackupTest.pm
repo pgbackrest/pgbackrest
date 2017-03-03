@@ -217,7 +217,7 @@ sub backupEnd
             {name => 'strType', trace => true},
             {name => 'oExecuteBackup', trace => true},
             {name => 'oParam', required => false, trace => true},
-            {name => 'bManifestCompare', required => false, default => true},
+            {name => 'bManifestCompare', required => false, default => true, trace => true},
         );
 
     # Set defaults
@@ -404,7 +404,7 @@ sub backup
             {name => 'oParam', required => false},
             {name => 'bManifestCompare', required => false, default => true},
         );
-
+             
     my $oExecuteBackup = $self->backupBegin($strType, $strComment, $oParam);
     my $strBackup = $self->backupEnd($strType, $oExecuteBackup, $oParam, $bManifestCompare);
 
