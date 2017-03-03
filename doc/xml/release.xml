@@ -153,7 +153,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.16dev" title="UNDER DEVELOPMENT">
+        <release date="2017-03-02" version="1.16" title="Page Checksum Improvements, CI, and Package Testing">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -161,7 +161,7 @@
                             <release-item-ideator id="frost.stephen"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed an issue where tables over 1GB would report page checksum errors after the first segment.</p>
+                        <p>Fixed an issue where tables over 1GB would report page checksum warnings after the first segment.</p>
                     </release-item>
 
                     <release-item>
