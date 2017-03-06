@@ -307,7 +307,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_TEST_NAME => 'expire',
-                    &TESTDEF_TEST_TOTAL => 1
+                    &TESTDEF_TEST_TOTAL => 2,
                 },
             ]
         },

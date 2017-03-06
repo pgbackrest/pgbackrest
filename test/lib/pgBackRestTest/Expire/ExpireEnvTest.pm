@@ -67,9 +67,9 @@ sub new
 }
 
 ####################################################################################################################################
-# stanzaCreate
+# stanzaSet - set the local stanza object
 ####################################################################################################################################
-sub stanzaCreate
+sub stanzaSet
 {
     my $self = shift;
 
@@ -78,28 +78,14 @@ sub stanzaCreate
     (
         $strOperation,
         $strStanza,
-        $strDbVersion
+        $strDbVersion,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->sanzaCreate', \@_,
+            __PACKAGE__ . '->stanzaSet', \@_,
             {name => 'strStanza'},
-            {name => 'strDbVersion'}
+            {name => 'strDbVersion'},
         );
-
-    my $strDbVersionTemp = $strDbVersion;
-    $strDbVersionTemp =~ s/\.//;
-
-    # Create the test path for pg_control
-    filePathCreate((optionGet(OPTION_DB_PATH) . '/' . DB_PATH_GLOBAL), undef, false, true);
-
-    # Copy pg_control for stanza-create
-    executeTest(
-        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
-        '/' . DB_FILE_PGCONTROL);
-
-    # Create the stanza
-    $self->{oHostBackup}->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
     # Assign variables
     my $oStanza = {};
@@ -123,6 +109,88 @@ sub stanzaCreate
     return logDebugReturn($strOperation);
 }
 
+####################################################################################################################################
+# stanzaCreate
+####################################################################################################################################
+sub stanzaCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strStanza,
+        $strDbVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->stanzaCreate', \@_,
+            {name => 'strStanza'},
+            {name => 'strDbVersion'},
+        );
+
+    my $strDbVersionTemp = $strDbVersion;
+    $strDbVersionTemp =~ s/\.//;
+
+    # Create the test path for pg_control
+    filePathCreate((optionGet(OPTION_DB_PATH) . '/' . DB_PATH_GLOBAL), undef, true);
+
+    # Copy pg_control for stanza-create
+    executeTest(
+        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
+        '/' . DB_FILE_PGCONTROL);
+
+    # Create the stanza
+    $self->{oHostBackup}->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
+    # Set local stanza object
+    $self->stanzaSet($strStanza, $strDbVersion);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# stanzaUpgrade
+####################################################################################################################################
+sub stanzaUpgrade
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strStanza,
+        $strDbVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->stanzaUpgrade', \@_,
+            {name => 'strStanza'},
+            {name => 'strDbVersion'},
+        );
+
+    my $strDbVersionTemp = $strDbVersion;
+    $strDbVersionTemp =~ s/\.//;
+
+    # Remove pg_control
+    fileRemove(optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+
+    # Copy pg_control for stanza-upgrade
+    executeTest(
+        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
+        '/' . DB_FILE_PGCONTROL);
+
+    # Upgrade the stanza
+    $self->{oHostBackup}->stanzaUpgrade('successfully upgrade the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
+    $self->stanzaSet($strStanza, $strDbVersion);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 ####################################################################################################################################
 # backupCreate
 ####################################################################################################################################

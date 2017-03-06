@@ -32,44 +32,56 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Expire::ExpireEnvTest;
 
 ####################################################################################################################################
+# initCommandOption
+####################################################################################################################################
+sub initCommandOption
+{
+    my $self = shift;
+    my $strDbBasePath = shift;
+    my $strRepoPath = shift;
+
+    # Set up the configuration needed for stanza object
+    my $oOption = {};
+
+    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+    $self->optionSetTest($oOption, OPTION_DB_PATH, $strDbBasePath);
+    $self->optionSetTest($oOption, OPTION_REPO_PATH, $strRepoPath);
+    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
+
+    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+
+    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
+    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+
+    $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+}
+
+####################################################################################################################################
 # run
 ####################################################################################################################################
 sub run
 {
     my $self = shift;
 
+    use constant SECONDS_PER_DAY => 86400;
+    my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
+    my $strDescription;
+
     if ($self->begin("local"))
     {
-
-
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
 
-        # Set up the configuration needed for stanza object
-        my $oOption = {};
-
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, $oHostDbMaster->dbBasePath());
-        $self->optionSetTest($oOption, OPTION_REPO_PATH, $oHostBackup->{strRepoPath});
-        $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
-
-        $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
-
-        $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-        $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
-
-        $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+        $self->initCommandOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
 
         # Create the test object
         my $oExpireTest = new pgBackRestTest::Expire::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
             $self);
 
         $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
-        use constant SECONDS_PER_DAY => 86400;
-        my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
 
         #-----------------------------------------------------------------------------------------------------------------------
-        my $strDescription = 'Nothing to expire';
+        $strDescription = 'Nothing to expire';
 
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
@@ -145,6 +157,46 @@ sub run
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_DIFF, undef, $strDescription);
+    }
+
+    if ($self->begin("Expire::stanzaUpgrade"))
+    {
+        # Create hosts, file object, and config
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
+
+        $self->initCommandOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+
+        # Create the test object
+        my $oExpireTest = new pgBackRestTest::Expire::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
+            $self);
+
+        $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Create backups in current db version';
+
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_DIFF, undef, $strDescription);
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Upgrade stanza and expire only earliest db backup and archive';
+
+        $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_94);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 3, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Upgrade the stanza, create full back - earliest db orphaned archive removed and earliest full backup ' .
+            'and archive in previous db version removed';
+
+        $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_95);
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
     }
 }
 

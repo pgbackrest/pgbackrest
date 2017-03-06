@@ -383,8 +383,9 @@ sub process
                                     $strArchiveExpireMax = $$oArchiveRange{start};
                                 }
 
-                                &log(DETAIL, "archive retention on backup ${strBackup}, start = $$oArchiveRange{start}" .
-                                     (defined($$oArchiveRange{stop}) ? ", stop = $$oArchiveRange{stop}" : ''));
+                                &log(DETAIL, "archive retention on backup ${strBackup}, archiveId = ${strArchiveId}, " .
+                                    "start = $$oArchiveRange{start}" .
+                                    (defined($$oArchiveRange{stop}) ? ", stop = $$oArchiveRange{stop}" : ''));
 
                                 push(@oyArchiveRange, $oArchiveRange);
                             }
