@@ -51,6 +51,9 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true});
 
+        # Create compression extension
+        my $strCompressExt = $bCompress ? ".$oFile->{strCompressExtension}" : '';
+
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
         filePathCreate($strXlogPath, undef, false, true);
@@ -91,18 +94,21 @@ sub run
             $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
         }
 
-        # Check the dir to be sure that segment 2 and 3 were not pushed yet
-        executeTest(
-            'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-1/0000000100000001",
-            {oLogTest => $self->expect(), bRemote => $bRemote});
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
+            "000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}",
+            'segment 2-4 are not pushed', 5);
 
-        # Push segment 5
+        #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5);
 
-        # Check that 5 is pushed
-        executeTest(
-            'ls -1R ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . "-1/0000000100000001",
-            {oLogTest => $self->expect(), bRemote => $bRemote});
+        $self->testResult(
+            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
+            "(000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " .
+                ($bRemote ? "000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " : '') .
+                "000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt})",
+            'segment 5 (and 2 if remote) is pushed', 5);
     }
     }
     }

@@ -124,6 +124,8 @@ sub run
         $oHostBackup->stanzaCreate('create required data for stanza',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
+        my @stryExpectedWAL;
+
         # Loop through backups
         for (my $iBackup = 1; $iBackup <= 3; $iBackup++)
         {
@@ -174,6 +176,9 @@ sub run
                     $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
                         " ${strXlogPath}/${strSourceFile}",
                     {oLogTest => $self->expect()});
+                push(
+                    @stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}" .
+                    ($bCompress ? ".$oFile->{strCompressExtension}" : ''));
 
                 # Make sure the temp file no longer exists
                 if (defined($strArchiveTmp))
@@ -282,6 +287,10 @@ sub run
                         $oFile, "${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
                         $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
 
+                    push(
+                        @stryExpectedWAL, "${strSourceFile}.partial-${strArchiveChecksum}" .
+                        ($bCompress ? ".$oFile->{strCompressExtension}" : ''));
+
                     # Test .partial archive duplicate
                     &log(INFO, '        test .partial archive duplicate');
                     $oHostDbMaster->executeSimple(
@@ -308,6 +317,13 @@ sub run
             }
         }
 
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
+            '(' . join(', ', @stryExpectedWAL) . ')',
+            'all WAL in archive', 5);
+
+        #---------------------------------------------------------------------------------------------------------------------------
         if (defined($self->expect()))
         {
             sleep(1); # Ugly hack to ensure repo is stable before checking files - replace in new tests

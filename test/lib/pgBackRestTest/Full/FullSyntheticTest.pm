@@ -155,6 +155,18 @@ sub run
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f',
             $lTime);
 
+        my $iBlockOffset = 32767 * 131072;
+
+        my $tPageValidSeg32767 =
+            pageBuild($tBasePage, $iBlockOffset + 0) .
+            pageBuild($tBasePage, $iBlockOffset + 1) .
+            pageBuild($tBasePage, $iBlockOffset + 2) .
+            pageBuild($tBasePage, 0, 0xFFFF, 0xFFFF);
+
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
+            '9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164', $lTime);
+
         my $tPageInvalid33001 =
             pageBuild($tBasePage, 1) .
             pageBuild($tBasePage, 1) .
@@ -761,6 +773,10 @@ sub run
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2.txt', 'TBLSPC2',
             'dc7f76e43c46101b47acc55ae4d593a9e6983578', $lTime, undef, undef, false);
+
+        $oHostDbMaster->manifestFileCreate(
+            \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/' . DB_FILE_PGINTERNALINIT, 'INIT',
+            'bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b', $lTime);
 
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
         if ($bNeutralTest)

@@ -535,7 +535,7 @@ eval
 
                         # Update changelog to add experimental version
                         fileStringWrite("${strBuildPath}/debian/changelog",
-                            "pgbackrest (${strVersionBase}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%e%H%M%S", gmtime) .
+                            "pgbackrest (${strVersionBase}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
                                 ") experimental; urgency=medium\n" .
                             "\n" .
                             '  * Automated experimental ' . ($bVersionDev ? 'development' : 'production') . " build.\n" .

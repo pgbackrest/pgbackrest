@@ -153,8 +153,26 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.16dev" title="UNDER DEVELOPMENT">
+        <release date="2017-03-02" version="1.16" title="Page Checksum Improvements, CI, and Package Testing">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where tables over 1GB would report page checksum warnings after the first segment.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lobréau.benoit"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where databases created with a non-default tablespace would raise bogus warnings about <file>pg_filenode.map</file> and <file>pg_internal.init</file> not being page aligned.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Improved the code and tests for <code>fileManifest()</code> to prevent a possible race condition when files are removed by the database while the manifest is being built.</p>
@@ -204,6 +222,18 @@
 
                     <release-item>
                         <p>Improved formatting of <code>testResult()</code> output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved truncation when outputting errors logs in the <code>ExecuteTest</code> module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed flapping archive-stop test with <code>testResult()</code> retries.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added final test of archive contents to archive-push test.</p>
                     </release-item>
 
                     <release-item>

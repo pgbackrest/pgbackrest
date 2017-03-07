@@ -110,8 +110,11 @@ sub backupChecksumPage
     }
     elsif ($iBufferSize > 0)
     {
+        # Calculate offset to the first block in the buffer
+        my $iBlockOffset = int($iBufferOffset / PG_PAGE_SIZE) + ($rExtraParam->{iSegmentNo} * 131072);
+
         if (!pageChecksumBuffer(
-                $$tBufferRef, $iBufferSize, int($iBufferOffset / PG_PAGE_SIZE), PG_PAGE_SIZE, $rExtraParam->{iWalId},
+                $$tBufferRef, $iBufferSize, $iBlockOffset, PG_PAGE_SIZE, $rExtraParam->{iWalId},
                 $rExtraParam->{iWalOffset}))
         {
             $hExtra->{bValid} = false;
@@ -120,7 +123,7 @@ sub backupChecksumPage
             # array, but we're hoping there won't be that many errors to scan so this should work fine.
             for (my $iBlockNo = 0; $iBlockNo < int($iBufferSize / PG_PAGE_SIZE); $iBlockNo++)
             {
-                my $iBlockNoStart = int($iBufferOffset / PG_PAGE_SIZE) + $iBlockNo;
+                my $iBlockNoStart = $iBlockOffset + $iBlockNo;
 
                 if (!pageChecksumTest(
                         substr($$tBufferRef, $iBlockNo * PG_PAGE_SIZE, PG_PAGE_SIZE), $iBlockNoStart, PG_PAGE_SIZE))
@@ -215,6 +218,12 @@ sub backupFile
 
     if ($bCopy)
     {
+        # Determine which segment no this is by checking for a numeric extension.  No extension means segment 0.
+        if ($bChecksumPage)
+        {
+            $hExtraParam->{iSegmentNo} = ($strDbFile =~ /\.[0-9]+$/) ? substr(($strDbFile =~ m/\.[0-9]+$/g)[0], 1) + 0 : 0;
+        }
+
         # Copy the file from the database to the backup (will return false if the source file is missing)
         (my $bCopyResult, $strCopyChecksum, $lCopySize, $rExtra) = $oFile->copy(
             PATH_DB_ABSOLUTE, $strDbFile,
