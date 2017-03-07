@@ -4384,3 +4384,6 @@ diff backup - protocol shutdown timeout (backup host)
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   TEST:         PgBaCkReStTeSt-BACKUP-STOP-PgBaCkReStTeSt
+P00  ERROR: [141]: remote process terminated on db-master host: unable to read line after 2 second(s)
+P00   WARN: unable to shutdown protocol [141]: remote process terminated on db-master host: unable to read line after 2 second(s)
+            HINT: the process completed all operations successfully but protocol-timeout may need to be increased.
