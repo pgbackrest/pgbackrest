@@ -22,6 +22,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::Expire;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
@@ -32,16 +33,14 @@ use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Expire::ExpireEnvTest;
 
 ####################################################################################################################################
-# initCommandOption
+# initStanzaOption
 ####################################################################################################################################
-sub initCommandOption
+sub initStanzaOption
 {
     my $self = shift;
+    my $oOption = shift;
     my $strDbBasePath = shift;
     my $strRepoPath = shift;
-
-    # Set up the configuration needed for stanza object
-    my $oOption = {};
 
     $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
     $self->optionSetTest($oOption, OPTION_DB_PATH, $strDbBasePath);
@@ -52,8 +51,6 @@ sub initCommandOption
 
     $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
     $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
-
-    $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 }
 
 ####################################################################################################################################
@@ -66,13 +63,15 @@ sub run
     use constant SECONDS_PER_DAY => 86400;
     my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
     my $strDescription;
+    my $oOption = {};
 
     if ($self->begin("local"))
     {
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
 
-        $self->initCommandOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+        $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 
         # Create the test object
         my $oExpireTest = new pgBackRestTest::Expire::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
@@ -164,7 +163,8 @@ sub run
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
 
-        $self->initCommandOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+        $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 
         # Create the test object
         my $oExpireTest = new pgBackRestTest::Expire::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
@@ -197,6 +197,30 @@ sub run
         $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_95);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+
+        $self->optionReset($oOption, OPTION_DB_PATH);
+        $self->optionReset($oOption, OPTION_ONLINE);
+        $self->optionSetTest($oOption, OPTION_RETENTION_FULL, 1);
+        $self->optionSetTest($oOption, OPTION_RETENTION_DIFF, 1);
+        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
+        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE, 1);
+        $self->configLoadExpect(dclone($oOption), CMD_EXPIRE);
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expiration cannot occur due to info file db mismatch';
+
+        $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+            {&INFO_ARCHIVE_SECTION_DB =>
+                {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => 6999999999999999999},
+             &INFO_ARCHIVE_SECTION_DB_HISTORY =>
+                {'1' =>
+                    {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
+
+        my $oExpire = new pgBackRest::Expire();
+        $self->testException(sub {$oExpire->process()},
+            ERROR_FILE_INVALID,
+            "archive and backup database versions do not match\n" .
+            "HINT: has a stanza-upgrade been performed?");
     }
 }
 

@@ -25,9 +25,9 @@ use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
-use pgBackRest::Manifest;
 use pgBackRest::Stanza;
 
 use pgBackRestTest::Common::Env::EnvHostTest;
@@ -43,28 +43,10 @@ sub initModule
     my $self = shift;
 
     $self->{strDbPath} = $self->testPath() . '/db'; # *
-    $self->{strWalPath} = "$self->{strDbPath}/pg_xlog";
-    $self->{strWalStatusPath} = "$self->{strWalPath}/archive_status";
-    $self->{strWalHash} = "1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
     $self->{strRepoPath} = $self->testPath() . '/repo'; # *
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza(); # *
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza(); # *
     $self->{strSpoolPath} = "$self->{strArchivePath}/out";
-
-    # Create the local file object
-    $self->{oFile} =
-        new pgBackRest::File
-        (
-            $self->stanza(),
-            $self->{strRepoPath},
-            new pgBackRest::Protocol::Common
-            (
-                OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
-                OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
-                OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
-                HOST_PROTOCOL_TIMEOUT                       # Protocol timeout
-            )
-        );
 }
 
 ####################################################################################################################################
@@ -73,9 +55,6 @@ sub initModule
 sub initTest
 {
     my $self = shift;
-
-    # Create WAL path
-    filePathCreate($self->{strWalStatusPath}, undef, true, true);
 
     # Create archive info path
     filePathCreate($self->{strArchivePath}, undef, true, true);
@@ -110,6 +89,8 @@ sub run
 
     $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
     $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+
+    # ??? Currently only contains unit tests for stanza-upgrade. TODO stanza-create
 
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaUpgrade"))

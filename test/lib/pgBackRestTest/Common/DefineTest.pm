@@ -71,6 +71,9 @@ use constant TESTDEF_MODULE_INFO                                    => 'Info';
 use constant TESTDEF_MODULE_STANZA                                  => 'Stanza';
     push @EXPORT, qw(TESTDEF_MODULE_STANZA);
 
+use constant TESTDEF_MODULE_EXPIRE                                  => 'Expire';
+    push @EXPORT, qw(TESTDEF_MODULE_EXPIRE);
+
 ################################################################################################################################
 # Define tests
 ################################################################################################################################
@@ -302,6 +305,11 @@ my $oTestDef =
             &TESTDEF_MODULE_NAME => 'expire',
             &TESTDEF_TEST_CONTAINER => false,
             &TESTDEF_EXPECT => true,
+
+            &TESTDEF_TEST_COVERAGE =>
+            {
+                &TESTDEF_MODULE_EXPIRE => TESTDEF_COVERAGE_FULL,
+            },
 
             &TESTDEF_TEST =>
             [
