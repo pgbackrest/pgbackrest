@@ -183,7 +183,7 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Upgrade stanza and expire only earliest db backup and archive';
 
-        $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_94);
+        $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_93);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
@@ -208,19 +208,40 @@ sub run
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expiration cannot occur due to info file db mismatch';
+        my $oExpire = new pgBackRest::Expire();
 
+        # Mismatched version
         $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
             {&INFO_ARCHIVE_SECTION_DB =>
-                {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => 6999999999999999999},
+                {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93, &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => WAL_VERSION_95_SYS_ID},
              &INFO_ARCHIVE_SECTION_DB_HISTORY =>
-                {'1' =>
-                    {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
+                {'3' =>
+                    {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93, &INFO_ARCHIVE_KEY_DB_ID => WAL_VERSION_95_SYS_ID}}});
 
-        my $oExpire = new pgBackRest::Expire();
         $self->testException(sub {$oExpire->process()},
             ERROR_FILE_INVALID,
             "archive and backup database versions do not match\n" .
             "HINT: has a stanza-upgrade been performed?");
+
+        # Restore the info file
+        $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+
+        # Mismatched system ID
+        $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+            {&INFO_ARCHIVE_SECTION_DB =>
+                {&INFO_ARCHIVE_KEY_DB_SYSTEM_ID => 6999999999999999999},
+             &INFO_ARCHIVE_SECTION_DB_HISTORY =>
+                {'3' =>
+                    {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_95, &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
+
+        $self->testException(sub {$oExpire->process()},
+            ERROR_FILE_INVALID,
+            "archive and backup database versions do not match\n" .
+            "HINT: has a stanza-upgrade been performed?");
+
+        # Restore the info file
+        $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+
     }
 }
 

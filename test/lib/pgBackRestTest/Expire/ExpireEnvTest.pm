@@ -79,12 +79,14 @@ sub stanzaSet
         $strOperation,
         $strStanza,
         $strDbVersion,
+        $bStanzaUpgrade,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->stanzaSet', \@_,
             {name => 'strStanza'},
             {name => 'strDbVersion'},
+            {name => 'bStanzaUpgrade'},
         );
 
     # Assign variables
@@ -97,9 +99,22 @@ sub stanzaSet
     $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
     $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE));
+    my $oBackupInfo = new pgBackRest::BackupInfo($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
+
+    if ($bStanzaUpgrade)
+    {
+        # Upgrade the stanza
+        $oArchiveInfo->dbSectionSet($$oStanza{strDbVersion}, $$oStanza{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
+        $oArchiveInfo->save();
+
+        $oBackupInfo->dbSectionSet($$oStanza{strDbVersion}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion},
+            $$oStanza{ullDbSysId}, $oBackupInfo->dbHistoryIdGet() + 1);
+        $oBackupInfo->save();
+    }
+
     # Get the archive and directory paths for the stanza
-    $$oStanza{strArchiveClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE) . '/' .
-        (new pgBackRest::Archive::ArchiveInfo($self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE))->archiveId());
+    $$oStanza{strArchiveClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
     $$oStanza{strBackupClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER);
     filePathCreate($$oStanza{strArchiveClusterPath}, undef, undef, true);
 
@@ -145,7 +160,7 @@ sub stanzaCreate
     $self->{oHostBackup}->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
     # Set local stanza object
-    $self->stanzaSet($strStanza, $strDbVersion);
+    $self->stanzaSet($strStanza, $strDbVersion, false);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -183,10 +198,7 @@ sub stanzaUpgrade
         'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
         '/' . DB_FILE_PGCONTROL);
 
-    # Upgrade the stanza
-    $self->{oHostBackup}->stanzaUpgrade('successfully upgrade the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
-
-    $self->stanzaSet($strStanza, $strDbVersion);
+    $self->stanzaSet($strStanza, $strDbVersion, true);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

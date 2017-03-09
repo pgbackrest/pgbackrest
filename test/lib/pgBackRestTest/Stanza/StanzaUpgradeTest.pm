@@ -56,8 +56,13 @@ sub run
 
         # Copy pg_control for stanza-create
         executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
+            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
             DB_FILE_PGCONTROL);
+
+        # Create the xlog path for pushing WAL
+        my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        filePathCreate($strXlogPath, undef, false, true);
+        my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
 
         # Attempt an upgrade before stanza-create has been performed
         #--------------------------------------------------------------------------------------------------------------------------
@@ -83,44 +88,73 @@ sub run
         $oHostBackup->stanzaCreate('use force to recreate the stanza',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-        # Perform a successful stanza upgrade noting additional history line in archive.info for new version of the database
+        # Fail on archive push due to mismatch of DB since stanza not upgraded
         #--------------------------------------------------------------------------------------------------------------------------
-        # Modify archive.info to an older database version causing a mismatch between the archive and backup info histories
-        $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
-            {&INFO_ARCHIVE_SECTION_DB =>
-                {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => 6999999999999999999},
-             &INFO_ARCHIVE_SECTION_DB_HISTORY =>
-                {'1' =>
-                    {&INFO_ARCHIVE_KEY_DB_VERSION => '9.3', &INFO_ARCHIVE_KEY_DB_ID => 6999999999999999999}}});
+        # Push a WAL segment so have a valid file in archive dir
+        # $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_93 . '.bin', 1);
 
-        $oHostBackup->stanzaUpgrade('successfully upgrade mismatched files', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        # Upgrade the DB by copying new pg_control
+        executeTest(
+            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
+            DB_FILE_PGCONTROL);
+
+        # Attempt to push an archive
+        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
+
+        # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->stanzaUpgrade('successful upgrade creates mismatched files', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------
-        # Create the xlog path and copy a WAL file
-        my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        filePathCreate($strXlogPath, undef, false, true);
-        my $strArchiveTestFile = $self->dataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
-
-        # Push a WAL segment
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
-
+        # Push a WAL segment so have a valid file in the latest DB archive dir only
+        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1);
         $self->testResult(
             sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-2/0000000100000001')},
-            "000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7.$oFile->{strCompressExtension}",
+            "000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.$oFile->{strCompressExtension}",
             'check that WAL is in the archive at -2');
 
-        # Change the pushed WAL segment to done
-        fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
-            "${strXlogPath}/archive_status/000000010000000100000001.done");
+        # Create a DB history mismatch between the info files
+        #--------------------------------------------------------------------------------------------------------------------------
+        # Remove the archive info file and force reconstruction
+        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
 
+        $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
+            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+        # Create a DB-ID mismatch between the info files
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+        $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
+            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+        #
+        # # Change the pushed WAL segment to done
+        # fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
+        #     "${strXlogPath}/archive_status/000000010000000100000001.done");
+        #
         # Confirm successful backup at db-1 although archive at db-2
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
         filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
-        
+
         $oHostBackup->backup('full', 'create full backup ', {strOptionalParam => '--retention-full=1 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
+
+        # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
+        #--------------------------------------------------------------------------------------------------------------------------
+        # Create the 10.0-3 directory and copy a WAL file to it (something that has a different system id)
+        $oHostBackup->executeSimple('mkdir ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/' . '10.0-3');
+        $oHostBackup->executeSimple('mkdir ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/' . '10.0-3/0000000100000001');
+        $oHostBackup->executeSimple('cp ' . $self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin '
+            . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/' . '10.0-3/0000000100000001/000000010000000100000001');
+
+        # Copy pg_control for 9.5
+        executeTest(
+            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
+            DB_FILE_PGCONTROL);
+
+        $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
     }
 }
 

@@ -250,16 +250,6 @@ sub reconstruct
 
     my $strInvalidFileStructure = undef;
 
-    # Remove any existing DB or History information
-    if ($self->test(INFO_ARCHIVE_SECTION_DB))
-    {
-        $self->remove(INFO_ARCHIVE_SECTION_DB);
-    }
-    if ($self->test(INFO_ARCHIVE_SECTION_DB_HISTORY))
-    {
-        $self->remove(INFO_ARCHIVE_SECTION_DB_HISTORY);
-    }
-
     my @stryArchiveId = fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
     my %hDbHistoryVersion;
 

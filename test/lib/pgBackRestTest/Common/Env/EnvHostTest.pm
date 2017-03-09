@@ -29,6 +29,14 @@ use pgBackRestTest::Common::HostGroupTest;
 ####################################################################################################################################
 # Constants
 ####################################################################################################################################
+use constant WAL_VERSION_92                                      => '92';
+    push @EXPORT, qw(WAL_VERSION_92);
+use constant WAL_VERSION_92_SYS_ID                               => 6393320793115174899;
+    push @EXPORT, qw(WAL_VERSION_92_SYS_ID);
+use constant WAL_VERSION_93                                      => '93';
+    push @EXPORT, qw(WAL_VERSION_93);
+use constant WAL_VERSION_93_SYS_ID                               => 6395542721432104958;
+    push @EXPORT, qw(WAL_VERSION_93_SYS_ID);
 use constant WAL_VERSION_94                                      => '94';
     push @EXPORT, qw(WAL_VERSION_94);
 use constant WAL_VERSION_94_SYS_ID                               => 6353949018581704918;

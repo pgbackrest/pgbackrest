@@ -120,8 +120,8 @@ sub run
 
         # Change the database version by copying a new pg_control file
         executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        executeTest('cp ' . $self->dataPath() . '/backup.pg_control_93.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        executeTest('cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $oHostDbMaster->dbBasePath() .
+            '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaCreate('fail on database mismatch without force option',
             {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});

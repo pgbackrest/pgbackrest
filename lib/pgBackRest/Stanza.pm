@@ -196,20 +196,33 @@ sub stanzaUpgrade
     # If the DB section does not match, then upgrade
     if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH))
     {
-        $oBackupInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-            $self->{oDb}{ullDbSysId}, $oBackupInfo->dbHistoryIdGet() + 1);
-        $oBackupInfo->save();
-        $bBackupUpgraded = true;
+        # Determine if it is necessary to reconstruct the file
+        my ($bReconstruct, $strWarningMsgArchive) =
+            $self->reconstructCheck($oBackupInfo, PATH_BACKUP_CLUSTER, $oFile, $oFile->pathGet(PATH_BACKUP_CLUSTER));
+
+        # If reconstruction was required then save the reconstructed file
+        if ($bReconstruct)
+        {
+            $oBackupInfo->save();
+            $bBackupUpgraded = true;
+        }
     }
 
     if ($self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
     {
-        $oArchiveInfo->dbSectionSet($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $oArchiveInfo->dbHistoryIdGet() + 1);
-        $oArchiveInfo->save();
-        $bArchiveUpgraded = true;
+        # Determine if it is necessary to reconstruct the file
+        my ($bReconstruct, $strWarningMsgArchive) =
+            $self->reconstructCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, $oFile, $oFile->pathGet(PATH_BACKUP_ARCHIVE));
+
+        # If reconstruction was required then save the reconstructed file
+        if ($bReconstruct)
+        {
+            $oArchiveInfo->save();
+            $bArchiveUpgraded = true;
+        }
     }
 
-    # If neither file needed upgrading then provide informational meesage that an upgrade was not necessary
+    # If neither file needed upgrading then provide informational message that an upgrade was not necessary
     if (!($bBackupUpgraded || $bArchiveUpgraded))
     {
         &log(INFO, "the stanza data is already up to date");
@@ -295,7 +308,7 @@ sub infoFileCreate
     my $iResult = 0;
     my $strResultMessage = undef;
     my $strWarningMsgArchive = undef;
-    my $bSave = true;
+    my $bReconstruct = true;
 
 
     # If force was not used and the info file does not exist and the directory is not empty, then error
@@ -311,47 +324,24 @@ sub infoFileCreate
 
     eval
     {
-        # Reconstruct the file from the data in the directory if there is any else initialize the file
-        if ($strPathType eq PATH_BACKUP_CLUSTER)
-        {
-            $oInfo->reconstruct(false, false, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
-                $self->{oDb}{iCatalogVersion});
-        }
-        # If this is the archive.info reconstruction then catch any warnings
-        else
-        {
-            $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
-        }
+        ($bReconstruct, $strWarningMsgArchive) = $self->reconstructCheck($oInfo, $strPathType, $oFile, $strParentPath);
 
-        # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
-        if ($oInfo->{bExists})
+        if ($oInfo->{bExists} && $bReconstruct)
         {
-            my $oInfoOnDisk =
-                ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::BackupInfo($strParentPath)
-                : new pgBackRest::Archive::ArchiveInfo($strParentPath));
-
             # If force was not used and the hashes are different then error
-            if ($oInfoOnDisk->hash() ne $oInfo->hash())
+            if (!optionGet(OPTION_FORCE))
             {
-                if (!optionGet(OPTION_FORCE))
-                {
-                    $iResult = ERROR_FILE_INVALID;
-                    $strResultMessage =
-                        ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') . "invalid\n" .
-                        'HINT: use stanza-upgrade if the database has been upgraded or use --force';
-                }
-            }
-            # If the hashes are the same, then don't save the file since it already exists and is valid
-            else
-            {
-                $bSave = false;
+                $iResult = ERROR_FILE_INVALID;
+                $strResultMessage =
+                    ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') . "invalid\n" .
+                    'HINT: use stanza-upgrade if the database has been upgraded or use --force';
             }
         }
 
         if ($iResult == 0)
         {
             # Save the reconstructed file
-            if ($bSave)
+            if ($bReconstruct)
             {
                 $oInfo->save();
             }
@@ -418,6 +408,73 @@ sub dbInfoGet
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# reconstructCheck
+#
+# Reconstruct the file based on disk data. If the info file already exists, it compares the reconstructed file to the existing file
+# and indicates if reconstruction is required. If the file does not yet exist on disk, it will still indicate reconstruction is
+# needed. The oInfo object contains the reconstructed data and can be saved by the calling routine.
+####################################################################################################################################
+sub reconstructCheck
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oInfo,
+        $strPathType,
+        $oFile,
+        $strParentPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->reconstructCheck', \@_,
+            {name => 'oInfo'},
+            {name => 'strPathType'},
+            {name => 'oFile'},
+            {name => 'strParentPath'},
+        );
+
+    my $bReconstruct = true;
+    my $strWarningMsgArchive = undef;
+
+    # Reconstruct the file from the data in the directory if there is any else initialize the file
+    if ($strPathType eq PATH_BACKUP_CLUSTER)
+    {
+        $oInfo->reconstruct(false, false, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+            $self->{oDb}{iCatalogVersion});
+    }
+    # If this is the archive.info reconstruction then catch any warnings
+    else
+    {
+        $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+    }
+
+    # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
+    if ($oInfo->{bExists})
+    {
+        my $oInfoOnDisk =
+            ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::BackupInfo($strParentPath)
+            : new pgBackRest::Archive::ArchiveInfo($strParentPath));
+
+        # If the hashes are the same, then no need to reconstruct the file since it already exists and is valid
+        if ($oInfoOnDisk->hash() eq $oInfo->hash())
+        {
+            $bReconstruct = false;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bReconstruct', value => $bReconstruct},
+        {name => 'strWarningMsgArchive', value => $strWarningMsgArchive},
+    );
 }
 
 ####################################################################################################################################

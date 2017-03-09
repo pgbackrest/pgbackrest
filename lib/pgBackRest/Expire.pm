@@ -267,8 +267,8 @@ sub process
 
             # Make sure the current database versions match between the two files
             if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                    ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION))) ||
-                $oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef,
+                    ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION)))) ||
+                !($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef,
                     ($oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID)))))
             {
                 confess &log(ERROR, "archive and backup database versions do not match\n" .
