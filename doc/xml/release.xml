@@ -153,6 +153,19 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.17dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading <postgres/>.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+        </release>
         <release date="2017-03-02" version="1.16" title="Page Checksum Improvements, CI, and Package Testing">
             <release-core-list>
                 <release-bug-list>
