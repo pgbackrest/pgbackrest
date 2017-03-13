@@ -113,7 +113,7 @@ sub backupChecksumPage
         # Calculate offset to the first block in the buffer
         my $iBlockOffset = int($iBufferOffset / PG_PAGE_SIZE) + ($rExtraParam->{iSegmentNo} * 131072);
 
-        if (!pageChecksumBuffer(
+        if (!pageChecksumBufferTest(
                 $$tBufferRef, $iBufferSize, $iBlockOffset, PG_PAGE_SIZE, $rExtraParam->{iWalId},
                 $rExtraParam->{iWalOffset}))
         {
@@ -126,7 +126,8 @@ sub backupChecksumPage
                 my $iBlockNoStart = $iBlockOffset + $iBlockNo;
 
                 if (!pageChecksumTest(
-                        substr($$tBufferRef, $iBlockNo * PG_PAGE_SIZE, PG_PAGE_SIZE), $iBlockNoStart, PG_PAGE_SIZE))
+                        substr($$tBufferRef, $iBlockNo * PG_PAGE_SIZE, PG_PAGE_SIZE), $iBlockNoStart, PG_PAGE_SIZE,
+                        $rExtraParam->{iWalId}, $rExtraParam->{iWalOffset}))
                 {
                     my $iLastIdx = defined($hExtra->{iyPageError}) ? @{$hExtra->{iyPageError}} - 1 : 0;
                     my $iyLast = defined($hExtra->{iyPageError}) ? $hExtra->{iyPageError}[$iLastIdx] : undef;

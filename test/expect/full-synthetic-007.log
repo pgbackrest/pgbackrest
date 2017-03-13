@@ -147,9 +147,9 @@ P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P00   WARN: invalid page checksums found in file db-master:[TEST_PATH]/db-master/db/base/base/32768/33001 at pages 0, 3-5, 7
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 65536, lManifestSaveSize = 3
-P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 32768, 271, 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164, {bValid => 1}), strKey = pg_data/base/32768/33000.32767
+P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 32768, 263, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, {bValid => 1}), strKey = pg_data/base/32768/33000.32767
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P00  DEBUG:     BackupFile::backupManifestUpdate: save manifest: lManifestSaveCurrent = 32768, lManifestSaveSize = 3
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (1, 32768, 272, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, {bValid => 1}), strKey = pg_data/base/32768/33000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
@@ -314,7 +314,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -436,7 +436,7 @@ P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = tr
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
 P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 1, 1, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164, 1, 1, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 1, 1, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 1, 1, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 1, 1, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, 89373d9f2973502940de06bc5212489df3f8a912, 0, 1, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
@@ -457,9 +457,9 @@ P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0, 65536, 325, 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, [undef]), strKey = pg_data/base/32768/33001
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000.32767, strQueueIdx = 0
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33001 (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0, 32768, 271, 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164, [undef]), strKey = pg_data/base/32768/33000.32767
+P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0, 32768, 263, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, [undef]), strKey = pg_data/base/32768/33000.32767
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0, 32768, 272, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, [undef]), strKey = pg_data/base/32768/33000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-master/db/base/base/32768/33000 (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
@@ -625,7 +625,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -773,7 +773,7 @@ P00  DEBUG:     build level 3 paths/links
 P00  DEBUG:     Protocol::LocalProcess->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = backup
 P00  DEBUG:     Protocol::LocalProcess->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, 65536, [MODIFICATION-TIME-1], 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 0, 0, pg_data/base/32768/33001, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33001, strOp = restoreFile, strQueue = pg_data
-P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, 32768, [MODIFICATION-TIME-1], 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164, 0, 0, pg_data/base/32768/33000.32767, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33000.32767, strOp = restoreFile, strQueue = pg_data
+P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, 32768, [MODIFICATION-TIME-1], 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 0, 0, pg_data/base/32768/33000.32767, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33000.32767, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, 32768, [MODIFICATION-TIME-1], 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 0, 0, pg_data/base/32768/33000, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/32768/33000, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, 16384, [MODIFICATION-TIME-1], e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 0, 0, pg_data/base/16384/17000, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/base/16384/17000, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::LocalProcess->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest, 8192, [MODIFICATION-TIME-2], 89373d9f2973502940de06bc5212489df3f8a912, 0, 0, pg_data/global/pg_control, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 1), strKey = pg_data/global/pg_control, strOp = restoreFile, strQueue = pg_data
@@ -797,8 +797,8 @@ P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero 
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0), strKey = pg_data/base/32768/33000.32767
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/32768/33000, strQueueIdx = 0
-P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 32768, lSizeCurrent = 65536, lSizeTotal = 163878, strChecksum = 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000.32767
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 32768, lSizeCurrent = 65536, lSizeTotal = 163878, strChecksum = 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000.32767
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P00  DEBUG:     Protocol::LocalProcess->process: job complete: iProcessId = 1, rResult = (0), strKey = pg_data/base/32768/33000
 P00  DEBUG:     Protocol::LocalProcess->process: get job from queue: iHostIdx = 0, iProcessId = 1, strKey = pg_data/base/16384/17000, strQueueIdx = 0
 P00  DEBUG:     RestoreFile::restoreLog(): bCopy = false, bForce = false, bZero = false, iLocalId = 1, lModificationTime = [MODIFICATION-TIME-1], lSize = 32768, lSizeCurrent = 98304, lSizeTotal = 163878, strChecksum = 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, strDbFile = [TEST_PATH]/db-master/db/base/base/32768/33000
@@ -887,7 +887,7 @@ P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat - destination changed
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches backup (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches backup (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches backup (16KB, 89%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
@@ -934,7 +934,7 @@ P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/postgresql.conf
 P00 DETAIL: remove link [TEST_PATH]/db-master/db/base/pg_stat
 P00   INFO: cleanup removed 2 links
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33001 - exists and matches size 65536 and modification time [MODIFICATION-TIME-1] (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/32768/33000 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/base/16384/17000 - exists and matches size 16384 and modification time [MODIFICATION-TIME-1] (16KB, 89%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01   INFO: restore file [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
@@ -1250,7 +1250,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1553,7 +1553,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1727,7 +1727,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1901,7 +1901,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2006,7 +2006,7 @@ P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts1-2 exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/tablespace/ts2-2 exists
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 (16KB, 89%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
@@ -2045,7 +2045,7 @@ P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/table
 P00   INFO: remove invalid files/paths/links from [TEST_PATH]/db-master/db/base-2
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 - exists and matches backup (64KB, 39%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 59%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 59%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 - exists and matches backup (32KB, 79%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/16384/17000 - exists and matches backup (16KB, 89%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
@@ -2172,7 +2172,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2383,7 +2383,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-INCR-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2560,7 +2560,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2729,7 +2729,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2905,7 +2905,7 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2981,7 +2981,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 88%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/global/pg_control (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -3087,7 +3087,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -3599,7 +3599,7 @@ pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29"
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3723,7 +3723,7 @@ P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base-2/recovery.conf
 P00 DETAIL: databases for include/exclude (1, 16384, 32768)
 P00 DETAIL: database filter: (^pg_data\/base\/16384\/)|(^pg_tblspc/2\/[TS_PATH-1]\/16384\/)
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/32768/33000 (32KB, 88%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/global/pg_control.pgbackrest (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P01 DETAIL: restore file [TEST_PATH]/db-master/db/base-2/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -3779,7 +3779,7 @@ P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33000.32767 (32KB, 66%) checksum 9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164
+P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33000.32767 (32KB, 66%) checksum 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/32768/33000 (32KB, 88%) checksum 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/global/pg_control.pgbackrest (8KB, 94%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P01   INFO: restore file [TEST_PATH]/db-master/db/base-2/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003

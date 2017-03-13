@@ -11,7 +11,7 @@ use AutoLoader;
 our @ISA = qw(Exporter);
 
 # Library version (add .999 during development)
-our $VERSION = '1.16';
+our $VERSION = '1.17.999';
 
 sub libCVersion {return $VERSION};
 
@@ -30,7 +30,7 @@ our %EXPORT_TAGS =
     'checksum' => [qw(
         pageChecksum
         pageChecksumTest
-        pageChecksumBuffer
+        pageChecksumBufferTest
     )],
 );
 

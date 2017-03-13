@@ -29,7 +29,7 @@ typedef IV int64;      /* == 64 bits */
 Checksum functions
 ***********************************************************************************************************************************/
 uint16 pageChecksum(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize);
-bool pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize);
-bool pageChecksumBuffer(
-        const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 iIgnoreWalId,
-        uint32 iIgnoreWalOffset);
+bool pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize, uint32 uiIgnoreWalId, uint32 uiIgnoreWalOffset);
+bool pageChecksumBufferTest(
+    const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 uiIgnoreWalId,
+    uint32 uiIgnoreWalOffset);

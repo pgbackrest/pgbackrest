@@ -24,16 +24,18 @@ pageChecksum(page, blkno, pageSize)
     U32 pageSize
 
 bool
-pageChecksumTest(page, blockNo, pageSize)
-    const char *page
-    U32 blockNo
-    U32 pageSize
+pageChecksumTest(szPage, uiBlockNo, uiPageSize, uiIgnoreWalId, uiIgnoreWalOffset)
+    const char *szPage
+    U32 uiBlockNo
+    U32 uiPageSize
+    U32 uiIgnoreWalId
+    U32 uiIgnoreWalOffset
 
 bool
-pageChecksumBuffer(pageBuffer, bufferSize, blockNoStart, pageSize, iIgnoreWalId, iIgnoreWalOffset)
-    const char *pageBuffer
-    U32 bufferSize
-    U32 blockNoStart
-    U32 pageSize
-    U32 iIgnoreWalId
-    U32 iIgnoreWalOffset
+pageChecksumBufferTest(szPageBuffer, uiBufferSize, uiBlockNoStart, uiPageSize, uiIgnoreWalId, uiIgnoreWalOffset)
+    const char *szPageBuffer
+    U32 uiBufferSize
+    U32 uiBlockNoStart
+    U32 uiPageSize
+    U32 uiIgnoreWalId
+    U32 uiIgnoreWalOffset
