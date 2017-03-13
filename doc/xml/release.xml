@@ -153,7 +153,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.17dev" title="UNDER DEVELOPMENT">
+        <release date="2017-03-13" version="1.17" title="Page Checksum Bug Fix">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
