@@ -42,10 +42,10 @@ sub initModule
 {
     my $self = shift;
 
-    $self->{strDbPath} = $self->testPath() . '/db'; # *
-    $self->{strRepoPath} = $self->testPath() . '/repo'; # *
-    $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza(); # *
-    $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza(); # *
+    $self->{strDbPath} = $self->testPath() . '/db';
+    $self->{strRepoPath} = $self->testPath() . '/repo';
+    $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
+    $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
     $self->{strSpoolPath} = "$self->{strArchivePath}/out";
 }
 

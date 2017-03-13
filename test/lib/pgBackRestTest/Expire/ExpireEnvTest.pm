@@ -24,6 +24,7 @@ use pgBackRest::Manifest;
 use pgBackRest::Stanza;
 use pgBackRest::Version;
 
+use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
@@ -92,8 +93,15 @@ sub stanzaSet
     # Assign variables
     my $oStanza = {};
 
-    # Get the database info for the stanza
     my $oStanzaCreate = new pgBackRest::Stanza();
+
+    # If we're not upgrading, then create the stanza
+    if (!$bStanzaUpgrade)
+    {
+        $oStanzaCreate->stanzaCreate();
+    }
+
+    # Get the database info for the stanza
     $$oStanza{strDbVersion} = $strDbVersion;
     $$oStanza{ullDbSysId} = $oStanzaCreate->{oDb}{ullDbSysId};
     $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
@@ -148,18 +156,18 @@ sub stanzaCreate
     my $strDbVersionTemp = $strDbVersion;
     $strDbVersionTemp =~ s/\.//;
 
+    my $strDbPath = optionGet(OPTION_DB_PATH);
+
     # Create the test path for pg_control
-    filePathCreate((optionGet(OPTION_DB_PATH) . '/' . DB_PATH_GLOBAL), undef, true);
+    filePathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), undef, true);
 
     # Copy pg_control for stanza-create
     executeTest(
-        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
+        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . $strDbPath .
         '/' . DB_FILE_PGCONTROL);
+    executeTest('sudo chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
 
-    # Create the stanza
-    $self->{oHostBackup}->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
-
-    # Set local stanza object
+    # Create the stanza and set the local stanza object
     $self->stanzaSet($strStanza, $strDbVersion, false);
 
     # Return from function and log return values if any
@@ -197,6 +205,7 @@ sub stanzaUpgrade
     executeTest(
         'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
         '/' . DB_FILE_PGCONTROL);
+    executeTest('sudo chmod 600 ' . optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     $self->stanzaSet($strStanza, $strDbVersion, true);
 

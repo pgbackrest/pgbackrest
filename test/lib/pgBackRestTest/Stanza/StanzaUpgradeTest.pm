@@ -97,6 +97,7 @@ sub run
         executeTest(
             'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
             DB_FILE_PGCONTROL);
+        executeTest('sudo chmod 600 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         # Attempt to push an archive
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
@@ -153,6 +154,7 @@ sub run
         executeTest(
             'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
             DB_FILE_PGCONTROL);
+        executeTest('sudo chmod 600 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
     }

@@ -1,44 +1,6 @@
 run 001 - local
 ===============
 
-stanza-create db - successfully create the stanza (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   INFO: stanza-create command end: completed successfully
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
-[backrest]
-backrest-checksum="[CHECKSUM]"
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[db]
-db-catalog-version=201204301
-db-control-version=922
-db-id=1
-db-system-id=6393320793115174899
-db-version="9.2"
-
-[db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-
-+ supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
------------------------------------------------------------------------
-[backrest]
-backrest-checksum="[CHECKSUM]"
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[db]
-db-id=1
-db-system-id=6393320793115174899
-db-version="9.2"
-
-[db:history]
-1={"db-id":6393320793115174899,"db-version":"9.2"}
-
 * full backup: label = [BACKUP-FULL-1], start = 000000010000000000000000, stop = 000000010000000000000002
 * incr backup: label = [BACKUP-INCR-1], prior = [BACKUP-FULL-1], start = 000000010000000000000006, stop = 0000000100000000000000FB
 ====================================================================================================================================
