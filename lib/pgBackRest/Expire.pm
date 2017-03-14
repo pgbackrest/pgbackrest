@@ -294,7 +294,8 @@ sub process
 
                     # If this is not the current database, then delete the archive directory else do nothing since the current
                     # DB archive directory must not be deleted
-                    if (!$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef, $iDbHistoryId))
+                    if (!defined($iDbHistoryId) || !$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef,
+                        $iDbHistoryId))
                     {
                         my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId);
 

@@ -637,11 +637,18 @@ sub backupArchiveDbHistoryId
         }
     }
 
+    # If the database is not found in the backup.info history list
     if (!defined($iDbHistoryId))
     {
-        # This should never happen unless the backup.info file is corrupt
-        confess &log(ASSERT, "the current database ${strDbVersionArchive} is not listed in the backup history",
-            ERROR_FILE_INVALID);
+        # Check to see that the current DB sections match for the archive and backup info files
+        if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                ($self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION)))) ||
+            !($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef,
+                ($self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID)))))
+        {
+            # This should never happen unless the backup.info file is corrupt
+            confess &log(ASSERT, "the archive and backup database sections do not match", ERROR_FILE_INVALID);
+        }
     }
 
     # Return from function and log return values if any
@@ -682,13 +689,17 @@ sub listByArchiveId
 
     my $iDbHistoryId = $self->backupArchiveDbHistoryId($strArchiveId, $strPathBackupArchive);
 
-    # Iterate through the backups and filter
-    foreach my $strBackup (@$stryBackup)
+    # If history found, then build list of backups associated with the archive id passed, else return empty array
+    if (defined($iDbHistoryId))
     {
-        # From the backup.info current backup section, get the db-id for the backup and if it is the same, add to the list
-        if ($self->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID, $iDbHistoryId))
+        # Iterate through the backups and filter
+        foreach my $strBackup (@$stryBackup)
         {
-            push(@stryArchiveBackup, $strBackup);
+            # From the backup.info current backup section, get the db-id for the backup and if it is the same, add to the list
+            if ($self->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID, $iDbHistoryId))
+            {
+                push(@stryArchiveBackup, $strBackup);
+            }
         }
     }
 

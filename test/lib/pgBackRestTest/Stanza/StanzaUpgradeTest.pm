@@ -141,6 +141,8 @@ sub run
 
         $oHostBackup->backup('full', 'create full backup ', {strOptionalParam => '--retention-full=1 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
+        $oHostDbMaster->info('db upgraded - archive at db-2, backup on db-1 only');
+        $oHostDbMaster->info('db upgraded - db-1 listed', {strOutput => INFO_OUTPUT_JSON});
 
         # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
         #--------------------------------------------------------------------------------------------------------------------------
@@ -157,6 +159,15 @@ sub run
         executeTest('sudo chmod 600 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
+        # Test info command JSON after upgrade
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
+
+        $oHostBackup->backup('full', 'create full backup ', {strOptionalParam => '--retention-full=1 --no-' .
+            OPTION_ONLINE . ' --log-level-console=detail'}, false);
+        $oHostDbMaster->info('db upgraded - backup on db-2 only');
+        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
     }
 }
 
