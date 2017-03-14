@@ -164,7 +164,7 @@ sub run
 
         $oHostBackup->backup('full', 'create second full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
-        $oHostDbMaster->info('db upgraded - backup on db-2 only');
+        $oHostDbMaster->info('db upgraded - backup on db-1 and db-2');
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
     }
 }
