@@ -93,10 +93,12 @@ relating to checksums.
 ***********************************************************************************************************************************/
 typedef struct PageHeaderData
 {
-	// LSN is member of *any* block, not only page-organized ones
-	PageXLogRecPtr pd_lsn;		/* LSN: next byte after last byte of xlog
-								 * record for last change to this page */
-	uint16		pd_checksum;	/* checksum */
+    // LSN is member of *any* block, not only page-organized ones
+    PageXLogRecPtr pd_lsn;  /* LSN: next byte after last byte of xlog * record for last change to this page */
+    uint16 pd_checksum;     /* checksum */
+    uint16 pd_flags;        /* flag bits, see below */
+    uint16 pd_lower;        /* offset to start of free space */
+    uint16 pd_upper;        /* offset to end of free space */
 } PageHeaderData;
 
 typedef PageHeaderData *PageHeader;
@@ -186,30 +188,29 @@ pageChecksum(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize)
 /***********************************************************************************************************************************
 pageChecksumTest
 
-Test checksums for a single page.
+Test if checksum is valid for a single page.
 ***********************************************************************************************************************************/
 bool
-pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize)
+pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize, uint32 uiIgnoreWalId, uint32 uiIgnoreWalOffset)
 {
-    // Get the actual checksum from the page
-    uint16 usActualChecksum = ((PageHeader)szPage)->pd_checksum;
-
-    // Get the calculated checksum from the page
-    uint16 usTestChecksum = pageChecksum(szPage, uiBlockNo, uiPageSize);
-
-    // Return match
-    return usActualChecksum == usTestChecksum;
+    return
+        // This is a new page so don't test checksum
+        ((PageHeader)szPage)->pd_upper == 0 ||
+        // LSN is after the backup started so checksum is not tested because pages may be torn
+        (((PageHeader)szPage)->pd_lsn.xlogid >= uiIgnoreWalId && ((PageHeader)szPage)->pd_lsn.xrecoff >= uiIgnoreWalOffset) ||
+        // Checksum is valid
+        ((PageHeader)szPage)->pd_checksum == pageChecksum(szPage, uiBlockNo, uiPageSize);
 }
 
 /***********************************************************************************************************************************
-pageChecksumBuffer
+pageChecksumBufferTest
 
-Test checksums for all pages in a buffer.
+Test if checksums are valid for all pages in a buffer.
 ***********************************************************************************************************************************/
 bool
-pageChecksumBuffer(
-    const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 iIgnoreWalId,
-    uint32 iIgnoreWalOffset)
+pageChecksumBufferTest(
+    const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 uiIgnoreWalId,
+    uint32 uiIgnoreWalOffset)
 {
     // If the buffer does not represent an even number of pages then error
     if (uiBufferSize % uiPageSize != 0 || uiBufferSize / uiPageSize == 0)
@@ -223,8 +224,7 @@ pageChecksumBuffer(
         const char *szPage = szPageBuffer + (uiIndex * uiPageSize);
 
         // Return false if the checksums do not match
-        if (!(((PageHeader)szPage)->pd_lsn.xlogid >= iIgnoreWalId && ((PageHeader)szPage)->pd_lsn.xrecoff >= iIgnoreWalOffset) &&
-            ((PageHeader)szPage)->pd_checksum != pageChecksum(szPage, uiBlockNoStart + uiIndex, uiPageSize))
+        if (!pageChecksumTest(szPage, uiBlockNoStart + uiIndex, uiPageSize, uiIgnoreWalId, uiIgnoreWalOffset))
             return false;
     }
 

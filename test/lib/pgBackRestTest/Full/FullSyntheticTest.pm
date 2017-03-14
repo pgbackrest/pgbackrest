@@ -160,12 +160,12 @@ sub run
         my $tPageValidSeg32767 =
             pageBuild($tBasePage, $iBlockOffset + 0) .
             pageBuild($tBasePage, $iBlockOffset + 1) .
-            pageBuild($tBasePage, $iBlockOffset + 2) .
+            ("\0" x 8192) .
             pageBuild($tBasePage, 0, 0xFFFF, 0xFFFF);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
-            '9732e3ecc35b7d94526f2fcbbe230e8ea3bc5164', $lTime);
+            '21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5', $lTime);
 
         my $tPageInvalid33001 =
             pageBuild($tBasePage, 1) .

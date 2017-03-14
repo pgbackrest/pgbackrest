@@ -86,7 +86,7 @@ sub pageBuild
         substr($tBuffer, 0, 8) . pack('S', $iPageChecksum + 2) . substr($tBuffer, 10) .
         substr($tBuffer, 0, 8) . pack('S', $iPageChecksum + 3) . substr($tBuffer, 10);
 
-    ok (pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'pass valid page buffer');
+    ok (pageChecksumBufferTest($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'pass valid page buffer');
 
     # Allow page with an invalid checksum because LSN >= ignore LSN
     $tBufferMulti =
@@ -94,10 +94,10 @@ sub pageBuild
         pageBuild($tBuffer, 0xFFFF, 0xFFFE, 0) .
         pageBuild($tBuffer, 0, 0, 2);
 
-    ok (pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFE), 'skip invalid checksum');
+    ok (pageChecksumBufferTest($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFE), 'skip invalid checksum');
 
     # Reject an invalid page buffer (second block will error because the checksum will not contain the correct block no)
-    ok (!pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'reject invalid page buffer');
+    ok (!pageChecksumBufferTest($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'reject invalid page buffer');
 
     # Find the rejected page in the buffer
     my $iRejectedBlockNo = -1;
@@ -105,7 +105,7 @@ sub pageBuild
 
     for (my $iIndex = 0; $iIndex < length($tBufferMulti) / $iPageSize; $iIndex++)
     {
-        if (!pageChecksumTest(substr($tBufferMulti, $iIndex * $iPageSize, $iPageSize), $iIndex, $iPageSize))
+        if (!pageChecksumTest(substr($tBufferMulti, $iIndex * $iPageSize, $iPageSize), $iIndex, $iPageSize, 0xFFFF, 0xFFFF))
         {
             $iRejectedBlockNo = $iIndex;
         }
@@ -120,7 +120,7 @@ sub pageBuild
 
     eval
     {
-        pageChecksumBuffer($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF);
+        pageChecksumBufferTest($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF);
         ok (0, 'misaligned test should have failed');
     }
     or do
