@@ -139,10 +139,8 @@ sub run
         # Create the tablespace directory and perform a backup
         filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
 
-        $oHostBackup->backup('full', 'create full backup ', {strOptionalParam => '--retention-full=1 --no-' .
+        $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
-        $oHostDbMaster->info('db upgraded - archive at db-2, backup on db-1 only');
-        $oHostDbMaster->info('db upgraded - db-1 listed', {strOutput => INFO_OUTPUT_JSON});
 
         # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
         #--------------------------------------------------------------------------------------------------------------------------
@@ -164,7 +162,7 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
 
-        $oHostBackup->backup('full', 'create full backup ', {strOptionalParam => '--retention-full=1 --no-' .
+        $oHostBackup->backup('full', 'create second full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
         $oHostDbMaster->info('db upgraded - backup on db-2 only');
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
