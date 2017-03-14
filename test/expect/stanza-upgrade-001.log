@@ -281,7 +281,7 @@ full backup - create first full backup  (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.done (0B, 100%)
 P00   INFO: full backup size = 16MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
@@ -341,7 +341,7 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
 [target:file]
 pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/pg_xlog/000000010000000100000001={"checksum":"1e34fa1c833090d94b9bb14f2a8d3153dca6ea27","mode":"0640","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_xlog/archive_status/000000010000000100000001.ready={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_xlog/archive_status/000000010000000100000001.done={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
 group="[GROUP-1]"
@@ -435,6 +435,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-mas
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 15b1a1a35c26b17570aca7920980f0ad11c6d858
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum e28bf39d0a56bf9fabd4049b329fcae8878bfec6
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.done (0B, 100%)
 P00   INFO: full backup size = 16MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
@@ -495,6 +496,7 @@ pg_data={"path":"[TEST_PATH]/db-master/db/base","type":"path"}
 [target:file]
 pg_data/global/pg_control={"checksum":"e28bf39d0a56bf9fabd4049b329fcae8878bfec6","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-3]}
 pg_data/pg_xlog/000000010000000100000001={"checksum":"15b1a1a35c26b17570aca7920980f0ad11c6d858","mode":"0640","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-4]}
+pg_data/pg_xlog/archive_status/000000010000000100000001.done={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_xlog/archive_status/000000010000000100000001.ready={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-4]}
 
 [target:file:default]

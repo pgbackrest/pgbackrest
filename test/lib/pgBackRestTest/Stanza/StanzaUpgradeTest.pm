@@ -129,10 +129,9 @@ sub run
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-        #
-        # # Change the pushed WAL segment to done
-        # fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
-        #     "${strXlogPath}/archive_status/000000010000000100000001.done");
+        # Change the pushed WAL segment to done to stop TIMESTAMP flopping in expect log
+        fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
+            "${strXlogPath}/archive_status/000000010000000100000001.done");
         #
         # Confirm successful backup at db-1 although archive at db-2
         #--------------------------------------------------------------------------------------------------------------------------
