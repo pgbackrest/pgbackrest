@@ -165,6 +165,14 @@
                     </release-item>
                 </release-feature-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Updated vagrant to new version and image.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2017-03-13" version="1.17" title="Page Checksum Bug Fix">
