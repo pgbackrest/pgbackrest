@@ -132,10 +132,6 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
         filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
-
-        # Remove the ready file before performing the backup to prevent the expect log from flapping the timestamp
-        fileRemove("${strXlogPath}/archive_status/000000010000000100000001.ready");
-
         $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
 
@@ -155,14 +151,9 @@ sub run
 
         $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Test info command JSON for multiple db backups after upgrade
+        # Push a WAL and create a backup in the new DB to confirm info command displays the JSON correctly
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
-
-        # Remove the ready file before performing the backup to prevent the expect log from flapping the timestamp
-        fileRemove("${strXlogPath}/archive_status/000000010000000100000001.ready");
-
-        # Create a beckup in the new DB and confirm info command displays the JSON correctly
         $oHostBackup->backup('full', 'create second full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});

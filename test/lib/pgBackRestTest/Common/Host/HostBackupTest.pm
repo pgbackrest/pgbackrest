@@ -365,7 +365,7 @@ sub backupEnd
             $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_BACKUP)->testPath() . '/' . BACKREST_CONF);
         }
 
-        if ($self->synthetic())
+        if ($self->synthetic() && $bManifestCompare)
         {
             $self->{oLogTest}->supplementalAdd($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST));
             $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
