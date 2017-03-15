@@ -99,7 +99,7 @@ sub run
             DB_FILE_PGCONTROL);
         executeTest('sudo chmod 600 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
-        # Attempt to push an archive
+        # Fail on attempt to push an archive
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
@@ -119,7 +119,6 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the archive info file and force reconstruction
         $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
@@ -129,14 +128,13 @@ sub run
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-        # Change the pushed WAL segment to done to stop TIMESTAMP flopping in expect log
-        fileMove("${strXlogPath}/archive_status/000000010000000100000001.ready",
-            "${strXlogPath}/archive_status/000000010000000100000001.done");
-        #
         # Confirm successful backup at db-1 although archive at db-2
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
         filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
+
+        # Remove the ready file before performing the backup to prevent the expect log from flapping the timestamp
+        fileRemove("${strXlogPath}/archive_status/000000010000000100000001.ready");
 
         $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
@@ -157,13 +155,16 @@ sub run
 
         $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Test info command JSON after upgrade
+        # Test info command JSON for multiple db backups after upgrade
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
 
+        # Remove the ready file before performing the backup to prevent the expect log from flapping the timestamp
+        fileRemove("${strXlogPath}/archive_status/000000010000000100000001.ready");
+
+        # Create a beckup in the new DB and confirm info command displays the JSON correctly
         $oHostBackup->backup('full', 'create second full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
-        $oHostDbMaster->info('db upgraded - backup on db-1 and db-2');
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
     }
 }
