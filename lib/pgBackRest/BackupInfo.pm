@@ -270,24 +270,25 @@ sub reconstruct
         else
         {
             # Turn off console logging to control when to display the error
-            logLevelSet(undef, OFF);
+            logDisable();
 
             eval
             {
                 $self->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $bRequired);
+                logEnable();
                 return true;
             }
             or do
             {
+                # Reset the console logging
+                logEnable();
+
                 # Confess unhandled errors
                 confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_BACKUP_MISMATCH);
 
                 # Update the DB section if it does not match the current database
                 $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false)+1);
             };
-
-            # Reset the console logging
-            logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
         }
     }
 
