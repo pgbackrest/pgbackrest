@@ -153,6 +153,16 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.18dev" title="UNDER DEVELOPMENT">
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Updated vagrant to new version and image.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
         <release date="2017-03-13" version="1.17" title="Page Checksum Bug Fix">
             <release-core-list>
                 <release-bug-list>

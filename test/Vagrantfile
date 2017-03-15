@@ -4,8 +4,8 @@ Vagrant.configure(2) do |config|
         vb.cpus = 8
     end
 
-    config.vm.box = "bento/ubuntu-16.04"
-    config.vm.box_version = "2.2.9";
+    config.vm.box = "ubuntu/xenial64"
+    config.vm.box_version = "20170311.0.0"
 
     config.vm.provider :virtualbox do |vb|
         vb.name = "pgbackrest-test"
@@ -18,9 +18,20 @@ Vagrant.configure(2) do |config|
         # Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning
         export DEBIAN_FRONTEND=noninteractive
 
+        # Assign a host name
+        sed -i 's/^127\.0\.0\.1\t.*/127\.0\.0\.1\tlocalhost pgbackrest-test/' /etc/hosts
+        hostnamectl set-hostname pgbackrest-test
+
         # Update Apt
         echo 'Update Apt' && date
         apt-get update
+
+        # Install build tools
+        apt-get install -y devscripts build-essential lintian git txt2man debhelper
+
+        # Synchronize date
+        apt-get install -y ntpdate
+        ntpdate pool.ntp.org
 
         # Install Docker
         echo 'Install Docker' && date
@@ -31,7 +42,7 @@ Vagrant.configure(2) do |config|
         apt-get install -y linux-image-extra-$(uname -r)
         apt-get install -y docker-engine
         service docker start
-        sudo usermod -aG docker vagrant
+        sudo usermod -aG docker ubuntu
 
         # Install Perl modules
         echo 'Install Perl Modules' && date
@@ -49,14 +60,14 @@ Vagrant.configure(2) do |config|
         # Create backrest user and postgres group
         echo 'Create Postgres Group & pgBackRest User' && date
         groupadd -g5000 postgres
-        adduser --uid=5001 --ingroup=vagrant --disabled-password --gecos "" backrest
+        adduser --uid=5001 --ingroup=ubuntu --disabled-password --gecos "" backrest
 
         # Build VM images
         echo 'Build VM Images' && date
         rm -rf /backrest/test/.vagrant/docker/*
         rm -rf /backrest/test/.vagrant/libc/*
         rm -rf /backrest/test/.vagrant/package/*
-        sudo su - vagrant -c '/backrest/test/test.pl --vm-build'
+        sudo su - ubuntu -c '/backrest/test/test.pl --vm-build'
 
         echo 'Build End' && date
     SHELL
