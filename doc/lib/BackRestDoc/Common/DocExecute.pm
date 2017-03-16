@@ -103,7 +103,7 @@ sub executeKey
     # Add user to command
     my $strCommand = $self->{oManifest}->variableReplace(trim($oCommand->fieldGet('exe-cmd')));
     my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
-    $strCommand = ($strUser eq 'vagrant' ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
+    $strCommand = ($strUser eq 'ubuntu' ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
 
     # Format and split command
     $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
@@ -553,7 +553,7 @@ sub backrestConfig
                 }
             }
 
-            my $strLocalFile = "/home/vagrant/data/pgbackrest.conf";
+            my $strLocalFile = "/home/ubuntu/data/pgbackrest.conf";
 
             # Save the ini file
             iniSave($strLocalFile, $self->{config}{$strHostName}{$$hCacheKey{file}}, true);
@@ -651,7 +651,7 @@ sub postgresConfig
                 confess &log(ERROR, "cannot configure postgres on host ${strHostName} because the host does not exist");
             }
 
-            my $strLocalFile = '/home/vagrant/data/postgresql.conf';
+            my $strLocalFile = '/home/ubuntu/data/postgresql.conf';
             $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
