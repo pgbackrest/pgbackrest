@@ -61,7 +61,7 @@
         <variable key="host-os" keyword="default">u14</variable>
         <variable key="host-os" keyword="co6">co6</variable>
 
-        <variable key="host-user">ubuntu</variable>
+        <variable key="host-user" eval="y">use English '-no_match_vars'; return getpwuid($UID) . '';</variable>
         <variable key="host-mount">/backrest:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
