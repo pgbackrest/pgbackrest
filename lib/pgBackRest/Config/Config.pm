@@ -2390,6 +2390,8 @@ sub optionValidate
                             }
 
                             $oConfig = iniLoad($strConfigFile, undef, true);
+
+                            configFileValidate($oConfig, $strCommand);
                         }
                     }
 
@@ -2691,6 +2693,86 @@ sub optionValidate
             confess &log(ERROR, "option '${strOption}' not valid for command '${strCommand}'", ERROR_OPTION_COMMAND);
         }
     }
+}
+
+####################################################################################################################################
+# configFileValidate
+#
+# Determine if the configuration file contains any invalid options or placements
+####################################################################################################################################
+sub configFileValidate
+{
+    my $oConfig = shift;
+    my $strCommand = shift;
+
+    my $bFileValid = true;
+
+    foreach my $strSectionKey (keys(%$oConfig))
+    {
+        my ($strSection, $strCmd) = ($strSectionKey =~ /^(\w+):*(\w*)$/);
+if ($strSectionKey =~ /:/) {
+                &log(WARN, "STRSECTION HAS COLON");
+}
+
+        foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
+        {
+            # Is the option a valid pgbackrest option?
+            if (!exists($oOptionRule{$strOption}))
+            {
+                &log(WARN, "pgbackrest.conf file contains invalid option '${strOption}'");
+                $bFileValid = false;
+            }
+            else
+            {
+                if (defined($strCmd) && $strCmd ne '')
+                {
+                    confess &log(ERROR, "STRCMD ${strCmd}");
+
+                    if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCmd}))
+                    {
+                        &log(WARN, "pgbackrest.conf valid option '${strOption}' is located under the wrong section ${strSectionKey}");
+                        $bFileValid = false;
+                    }
+                }
+                # else
+                # {
+                #      &log(WARN, "STRSECTIONKEY '${strSection}'");
+                # }
+            }
+
+            # # Is the option a valid pgbackrest option?
+            # if (!exists($oOptionRule{$strOption}))
+            # {
+            #     &log(WARN, "pgbackrest.conf file contains invalid option '${strOption}'");
+            #     $bFileValid = false;
+            # }
+            # elsif (my ($strSection, $strCmd) = ($strSectionKey =~ /^(\w+):(\w+)$/))
+            # {
+            #     &log(INFO, "STRSECTIONKEY '${strSectionKey}' = '${strSection}' , '${strCmd}'");
+            # }
+            # elsif ($strSectionKey =~ /^\w+$/)
+            # {
+            #     &log(INFO, "STRSECTIONKEY '${strSectionKey}'");
+            # }
+            # # Is the valid option located in the correct section?
+            # elsif (($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_GLOBAL &&
+            #         $strSectionKey ne CONFIG_SECTION_GLOBAL) ||
+            #         ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
+            #         $strSectionKey eq CONFIG_SECTION_GLOBAL))
+            # {
+            #     &log(WARN, "pgbackrest.conf valid option '${strOption}' is located under the wrong section");
+            #     $bFileValid = false;
+            # }
+            # # Is the option valid for a command?
+            # elsif (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
+            # {
+            #     &log(WARN, "pgbackrest.conf valid option '${strOption}' is located under the wrong section");
+            #     $bFileValid = false;
+            # }
+        }
+    }
+
+    return $bFileValid;
 }
 
 ####################################################################################################################################
