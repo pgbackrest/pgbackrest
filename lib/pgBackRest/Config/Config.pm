@@ -2713,7 +2713,7 @@ sub configFileValidate
 
     foreach my $strSectionKey (keys(%$oConfig))
     {
-        my ($strSection, $strCmd) = ($strSectionKey =~ m/(\w+):*(\w*)/);
+        my ($strSection, $strCmd) = ($strSectionKey =~ m/(\w+):*(\w*-*\w*)/);
 
         foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
         {
@@ -2725,7 +2725,7 @@ sub configFileValidate
             }
             else
             {
-                # Is the option valid for a command?
+                # Is the option valid for the command section in which it is located?
                 if (defined($strCmd) && $strCmd ne '')
                 {
                     if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCmd}))
@@ -2735,7 +2735,7 @@ sub configFileValidate
                     }
                 }
 
-                # Is the valid option located in the correct section?
+                # Is the valid option located in the correct global/stanza section?
                 if (($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_GLOBAL &&
                         $strSection ne CONFIG_SECTION_GLOBAL) ||
                         ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
@@ -2750,6 +2750,8 @@ sub configFileValidate
 
     return $bFileValid;
 }
+
+push @EXPORT, qw(configFileValidate);
 
 ####################################################################################################################################
 # optionCommandRule
