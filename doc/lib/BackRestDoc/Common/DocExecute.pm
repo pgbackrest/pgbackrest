@@ -7,6 +7,7 @@ use parent 'BackRestDoc::Common::DocRender';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -25,6 +26,11 @@ use pgBackRestTest::Common::HostTest;
 use pgBackRestTest::Common::HostGroupTest;
 
 use BackRestDoc::Common::DocManifest;
+
+####################################################################################################################################
+# User that's building the docs
+####################################################################################################################################
+use constant DOC_USER                                              => getpwuid($UID) . '';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -103,7 +109,7 @@ sub executeKey
     # Add user to command
     my $strCommand = $self->{oManifest}->variableReplace(trim($oCommand->fieldGet('exe-cmd')));
     my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, 'postgres'));
-    $strCommand = ($strUser eq 'vagrant' ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
+    $strCommand = ($strUser eq DOC_USER ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
 
     # Format and split command
     $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
@@ -553,7 +559,7 @@ sub backrestConfig
                 }
             }
 
-            my $strLocalFile = "/home/vagrant/data/pgbackrest.conf";
+            my $strLocalFile = '/home/' . DOC_USER . '/data/pgbackrest.conf';
 
             # Save the ini file
             iniSave($strLocalFile, $self->{config}{$strHostName}{$$hCacheKey{file}}, true);
@@ -651,7 +657,7 @@ sub postgresConfig
                 confess &log(ERROR, "cannot configure postgres on host ${strHostName} because the host does not exist");
             }
 
-            my $strLocalFile = '/home/vagrant/data/postgresql.conf';
+            my $strLocalFile = '/home/' . DOC_USER . '/data/postgresql.conf';
             $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
