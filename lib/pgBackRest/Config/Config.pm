@@ -2713,12 +2713,21 @@ sub configFileValidate
 
     foreach my $strSectionKey (keys(%$oConfig))
     {
-        my ($strSection, $strCmd) = ($strSectionKey =~ m/(\w+):*(\w*-*\w*)/);
+        my ($strSection, $strCommand) = ($strSectionKey =~ m/(\w+):*(\w*-*\w*)/);
 
         foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
         {
+            my $strValue = $$oConfig{$strSectionKey}{$strOption};
+
+            # Is the option listed as an alternate name for another option? If so, replace it with the recognized option.
+            my $strOptionAltName = optionAltName($strOption);
+            if (defined($strOptionAltName))
+            {
+                $strOption = $strOptionAltName;
+            }
+
             # Is the option a valid pgbackrest option?
-            if (!exists($oOptionRule{$strOption}))
+            if (!(exists($oOptionRule{$strOption}) || defined($strOptionAltName)))
             {
                 &log(WARN, "pgbackrest.conf file contains invalid option '${strOption}'");
                 $bFileValid = false;
@@ -2726,22 +2735,22 @@ sub configFileValidate
             else
             {
                 # Is the option valid for the command section in which it is located?
-                if (defined($strCmd) && $strCmd ne '')
+                if (defined($strCommand) && $strCommand ne '')
                 {
-                    if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCmd}))
+                    if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
                     {
-                        &log(WARN, "pgbackrest.conf valid option '${strOption}' is not valid for command '$strCmd'");
+                        &log(WARN, "pgbackrest.conf valid option '${strOption}' is not valid for command '$strCommand'");
                         $bFileValid = false;
                     }
                 }
 
-                # Is the valid option located in the correct global/stanza section?
-                if (($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_GLOBAL &&
-                        $strSection ne CONFIG_SECTION_GLOBAL) ||
-                        ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
-                        $strSection eq CONFIG_SECTION_GLOBAL))
+                # Is the valid option a stanza-only option and not located in a global section?
+                if ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
+                    $strSection eq CONFIG_SECTION_GLOBAL)
                 {
-                    &log(WARN, "pgbackrest.conf valid option '${strOption}' is not valid under section ${strSection}");
+                    &log(WARN, "pgbackrest.conf valid option '${strOption}' is a stanza section option and is not valid under " .
+                        "section ${strSection}\n" .
+                        "HINT: global options can be under global or stanza sections but not visa-versa");
                     $bFileValid = false;
                 }
             }
@@ -2752,6 +2761,32 @@ sub configFileValidate
 }
 
 push @EXPORT, qw(configFileValidate);
+
+####################################################################################################################################
+# optionAltName
+#
+# Returns the ALT_NAME for the option if one exists.
+####################################################################################################################################
+sub optionAltName
+{
+    my $strOption = shift;
+
+    my $strOptionAltName = undef;
+
+    # Check if the options exists as an alternate name (e.g. db-host has altname db1-host)
+    foreach my $strKey (keys(%oOptionRule))
+    {
+        if (defined($oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME}) &&
+            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} eq $strOption)
+        {
+            $strOptionAltName = $strKey;
+        }
+    }
+
+    return $strOptionAltName;
+}
+
+push @EXPORT, qw(optionAltName);
 
 ####################################################################################################################################
 # optionCommandRule

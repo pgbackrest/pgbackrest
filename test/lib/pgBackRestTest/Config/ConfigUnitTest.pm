@@ -25,37 +25,51 @@ sub run
 {
     my $self = shift;
 
-    my $oOption = {};
     my $oConfig = {};
-    my $strConfigFile = $self->testPath() . '/pgbackrest.conf';
 
-    if ($self->begin('invalid section ' . OPTION_PROCESS_MAX))
+    if ($self->begin('invalid section ' . OPTION_DB_PORT))
     {
-        $oConfig = {};
-        $$oConfig{$self->stanza() . ':' . &CMD_BACKUP}{&OPTION_PROCESS_MAX} = 2;
+        my $oConfig = {};
+        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_DB_HOST} = 1234;
 
         $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid section');
     }
 
-    if ($self->begin('invalid section command ' . OPTION_PROCESS_MAX))
+    if ($self->begin('invalid global section command ' . OPTION_DB_PORT))
     {
-        $oConfig = {};
-        $$oConfig{$self->stanza() . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
+        my $oConfig = {};
+        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid command section');
+        $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid global command section');
     }
 
-    if ($self->begin('invalid option ' . OPTION_PROCESS_MAX))
+    if ($self->begin('invalid stanza section command ' . OPTION_DB_PORT))
     {
-        $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{bogus} = 'bogus';
+        my $oConfig = {};
+        $$oConfig{$self->stanza() . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option');
+        $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid stanza command section');
+    }
+
+    if ($self->begin('invalid option'))
+    {
+        my $oConfig = {};
+        $$oConfig{&CONFIG_SECTION_GLOBAL}{'bogus'} = 'bogus';
+
+        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option' . $$oConfig{&CONFIG_SECTION_GLOBAL}{bogus});
+    }
+
+    if ($self->begin('valid alt name'))
+    {
+        my $oConfig = {};
+        $$oConfig{&CONFIG_SECTION_GLOBAL}{'thread-max'} = 3;
+
+        $self->testResult(sub {configFileValidate($oConfig)}, true, 'valid alt name found');
     }
 
     if ($self->begin('valid config file'))
     {
-        $oConfig = {};
+        my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR} = OPTION_DEFAULT_LOG_LEVEL_STDERR;
         $$oConfig{$self->stanza()}{&OPTION_DB_PATH} = '/db';
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_PROCESS_MAX} = 2;
@@ -64,11 +78,5 @@ sub run
     }
 
 }
-
-####################################################################################################################################
-# Getters
-####################################################################################################################################
-# Change this from the default so the same stanza is not used in all tests.
-sub stanza {return 'main'};
 
 1;
