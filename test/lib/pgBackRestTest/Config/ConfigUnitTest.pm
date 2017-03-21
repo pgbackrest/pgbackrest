@@ -27,28 +27,31 @@ sub run
 
     my $oConfig = {};
 
-    if ($self->begin('invalid section ' . OPTION_DB_PORT))
+    if ($self->begin('valid option ' . OPTION_DB_PORT . ' under invalid section'))
     {
         my $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_DB_HOST} = 1234;
+        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid section');
+        $self->testResult(sub {configFileValidate($oConfig)}, false,
+            'valid option ' . OPTION_DB_PORT . ' under invalid section');
     }
 
-    if ($self->begin('invalid global section command ' . OPTION_DB_PORT))
+    if ($self->begin('valid option ' . OPTION_DB_PORT . ' under invalid global section command'))
     {
         my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid global command section');
+        $self->testResult(sub {configFileValidate($oConfig)}, false,
+            'valid option ' . OPTION_DB_PORT . ' under invalid global section command');
     }
 
-    if ($self->begin('invalid stanza section command ' . OPTION_DB_PORT))
+    if ($self->begin('valid option ' . OPTION_DB_PORT . ' under invalid stanza section command'))
     {
         my $oConfig = {};
         $$oConfig{$self->stanza() . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'valid option under invalid stanza command section');
+        $self->testResult(sub {configFileValidate($oConfig)}, false,
+            'valid option ' . OPTION_DB_PORT . ' under invalid stanza section command');
     }
 
     if ($self->begin('invalid option'))
@@ -56,7 +59,7 @@ sub run
         my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{'bogus'} = 'bogus';
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option' . $$oConfig{&CONFIG_SECTION_GLOBAL}{bogus});
+        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{bogus});
     }
 
     if ($self->begin('valid alt name'))
