@@ -57,9 +57,9 @@ sub run
     if ($self->begin('invalid option'))
     {
         my $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{'bogus'} = 'bogus';
+        $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS} = BOGUS;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{bogus});
+        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS});
     }
 
     if ($self->begin('valid alt name'))
