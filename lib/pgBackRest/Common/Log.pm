@@ -764,14 +764,14 @@ sub testCheck
 push @EXPORT, qw(testCheck);
 
 ####################################################################################################################################
-# logFileLogLevel - get the current file log level
+# logLevel - get the current log levels
 ####################################################################################################################################
-sub logFileLogLevel
+sub logLevel
 {
-    return $strLogLevelFile;
+    return ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
 }
 
-push @EXPORT, qw(logFileLogLevel);
+push @EXPORT, qw(logLevel);
 
 ####################################################################################################################################
 # logFileCacheClear - Clear the log file cache for testing
@@ -784,15 +784,33 @@ sub logFileCacheClear
 push @EXPORT, qw(logFileCacheClear);
 
 ####################################################################################################################################
-# logFileCacheTest - Test for a string in the log file
+# logFileCacheTestSimilar - Test for a string somewhere in the log file
 ####################################################################################################################################
-sub logFileCacheTest
+sub logFileCacheTestSimilar
 {
     my $strTest = shift;
 
-    return (($strLogFileCache =~ m/$strTest/) ? true : false);
+    my $strTmpLogFileCache = $strLogFileCache;
+
+    # Strip all whitespace
+    $strTmpLogFileCache =~ s/\s+//g;
+    $strTest =~ s/\s+//g;
+
+    return (($strTmpLogFileCache =~ m/$strTest/) ? true : false);
 }
 
-push @EXPORT, qw(logFileCacheTest);
+push @EXPORT, qw(logFileCacheTestSimilar);
+
+####################################################################################################################################
+# logFileCacheTestExact - Test for an exact match of the log
+####################################################################################################################################
+sub logFileCacheTestExact
+{
+    my $strTest = shift;
+
+    return (($strLogFileCache eq $strTest) ? true : false);
+}
+
+push @EXPORT, qw(logFileCacheTestExact);
 
 1;

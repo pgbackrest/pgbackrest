@@ -290,6 +290,7 @@ sub testResult
     my $strDescription = shift;
     my $iWaitSeconds = shift;
     my $strWarnMessage = shift;
+    my $bTestExactWarnMessage = shift;
 
     &log(INFO, '    ' . (defined($strDescription) ? $strDescription : 'no description'));
     my $strActual;
@@ -347,7 +348,7 @@ sub testResult
     # If we get here then test any warning message
     if (defined($strWarnMessage))
     {
-        testWarning($fnSub, $strWarnMessage);
+        testWarning($fnSub, $strWarnMessage, $bTestExactWarnMessage);
     }
 }
 
@@ -358,27 +359,43 @@ sub testWarning
 {
     my $fnSub = shift;
     my $strWarnMessage = shift;
+    my $bTestExact = shift;
 
     if (ref($fnSub) ne 'CODE')
     {
         confess "a function must be called to test a warning message";
     }
 
-    # Save the current logfile level and set the level to warn
-    my $strCurrentFileLogLevel = logFileLogLevel();
-    logLevelSet(WARN);
+    # Save the current log levels and set the file level to warn and timestam false
+    my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
+    logLevelSet(WARN, undef, undef, false);
 
     # Clear the cache just in case
     logFileCacheClear();
 
     # Run the function
     $fnSub->();
-    logLevelSet($strCurrentFileLogLevel);
+
+    # Restore the log levels
+    logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
+
+    # Prepend the preamble and trailing carriage return
+    $strWarnMessage = "P00   " . WARN . ": " . $strWarnMessage . "\n";
 
     # Test the cache for the warning
-    if (!logFileCacheTest($strWarnMessage))
+    if ($bTestExact)
     {
-        confess "expected warning message was not found";
+        if (!logFileCacheTestExact($strWarnMessage))
+        {
+            confess "the log does not exactly match the expected warning message";
+        }
+    }
+    else
+    {
+        if (!logFileCacheTestSimilar($strWarnMessage))
+        {
+            confess "expected warning message was not found";
+        }
     }
 }
 
