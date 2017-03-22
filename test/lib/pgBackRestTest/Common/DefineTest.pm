@@ -99,7 +99,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 6,
+                    &TESTDEF_TEST_TOTAL => 7,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
                 {

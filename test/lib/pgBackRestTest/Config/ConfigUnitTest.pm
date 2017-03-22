@@ -27,6 +27,8 @@ sub run
 
     my $oConfig = {};
 
+    optionSet(OPTION_CONFIG, $self->testPath() . '/pgbackrest.conf', true);
+
     if ($self->begin('valid option ' . OPTION_DB_PORT . ' under invalid section'))
     {
         my $oConfig = {};
@@ -80,6 +82,15 @@ sub run
         $self->testResult(sub {configFileValidate($oConfig)}, true, 'valid config file');
     }
 
+    if ($self->begin('valid unusual section name'))
+    {
+        my $oConfig = {};
+        $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR} = OPTION_DEFAULT_LOG_LEVEL_STDERR;
+        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_PROCESS_MAX} = 2;
+        $$oConfig{'unusual-section^name!:' . &CMD_CHECK}{&OPTION_DB_PATH} = '/db';
+
+        $self->testResult(sub {configFileValidate($oConfig)}, true, 'valid unusual section name');
+    }
 }
 
 1;

@@ -2713,8 +2713,7 @@ sub configFileValidate
 
     foreach my $strSectionKey (keys(%$oConfig))
     {
-        my ($strSection, $strCommand) = ($strSectionKey =~ m/(\w+):*(\w*-*\w*)/);
-
+        my ($strSection, $strCommand) = ($strSectionKey =~ m/([^:]*):*(\w*-*\w*)/);
         foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
         {
             my $strValue = $$oConfig{$strSectionKey}{$strOption};
@@ -2729,7 +2728,7 @@ sub configFileValidate
             # Is the option a valid pgbackrest option?
             if (!(exists($oOptionRule{$strOption}) || defined($strOptionAltName)))
             {
-                &log(WARN, "pgbackrest.conf file contains invalid option '${strOption}'");
+                &log(WARN, optionGet(OPTION_CONFIG) . " file contains invalid option '${strOption}'");
                 $bFileValid = false;
             }
             else
@@ -2739,7 +2738,8 @@ sub configFileValidate
                 {
                     if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
                     {
-                        &log(WARN, "pgbackrest.conf valid option '${strOption}' is not valid for command '$strCommand'");
+                        &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is not valid for command " .
+                            "'$strCommand'");
                         $bFileValid = false;
                     }
                 }
@@ -2748,9 +2748,9 @@ sub configFileValidate
                 if ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
                     $strSection eq CONFIG_SECTION_GLOBAL)
                 {
-                    &log(WARN, "pgbackrest.conf valid option '${strOption}' is a stanza section option and is not valid under " .
-                        "section ${strSection}\n" .
-                        "HINT: global options can be under global or stanza sections but not visa-versa");
+                    &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is a stanza section option and is not " .
+                        "valid in section ${strSection}\n" .
+                        "HINT: global options can be specified in global or stanza sections but not visa-versa");
                     $bFileValid = false;
                 }
             }
