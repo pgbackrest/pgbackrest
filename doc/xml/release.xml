@@ -154,6 +154,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.18dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+
             <release-test-list>
                 <release-refactor-list>
                     <release-item>

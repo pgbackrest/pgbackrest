@@ -98,6 +98,11 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_TEST_NAME => 'unit',
+                    &TESTDEF_TEST_TOTAL => 7,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+                {
                     &TESTDEF_TEST_NAME => 'option',
                     &TESTDEF_TEST_TOTAL => 34,
                     &TESTDEF_TEST_INDIVIDUAL => false,
