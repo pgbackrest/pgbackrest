@@ -289,9 +289,11 @@ sub testResult
     my $strExpected = shift;
     my $strDescription = shift;
     my $iWaitSeconds = shift;
-
+    my $strWarnMessage = shift; # CSHANG
+print
     &log(INFO, '    ' . (defined($strDescription) ? $strDescription : 'no description'));
     my $strActual;
+    my $bWarnValid = true;
 
     my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 0);
     my $bDone = false;
@@ -341,6 +343,24 @@ sub testResult
             $bDone = true;
         }
     } while (!$bDone);
+
+    # If we get here then test any warning message
+    if (defined($strWarnMessage)) #CSHANG
+    {
+        if (ref($fnSub) ne 'CODE')
+        {
+            confess "a function must be called to test a warning message";
+        }
+        my $strCurrentFileLogLevel = logFileLogLevel();
+        logLevelSet(WARN);
+        logFileCacheClear();
+        $fnSub->();
+        logLevelSet($strCurrentFileLogLevel);
+        if (!logFileCacheTest($strWarnMessage))
+        {
+            confess "expected warning message was not found";
+        }
+    }
 }
 
 ####################################################################################################################################

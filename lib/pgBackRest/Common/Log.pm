@@ -114,26 +114,23 @@ use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-
 sub logFileSet
 {
     my $strFile = shift;
-print "sub logFileSet: LOGLEVELFILENAME $strFile, FILELOGLEVEL $strLogLevelFile\n"; # CSHANG
+
     # Only open the log file if file logging is enabled
     if ($strLogLevelFile ne OFF)
     {
-print "sub logFileSet: DIRNAME ".dirname($strFile)."\n"; # CSHANG
         filePathCreate(dirname($strFile), '0770', true, true);
 
         $strFile .= '.log';
         $bLogFileExists = -e $strFile ? true : false;
         $bLogFileFirst = true;
-print "sub logFileSet: LOGFILEEXISTS $bLogFileExists\n"; # CSHANG
+
         $hLogFile = fileOpen($strFile, O_WRONLY | O_CREAT | O_APPEND, '0660');
-print "sub logFileSet: HLOGFILE ". (defined($hLogFile) ? 'defined' : 'undef') ."\n"; # CSHANG
-$strLogFileCache = 'test'; # CSHANG
+
         # Write out anything that was cached before the file was opened
         if (defined($strLogFileCache))
         {
             logBanner();
             syswrite($hLogFile, $strLogFileCache);
-print "sub logFileSet: LOGWRITTEN $hLogFile\n"; # CSHANG
             undef($strLogFileCache);
         }
     }
@@ -175,7 +172,7 @@ sub logLevelSet
     # Load FileCommon module
     require pgBackRest::FileCommon;
     pgBackRest::FileCommon->import();
-print "sub logLevelSet: FILELOGLEVEL $strLevelFileParam\n"; # CSHANG
+
     if (defined($strLevelFileParam))
     {
         if (!defined($oLogLevelRank{uc($strLevelFileParam)}{rank}))
@@ -638,7 +635,7 @@ sub log
         ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
         sprintf('P%02d', defined($iProcessId) ? $iProcessId : 0) .
         (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
-print "sub log: LOG DISABLE $bLogDisable\n"; # CSHANG
+
     # Skip output if disabled
     if (!$bLogDisable)
     {
@@ -670,7 +667,7 @@ print "sub log: LOG DISABLE $bLogDisable\n"; # CSHANG
 
             $rExtra->{bLogConsole} = true;
         }
-print "sub log: LOGLOGFILE ".(defined($rExtra->{bLogLogFile}) ? $rExtra->{bLogLogFile} : 'undef') .", RANK ". (defined($iLogLevelRank) ? $iLogLevelRank : 'undef'). " LOGLEVELFILERANK ".$oLogLevelRank{$strLogLevelFile}{rank}." HLOGFILE: ".(defined($hLogFile) ? $hLogFile : 'undef')." SUPPRESSLOG $bSuppressLog\n"; # CSHANG
+
         # Output to file depending on log level and test flag
         if (!$rExtra->{bLogLogFile} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
         {
@@ -686,7 +683,6 @@ print "sub log: LOGLOGFILE ".(defined($rExtra->{bLogLogFile}) ? $rExtra->{bLogLo
                     else
                     {
                         $strLogFileCache .= $strMessageFormat;
-print "sub log: LOGFILECACHE $strLogFileCache\n";
                     }
 
                     if ($strLevel eq ASSERT ||
@@ -768,6 +764,16 @@ sub testCheck
 push @EXPORT, qw(testCheck);
 
 ####################################################################################################################################
+# logFileLogLevel - get the current file log level
+####################################################################################################################################
+sub logFileLogLevel
+{
+    return $strLogLevelFile;
+}
+
+push @EXPORT, qw(logFileLogLevel);
+
+####################################################################################################################################
 # logFileCacheClear - Clear the log file cache for testing
 ####################################################################################################################################
 sub logFileCacheClear
@@ -783,7 +789,7 @@ push @EXPORT, qw(logFileCacheClear);
 sub logFileCacheTest
 {
     my $strTest = shift;
-print "$strLogFileCache";
+
     return (($strLogFileCache =~ m/$strTest/) ? true : false);
 }
 
