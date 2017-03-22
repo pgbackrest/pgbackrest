@@ -289,8 +289,8 @@ sub testResult
     my $strExpected = shift;
     my $strDescription = shift;
     my $iWaitSeconds = shift;
-    my $strWarnMessage = shift; # CSHANG
-print
+    my $strWarnMessage = shift;
+
     &log(INFO, '    ' . (defined($strDescription) ? $strDescription : 'no description'));
     my $strActual;
     my $bWarnValid = true;
@@ -345,21 +345,40 @@ print
     } while (!$bDone);
 
     # If we get here then test any warning message
-    if (defined($strWarnMessage)) #CSHANG
+    if (defined($strWarnMessage))
     {
-        if (ref($fnSub) ne 'CODE')
-        {
-            confess "a function must be called to test a warning message";
-        }
-        my $strCurrentFileLogLevel = logFileLogLevel();
-        logLevelSet(WARN);
-        logFileCacheClear();
-        $fnSub->();
-        logLevelSet($strCurrentFileLogLevel);
-        if (!logFileCacheTest($strWarnMessage))
-        {
-            confess "expected warning message was not found";
-        }
+        testWarning($fnSub, $strWarnMessage);
+    }
+}
+
+####################################################################################################################################
+# testWarning
+####################################################################################################################################
+sub testWarning
+{
+    my $fnSub = shift;
+    my $strWarnMessage = shift;
+
+    if (ref($fnSub) ne 'CODE')
+    {
+        confess "a function must be called to test a warning message";
+    }
+
+    # Save the current logfile level and set the level to warn
+    my $strCurrentFileLogLevel = logFileLogLevel();
+    logLevelSet(WARN);
+
+    # Clear the cache just in case
+    logFileCacheClear();
+
+    # Run the function
+    $fnSub->();
+    logLevelSet($strCurrentFileLogLevel);
+
+    # Test the cache for the warning
+    if (!logFileCacheTest($strWarnMessage))
+    {
+        confess "expected warning message was not found";
     }
 }
 
