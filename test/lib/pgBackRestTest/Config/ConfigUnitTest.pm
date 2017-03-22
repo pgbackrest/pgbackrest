@@ -18,6 +18,12 @@ use pgBackRest::Config::Config;
 
 use pgBackRestTest::Common::RunTest;
 
+# sub initTest
+# {
+#     logLevelSet('warn', 'warn', 'warn');
+#     logFileSet('/home/vagrant/testlog');
+#
+# }
 ####################################################################################################################################
 # run
 ####################################################################################################################################
@@ -26,8 +32,8 @@ sub run
     my $self = shift;
 
     my $oConfig = {};
-
-    optionSet(OPTION_CONFIG, $self->testPath() . '/pgbackrest.conf', true);
+    my $strConfigFile = $self->testPath() . '/pgbackrest.conf';
+    optionSet(OPTION_CONFIG, $strConfigFile, true);
 
     if ($self->begin('valid option ' . OPTION_DB_PORT . ' under invalid section'))
     {
@@ -61,7 +67,17 @@ sub run
         my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS} = BOGUS;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS});
+    logLevelSet('warn');
+#    logFileSet('/home/vagrant/testlog');
+
+# optionSet(OPTION_LOG_LEVEL_FILE, 'warn', true);
+# optionSet(OPTION_LOG_PATH, '/home/vagrant/');
+#OPTION_LOG_TIMESTAMP
+        logFileCacheClear();
+        configFileValidate($oConfig);
+        # $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS});
+        # $self->testResult(sub {logFileCacheTest($strConfigFile . ' file contains invalid option')}, true, 'warning message output');
+        logFileCacheTest($strConfigFile . ' file contains invalid option');
     }
 
     if ($self->begin('valid alt name'))

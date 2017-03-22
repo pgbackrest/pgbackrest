@@ -2728,6 +2728,7 @@ sub configFileValidate
             # Is the option a valid pgbackrest option?
             if (!(exists($oOptionRule{$strOption}) || defined($strOptionAltName)))
             {
+print "sub configFileValidate: OPTION NOT EXIST\n"; # CSHANG
                 &log(WARN, optionGet(OPTION_CONFIG) . " file contains invalid option '${strOption}'");
                 $bFileValid = false;
             }
