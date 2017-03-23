@@ -676,6 +676,7 @@ sub listByArchiveId
         $strArchiveId,
         $strPathBackupArchive,
         $stryBackup,
+        $strOrder,
     ) =
         logDebugParam
         (
@@ -683,6 +684,7 @@ sub listByArchiveId
             {name => 'strArchiveId'},
             {name => 'strPathBackupArchive'},
             {name => 'stryBackup'},
+            {name => 'strOrder', default => 'forward'}
         );
 
     # List of backups associated with the db-id provided
@@ -699,7 +701,14 @@ sub listByArchiveId
             # From the backup.info current backup section, get the db-id for the backup and if it is the same, add to the list
             if ($self->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID, $iDbHistoryId))
             {
-                push(@stryArchiveBackup, $strBackup);
+                if ($strOrder eq 'reverse')
+                {
+                    unshift(@stryArchiveBackup, $strBackup)
+                }
+                else
+                {
+                    push(@stryArchiveBackup, $strBackup)
+                }
             }
         }
     }

@@ -282,10 +282,11 @@ sub process
             # For each archiveId, remove WAL that are not part of retention
             foreach my $strArchiveId (@stryListArchiveDisk)
             {
-                # From the full list of backups to retain, create a list of backups associated with this archiveId (e.g. 9.4-1)
+                # From the full list of backups to retain, create a list of backups, oldest to newest, associated with this
+                # archiveId (e.g. 9.4-1)
                 my @stryLocalBackupRetention = $oBackupInfo->listByArchiveId($strArchiveId,
-                    $oFile->pathGet(PATH_BACKUP_ARCHIVE), \@stryGlobalBackupRetention);
-
+                    $oFile->pathGet(PATH_BACKUP_ARCHIVE), \@stryGlobalBackupRetention, 'reverse');
+# print "LOCAL BACKUPS TO RETAIN OLDERT TO NEWEST?: ARCHIVEID $strArchiveId, stryLocalBackupRetention=".Dumper(@stryLocalBackupRetention)."\n"; #CSHANG
                 # If no backup to retain was found
                 if (!@stryLocalBackupRetention)
                 {
@@ -320,7 +321,7 @@ sub process
                         {
                             if ($strLocalBackupRetention eq $strGlobalBackupArchiveRetention)
                             {
-                                push(@stryLocalBackupArchiveRentention, $strLocalBackupRetention);
+                                unshift(@stryLocalBackupArchiveRentention, $strLocalBackupRetention);
                             }
                         }
                     }
@@ -332,15 +333,17 @@ sub process
                     if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
                     {
                         &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for archive retention");
-                        $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[-1];
+                        $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[0];
                     }
+print "NOT ENOUGH BACKUPS: ARCHIVEID $strArchiveId, OLDEST=".Dumper($stryLocalBackupArchiveRentention[0])."\n"; #CSHANG
                 }
 
                 # If no backups were found as part of retention then set the backup archive retention to the newest backup
                 # so that the database is fully recoverable (can be recovered from the last backup through pitr)
                 if (!@stryLocalBackupArchiveRentention)
                 {
-                    $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[0];
+                    $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[-1];
+print "NO BACKUPS FOUND FOR RETENTION: ARCHIVEID $strArchiveId, NEWEST=".Dumper($stryLocalBackupArchiveRentention[0])."\n"; #CSHANG
                 }
 
                 my $strArchiveRetentionBackup = $stryLocalBackupArchiveRentention[0];

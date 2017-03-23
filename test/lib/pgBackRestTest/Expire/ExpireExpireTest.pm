@@ -198,6 +198,7 @@ sub run
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
 
+        #-----------------------------------------------------------------------------------------------------------------------
         $self->optionReset($oOption, OPTION_DB_PATH);
         $self->optionReset($oOption, OPTION_ONLINE);
         $self->optionSetTest($oOption, OPTION_RETENTION_FULL, 1);
@@ -206,7 +207,6 @@ sub run
         $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE, 1);
         $self->configLoadExpect(dclone($oOption), CMD_EXPIRE);
 
-        #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expiration cannot occur due to info file db mismatch';
         my $oExpire = new pgBackRest::Expire();
 
