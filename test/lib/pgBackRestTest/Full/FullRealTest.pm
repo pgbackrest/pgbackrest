@@ -246,7 +246,7 @@ sub run
             # Restart the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
 
-            # Stanza Create - ??? move to stanza-create tests when can create a backup synthetically
+            # Stanza Create
             #-----------------------------------------------------------------------------------------------------------------------
             # With data existing in the archive and backup directory, remove backup info file and confirm failure
             executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
@@ -259,39 +259,60 @@ sub run
             # Remove the backup info file
             executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
 
-            # Change the database version by copying a new pg_control file WAL_VERSION_94
-            executeTest('sudo mv ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL .
-                ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL . 'save');
-
+            # Change the database version by copying a new pg_control file to a new db-path to use for db mismatch test
+            filePathCreate($oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL, undef, true, true);
             if ($self->pgVersion() eq PG_VERSION_94)
             {
                 executeTest(
-                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-                    DB_FILE_PGCONTROL);
+                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbPath() .
+                    '/testbase/' . DB_FILE_PGCONTROL);
             } else
             {
                 executeTest(
-                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-                    DB_FILE_PGCONTROL);
+                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbPath() .
+                    '/testbase/' . DB_FILE_PGCONTROL);
             }
 
-            # Run stanza-create online with --force
-            $oHostBackup->stanzaCreate('test force fails on database mismatch with directory',
-                {iExpectedExitStatus => ERROR_DB_MISMATCH});
-
-            # Run stanza-create offline with --force to create invalid files
-            $oHostBackup->stanzaCreate('restore stanza files',
-                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
-
-            # Restore the database version
-            executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-            executeTest('sudo mv ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL . 'save' .
-                ' ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+            # Run stanza-create online to confirm proper handling of configValidation error against new db-path
+            $oHostBackup->stanzaCreate('fail on database mismatch with directory',
+                {strOptionalParam => ' --' . OPTION_DB_PATH . '=' . $oHostDbMaster->dbPath() . '/testbase/',
+                iExpectedExitStatus => ERROR_DB_MISMATCH});
 
             # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
             #-----------------------------------------------------------------------------------------------------------------------
-            # Run stanza-upgrade online to correct the info files
+            # Run stanza-create offline with --force to create files needing to be upgraded (using new db-path)
+            $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
+                {strOptionalParam => ' --' . OPTION_DB_PATH . '=' . $oHostDbMaster->dbPath() . '/testbase/ --no-' . OPTION_ONLINE .
+                ' --' . OPTION_FORCE});
+            my $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo($oHostBackup->repoPath() . '/archive/' . $self->stanza());
+            my $oBackupInfo = new pgBackRest::BackupInfo($oHostBackup->repoPath() . '/backup/' . $self->stanza());
+
+            # Read info files to confirm the files were created with a different database version
+            if ($self->pgVersion() eq PG_VERSION_94)
+            {
+                $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                    PG_VERSION_95)}, true, 'archive upgrade forced with db-mismatch');
+                $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+                    PG_VERSION_95)}, true, 'backup upgrade forced with db-mismatch');
+            }
+            else
+            {
+                $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                    PG_VERSION_94)}, true, 'archive create forced with db-mismatch in prep for stanza-upgrade');
+                $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+                    PG_VERSION_94)}, true, 'backup create forced with db-mismatch in prep for stanza-upgrade');
+            }
+
+            # Run stanza-upgrade online with the default db-path to correct the info files
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
+
+            # Reread the info files and confirm the result
+            $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo($oHostBackup->repoPath() . '/archive/' . $self->stanza());
+            $oBackupInfo = new pgBackRest::BackupInfo($oHostBackup->repoPath() . '/backup/' . $self->stanza());
+            $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                $self->pgVersion())}, true, 'archive upgrade online corrects db');
+            $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
+                $self->pgVersion())}, true, 'backup upgrade online corrects db');
         }
 
         # Full backup
