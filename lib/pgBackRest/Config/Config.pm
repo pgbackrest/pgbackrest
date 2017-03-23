@@ -2692,9 +2692,8 @@ sub optionValidate
         }
     }
 
-    # If a config file was loaded, and the command is not a time-sensitive command then determine if all options are valid in the
-    # config file
-    if (defined($oConfig) && !($strCommand eq CMD_ARCHIVE_PUSH || $strCommand eq CMD_ARCHIVE_GET))
+    # If a config file was loaded then determine if all options are valid in the config file
+    if (defined($oConfig))
     {
         configFileValidate($oConfig);
     }
@@ -2714,12 +2713,14 @@ sub configFileValidate
     foreach my $strSectionKey (keys(%$oConfig))
     {
         my ($strSection, $strCommand) = ($strSectionKey =~ m/([^:]*):*(\w*-*\w*)/);
+
         foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
         {
             my $strValue = $$oConfig{$strSectionKey}{$strOption};
 
             # Is the option listed as an alternate name for another option? If so, replace it with the recognized option.
             my $strOptionAltName = optionAltName($strOption);
+
             if (defined($strOptionAltName))
             {
                 $strOption = $strOptionAltName;

@@ -161,7 +161,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Added validation of <setting>pgbackrest.conf</setting> when a non-time-sensitive command is executed in order to display warnings if there are options in the file that are not valid options or are not in the correct section.</p>
+                        <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
                     </release-item>
                 </release-feature-list>
             </release-core-list>
