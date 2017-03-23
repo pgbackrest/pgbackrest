@@ -170,7 +170,8 @@ sub stanzaCreate
 ####################################################################################################################################
 # stanzaUpgrade
 #
-#
+# Updates stanza information to reflect new cluster information.  Normally used for version upgrades, but could be used after a
+# cluster has been dumped and restored to the same version.
 ####################################################################################################################################
 sub stanzaUpgrade
 {

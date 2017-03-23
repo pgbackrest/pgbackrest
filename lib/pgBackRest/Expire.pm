@@ -392,7 +392,7 @@ sub process
                             }
                         }
 
-                        # Get all major archive paths (timeline and first 64 bits of LSN)
+                        # Get all major archive paths (timeline and first 32 bits of LSN)
                         foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
                         {
                             logDebugMisc($strOperation, "found major WAL path: ${strPath}");

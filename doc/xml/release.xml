@@ -161,7 +161,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading <postgres/>.</p>
+                        <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading to a new major version of <postgres/>.</p>
                     </release-item>
 
                     <release-item>

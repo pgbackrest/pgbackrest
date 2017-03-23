@@ -304,7 +304,7 @@ sub reconstruct
 
         if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
         {
-            gunzip $hFile => \$tBlock
+            gunzip($hFile => \$tBlock)
                 or confess &log(ERROR,
                     "gunzip failed with error: " . $GunzipError .
                     " on file ${strArchiveFilePath}", ERROR_FILE_READ);

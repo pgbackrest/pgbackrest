@@ -1030,7 +1030,7 @@
                             {[backrest-exe]} --stanza=db stanza-upgrade
                         </code-block>
 
-                        </text>
+                        Upgrade the <id>db</id> stanza to a new version of <postgres/>.</text>
                     </command-example>
                 </command-example-list>
             </command>
