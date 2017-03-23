@@ -171,6 +171,10 @@
                     <release-item>
                         <p>Updated vagrant to new version and image.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Added ability to test warning messages.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
