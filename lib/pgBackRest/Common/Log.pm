@@ -774,15 +774,23 @@ sub logLevel
 push @EXPORT, qw(logLevel);
 
 ####################################################################################################################################
-# logFileCacheClear - Clear the log file cache for testing
+# logFileCacheClear - Clear the log file cache
 ####################################################################################################################################
 sub logFileCacheClear
 {
     undef($strLogFileCache);
-
-    return (\$strLogFileCache);
 }
 
 push @EXPORT, qw(logFileCacheClear);
+
+####################################################################################################################################
+# logFileCache - Get the log file cache
+####################################################################################################################################
+sub logFileCache
+{
+    return $strLogFileCache;
+}
+
+push @EXPORT, qw(logFileCache);
 
 1;

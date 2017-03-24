@@ -286,15 +286,14 @@ sub end
 sub testLogFileCacheTestSimilar
 {
     my $strTest = shift;
-    my $strLogFileCache = shift;
 
-    my $strTmpLogFileCache = $strLogFileCache;
+    my $strTmpLogFileCache = logFileCache();
 
     # Strip all whitespace
     $strTmpLogFileCache =~ s/\s+//g;
     $strTest =~ s/\s+//g;
 
-    return ((($strTmpLogFileCache =~ m/$strTest/) ? true : false), $strLogFileCache);
+    return ((($strTmpLogFileCache =~ m/$strTest/) ? true : false), logFileCache());
 }
 
 ####################################################################################################################################
@@ -303,9 +302,8 @@ sub testLogFileCacheTestSimilar
 sub testLogFileCacheTestExact
 {
     my $strTest = shift;
-    my $strLogFileCache = shift;
 
-    return ((($strLogFileCache eq $strTest) ? true : false), $strLogFileCache);
+    return (((logFileCache() eq $strTest) ? true : false), logFileCache());
 }
 
 ####################################################################################################################################
@@ -333,7 +331,7 @@ sub testResult
     logLevelSet(WARN, OFF, undef, false);
 
     # Clear the cache for this test
-    my $strLogFileCache = logFileCacheClear();
+    logFileCacheClear();
 
     do
     {
@@ -387,7 +385,7 @@ sub testResult
     # If we get here then test any warning message
     if (defined($strWarnMessage))
     {
-        my $strResult = testWarningMessage($strWarnMessage, $bTestExactWarnMessage, $strLogFileCache);
+        my $strResult = testWarningMessage($strWarnMessage, $bTestExactWarnMessage);
 
         # Restore the log levels
         logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
@@ -417,7 +415,7 @@ sub testWarning
     my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
     logLevelSet(WARN, undef, undef, false);
 
-    # Clear the cache just in case
+    # Clear the cache for this test
     logFileCacheClear();
 
     # Run the function
@@ -450,7 +448,7 @@ sub testWarningMessage
     # Test the cache for the warning
     if ($bTestExact)
     {
-        my ($bResult, $strLogMessage) = logFileCacheTestExact($strWarnMessage);
+        my ($bResult, $strLogMessage) = testLogFileCacheTestExact($strWarnMessage);
 
         if (!$bResult)
         {
@@ -459,7 +457,7 @@ sub testWarningMessage
     }
     else
     {
-        my ($bResult, $strLogMessage) = logFileCacheTestSimilar($strWarnMessage);
+        my ($bResult, $strLogMessage) = testLogFileCacheTestSimilar($strWarnMessage);
 
         if (!$bResult)
         {
