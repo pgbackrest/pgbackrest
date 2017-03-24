@@ -59,7 +59,7 @@ sub run
         $$oConfig{$self->stanza() . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
 
         $self->testResult(sub {configFileValidate($oConfig)}, false,
-            'valid option ' . OPTION_DB_PORT . ' under invalid global section command', undef,
+            'valid option ' . OPTION_DB_PORT . ' under invalid stanza section command', undef,
             $strConfigFile . " valid option '" . OPTION_DB_PORT . "' is not valid for command '" . CMD_ARCHIVE_PUSH ."'", true);
     }
 

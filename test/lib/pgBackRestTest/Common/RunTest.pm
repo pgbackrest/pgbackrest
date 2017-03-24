@@ -299,30 +299,36 @@ sub testResult
     my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 0);
     my $bDone = false;
 
+    # Save the current log levels and set the file level to warn, console to off and timestamp false
+    my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
+    logLevelSet(WARN, OFF, undef, false);
+
     do
     {
         eval
         {
-# CSHANG so maybe here we save the current log level settings, then turn the console off and the file on to have things sent to the file cache buffer
-# So we'll get a result from the function -
-            logDisable();
+            # Clear the cache for this test
+            logFileCacheClear();
+
             my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
             if (@stryResult <= 1)
             {
-                $strActual = ${logDebugBuild($stryResult[0])};  # CSHANG No possiblity of errors being thrown from here so log levels don't matter
+                $strActual = ${logDebugBuild($stryResult[0])};
             }
             else
             {
                 $strActual = ${logDebugBuild(\@stryResult)};
             }
 
-            logEnable();
+            # Restore the log level
+            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
             return true;
         }
         or do
         {
-            logEnable();
+            # Restore the log level
+            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
 
             if (!isException($EVAL_ERROR))
             {
@@ -350,7 +356,15 @@ sub testResult
     # If we get here then test any warning message
     if (defined($strWarnMessage))
     {
-        testWarning($fnSub, $strWarnMessage, $bTestExactWarnMessage);
+        my $strResult = testWarningMessage($strWarnMessage, $bTestExactWarnMessage);
+
+        # Restore the log levels
+        logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
+
+        if (defined($strResult))
+        {
+            confess $strResult;
+        }
     }
 }
 
@@ -378,8 +392,26 @@ sub testWarning
     # Run the function
     $fnSub->();
 
+    my $strResult = testWarningMessage($strWarnMessage, $bTestExact);
+
     # Restore the log levels
     logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
+
+    if (defined($strResult))
+    {
+        confess $strResult;
+    }
+}
+
+####################################################################################################################################
+# testWarningMessage
+####################################################################################################################################
+sub testWarningMessage
+{
+    my $strWarnMessage = shift;
+    my $bTestExact = shift;
+
+    my $strResult = undef;
 
     # Prepend the preamble and trailing carriage return
     $strWarnMessage = "P00   " . WARN . ": " . $strWarnMessage . "\n";
@@ -387,18 +419,24 @@ sub testWarning
     # Test the cache for the warning
     if ($bTestExact)
     {
-        if (!logFileCacheTestExact($strWarnMessage))
+        my ($bResult, $strLogMessage) = logFileCacheTestExact($strWarnMessage);
+
+        if (!$bResult)
         {
-            confess "the log does not exactly match the expected warning message";
+            $strResult = "the log message:\n$strLogMessage\n does not exactly match the expected warning message:\n$strWarnMessage";
         }
     }
     else
     {
-        if (!logFileCacheTestSimilar($strWarnMessage))
+        my ($bResult, $strLogMessage) = logFileCacheTestSimilar($strWarnMessage);
+
+        if (!$bResult)
         {
-            confess "expected warning message was not found";
+            $strResult = "expected warning message:\n$strWarnMessage\n was not found";
         }
     }
+
+    return $strResult;
 }
 
 ####################################################################################################################################

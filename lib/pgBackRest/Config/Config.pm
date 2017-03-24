@@ -2740,7 +2740,7 @@ sub configFileValidate
                     if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
                     {
                         &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is not valid for command " .
-                            "'$strCommand'");
+                            "'${strCommand}'");
                         $bFileValid = false;
                     }
                 }

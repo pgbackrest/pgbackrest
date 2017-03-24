@@ -796,7 +796,7 @@ sub logFileCacheTestSimilar
     $strTmpLogFileCache =~ s/\s+//g;
     $strTest =~ s/\s+//g;
 
-    return (($strTmpLogFileCache =~ m/$strTest/) ? true : false);
+    return ((($strTmpLogFileCache =~ m/$strTest/) ? true : false), $strLogFileCache);
 }
 
 push @EXPORT, qw(logFileCacheTestSimilar);
@@ -808,7 +808,7 @@ sub logFileCacheTestExact
 {
     my $strTest = shift;
 
-    return (($strLogFileCache eq $strTest) ? true : false);
+    return ((($strLogFileCache eq $strTest) ? true : false), $strLogFileCache);
 }
 
 push @EXPORT, qw(logFileCacheTestExact);
