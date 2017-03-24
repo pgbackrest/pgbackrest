@@ -779,38 +779,10 @@ push @EXPORT, qw(logLevel);
 sub logFileCacheClear
 {
     undef($strLogFileCache);
+
+    return (\$strLogFileCache);
 }
 
 push @EXPORT, qw(logFileCacheClear);
-
-####################################################################################################################################
-# logFileCacheTestSimilar - Test for a string somewhere in the log file
-####################################################################################################################################
-sub logFileCacheTestSimilar
-{
-    my $strTest = shift;
-
-    my $strTmpLogFileCache = $strLogFileCache;
-
-    # Strip all whitespace
-    $strTmpLogFileCache =~ s/\s+//g;
-    $strTest =~ s/\s+//g;
-
-    return ((($strTmpLogFileCache =~ m/$strTest/) ? true : false), $strLogFileCache);
-}
-
-push @EXPORT, qw(logFileCacheTestSimilar);
-
-####################################################################################################################################
-# logFileCacheTestExact - Test for an exact match of the log
-####################################################################################################################################
-sub logFileCacheTestExact
-{
-    my $strTest = shift;
-
-    return ((($strLogFileCache eq $strTest) ? true : false), $strLogFileCache);
-}
-
-push @EXPORT, qw(logFileCacheTestExact);
 
 1;

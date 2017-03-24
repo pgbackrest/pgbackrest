@@ -279,6 +279,35 @@ sub end
     }
 }
 
+
+####################################################################################################################################
+# logFileCacheTestSimilar - Test for a string somewhere in the log file
+####################################################################################################################################
+sub testLogFileCacheTestSimilar
+{
+    my $strTest = shift;
+    my $strLogFileCache = shift;
+
+    my $strTmpLogFileCache = $strLogFileCache;
+
+    # Strip all whitespace
+    $strTmpLogFileCache =~ s/\s+//g;
+    $strTest =~ s/\s+//g;
+
+    return ((($strTmpLogFileCache =~ m/$strTest/) ? true : false), $strLogFileCache);
+}
+
+####################################################################################################################################
+# logFileCacheTestExact - Test for an exact match of the log
+####################################################################################################################################
+sub testLogFileCacheTestExact
+{
+    my $strTest = shift;
+    my $strLogFileCache = shift;
+
+    return ((($strLogFileCache eq $strTest) ? true : false), $strLogFileCache);
+}
+
 ####################################################################################################################################
 # testResult
 ####################################################################################################################################
@@ -303,12 +332,14 @@ sub testResult
     my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
     logLevelSet(WARN, OFF, undef, false);
 
+    # Clear the cache for this test
+    my $strLogFileCache = logFileCacheClear();
+
     do
     {
         eval
         {
-            # Clear the cache for this test
-            logFileCacheClear();
+
 
             my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
@@ -356,7 +387,7 @@ sub testResult
     # If we get here then test any warning message
     if (defined($strWarnMessage))
     {
-        my $strResult = testWarningMessage($strWarnMessage, $bTestExactWarnMessage);
+        my $strResult = testWarningMessage($strWarnMessage, $bTestExactWarnMessage, $strLogFileCache);
 
         # Restore the log levels
         logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
