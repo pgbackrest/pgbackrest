@@ -303,12 +303,14 @@ sub testResult
     {
         eval
         {
+# CSHANG so maybe here we save the current log level settings, then turn the console off and the file on to have things sent to the file cache buffer
+# So we'll get a result from the function -
             logDisable();
             my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
             if (@stryResult <= 1)
             {
-                $strActual = ${logDebugBuild($stryResult[0])};
+                $strActual = ${logDebugBuild($stryResult[0])};  # CSHANG No possiblity of errors being thrown from here so log levels don't matter
             }
             else
             {
@@ -366,7 +368,7 @@ sub testWarning
         confess "a function must be called to test a warning message";
     }
 
-    # Save the current log levels and set the file level to warn and timestam false
+    # Save the current log levels and set the file level to warn and timestamp false
     my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
     logLevelSet(WARN, undef, undef, false);
 
