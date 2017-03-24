@@ -156,6 +156,10 @@ sub run
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_DIFF, undef, $strDescription);
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire no archive but show info message - using oldest full backup for archive retention';
+        $oExpireTest->process($self->stanza(), 10, 10, BACKUP_TYPE_FULL, 10, $strDescription);
     }
 
     if ($self->begin("Expire::stanzaUpgrade"))
@@ -197,6 +201,12 @@ sub run
         $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_95);
         $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
         $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+
+        #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire all archive last full backup through pitr';
+
+        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 3, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $self->optionReset($oOption, OPTION_DB_PATH);
@@ -241,7 +251,6 @@ sub run
 
         # Restore the info file
         $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-
     }
 }
 

@@ -282,11 +282,11 @@ sub process
             # For each archiveId, remove WAL that are not part of retention
             foreach my $strArchiveId (@stryListArchiveDisk)
             {
-                # From the full list of backups to retain, create a list of backups, oldest to newest, associated with this
+                # From the global list of backups to retain, create a list of backups, oldest to newest, associated with this
                 # archiveId (e.g. 9.4-1)
                 my @stryLocalBackupRetention = $oBackupInfo->listByArchiveId($strArchiveId,
                     $oFile->pathGet(PATH_BACKUP_ARCHIVE), \@stryGlobalBackupRetention, 'reverse');
-# print "LOCAL BACKUPS TO RETAIN OLDERT TO NEWEST?: ARCHIVEID $strArchiveId, stryLocalBackupRetention=".Dumper(@stryLocalBackupRetention)."\n"; #CSHANG
+
                 # If no backup to retain was found
                 if (!@stryLocalBackupRetention)
                 {
@@ -312,7 +312,8 @@ sub process
 
                 my @stryLocalBackupArchiveRentention;
 
-                if (@stryGlobalBackupArchiveRetention)
+                # If the archive retention is less than or equal to the number of all backups, then perform selective expiration
+                if (@stryGlobalBackupArchiveRetention && $iArchiveRetention <= scalar @stryGlobalBackupRetention)
                 {
                     # From the full list of backups in archive retention, find the intersection of local backups to retain
                     foreach my $strGlobalBackupArchiveRetention (@stryGlobalBackupArchiveRetention)
@@ -326,24 +327,24 @@ sub process
                         }
                     }
                 }
-                # If there are not enough backups yet globally to start archive expiration then set the archive retention
+                # Else if there are not enough backups yet globally to start archive expiration then set the archive retention
                 # to the oldest backup so anything prior to that will be removed as it is not needed but everything else is
+                # This is incase there are old archives left around so that they don't stay around forever
                 else
                 {
                     if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
                     {
-                        &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for archive retention");
+                        &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for  ${strArchiveId} " .
+                            " archive retention");
                         $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[0];
                     }
-print "NOT ENOUGH BACKUPS: ARCHIVEID $strArchiveId, OLDEST=".Dumper($stryLocalBackupArchiveRentention[0])."\n"; #CSHANG
                 }
 
-                # If no backups were found as part of retention then set the backup archive retention to the newest backup
+                # If no local backups were found as part of retention then set the backup archive retention to the newest backup
                 # so that the database is fully recoverable (can be recovered from the last backup through pitr)
                 if (!@stryLocalBackupArchiveRentention)
                 {
                     $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[-1];
-print "NO BACKUPS FOUND FOR RETENTION: ARCHIVEID $strArchiveId, NEWEST=".Dumper($stryLocalBackupArchiveRentention[0])."\n"; #CSHANG
                 }
 
                 my $strArchiveRetentionBackup = $stryLocalBackupArchiveRentention[0];
