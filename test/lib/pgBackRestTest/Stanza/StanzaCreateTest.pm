@@ -23,6 +23,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 
 use pgBackRestTest::Common::Env::EnvHostTest;
@@ -119,16 +120,11 @@ sub run
 
         # Change the database version by copying a new pg_control file
         executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        executeTest('cp ' . $self->dataPath() . '/backup.pg_control_93.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        executeTest('cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $oHostDbMaster->dbBasePath() .
+            '/' . DB_FILE_PGCONTROL);
 
-        # Remove the archive info file
-        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
-
-        # Run stanza-create with --force
-        $oHostBackup->stanzaCreate('test force fails for database mismatch with directory',
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, strOptionalParam => '--no-' . OPTION_ONLINE .
-            ' --' . OPTION_FORCE});
+        $oHostBackup->stanzaCreate('fail on database mismatch without force option',
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Restore pg_control
         executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);

@@ -197,7 +197,7 @@ sub backupInfoCheck
     ) =
         logDebugParam
     (
-        __PACKAGE__ . '->getBackupInfoCheck', \@_,
+        __PACKAGE__ . '->backupInfoCheck', \@_,
         {name => 'oFile'},
         {name => 'strDbVersion', required => false},
         {name => 'iControlVersion', required => false},

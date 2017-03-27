@@ -1346,6 +1346,49 @@ my $oConfigHelpData =
             }
         },
 
+        # STANZA-UPGRADE Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'stanza-upgrade' =>
+        {
+            summary =>
+                "Upgrade a stanza.",
+            description =>
+                "Immediately after upgrading PostgreSQL to a newer major version, the db-path for all pgBackRest configurations " .
+                    "must be set to the new database location and the stanza-upgrade run on the backup host. If the database is " .
+                    "offline use the --no-online option.",
+
+            option =>
+            {
+                'backup-cmd' => 'section',
+                'backup-config' => 'section',
+                'backup-host' => 'section',
+                'backup-standby' => 'section',
+                'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
+                'compress-level' => 'section',
+                'compress-level-network' => 'section',
+                'config' => 'default',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
+                'db-host' => 'section',
+                'db-path' => 'section',
+                'db-port' => 'section',
+                'db-socket-path' => 'section',
+                'db-timeout' => 'section',
+                'db-user' => 'section',
+                'lock-path' => 'section',
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
+                'log-path' => 'section',
+                'neutral-umask' => 'section',
+                'online' => 'default',
+                'protocol-timeout' => 'section',
+                'repo-path' => 'section',
+                'repo-sync' => 'section',
+                'stanza' => 'default'
+            }
+        },
+
         # START Command Help
         #---------------------------------------------------------------------------------------------------------------------------
         'start' =>

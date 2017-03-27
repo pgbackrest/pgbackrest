@@ -24,6 +24,7 @@ use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Info;
+use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
@@ -43,6 +44,7 @@ sub initModule
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
+    $self->{strDbPath} = $self->testPath() . '/db';
 
     # Create the local file object
     $self->{oFile} =
@@ -67,8 +69,30 @@ sub initTest
 {
     my $self = shift;
 
+    # Create parent path for pg_control
+    filePathCreate(($self->{strDbPath} . '/' . DB_PATH_GLOBAL), undef, false, true);
+
+    # Create archive info path
+    filePathCreate($self->{strArchivePath}, undef, true, true);
+
+    # Create backup info path
+    filePathCreate($self->{strBackupPath}, undef, true, true);
+
     # Create the test object
-    $self->{oExpireTest} = new pgBackRestTest::Expire::ExpireEnvTest(undef, $self->backrestExe(), $self->{oFile}, undef);
+    $self->{oExpireTest} = new pgBackRestTest::Expire::ExpireEnvTest(undef, $self->backrestExe(), $self->{oFile}, undef, $self);
+
+    # Set options for stanzaCreate
+    my $oOption = {};
+    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
+    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
+    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
+    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
+    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+
+    $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+
     $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
 }
 
