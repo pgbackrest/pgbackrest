@@ -318,7 +318,7 @@ sub execute
                         }
                         else
                         {
-                            $strOutput .= (defined($strOutput) ? "\n" : '') . $stryOutput[@stryOutput - 1];
+                            $strOutput .= (defined($strOutput) ? "\n" : '') . $stryOutput[-1];
                         }
                     }
                 }

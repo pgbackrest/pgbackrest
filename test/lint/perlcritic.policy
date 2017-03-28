@@ -55,9 +55,6 @@ severity = 5
 # Natural ordering here indicates the order in which they should be addressed.
 #-----------------------------------------------------------------------------------------------------------------------------------
 
-# S4 - Requires array offset from end to use negative syntax.
-[-Variables::RequireNegativeIndices]
-
 # S3 - Requires all variables to be used.
 [-Variables::ProhibitUnusedVariables]
 
