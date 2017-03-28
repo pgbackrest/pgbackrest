@@ -275,7 +275,6 @@ sub sectionProcess
     my $oSectionBodyElement = $oSectionElement->addNew(HTML_DIV, "section-body");
 
     # Process each child
-    my $oSectionBodyExe;
     my $iSectionNo = 1;
 
     foreach my $oChild ($oSection->nodeList())

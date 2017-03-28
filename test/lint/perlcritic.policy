@@ -55,9 +55,6 @@ severity = 5
 # Natural ordering here indicates the order in which they should be addressed.
 #-----------------------------------------------------------------------------------------------------------------------------------
 
-# S3 - Requires all variables to be used.
-[-Variables::ProhibitUnusedVariables]
-
 # S2 - Requires all long numbers to have thousand separators.
 [-ValuesAndExpressions::RequireNumberSeparators]
 
