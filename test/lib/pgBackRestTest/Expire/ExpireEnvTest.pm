@@ -170,7 +170,7 @@ sub backupCreate
                           defined($oLastManifest) ? $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) : undef,
                           $lTimestamp);
 
-    my $strBackupClusterSetPath .= "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
+    my $strBackupClusterSetPath = "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
     filePathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");

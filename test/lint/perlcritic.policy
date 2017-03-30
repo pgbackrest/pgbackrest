@@ -58,9 +58,6 @@ severity = 5
 # S2 - Requires all long numbers to have thousand separators.
 [-ValuesAndExpressions::RequireNumberSeparators]
 
-# S4 - Requires simple assignments in declarations. (TEST ONLY)
-[-Variables::ProhibitAugmentedAssignmentInDeclaration]
-
 # S4 - Requires parans when logical and bitwise booleans are mixed.
 [-ValuesAndExpressions::ProhibitMixedBooleanOperators]
 
