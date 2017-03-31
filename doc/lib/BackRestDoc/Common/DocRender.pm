@@ -644,7 +644,7 @@ sub processTag
 
     if (!defined($strTag))
     {
-        use Data::Dumper;
+        require Data::Dumper;
         confess Dumper($oTag);
     }
 
