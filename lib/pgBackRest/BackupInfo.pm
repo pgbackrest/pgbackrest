@@ -7,12 +7,14 @@ use parent 'pgBackRest::Common::Ini';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 use File::stat;
 
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::BackupCommon;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -20,6 +22,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
@@ -37,10 +40,6 @@ use constant INFO_BACKUP_SECTION_BACKUP                             => MANIFEST_
     push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP);
 use constant INFO_BACKUP_SECTION_BACKUP_CURRENT                     => INFO_BACKUP_SECTION_BACKUP . ':current';
     push @EXPORT, qw(INFO_BACKUP_SECTION_BACKUP_CURRENT);
-use constant INFO_BACKUP_SECTION_DB                                 => 'db';
-    push @EXPORT, qw(INFO_BACKUP_SECTION_DB);
-use constant INFO_BACKUP_SECTION_DB_HISTORY                         => INFO_BACKUP_SECTION_DB . ':history';
-    push @EXPORT, qw(INFO_BACKUP_SECTION_DB_HISTORY);
 
 use constant INFO_BACKUP_KEY_ARCHIVE_CHECK                          => MANIFEST_KEY_ARCHIVE_CHECK;
     push @EXPORT, qw(INFO_BACKUP_KEY_ARCHIVE_CHECK);
@@ -192,13 +191,21 @@ sub reconstruct
     (
         $strOperation,
         $bSave,
-        $bRequired,
+        $bRequired,             # If false then must be creating or reconstructing so the DB info must be supplied
+        $strDbVersion,
+        $ullDbSysId,
+        $iControlVersion,
+        $iCatalogVersion,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
         {name => 'bSave', default => true},
         {name => 'bRequired', default => true},
+        {name => 'strDbVersion', required => false},
+        {name => 'ullDbSysId', required => false},
+        {name => 'iControlVersion', required => false},
+        {name => 'iCatalogVersion', required => false},
     );
 
     # Check for backups that are not in FILE_BACKUP_INFO
@@ -211,10 +218,77 @@ sub reconstruct
 
         if (!$self->current($strBackup) && fileExists($strManifestFile))
         {
-            &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
 
+            # If we are reconstructing, then we need to be sure this db-id and version is in the history section. Also if it
+            # has a db-id greater than anything in the history section, then add it to the db section.
+            if (!$bRequired)
+            {
+                my $hDbList = $self->dbHistoryList();
+                my $iDbId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID);
+                my $iDbIdMax = 0;
+                my $ullDbSysId = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID);
+                my $strDbVersion = $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
+
+                # If this is the max history id then set the db section
+                foreach my $iDbHistoryId (keys %{$hDbList})
+                {
+                    # If the current history ID is greater than the running max, then set it to the current id
+                    if ($iDbHistoryId > $iDbIdMax)
+                    {
+                        $iDbIdMax = $iDbHistoryId;
+                    }
+                }
+
+                if ($iDbId >= $iDbIdMax)
+                {
+                    $self->dbSectionSet($strDbVersion, $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL),
+                        $oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG), $ullDbSysId, $iDbId);
+                }
+            }
+
+            &log(WARN, "backup ${strBackup} found in repository added to " . FILE_BACKUP_INFO);
+
             $self->add($oManifest, $bSave, $bRequired);
+        }
+    }
+
+    # If reconstructing, make sure the DB section is correct
+    if (!$bRequired)
+    {
+        # If any database info is missing, then assert
+        if (!defined($strDbVersion) || !defined($ullDbSysId) || !defined($iControlVersion) || !defined($iCatalogVersion))
+        {
+            confess &log(ASSERT, "backup info cannot be reconstructed without database information");
+        }
+        # If the DB section does not exist then create the db and history section
+        elsif (!$self->test(INFO_BACKUP_SECTION_DB))
+        {
+            $self->create($strDbVersion, $ullDbSysId, $iControlVersion, $iCatalogVersion, $bSave);
+        }
+        # Else update the DB section if it does not match the current database
+        else
+        {
+            # Turn off console logging to control when to display the error
+            logDisable();
+
+            eval
+            {
+                $self->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $bRequired);
+                logEnable();
+                return true;
+            }
+            or do
+            {
+                # Reset the console logging
+                logEnable();
+
+                # Confess unhandled errors
+                confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_BACKUP_MISMATCH);
+
+                # Update the DB section if it does not match the current database
+                $self->dbSectionSet($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId, $self->dbHistoryIdGet(false)+1);
+            };
         }
     }
 
@@ -404,8 +478,18 @@ sub add
         $oBackupManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE));
     $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_VERSION,
         $oBackupManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
-    $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HISTORY_ID,
-        $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID));
+
+    if ($bRequired)
+    {
+        $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HISTORY_ID,
+            $self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID));
+    }
+    # If we are reconstructing, then the history id must be taken from the manifest
+    else
+    {
+        $self->set(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackupLabel, INFO_BACKUP_KEY_HISTORY_ID,
+            $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID));
+    }
 
     if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, BACKUP_TYPE_FULL))
     {
@@ -502,6 +586,138 @@ sub list
     (
         $strOperation,
         {name => 'stryBackup', value => \@stryBackup}
+    );
+}
+
+####################################################################################################################################
+# backupArchiveDbHistoryId
+#
+# Gets the backup.info db-id for the archiveId passed.
+####################################################################################################################################
+sub backupArchiveDbHistoryId
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchiveId,
+        $strPathBackupArchive,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->backupArchiveDbHistoryId', \@_,
+            {name => 'strArchiveId'},
+            {name => 'strPathBackupArchive'},
+        );
+
+    # List of backups associated with the db-id provided
+    my @stryArchiveBackup;
+
+    # Build the db list from the history in the backup info and archive info file
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($strPathBackupArchive, true);
+    my $hDbListArchive = $oArchiveInfo->dbHistoryList();
+    my $hDbListBackup = $self->dbHistoryList();
+    my $iDbHistoryId = undef;
+
+    # Get the db-version and db-id (history id) from the archiveId
+    my ($strDbVersionArchive, $iDbIdArchive) = split("-", $strArchiveId);
+
+    # Get the DB system ID to map back to the backup info
+    my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
+
+    # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
+    foreach my $iDbIdBackup (keys %{$hDbListBackup})
+    {
+        if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
+            $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
+        {
+            $iDbHistoryId = $iDbIdBackup;
+            last;
+        }
+    }
+
+    # If the database is not found in the backup.info history list
+    if (!defined($iDbHistoryId))
+    {
+        # Check to see that the current DB sections match for the archive and backup info files
+        if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
+                ($self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION)))) ||
+            !($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_SYSTEM_ID, undef,
+                ($self->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_SYSTEM_ID)))))
+        {
+            # This should never happen unless the backup.info file is corrupt
+            confess &log(ASSERT, "the archive and backup database sections do not match", ERROR_FILE_INVALID);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# listByArchiveId
+#
+# Filters a list of backups by the archiveId passed.
+####################################################################################################################################
+sub listByArchiveId
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strArchiveId,
+        $strPathBackupArchive,
+        $stryBackup,
+        $strOrder,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->listByArchiveId', \@_,
+            {name => 'strArchiveId'},
+            {name => 'strPathBackupArchive'},
+            {name => 'stryBackup'},
+            {name => 'strOrder', default => 'forward'}
+        );
+
+    # List of backups associated with the db-id provided
+    my @stryArchiveBackup;
+
+    my $iDbHistoryId = $self->backupArchiveDbHistoryId($strArchiveId, $strPathBackupArchive);
+
+    # If history found, then build list of backups associated with the archive id passed, else return empty array
+    if (defined($iDbHistoryId))
+    {
+        # Iterate through the backups and filter
+        foreach my $strBackup (@$stryBackup)
+        {
+            # From the backup.info current backup section, get the db-id for the backup and if it is the same, add to the list
+            if ($self->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID, $iDbHistoryId))
+            {
+                if ($strOrder eq 'reverse')
+                {
+                    unshift(@stryArchiveBackup, $strBackup)
+                }
+                else
+                {
+                    push(@stryArchiveBackup, $strBackup)
+                }
+            }
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryArchiveBackup', value => \@stryArchiveBackup}
     );
 }
 
@@ -640,6 +856,40 @@ sub dbHistoryIdGet
     (
         $strOperation,
         {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# dbHistoryList
+#
+# Get the data from the db history section.
+####################################################################################################################################
+sub dbHistoryList
+{
+    my $self = shift;
+    my
+    (
+        $strOperation,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryList',
+        );
+
+    my %hDbHash;
+
+    foreach my $iHistoryId ($self->keys(INFO_BACKUP_SECTION_DB_HISTORY))
+    {
+        $hDbHash{$iHistoryId}{&INFO_DB_VERSION} =
+            $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION);
+        $hDbHash{$iHistoryId}{&INFO_SYSTEM_ID} =
+            $self->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hDbHash', value => \%hDbHash}
     );
 }
 

@@ -136,12 +136,16 @@ stanza-create db - verify success with force (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - test force fails on database mismatch with directory (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
+stanza-create db - fail on database mismatch with directory (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --db-path=[TEST_PATH]/db-master/db/testbase/ stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
-stanza-create db - restore stanza files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
+stanza-create db - successfully create stanza files to be upgraded (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --db-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
+------------------------------------------------------------------------------------------------------------------------------------
+
+stanza-upgrade db - upgrade stanza files online (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - fail on backup lock exists (backup host)
