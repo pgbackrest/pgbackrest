@@ -222,7 +222,8 @@ sub process
     $oBackupInfo->save();
 
     # Remove backups from disk
-    foreach my $strBackup ($oFile->list(PATH_BACKUP_CLUSTER, undef, backupRegExpGet(true, true, true), 'reverse'))
+    foreach my $strBackup ($oFile->list(
+        PATH_BACKUP_CLUSTER, undef, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
     {
         if (!$oBackupInfo->current($strBackup))
         {
@@ -263,7 +264,8 @@ sub process
         if ($iBackupTotal > 0)
         {
             my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true);
-            my @stryListArchiveDisk = fileList($oFile->pathGet(PATH_BACKUP_ARCHIVE), REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
+            my @stryListArchiveDisk = fileList(
+                $oFile->pathGet(PATH_BACKUP_ARCHIVE), {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
 
             # Make sure the current database versions match between the two files
             if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
@@ -397,7 +399,8 @@ sub process
                         }
 
                         # Get all major archive paths (timeline and first 32 bits of LSN)
-                        foreach my $strPath ($oFile->list(PATH_BACKUP_ARCHIVE, $strArchiveId, REGEX_ARCHIVE_DIR_WAL))
+                        foreach my $strPath ($oFile->list(
+                            PATH_BACKUP_ARCHIVE, $strArchiveId, {strExpression => REGEX_ARCHIVE_DIR_WAL}))
                         {
                             logDebugMisc($strOperation, "found major WAL path: ${strPath}");
                             $bRemove = true;
@@ -431,8 +434,8 @@ sub process
                             elsif ($strPath le substr($strArchiveExpireMax, 0, 16))
                             {
                                 # Look for files in the archive directory
-                                foreach my $strSubPath ($oFile->list(PATH_BACKUP_ARCHIVE,
-                                                                     "${strArchiveId}/${strPath}", "^[0-F]{24}.*\$"))
+                                foreach my $strSubPath ($oFile->list(
+                                    PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strPath}", {strExpression => "^[0-F]{24}.*\$"}))
                                 {
                                     $bRemove = true;
 

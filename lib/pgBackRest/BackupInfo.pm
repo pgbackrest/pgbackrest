@@ -209,7 +209,7 @@ sub reconstruct
     );
 
     # Check for backups that are not in FILE_BACKUP_INFO
-    foreach my $strBackup (fileList($self->{strBackupClusterPath}, backupRegExpGet(true, true, true)))
+    foreach my $strBackup (fileList($self->{strBackupClusterPath}, {strExpression => backupRegExpGet(true, true, true)}))
     {
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
 

@@ -345,7 +345,7 @@ sub stanzaList
     # Run locally
     else
     {
-        my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, undef, undef, true);
+        my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, {bIgnoreMissing => true});
 
         foreach my $strStanzaFound (@stryStanza)
         {
@@ -389,14 +389,14 @@ sub stanzaList
 
                 if ($oFile->exists(PATH_BACKUP, $strArchivePath))
                 {
-                    my @stryWalMajor = $oFile->list(PATH_BACKUP, $strArchivePath, '^[0-F]{16}$');
+                    my @stryWalMajor = $oFile->list(PATH_BACKUP, $strArchivePath, {strExpression => '^[0-F]{16}$'});
 
                     # Get first WAL segment
                     foreach my $strWalMajor (@stryWalMajor)
                     {
                         my @stryWalFile = $oFile->list(
                             PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
-                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$");
+                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
 
                         if (@stryWalFile > 0)
                         {
@@ -410,7 +410,7 @@ sub stanzaList
                     {
                         my @stryWalFile = $oFile->list(
                             PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
-                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", 'reverse');
+                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", 'reverse'});
 
                         if (@stryWalFile > 0)
                         {
