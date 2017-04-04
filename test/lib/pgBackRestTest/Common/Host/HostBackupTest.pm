@@ -13,6 +13,7 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use pgBackRest::BackupCommon;
@@ -240,8 +241,8 @@ sub backupEnd
     # because a running database is always in flux.  Even so, it allows us test many things.
     if (!$self->synthetic())
     {
-        $oExpectedManifest =
-            iniLoad($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST, $oExpectedManifest);
+        $oExpectedManifest = iniParse(
+            fileStringRead($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST));
     }
 
     # Make sure tablespace links are correct
@@ -494,8 +495,8 @@ sub backupCompare
 
     my $strTestPath = $self->testPath();
 
-    iniSave("${strTestPath}/actual.manifest", $oActualManifest->{oContent});
-    iniSave("${strTestPath}/expected.manifest", $oExpectedManifest);
+    fileStringWrite("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
+    fileStringWrite("${strTestPath}/expected.manifest", iniRender($oExpectedManifest));
 
     executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
@@ -1032,7 +1033,10 @@ sub configCreate
     }
 
     # Write out the configuration file
-    iniSave($self->backrestConfig(), \%oParamHash, true);
+    fileStringWrite($self->backrestConfig(), iniRender(\%oParamHash, true));
+
+    # Modify the file permissions so it can be read/saved by all test users
+    executeTest('sudo chmod 660 ' . $self->backrestConfig());
 }
 
 ####################################################################################################################################
@@ -1050,59 +1054,48 @@ sub manifestMunge
     (
         $strOperation,
         $strBackup,
-        $strSection,
-        $strKey,
-        $strSubKey,
-        $strValue,
+        $hParam,
+        $bCache,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifestMunge', \@_,
-            {name => '$strBackup'},
-            {name => '$strSection'},
-            {name => '$strKey'},
-            {name => '$strSubKey', required => false},
-            {name => '$strValue', required => false},
+            {name => 'strBackup'},
+            {name => '$hParam'},
+            {name => 'bCache', default => true},
         );
 
-    my $strManifestFile = "${strBackup}/" . FILE_MANIFEST;
+    $self->infoMunge($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), $hParam, $bCache);
 
-    # Change mode on the backup path so it can be read/written
-    if ($self->nameTest(HOST_BACKUP))
-    {
-        executeTest('sudo chmod g+w ' . $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strManifestFile));
-    }
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
-    # Read the manifest
-    my %oManifest;
-    iniLoad($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strManifestFile), \%oManifest);
+####################################################################################################################################
+# manifestRestore
+####################################################################################################################################
+sub manifestRestore
+{
+    my $self = shift;
 
-    # Write in the munged value
-    if (defined($strSubKey))
-    {
-        if (defined($strValue))
-        {
-            $oManifest{$strSection}{$strKey}{$strSubKey} = $strValue;
-        }
-        else
-        {
-            delete($oManifest{$strSection}{$strKey}{$strSubKey});
-        }
-    }
-    else
-    {
-        if (defined($strValue))
-        {
-            $oManifest{$strSection}{$strKey} = $strValue;
-        }
-        else
-        {
-            delete($oManifest{$strSection}{$strKey});
-        }
-    }
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strBackup,
+        $bSave,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->manifestRestore', \@_,
+            {name => 'strBackup'},
+            {name => 'bSave', default => true},
+        );
 
-    # Resave the manifest
-    $self->iniSaveChecksum($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, $strManifestFile), \%oManifest, true);
+    $self->infoRestore($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), $bSave);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -1121,38 +1114,64 @@ sub infoMunge
     (
         $strOperation,
         $strFileName,
-        $hParam
+        $hParam,
+        $bCache,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->infoMunge', \@_,
             {name => 'strFileName'},
-            {name => 'hParam'}
+            {name => 'hParam'},
+            {name => 'bCache', default => true},
         );
 
     # If the original file content does not exist then load it
     if (!defined($self->{hInfoFile}{$strFileName}))
     {
-        $self->{hInfoFile}{$strFileName} = iniLoad($strFileName);
-        # Modify the file permissions so it can be saved
-        executeTest("sudo chmod 660 ${strFileName}");
+        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini($strFileName);
     }
 
     # Make a copy of the original file contents
-    my $hContent = dclone($self->{hInfoFile}{$strFileName});
+    my $oMungeIni = new pgBackRest::Common::Ini(
+        $strFileName, {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent})});
 
     # Load params
-    foreach my $strSection (sort(keys(%{$hParam})))
+    foreach my $strSection (keys(%{$hParam}))
     {
-        foreach my $strKey (keys(%{$$hParam{$strSection}}))
+        foreach my $strKey (keys(%{$hParam->{$strSection}}))
         {
-            # Munge the copy with the new parameter values
-            $$hContent{$strSection}{$strKey} = $$hParam{$strSection}{$strKey};
+            if (ref($hParam->{$strSection}{$strKey}) eq 'HASH')
+            {
+                foreach my $strSubKey (keys(%{$hParam->{$strSection}{$strKey}}))
+                {
+                    # Munge the copy with the new parameter values
+                    $oMungeIni->set($strSection, $strKey, $strSubKey, $hParam->{$strSection}{$strKey}{$strSubKey});
+                }
+            }
+            else
+            {
+                # Munge the copy with the new parameter values
+                $oMungeIni->set($strSection, $strKey, undef, $hParam->{$strSection}{$strKey});
+            }
         }
     }
 
+    # Modify the file/directory permissions so it can be saved
+    executeTest("sudo rm -f ${strFileName} && sudo chmod 770 " . dirname($strFileName));
+
     # Save the munged data to the file
-    $self->iniSaveChecksum($strFileName, \%{$hContent}, true);
+    $oMungeIni->save();
+
+    # Fix permissions
+    executeTest(
+        "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
+        ' && sudo chown ' . $self->userGet() . " ${strFileName}");
+
+    # Clear the cache is requested
+    if (!$bCache)
+    {
+        delete($self->{hInfoFile}{$strFileName});
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1179,7 +1198,7 @@ sub infoRestore
         (
             __PACKAGE__ . '->infoRestore', \@_,
             {name => 'strFileName'},
-            {name => 'bSave', default => true, required => false},
+            {name => 'bSave', default => true},
         );
 
     # If the original file content exists in the global hash, then save it to the file
@@ -1187,7 +1206,15 @@ sub infoRestore
     {
         if ($bSave)
         {
-            iniSave($strFileName, $self->{hInfoFile}{$strFileName});
+            # Modify the file/directory permissions so it can be saved
+            executeTest("sudo rm -f ${strFileName} && sudo chmod 770 " . dirname($strFileName));
+
+            # Save the munged data to the file
+            $self->{hInfoFile}{$strFileName}->{bModified} = true;
+            $self->{hInfoFile}{$strFileName}->save();
+
+            # Fix permissions
+            executeTest("sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName));
         }
     }
     else
@@ -1200,33 +1227,6 @@ sub infoRestore
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# iniSaveChecksum
-#
-# Save an ini file an optionall recalculate the checksum so it's valid.
-####################################################################################################################################
-sub iniSaveChecksum
-{
-    my $self = shift;
-    my $strFileName = shift;
-    my $oIniRef = shift;
-    my $bChecksum = shift;
-
-    # Calculate a new checksum if requested
-    if (defined($bChecksum) && $bChecksum)
-    {
-        delete($$oIniRef{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
-
-        my $oSHA = Digest::SHA->new('sha1');
-        my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
-        $oSHA->add($oJSON->encode($oIniRef));
-
-        $$oIniRef{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
-    }
-
-    iniSave($strFileName, $oIniRef);
 }
 
 ####################################################################################################################################

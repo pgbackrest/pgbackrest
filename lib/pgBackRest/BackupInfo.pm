@@ -136,7 +136,7 @@ sub new
     }
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strBackupInfoFile, $bExists);
+    my $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bExists});
 
     $self->{bExists} = $bExists;
     $self->{strBackupClusterPath} = $strBackupClusterPath;

@@ -6,6 +6,7 @@ package pgBackRest::Common::Ini;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -42,211 +43,324 @@ use constant INI_KEY_FORMAT                                         => 'backrest
 use constant INI_KEY_VERSION                                        => 'backrest-version';
     push @EXPORT, qw(INI_KEY_VERSION);
 
-use constant INI_COMMENT                                            => '[comment]';
+####################################################################################################################################
+# Ini sort orders
+####################################################################################################################################
+use constant INI_SORT_FORWARD                                       => 'forward';
+    push @EXPORT, qw(INI_SORT_FORWARD);
+use constant INI_SORT_REVERSE                                       => 'reverse';
+    push @EXPORT, qw(INI_SORT_REVERSE);
+use constant INI_SORT_NONE                                          => 'none';
+    push @EXPORT, qw(INI_SORT_NONE);
 
 ####################################################################################################################################
-# CONSTRUCTOR
+# new()
 ####################################################################################################################################
 sub new
 {
     my $class = shift;                  # Class name
-    my $strFileName = shift;            # Manifest filename
-    my $bLoad = shift;                  # Load the ini?
 
     # Create the class hash
     my $self = {};
     bless $self, $class;
 
-    # Filename must be specified
-    if (!defined($strFileName))
-    {
-        confess &log(ASSERT, 'filename must be provided');
-    }
+    # Assign function parameters, defaults, and log debug info
+    (
+        my $strOperation,
+        $self->{strFileName},
+        my $bLoad,
+        my $strContent,
+        $self->{iInitFormat},
+        $self->{strInitVersion},
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->new', \@_,
+            {name => 'strFileName', trace => true},
+            {name => 'bLoad', optional => true, default => true, trace => true},
+            {name => 'strContent', optional => true, trace => true},
+            {name => 'iInitFormat', optional => true, default => BACKREST_FORMAT, trace => true},
+            {name => 'strInitVersion', optional => true, default => BACKREST_VERSION, trace => true},
+        );
 
     # Set variables
-    my $oContent = {};
-    $self->{oContent} = $oContent;
-    $self->{strFileName} = $strFileName;
+    $self->{oContent} = {};
 
-    # Load the ini if specified
-    if (!defined($bLoad) || $bLoad)
+    # Set changed to false
+    $self->{bModified} = false;
+
+    # Set exists to false
+    $self->{bExists} = false;
+
+    # Load the file if requested
+    if ($bLoad)
     {
         $self->load();
-
-        # Make sure the ini is valid by testing checksum
-        my $strChecksum = $self->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM);
-        my $strTestChecksum = $self->hash();
-
-        if ($strChecksum ne $strTestChecksum)
-        {
-            confess &log(ERROR, "${strFileName} checksum is invalid, should be ${strTestChecksum} but found ${strChecksum}",
-                         ERROR_CHECKSUM);
-        }
-
-        # Make sure that the format is current, otherwise error
-        my $iFormat = $self->get(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, false, 0);
-
-        if ($iFormat != BACKREST_FORMAT)
-        {
-            confess &log(ERROR, "format of ${strFileName} is ${iFormat} but " . BACKREST_FORMAT . ' is required', ERROR_FORMAT);
-        }
-
-        # Check if the version has changed
-        if (!$self->test(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION))
-        {
-            $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
-        }
     }
+    # Load from a string if provided
+    elsif (defined($strContent))
+    {
+        $self->{oContent} = iniParse($strContent);
+        $self->headerCheck();
+    }
+    # Else initialize
     else
     {
-        $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT);
-        $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
+        $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, $self->{iInitFormat});
+        $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, $self->{strInitVersion});
     }
 
     return $self;
 }
 
 ####################################################################################################################################
-# load
-#
-# Load the ini.
+# load() - load the ini.
 ####################################################################################################################################
 sub load
 {
     my $self = shift;
 
-    iniLoad($self->{strFileName}, $self->{oContent});
-}
-
-####################################################################################################################################
-# iniLoad
-#
-# Load file from standard INI format to a hash.
-####################################################################################################################################
-push @EXPORT, qw(iniLoad);
-
-sub iniLoad
-{
-    my $strFileName = shift;
-    my $oContent = shift;
-    my $bRelaxed = shift;
-
-    # Open the ini file for reading
-    my $hFile;
-    my $strSection;
-
-    open($hFile, '<', $strFileName)
-        or confess &log(ERROR, "unable to open ${strFileName}");
-
-    # Create the JSON object
-    my $oJSON = JSON::PP->new()->allow_nonref();
-
-    # Read the INI file
-    while (my $strLine = readline($hFile))
-    {
-        $strLine = trim($strLine);
-
-        # Skip lines that are blank or comments
-        if ($strLine ne '' && $strLine !~ '^[ ]*#.*')
-        {
-            # Get the section
-            if (index($strLine, '[') == 0)
-            {
-                $strSection = substr($strLine, 1, length($strLine) - 2);
-            }
-            else
-            {
-                # Get key and value
-                my $iIndex = index($strLine, '=');
-
-                if ($iIndex == -1)
-                {
-                    confess &log(ERROR, "unable to read from ${strFileName}: ${strLine}");
-                }
-
-                my $strKey = substr($strLine, 0, $iIndex);
-                my $strValue = substr($strLine, $iIndex + 1);
-
-                # If relaxed then read the value directly
-                if ($bRelaxed)
-                {
-                    if (defined($$oContent{$strSection}{$strKey}))
-                    {
-                        if (ref($$oContent{$strSection}{$strKey}) ne 'ARRAY')
-                        {
-                            $$oContent{$strSection}{$strKey} = [$$oContent{$strSection}{$strKey}];
-                        }
-
-                        push(@{$$oContent{$strSection}{$strKey}}, $strValue);
-                    }
-                    else
-                    {
-                        $$oContent{$strSection}{$strKey} = $strValue;
-                    }
-                }
-                # Else read the value as stricter JSON
-                else
-                {
-                    ${$oContent}{$strSection}{$strKey} = $oJSON->decode($strValue);
-                }
-            }
-        }
-    }
-
-    close($hFile);
-    return($oContent);
-}
-
-####################################################################################################################################
-# save
-#
-# Save the file.
-####################################################################################################################################
-sub save
-{
-    my $self = shift;
-
-    $self->hash();
-    iniSave($self->{strFileName}, $self->{oContent}, false, true);
-
-    # Indicate the file now exists
+    $self->{oContent} = iniParse(fileStringRead($self->{strFileName}));
+    $self->headerCheck();
     $self->{bExists} = true;
 }
 
 ####################################################################################################################################
-# iniSave
-#
-# Save from a hash to standard INI format.
+# headerCheck() - check that version and checksum in header are as expected
 ####################################################################################################################################
-push @EXPORT, qw(iniSave);
+sub headerCheck
+{
+    my $self = shift;
 
-sub iniSave
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $bIgnoreInvalid,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->headerCheck', \@_,
+            {name => 'bIgnoreInvalid', optional => true, default => false, trace => true},
+        );
+
+    # Eval so exceptions can be ignored on bIgnoreInvalid
+    my $bValid = true;
+
+    eval
+    {
+        # Make sure the ini is valid by testing checksum
+        my $strChecksum = $self->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef, false);
+        my $strTestChecksum = $self->hash();
+
+        if (!defined($strChecksum) || $strChecksum ne $strTestChecksum)
+        {
+            confess &log(ERROR,
+                "invalid checksum in '$self->{strFileName}', expected '${strTestChecksum}' but found " .
+                    (defined($strChecksum) ? "'${strChecksum}'" : '[undef]'),
+                ERROR_CHECKSUM);
+        }
+
+        # Make sure that the format is current, otherwise error
+        my $iFormat = $self->get(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, false, 0);
+
+        if ($iFormat != $self->{iInitFormat})
+        {
+            confess &log(ERROR,
+                "invalid format in '$self->{strFileName}', expected $self->{iInitFormat} but found ${iFormat}", ERROR_FORMAT);
+        }
+
+        # Check if the version has changed
+        if (!$self->test(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, $self->{strInitVersion}))
+        {
+            $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, $self->{strInitVersion});
+        }
+
+        return true;
+    }
+    or do
+    {
+        # Confess the error if it should not be ignored
+        if (!$bIgnoreInvalid)
+        {
+            confess $EVAL_ERROR;
+        }
+
+        # Return false when errors are ignored
+        $bValid = false;
+    };
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bValid', value => $bValid, trace => true}
+    );
+}
+
+####################################################################################################################################
+# iniParse() - parse from standard INI format to a hash.
+####################################################################################################################################
+push @EXPORT, qw(iniParse);
+
+sub iniParse
 {
     # Assign function parameters, defaults, and log debug info
     my
     (
         $strOperation,
-        $strFileName,
-        $oContent,
+        $strContent,
         $bRelaxed,
-        $bTemp
+        $bIgnoreInvalid,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '::iniSave', \@_,
-            {name => 'strFileName', trace => true},
+            __PACKAGE__ . '::iniParse', \@_,
+            {name => 'strContent', trace => true},
+            {name => 'bRelaxed', optional => true, default => false, trace => true},
+            {name => 'bIgnoreInvalid', optional => true, default => false, trace => true},
+        );
+
+    # Ini content
+    my $oContent = {};
+    my $strSection;
+
+    # Create the JSON object
+    my $oJSON = JSON::PP->new()->allow_nonref();
+
+    # Eval so exceptions can be ignored on bIgnoreInvalid
+    eval
+    {
+        # Read the INI file
+        foreach my $strLine (split("\n", $strContent))
+        {
+            $strLine = trim($strLine);
+
+            # Skip lines that are blank or comments
+            if ($strLine ne '' && $strLine !~ '^[ ]*#.*')
+            {
+                # Get the section
+                if (index($strLine, '[') == 0)
+                {
+                    $strSection = substr($strLine, 1, length($strLine) - 2);
+                }
+                else
+                {
+                    if (!defined($strSection))
+                    {
+                        confess &log(ERROR, "key/value pair '${strLine}' found outside of a section", ERROR_CONFIG);
+                    }
+
+                    # Get key and value
+                    my $iIndex = index($strLine, '=');
+
+                    if ($iIndex == -1)
+                    {
+                        confess &log(ERROR, "unable to find '=' in '${strLine}'", ERROR_CONFIG);
+                    }
+
+                    my $strKey = substr($strLine, 0, $iIndex);
+                    my $strValue = substr($strLine, $iIndex + 1);
+
+                    # If relaxed then read the value directly
+                    if ($bRelaxed)
+                    {
+                        if (defined($$oContent{$strSection}{$strKey}))
+                        {
+                            if (ref($$oContent{$strSection}{$strKey}) ne 'ARRAY')
+                            {
+                                $$oContent{$strSection}{$strKey} = [$$oContent{$strSection}{$strKey}];
+                            }
+
+                            push(@{$$oContent{$strSection}{$strKey}}, $strValue);
+                        }
+                        else
+                        {
+                            $$oContent{$strSection}{$strKey} = $strValue;
+                        }
+                    }
+                    # Else read the value as stricter JSON
+                    else
+                    {
+                        ${$oContent}{$strSection}{$strKey} = $oJSON->decode($strValue);
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+    or do
+    {
+        # Confess the error if it should not be ignored
+        if (!$bIgnoreInvalid)
+        {
+            confess $EVAL_ERROR;
+        }
+
+        # Undef content when errors are ignored
+        undef($oContent);
+    };
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oContent', value => $oContent, trace => true}
+    );
+}
+
+####################################################################################################################################
+# save() - save the file.
+####################################################################################################################################
+sub save
+{
+    my $self = shift;
+
+    if ($self->{bModified})
+    {
+        # Calculate the hash
+        $self->hash();
+
+        # Save the file
+        fileStringWrite($self->{strFileName}, iniRender($self->{oContent}));
+        $self->{bModified} = false;
+
+        # Indicate the file now exists
+        $self->{bExists} = true;
+
+        # File was saved
+        return true;
+    }
+
+    # File was not saved
+    return false;
+}
+
+####################################################################################################################################
+# iniRender() - render hash to standard INI format.
+####################################################################################################################################
+push @EXPORT, qw(iniRender);
+
+sub iniRender
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oContent,
+        $bRelaxed,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::iniRender', \@_,
             {name => 'oContent', trace => true},
-            {name => 'bRelaxed', default => false, trace => true},
-            {name => 'bTemp', default => false, trace => true}
+            {name => 'bTemp', default => false, trace => true},
         );
 
     # Open the ini file for writing
-    my $strFileTemp = $bTemp ? "${strFileName}.new" : $strFileName;
-    my $hFile;
+    my $strContent = '';
     my $bFirst = true;
-
-    sysopen($hFile, $strFileTemp, O_WRONLY | O_CREAT | O_TRUNC, 0640)
-        or confess &log(ERROR, "unable to open ${strFileTemp}");
 
     # Create the JSON object canonical so that fields are alpha ordered to pass unit tests
     my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
@@ -257,35 +371,15 @@ sub iniSave
         # Add a linefeed between sections
         if (!$bFirst)
         {
-            syswrite($hFile, "\n")
-                or confess "unable to write lf: $!";
-        }
-
-        # Write the section comment if present
-        if (defined(${$oContent}{$strSection}{&INI_COMMENT}))
-        {
-            my $strComment = trim(${$oContent}{$strSection}{&INI_COMMENT});
-            $strComment =~ s/\n/\n# /g;
-
-            # syswrite($hFile, ('#' x 80) . "\n# ${strComment}\n" . ('#' x 80) . "\n")
-            #     or confess "unable to comment for section ${strSection}: $!";
-            syswrite($hFile, "# ${strComment}\n")
-                or confess "unable to comment for section ${strSection}: $!";
+            $strContent .= "\n";
         }
 
         # Write the section
-        syswrite($hFile, "[${strSection}]\n")
-            or confess "unable to write section ${strSection}: $!";
+        $strContent .= "[${strSection}]\n";
 
         # Iterate through all keys in the section
-        foreach my $strKey (sort(keys(%{${$oContent}{"${strSection}"}})))
+        foreach my $strKey (sort(keys(%{$oContent->{$strSection}})))
         {
-            # Skip comments
-            if ($strKey eq INI_COMMENT)
-            {
-                next;
-            }
-
             # If the value is a hash then convert it to JSON, otherwise store as is
             my $strValue = ${$oContent}{$strSection}{$strKey};
 
@@ -297,181 +391,124 @@ sub iniSave
                 {
                     foreach my $strArrayValue (@{$strValue})
                     {
-                        syswrite($hFile, "${strKey}=${strArrayValue}\n")
-                            or confess "unable to write relaxed key array ${strKey}: $!";
+                        $strContent .= "${strKey}=${strArrayValue}\n";
                     }
                 }
                 # Else write a standard key/value pair
                 else
                 {
-                    syswrite($hFile, "${strKey}=${strValue}\n")
-                        or confess "unable to write relaxed key ${strKey}: $!";
+                    $strContent .= "${strKey}=${strValue}\n";
                 }
             }
             # Else write as stricter JSON
             else
             {
-                syswrite($hFile, "${strKey}=" . $oJSON->encode($strValue) . "\n")
-                    or confess "unable to write json key ${strKey}: $!";
+                $strContent .= "${strKey}=" . $oJSON->encode($strValue) . "\n";
             }
         }
 
         $bFirst = false;
     }
 
-    # Sync and close temp file
-    $hFile->sync();
-    close($hFile);
-
-    # Rename temp file to ini file
-    if ($bTemp && !rename($strFileTemp, $strFileName))
-    {
-        unlink($strFileTemp);
-        confess &log(ERROR, "unable to move ${strFileTemp} to ${strFileName}", ERROR_FILE_MOVE);
-    }
-
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strContent', value => $strContent, trace => true}
+    );
 }
 
 ####################################################################################################################################
-# hash
-#
-# Generate hash for the manifest.
+# hash() - generate hash for the manifest.
 ####################################################################################################################################
 sub hash
 {
     my $self = shift;
 
     # Remove the old checksum
-    $self->remove(INI_SECTION_BACKREST, INI_KEY_CHECKSUM);
+    delete($self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
 
     # Calculate the checksum
     my $oChecksumContent = dclone($self->{oContent});
-
-    foreach my $strSection (keys(%$oChecksumContent))
-    {
-        delete(${$oChecksumContent}{$strSection}{&INI_COMMENT});
-    }
-
     my $oSHA = Digest::SHA->new('sha1');
     my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
-    $oSHA->add($oJSON->encode($oChecksumContent));
+    $oSHA->add($oJSON->encode($self->{oContent}));
 
     # Set the new checksum
-    my $strHash = $oSHA->hexdigest();
+    $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
 
-    $self->set(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef, $strHash);
-
-    return $strHash;
+    return $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
 }
 
 ####################################################################################################################################
-# get
-#
-# Get a value.
+# get() - get a value.
 ####################################################################################################################################
 sub get
 {
     my $self = shift;
     my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
     my $bRequired = shift;
     my $oDefault = shift;
 
-    my $oContent = $self->{oContent};
-
-    # Section must always be defined
+    # Parameter constraints
     if (!defined($strSection))
     {
-        confess &log(ASSERT, 'section is not defined');
+        confess &log(ASSERT, 'strSection is required');
     }
 
-    # Set default for required
-    $bRequired = defined($bRequired) ? $bRequired : true;
-
-    # Store the result
-    my $oResult = undef;
-
-    if (defined($strSubValue))
+    if (defined($strSubKey) && !defined($strKey))
     {
-        if (!defined($strValue))
-        {
-            confess &log(ASSERT, "subvalue '${strSubValue}' requested but value is not defined");
-        }
-
-        if (defined(${$oContent}{$strSection}{$strValue}))
-        {
-            $oResult = ${$oContent}{$strSection}{$strValue}{$strSubValue};
-        }
+        confess &log(ASSERT, "strKey is required when strSubKey '${strSubKey}' is requested");
     }
-    elsif (defined($strValue))
+
+    # Get the result
+    my $oResult = $self->{oContent}->{$strSection};
+
+    if (defined($strKey) && defined($oResult))
     {
-        if (defined(${$oContent}{$strSection}))
+        $oResult = $oResult->{$strKey};
+
+        if (defined($strSubKey) && defined($oResult))
         {
-            $oResult = ${$oContent}{$strSection}{$strValue};
+            $oResult = $oResult->{$strSubKey};
         }
     }
-    else
-    {
-        $oResult = ${$oContent}{$strSection};
-    }
 
-    if (!defined($oResult) && $bRequired)
+    # When result is not defined
+    if (!defined($oResult))
     {
-        confess &log(ASSERT, "manifest section '$strSection'" . (defined($strValue) ? ", value '$strValue'" : '') .
-                              (defined($strSubValue) ? ", subvalue '$strSubValue'" : '') . ' is required but not defined');
-    }
+        # Error if a result is required
+        if (!defined($bRequired) || $bRequired)
+        {
+            confess &log(ASSERT, "strSection '$strSection'" . (defined($strKey) ? ", strKey '$strKey'" : '') .
+                                  (defined($strSubKey) ? ", strSubKey '$strSubKey'" : '') . ' is required but not defined');
+        }
 
-    if (!defined($oResult) && defined($oDefault))
-    {
-        $oResult = $oDefault;
+        # Return default if specified
+        if (defined($oDefault))
+        {
+            return $oDefault;
+        }
     }
 
     return $oResult
 }
 
 ####################################################################################################################################
-# boolGet
-#
-# Get a numeric value.
+# boolGet() - get a boolean value.
 ####################################################################################################################################
-sub boolGet
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bRequired = shift;
-    my $bDefault = shift;
-
-    return $self->get($strSection, $strValue, $strSubValue, $bRequired,
-                      defined($bDefault) ? ($bDefault ? INI_TRUE : INI_FALSE) : undef) ? true : false;
-}
+sub boolGet {
+    return shift->get(shift, shift, shift, shift, defined($_[0]) ? (shift() ? INI_TRUE : INI_FALSE) : undef) ? true : false}
 
 ####################################################################################################################################
-# numericGet
-#
-# Get a numeric value.
+# numericGet() - get a numeric value.
 ####################################################################################################################################
-sub numericGet
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bRequired = shift;
-    my $nDefault = shift;
-
-    return $self->get($strSection, $strValue, $strSubValue, $bRequired,
-                      defined($nDefault) ? $nDefault + 0 : undef) + 0;
-}
+sub numericGet {return shift->get(shift, shift, shift, shift, defined($_[0]) ? shift() + 0 : undef) + 0}
 
 ####################################################################################################################################
-# set
-#
-# Set a value.
+# set - set a value.
 ####################################################################################################################################
 sub set
 {
@@ -479,72 +516,54 @@ sub set
     my $strSection = shift;
     my $strKey = shift;
     my $strSubKey = shift;
-    my $strValue = shift;
+    my $oValue = shift;
 
-    my $oContent = $self->{oContent};
+    # Parameter constraints
+    if (!(defined($strSection) && defined($strKey)))
+    {
+        confess &log(ASSERT, 'strSection and strKey are required');
+    }
+
+    my $oCurrentValue;
 
     if (defined($strSubKey))
     {
-        ${$oContent}{$strSection}{$strKey}{$strSubKey} = $strValue;
+        $oCurrentValue = \$self->{oContent}{$strSection}{$strKey}{$strSubKey};
     }
     else
     {
-        ${$oContent}{$strSection}{$strKey} = $strValue;
+        $oCurrentValue = \$self->{oContent}{$strSection}{$strKey};
     }
+
+    if (!defined($$oCurrentValue) ||
+        defined($oCurrentValue) != defined($oValue) ||
+        ${dclone($oCurrentValue)} ne ${dclone(\$oValue)})
+    {
+        $$oCurrentValue = $oValue;
+
+        if (!$self->{bModified})
+        {
+            $self->{bModified} = true;
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 ####################################################################################################################################
-# boolSet
-#
-# Set a boolean value.
+# boolSet - set a boolean value.
 ####################################################################################################################################
-sub boolSet
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strKey = shift;
-    my $strSubKey = shift;
-    my $bValue = shift;
-
-    $self->set($strSection, $strKey, $strSubKey, $bValue ? INI_TRUE : INI_FALSE);
-}
+sub boolSet {shift->set(shift, shift, shift, shift() ? INI_TRUE : INI_FALSE)}
 
 ####################################################################################################################################
-# numericSet
-#
-# Set a numeric value.
+# numericSet - set a numeric value.
 ####################################################################################################################################
-sub numericSet
-{
-    my $self = shift;
-    my $strSection = shift;
-    my $strKey = shift;
-    my $strSubKey = shift;
-    my $nValue = shift;
-
-    $self->set($strSection, $strKey, $strSubKey, $nValue + 0);
-}
+sub numericSet {shift->set(shift, shift, shift, defined($_[0]) ? shift() + 0 : undef)}
 
 ####################################################################################################################################
-# commentSet
-#
-# Set a section comment.
-####################################################################################################################################
-# sub commentSet
-# {
-#     my $self = shift;
-#     my $strSection = shift;
-#     my $strComment = shift;
-#
-#     my $oContent = $self->{oContent};
-#
-#     ${$oContent}{$strSection}{&INI_COMMENT} = $strComment;
-# }
-
-####################################################################################################################################
-# remove
-#
-# Remove a value.
+# remove - remove a value.
 ####################################################################################################################################
 sub remove
 {
@@ -552,28 +571,51 @@ sub remove
     my $strSection = shift;
     my $strKey = shift;
     my $strSubKey = shift;
-    my $strValue = shift;
 
-    my $oContent = $self->{oContent};
+    # Test if the value exists
+    if ($self->test($strSection, $strKey, $strSubKey))
+    {
+        # Remove a subkey
+        if (defined($strSubKey))
+        {
+            delete($self->{oContent}{$strSection}{$strKey}{$strSubKey});
+        }
 
-    if (defined($strSubKey))
-    {
-        delete(${$oContent}{$strSection}{$strKey}{$strSubKey});
+        # Remove a key
+        if (defined($strKey))
+        {
+            if (!defined($strSubKey))
+            {
+                delete($self->{oContent}{$strSection}{$strKey});
+            }
+
+            # Remove the section if it is now empty
+            if (keys(%{$self->{oContent}{$strSection}}) == 0)
+            {
+                delete($self->{oContent}{$strSection});
+            }
+        }
+
+        # Remove a section
+        if (!defined($strKey))
+        {
+            delete($self->{oContent}{$strSection});
+        }
+
+        # Record changes
+        if (!$self->{bModified})
+        {
+            $self->{bModified} = true;
+        }
+
+        return true;
     }
-    elsif (defined($strKey))
-    {
-        delete(${$oContent}{$strSection}{$strKey});
-    }
-    else
-    {
-        delete(${$oContent}{$strSection});
-    }
+
+    return false;
 }
 
 ####################################################################################################################################
-# keys
-#
-# Get a list of keys.
+# keys - get the list of keys in a section.
 ####################################################################################################################################
 sub keys
 {
@@ -581,22 +623,17 @@ sub keys
     my $strSection = shift;
     my $strSortOrder = shift;
 
-    if (!defined($strSection))
-    {
-        confess &log(ASSERT, 'strSection must be set');
-    }
-
     if ($self->test($strSection))
     {
-        if (!defined($strSortOrder) || $strSortOrder eq 'forward')
+        if (!defined($strSortOrder) || $strSortOrder eq INI_SORT_FORWARD)
         {
             return (sort(keys(%{$self->get($strSection)})));
         }
-        elsif ($strSortOrder eq 'reverse')
+        elsif ($strSortOrder eq INI_SORT_REVERSE)
         {
             return (sort {$b cmp $a} (keys(%{$self->get($strSection)})));
         }
-        elsif ($strSortOrder eq 'none')
+        elsif ($strSortOrder eq INI_SORT_NONE)
         {
             return (keys(%{$self->get($strSection)}));
         }
@@ -611,9 +648,10 @@ sub keys
 }
 
 ####################################################################################################################################
-# test
+# test - test a value.
 #
-# Test a value to see if it equals the supplied test value.  If no test value is given, tests that it is defined.
+# Test a value to see if it equals the supplied test value.  If no test value is given, tests that the section, key, or subkey
+# is defined.
 ####################################################################################################################################
 sub test
 {
@@ -623,10 +661,13 @@ sub test
     my $strSubValue = shift;
     my $strTest = shift;
 
+    # Get the value
     my $strResult = $self->get($strSection, $strValue, $strSubValue, false);
 
+    # Is there a result
     if (defined($strResult))
     {
+        # Is there a value to test against?
         if (defined($strTest))
         {
             return $strResult eq $strTest ? true : false;
@@ -639,19 +680,17 @@ sub test
 }
 
 ####################################################################################################################################
-# boolTest
-#
-# Test a value to see if it equals the supplied test boolean value.  If no test value is given, tests that it is defined.
+# boolTest - test a boolean value, see test().
 ####################################################################################################################################
 sub boolTest
 {
-    my $self = shift;
-    my $strSection = shift;
-    my $strValue = shift;
-    my $strSubValue = shift;
-    my $bTest = shift;
-
-    return $self->test($strSection, $strValue, $strSubValue, defined($bTest) ? ($bTest ? INI_TRUE : INI_FALSE) : undef);
+    return shift->test(shift, shift, shift, defined($_[0]) ? (shift() ? INI_TRUE : INI_FALSE) : undef);
 }
+
+####################################################################################################################################
+# Properties.
+####################################################################################################################################
+sub modified {shift->{bModified}}                                   # Has the data been modified since last load/save?
+sub exists {shift->{bExists}}                                       # Is the data persisted to file?
 
 1;

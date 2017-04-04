@@ -175,6 +175,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Refactor <code>Ini.pm</code> to facilitate testing.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow functions to accept optional parameters as a hash.</p>
                     </release-item>
 
@@ -186,6 +190,14 @@
 
             <release-test-list>
                 <release-refactor-list>
+                    <release-item>
+                        <p>Complete statement/branch coverage for <code>Ini.pm</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved functions used to test/munge manifest and info files.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Updated vagrant to new version and image.</p>
                     </release-item>

@@ -13,6 +13,7 @@ use File::stat qw(lstat);
 
 use pgBackRest::BackupInfo;
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
@@ -597,7 +598,7 @@ sub clean
     # Clean up each target starting from the most nested
     my %oFileChecked;
 
-    for my $strTarget (sort {$b cmp $a} ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET)))
+    for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET, INI_SORT_REVERSE))
     {
         if ($oTargetFound{$strTarget})
         {
@@ -1207,7 +1208,7 @@ sub process
     foreach my $strRepoFile (
         sort {sprintf("%016d-${b}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $b, MANIFEST_SUBKEY_SIZE)) cmp
               sprintf("%016d-${a}", $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $a, MANIFEST_SUBKEY_SIZE))}
-        ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE, 'none')))
+        ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE, INI_SORT_NONE)))
     {
         # Skip the tablespace_map file in versions >= 9.5 so Postgres does not rewrite links in DB_PATH_PGTBLSPC.
         # The tablespace links have already been created by Restore::build().

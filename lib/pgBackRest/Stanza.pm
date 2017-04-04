@@ -327,7 +327,7 @@ sub infoFileCreate
     {
         ($bReconstruct, $strWarningMsgArchive) = $self->reconstructCheck($oInfo, $strPathType, $oFile, $strParentPath);
 
-        if ($oInfo->{bExists} && $bReconstruct)
+        if ($oInfo->exists() && $bReconstruct)
         {
             # If force was not used and the hashes are different then error
             if (!optionGet(OPTION_FORCE))

@@ -2421,7 +2421,7 @@ sub optionValidate
                                 confess &log(ERROR, "'${strConfigFile}' is not a file", ERROR_FILE_INVALID);
                             }
 
-                            $oConfig = iniLoad($strConfigFile, undef, true);
+                            $oConfig = iniParse(fileStringRead($strConfigFile), {bRelaxed => true});
                         }
                     }
 
