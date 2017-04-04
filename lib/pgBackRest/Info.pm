@@ -410,7 +410,7 @@ sub stanzaList
                     {
                         my @stryWalFile = $oFile->list(
                             PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
-                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", 'reverse'});
+                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
 
                         if (@stryWalFile > 0)
                         {
