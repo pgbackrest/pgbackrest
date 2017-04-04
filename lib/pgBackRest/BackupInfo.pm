@@ -783,7 +783,7 @@ sub delete
 ####################################################################################################################################
 # create
 #
-# Create the info file. WARNING - this file should only be called from stanza-create.
+# Create the info file. WARNING - this file should only be called from stanza-create or test modules.
 ####################################################################################################################################
 sub create
 {
