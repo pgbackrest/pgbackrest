@@ -209,6 +209,11 @@ sub run
         $oExpireTest->process($self->stanza(), 3, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
+        $strDescription = 'Expire all archive except for the current database';
+
+        $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+
+        #-----------------------------------------------------------------------------------------------------------------------
         $self->optionReset($oOption, OPTION_DB_PATH);
         $self->optionReset($oOption, OPTION_ONLINE);
         $self->optionSetTest($oOption, OPTION_RETENTION_FULL, 1);
