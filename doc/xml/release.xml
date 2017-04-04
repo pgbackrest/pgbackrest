@@ -189,6 +189,10 @@
                     <release-item>
                         <p>Updated vagrant to new version and image.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed flapping archive stop tests.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
