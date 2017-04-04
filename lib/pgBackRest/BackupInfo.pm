@@ -940,6 +940,67 @@ sub dbSectionSet
 }
 
 ####################################################################################################################################
+# confirmDb
+#
+# Ensure that the backup is associated with the database passed.
+# NOTE: The backup must exist in the backup:current section.
+####################################################################################################################################
+sub confirmDb
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strBackup,
+        $strDbVersion,
+        $ullDbSysId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->confirmDb', \@_,
+            {name => 'strBackup', trace => true},
+            {name => 'strDbVersion', trace => true},
+            {name => 'ullDbSysId', trace => true},
+        );
+
+    my $bConfirmDb = undef;
+
+    # Get the db-id associated with the backup
+    my $iDbHistoryId = $self->get(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_HISTORY_ID);
+
+    # Get the version and system-id for all known databases
+    my $hDbList = $self->dbHistoryList();
+
+    # If the db-id for the backup exists in the list
+    if (exists $hDbList->{$iDbHistoryId})
+    {
+        if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} ne $strDbVersion) ||
+            ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} ne $ullDbSysId))
+        {
+            $bConfirmDb = false;
+        }
+        else
+        {
+            $bConfirmDb = true;
+        }
+    }
+    # If not, the backup.info file must be corrupt
+    else
+    {
+        confess &log(ERROR, "backup info file is missing database history information for an existing backup", ERROR_FILE_INVALID);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bConfirmDb', value => $bConfirmDb}
+    );
+}
+
+####################################################################################################################################
 # confirmExists
 #
 # Ensure that the backup.info file and the db section exist.

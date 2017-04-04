@@ -29,7 +29,6 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
-use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::LocalProcess;
@@ -522,40 +521,13 @@ sub process
     # Find the previous backup based on the type
     my $oLastManifest;
     my $strBackupLastPath;
-    my $bLastBackupCurrentDb = true;
 
     if ($strType ne BACKUP_TYPE_FULL)
     {
         $strBackupLastPath = $oBackupInfo->last($strType eq BACKUP_TYPE_DIFF ? BACKUP_TYPE_FULL : BACKUP_TYPE_INCR);
 
-        # If there is a prior backup, then make sure it is for the current database
-        if (defined($strBackupLastPath))
-        {
-            # Get the db-id associated with the backup
-            my $iBackupLastDbHistoryId = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
-                $strBackupLastPath, INFO_BACKUP_KEY_HISTORY_ID);
-
-            # Get the version and system-id for all known databases
-            my $hDbList = $oBackupInfo->dbHistoryList();
-
-            # If the db-id for the backup exists in the list
-            if (exists $hDbList->{$iBackupLastDbHistoryId})
-            {
-                if (($hDbList->{$iBackupLastDbHistoryId}{&INFO_DB_VERSION} ne $strDbVersion) ||
-                    ($hDbList->{$iBackupLastDbHistoryId}{&INFO_SYSTEM_ID} ne $ullDbSysId))
-                {
-                    $bLastBackupCurrentDb = false;
-                }
-            }
-            # If not, the backup.info file must be corrupt
-            else
-            {
-                confess &log(ERROR, "backup info file is missing history information for an existing backup\n" .
-                    "HINT: use stanza-create --force to correct");
-            }
-        }
-
-        if (defined($strBackupLastPath) && $bLastBackupCurrentDb)
+        # If there is a prior backup and it is for the current database, then use it as base
+        if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))
         {
             $oLastManifest = new pgBackRest::Manifest(
                 $oFileLocal->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLastPath}/" . FILE_MANIFEST));
