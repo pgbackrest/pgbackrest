@@ -29,6 +29,7 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::LocalProcess;
@@ -488,15 +489,73 @@ sub process
     # Declare the backup manifest
     my $oBackupManifest = new pgBackRest::Manifest($strBackupConfFile, false);
 
+    # Initialize database objects
+    my $oDbMaster = undef;
+    my $oDbStandby = undef;
+
+    # Get the database objects
+    ($oDbMaster, $self->{iMasterRemoteIdx}, $oDbStandby, $self->{iCopyRemoteIdx}) = dbObjectGet();
+
+    # If remote copy was not explicitly set then set it equal to master
+    if (!defined($self->{iCopyRemoteIdx}))
+    {
+        $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
+    }
+
+    # Initialize the master file object
+    my $oFileMaster = new pgBackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_PATH),
+        protocolGet(DB, $self->{iMasterRemoteIdx})
+    );
+
+    # Determine the database paths
+    my $strDbMasterPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iMasterRemoteIdx}));
+    my $strDbCopyPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iCopyRemoteIdx}));
+
+    # Database info
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
+
+    my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
+
     # Find the previous backup based on the type
     my $oLastManifest;
     my $strBackupLastPath;
+    my $bLastBackupCurrentDb = true;
 
     if ($strType ne BACKUP_TYPE_FULL)
     {
         $strBackupLastPath = $oBackupInfo->last($strType eq BACKUP_TYPE_DIFF ? BACKUP_TYPE_FULL : BACKUP_TYPE_INCR);
 
+        # If there is a prior backup, then make sure it is for the current database
         if (defined($strBackupLastPath))
+        {
+            # Get the db-id associated with the backup
+            my $iBackupLastDbHistoryId = $oBackupInfo->get(INFO_BACKUP_SECTION_BACKUP_CURRENT,
+                $strBackupLastPath, INFO_BACKUP_KEY_HISTORY_ID);
+
+            # Get the version and system-id for all known databases
+            my $hDbList = $oBackupInfo->dbHistoryList();
+
+            # If the db-id for the backup exists in the list
+            if (exists $hDbList->{$iBackupLastDbHistoryId})
+            {
+                if (($hDbList->{$iBackupLastDbHistoryId}{&INFO_DB_VERSION} ne $strDbVersion) ||
+                    ($hDbList->{$iBackupLastDbHistoryId}{&INFO_SYSTEM_ID} ne $ullDbSysId))
+                {
+                    $bLastBackupCurrentDb = false;
+                }
+            }
+            # If not, the backup.info file must be corrupt
+            else
+            {
+                confess &log(ERROR, "backup info file is missing history information for an existing backup\n" .
+                    "HINT: use stanza-create --force to correct");
+            }
+        }
+
+        if (defined($strBackupLastPath) && $bLastBackupCurrentDb)
         {
             $oLastManifest = new pgBackRest::Manifest(
                 $oFileLocal->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLastPath}/" . FILE_MANIFEST));
@@ -543,36 +602,7 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
                               !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
 
-    # Initialize database objects
-    my $oDbMaster = undef;
-    my $oDbStandby = undef;
-
-    # Get the database objects
-    ($oDbMaster, $self->{iMasterRemoteIdx}, $oDbStandby, $self->{iCopyRemoteIdx}) = dbObjectGet();
-
-    # If remote copy was not explicitly set then set it equal to master
-    if (!defined($self->{iCopyRemoteIdx}))
-    {
-        $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
-    }
-
-    # Initialize the master file object
-    my $oFileMaster = new pgBackRest::File
-    (
-        optionGet(OPTION_STANZA),
-        optionGet(OPTION_REPO_PATH),
-        protocolGet(DB, $self->{iMasterRemoteIdx})
-    );
-
-    # Determine the database paths
-    my $strDbMasterPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iMasterRemoteIdx}));
-    my $strDbCopyPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iCopyRemoteIdx}));
-
-    # Database info
-    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
-
-    my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
-
+    # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
