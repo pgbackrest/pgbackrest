@@ -77,12 +77,9 @@ sub run
     my $self = shift;
 
     # Increment the run, log, and decide whether this unit test should be run
-    if (!$self->begin('unit')) {return}
-
-    # Unit tests for confirmDb()
-    #-----------------------------------------------------------------------------------------------------------------------
+    ################################################################################################################################
+    if ($self->begin("BackupInfo::confirmDb()"))
     {
-
         my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
         $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, '937', '201306121', true);
 

@@ -558,6 +558,7 @@ sub process
         {
             &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
             $strType = BACKUP_TYPE_FULL;
+            $strBackupLastPath = undef;
         }
     }
 
