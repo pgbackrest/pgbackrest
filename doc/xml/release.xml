@@ -191,6 +191,14 @@
             <release-test-list>
                 <release-refactor-list>
                     <release-item>
+                        <p>Require description in every call to <code>testResult()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Make <code>iWaitSeconds</code> an optional parameter for <code>testResult()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Updated vagrant to new version and image.</p>
                     </release-item>
 

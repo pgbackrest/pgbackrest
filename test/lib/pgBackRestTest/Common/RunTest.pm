@@ -285,15 +285,29 @@ sub end
 sub testResult
 {
     my $self = shift;
-    my $fnSub = shift;
-    my $strExpected = shift;
-    my $strDescription = shift;
-    my $iWaitSeconds = shift;
 
-    &log(INFO, '    ' . (defined($strDescription) ? $strDescription : 'no description'));
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $fnSub,
+        $strExpected,
+        $strDescription,
+        $iWaitSeconds,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::testResult', \@_,
+            {name => 'fnSub', trace => true},
+            {name => 'strExpected', required => false, trace => true},
+            {name => 'strDescription', trace => true},
+            {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
+        );
+
+    &log(INFO, '    ' . $strDescription);
     my $strActual;
 
-    my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 0);
+    my $oWait = waitInit($iWaitSeconds);
     my $bDone = false;
 
     do
@@ -341,6 +355,9 @@ sub testResult
             $bDone = true;
         }
     } while (!$bDone);
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
