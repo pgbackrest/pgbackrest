@@ -39,6 +39,7 @@ use BackRestDoc::Custom::DocCustomRelease;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CiTest;
+use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::JobTest;
@@ -678,6 +679,55 @@ eval
             executeTest("cover -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
             executeTest("rm -rf ${strCoveragePath}_temp");
         }
+
+        # Determine which modules were covered
+        #-----------------------------------------------------------------------------------------------------------------------
+        my $hModuleTest;                                            # Everything that was run
+        # my $hTestDef = testDefGet();
+        # my $hCoveragePartial;                                       # Modules with partial coverage - do not test
+        my $hCoverage;                                              # Code covered in tests
+
+        # Build a hash of all modules, tests, and runs that were executed
+        foreach my $hTestRun (@{$oyTestRun})
+        {
+            # Get coverage for the module
+            my $strModule = $hTestRun->{&TEST_MODULE};
+            my $hModule = testDefModuleGet($strModule);
+            my @hyCoverage = ($hModule->{&TESTDEF_TEST_COVERAGE});
+
+            # Get coverage for the test
+            my $strTest = $hTestRun->{&TEST_NAME};
+            my $hTest = testDefModuleTestGet($hModule, $strTest);
+            push(@hyCoverage, $hTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL});
+
+            # If no tests are listed it means all of them were run
+            if (@{$hTestRun->{&TEST_RUN}} == 0)
+            {
+                for (my $iRun = 1; $iRun <= $hTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
+                {
+                    $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
+                }
+            }
+            # Else a list of tests is given
+            else
+            {
+                foreach my $iRun (@{$hTestRun->{&TEST_RUN}})
+                {
+                    push(@hyCoverage, $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun});
+                }
+            }
+
+            foreach my $hCoveragePart (@hyCoverage)
+            {
+                foreach my $strCode (sort(keys(%{$hCoveragePart})))
+                {
+                    $hCoverage->{$strCode}{$strModule}{$strTest}{$iRun} = true;
+                    $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
+                }
+            }
+        }
+
+        use Data::Dumper; confess Dumper($hModuleTest);
 
         # Print test info and exit
         #-----------------------------------------------------------------------------------------------------------------------
