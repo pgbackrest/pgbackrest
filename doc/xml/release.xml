@@ -181,6 +181,10 @@
                     <release-item>
                         <p>Refactor <code>File->list()</code> and <code>fileList()</code> to accept optional parameters.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>backupLabel()</code> and add unit tests.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
