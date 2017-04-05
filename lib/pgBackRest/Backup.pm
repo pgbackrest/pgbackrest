@@ -950,13 +950,14 @@ sub process
     # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
     # be skipped by dealing with any backup label collisions here.
     if (fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER),
-                 ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
-                 timestampFileFormat(undef, $lTimestampStop) .
-                 ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')) ||
+                 {strExpression =>
+                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStop) .
+                    ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
         fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
-                 ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
-                 timestampFileFormat(undef, $lTimestampStop) .
-                 ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . $oFileLocal->{strCompressExtension}), undef, true))
+                 {strExpression =>
+                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStop) .
+                    ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . $oFileLocal->{strCompressExtension}),
+                    bIgnoreMissing => true}))
     {
         waitRemainder();
         $strBackupLabel = backupLabelFormat($strType, $strBackupLastPath, time());

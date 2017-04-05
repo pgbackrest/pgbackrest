@@ -587,7 +587,8 @@ sub backupLast
     my $self = shift;
 
     my @stryBackup = $self->{oFile}->list(
-        PATH_BACKUP_CLUSTER, undef, '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', 'reverse');
+        PATH_BACKUP_CLUSTER, undef,
+        {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
 
     if (!defined($stryBackup[0]))
     {

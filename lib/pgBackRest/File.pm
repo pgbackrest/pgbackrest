@@ -966,9 +966,9 @@ sub list
             __PACKAGE__ . '->list', \@_,
             {name => 'strPathType'},
             {name => 'strPath', required => false},
-            {name => 'strExpression', required => false},
-            {name => 'strSortOrder', default => 'forward'},
-            {name => 'bIgnoreMissing', default => false}
+            {name => 'strExpression', optional => true},
+            {name => 'strSortOrder', optional => true, default => 'forward'},
+            {name => 'bIgnoreMissing', optional => true, default => false}
         );
 
     # Set operation variables
@@ -979,12 +979,14 @@ sub list
     if ($self->isRemote($strPathType))
     {
         @stryFileList = $self->{oProtocol}->cmdExecute(
-            OP_FILE_LIST, [$strPathOp, $strExpression, $strSortOrder, $bIgnoreMissing]);
+            OP_FILE_LIST,
+            [$strPathOp, {strExpression => $strExpression, strSortOrder => $strSortOrder, bIgnoreMissing => $bIgnoreMissing}]);
     }
     # Run locally
     else
     {
-        @stryFileList = fileList($strPathOp, $strExpression, $strSortOrder, $bIgnoreMissing);
+        @stryFileList = fileList(
+            $strPathOp, {strExpression => $strExpression, strSortOrder => $strSortOrder, bIgnoreMissing => $bIgnoreMissing});
     }
 
     # Return from function and log return values if any

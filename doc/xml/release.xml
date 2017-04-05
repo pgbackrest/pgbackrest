@@ -172,6 +172,16 @@
                         <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Allow functions to accept optional parameters as a hash.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>File->list()</code> and <code>fileList()</code> to accept optional parameters.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-test-list>

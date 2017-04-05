@@ -264,15 +264,15 @@ sub fileList
         $strPath,
         $strExpression,
         $strSortOrder,
-        $bIgnoreMissing
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileList', \@_,
             {name => 'strPath', trace => true},
-            {name => 'strExpression', required => false, trace => true},
-            {name => 'strSortOrder', default => 'forward', trace => true},
-            {name => 'bIgnoreMissing', default => false, trace => true}
+            {name => 'strExpression', optional => true, trace => true},
+            {name => 'strSortOrder', optional => true, default => 'forward', trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
     # Working variables
@@ -390,7 +390,7 @@ sub fileManifestRecurse
     }
 
     # Get a list of all files in the path (including .)
-    my @stryFileList = fileList($strPathRead, undef, undef, $iDepth != 0);
+    my @stryFileList = fileList($strPathRead, {bIgnoreMissing => $iDepth != 0});
     unshift(@stryFileList, '.');
     my $hFileStat = fileManifestList($strPathRead, \@stryFileList);
 

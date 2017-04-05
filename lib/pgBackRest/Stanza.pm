@@ -119,8 +119,8 @@ sub stanzaCreate
     my $strParentPathBackup = $self->parentPathGet($oFile, PATH_BACKUP_CLUSTER);
 
     # Get a listing of files in the directory, ignoring if any are missing
-    my @stryFileListArchive = fileList($strParentPathArchive, undef, 'forward', true);
-    my @stryFileListBackup = fileList($strParentPathBackup, undef, 'forward', true);
+    my @stryFileListArchive = fileList($strParentPathArchive, {bIgnoreMissing => true});
+    my @stryFileListBackup = fileList($strParentPathBackup, {bIgnoreMissing => true});
 
     # If force not used and at least one directory is not empty, then check to see if the info files exist
     if (!optionGet(OPTION_FORCE) && (@stryFileListArchive || @stryFileListBackup))
