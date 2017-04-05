@@ -944,26 +944,9 @@ sub process
         }
     }
 
-    # Create the path for the new backup
+    # Create label for new backup
     my $lTimestampStop = time();
-    my $strBackupLabel = backupLabelFormat($strType, $strBackupLastPath, $lTimestampStop);
-
-    # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
-    # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
-    # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
-    # be skipped by dealing with any backup label collisions here.
-    if (fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER),
-                 ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
-                 timestampFileFormat(undef, $lTimestampStop) .
-                 ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')) ||
-        fileList($oFileLocal->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
-                 ($strType eq BACKUP_TYPE_FULL ? '^' : '_') .
-                 timestampFileFormat(undef, $lTimestampStop) .
-                 ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . $oFileLocal->{strCompressExtension}), undef, true))
-    {
-        waitRemainder();
-        $strBackupLabel = backupLabelFormat($strType, $strBackupLastPath, time());
-    }
+    my $strBackupLabel = backupLabel($oFileLocal, $strType, $strBackupLastPath, $lTimestampStop);
 
     # Record timestamp stop in the config
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_STOP, undef, $lTimestampStop + 0);

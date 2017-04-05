@@ -65,6 +65,9 @@ use constant TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC                      => TESTDEF_M
 use constant TESTDEF_MODULE_ARCHIVE_PUSH_FILE                       => TESTDEF_MODULE_ARCHIVE_PUSH . 'File';
     push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_FILE);
 
+use constant TESTDEF_MODULE_BACKUP_COMMON                           => 'BackupCommon';
+    push @EXPORT, qw(TESTDEF_MODULE_BACKUP_COMMON);
+
 use constant TESTDEF_MODULE_INFO                                    => 'Info';
     push @EXPORT, qw(TESTDEF_MODULE_INFO);
 
@@ -294,11 +297,16 @@ my $oTestDef =
             &TESTDEF_TEST_CONTAINER => false,
             &TESTDEF_EXPECT => false,
 
+            &TESTDEF_TEST_COVERAGE =>
+            {
+                &TESTDEF_MODULE_BACKUP_COMMON => TESTDEF_COVERAGE_FULL,
+            },
+
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_TOTAL => 3,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
             ]

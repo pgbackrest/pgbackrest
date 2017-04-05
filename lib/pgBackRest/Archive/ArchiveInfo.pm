@@ -250,7 +250,8 @@ sub reconstruct
 
     my $strInvalidFileStructure = undef;
 
-    my @stryArchiveId = fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true);
+    my @stryArchiveId = fileList(
+        $self->{strArchiveClusterPath}, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
     my %hDbHistoryVersion;
 
     # Get the db-version and db-id (history id) from the upper level directory names, e.g. 9.4-1
@@ -267,8 +268,9 @@ sub reconstruct
         my $strVersionDir = $strDbVersion . "-" . $iDbHistoryId;
 
         # Get the name of the first archive directory
-        my $strArchiveDir =
-            (fileList($self->{strArchiveClusterPath} . "/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL, 'forward', true))[0];
+        my $strArchiveDir = (fileList(
+            $self->{strArchiveClusterPath} . "/${strVersionDir}",
+            {strExpression => REGEX_ARCHIVE_DIR_WAL, bIgnoreMissing => true}))[0];
 
         # Continue if any file structure or missing files info
         if (!defined($strArchiveDir))
@@ -278,9 +280,10 @@ sub reconstruct
         }
 
         # ??? Should probably make a function in ArchiveCommon
-        my $strArchiveFile =
-            (fileList($self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
-            "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 'forward', true))[0];
+        my $strArchiveFile = (fileList(
+            $self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
+            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$",
+                bIgnoreMissing => true}))[0];
 
         # Continue if any file structure or missing files info
         if (!defined($strArchiveFile))
