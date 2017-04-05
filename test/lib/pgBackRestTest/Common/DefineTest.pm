@@ -14,6 +14,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 
 ################################################################################################################################
 # Test definition constants
@@ -29,18 +30,23 @@ use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
 use constant TESTDEF_TEST_ALL                                       => 'all';
     push @EXPORT, qw(TESTDEF_TEST_ALL);
+# Determines coverage for the test
 use constant TESTDEF_TEST_COVERAGE                                  => 'coverage';
     push @EXPORT, qw(TESTDEF_TEST_COVERAGE);
+# Determines if each run in a test will be run in a new container
 use constant TESTDEF_TEST_INDIVIDUAL                                => 'individual';
     push @EXPORT, qw(TESTDEF_TEST_INDIVIDUAL);
 use constant TESTDEF_TEST_NAME                                      => 'name';
     push @EXPORT, qw(TESTDEF_TEST_NAME);
 use constant TESTDEF_TEST_TOTAL                                     => 'total';
     push @EXPORT, qw(TESTDEF_TEST_TOTAL);
+# Determines if the test will be run in a container or will create containers itself
 use constant TESTDEF_TEST_CONTAINER                                 => 'container';
     push @EXPORT, qw(TESTDEF_TEST_CONTAINER);
+# Determines if the test will be run with multiple processes
 use constant TESTDEF_TEST_PROCESS                                   => 'process';
     push @EXPORT, qw(TESTDEF_TEST_PROCESS);
+# Determines if the test will be run against multiple db versions
 use constant TESTDEF_TEST_DB                                        => 'db';
     push @EXPORT, qw(TESTDEF_TEST_DB);
 
@@ -379,8 +385,50 @@ my $oTestDef =
     ]
 };
 
-# An easier to query hash version of the above
-my $hTestDefHash;
+####################################################################################################################################
+# Process normalized data into a more queryable form
+####################################################################################################################################
+my $hTestDefHash;                                                   # An easier way to query hash version of the above
+my @stryModule;                                                     # Ordered list of modules
+my $hModuleTest;                                                    # Ordered list of tests for each module
+
+# Iterate each module
+foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
+{
+    # Push the module onto the ordered list
+    my $strModule = $hModule->{&TESTDEF_MODULE_NAME};
+    push(@stryModule, $strModule);
+
+    # Iterate each test
+    my @stryModuleTest;
+
+    foreach my $hModuleTest (@{$hModule->{&TESTDEF_TEST}})
+    {
+        # Push the test on the order list
+        my $strTest = $hModuleTest->{&TESTDEF_TEST_NAME};
+        push(@stryModuleTest, $strTest);
+
+        # Resolve variables that can be set in the module or the test
+        foreach my $strVar (
+            TESTDEF_TEST_CONTAINER, TESTDEF_EXPECT, TESTDEF_TEST_PROCESS, TESTDEF_TEST_DB, TESTDEF_TEST_INDIVIDUAL)
+        {
+            $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
+                $hModuleTest->{$strVar}, coalesce($hModule->{$strVar}, false));
+        }
+
+        # Set test count
+        $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_TOTAL} = $hModuleTest->{&TESTDEF_TEST_TOTAL};
+
+        # Iterate each run
+        for (my $iRun = 1; $iRun <= $hModuleTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
+        {
+        }
+    }
+
+    $hModuleTest->{$strModule} = \@stryModuleTest;
+}
+
+use Data::Dumper; confess Dumper($hTestDefHash);
 
 ####################################################################################################################################
 # testDefGet
@@ -391,20 +439,6 @@ sub testDefGet
 }
 
 push @EXPORT, qw(testDefGet);
-
-####################################################################################################################################
-# testDefHashGet
-####################################################################################################################################
-sub testDefHashGet
-{
-    if (!defined($hTestDefHash))
-    {
-    }
-
-    return $hTestDefHash;
-}
-
-push @EXPORT, qw(testDefHashGet);
 
 ####################################################################################################################################
 # testDefModuleGet

@@ -33,6 +33,24 @@ sub trim
 push @EXPORT, qw(trim);
 
 ####################################################################################################################################
+# coalesce
+#
+# Return the first non-null parameter.
+####################################################################################################################################
+sub coalesce
+{
+    foreach my $strParam (@_)
+    {
+        if (defined($strParam))
+        {
+            return $strParam;
+        }
+    }
+}
+
+push @EXPORT, qw(coalesce);
+
+####################################################################################################################################
 # commonPrefix
 #
 # Determine how much of two strings is the same from the beginning.
