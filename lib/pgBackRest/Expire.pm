@@ -84,6 +84,7 @@ sub DESTROY
 sub logExpire
 {
     my $self = shift;
+    my $strArchiveId = shift;
     my $strArchiveFile = shift;
 
     if (defined($strArchiveFile))
@@ -104,8 +105,8 @@ sub logExpire
     {
         if (defined($self->{strArchiveExpireStart}))
         {
-            &log(DETAIL, 'remove archive: start = ' . substr($self->{strArchiveExpireStart}, 0, 24) .
-                       ', stop = ' . substr($self->{strArchiveExpireStop}, 0, 24));
+            &log(DETAIL, "remove archive: archiveId = ${strArchiveId}, start = " . substr($self->{strArchiveExpireStart}, 0, 24) .
+                ", stop = " . substr($self->{strArchiveExpireStop}, 0, 24));
         }
 
         undef($self->{strArchiveExpireStart});
@@ -303,9 +304,9 @@ sub process
                         my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId);
 
                         remove_tree($strFullPath) > 0
-                            or confess &log(ERROR, "unable to remove orphaned ${strFullPath}", ERROR_PATH_REMOVE);
+                            or confess &log(ERROR, "unable to remove archive path ${strFullPath}", ERROR_PATH_REMOVE);
 
-                        &log(INFO, "removed orphaned archive path: ${strFullPath}");
+                        &log(INFO, "remove archive path: ${strFullPath}");
                     }
 
                     # Continue to next directory
@@ -336,8 +337,8 @@ sub process
                 {
                     if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
                     {
-                        &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for  ${strArchiveId} " .
-                            " archive retention");
+                        &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for ${strArchiveId} " .
+                            "archive retention");
                         $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[0];
                     }
                 }
@@ -426,7 +427,7 @@ sub process
 
                                 # Log expire info
                                 logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
-                                $self->logExpire($strPath);
+                                $self->logExpire($strArchiveId, $strPath);
                             }
                             # Else delete individual files instead if the major path is less than or equal to the most recent
                             # retention backup.  This optimization prevents scanning though major paths that could not possibly
@@ -455,15 +456,15 @@ sub process
                                     {
                                         fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"));
 
-                                        logDebugMisc($strOperation, "remove WAL segment: ${strSubPath}");
+                                        logDebugMisc($strOperation, "remove WAL segment: ${strArchiveId}/${strSubPath}");
 
                                         # Log expire info
-                                        $self->logExpire(substr($strSubPath, 0, 24));
+                                        $self->logExpire($strArchiveId, substr($strSubPath, 0, 24));
                                     }
                                     else
                                     {
                                         # Log that the file was not expired
-                                        $self->logExpire();
+                                        $self->logExpire($strArchiveId);
                                     }
                                 }
                             }
@@ -472,7 +473,7 @@ sub process
                         # Log if no archive was expired
                         if ($self->{iArchiveExpireTotal} == 0)
                         {
-                            &log(DETAIL, 'no archive to remove');
+                            &log(DETAIL, "no archive to remove, archiveId = ${strArchiveId}");
                         }
                     }
                 }

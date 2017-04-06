@@ -488,61 +488,6 @@ sub process
     # Declare the backup manifest
     my $oBackupManifest = new pgBackRest::Manifest($strBackupConfFile, false);
 
-    # Find the previous backup based on the type
-    my $oLastManifest;
-    my $strBackupLastPath;
-
-    if ($strType ne BACKUP_TYPE_FULL)
-    {
-        $strBackupLastPath = $oBackupInfo->last($strType eq BACKUP_TYPE_DIFF ? BACKUP_TYPE_FULL : BACKUP_TYPE_INCR);
-
-        if (defined($strBackupLastPath))
-        {
-            $oLastManifest = new pgBackRest::Manifest(
-                $oFileLocal->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLastPath}/" . FILE_MANIFEST));
-
-            &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
-                       ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
-
-            # If this is incr or diff warn if certain options have changed
-            my $strKey;
-
-            # Warn if compress option changed
-            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress))
-            {
-                &log(WARN, "${strType} backup cannot alter compress option to '" . boolFormat($bCompress) .
-                           "', reset to value in ${strBackupLastPath}");
-                $bCompress = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
-            }
-
-            # Warn if hardlink option changed
-            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink))
-            {
-                &log(WARN, "${strType} backup cannot alter hardlink option to '" . boolFormat($bHardLink) .
-                           "', reset to value in ${strBackupLastPath}");
-                $bHardLink = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
-            }
-        }
-        else
-        {
-            &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
-            $strType = BACKUP_TYPE_FULL;
-        }
-    }
-
-    # Backup settings
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
-    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, optionGet(OPTION_BACKUP_STANDBY));
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, optionGet(OPTION_ONLINE));
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
-                              !optionGet(OPTION_ONLINE) ||
-                              (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_COPY)));
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
-                              !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
-
     # Initialize database objects
     my $oDbMaster = undef;
     my $oDbStandby = undef;
@@ -573,6 +518,64 @@ sub process
 
     my $iDbHistoryId = $oBackupInfo->check($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
 
+    # Find the previous backup based on the type
+    my $oLastManifest;
+    my $strBackupLastPath;
+
+    if ($strType ne BACKUP_TYPE_FULL)
+    {
+        $strBackupLastPath = $oBackupInfo->last($strType eq BACKUP_TYPE_DIFF ? BACKUP_TYPE_FULL : BACKUP_TYPE_INCR);
+
+        # If there is a prior backup and it is for the current database, then use it as base
+        if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))
+        {
+            $oLastManifest = new pgBackRest::Manifest(
+                $oFileLocal->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLastPath}/" . FILE_MANIFEST));
+
+            &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
+                       ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
+
+            # If this is incr or diff warn if certain options have changed
+            my $strKey;
+
+            # Warn if compress option changed
+            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress))
+            {
+                &log(WARN, "${strType} backup cannot alter compress option to '" . boolFormat($bCompress) .
+                           "', reset to value in ${strBackupLastPath}");
+                $bCompress = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
+            }
+
+            # Warn if hardlink option changed
+            if (!$oLastManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink))
+            {
+                &log(WARN, "${strType} backup cannot alter hardlink option to '" . boolFormat($bHardLink) .
+                           "', reset to value in ${strBackupLastPath}");
+                $bHardLink = $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
+            }
+        }
+        else
+        {
+            &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
+            $strType = BACKUP_TYPE_FULL;
+            $strBackupLastPath = undef;
+        }
+    }
+
+    # Backup settings
+    $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
+    $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, optionGet(OPTION_BACKUP_STANDBY));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, optionGet(OPTION_ONLINE));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
+                              !optionGet(OPTION_ONLINE) ||
+                              (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_COPY)));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
+                              !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
+
+    # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);

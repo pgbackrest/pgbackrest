@@ -1327,7 +1327,6 @@ incr backup - invalid database version (backup host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  ERROR: [126]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 8.0, system-id = 6353949018581704918
             HINT: is this the correct stanza?
 P00   INFO: backup command end: aborted with exception [126]
@@ -1338,7 +1337,6 @@ incr backup - invalid system id (backup host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  ERROR: [126]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 9.4, system-id = 6999999999999999999
             HINT: is this the correct stanza?
 P00   INFO: backup command end: aborted with exception [126]
@@ -1349,7 +1347,6 @@ incr backup - invalid control version (backup host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  ERROR: [126]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 842, catalog-version = 201409291
             HINT: this may be a symptom of database or repository corruption!
 P00   INFO: backup command end: aborted with exception [126]
@@ -1360,7 +1357,6 @@ incr backup - invalid catalog version (backup host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  ERROR: [126]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 942, catalog-version = 197208141
             HINT: this may be a symptom of database or repository corruption!
 P00   INFO: backup command end: aborted with exception [126]
@@ -1416,13 +1412,6 @@ P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential
 P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     BackupInfo->current=>: bTest = true
-P00  DEBUG:     BackupInfo->last(): strType = incr
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
-P00  DEBUG:     BackupInfo->list(): strFilter = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strOrder = reverse
-P00  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
-P00  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
@@ -1437,6 +1426,15 @@ P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, 
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check(): bRequired = <true>, iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
+P00  DEBUG:     BackupInfo->last(): strType = incr
+P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
+P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->list(): strFilter = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strOrder = reverse
+P00  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
+P00  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
+P00  DEBUG:     BackupInfo->dbHistoryList=>: hDbHash = [hash]
+P00  DEBUG:     BackupInfo->confirmDb=>: bConfirmDb = true
+P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -1702,13 +1700,6 @@ P00  DEBUG:     BackupInfo->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     BackupInfo->current=>: bTest = true
 P00   WARN: backup [BACKUP-INCR-1] missing in repository removed from backup.info
 P00  DEBUG:     BackupInfo->delete(): strBackupLabel = [BACKUP-INCR-1]
-P00  DEBUG:     BackupInfo->last(): strType = incr
-P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
-P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
-P00  DEBUG:     BackupInfo->list(): strFilter = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strOrder = reverse
-P00  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
-P00  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
-P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Protocol::Protocol::protocolGet(): iRemoteIdx = 1, oParam = [undef], strRemoteType = db
 P00  DEBUG:     Protocol::Protocol::protocolGet: create (cached) remote protocol
@@ -1723,6 +1714,15 @@ P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, 
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check(): bRequired = <true>, iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     BackupInfo->check=>: iDbHistoryId = 1
+P00  DEBUG:     BackupInfo->last(): strType = incr
+P00  DEBUG:     BackupCommon::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
+P00  DEBUG:     BackupCommon::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     BackupInfo->list(): strFilter = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strOrder = reverse
+P00  DEBUG:     BackupInfo->list=>: stryBackup = ([BACKUP-FULL-2])
+P00  DEBUG:     BackupInfo->last=>: strBackup = [BACKUP-FULL-2]
+P00  DEBUG:     BackupInfo->dbHistoryList=>: hDbHash = [hash]
+P00  DEBUG:     BackupInfo->confirmDb=>: bConfirmDb = true
+P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]

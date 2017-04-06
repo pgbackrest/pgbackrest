@@ -286,7 +286,7 @@ P00   INFO: full backup size = 16MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive=2 --retention-full=2 --stanza=db
-P00   INFO: full backup total < 2 - using oldest full backup for  9.4-2  archive retention
+P00   INFO: full backup total < 2 - using oldest full backup for 9.4-2 archive retention
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -353,10 +353,11 @@ db-version="9.5"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 
-full backup - create second full backup  (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
+diff backup - diff changed to full backup (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=diff
+P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 15b1a1a35c26b17570aca7920980f0ad11c6d858
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum e28bf39d0a56bf9fabd4049b329fcae8878bfec6
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
@@ -364,7 +365,7 @@ P00   INFO: full backup size = 16MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive=2 --retention-full=2 --stanza=db
-P00   INFO: removed orphaned archive path: [TEST_PATH]/db-master/repo/archive/db/10.0-3
+P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/10.0-3
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
