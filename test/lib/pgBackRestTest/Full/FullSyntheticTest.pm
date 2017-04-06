@@ -80,8 +80,6 @@ sub run
 
         # Build the manifest
         my %oManifest;
-        my $iDbCatalogVersion = 201409291;
-        my $iDbControlVersion = 942;
 
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT;
@@ -93,9 +91,9 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardLink ? JSON::PP::true : JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
 
-        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = $iDbCatalogVersion;
-        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = $iDbControlVersion;
-        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = WAL_VERSION_94_SYS_ID;
+        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
+        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
+        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6353949018581704918;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
@@ -625,40 +623,6 @@ sub run
             $strType, 'invalid catalog version',
             {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_BACKUP_MISMATCH,
                 strOptionalParam => '--log-level-console=detail'});
-
-        # Munge the backup info file to simulate an upgrade by setting db-id=2 and replacing the history to indicate an older db
-        # version existed as db-id=1
-        # $oHostBackup->infoMunge(
-        #     $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
-        #     {
-        #         &INFO_BACKUP_SECTION_DB =>
-        #         {
-        #             &INFO_BACKUP_KEY_HISTORY_ID => 2
-        #         },
-        #         &INFO_BACKUP_SECTION_DB_HISTORY =>
-        #         {
-        #             '1' =>
-        #                 {
-        #                     &INFO_BACKUP_KEY_CATALOG => 201306121,
-        #                     &INFO_BACKUP_KEY_CONTROL => 937,
-        #                     &INFO_BACKUP_KEY_SYSTEM_ID => WAL_VERSION_93_SYS_ID,
-        #                     &INFO_BACKUP_KEY_DB_VERSION => PG_VERSION_93,
-        #                 },
-        #             '2' =>
-        #                 {
-        #                     &INFO_BACKUP_KEY_CATALOG => $iDbCatalogVersion,
-        #                     &INFO_BACKUP_KEY_CONTROL => $iDbControlVersion,
-        #                     &INFO_BACKUP_KEY_SYSTEM_ID => WAL_VERSION_94_SYS_ID,
-        #                     &INFO_BACKUP_KEY_DB_VERSION => PG_VERSION_94,
-        #                 },
-        #         }
-        #     });
-        #
-        # # Test backup is changed from type=INCR to FULL
-        # my $oExecuteBackup = $oHostBackup->backupBegin(
-        #     'diff', 'incr changed to full backup ',
-        #     {oExpectedManifest => \%oManifest, strOptionalParam => '--log-level-console=detail'});
-        # $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));

@@ -26,7 +26,6 @@ use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
-use pgBackRest::Stanza;
 
 use pgBackRestTest::Common::Env::EnvHostTest;
 use pgBackRestTest::Common::ExecuteTest;

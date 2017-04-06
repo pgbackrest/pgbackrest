@@ -337,7 +337,7 @@ sub process
                 {
                     if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
                     {
-                        &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for  ${strArchiveId} " .
+                        &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for ${strArchiveId} " .
                             "archive retention");
                         $stryLocalBackupArchiveRentention[0] = $stryLocalBackupRetention[0];
                     }

@@ -976,14 +976,15 @@ sub confirmDb
     # If the db-id for the backup exists in the list
     if (exists $hDbList->{$iDbHistoryId})
     {
-        if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} ne $strDbVersion) ||
-            ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} ne $ullDbSysId))
+        # If the version and system-id match then datbase is confirmed for the backup
+        if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
+            ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
         {
-            $bConfirmDb = false;
+            $bConfirmDb = true;
         }
         else
         {
-            $bConfirmDb = true;
+            $bConfirmDb = false;
         }
     }
     # If not, the backup.info file must be corrupt
