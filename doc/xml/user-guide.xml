@@ -2116,10 +2116,10 @@
             </execute>
         </execute-list>
 
-        <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster to ensure the database system id is identical on both the master and standby. Install the new <postgres/> binaries on the standby and create the cluster.</p>
+        <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster to ensure the database system id is identical on both the master and standby.</p>
 
         <execute-list host="{[host-db-standby]}">
-            <title>Stop old cluster</title>
+            <title>Stop old cluster and drop default cluster if created</title>
 
             <execute user="root">
                 <exe-cmd>{[db-cluster-stop]}</exe-cmd>
@@ -2132,16 +2132,6 @@
 
             <execute user="root" keyword="default">
                 <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
-            </execute>
-
-            <execute user="postgres" keyword="default">
-                <exe-cmd>
-                    /usr/lib/postgresql/{[pg-version-upgrade]}/bin/initdb
-                        -D {[db-path-upgrade]} -k -A peer</exe-cmd>
-            </execute>
-
-            <execute user="root" output="y" filter="n">
-                <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -2271,7 +2261,7 @@
             </execute>
         </execute-list>
 
-        <p>Remove the old clusters.</p>
+        <p>Remove the old cluster.</p>
 
         <execute-list host="{[host-db-master]}">
             <title>Remove old cluster</title>
@@ -2285,8 +2275,20 @@
             </execute>
         </execute-list>
 
+        <p>Run a full backup on the new cluster and then restore the standby from the backup. If an attempt to run an incremental or differential backup instead of full, the backup will automatically be changed to full.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Run a full backup</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Install the new <postgres/> binaries on the standby and create the cluster.</p>
+
         <execute-list host="{[host-db-standby]}">
-            <title>Remove old cluster</title>
+            <title>Remove old cluster and initialize new one</title>
 
             <execute keyword="default" user="root">
                 <exe-cmd>pg_dropcluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
@@ -2295,15 +2297,15 @@
             <execute keyword="co6" user="root">
                 <exe-cmd>rm -rf {[db-path]}</exe-cmd>
             </execute>
-        </execute-list>
 
-        <p>Run a full backup on the new cluster and then restore the standby from the backup.</p>
+            <execute user="postgres" keyword="default">
+                <exe-cmd>
+                    /usr/lib/postgresql/{[pg-version-upgrade]}/bin/initdb
+                        -D {[db-path-upgrade]} -k -A peer</exe-cmd>
+            </execute>
 
-        <execute-list host="{[host-backup]}">
-            <title>Run a full backup</title>
-
-            <execute user="backrest">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
+            <execute user="root" output="y" filter="n">
+                <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -2319,17 +2321,6 @@
             <title>Configure <postgres/></title>
 
             <postgres-config-option key="hot_standby">on</postgres-config-option>
-            <postgres-config-option key="port">5432</postgres-config-option>
-        </postgres-config>
-
-        <postgres-config host="{[host-db-standby]}" file="{[postgres-config-demo-upgrade]}" show="n">
-            <title>Configure <postgres/></title>
-
-            <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
-            <postgres-config-option key="log_line_prefix">''</postgres-config-option>
-            <postgres-config-option key="ssl" keyword="default">true</postgres-config-option>
-            <postgres-config-option key="ssl_cert_file" keyword="default">'/etc/ssl/certs/ssl-cert-snakeoil.pem'</postgres-config-option>
-            <postgres-config-option key="ssl_key_file" keyword="default">'/etc/ssl/private/ssl-cert-snakeoil.key'</postgres-config-option>
         </postgres-config>
 
         <execute-list host="{[host-db-standby]}">

@@ -151,11 +151,16 @@ sub run
 
         $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Push a WAL and create a backup in the new DB to confirm info command displays the JSON correctly
+        # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
-        $oHostBackup->backup('full', 'create second full backup ', {strOptionalParam => '--retention-full=2 --no-' .
-            OPTION_ONLINE . ' --log-level-console=detail'}, false);
+
+        # Test backup is changed from type=DIFF to FULL (WARN message displayed)
+        my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
+            {strOptionalParam => '--retention-full=2 --no-' . OPTION_ONLINE . ' --log-level-console=detail'});
+        $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
+
+        # Confirm info command displays the JSON correctly
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
     }
 }

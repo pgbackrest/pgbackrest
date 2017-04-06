@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# ArchivePushUnitTest.pm - Unit tests for ArchivePush and ArchivePush Async
+# StanzaUnitTest.pm - Unit tests for Stanza.pm
 ####################################################################################################################################
 package pgBackRestTest::Stanza::StanzaUnitTest;
 use parent 'pgBackRestTest::Common::Env::EnvHostTest';

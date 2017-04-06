@@ -376,6 +376,21 @@ my $oTestDef =
                 }
             ]
         },
+        # BackupInfo tests
+        {
+            &TESTDEF_MODULE_NAME => 'backupInfo',
+            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_EXPECT => false,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_TEST_NAME => 'unit',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
+            ]
+        },
     ]
 };
 

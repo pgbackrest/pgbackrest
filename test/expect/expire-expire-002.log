@@ -483,7 +483,7 @@ P00   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-FULL-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-2], archiveId = 9.2-1, start = 00000001000000000000000C
-P00 DETAIL: remove archive: start = 000000010000000000000000, stop = 00000001000000000000000B
+P00 DETAIL: remove archive: archiveId = 9.2-1, start = 000000010000000000000000, stop = 00000001000000000000000B
 P00 DETAIL: archive retention on backup [BACKUP-FULL-3], archiveId = 9.3-2, start = 000000010000000000000000
 P00   INFO: expire command end: completed successfully
 
@@ -1164,9 +1164,9 @@ P00   INFO: expire full backup set: [BACKUP-FULL-3], [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-FULL-3]
 P00   INFO: remove expired backup [BACKUP-FULL-2]
-P00   INFO: removed orphaned archive path: [TEST_PATH]/db-master/repo/archive/db/9.2-1
+P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.2-1
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
-P00 DETAIL: remove archive: start = 000000010000000000000000, stop = 0000000100000000000000FE
+P00 DETAIL: remove archive: archiveId = 9.3-2, start = 000000010000000000000000, stop = 0000000100000000000000FE
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 9.5-3, start = 000000010000000000000000
 P00   INFO: expire command end: completed successfully
 
@@ -1322,10 +1322,10 @@ P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-mas
 P00   INFO: expire diff backup [BACKUP-DIFF-1]
 P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
-P00 DETAIL: no archive to remove
+P00 DETAIL: no archive to remove, archiveId = 9.3-2
 P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 9.5-3, start = 000000010000000000000000, stop = 000000010000000000000002
 P00 DETAIL: archive retention on backup [BACKUP-FULL-6], archiveId = 9.5-3, start = 000000010000000000000006
-P00 DETAIL: remove archive: start = 000000010000000000000003, stop = 000000010000000000000005
+P00 DETAIL: remove archive: archiveId = 9.5-3, start = 000000010000000000000003, stop = 000000010000000000000005
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -1383,6 +1383,134 @@ db-version="9.5"
 000000010000000100000008-0000000000000000000000000000000000000000.gz
 000000010000000100000009-0000000000000000000000000000000000000000
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
+
+[TEST_PATH]/db-master/repo/archive/db/9.5-3:
+0000000100000000
+
+[TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
+000000010000000000000000-0000000000000000000000000000000000000000.gz
+000000010000000000000001-0000000000000000000000000000000000000000
+000000010000000000000002-0000000000000000000000000000000000000000.gz
+000000010000000000000006-0000000000000000000000000000000000000000.gz
+000000010000000000000007-0000000000000000000000000000000000000000
+000000010000000000000008-0000000000000000000000000000000000000000.gz
+000000010000000000000009-0000000000000000000000000000000000000000.gz
+00000001000000000000000A-0000000000000000000000000000000000000000
+00000001000000000000000B-0000000000000000000000000000000000000000.gz
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
+---------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup:current]
+[BACKUP-FULL-4]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"0000000100000000000000FF","backup-archive-stop":"000000010000000100000001","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":2,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":3,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"000000010000000000000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":3,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+
+[db]
+db-catalog-version=201510051
+db-control-version=942
+db-id=3
+db-system-id=6392579261579036436
+db-version="9.5"
+
+[db:history]
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+
+> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+------------------------------------------------------------------------------------------------------------------------------------
+[BACKUP-FULL-4]
+[BACKUP-FULL-5]
+[BACKUP-FULL-6]
+
+> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+------------------------------------------------------------------------------------------------------------------------------------
+[TEST_PATH]/db-master/repo/archive/db:
+9.3-2
+9.5-3
+
+[TEST_PATH]/db-master/repo/archive/db/9.3-2:
+0000000100000000
+0000000100000001
+
+[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
+0000000100000000000000FF-0000000000000000000000000000000000000000.gz
+
+[TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000001:
+000000010000000100000000-0000000000000000000000000000000000000000
+000000010000000100000001-0000000000000000000000000000000000000000.gz
+000000010000000100000002-0000000000000000000000000000000000000000.gz
+000000010000000100000003-0000000000000000000000000000000000000000
+000000010000000100000004-0000000000000000000000000000000000000000.gz
+000000010000000100000005-0000000000000000000000000000000000000000.gz
+000000010000000100000006-0000000000000000000000000000000000000000
+000000010000000100000007-0000000000000000000000000000000000000000.gz
+000000010000000100000008-0000000000000000000000000000000000000000.gz
+000000010000000100000009-0000000000000000000000000000000000000000
+00000001000000010000000A-0000000000000000000000000000000000000000.gz
+
+[TEST_PATH]/db-master/repo/archive/db/9.5-3:
+0000000100000000
+
+[TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
+000000010000000000000000-0000000000000000000000000000000000000000.gz
+000000010000000000000001-0000000000000000000000000000000000000000
+000000010000000000000002-0000000000000000000000000000000000000000.gz
+000000010000000000000006-0000000000000000000000000000000000000000.gz
+000000010000000000000007-0000000000000000000000000000000000000000
+000000010000000000000008-0000000000000000000000000000000000000000.gz
+000000010000000000000009-0000000000000000000000000000000000000000.gz
+00000001000000000000000A-0000000000000000000000000000000000000000
+00000001000000000000000B-0000000000000000000000000000000000000000.gz
+
+Expire all archive except for the current database
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=2 --retention-archive-type=full expire
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=2 --stanza=db
+P00   INFO: expire full backup [BACKUP-FULL-4]
+P00   INFO: remove expired backup [BACKUP-FULL-4]
+P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.3-2
+P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 9.5-3, start = 000000010000000000000000
+P00 DETAIL: no archive to remove, archiveId = 9.5-3
+P00   INFO: expire command end: completed successfully
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
+---------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup:current]
+[BACKUP-FULL-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000000","backup-archive-stop":"000000010000000000000002","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":3,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+[BACKUP-FULL-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":"000000010000000000000006","backup-archive-stop":"000000010000000000000008","backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":3,"option-archive-check":true,"option-archive-copy":false,"option-backup-standby":false,"option-checksum-page":true,"option-compress":true,"option-hardlink":false,"option-online":true}
+
+[db]
+db-catalog-version=201510051
+db-control-version=942
+db-id=3
+db-system-id=6392579261579036436
+db-version="9.5"
+
+[db:history]
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+
+> ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
+------------------------------------------------------------------------------------------------------------------------------------
+[BACKUP-FULL-5]
+[BACKUP-FULL-6]
+
+> ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
+------------------------------------------------------------------------------------------------------------------------------------
+[TEST_PATH]/db-master/repo/archive/db:
+9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
 0000000100000000
