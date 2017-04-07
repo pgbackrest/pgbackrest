@@ -321,7 +321,7 @@ sub run
         $self->testResult(
             sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
             '(' . join(', ', @stryExpectedWAL) . ')',
-            'all WAL in archive', 5);
+            'all WAL in archive', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($self->expect()))

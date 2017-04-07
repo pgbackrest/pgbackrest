@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# pgBackRest - Simple PostgreSQL Backup and Restore
+# pgBackRest - Reliable PostgreSQL Backup & Restore
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -84,11 +84,11 @@ local $EVAL_ERROR = undef; eval
             optionGet(OPTION_PROTOCOL_TIMEOUT)
         );
 
-        # Acquire a remote lock (except for commands that are read-only)
+        # Acquire a remote lock (except for commands that are read-only or local processes)
         if (!(optionTest(OPTION_COMMAND, CMD_ARCHIVE_GET) || optionTest(OPTION_COMMAND, CMD_INFO) ||
-              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK)))
+              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK) || optionTest(OPTION_PROCESS)))
         {
-            lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
+            lockAcquire(optionGet(OPTION_COMMAND), undef, true);
         }
 
         # Process remote requests
@@ -110,9 +110,6 @@ local $EVAL_ERROR = undef; eval
 
         # Create the local object
         my $oLocal = new pgBackRest::Protocol::LocalMinion(optionGet(OPTION_COMMAND));
-
-        # Acquire a local lock
-        lockAcquire(optionGet(OPTION_COMMAND), undef, true, optionGet(OPTION_PROCESS, false));
 
         # Process local requests
         exitSafe($oLocal->process());

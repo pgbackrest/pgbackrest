@@ -66,7 +66,9 @@ sub init
     (
         optionGet(OPTION_STANZA),
         optionGet(OPTION_REPO_PATH),
-        protocolGet(optionGet(OPTION_TYPE), optionGet(OPTION_HOST_ID), {iProcessIdx => optionGet(OPTION_PROCESS)})
+        protocolGet(
+            optionGet(OPTION_TYPE), optionGet(OPTION_HOST_ID),
+            {iProcessIdx => optionGet(OPTION_PROCESS), strCommand => optionGet(OPTION_COMMAND)})
     );
 
     # Create anonymous subs for each command
