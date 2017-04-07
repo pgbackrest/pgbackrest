@@ -222,7 +222,7 @@ sub iniParse
         );
 
     # Ini content
-    my $oContent = {};
+    my $oContent = undef;
     my $strSection;
 
     # Create the JSON object
@@ -265,18 +265,18 @@ sub iniParse
                     # If relaxed then read the value directly
                     if ($bRelaxed)
                     {
-                        if (defined($$oContent{$strSection}{$strKey}))
+                        if (defined($oContent->{$strSection}{$strKey}))
                         {
-                            if (ref($$oContent{$strSection}{$strKey}) ne 'ARRAY')
+                            if (ref($oContent->{$strSection}{$strKey}) ne 'ARRAY')
                             {
-                                $$oContent{$strSection}{$strKey} = [$$oContent{$strSection}{$strKey}];
+                                $oContent->{$strSection}{$strKey} = [$oContent->{$strSection}{$strKey}];
                             }
 
-                            push(@{$$oContent{$strSection}{$strKey}}, $strValue);
+                            push(@{$oContent->{$strSection}{$strKey}}, $strValue);
                         }
                         else
                         {
-                            $$oContent{$strSection}{$strKey} = $strValue;
+                            $oContent->{$strSection}{$strKey} = $strValue;
                         }
                     }
                     # Else read the value as stricter JSON
@@ -286,6 +286,12 @@ sub iniParse
                     }
                 }
             }
+        }
+
+        # Error if the file is empty
+        if (!$bRelaxed && !defined($oContent))
+        {
+            confess &log(ERROR, 'no key/value pairs found', ERROR_CONFIG);
         }
 
         return true;
@@ -355,7 +361,7 @@ sub iniRender
         (
             __PACKAGE__ . '::iniRender', \@_,
             {name => 'oContent', trace => true},
-            {name => 'bTemp', default => false, trace => true},
+            {name => 'bRelaxed', default => false, trace => true},
         );
 
     # Open the ini file for writing
@@ -499,13 +505,34 @@ sub get
 ####################################################################################################################################
 # boolGet() - get a boolean value.
 ####################################################################################################################################
-sub boolGet {
-    return shift->get(shift, shift, shift, shift, defined($_[0]) ? (shift() ? INI_TRUE : INI_FALSE) : undef) ? true : false}
+sub boolGet
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $bRequired = shift;
+    my $bDefault = shift;
+
+    return $self->get(
+        $strSection, $strKey, $strSubKey, $bRequired,
+        defined($bDefault) ? ($bDefault ? INI_TRUE : INI_FALSE) : undef) ? true : false;
+}
 
 ####################################################################################################################################
 # numericGet() - get a numeric value.
 ####################################################################################################################################
-sub numericGet {return shift->get(shift, shift, shift, shift, defined($_[0]) ? shift() + 0 : undef) + 0}
+sub numericGet
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $bRequired = shift;
+    my $nDefault = shift;
+
+    return $self->get($strSection, $strKey, $strSubKey, $bRequired, defined($nDefault) ? $nDefault + 0 : undef) + 0;
+}
 
 ####################################################################################################################################
 # set - set a value.
@@ -555,12 +582,30 @@ sub set
 ####################################################################################################################################
 # boolSet - set a boolean value.
 ####################################################################################################################################
-sub boolSet {shift->set(shift, shift, shift, shift() ? INI_TRUE : INI_FALSE)}
+sub boolSet
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $bValue = shift;
+
+    $self->set($strSection, $strKey, $strSubKey, $bValue ? INI_TRUE : INI_FALSE);
+}
 
 ####################################################################################################################################
 # numericSet - set a numeric value.
 ####################################################################################################################################
-sub numericSet {shift->set(shift, shift, shift, defined($_[0]) ? shift() + 0 : undef)}
+sub numericSet
+{
+    my $self = shift;
+    my $strSection = shift;
+    my $strKey = shift;
+    my $strSubKey = shift;
+    my $nValue = shift;
+
+    $self->set($strSection, $strKey, $strSubKey, defined($nValue) ? $nValue + 0 : undef);
+}
 
 ####################################################################################################################################
 # remove - remove a value.
@@ -684,7 +729,13 @@ sub test
 ####################################################################################################################################
 sub boolTest
 {
-    return shift->test(shift, shift, shift, defined($_[0]) ? (shift() ? INI_TRUE : INI_FALSE) : undef);
+    my $self = shift;
+    my $strSection = shift;
+    my $strValue = shift;
+    my $strSubValue = shift;
+    my $bTest = shift;
+
+    return $self->test($strSection, $strValue, $strSubValue, defined($bTest) ? ($bTest ? INI_TRUE : INI_FALSE) : undef);
 }
 
 ####################################################################################################################################

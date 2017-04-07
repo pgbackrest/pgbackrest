@@ -114,6 +114,10 @@ sub run
             'empty with synthetic format and version');
 
         #---------------------------------------------------------------------------------------------------------------------------
+        fileStringWrite($strTestFile);
+        $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CONFIG, 'no key/value pairs found');
+
+        #---------------------------------------------------------------------------------------------------------------------------
         $oIni = new pgBackRest::Common::Ini($strTestFile, {bLoad => false});
         $oIni->save();
 
