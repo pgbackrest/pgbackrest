@@ -123,7 +123,7 @@ sub testListGet
                                     next if (
                                         $bCoverage &&
                                         (($bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}{$iTestRunIdx})) ||
-                                         (!$bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL}))) &&
+                                         (!$bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}))) &&
                                         !defined($oModule->{&TESTDEF_TEST_COVERAGE}));
 
                                     my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];

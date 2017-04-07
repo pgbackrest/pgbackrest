@@ -17,6 +17,7 @@ $SIG{__DIE__} = sub { Carp::confess @_ };
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Cwd qw(abs_path cwd);
+use JSON::PP;
 use Pod::Usage qw(pod2usage);
 use POSIX qw(ceil strftime);
 use Time::HiRes qw(gettimeofday);
@@ -666,7 +667,7 @@ eval
         }
         while ($iVmTotal > 0);
 
-        # Write out coverage info
+        # Write out coverage info and test coverage
         #-----------------------------------------------------------------------------------------------------------------------
         if ($bCoverage)
         {
@@ -678,56 +679,82 @@ eval
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
             executeTest("cover -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
             executeTest("rm -rf ${strCoveragePath}_temp");
-        }
 
-        # Determine which modules were covered
-        #-----------------------------------------------------------------------------------------------------------------------
-        # my $hModuleTest;                                            # Everything that was run
-        # # my $hTestDef = testDefGet();
-        # # my $hCoveragePartial;                                       # Modules with partial coverage - do not test
-        # my $hCoverage;                                              # Code covered in tests
-        #
-        # # Build a hash of all modules, tests, and runs that were executed
-        # foreach my $hTestRun (@{$oyTestRun})
-        # {
-        #     # Get coverage for the module
-        #     my $strModule = $hTestRun->{&TEST_MODULE};
-        #     my $hModule = testDefModuleGet($strModule);
-        #     my @hyCoverage = ($hModule->{&TESTDEF_TEST_COVERAGE});
-        #
-        #     # Get coverage for the test
-        #     my $strTest = $hTestRun->{&TEST_NAME};
-        #     my $hTest = testDefModuleTestGet($hModule, $strTest);
-        #     push(@hyCoverage, $hTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL});
-        #
-        #     # If no tests are listed it means all of them were run
-        #     if (@{$hTestRun->{&TEST_RUN}} == 0)
-        #     {
-        #         for (my $iRun = 1; $iRun <= $hTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
-        #         {
-        #             $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
-        #         }
-        #     }
-        #     # Else a list of tests is given
-        #     else
-        #     {
-        #         foreach my $iRun (@{$hTestRun->{&TEST_RUN}})
-        #         {
-        #             push(@hyCoverage, $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun});
-        #         }
-        #     }
-        #
-        #     foreach my $hCoveragePart (@hyCoverage)
-        #     {
-        #         foreach my $strCode (sort(keys(%{$hCoveragePart})))
-        #         {
-        #             $hCoverage->{$strCode}{$strModule}{$strTest}{$iRun} = true;
-        #             $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
-        #         }
-        #     }
-        # }
-        #
-        # use Data::Dumper; confess Dumper($hModuleTest);
+            # Determine which modules were covered (only check coverage if all tests were successful)
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($iTestFail == 0)
+            {
+                my $hModuleTest;                                        # Everything that was run
+
+                # Build a hash of all modules, tests, and runs that were executed
+                foreach my $hTestRun (@{$oyTestRun})
+                {
+                    # Get coverage for the module
+                    my $strModule = $hTestRun->{&TEST_MODULE};
+                    my $hModule = testDefModuleGet($strModule);
+
+                    # Get coverage for the test
+                    my $strTest = $hTestRun->{&TEST_NAME};
+                    my $hTest = testDefModuleTestGet($hModule, $strTest);
+
+                    # If no tests are listed it means all of them were run
+                    if (@{$hTestRun->{&TEST_RUN}} == 0)
+                    {
+                        for (my $iRun = 1; $iRun <= $hTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
+                        {
+                            $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
+                        }
+                    }
+                    # Else a list of tests is given
+                    else
+                    {
+                        foreach my $iRun (@{$hTestRun->{&TEST_RUN}})
+                        {
+                            $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
+                        }
+                    }
+                }
+
+                # Load the results of coverage testing from JSON
+                my $oJSON = JSON::PP->new()->allow_nonref();
+                my $hCoverageResult = $oJSON->decode(fileStringRead("${strBackRestBase}/test/coverage/cover.json"));
+
+                # Now compare against code modules that should have full coverage
+                my $hCoverageList = testDefCoverageList();
+
+                foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
+                {
+                    my $bFoundAll = true;
+                    # &log(WARN, "    testing $strCodeModule");
+
+                    foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
+                    {
+                        # &log(WARN, "        checking $hTest->{strModule}, $hTest->{strTest}, $hTest->{iRun}");
+
+                        if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}{$hTest->{iRun}}))
+                        {
+                            $bFoundAll = false;
+                            next;
+                        }
+                    }
+
+                    # If all tests needed for coverage were found
+                    if ($bFoundAll)
+                    {
+                        # Get summary results (!!! Need to fix this for coverage testing on bin/pgbackrest)
+                        my $hCoverageResultAll =
+                            $hCoverageResult->{'summary'}{"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"};
+
+                        if (!defined($hCoverageResultAll))
+                        {
+                            confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
+                        }
+
+                        &log(WARN, "matched $strCodeModule");
+                    }
+                }
+            }
+        }
 
         # Print test info and exit
         #-----------------------------------------------------------------------------------------------------------------------

@@ -511,7 +511,7 @@ sub testRunExe
                 {
                     $hTestCoverage =
                         defined($hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}) ? $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun} :
-                            $hTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL};
+                            $hTest->{&TESTDEF_TEST_COVERAGE};
 
                     if (!defined($hTestCoverage))
                     {

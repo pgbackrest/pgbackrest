@@ -509,4 +509,14 @@ sub testDefModuleTestGet
 
 push @EXPORT, qw(testDefModuleTestGet);
 
+####################################################################################################################################
+# testDefCoverageList
+####################################################################################################################################
+sub testDefCoverageList
+{
+    return $hCoverageList;
+}
+
+push @EXPORT, qw(testDefCoverageList);
+
 1;
