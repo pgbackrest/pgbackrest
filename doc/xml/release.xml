@@ -155,6 +155,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.18dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where read-only operations that used local worker processes (i.e. <cmd>restore</cmd>) were creating write locks that could interfere with parallel <cmd>archive-push</cmd>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -174,6 +184,10 @@
                 </release-feature-list>
 
                 <release-refactor-list>
+                    <release-item>
+                        <p>Simplify locking scheme.  Now, only the master process will hold write locks (archive-push, backup) and not all the local and remote worker processes as before.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Allow functions to accept optional parameters as a hash.</p>
                     </release-item>
