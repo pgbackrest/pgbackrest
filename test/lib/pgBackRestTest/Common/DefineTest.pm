@@ -28,8 +28,6 @@ use constant TESTDEF_EXPECT                                         => 'expect';
     push @EXPORT, qw(TESTDEF_EXPECT);
 use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
-use constant TESTDEF_TEST_ALL                                       => 'all';
-    push @EXPORT, qw(TESTDEF_TEST_ALL);
 # Determines coverage for the test
 use constant TESTDEF_TEST_COVERAGE                                  => 'coverage';
     push @EXPORT, qw(TESTDEF_TEST_COVERAGE);
@@ -136,8 +134,8 @@ my $oTestDef =
 
             &TESTDEF_TEST_COVERAGE =>
             {
-                &TESTDEF_MODULE_FILE => TESTDEF_COVERAGE_FULL,
-                &TESTDEF_MODULE_FILE_COMMON => TESTDEF_COVERAGE_FULL,
+                &TESTDEF_MODULE_FILE => TESTDEF_COVERAGE_PARTIAL,
+                &TESTDEF_MODULE_FILE_COMMON => TESTDEF_COVERAGE_PARTIAL,
             },
 
             &TESTDEF_TEST =>
@@ -259,10 +257,7 @@ my $oTestDef =
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
-                        &TESTDEF_TEST_ALL =>
-                        {
-                            &TESTDEF_MODULE_ARCHIVE_COMMON => TESTDEF_COVERAGE_PARTIAL,
-                        }
+                        &TESTDEF_MODULE_ARCHIVE_COMMON => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
@@ -274,12 +269,9 @@ my $oTestDef =
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
-                        &TESTDEF_TEST_ALL =>
-                        {
-                            &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
-                            &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
-                            &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_PARTIAL,
-                        }
+                        &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
+                        &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
+                        &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
@@ -358,10 +350,7 @@ my $oTestDef =
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
-                        &TESTDEF_TEST_ALL =>
-                        {
-                            &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_FULL,
-                        }
+                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_FULL,
                     },
                 },
             ]
@@ -396,6 +385,8 @@ my $oTestDef =
 my $hTestDefHash;                                                   # An easier way to query hash version of the above
 my @stryModule;                                                     # Ordered list of modules
 my $hModuleTest;                                                    # Ordered list of tests for each module
+my $hCoverageType;                                                  # Coverage type for each code module (full/partial)
+my $hCoverageList;                                                  # Tests required for full code module coverage (if type full)
 
 # Iterate each module
 foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
@@ -427,13 +418,44 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
         # Iterate each run
         for (my $iRun = 1; $iRun <= $hModuleTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
         {
+            my $iFullTotal = 0;
+            my $iPartialTotal = 0;
+
+            # Concatenate coverage for modules and tests
+            foreach my $hCoverage ($hModule->{&TESTDEF_TEST_COVERAGE}, $hModuleTest->{&TESTDEF_TEST_COVERAGE})
+            {
+                foreach my $strCodeModule (sort(keys(%{$hCoverage})))
+                {
+                    if (defined($hTestDefHash->{$strModule}{$strTest}{$iRun}{$strCodeModule}))
+                    {
+                        confess &log(ERROR,
+                            "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
+                    }
+
+                    $hTestDefHash->{$strModule}{$strTest}{$iRun}{$strCodeModule} = $hCoverage->{$strCodeModule};
+
+                    # Build coverage type hash and make sure coverage type does not change
+                    if (!defined($hCoverageType->{$strCodeModule}))
+                    {
+                        $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
+                    }
+                    elsif ($hCoverageType->{$strCodeModule} != $hCoverage->{$strCodeModule})
+                    {
+                        confess &log(ERROR, "cannot mix full/partial coverage for ${strCodeModule}");
+                    }
+
+                    # Add to coverage list
+                    if ($hCoverageType->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
+                    {
+                        push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest, iRun => $iRun});
+                    }
+                }
+            }
         }
     }
 
     $hModuleTest->{$strModule} = \@stryModuleTest;
 }
-
-use Data::Dumper; confess Dumper($hTestDefHash);
 
 ####################################################################################################################################
 # testDefGet
