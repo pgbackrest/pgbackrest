@@ -93,7 +93,7 @@ sub run
         # Else success
         else
         {
-            $self->testResult($strFunction, '[undef]');
+            $self->testResult($strFunction, '[undef]', 'success');
         }
     }
     }

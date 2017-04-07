@@ -34,8 +34,9 @@ sub run
         my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false,
-            'valid option ' . OPTION_DB_PORT . ' under invalid section', undef,
+        $self->testMessage(
+            sub {configFileValidate($oConfig)},
+            'valid option ' . OPTION_DB_PORT . ' under invalid section',
             $strConfigFile . " valid option '" . OPTION_DB_PORT . "' is a stanza section option and is not valid in section " .
                 CONFIG_SECTION_GLOBAL ." HINT: global options can be specified in global or stanza sections but not visa-versa",
                 false);
@@ -46,11 +47,11 @@ sub run
         my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false,
-            'valid option ' . OPTION_DB_PORT . ' for command ' . CMD_BACKUP . ' under invalid global section', undef,
+        $self->testMessage(
+            sub {configFileValidate($oConfig)},
+            'valid option ' . OPTION_DB_PORT . ' for command ' . CMD_BACKUP . ' under invalid global section',
             $strConfigFile . " valid option '" . OPTION_DB_PORT . "' is a stanza section option and is not valid in section " .
-                CONFIG_SECTION_GLOBAL ." HINT: global options can be specified in global or stanza sections but not visa-versa",
-                false);
+                CONFIG_SECTION_GLOBAL ." HINT: global options can be specified in global or stanza sections but not visa-versa");
     }
 
     if ($self->begin('valid option ' . OPTION_DB_PORT . ' under invalid stanza section command'))
@@ -58,8 +59,9 @@ sub run
         my $oConfig = {};
         $$oConfig{$self->stanza() . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_DB_PORT} = 1234;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false,
-            'valid option ' . OPTION_DB_PORT . ' under invalid stanza section command', undef,
+        $self->testMessage(
+            sub {configFileValidate($oConfig)},
+            'valid option ' . OPTION_DB_PORT . ' under invalid stanza section command',
             $strConfigFile . " valid option '" . OPTION_DB_PORT . "' is not valid for command '" . CMD_ARCHIVE_PUSH ."'", true);
     }
 
@@ -68,8 +70,10 @@ sub run
         my $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS} = BOGUS;
 
-        $self->testResult(sub {configFileValidate($oConfig)}, false, 'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS},
-            undef, $strConfigFile . " file contains invalid option '" . BOGUS . "'", true);
+        $self->testMessage(
+            sub {configFileValidate($oConfig)},
+            'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS},
+            $strConfigFile . " file contains invalid option '" . BOGUS . "'", true);
     }
 
     if ($self->begin('valid alt name'))

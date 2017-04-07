@@ -279,51 +279,38 @@ sub end
     }
 }
 
-
-####################################################################################################################################
-# logFileCacheTestSimilar - Test for a string somewhere in the log file
-####################################################################################################################################
-sub testLogFileCacheTestSimilar
-{
-    my $strTest = shift;
-
-    my $strTmpLogFileCache = logFileCache();
-
-    # Strip all whitespace
-    $strTmpLogFileCache =~ s/\s+//g;
-    $strTest =~ s/\s+//g;
-
-    return ((($strTmpLogFileCache =~ m/$strTest/) ? true : false), logFileCache());
-}
-
-####################################################################################################################################
-# logFileCacheTestExact - Test for an exact match of the log
-####################################################################################################################################
-sub testLogFileCacheTestExact
-{
-    my $strTest = shift;
-
-    return (((logFileCache() eq $strTest) ? true : false), logFileCache());
-}
-
 ####################################################################################################################################
 # testResult
 ####################################################################################################################################
 sub testResult
 {
     my $self = shift;
-    my $fnSub = shift;
-    my $strExpected = shift;
-    my $strDescription = shift;
-    my $iWaitSeconds = shift;
-    my $strWarnMessage = shift;
-    my $bTestExactWarnMessage = shift;
 
-    &log(INFO, '    ' . (defined($strDescription) ? $strDescription : 'no description'));
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $fnSub,
+        $strExpected,
+        $strDescription,
+        $iWaitSeconds,
+        $strExpectLogMessage,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::testResult', \@_,
+            {name => 'fnSub', trace => true},
+            {name => 'strExpected', required => false, trace => true},
+            {name => 'strDescription', trace => true},
+            {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
+            {name => 'strWarnMessage', optional => true, trace => true},
+        );
+
+    &log(INFO, '    ' . $strDescription);
     my $strActual;
     my $bWarnValid = true;
 
-    my $oWait = waitInit(defined($iWaitSeconds) ? $iWaitSeconds : 0);
+    my $oWait = waitInit($iWaitSeconds);
     my $bDone = false;
 
     # Save the current log levels and set the file level to warn, console to off and timestamp false
@@ -338,7 +325,7 @@ sub testResult
         eval
         {
 
-
+print "RESULTREF=".ref($fnSub)."\n";
             my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
             if (@stryResult <= 1)
@@ -383,9 +370,9 @@ sub testResult
     } while (!$bDone);
 
     # If we get here then test any warning message
-    if (defined($strWarnMessage))
+    if (defined($strExpectLogMessage))
     {
-        my $strResult = testWarningMessage($strWarnMessage, $bTestExactWarnMessage);
+        my $strResult = testLogMessage($strExpectLogMessage);
 
         # Restore the log levels
         logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
@@ -395,25 +382,30 @@ sub testResult
             confess $strResult;
         }
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
-# testWarning
+# testMessage
 ####################################################################################################################################
-sub testWarning
+sub testMessage
 {
+    my $self = shift;
+
     my $fnSub = shift;
-    my $strWarnMessage = shift;
-    my $bTestExact = shift;
+    my $strExpectedMessage = shift;
+    my $strDescription = shift;
 
     if (ref($fnSub) ne 'CODE')
     {
-        confess "a function must be called to test a warning message";
+        confess "a function must be called to test a log message";
     }
 
-    # Save the current log levels and set the file level to warn and timestamp false
+    # Save the current log levels and set the file level to warn, console to off and timestamp false
     my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
-    logLevelSet(WARN, undef, undef, false);
+    logLevelSet(WARN, OFF, undef, false);
 
     # Clear the cache for this test
     logFileCacheClear();
@@ -421,7 +413,7 @@ sub testWarning
     # Run the function
     $fnSub->();
 
-    my $strResult = testWarningMessage($strWarnMessage, $bTestExact);
+    my $strResult = testLogMessage($strExpectedMessage);
 
     # Restore the log levels
     logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
@@ -433,36 +425,25 @@ sub testWarning
 }
 
 ####################################################################################################################################
-# testWarningMessage
+# testLogMessage
 ####################################################################################################################################
-sub testWarningMessage
+sub testLogMessage
 {
-    my $strWarnMessage = shift;
-    my $bTestExact = shift;
+    my $strExpectedLogMessage = shift;
 
     my $strResult = undef;
 
-    # Prepend the preamble and trailing carriage return
-    $strWarnMessage = "P00   " . WARN . ": " . $strWarnMessage . "\n";
+    # Get the cached messages
+    my $strLogMessage = logFileCache();
 
-    # Test the cache for the warning
-    if ($bTestExact)
+    # Strip leading Process marker and whitespace from each line
+    $strLogMessage =~ s/^(P[0-9]{2})*\s+//mg;
+
+    if (($strLogMessage eq $strExpectedLogMessage) ||
+        ($strLogMessage =~ $strExpectedLogMessage))
     {
-        my ($bResult, $strLogMessage) = testLogFileCacheTestExact($strWarnMessage);
-
-        if (!$bResult)
-        {
-            $strResult = "the log message:\n$strLogMessage\n does not exactly match the expected warning message:\n$strWarnMessage";
-        }
-    }
-    else
-    {
-        my ($bResult, $strLogMessage) = testLogFileCacheTestSimilar($strWarnMessage);
-
-        if (!$bResult)
-        {
-            $strResult = "expected warning message:\n$strWarnMessage\n was not found";
-        }
+            $strResult = "the log message:\n$strLogMessage\n does not match or does not contain the expected message:\n" .
+                $strExpectedLogMessage;
     }
 
     return $strResult;

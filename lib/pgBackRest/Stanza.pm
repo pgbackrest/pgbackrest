@@ -22,6 +22,7 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
 
@@ -47,6 +48,7 @@ sub new
 
     # Initialize the database object
     $self->{oDb} = dbMasterGet();
+    $self->dbInfoGet();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -54,22 +56,6 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
-}
-
-####################################################################################################################################
-# DESTROY
-####################################################################################################################################
-sub DESTROY
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
-
-    undef($self->{oDb});
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -82,14 +68,23 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
-    # Error if any other command other than stanza-create is found
-    if (!commandTest(CMD_STANZA_CREATE))
-    {
-        confess &log(ASSERT, "Stanza->process() called with invalid command: " . commandGet());
-    }
+    my $iResult = 0;
 
     # Process stanza create
-    my $iResult = $self->stanzaCreate();
+    if (commandTest(CMD_STANZA_CREATE))
+    {
+        $iResult = $self->stanzaCreate();
+    }
+    # Process stanza upgrade
+    elsif (commandTest(CMD_STANZA_UPGRADE))
+    {
+        $iResult = $self->stanzaUpgrade();
+    }
+    # Else error if any other command is found
+    else
+    {
+        confess &log(ASSERT, "stanza->process() called with invalid command: " . commandGet());
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -119,15 +114,13 @@ sub stanzaCreate
         protocolGet(NONE)
     );
 
-    $self->dbInfoGet();
-
     # Get the parent paths (create if not exist)
     my $strParentPathArchive = $self->parentPathGet($oFile, PATH_BACKUP_ARCHIVE);
     my $strParentPathBackup = $self->parentPathGet($oFile, PATH_BACKUP_CLUSTER);
 
     # Get a listing of files in the directory, ignoring if any are missing
-    my @stryFileListArchive = fileList($strParentPathArchive, undef, 'forward', true);
-    my @stryFileListBackup = fileList($strParentPathBackup, undef, 'forward', true);
+    my @stryFileListArchive = fileList($strParentPathArchive, {bIgnoreMissing => true});
+    my @stryFileListBackup = fileList($strParentPathBackup, {bIgnoreMissing => true});
 
     # If force not used and at least one directory is not empty, then check to see if the info files exist
     if (!optionGet(OPTION_FORCE) && (@stryFileListArchive || @stryFileListBackup))
@@ -171,6 +164,76 @@ sub stanzaCreate
     (
         $strOperation,
         {name => 'iResult', value => $iResult, trace => true}
+    );
+}
+
+####################################################################################################################################
+# stanzaUpgrade
+#
+# Updates stanza information to reflect new cluster information.  Normally used for version upgrades, but could be used after a
+# cluster has been dumped and restored to the same version.
+####################################################################################################################################
+sub stanzaUpgrade
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
+
+    # Initialize default file object with protocol set to NONE meaning strictly local
+    my $oFile = new pgBackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_PATH),
+        protocolGet(NONE)
+    );
+
+    # Get the archive info and backup info files; if either does not exist an error will be thrown
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE));
+    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    my $bBackupUpgraded = false;
+    my $bArchiveUpgraded = false;
+
+    # If the DB section does not match, then upgrade
+    if ($self->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH))
+    {
+        # Determine if it is necessary to reconstruct the file
+        my ($bReconstruct, $strWarningMsgArchive) =
+            $self->reconstructCheck($oBackupInfo, PATH_BACKUP_CLUSTER, $oFile, $oFile->pathGet(PATH_BACKUP_CLUSTER));
+
+        # If reconstruction was required then save the reconstructed file
+        if ($bReconstruct)
+        {
+            $oBackupInfo->save();
+            $bBackupUpgraded = true;
+        }
+    }
+
+    if ($self->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
+    {
+        # Determine if it is necessary to reconstruct the file
+        my ($bReconstruct, $strWarningMsgArchive) =
+            $self->reconstructCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, $oFile, $oFile->pathGet(PATH_BACKUP_ARCHIVE));
+
+        # If reconstruction was required then save the reconstructed file
+        if ($bReconstruct)
+        {
+            $oArchiveInfo->save();
+            $bArchiveUpgraded = true;
+        }
+    }
+
+    # If neither file needed upgrading then provide informational message that an upgrade was not necessary
+    if (!($bBackupUpgraded || $bArchiveUpgraded))
+    {
+        &log(INFO, "the stanza data is already up to date");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => 0, trace => true}
     );
 }
 
@@ -246,84 +309,40 @@ sub infoFileCreate
     my $iResult = 0;
     my $strResultMessage = undef;
     my $strWarningMsgArchive = undef;
-    my $bSave = true;
+    my $bReconstruct = true;
+
+
+    # If force was not used and the info file does not exist and the directory is not empty, then error
+    # This should also be performed by the calling routine before this function is called, so this is just a safety check
+    if (!optionGet(OPTION_FORCE) && !$oInfo->{bExists} && @$stryFileList)
+    {
+        confess &log(ERROR, ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') .
+            $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
+    }
 
     # Turn off console logging to control when to display the error
-    logLevelSet(undef, OFF);
+    logDisable();
 
     eval
     {
-        # ??? File init will need to be addressed with stanza-upgrade since there could then be more than one DB and db-id
-        # so the DB section, esp for backup.info, cannot be initialized before we attempt to reconstruct the file from the
-        # directories since the history id would be wrong. Also need to handle if the reconstruction fails - if any file in
-        # the backup directory or archive directory are missing or mal-formed, then currently an error will be thrown, which
-        # may not be desireable.
+        ($bReconstruct, $strWarningMsgArchive) = $self->reconstructCheck($oInfo, $strPathType, $oFile, $strParentPath);
 
-        # If the info file does not exist, initialize it internally but do not save until complete reconstruction
-        if (!$oInfo->{bExists})
+        if ($oInfo->{bExists} && $bReconstruct)
         {
-            ($strPathType eq PATH_BACKUP_CLUSTER)
-                ? $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
-                    $self->{oDb}{iCatalogVersion}, false)
-                : $oInfo->create($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
-        }
-
-        # Reconstruct the file from the data in the directory if there is any
-        if ($strPathType eq PATH_BACKUP_CLUSTER)
-        {
-            $oInfo->reconstruct(false, false);
-        }
-        # If this is the archive.info reconstruction then catch any warnings
-        else
-        {
-            $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
-        }
-
-        # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
-        if ($oInfo->{bExists})
-        {
-            my $oInfoOnDisk =
-                ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::BackupInfo($strParentPath)
-                : new pgBackRest::Archive::ArchiveInfo($strParentPath));
-
             # If force was not used and the hashes are different then error
-            if ($oInfoOnDisk->hash() ne $oInfo->hash())
+            if (!optionGet(OPTION_FORCE))
             {
-                if (!optionGet(OPTION_FORCE))
-                {
-                    $iResult = ERROR_FILE_INVALID;
-                    $strResultMessage =
-                        ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') .
-                        ' invalid; to correct, use --force';
-                }
+                $iResult = ERROR_FILE_INVALID;
+                $strResultMessage =
+                    ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup file ' : 'archive file ') . "invalid\n" .
+                    'HINT: use stanza-upgrade if the database has been upgraded or use --force';
             }
-            # If the hashes are the same, then don't save the file since it already exists and is valid
-            else
-            {
-                $bSave = false;
-            }
-        }
-
-        # If force was not used and the info file does not exist and the directory is not empty, then error
-        # This should also be performed by the calling routine before this function is called, so this is just a safety check
-        if ($iResult == 0 && !optionGet(OPTION_FORCE) && !$oInfo->{bExists} && @$stryFileList)
-        {
-            $iResult = ERROR_PATH_NOT_EMPTY;
-            $strResultMessage =
-                ($strPathType eq PATH_BACKUP_CLUSTER ? 'backup directory ' : 'archive directory ') . $strStanzaCreateErrorMsg;
         }
 
         if ($iResult == 0)
         {
-            # ??? With stanza-upgrade we will want ability to force the DB section to match but for now, if it doesn't match,
-            # then something is wrong.
-            ($strPathType eq PATH_BACKUP_CLUSTER)
-                ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
-                    $self->{oDb}{ullDbSysId}, false)
-                : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, false);
-
             # Save the reconstructed file
-            if ($bSave)
+            if ($bReconstruct)
             {
                 $oInfo->save();
             }
@@ -337,17 +356,17 @@ sub infoFileCreate
             }
         }
 
+        # Reset the console logging
+        logEnable();
         return true;
     }
     or do
     {
-        # Capture error information
+        # Reset console logging and capture error information
+        logEnable();
         $iResult = exceptionCode($EVAL_ERROR);
         $strResultMessage = exceptionMessage($EVAL_ERROR->message());
     };
-
-    # Reset the console logging
-    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
 
     # If a warning was issued, raise it
     if (defined($strWarningMsgArchive))
@@ -390,6 +409,133 @@ sub dbInfoGet
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# reconstructCheck
+#
+# Reconstruct the file based on disk data. If the info file already exists, it compares the reconstructed file to the existing file
+# and indicates if reconstruction is required. If the file does not yet exist on disk, it will still indicate reconstruction is
+# needed. The oInfo object contains the reconstructed data and can be saved by the calling routine.
+####################################################################################################################################
+sub reconstructCheck
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oInfo,
+        $strPathType,
+        $oFile,
+        $strParentPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->reconstructCheck', \@_,
+            {name => 'oInfo'},
+            {name => 'strPathType'},
+            {name => 'oFile'},
+            {name => 'strParentPath'},
+        );
+
+    my $bReconstruct = true;
+    my $strWarningMsgArchive = undef;
+
+    # Reconstruct the file from the data in the directory if there is any else initialize the file
+    if ($strPathType eq PATH_BACKUP_CLUSTER)
+    {
+        $oInfo->reconstruct(false, false, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
+            $self->{oDb}{iCatalogVersion});
+    }
+    # If this is the archive.info reconstruction then catch any warnings
+    else
+    {
+        $strWarningMsgArchive = $oInfo->reconstruct($oFile, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
+    }
+
+    # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
+    if ($oInfo->{bExists})
+    {
+        my $oInfoOnDisk =
+            ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::BackupInfo($strParentPath)
+            : new pgBackRest::Archive::ArchiveInfo($strParentPath));
+
+        # If the hashes are the same, then no need to reconstruct the file since it already exists and is valid
+        if ($oInfoOnDisk->hash() eq $oInfo->hash())
+        {
+            $bReconstruct = false;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bReconstruct', value => $bReconstruct},
+        {name => 'strWarningMsgArchive', value => $strWarningMsgArchive},
+    );
+}
+
+####################################################################################################################################
+# upgradeCheck
+#
+# Checks the info file to see if an upgrade is necessary.
+####################################################################################################################################
+sub upgradeCheck
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oInfo,
+        $strPathType,
+        $iExpectedError,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->upgradeCheck', \@_,
+            {name => 'oInfo'},
+            {name => 'strPathType'},
+            {name => 'iExpectedError'},
+        );
+
+    my $iResult = 0;
+    my $strResultMessage = undef;
+
+    # Turn off console logging to control when to display the error
+    logDisable();
+
+    eval
+    {
+        ($strPathType eq PATH_BACKUP_CLUSTER)
+            ? $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion},
+                $self->{oDb}{ullDbSysId}, true)
+            : $oInfo->check($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, true);
+        logEnable();
+        return true;
+    }
+    or do
+    {
+        logEnable();
+
+        # Confess unhandled errors
+        confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != $iExpectedError);
+
+        # Capture the result which will be the expected error, meaning an upgrade is needed
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+    };
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bResult', value => ($iResult == $iExpectedError ? true : false)},
+    );
 }
 
 1;

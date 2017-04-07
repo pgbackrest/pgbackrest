@@ -161,22 +161,64 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
-                    </release-item>
-                </release-feature-list>
-            </release-core-list>
-
-            <release-test-list>
-                <release-refactor-list>
-                    <release-item>
-                        <p>Updated vagrant to new version and image.</p>
+                        <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading to a new major version of <postgres/>.</p>
                     </release-item>
 
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
-                        
+
+                        <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Allow functions to accept optional parameters as a hash.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>File->list()</code> and <code>fileList()</code> to accept optional parameters.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>backupLabel()</code> and add unit tests.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Update wording for release note sections.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Require description in every call to <code>testResult()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Make <code>iWaitSeconds</code> an optional parameter for <code>testResult()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Updated vagrant to new version and image.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed flapping archive stop tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
                         <p>Added ability to test warning messages.</p>
                     </release-item>
                 </release-refactor-list>

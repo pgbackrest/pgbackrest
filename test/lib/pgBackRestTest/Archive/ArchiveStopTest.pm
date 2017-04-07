@@ -96,19 +96,20 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
+            sub {$oFile->list(
+                PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001', {strExpression => '^(?!000000010000000100000002).+'})},
             "000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}",
-            'segment 2-4 are not pushed', 5);
+            'segment 2-4 not pushed (2 is pushed sometimes when remote but ignore)', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5);
 
         $self->testResult(
-            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
+            sub {$oFile->list(
+                PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001', {strExpression => '^(?!000000010000000100000002).+'})},
             "(000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " .
-                ($bRemote ? "000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " : '') .
                 "000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt})",
-            'segment 5 (and 2 if remote) is pushed', 5);
+            'segment 5 is pushed', {iWaitSeconds => 5});
     }
     }
     }
