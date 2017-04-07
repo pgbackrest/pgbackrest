@@ -71,14 +71,20 @@ sub protocolGet
         $strOperation,
         $strRemoteType,
         $iRemoteIdx,
-        $oParam,
+        $bCache,
+        $strBackRestBin,
+        $iProcessIdx,
+        $strCommand,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::protocolGet', \@_,
             {name => 'strRemoteType'},
             {name => 'iRemoteIdx', default => 1},
-            {name => 'oParam', required => false},
+            {name => 'bCache', optional => true, default => true},
+            {name => 'strBackRestBin', optional => true},
+            {name => 'iProcessIdx', optional => true},
+            {name => 'strCommand', optional => true, default => commandGet()},
         );
 
     # Protocol object
@@ -102,8 +108,6 @@ sub protocolGet
     # Else create the remote protocol
     else
     {
-        my $bCache = defined($$oParam{bCache}) ? $$oParam{bCache} : true;
-
         # Set protocol to cached value
         $oProtocol =
             $bCache && defined($$hProtocol{$strRemoteType}{$iRemoteIdx}) ? $$hProtocol{$strRemoteType}{$iRemoteIdx} : undef;
@@ -157,10 +161,10 @@ sub protocolGet
                 optionGet(OPTION_CMD_SSH),
                 commandWrite(
                     CMD_REMOTE, true,
-                    defined($oParam->{strBackRestBin}) ? $oParam->{strBackRestBin} : optionGet($strOptionCmd), undef,
+                    defined($strBackRestBin) ? $strBackRestBin : optionGet($strOptionCmd), undef,
                     {
-                        &OPTION_COMMAND => {value => commandGet()},
-                        &OPTION_PROCESS => {value => $$oParam{iProcessIdx}},
+                        &OPTION_COMMAND => {value => $strCommand},
+                        &OPTION_PROCESS => {value => $iProcessIdx},
                         &OPTION_CONFIG => {
                             value => optionSource($strOptionConfig) eq SOURCE_DEFAULT ? undef : optionGet($strOptionConfig)},
                         &OPTION_TYPE => {value => $strRemoteType},

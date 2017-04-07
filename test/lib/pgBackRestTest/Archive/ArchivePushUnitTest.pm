@@ -763,7 +763,7 @@ sub run
 
         $self->testException(
             sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_HOST_CONNECT,
-            "remote process terminated on local-1 host: remote process terminated on bogus host.*");
+            'remote process terminated on ' . BOGUS . ' host.*');
         exit if ($iProcessId != $PID);
 
         # Disable async archiving

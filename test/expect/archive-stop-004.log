@@ -44,11 +44,11 @@ db-version="9.4"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db --backup-host=bogus archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [124]: remote process terminated on local-1 host: remote process terminated on bogus host (exit status 255): [REMOTE-PROCESS-TERMINATED-MESSAGE]
+P00  ERROR: [124]: remote process terminated on bogus host (exit status 255): [REMOTE-PROCESS-TERMINATED-MESSAGE]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db --backup-host=bogus archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [124]: remote process terminated on local-1 host: remote process terminated on bogus host (exit status 255): [REMOTE-PROCESS-TERMINATED-MESSAGE]
+P00  ERROR: [124]: remote process terminated on bogus host (exit status 255): [REMOTE-PROCESS-TERMINATED-MESSAGE]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 ------------------------------------------------------------------------------------------------------------------------------------

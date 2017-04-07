@@ -315,6 +315,11 @@ my $oTestDef =
                     &TESTDEF_TEST_TOTAL => 3,
                     &TESTDEF_TEST_INDIVIDUAL => false,
                 },
+                {
+                    &TESTDEF_TEST_NAME => 'info-unit',
+                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TEST_INDIVIDUAL => false,
+                },
             ]
         },
         # Expire tests

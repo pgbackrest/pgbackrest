@@ -35,11 +35,9 @@ sub lockFileName
     my $strLockType = shift;
     my $strStanza = shift;
     my $bRemote = shift;
-    my $iProcessIdx = shift;
 
     return optionGet(OPTION_LOCK_PATH) . '/' . (defined($strStanza) ? $strStanza : 'global') . "_${strLockType}" .
-           (defined($bRemote) && $bRemote ? '_remote' : '') .
-           (defined($iProcessIdx) ? "-${iProcessIdx}" : '') . '.lock';
+           (defined($bRemote) && $bRemote ? '_remote' : '') . '.lock';
 }
 
 ####################################################################################################################################
@@ -66,7 +64,6 @@ sub lockAcquire
         $strLockType,
         $bFailOnNoLock,
         $bRemote,
-        $iProcessIdx
     ) =
         logDebugParam
         (
@@ -74,7 +71,6 @@ sub lockAcquire
             {name => 'strLockType'},
             {name => 'bFailOnNoLock', default => true},
             {name => 'bRemote', default => false},
-            {name => 'iProcessIdx', required => false}
         );
 
     my $bResult = false;
@@ -96,7 +92,7 @@ sub lockAcquire
         lockPathCreate();
 
         # Attempt to open the lock file
-        $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA, false), $bRemote, $iProcessIdx);
+        $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA, false), $bRemote);
 
         sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640))
             or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
@@ -234,9 +230,6 @@ sub lockStop
 
             # Skip if this is a stop file
             next if ($strFile =~ /\.stop$/);
-
-            # Skip if this is a process lock file (only send TERMs to the main process)
-            next if ($strFile =~ /\-[0-9]+\.lock$/);
 
             # Open the lock file for read
             if (!sysopen($hLockHandle, $strLockFile, O_RDONLY))
