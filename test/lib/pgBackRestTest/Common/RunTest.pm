@@ -294,7 +294,7 @@ sub testResult
         $strExpected,
         $strDescription,
         $iWaitSeconds,
-        $strExpectLogMessage,
+        $strExpectedLogMessage,
     ) =
         logDebugParam
         (
@@ -303,7 +303,7 @@ sub testResult
             {name => 'strExpected', required => false, trace => true},
             {name => 'strDescription', trace => true},
             {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
-            {name => 'strWarnMessage', optional => true, trace => true},
+            {name => 'strExpectedLogMessage', optional => true, trace => true},
         );
 
     &log(INFO, '    ' . $strDescription);
@@ -324,8 +324,6 @@ sub testResult
     {
         eval
         {
-
-print "RESULTREF=".ref($fnSub)."\n";
             my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
             if (@stryResult <= 1)
@@ -370,83 +368,24 @@ print "RESULTREF=".ref($fnSub)."\n";
     } while (!$bDone);
 
     # If we get here then test any warning message
-    if (defined($strExpectLogMessage))
+    if (defined($strExpectedLogMessage))
     {
-        my $strResult = testLogMessage($strExpectLogMessage);
+        my $strLogMessage = logFileCache();
 
-        # Restore the log levels
-        logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
+        # Strip leading Process marker and whitespace from each line
+        $strLogMessage =~ s/^(P[0-9]{2})*\s+//mg;
 
-        if (defined($strResult))
+        # If the expected message does not exactly match the logged message or is not at least contained in it, then error
+        if (($strLogMessage ne $strExpectedLogMessage) ||
+            !($strLogMessage =~ $strExpectedLogMessage))
         {
-            confess $strResult;
+            confess "the log message:\n$strLogMessage\ndoes not match or does not contain the expected message:\n" .
+                $strExpectedLogMessage;
         }
     }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# testMessage
-####################################################################################################################################
-sub testMessage
-{
-    my $self = shift;
-
-    my $fnSub = shift;
-    my $strExpectedMessage = shift;
-    my $strDescription = shift;
-
-    if (ref($fnSub) ne 'CODE')
-    {
-        confess "a function must be called to test a log message";
-    }
-
-    # Save the current log levels and set the file level to warn, console to off and timestamp false
-    my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
-    logLevelSet(WARN, OFF, undef, false);
-
-    # Clear the cache for this test
-    logFileCacheClear();
-
-    # Run the function
-    $fnSub->();
-
-    my $strResult = testLogMessage($strExpectedMessage);
-
-    # Restore the log levels
-    logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
-
-    if (defined($strResult))
-    {
-        confess $strResult;
-    }
-}
-
-####################################################################################################################################
-# testLogMessage
-####################################################################################################################################
-sub testLogMessage
-{
-    my $strExpectedLogMessage = shift;
-
-    my $strResult = undef;
-
-    # Get the cached messages
-    my $strLogMessage = logFileCache();
-
-    # Strip leading Process marker and whitespace from each line
-    $strLogMessage =~ s/^(P[0-9]{2})*\s+//mg;
-
-    if (($strLogMessage eq $strExpectedLogMessage) ||
-        ($strLogMessage =~ $strExpectedLogMessage))
-    {
-            $strResult = "the log message:\n$strLogMessage\n does not match or does not contain the expected message:\n" .
-                $strExpectedLogMessage;
-    }
-
-    return $strResult;
 }
 
 ####################################################################################################################################
