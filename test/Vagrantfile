@@ -13,6 +13,7 @@ Vagrant.configure(2) do |config|
 
     # Provision the VM
     config.vm.provision "shell", inline: <<-SHELL
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build Begin' && date
 
         # Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning
@@ -32,16 +33,16 @@ Vagrant.configure(2) do |config|
         ntpdate pool.ntp.org
 
         #---------------------------------------------------------------------------------------------------------------------------
-        echo 'Install Build Tools' && date
-        apt-get install -y devscripts build-essential lintian git txt2man debhelper
-
-        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date
         apt-get install -y libdbd-pg-perl libxml-checker-perl libperl-critic-perl libdevel-nytprof-perl
 
         #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Install Build Tools' && date
+        apt-get install -y devscripts build-essential lintian git txt2man debhelper
+
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build Devel::Cover' && date
-        apt-get install -y libpod-coverage-perl libtest-differences-perl libhtml-parser-perl
+        apt-get install -y libpod-coverage-perl libtest-differences-perl libhtml-parser-perl libtemplate-perl
         git clone --branch debian/1.23-2 \
             https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git /root/libdevel-cover-perl
         cd /root/libdevel-cover-perl && debuild --no-lintian -i -us -uc -b > /dev/null
