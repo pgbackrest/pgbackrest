@@ -258,6 +258,26 @@ sub sudoSetup
 }
 
 ####################################################################################################################################
+# Devel::Cover setup
+####################################################################################################################################
+sub coverSetup
+{
+    my $strOS = shift;
+
+    my $strScript = '';
+    my $oVm = vmGet();
+
+    if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    {
+        $strScript .=
+            "\n\nCOPY ${strOS}-libdevel-cover-perl_1.23-2_amd64.deb /tmp/libdevel-cover-perl_1.23-2_amd64.deb\n" .
+            "RUN dpkg -i /tmp/libdevel-cover-perl_1.23-2_amd64.deb";
+    }
+
+    return $strScript;
+}
+
+####################################################################################################################################
 # Install Perl packages
 ####################################################################################################################################
 sub perlInstall
@@ -269,29 +289,34 @@ sub perlInstall
 
     if ($strOS eq VM_CO6)
     {
-        return $strImage .
+        $strImage .=
             'RUN yum install -y perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg';
     }
     elsif ($strOS eq VM_CO7)
     {
-        return $strImage .
+        $strImage .=
             'RUN yum install -y perl perl-JSON-PP perl-Digest-SHA perl-DBD-Pg';
     }
     elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
     {
-        return $strImage .
-            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl' .
-            ($strOS eq VM_U14 ? ' libdevel-cover-perl libtest-pod-coverage-perl' : '');
+        $strImage .=
+            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl libhtml-parser-perl';
     }
     elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
     {
-        return $strImage .
-            'RUN apt-get install -y libdbd-pg-perl libdbi-perl' .
-            ($strOS eq VM_U16 ? ' libdevel-cover-perl libtest-pod-coverage-perl' : '');
+        $strImage .=
+            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libhtml-parser-perl';
+    }
+    else
+    {
+        confess &log(ERROR, "unable to install perl for os '${strOS}'");
     }
 
-    confess &log(ERROR, "unable to install perl for os '${strOS}'");
+    return $strImage;
 }
+
+# apt-get install -y libhtml-parser-perl
+# dpkg -i /backrest/test/.vagrant/docker/libdevel-cover-perl_1.23-2_amd64.deb
 
 ####################################################################################################################################
 # Build containers
@@ -488,8 +513,12 @@ sub containerBuild
         {
             $strScript =
                 "# Install package build tools and package source\n" .
-                "RUN apt-get install -y devscripts build-essential lintian git libxml-checker-perl txt2man debhelper && \\\n" .
-                "    git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src\n";
+                "RUN apt-get install -y devscripts build-essential lintian git libxml-checker-perl txt2man debhelper" .
+                    " libpod-coverage-perl libppi-html-perl libtemplate-perl libtest-differences-perl && \\\n" .
+                "    git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src && \\\n" .
+                "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git" .
+                    " /root/libdevel-cover-perl && \\\n" .
+                "    cd /root/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b";
         }
         else
         {
@@ -500,6 +529,17 @@ sub containerBuild
 
         # Write the image
         containerWrite($strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strScript, $bVmForce, false);
+
+        #
+        executeTest('docker rm -f test-build', {bSuppressError => true});
+        executeTest(
+            "docker run -itd -h test-build --name=test-build" .
+            " -v ${strTempPath}:${strTempPath} " . containerRepo() . ":${strOS}-build",
+            {bSuppressStdErr => true});
+        executeTest(
+            "docker exec -i test-build " .
+            "bash -c 'cp /root/libdevel-cover-perl_1.23-2_amd64.deb ${strTempPath}/${strOS}-libdevel-cover-perl_1.23-2_amd64.deb'");
+        executeTest('docker rm -f test-build');
 
         # Db image
         ###########################################################################################################################
@@ -589,6 +629,9 @@ sub containerBuild
             # Install SSH key
             $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
 
+            # Setup Devel::Cover
+            $strScript .= coverSetup($strOS);
+
             # Write the image
             containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
         }
@@ -600,6 +643,9 @@ sub containerBuild
 
         # Install SSH key
         $strScript = sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+
+        # Setup Devel::Cover
+        $strScript .= coverSetup($strOS);
 
         # Write the image
         containerWrite($strTempPath, $strOS, 'Db Synthetic Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
@@ -627,6 +673,9 @@ sub containerBuild
 
         # Setup sudo
         $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
+
+        # Setup Devel::Cover
+        $strScript .= coverSetup($strOS);
 
         # Write the image
         containerWrite($strTempPath, $strOS, 'Loop Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
@@ -680,6 +729,9 @@ sub containerBuild
         $strScript .=
             "\n\n# Make " . TEST_USER . " home dir readable\n" .
             'RUN chmod g+r,g+x /home/' . TEST_USER;
+
+        # Setup Devel::Cover
+        $strScript .= coverSetup($strOS);
 
         # Write the image
         containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);

@@ -738,7 +738,14 @@ eval
                     }
                 }
 
-                &log(INFO, 'Verify full coverage for: ' . join(', ', @stryCoverageActual));
+                if (@stryCoverageActual > 0)
+                {
+                    &log(INFO, 'Verify full coverage for: ' . join(', ', @stryCoverageActual));
+                }
+                else
+                {
+                    &log(INFO, 'No code modules to verify full coverage for');
+                }
 
                 foreach my $strCodeModule (@stryCoverageActual)
                 {
