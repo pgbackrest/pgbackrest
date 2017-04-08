@@ -162,7 +162,7 @@ sub process
         "before_install:\n" .
         "  - sudo apt-get -qq update\n" .
         "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl" .
-            " libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts\n" .
+            " libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl\n" .
         "  - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
         '  - cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
         '  - sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .

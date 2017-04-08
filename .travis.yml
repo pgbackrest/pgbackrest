@@ -37,7 +37,7 @@ env:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts
+  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl
   - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl
   - cd ~/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b
   - sudo dpkg -i ~/libdevel-cover-perl_1.23-2_amd64.deb
