@@ -41,7 +41,7 @@ before_install:
   - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl
   - cd ~/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b
   - sudo dpkg -i ~/libdevel-cover-perl_1.23-2_amd64.deb
-  - cover -v
+  - cover -h
 
 install:
   - sudo adduser --ingroup=${USER?} --disabled-password --gecos "" backrest
