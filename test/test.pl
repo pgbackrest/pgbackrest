@@ -75,7 +75,7 @@ test.pl [options]
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --vm-out --process-max=1 --retry=0 --ci-no-config
+   --dev                --no-lint --smart --no-package --vm-out --process-max=1
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -192,7 +192,6 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $bNoCiConfig = true;
         $bVmOut = true;
         $iProcessMax = 1;
     }
