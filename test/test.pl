@@ -741,13 +741,22 @@ eval
                     # If all tests needed for coverage were found
                     if ($bFoundAll)
                     {
-                        # Get summary results (!!! Need to fix this for coverage testing on bin/pgbackrest)
+                        # Get summary results (!!! Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
                         my $hCoverageResultAll =
-                            $hCoverageResult->{'summary'}{"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"};
+                            $hCoverageResult->{'summary'}
+                                {"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"}{total};
 
                         if (!defined($hCoverageResultAll))
                         {
                             confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
+                        }
+
+                        # use Data::Dumper; confess Dumper($hCoverageResultAll);
+
+                        # Check that all code has been covered
+                        if ($hCoverageResultAll->{covered} + $hCoverageResultAll->{uncoverable} != $hCoverageResultAll->{total})
+                        {
+                            &log(WARN, "code module ${strCodeModule} it not fully covered");
                         }
 
                         &log(WARN, "matched $strCodeModule");
