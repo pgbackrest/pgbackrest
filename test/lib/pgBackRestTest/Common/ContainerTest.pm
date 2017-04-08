@@ -47,6 +47,14 @@ use constant BACKREST_USER                                          => 'backrest
 use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
 
 ####################################################################################################################################
+# Package constants
+####################################################################################################################################
+use constant LIB_COVER_VERSION                                      => '1.23-2';
+    push @EXPORT, qw(LIB_COVER_VERSION);
+use constant LIB_COVER_PACKAGE                                      => 'libdevel-cover-perl_' . LIB_COVER_VERSION . '_amd64.deb';
+    push @EXPORT, qw(LIB_COVER_PACKAGE);
+
+####################################################################################################################################
 # Container repo
 ####################################################################################################################################
 sub containerRepo
@@ -270,8 +278,8 @@ sub coverSetup
     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\n\nCOPY ${strOS}-libdevel-cover-perl_1.23-2_amd64.deb /tmp/libdevel-cover-perl_1.23-2_amd64.deb\n" .
-            "RUN dpkg -i /tmp/libdevel-cover-perl_1.23-2_amd64.deb";
+            "\n\nCOPY ${strOS}-" . LIB_COVER_PACKAGE . ' /tmp/' . LIB_COVER_PACKAGE . "\n" .
+            'RUN dpkg -i /tmp/' . LIB_COVER_PACKAGE;
     }
 
     return $strScript;
@@ -314,9 +322,6 @@ sub perlInstall
 
     return $strImage;
 }
-
-# apt-get install -y libhtml-parser-perl
-# dpkg -i /backrest/test/.vagrant/docker/libdevel-cover-perl_1.23-2_amd64.deb
 
 ####################################################################################################################################
 # Build containers
@@ -518,7 +523,7 @@ sub containerBuild
                 "    git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src && \\\n" .
                 "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git" .
                     " /root/libdevel-cover-perl && \\\n" .
-                "    cd /root/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b";
+                '    cd /root/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . ' && debuild -i -us -uc -b';
         }
         else
         {
@@ -530,16 +535,19 @@ sub containerBuild
         # Write the image
         containerWrite($strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strScript, $bVmForce, false);
 
-        #
-        executeTest('docker rm -f test-build', {bSuppressError => true});
-        executeTest(
-            "docker run -itd -h test-build --name=test-build" .
-            " -v ${strTempPath}:${strTempPath} " . containerRepo() . ":${strOS}-build",
-            {bSuppressStdErr => true});
-        executeTest(
-            "docker exec -i test-build " .
-            "bash -c 'cp /root/libdevel-cover-perl_1.23-2_amd64.deb ${strTempPath}/${strOS}-libdevel-cover-perl_1.23-2_amd64.deb'");
-        executeTest('docker rm -f test-build');
+        # Copy Devel::Cover to host so it can be installed in other containers
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+        {
+            executeTest('docker rm -f test-build', {bSuppressError => true});
+            executeTest(
+                "docker run -itd -h test-build --name=test-build" .
+                " -v ${strTempPath}:${strTempPath} " . containerRepo() . ":${strOS}-build",
+                {bSuppressStdErr => true});
+            executeTest(
+                "docker exec -i test-build " .
+                "bash -c 'cp /root/" . LIB_COVER_PACKAGE . " ${strTempPath}/${strOS}-" . LIB_COVER_PACKAGE . "'");
+            executeTest('docker rm -f test-build');
+        }
 
         # Db image
         ###########################################################################################################################

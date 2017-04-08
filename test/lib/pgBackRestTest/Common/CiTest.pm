@@ -164,8 +164,8 @@ sub process
         "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl" .
             " libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts\n" .
         "  - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
-        "  - cd ~/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b\n" .
-        "  - sudo dpkg -i ~/libdevel-cover-perl_1.23-2_amd64.deb\n" .
+        '  - cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
+        '  - sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
         "\n" .
         "install:\n" .
         "  - sudo adduser --ingroup=\${USER?} --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
