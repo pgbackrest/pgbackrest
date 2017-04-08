@@ -220,7 +220,7 @@ my $oTestDef =
 
             &TESTDEF_TEST_COVERAGE =>
             {
-                &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_FULL,
+                &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_PARTIAL,
             },
 
             &TESTDEF_TEST =>
@@ -322,7 +322,7 @@ my $oTestDef =
 
             &TESTDEF_TEST_COVERAGE =>
             {
-                &TESTDEF_MODULE_EXPIRE => TESTDEF_COVERAGE_FULL,
+                &TESTDEF_MODULE_EXPIRE => TESTDEF_COVERAGE_PARTIAL,
             },
 
             &TESTDEF_TEST =>
@@ -350,7 +350,7 @@ my $oTestDef =
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
-                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_FULL,
+                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
             ]
