@@ -53,6 +53,8 @@ use constant LIB_COVER_VERSION                                      => '1.23-2';
     push @EXPORT, qw(LIB_COVER_VERSION);
 use constant LIB_COVER_PACKAGE                                      => 'libdevel-cover-perl_' . LIB_COVER_VERSION . '_amd64.deb';
     push @EXPORT, qw(LIB_COVER_PACKAGE);
+use constant LIB_COVER_EXE                                          => '/usr/bin/cover';
+    push @EXPORT, qw(LIB_COVER_EXE);
 
 ####################################################################################################################################
 # Container repo

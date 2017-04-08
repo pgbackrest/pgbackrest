@@ -166,7 +166,7 @@ sub process
         "  - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
         '  - cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
         '  - sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
-        '  - cover -v\n" .
+        '  - ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .
         "  - sudo adduser --ingroup=\${USER?} --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
