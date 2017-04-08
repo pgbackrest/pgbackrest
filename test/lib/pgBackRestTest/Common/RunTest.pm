@@ -104,6 +104,7 @@ sub process
     (
         my $strOperation,
         $self->{strVm},
+        $self->{strVmHost},
         $self->{iVmId},
         $self->{strBasePath},
         $self->{strTestPath},
@@ -118,7 +119,6 @@ sub process
         $self->{bDryRun},
         $self->{bCleanup},
         $self->{bLogForce},
-        $self->{bCoverage},
         $self->{strPgUser},
         $self->{strBackRestUser},
         $self->{strGroup},
@@ -127,6 +127,7 @@ sub process
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'strVm'},
+            {name => 'strVmHost'},
             {name => 'iVmId'},
             {name => 'strBasePath'},
             {name => 'strTestPath'},
@@ -141,7 +142,6 @@ sub process
             {name => 'bDryRun'},
             {name => 'bCleanup'},
             {name => 'bLogForce'},
-            {name => 'bCoverage'},
             {name => 'strPgUser'},
             {name => 'strBackRestUser'},
             {name => 'strGroup'},
@@ -527,7 +527,7 @@ sub backrestExe {return shift->{strBackRestExe}}
 sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {return shift->{bCoverage}}
+sub coverage {my $self = shift; return $self->{strVm} eq $self->{strVmHost}}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}

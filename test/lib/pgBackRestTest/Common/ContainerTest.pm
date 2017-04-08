@@ -280,7 +280,8 @@ sub perlInstall
     elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
     {
         return $strImage .
-            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl';
+            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl' .
+            ($strOS eq VM_U14 ? ' libdevel-cover-perl libtest-pod-coverage-perl' : '');
     }
     elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
     {

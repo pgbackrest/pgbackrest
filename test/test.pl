@@ -71,7 +71,7 @@ test.pl [options]
    --log-force          force overwrite of current test log files
    --no-lint            disable static source code analysis
    --build-only         compile the C library / packages and run tests only
-   --coverage           perform coverage analysis
+   --coverage-only      only run coverage tests (as a subset of selected tests)
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
@@ -121,7 +121,7 @@ my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
-my $bCoverage = false;
+my $bCoverageOnly = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -153,7 +153,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'build-only' => \$bBuildOnly,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
-            'coverage' => \$bCoverage,
+            'coverage-only' => \$bCoverageOnly,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'retry=s' => \$iRetry)
@@ -232,8 +232,7 @@ eval
         $strTestPath = cwd() . '/test';
     }
 
-    # Coverage can only be run with u16 containers due to version compatibility issues
-    if ($bCoverage)
+    if ($bCoverageOnly)
     {
         if ($strVm eq VM_ALL)
         {
@@ -573,7 +572,7 @@ eval
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverage);
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverageOnly);
 
         if (@{$oyTestRun} == 0)
         {
@@ -651,7 +650,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
-                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bCoverage, $bNoCleanup,
+                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $strVmHost, $bNoCleanup,
                         $iRetry);
                     $iTestIdx++;
 
@@ -670,7 +669,7 @@ eval
         #-----------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if ($bCoverage && !$bDryRun)
+        if (($strVm eq VM_ALL || $strVm eq $strVmHost)  && !$bDryRun)
         {
             &log(INFO, 'Writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
@@ -690,18 +689,21 @@ eval
                 # Build a hash of all modules, tests, and runs that were executed
                 foreach my $hTestRun (@{$oyTestRun})
                 {
-                    # Get coverage for the module
-                    my $strModule = $hTestRun->{&TEST_MODULE};
-                    my $hModule = testDefModule($strModule);
-
-                    # Get coverage for the test
-                    my $strTest = $hTestRun->{&TEST_NAME};
-                    my $hTest = testDefModuleTest($strModule, $strTest);
-
-                    # If no tests are listed it means all of them were run
-                    if (@{$hTestRun->{&TEST_RUN}} == 0)
+                    if ($hTestRun->{&TEST_VM} eq $strVmHost)
                     {
-                        $hModuleTest->{$strModule}{$strTest} = true;
+                        # Get coverage for the module
+                        my $strModule = $hTestRun->{&TEST_MODULE};
+                        my $hModule = testDefModule($strModule);
+
+                        # Get coverage for the test
+                        my $strTest = $hTestRun->{&TEST_NAME};
+                        my $hTest = testDefModuleTest($strModule, $strTest);
+
+                        # If no tests are listed it means all of them were run
+                        if (@{$hTestRun->{&TEST_RUN}} == 0)
+                        {
+                            $hModuleTest->{$strModule}{$strTest} = true;
+                        }
                     }
                 }
 
@@ -793,7 +795,7 @@ eval
 
     # Run the test
     testRun($stryModule[0], $stryModuleTest[0])->process(
-        $strVm, $iVmId,                                             # Vm info
+        $strVm, $strVmHost, $iVmId,                                 # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable
@@ -801,7 +803,6 @@ eval
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
-        $bCoverage,                                                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)

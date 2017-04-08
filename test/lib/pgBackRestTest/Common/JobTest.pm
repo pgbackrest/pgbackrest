@@ -56,7 +56,7 @@ sub new
         $self->{strLogLevel},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
-        $self->{bCoverage},
+        $self->{strVmHost},
         $self->{bNoCleanup},
         $self->{iRetry},
     ) =
@@ -76,7 +76,7 @@ sub new
             {name => 'strLogLevel'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
-            {name => 'bCoverage'},
+            {name => 'strVmHost'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
         );
@@ -166,11 +166,12 @@ sub run
         # Create command
         my $strCommand =
             ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-            ($self->{bCoverage} ? testRunExe(
+            ($self->{strVmHost} eq $self->{oTest}->{&TEST_VM} ? testRunExe(
                 abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
                 $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
                 abs_path($0)) .
             " --test-path=${strVmTestPath}" .
+            " --vm-host=$self->{strVmHost}" .
             " --vm=$self->{oTest}->{&TEST_VM}" .
             " --vm-id=$self->{iVmIdx}" .
             " --module=" . $self->{oTest}->{&TEST_MODULE} .
@@ -180,7 +181,6 @@ sub run
             (defined($self->{oTest}->{&TEST_PROCESS}) ? ' --process-max=' . $self->{oTest}->{&TEST_PROCESS} : '') .
             ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
             ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
-            ($self->{bCoverage} ? ' --coverage' : '') .
             ($self->{bLogForce} ? ' --log-force' : '') .
             ($self->{bDryRun} ? ' --dry-run' : '') .
             ($self->{bDryRun} ? ' --vm-out' : '') .
