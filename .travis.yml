@@ -13,14 +13,14 @@ services:
   - docker
 
 env:
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup"
+  # - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup"
   # - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=full --test=synthetic --no-lint --no-package"
   # - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=9.1" PGB_TEST_PARAM="--module=full --test=real --db=9.1 --process-max=2 --no-lint --no-package"
   # - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=9.0" PGB_TEST_PARAM="--module=full --test=real --db=9.0 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
+  # - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
   # - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=full --test=synthetic --no-lint --no-package"
   # - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=9.4" PGB_TEST_PARAM="--module=full --test=real --db=9.4 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
+  # - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
   # - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=full --test=synthetic --no-lint --no-package"
   # - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=9.3" PGB_TEST_PARAM="--module=full --test=real --db=9.3 --process-max=2 --no-lint --no-package"
   # - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=8.4" PGB_TEST_PARAM="--module=full --test=real --db=8.4 --process-max=2 --no-lint --no-package"
@@ -31,7 +31,7 @@ env:
   - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
   # - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=full --test=synthetic --no-lint --no-package"
   # - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=9.2" PGB_TEST_PARAM="--module=full --test=real --db=9.2 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
+  # - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=backup --no-lint"
   # - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--module=full --test=synthetic --no-lint --no-package"
   # - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=8.3" PGB_TEST_PARAM="--module=full --test=real --db=8.3 --process-max=2 --no-lint --no-package"
 
@@ -41,6 +41,7 @@ before_install:
   - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl
   - cd ~/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b
   - sudo dpkg -i ~/libdevel-cover-perl_1.23-2_amd64.deb
+  - cover -v
 
 install:
   - sudo adduser --ingroup=${USER?} --disabled-password --gecos "" backrest
