@@ -52,4 +52,4 @@ install:
   - pgbackrest/test/test.pl --vm-build --vm=${PGB_TEST_VM?} ${PGB_BUILD_PARAM?}
 
 script:
-  - pgbackrest/test/test.pl --vm-host=u14 --vm=${PGB_TEST_VM?} ${PGB_TEST_PARAM?}
+  - pgbackrest/test/test.pl --vm-host=u14 --log-level=detail --vm=${PGB_TEST_VM?} ${PGB_TEST_PARAM?}
