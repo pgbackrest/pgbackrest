@@ -669,7 +669,9 @@ eval
 
         # Write out coverage info and test coverage
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bCoverage)
+        my $iUncoveredCodeModuleTotal = 0;
+
+        if ($bCoverage && !$bDryRun)
         {
             &log(INFO, 'Writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
@@ -691,27 +693,16 @@ eval
                 {
                     # Get coverage for the module
                     my $strModule = $hTestRun->{&TEST_MODULE};
-                    my $hModule = testDefModuleGet($strModule);
+                    my $hModule = testDefModule($strModule);
 
                     # Get coverage for the test
                     my $strTest = $hTestRun->{&TEST_NAME};
-                    my $hTest = testDefModuleTestGet($hModule, $strTest);
+                    my $hTest = testDefModuleTest($strModule, $strTest);
 
                     # If no tests are listed it means all of them were run
                     if (@{$hTestRun->{&TEST_RUN}} == 0)
                     {
-                        for (my $iRun = 1; $iRun <= $hTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
-                        {
-                            $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
-                        }
-                    }
-                    # Else a list of tests is given
-                    else
-                    {
-                        foreach my $iRun (@{$hTestRun->{&TEST_RUN}})
-                        {
-                            $hModuleTest->{$strModule}{$strTest}{$iRun} = true;
-                        }
+                        $hModuleTest->{$strModule}{$strTest} = true;
                     }
                 }
 
@@ -721,45 +712,53 @@ eval
 
                 # Now compare against code modules that should have full coverage
                 my $hCoverageList = testDefCoverageList();
+                my @stryCoverageActual;
 
                 foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
                 {
-                    my $bFoundAll = true;
-                    # &log(WARN, "    testing $strCodeModule");
-
-                    foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
+                    if (@{$hCoverageList->{$strCodeModule}} > 0)
                     {
-                        # &log(WARN, "        checking $hTest->{strModule}, $hTest->{strTest}, $hTest->{iRun}");
+                        my $iCoverageTotal = 0;
 
-                        if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}{$hTest->{iRun}}))
+                        foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
                         {
-                            $bFoundAll = false;
-                            next;
+                            if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}))
+                            {
+                                next;
+                            }
+
+                            $iCoverageTotal++;
+                        }
+
+                        if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
+                        {
+                            push(@stryCoverageActual, $strCodeModule);
                         }
                     }
+                }
 
-                    # If all tests needed for coverage were found
-                    if ($bFoundAll)
+                &log(INFO, 'Verify full coverage for: ' . join(', ', @stryCoverageActual));
+
+                foreach my $strCodeModule (@stryCoverageActual)
+                {
+                    # Get summary results (??? Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
+                    my $hCoverageResultAll =
+                        $hCoverageResult->{'summary'}
+                            {"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"}{total};
+
+                    if (!defined($hCoverageResultAll))
                     {
-                        # Get summary results (!!! Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
-                        my $hCoverageResultAll =
-                            $hCoverageResult->{'summary'}
-                                {"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"}{total};
+                        confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
+                    }
 
-                        if (!defined($hCoverageResultAll))
-                        {
-                            confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
-                        }
+                    # Check that all code has been covered
+                    my $iUncoveredLines =
+                        $hCoverageResultAll->{total} - $hCoverageResultAll->{covered} - $hCoverageResultAll->{uncoverable};
 
-                        # use Data::Dumper; confess Dumper($hCoverageResultAll);
-
-                        # Check that all code has been covered
-                        if ($hCoverageResultAll->{covered} + $hCoverageResultAll->{uncoverable} != $hCoverageResultAll->{total})
-                        {
-                            &log(WARN, "code module ${strCodeModule} it not fully covered");
-                        }
-
-                        &log(WARN, "matched $strCodeModule");
+                    if ($iUncoveredLines != 0)
+                    {
+                        &log(ERROR, "code module ${strCodeModule} it not fully covered");
+                        $iUncoveredCodeModuleTotal++;
                     }
                 }
             }
@@ -773,12 +772,16 @@ eval
         }
         else
         {
-            &log(INFO, 'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' : "WITH ${iTestFail} FAILURE(S)") .
-                       ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
-                       ' (' . (time() - $lStartTime) . 's)');
+            &log(INFO,
+                'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' .
+                    ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
+                "WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
+                    ' (' . (time() - $lStartTime) . 's)');
+
+            exit 1 if ($iTestFail > 0 || $iUncoveredCodeModuleTotal > 0);
         }
 
-        exit $iTestFail == 0 ? 0 : 1;
+        exit 0;
     }
 
     ################################################################################################################################

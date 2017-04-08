@@ -243,8 +243,6 @@ my $oTestDef =
         # Archive tests
         {
             &TESTDEF_MODULE_NAME => 'archive',
-            &TESTDEF_TEST_CONTAINER => false,
-            &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
             [
@@ -252,8 +250,6 @@ my $oTestDef =
                     &TESTDEF_TEST_NAME => 'unit',
                     &TESTDEF_TEST_TOTAL => 4,
                     &TESTDEF_TEST_CONTAINER => true,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
-                    &TESTDEF_EXPECT => false,
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
@@ -264,8 +260,6 @@ my $oTestDef =
                     &TESTDEF_TEST_NAME => 'push-unit',
                     &TESTDEF_TEST_TOTAL => 7,
                     &TESTDEF_TEST_CONTAINER => true,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
-                    &TESTDEF_EXPECT => false,
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
@@ -278,14 +272,20 @@ my $oTestDef =
                     &TESTDEF_TEST_NAME => 'push',
                     &TESTDEF_TEST_TOTAL => 8,
                     &TESTDEF_TEST_PROCESS => true,
+                    &TESTDEF_TEST_INDIVIDUAL => true,
+                    &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_TEST_NAME => 'stop',
-                    &TESTDEF_TEST_TOTAL => 6
+                    &TESTDEF_TEST_TOTAL => 6,
+                    &TESTDEF_TEST_INDIVIDUAL => true,
+                    &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_TEST_NAME => 'get',
-                    &TESTDEF_TEST_TOTAL => 8
+                    &TESTDEF_TEST_TOTAL => 8,
+                    &TESTDEF_TEST_INDIVIDUAL => true,
+                    &TESTDEF_EXPECT => true,
                 },
             ]
         },
@@ -415,40 +415,33 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
         # Set test count
         $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_TOTAL} = $hModuleTest->{&TESTDEF_TEST_TOTAL};
 
-        # Iterate each run
-        for (my $iRun = 1; $iRun <= $hModuleTest->{&TESTDEF_TEST_TOTAL}; $iRun++)
+        # Concatenate coverage for modules and tests
+        foreach my $hCoverage ($hModule->{&TESTDEF_TEST_COVERAGE}, $hModuleTest->{&TESTDEF_TEST_COVERAGE})
         {
-            my $iFullTotal = 0;
-            my $iPartialTotal = 0;
-
-            # Concatenate coverage for modules and tests
-            foreach my $hCoverage ($hModule->{&TESTDEF_TEST_COVERAGE}, $hModuleTest->{&TESTDEF_TEST_COVERAGE})
+            foreach my $strCodeModule (sort(keys(%{$hCoverage})))
             {
-                foreach my $strCodeModule (sort(keys(%{$hCoverage})))
+                if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_COVERAGE}{$strCodeModule}))
                 {
-                    if (defined($hTestDefHash->{$strModule}{$strTest}{$iRun}{$strCodeModule}))
-                    {
-                        confess &log(ERROR,
-                            "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
-                    }
+                    confess &log(ASSERT,
+                        "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
+                }
 
-                    $hTestDefHash->{$strModule}{$strTest}{$iRun}{$strCodeModule} = $hCoverage->{$strCodeModule};
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
 
-                    # Build coverage type hash and make sure coverage type does not change
-                    if (!defined($hCoverageType->{$strCodeModule}))
-                    {
-                        $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
-                    }
-                    elsif ($hCoverageType->{$strCodeModule} != $hCoverage->{$strCodeModule})
-                    {
-                        confess &log(ERROR, "cannot mix full/partial coverage for ${strCodeModule}");
-                    }
+                # Build coverage type hash and make sure coverage type does not change
+                if (!defined($hCoverageType->{$strCodeModule}))
+                {
+                    $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
+                }
+                elsif ($hCoverageType->{$strCodeModule} != $hCoverage->{$strCodeModule})
+                {
+                    confess &log(ASSERT, "cannot mix full/partial coverage for ${strCodeModule}");
+                }
 
-                    # Add to coverage list
-                    if ($hCoverageType->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
-                    {
-                        push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest, iRun => $iRun});
-                    }
+                # Add to coverage list
+                if ($hCoverageType->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
+                {
+                    push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
                 }
             }
         }
@@ -457,57 +450,77 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
     $hModuleTest->{$strModule} = \@stryModuleTest;
 }
 
-####################################################################################################################################
 # testDefGet
 ####################################################################################################################################
 sub testDefGet
-{
+ {
     return $oTestDef;
-}
+ }
 
 push @EXPORT, qw(testDefGet);
 
 ####################################################################################################################################
-# testDefModuleGet
+# testDefModuleList
 ####################################################################################################################################
-sub testDefModuleGet
+sub testDefModuleList
+{
+    return @stryModule;
+}
+
+push @EXPORT, qw(testDefModuleList);
+
+####################################################################################################################################
+# testDefModule
+####################################################################################################################################
+sub testDefModule
 {
     my $strModule = shift;
 
-    # Find the module
-    foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
+    if (!defined($hTestDefHash->{$strModule}))
     {
-        if ($hModule->{&TESTDEF_MODULE_NAME} eq $strModule)
-        {
-            return $hModule;
-        }
+        confess &log(ASSERT, "unable to find module ${strModule}");
     }
 
-    confess &log(ASSERT, "unable to find module ${strModule}");
+    return $hTestDefHash->{$strModule};
 }
 
-push @EXPORT, qw(testDefModuleGet);
+push @EXPORT, qw(testDefModule);
+
 
 ####################################################################################################################################
-# testDefModuleTestGet
+# testDefModuleTestList
 ####################################################################################################################################
-sub testDefModuleTestGet
+sub testDefModuleTestList
 {
-    my $hModule = shift;
+    my $strModule = shift;
+
+    if (!defined($hModuleTest->{$strModule}))
+    {
+        confess &log(ASSERT, "unable to find module ${strModule}");
+    }
+
+    return @{$hModuleTest->{$strModule}};
+}
+
+push @EXPORT, qw(testDefModuleTestList);
+
+####################################################################################################################################
+# testDefModuleTest
+####################################################################################################################################
+sub testDefModuleTest
+{
+    my $strModule = shift;
     my $strModuleTest = shift;
 
-    foreach my $hModuleTest (@{$hModule->{&TESTDEF_TEST}})
+    if (!defined($hTestDefHash->{$strModule}{$strModuleTest}))
     {
-        if ($hModuleTest->{&TESTDEF_TEST_NAME} eq $strModuleTest)
-        {
-            return $hModuleTest;
-        }
+        confess &log(ASSERT, "unable to find module ${strModule}, test ${strModuleTest}");
     }
 
-    confess &log(ASSERT, "unable to find module test ${strModuleTest}");
+    return $hTestDefHash->{$strModule}{$strModuleTest};
 }
 
-push @EXPORT, qw(testDefModuleTestGet);
+push @EXPORT, qw(testDefModuleTest);
 
 ####################################################################################################################################
 # testDefCoverageList

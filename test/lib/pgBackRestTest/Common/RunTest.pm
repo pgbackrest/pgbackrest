@@ -157,8 +157,7 @@ sub process
     $self->cleanModule();
 
     # Make sure the correct number of tests ran
-    my $hModule = testDefModuleGet($self->{strModule});
-    my $hModuleTest = testDefModuleTestGet($hModule, $self->{strModuleTest});
+    my $hModuleTest = testDefModuleTest($self->{strModule}, $self->{strModuleTest});
 
     if ($hModuleTest->{&TESTDEF_TEST_TOTAL} != $self->runCurrent())
     {
@@ -205,14 +204,7 @@ sub begin
     # Else get the default expect setting
     else
     {
-        my $hModule = testDefModuleGet($self->{strModule});
-        my $hModuleTest = testDefModuleTestGet($hModule, $self->{strModuleTest});
-        $self->{bExpect} =
-            defined($hModuleTest->{&TESTDEF_EXPECT}) ?
-                ($hModuleTest->{&TESTDEF_EXPECT} ? true : false) :
-                (defined($hModule->{&TESTDEF_EXPECT}) ?
-                    ($hModule->{&TESTDEF_EXPECT} ? true : false) :
-                    false);
+        $self->{bExpect} = (testDefModuleTest($self->{strModule}, $self->{strModuleTest}))->{&TESTDEF_EXPECT};
     }
 
     # Increment the run counter;
@@ -494,33 +486,9 @@ sub testRunExe
     my $bLog = shift;
 
     # Limit Perl modules tested to what is defined in the test coverage (if it exists)
+    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_TEST_COVERAGE};
     my $strPerlModule;
     my $strPerlModuleLog;
-    my $hTestCoverage;
-    my $hTestDef = testDefGet();
-
-    foreach my $hTestModule (@{$hTestDef->{&TESTDEF_MODULE}})
-    {
-        if ($hTestModule->{&TESTDEF_MODULE_NAME} eq $strModule)
-        {
-            $hTestCoverage = $hTestModule->{&TESTDEF_TEST_COVERAGE};
-
-            foreach my $hTest (@{$hTestModule->{&TESTDEF_TEST}})
-            {
-                if (defined($strTest) && $hTest->{&TESTDEF_TEST_NAME} eq $strTest)
-                {
-                    $hTestCoverage =
-                        defined($hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}) ? $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun} :
-                            $hTest->{&TESTDEF_TEST_COVERAGE};
-
-                    if (!defined($hTestCoverage))
-                    {
-                        $hTestCoverage = $hTestModule->{&TESTDEF_TEST_COVERAGE};
-                    }
-                }
-            }
-        }
-    }
 
     if (defined($hTestCoverage))
     {
