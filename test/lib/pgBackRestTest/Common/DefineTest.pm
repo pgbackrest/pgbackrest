@@ -202,7 +202,6 @@ my $oTestDef =
         # Stanza tests
         {
             &TESTDEF_NAME => 'stanza',
-            &TESTDEF_EXPECT => true,
 
             &TESTDEF_COVERAGE =>
             {
@@ -214,14 +213,17 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 2,
+                    &TESTDEF_CONTAINER => true,
                 },
                 {
                     &TESTDEF_NAME => 'create',
                     &TESTDEF_TOTAL => 2
+                    &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_NAME => 'upgrade',
                     &TESTDEF_TOTAL => 2
+                    &TESTDEF_EXPECT => true,
                 },
             ]
         },
@@ -277,6 +279,7 @@ my $oTestDef =
         # Backup tests
         {
             &TESTDEF_NAME => 'backup',
+            &TESTDEF_CONTAINER => true,
 
             &TESTDEF_COVERAGE =>
             {
@@ -299,6 +302,7 @@ my $oTestDef =
         {
             &TESTDEF_NAME => 'expire',
             &TESTDEF_EXPECT => true,
+            &TESTDEF_INDIVIDUAL => true,
 
             &TESTDEF_COVERAGE =>
             {
@@ -335,18 +339,18 @@ my $oTestDef =
         {
             &TESTDEF_NAME => 'full',
             &TESTDEF_EXPECT => true,
+            &TESTDEF_INDIVIDUAL => true,
+            &TESTDEF_PROCESS => true
 
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_NAME => 'synthetic',
                     &TESTDEF_TOTAL => 8,
-                    &TESTDEF_PROCESS => true
                 },
                 {
                     &TESTDEF_NAME => 'real',
                     &TESTDEF_TOTAL => 11,
-                    &TESTDEF_PROCESS => true,
                     &TESTDEF_DB => true
                 }
             ]
