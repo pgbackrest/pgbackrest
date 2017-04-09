@@ -243,7 +243,7 @@ eval
         {
             confess &log(ERROR, "select a single Debian-based VM for coverage testing");
         }
-        elsif (!vmBaseTest($strVm, VM_OS_BASE_DEBIAN))
+        elsif (!vmCoverage($strVm))
         {
             confess &log(ERROR, "only Debian-based VMs can be used for coverage testing");
         }
@@ -678,7 +678,7 @@ eval
         #-----------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if (vmBaseTest($strVm, VM_OS_BASE_DEBIAN)  && !$bDryRun)
+        if (vmCoverage($strVm) && !$bDryRun)
         {
             &log(INFO, 'writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");

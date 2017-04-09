@@ -288,4 +288,16 @@ sub vmBaseTest
 
 push @EXPORT, qw(vmBaseTest);
 
+####################################################################################################################################
+# vmCoverage
+####################################################################################################################################
+sub vmCoverage
+{
+    my $strVm = shift;
+
+    return $strVm eq VM_ALL ? false : vmBaseTest($strVm, VM_OS_BASE_DEBIAN);
+}
+
+push @EXPORT, qw(vmCoverage);
+
 1;

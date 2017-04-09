@@ -165,7 +165,7 @@ sub run
         # Create command
         my $strCommand =
             ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-            (vmBaseTest($self->{oTest}->{&TEST_VM}, VM_OS_BASE_DEBIAN) ? testRunExe(
+            (vmCoverage($self->{oTest}->{&TEST_VM}) ? testRunExe(
                 abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
                 $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
                 abs_path($0)) .
