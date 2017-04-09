@@ -768,7 +768,7 @@ eval
 
                         if ($iUncoveredLines != 0)
                         {
-                            &log(ERROR, "code module ${strCodeModule} it not fully covered");
+                            &log(ERROR, "code module ${strCodeModule} is not fully covered");
                             $iUncoveredCodeModuleTotal++;
                         }
                     }
@@ -781,7 +781,7 @@ eval
 
                         if ($iCoveragePercent == 100)
                         {
-                            &log(ERROR, "code module ${strCodeModule} has 100% coverage and should be marked fully covered");
+                            &log(ERROR, "code module ${strCodeModule} has 100% coverage but is not marked fully covered");
                             $iUncoveredCodeModuleTotal++;
                         }
                         else
