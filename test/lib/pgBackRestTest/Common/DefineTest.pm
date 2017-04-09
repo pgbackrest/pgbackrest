@@ -104,7 +104,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'help',
                     &TESTDEF_TOTAL => 1,
-                    &TESTDEF_INDIVIDUAL => false,
                 }
             ]
         },
@@ -118,17 +117,14 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 7,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'option',
                     &TESTDEF_TOTAL => 34,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'config',
                     &TESTDEF_TOTAL => 25,
-                    &TESTDEF_INDIVIDUAL => false,
                 }
             ]
         },
@@ -148,79 +144,64 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 1,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'owner',
                     &TESTDEF_TOTAL => 8,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'path-create',
                     &TESTDEF_TOTAL => 8,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'move',
                     &TESTDEF_TOTAL => 24,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'compress',
                     &TESTDEF_TOTAL => 4,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'wait',
                     &TESTDEF_TOTAL => 2,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'link',
                     &TESTDEF_TOTAL => 1,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'stat',
                     &TESTDEF_TOTAL => 1,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'manifest',
                     &TESTDEF_TOTAL => 5,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'list',
                     &TESTDEF_TOTAL => 72,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'remove',
                     &TESTDEF_TOTAL => 32,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'hash',
                     &TESTDEF_TOTAL => 16,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'exists',
                     &TESTDEF_TOTAL => 6,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'copy',
                     &TESTDEF_TOTAL => 144,
-                    &TESTDEF_INDIVIDUAL => false,
                 }
             ]
         },
         # Stanza tests
         {
             &TESTDEF_NAME => 'stanza',
-            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
             &TESTDEF_COVERAGE =>
@@ -232,7 +213,6 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'unit',
-                    &TESTDEF_EXPECT => false,
                     &TESTDEF_TOTAL => 2,
                 },
                 {
@@ -297,8 +277,6 @@ my $oTestDef =
         # Backup tests
         {
             &TESTDEF_NAME => 'backup',
-            &TESTDEF_CONTAINER => false,
-            &TESTDEF_EXPECT => false,
 
             &TESTDEF_COVERAGE =>
             {
@@ -310,19 +288,16 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 3,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
                     &TESTDEF_NAME => 'info-unit',
                     &TESTDEF_TOTAL => 1,
-                    &TESTDEF_INDIVIDUAL => false,
                 },
             ]
         },
         # Expire tests
         {
             &TESTDEF_NAME => 'expire',
-            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
             &TESTDEF_COVERAGE =>
@@ -341,16 +316,12 @@ my $oTestDef =
         # Info tests
         {
             &TESTDEF_NAME => 'info',
-            &TESTDEF_CONTAINER => false,
-            &TESTDEF_EXPECT => true,
+            &TESTDEF_CONTAINER => true,
 
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_NAME => 'unit',
-                    &TESTDEF_CONTAINER => true,
-                    &TESTDEF_INDIVIDUAL => false,
-                    &TESTDEF_EXPECT => false,
                     &TESTDEF_TOTAL => 1,
 
                     &TESTDEF_COVERAGE =>
@@ -363,7 +334,6 @@ my $oTestDef =
         # Full tests
         {
             &TESTDEF_NAME => 'full',
-            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
