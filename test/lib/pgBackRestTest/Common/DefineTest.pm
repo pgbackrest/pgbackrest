@@ -217,12 +217,12 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'create',
-                    &TESTDEF_TOTAL => 2
+                    &TESTDEF_TOTAL => 2,
                     &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_NAME => 'upgrade',
-                    &TESTDEF_TOTAL => 2
+                    &TESTDEF_TOTAL => 2,
                     &TESTDEF_EXPECT => true,
                 },
             ]
@@ -340,7 +340,7 @@ my $oTestDef =
             &TESTDEF_NAME => 'full',
             &TESTDEF_EXPECT => true,
             &TESTDEF_INDIVIDUAL => true,
-            &TESTDEF_PROCESS => true
+            &TESTDEF_PROCESS => true,
 
             &TESTDEF_TEST =>
             [
@@ -351,7 +351,7 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'real',
                     &TESTDEF_TOTAL => 11,
-                    &TESTDEF_DB => true
+                    &TESTDEF_DB => true,
                 }
             ]
         },
