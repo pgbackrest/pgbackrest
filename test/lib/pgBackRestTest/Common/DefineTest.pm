@@ -21,42 +21,52 @@ use pgBackRest::Common::String;
 ################################################################################################################################
 use constant TESTDEF_MODULE                                         => 'module';
     push @EXPORT, qw(TESTDEF_MODULE);
-use constant TESTDEF_MODULE_NAME                                    => 'name';
-    push @EXPORT, qw(TESTDEF_MODULE_NAME);
-
-use constant TESTDEF_EXPECT                                         => 'expect';
-    push @EXPORT, qw(TESTDEF_EXPECT);
+use constant TESTDEF_NAME                                           => 'name';
+    push @EXPORT, qw(TESTDEF_NAME);
 use constant TESTDEF_TEST                                           => 'test';
     push @EXPORT, qw(TESTDEF_TEST);
-# Determines coverage for the test
-use constant TESTDEF_TEST_COVERAGE                                  => 'coverage';
-    push @EXPORT, qw(TESTDEF_TEST_COVERAGE);
-# Determines if each run in a test will be run in a new container
-use constant TESTDEF_TEST_INDIVIDUAL                                => 'individual';
-    push @EXPORT, qw(TESTDEF_TEST_INDIVIDUAL);
-use constant TESTDEF_TEST_NAME                                      => 'name';
-    push @EXPORT, qw(TESTDEF_TEST_NAME);
-use constant TESTDEF_TEST_TOTAL                                     => 'total';
-    push @EXPORT, qw(TESTDEF_TEST_TOTAL);
-# Determines if the test will be run in a container or will create containers itself
-use constant TESTDEF_TEST_CONTAINER                                 => 'container';
-    push @EXPORT, qw(TESTDEF_TEST_CONTAINER);
-# Determines if the test will be run with multiple processes
-use constant TESTDEF_TEST_PROCESS                                   => 'process';
-    push @EXPORT, qw(TESTDEF_TEST_PROCESS);
-# Determines if the test will be run against multiple db versions
-use constant TESTDEF_TEST_DB                                        => 'db';
-    push @EXPORT, qw(TESTDEF_TEST_DB);
 
+# Determines if the test will be run against multiple db versions
+use constant TESTDEF_DB                                             => 'db';
+    push @EXPORT, qw(TESTDEF_DB);
+# Determines if the test will be run in a container or will create containers itself
+use constant TESTDEF_CONTAINER                                      => 'container';
+    push @EXPORT, qw(TESTDEF_CONTAINER);
+# Determines coverage for the test
+use constant TESTDEF_COVERAGE                                       => 'coverage';
+    push @EXPORT, qw(TESTDEF_COVERAGE);
+# Should expect log tests be run
+use constant TESTDEF_EXPECT                                         => 'expect';
+    push @EXPORT, qw(TESTDEF_EXPECT);
+# Determines if each run in a test will be run in a new container
+use constant TESTDEF_INDIVIDUAL                                     => 'individual';
+    push @EXPORT, qw(TESTDEF_INDIVIDUAL);
+# Determines if the test will be run with multiple processes
+use constant TESTDEF_PROCESS                                        => 'process';
+    push @EXPORT, qw(TESTDEF_PROCESS);
+# Total runs in the test
+use constant TESTDEF_TOTAL                                          => 'total';
+    push @EXPORT, qw(TESTDEF_TOTAL);
+
+# The test provides full coverage for the module
 use constant TESTDEF_COVERAGE_FULL                                  => true;
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
+# The test provides partial coverage for the module
 use constant TESTDEF_COVERAGE_PARTIAL                               => false;
     push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
 
+################################################################################################################################
+# Code modules
+################################################################################################################################
 use constant TESTDEF_MODULE_FILE                                    => 'File';
     push @EXPORT, qw(TESTDEF_MODULE_FILE);
 use constant TESTDEF_MODULE_FILE_COMMON                             => TESTDEF_MODULE_FILE . 'Common';
     push @EXPORT, qw(TESTDEF_MODULE_FILE_COMMON);
+
+use constant TESTDEF_MODULE_COMMON                                  => 'Common';
+    push @EXPORT, qw(TESTDEF_MODULE_COMMON);
+use constant TESTDEF_MODULE_COMMON_INI                              => TESTDEF_MODULE_COMMON . '/Ini';
+    push @EXPORT, qw(TESTDEF_MODULE_COMMON_INI);
 
 use constant TESTDEF_MODULE_ARCHIVE                                 => 'Archive';
     push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE);
@@ -90,49 +100,49 @@ my $oTestDef =
     [
         # Help tests
         {
-            &TESTDEF_MODULE_NAME => 'help',
-            &TESTDEF_TEST_CONTAINER => true,
+            &TESTDEF_NAME => 'help',
+            &TESTDEF_CONTAINER => true,
             &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'help',
-                    &TESTDEF_TEST_TOTAL => 1,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'help',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_INDIVIDUAL => false,
                 }
             ]
         },
         # Config tests
         {
-            &TESTDEF_MODULE_NAME => 'config',
-            &TESTDEF_TEST_CONTAINER => true,
+            &TESTDEF_NAME => 'config',
+            &TESTDEF_CONTAINER => true,
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 7,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_TOTAL => 7,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'option',
-                    &TESTDEF_TEST_TOTAL => 34,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'option',
+                    &TESTDEF_TOTAL => 34,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'config',
-                    &TESTDEF_TEST_TOTAL => 25,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'config',
+                    &TESTDEF_TOTAL => 25,
+                    &TESTDEF_INDIVIDUAL => false,
                 }
             ]
         },
         # File tests
         {
-            &TESTDEF_MODULE_NAME => 'file',
-            &TESTDEF_TEST_CONTAINER => true,
+            &TESTDEF_NAME => 'file',
+            &TESTDEF_CONTAINER => true,
 
-            &TESTDEF_TEST_COVERAGE =>
+            &TESTDEF_COVERAGE =>
             {
                 &TESTDEF_MODULE_FILE => TESTDEF_COVERAGE_PARTIAL,
                 &TESTDEF_MODULE_FILE_COMMON => TESTDEF_COVERAGE_PARTIAL,
@@ -141,84 +151,84 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 1,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'owner',
-                    &TESTDEF_TEST_TOTAL => 8,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'owner',
+                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'path-create',
-                    &TESTDEF_TEST_TOTAL => 8,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'path-create',
+                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'move',
-                    &TESTDEF_TEST_TOTAL => 24,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'move',
+                    &TESTDEF_TOTAL => 24,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'compress',
-                    &TESTDEF_TEST_TOTAL => 4,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'compress',
+                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'wait',
-                    &TESTDEF_TEST_TOTAL => 2,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'wait',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'link',
-                    &TESTDEF_TEST_TOTAL => 1,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'link',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'stat',
-                    &TESTDEF_TEST_TOTAL => 1,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'stat',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'manifest',
-                    &TESTDEF_TEST_TOTAL => 5,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'manifest',
+                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'list',
-                    &TESTDEF_TEST_TOTAL => 72,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'list',
+                    &TESTDEF_TOTAL => 72,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'remove',
-                    &TESTDEF_TEST_TOTAL => 32,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'remove',
+                    &TESTDEF_TOTAL => 32,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'hash',
-                    &TESTDEF_TEST_TOTAL => 16,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'hash',
+                    &TESTDEF_TOTAL => 16,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'exists',
-                    &TESTDEF_TEST_TOTAL => 6,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'exists',
+                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'copy',
-                    &TESTDEF_TEST_TOTAL => 144,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'copy',
+                    &TESTDEF_TOTAL => 144,
+                    &TESTDEF_INDIVIDUAL => false,
                 }
             ]
         },
         # Stanza tests
         {
-            &TESTDEF_MODULE_NAME => 'stanza',
-            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_NAME => 'stanza',
+            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
-            &TESTDEF_TEST_COVERAGE =>
+            &TESTDEF_COVERAGE =>
             {
                 &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_PARTIAL,
             },
@@ -226,42 +236,42 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'unit',
+                    &TESTDEF_NAME => 'unit',
                     &TESTDEF_EXPECT => false,
-                    &TESTDEF_TEST_TOTAL => 2,
+                    &TESTDEF_TOTAL => 2,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'create',
-                    &TESTDEF_TEST_TOTAL => 2
+                    &TESTDEF_NAME => 'create',
+                    &TESTDEF_TOTAL => 2
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'upgrade',
-                    &TESTDEF_TEST_TOTAL => 2
+                    &TESTDEF_NAME => 'upgrade',
+                    &TESTDEF_TOTAL => 2
                 },
             ]
         },
         # Archive tests
         {
-            &TESTDEF_MODULE_NAME => 'archive',
+            &TESTDEF_NAME => 'archive',
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 4,
-                    &TESTDEF_TEST_CONTAINER => true,
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_CONTAINER => true,
 
-                    &TESTDEF_TEST_COVERAGE =>
+                    &TESTDEF_COVERAGE =>
                     {
                         &TESTDEF_MODULE_ARCHIVE_COMMON => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'push-unit',
-                    &TESTDEF_TEST_TOTAL => 7,
-                    &TESTDEF_TEST_CONTAINER => true,
+                    &TESTDEF_NAME => 'push-unit',
+                    &TESTDEF_TOTAL => 7,
+                    &TESTDEF_CONTAINER => true,
 
-                    &TESTDEF_TEST_COVERAGE =>
+                    &TESTDEF_COVERAGE =>
                     {
                         &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
                         &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
@@ -269,33 +279,33 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'push',
-                    &TESTDEF_TEST_TOTAL => 8,
-                    &TESTDEF_TEST_PROCESS => true,
-                    &TESTDEF_TEST_INDIVIDUAL => true,
+                    &TESTDEF_NAME => 'push',
+                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_PROCESS => true,
+                    &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'stop',
-                    &TESTDEF_TEST_TOTAL => 6,
-                    &TESTDEF_TEST_INDIVIDUAL => true,
+                    &TESTDEF_NAME => 'stop',
+                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'get',
-                    &TESTDEF_TEST_TOTAL => 8,
-                    &TESTDEF_TEST_INDIVIDUAL => true,
+                    &TESTDEF_NAME => 'get',
+                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
             ]
         },
         # Backup tests
         {
-            &TESTDEF_MODULE_NAME => 'backup',
-            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_NAME => 'backup',
+            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => false,
 
-            &TESTDEF_TEST_COVERAGE =>
+            &TESTDEF_COVERAGE =>
             {
                 &TESTDEF_MODULE_BACKUP_COMMON => TESTDEF_COVERAGE_FULL,
             },
@@ -303,24 +313,24 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_TOTAL => 3,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'info-unit',
-                    &TESTDEF_TEST_TOTAL => 1,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'info-unit',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_INDIVIDUAL => false,
                 },
             ]
         },
         # Expire tests
         {
-            &TESTDEF_MODULE_NAME => 'expire',
-            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_NAME => 'expire',
+            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
-            &TESTDEF_TEST_COVERAGE =>
+            &TESTDEF_COVERAGE =>
             {
                 &TESTDEF_MODULE_EXPIRE => TESTDEF_COVERAGE_PARTIAL,
             },
@@ -328,27 +338,40 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'expire',
-                    &TESTDEF_TEST_TOTAL => 2,
+                    &TESTDEF_NAME => 'expire',
+                    &TESTDEF_TOTAL => 2,
                 },
             ]
         },
         # Info tests
         {
-            &TESTDEF_MODULE_NAME => 'info',
-            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_NAME => 'info',
+            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'unit',
-                    &TESTDEF_TEST_CONTAINER => true,
-                    &TESTDEF_TEST_INDIVIDUAL => false,
+                    &TESTDEF_NAME => 'ini-unit',
+                    &TESTDEF_CONTAINER => true,
+                    &TESTDEF_INDIVIDUAL => false,
                     &TESTDEF_EXPECT => false,
-                    &TESTDEF_TEST_TOTAL => 1,
+                    &TESTDEF_TOTAL => 10,
 
-                    &TESTDEF_TEST_COVERAGE =>
+                    &TESTDEF_COVERAGE =>
+                    {
+                        &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+
+                {
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_CONTAINER => true,
+                    &TESTDEF_INDIVIDUAL => false,
+                    &TESTDEF_EXPECT => false,
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
                     {
                         &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_PARTIAL,
                     },
@@ -357,22 +380,22 @@ my $oTestDef =
         },
         # Full tests
         {
-            &TESTDEF_MODULE_NAME => 'full',
-            &TESTDEF_TEST_CONTAINER => false,
+            &TESTDEF_NAME => 'full',
+            &TESTDEF_CONTAINER => false,
             &TESTDEF_EXPECT => true,
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_TEST_NAME => 'synthetic',
-                    &TESTDEF_TEST_TOTAL => 8,
-                    &TESTDEF_TEST_PROCESS => true
+                    &TESTDEF_NAME => 'synthetic',
+                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_PROCESS => true
                 },
                 {
-                    &TESTDEF_TEST_NAME => 'real',
-                    &TESTDEF_TEST_TOTAL => 11,
-                    &TESTDEF_TEST_PROCESS => true,
-                    &TESTDEF_TEST_DB => true
+                    &TESTDEF_NAME => 'real',
+                    &TESTDEF_TOTAL => 11,
+                    &TESTDEF_PROCESS => true,
+                    &TESTDEF_DB => true
                 }
             ]
         },
@@ -392,7 +415,7 @@ my $hCoverageList;                                                  # Tests requ
 foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 {
     # Push the module onto the ordered list
-    my $strModule = $hModule->{&TESTDEF_MODULE_NAME};
+    my $strModule = $hModule->{&TESTDEF_NAME};
     push(@stryModule, $strModule);
 
     # Iterate each test
@@ -401,32 +424,32 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
     foreach my $hModuleTest (@{$hModule->{&TESTDEF_TEST}})
     {
         # Push the test on the order list
-        my $strTest = $hModuleTest->{&TESTDEF_TEST_NAME};
+        my $strTest = $hModuleTest->{&TESTDEF_NAME};
         push(@stryModuleTest, $strTest);
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_TEST_CONTAINER, TESTDEF_EXPECT, TESTDEF_TEST_PROCESS, TESTDEF_TEST_DB, TESTDEF_TEST_INDIVIDUAL)
+            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_PROCESS, TESTDEF_DB, TESTDEF_INDIVIDUAL)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, coalesce($hModule->{$strVar}, false));
         }
 
         # Set test count
-        $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_TOTAL} = $hModuleTest->{&TESTDEF_TEST_TOTAL};
+        $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TOTAL} = $hModuleTest->{&TESTDEF_TOTAL};
 
         # Concatenate coverage for modules and tests
-        foreach my $hCoverage ($hModule->{&TESTDEF_TEST_COVERAGE}, $hModuleTest->{&TESTDEF_TEST_COVERAGE})
+        foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
         {
             foreach my $strCodeModule (sort(keys(%{$hCoverage})))
             {
-                if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_COVERAGE}{$strCodeModule}))
+                if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule}))
                 {
                     confess &log(ASSERT,
                         "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
                 }
 
-                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TEST_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
 
                 # Build coverage type hash and make sure coverage type does not change
                 if (!defined($hCoverageType->{$strCodeModule}))

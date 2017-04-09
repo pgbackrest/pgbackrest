@@ -159,9 +159,9 @@ sub process
     # Make sure the correct number of tests ran
     my $hModuleTest = testDefModuleTest($self->{strModule}, $self->{strModuleTest});
 
-    if ($hModuleTest->{&TESTDEF_TEST_TOTAL} != $self->runCurrent())
+    if ($hModuleTest->{&TESTDEF_TOTAL} != $self->runCurrent())
     {
-        confess &log(ASSERT, "expected $hModuleTest->{&TESTDEF_TEST_TOTAL} tests to run but $self->{iRun} ran");
+        confess &log(ASSERT, "expected $hModuleTest->{&TESTDEF_TOTAL} tests to run but $self->{iRun} ran");
     }
 
     # Return from function and log return values if any
@@ -486,7 +486,7 @@ sub testRunExe
     my $bLog = shift;
 
     # Limit Perl modules tested to what is defined in the test coverage (if it exists)
-    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_TEST_COVERAGE};
+    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
     my $strPerlModule;
     my $strPerlModuleLog;
 
