@@ -199,6 +199,24 @@ my $oTestDef =
                 }
             ]
         },
+        # Info tests
+        {
+            &TESTDEF_NAME => 'info',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+            ]
+        },
         # Stanza tests
         {
             &TESTDEF_NAME => 'stanza',
@@ -314,24 +332,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'expire',
                     &TESTDEF_TOTAL => 2,
-                },
-            ]
-        },
-        # Info tests
-        {
-            &TESTDEF_NAME => 'info',
-            &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 1,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_PARTIAL,
-                    },
                 },
             ]
         },
