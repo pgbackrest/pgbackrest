@@ -28,6 +28,7 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # new
@@ -56,7 +57,6 @@ sub new
         $self->{strLogLevel},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
-        $self->{strVmHost},
         $self->{bNoCleanup},
         $self->{iRetry},
     ) =
@@ -76,7 +76,6 @@ sub new
             {name => 'strLogLevel'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
-            {name => 'strVmHost'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
         );
@@ -166,12 +165,11 @@ sub run
         # Create command
         my $strCommand =
             ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-            ($self->{strVmHost} eq $self->{oTest}->{&TEST_VM} ? testRunExe(
+            (vmCoverage($self->{oTest}->{&TEST_VM}) ? testRunExe(
                 abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
                 $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
                 abs_path($0)) .
             " --test-path=${strVmTestPath}" .
-            " --vm-host=$self->{strVmHost}" .
             " --vm=$self->{oTest}->{&TEST_VM}" .
             " --vm-id=$self->{iVmIdx}" .
             " --module=" . $self->{oTest}->{&TEST_MODULE} .

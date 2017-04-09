@@ -115,7 +115,7 @@ my $bHelp = false;
 my $bQuiet = false;
 my $strDbVersion = 'minimal';
 my $bLogForce = false;
-my $strVm = VM_ALL;
+my $strVm;
 my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
@@ -234,15 +234,25 @@ eval
 
     if ($bCoverageOnly)
     {
-        if ($strVm eq VM_ALL)
+        if (!defined($strVm))
         {
             &log(INFO, "Set --vm=${strVmHost} for coverage testing");
             $strVm = $strVmHost;
         }
-        elsif ($strVm ne $strVmHost)
+        elsif ($strVm eq VM_ALL)
         {
-            confess &log(ERROR, "only --vm=${strVmHost} can be used for coverage testing");
+            confess &log(ERROR, "select a single Debian-based VM for coverage testing");
         }
+        elsif (!vmCoverage($strVm))
+        {
+            confess &log(ERROR, "only Debian-based VMs can be used for coverage testing");
+        }
+    }
+
+    # If VM is not defined then set it to all
+    if (!defined($strVm))
+    {
+        $strVm = VM_ALL;
     }
 
     # Get the base backrest path
@@ -650,8 +660,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
-                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $strVmHost, $bNoCleanup,
-                        $iRetry);
+                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry);
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -669,15 +678,19 @@ eval
         #-----------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if (($strVm eq VM_ALL || $strVm eq $strVmHost)  && !$bDryRun)
+        if (vmCoverage($strVm) && !$bDryRun)
         {
             &log(INFO, 'writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest('sudo ' . LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest(
+                'sudo ' . LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp",
+                {bSuppressStdErr => true});
             executeTest("sudo rm -rf ${strCoveragePath}_temp");
             executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest('sudo ' . LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest(
+                'sudo ' . LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp",
+                {bSuppressStdErr => true});
             executeTest("sudo rm -rf ${strCoveragePath}_temp");
 
             # Determine which modules were covered (only check coverage if all tests were successful)
@@ -689,21 +702,18 @@ eval
                 # Build a hash of all modules, tests, and runs that were executed
                 foreach my $hTestRun (@{$oyTestRun})
                 {
-                    if ($hTestRun->{&TEST_VM} eq $strVmHost)
+                    # Get coverage for the module
+                    my $strModule = $hTestRun->{&TEST_MODULE};
+                    my $hModule = testDefModule($strModule);
+
+                    # Get coverage for the test
+                    my $strTest = $hTestRun->{&TEST_NAME};
+                    my $hTest = testDefModuleTest($strModule, $strTest);
+
+                    # If no tests are listed it means all of them were run
+                    if (@{$hTestRun->{&TEST_RUN}} == 0)
                     {
-                        # Get coverage for the module
-                        my $strModule = $hTestRun->{&TEST_MODULE};
-                        my $hModule = testDefModule($strModule);
-
-                        # Get coverage for the test
-                        my $strTest = $hTestRun->{&TEST_NAME};
-                        my $hTest = testDefModuleTest($strModule, $strTest);
-
-                        # If no tests are listed it means all of them were run
-                        if (@{$hTestRun->{&TEST_RUN}} == 0)
-                        {
-                            $hModuleTest->{$strModule}{$strTest} = true;
-                        }
+                        $hModuleTest->{$strModule}{$strTest} = true;
                     }
                 }
 
@@ -823,7 +833,7 @@ eval
 
     # Run the test
     testRun($stryModule[0], $stryModuleTest[0])->process(
-        $strVm, $strVmHost, $iVmId,                                 # Vm info
+        $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable

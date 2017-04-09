@@ -22,6 +22,7 @@ use pgBackRest::Common::Wait;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Constant to use when bogus data is required
@@ -104,7 +105,6 @@ sub process
     (
         my $strOperation,
         $self->{strVm},
-        $self->{strVmHost},
         $self->{iVmId},
         $self->{strBasePath},
         $self->{strTestPath},
@@ -127,7 +127,6 @@ sub process
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'strVm'},
-            {name => 'strVmHost'},
             {name => 'iVmId'},
             {name => 'strBasePath'},
             {name => 'strTestPath'},
@@ -159,9 +158,9 @@ sub process
     # Make sure the correct number of tests ran
     my $hModuleTest = testDefModuleTest($self->{strModule}, $self->{strModuleTest});
 
-    if ($hModuleTest->{&TESTDEF_TEST_TOTAL} != $self->runCurrent())
+    if ($hModuleTest->{&TESTDEF_TOTAL} != $self->runCurrent())
     {
-        confess &log(ASSERT, "expected $hModuleTest->{&TESTDEF_TEST_TOTAL} tests to run but $self->{iRun} ran");
+        confess &log(ASSERT, "expected $hModuleTest->{&TESTDEF_TOTAL} tests to run but $self->{iRun} ran");
     }
 
     # Return from function and log return values if any
@@ -486,7 +485,7 @@ sub testRunExe
     my $bLog = shift;
 
     # Limit Perl modules tested to what is defined in the test coverage (if it exists)
-    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_TEST_COVERAGE};
+    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
     my $strPerlModule;
     my $strPerlModuleLog;
 
@@ -527,7 +526,7 @@ sub backrestExe {return shift->{strBackRestExe}}
 sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {my $self = shift; return $self->{strVm} eq $self->{strVmHost}}
+sub coverage {vmBaseTest(shift->{strVm}, VM_OS_BASE_DEBIAN)}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}

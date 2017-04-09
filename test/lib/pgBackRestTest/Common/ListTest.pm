@@ -95,7 +95,7 @@ sub testListGet
                             $strDbVersionKey = &VM_DB_MINIMAL;
                         }
 
-                        if (defined($$oTest{&TESTDEF_TEST_DB}) && $$oTest{&TESTDEF_TEST_DB})
+                        if (defined($$oTest{&TESTDEF_DB}) && $$oTest{&TESTDEF_DB})
                         {
                             $iDbVersionMin = 0;
                             $iDbVersionMax = @{$$oyVm{$strTestOS}{$strDbVersionKey}} - 1;
@@ -111,10 +111,10 @@ sub testListGet
                             {
                                 # Individual tests will be each be run in a separate container.  This is the default.
                                 my $bTestIndividual =
-                                    !defined($$oTest{&TESTDEF_TEST_INDIVIDUAL}) || $$oTest{&TESTDEF_TEST_INDIVIDUAL} ? true : false;
+                                    !defined($$oTest{&TESTDEF_INDIVIDUAL}) || $$oTest{&TESTDEF_INDIVIDUAL} ? true : false;
 
                                 my $iTestRunMin = $bTestIndividual ? 1 : -1;
-                                my $iTestRunMax = $bTestIndividual ? $$oTest{&TESTDEF_TEST_TOTAL} : -1;
+                                my $iTestRunMax = $bTestIndividual ? $$oTest{&TESTDEF_TOTAL} : -1;
 
                                 for (my $iTestRunIdx = $iTestRunMin; $iTestRunIdx <= $iTestRunMax; $iTestRunIdx++)
                                 {
@@ -124,11 +124,11 @@ sub testListGet
                                             !grep(/^$iTestRunIdx$/i, @{$iyModuleTestRun}));
 
                                     # Skip this run if only coverage tests are requested and this test does not provide coverage
-                                    next if ($bCoverageOnly && !defined($oTest->{&TESTDEF_TEST_COVERAGE}));
+                                    next if ($bCoverageOnly && !defined($oTest->{&TESTDEF_COVERAGE}));
 
                                     my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];
 
-                                    if (defined($$oTest{&TESTDEF_TEST_PROCESS}) && $$oTest{&TESTDEF_TEST_PROCESS} &&
+                                    if (defined($$oTest{&TESTDEF_PROCESS}) && $$oTest{&TESTDEF_PROCESS} &&
                                         !defined($iProcessMax) && $bFirstDbVersion)
                                     {
                                         $iyProcessMax = [1, 4];
@@ -153,8 +153,8 @@ sub testListGet
                                         my $oTestRun =
                                         {
                                             &TEST_VM => $strTestOS,
-                                            &TEST_CONTAINER => defined($oTest->{&TESTDEF_TEST_CONTAINER}) ?
-                                                $oTest->{&TESTDEF_TEST_CONTAINER} : $oModule->{&TESTDEF_TEST_CONTAINER},
+                                            &TEST_CONTAINER => defined($oTest->{&TESTDEF_CONTAINER}) ?
+                                                $oTest->{&TESTDEF_CONTAINER} : $oModule->{&TESTDEF_CONTAINER},
                                             &TEST_PGSQL_BIN => $strPgSqlBin,
                                             &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
                                             &TEST_MODULE => $strModule,
