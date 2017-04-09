@@ -671,7 +671,7 @@ eval
 
         if (($strVm eq VM_ALL || $strVm eq $strVmHost)  && !$bDryRun)
         {
-            &log(INFO, 'Writing coverage report');
+            &log(INFO, 'writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
             executeTest('sudo ' . LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
@@ -713,7 +713,8 @@ eval
 
                 # Now compare against code modules that should have full coverage
                 my $hCoverageList = testDefCoverageList();
-                my @stryCoverageActual;
+                my $hCoverageType = testDefCoverageType();
+                my $hCoverageActual;
 
                 foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
                 {
@@ -733,21 +734,21 @@ eval
 
                         if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
                         {
-                            push(@stryCoverageActual, $strCodeModule);
+                            $hCoverageActual->{$strCodeModule} = $hCoverageType->{$strCodeModule};
                         }
                     }
                 }
 
-                if (@stryCoverageActual > 0)
+                if (keys(%{$hCoverageActual}) > 0)
                 {
-                    &log(INFO, 'Verify full coverage for: ' . join(', ', @stryCoverageActual));
+                    &log(INFO, 'test coverage for: ' . join(', ', sort(keys(%{$hCoverageActual}))));
                 }
                 else
                 {
-                    &log(INFO, 'No code modules to verify full coverage for');
+                    &log(INFO, 'no code modules had all tests run required for coverage');
                 }
 
-                foreach my $strCodeModule (@stryCoverageActual)
+                foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
                     # Get summary results (??? Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
                     my $hCoverageResultAll =
@@ -760,13 +761,33 @@ eval
                     }
 
                     # Check that all code has been covered
-                    my $iUncoveredLines =
-                        $hCoverageResultAll->{total} - $hCoverageResultAll->{covered} - $hCoverageResultAll->{uncoverable};
-
-                    if ($iUncoveredLines != 0)
+                    if ($hCoverageActual->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
                     {
-                        &log(ERROR, "code module ${strCodeModule} it not fully covered");
-                        $iUncoveredCodeModuleTotal++;
+                        my $iUncoveredLines =
+                            $hCoverageResultAll->{total} - $hCoverageResultAll->{covered} - $hCoverageResultAll->{uncoverable};
+
+                        if ($iUncoveredLines != 0)
+                        {
+                            &log(ERROR, "code module ${strCodeModule} it not fully covered");
+                            $iUncoveredCodeModuleTotal++;
+                        }
+                    }
+                    # Else test how much partial coverage where was
+                    else
+                    {
+                        my $iCoveragePercent = int(
+                            ($hCoverageResultAll->{covered} + $hCoverageResultAll->{uncoverable}) * 100 /
+                                $hCoverageResultAll->{total});
+
+                        if ($iCoveragePercent == 100)
+                        {
+                            &log(ERROR, "code module ${strCodeModule} has 100% coverage and should be marked fully covered");
+                            $iUncoveredCodeModuleTotal++;
+                        }
+                        else
+                        {
+                            &log(INFO, "code module ${strCodeModule} has (expected) partial coverage of ${iCoveragePercent}%");
+                        }
                     }
                 }
             }

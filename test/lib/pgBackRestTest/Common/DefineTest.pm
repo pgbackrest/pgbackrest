@@ -265,7 +265,7 @@ my $oTestDef =
                     {
                         &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
                         &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
-                        &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_PARTIAL,
+                        &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {
@@ -439,10 +439,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
                 }
 
                 # Add to coverage list
-                if ($hCoverageType->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
-                {
-                    push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
-                }
+                push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
             }
         }
     }
@@ -512,6 +509,16 @@ sub testDefModuleTest
 }
 
 push @EXPORT, qw(testDefModuleTest);
+
+####################################################################################################################################
+# testDefCoverageType
+####################################################################################################################################
+sub testDefCoverageType
+{
+    return $hCoverageType;
+}
+
+push @EXPORT, qw(testDefCoverageType);
 
 ####################################################################################################################################
 # testDefCoverageList
