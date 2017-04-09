@@ -683,10 +683,14 @@ eval
             &log(INFO, 'writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest('sudo ' . LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest(
+                'sudo ' . LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp",
+                {bSuppressStdErr => true});
             executeTest("sudo rm -rf ${strCoveragePath}_temp");
             executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest('sudo ' . LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest(
+                'sudo ' . LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp",
+                {bSuppressStdErr => true});
             executeTest("sudo rm -rf ${strCoveragePath}_temp");
 
             # Determine which modules were covered (only check coverage if all tests were successful)
