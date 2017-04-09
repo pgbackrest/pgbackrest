@@ -17,6 +17,7 @@ $SIG{__DIE__} = sub { Carp::confess @_ };
 use File::Basename qw(dirname);
 use Getopt::Long qw(GetOptions);
 use Cwd qw(abs_path cwd);
+use JSON::PP;
 use Pod::Usage qw(pod2usage);
 use POSIX qw(ceil strftime);
 use Time::HiRes qw(gettimeofday);
@@ -39,6 +40,7 @@ use BackRestDoc::Custom::DocCustomRelease;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::CiTest;
+use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::JobTest;
@@ -69,11 +71,11 @@ test.pl [options]
    --log-force          force overwrite of current test log files
    --no-lint            disable static source code analysis
    --build-only         compile the C library / packages and run tests only
-   --coverage           perform coverage analysis
+   --coverage-only      only run coverage tests (as a subset of selected tests)
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --vm-out --process-max=1 --retry=0 --ci-no-config
+   --dev                --no-lint --smart --no-package --vm-out --process-max=1
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -119,7 +121,7 @@ my $bVmBuild = false;
 my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
-my $bCoverage = false;
+my $bCoverageOnly = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -151,7 +153,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'build-only' => \$bBuildOnly,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
-            'coverage' => \$bCoverage,
+            'coverage-only' => \$bCoverageOnly,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'retry=s' => \$iRetry)
@@ -190,7 +192,6 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $bNoCiConfig = true;
         $bVmOut = true;
         $iProcessMax = 1;
     }
@@ -231,8 +232,7 @@ eval
         $strTestPath = cwd() . '/test';
     }
 
-    # Coverage can only be run with u16 containers due to version compatibility issues
-    if ($bCoverage)
+    if ($bCoverageOnly)
     {
         if ($strVm eq VM_ALL)
         {
@@ -572,7 +572,7 @@ eval
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverage);
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverageOnly);
 
         if (@{$oyTestRun} == 0)
         {
@@ -650,7 +650,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
-                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bCoverage, $bNoCleanup,
+                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $strVmHost, $bNoCleanup,
                         $iRetry);
                     $iTestIdx++;
 
@@ -665,18 +665,132 @@ eval
         }
         while ($iVmTotal > 0);
 
-        # Write out coverage info
+        # Write out coverage info and test coverage
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bCoverage)
+        my $iUncoveredCodeModuleTotal = 0;
+
+        if (($strVm eq VM_ALL || $strVm eq $strVmHost)  && !$bDryRun)
         {
-            &log(INFO, 'Writing coverage report');
+            &log(INFO, 'writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
             executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest("cover -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
-            executeTest("rm -rf ${strCoveragePath}_temp");
-            executeTest("cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
-            executeTest("cover -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
-            executeTest("rm -rf ${strCoveragePath}_temp");
+            executeTest('sudo ' . LIB_COVER_EXE . " -report json -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest("sudo rm -rf ${strCoveragePath}_temp");
+            executeTest("sudo cp -rp ${strCoveragePath} ${strCoveragePath}_temp");
+            executeTest('sudo ' . LIB_COVER_EXE . " -outputdir ${strBackRestBase}/test/coverage ${strCoveragePath}_temp");
+            executeTest("sudo rm -rf ${strCoveragePath}_temp");
+
+            # Determine which modules were covered (only check coverage if all tests were successful)
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($iTestFail == 0)
+            {
+                my $hModuleTest;                                        # Everything that was run
+
+                # Build a hash of all modules, tests, and runs that were executed
+                foreach my $hTestRun (@{$oyTestRun})
+                {
+                    if ($hTestRun->{&TEST_VM} eq $strVmHost)
+                    {
+                        # Get coverage for the module
+                        my $strModule = $hTestRun->{&TEST_MODULE};
+                        my $hModule = testDefModule($strModule);
+
+                        # Get coverage for the test
+                        my $strTest = $hTestRun->{&TEST_NAME};
+                        my $hTest = testDefModuleTest($strModule, $strTest);
+
+                        # If no tests are listed it means all of them were run
+                        if (@{$hTestRun->{&TEST_RUN}} == 0)
+                        {
+                            $hModuleTest->{$strModule}{$strTest} = true;
+                        }
+                    }
+                }
+
+                # Load the results of coverage testing from JSON
+                my $oJSON = JSON::PP->new()->allow_nonref();
+                my $hCoverageResult = $oJSON->decode(fileStringRead("${strBackRestBase}/test/coverage/cover.json"));
+
+                # Now compare against code modules that should have full coverage
+                my $hCoverageList = testDefCoverageList();
+                my $hCoverageType = testDefCoverageType();
+                my $hCoverageActual;
+
+                foreach my $strCodeModule (sort(keys(%{$hCoverageList})))
+                {
+                    if (@{$hCoverageList->{$strCodeModule}} > 0)
+                    {
+                        my $iCoverageTotal = 0;
+
+                        foreach my $hTest (@{$hCoverageList->{$strCodeModule}})
+                        {
+                            if (!defined($hModuleTest->{$hTest->{strModule}}{$hTest->{strTest}}))
+                            {
+                                next;
+                            }
+
+                            $iCoverageTotal++;
+                        }
+
+                        if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
+                        {
+                            $hCoverageActual->{$strCodeModule} = $hCoverageType->{$strCodeModule};
+                        }
+                    }
+                }
+
+                if (keys(%{$hCoverageActual}) > 0)
+                {
+                    &log(INFO, 'test coverage for: ' . join(', ', sort(keys(%{$hCoverageActual}))));
+                }
+                else
+                {
+                    &log(INFO, 'no code modules had all tests run required for coverage');
+                }
+
+                foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
+                {
+                    # Get summary results (??? Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
+                    my $hCoverageResultAll =
+                        $hCoverageResult->{'summary'}
+                            {"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"}{total};
+
+                    if (!defined($hCoverageResultAll))
+                    {
+                        confess &log(ERROR, "unable to find coverage results for ${strCodeModule}");
+                    }
+
+                    # Check that all code has been covered
+                    if ($hCoverageActual->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
+                    {
+                        my $iUncoveredLines =
+                            $hCoverageResultAll->{total} - $hCoverageResultAll->{covered} - $hCoverageResultAll->{uncoverable};
+
+                        if ($iUncoveredLines != 0)
+                        {
+                            &log(ERROR, "code module ${strCodeModule} it not fully covered");
+                            $iUncoveredCodeModuleTotal++;
+                        }
+                    }
+                    # Else test how much partial coverage where was
+                    else
+                    {
+                        my $iCoveragePercent = int(
+                            ($hCoverageResultAll->{covered} + $hCoverageResultAll->{uncoverable}) * 100 /
+                                $hCoverageResultAll->{total});
+
+                        if ($iCoveragePercent == 100)
+                        {
+                            &log(ERROR, "code module ${strCodeModule} has 100% coverage and should be marked fully covered");
+                            $iUncoveredCodeModuleTotal++;
+                        }
+                        else
+                        {
+                            &log(INFO, "code module ${strCodeModule} has (expected) partial coverage of ${iCoveragePercent}%");
+                        }
+                    }
+                }
+            }
         }
 
         # Print test info and exit
@@ -687,12 +801,16 @@ eval
         }
         else
         {
-            &log(INFO, 'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' : "WITH ${iTestFail} FAILURE(S)") .
-                       ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
-                       ' (' . (time() - $lStartTime) . 's)');
+            &log(INFO,
+                'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' .
+                    ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
+                "WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
+                    ' (' . (time() - $lStartTime) . 's)');
+
+            exit 1 if ($iTestFail > 0 || $iUncoveredCodeModuleTotal > 0);
         }
 
-        exit $iTestFail == 0 ? 0 : 1;
+        exit 0;
     }
 
     ################################################################################################################################
@@ -705,7 +823,7 @@ eval
 
     # Run the test
     testRun($stryModule[0], $stryModuleTest[0])->process(
-        $strVm, $iVmId,                                             # Vm info
+        $strVm, $strVmHost, $iVmId,                                 # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable
@@ -713,7 +831,6 @@ eval
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
-        $bCoverage,                                                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)

@@ -51,9 +51,9 @@ sub testListGet
     my $iyModuleTestRun = shift;
     my $strDbVersion = shift;
     my $iProcessMax = shift;
-    my $bCoverage = shift;
+    my $bCoverageOnly = shift;
 
-    my $oTestDef = testDefGet();
+    # my $oTestDef = testDefGet();
     my $oyVm = vmGet();
     my $oyTestRun = [];
 
@@ -71,13 +71,17 @@ sub testListGet
 
     foreach my $strTestOS (@stryTestOS)
     {
-        foreach my $oModule (@{$$oTestDef{&TESTDEF_MODULE}})
+        foreach my $strModule (testDefModuleList())
         {
-            if (@{$stryModule} == 0 || grep(/^$$oModule{&TESTDEF_MODULE_NAME}$/i, @{$stryModule}))
+            my $oModule = testDefModule($strModule);
+
+            if (@{$stryModule} == 0 || grep(/^$strModule$/i, @{$stryModule}))
             {
-                foreach my $oTest (@{$$oModule{test}})
+                foreach my $strModuleTest (testDefModuleTestList($strModule))
                 {
-                    if (@{$stryModuleTest} == 0 || grep(/^$$oTest{&TESTDEF_TEST_NAME}$/i, @{$stryModuleTest}))
+                    my $oTest = testDefModuleTest($strModule, $strModuleTest);
+
+                    if (@{$stryModuleTest} == 0 || grep(/^$strModuleTest$/i, @{$stryModuleTest}))
                     {
                         my $iDbVersionMin = -1;
                         my $iDbVersionMax = -1;
@@ -119,12 +123,8 @@ sub testListGet
                                         $bTestIndividual && @{$iyModuleTestRun} != 0 &&
                                             !grep(/^$iTestRunIdx$/i, @{$iyModuleTestRun}));
 
-                                    # Skip this run if coverage is requested and this test does not provide coverage
-                                    next if (
-                                        $bCoverage &&
-                                        (($bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}{$iTestRunIdx})) ||
-                                         (!$bTestIndividual && !defined($oTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL}))) &&
-                                        !defined($oModule->{&TESTDEF_TEST_COVERAGE}));
+                                    # Skip this run if only coverage tests are requested and this test does not provide coverage
+                                    next if ($bCoverageOnly && !defined($oTest->{&TESTDEF_TEST_COVERAGE}));
 
                                     my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];
 
@@ -157,8 +157,8 @@ sub testListGet
                                                 $oTest->{&TESTDEF_TEST_CONTAINER} : $oModule->{&TESTDEF_TEST_CONTAINER},
                                             &TEST_PGSQL_BIN => $strPgSqlBin,
                                             &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
-                                            &TEST_MODULE => $$oModule{&TESTDEF_MODULE_NAME},
-                                            &TEST_NAME => $$oTest{&TESTDEF_TEST_NAME},
+                                            &TEST_MODULE => $strModule,
+                                            &TEST_NAME => $strModuleTest,
                                             &TEST_RUN =>
                                                 $iTestRunIdx == -1 ? (@{$iyModuleTestRun} == 0 ? undef : $iyModuleTestRun) :
                                                     [$iTestRunIdx],
