@@ -660,8 +660,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
-                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $strVmHost, $bNoCleanup,
-                        $iRetry);
+                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry);
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -830,7 +829,7 @@ eval
 
     # Run the test
     testRun($stryModule[0], $stryModuleTest[0])->process(
-        $strVm, $strVmHost, $iVmId,                                 # Vm info
+        $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable

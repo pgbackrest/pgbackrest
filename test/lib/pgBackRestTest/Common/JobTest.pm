@@ -57,7 +57,6 @@ sub new
         $self->{strLogLevel},
         $self->{bLogForce},
         $self->{bShowOutputAsync},
-        $self->{strVmHost},
         $self->{bNoCleanup},
         $self->{iRetry},
     ) =
@@ -77,7 +76,6 @@ sub new
             {name => 'strLogLevel'},
             {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
-            {name => 'strVmHost'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
         );
@@ -172,7 +170,6 @@ sub run
                 $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
                 abs_path($0)) .
             " --test-path=${strVmTestPath}" .
-            " --vm-host=$self->{strVmHost}" .
             " --vm=$self->{oTest}->{&TEST_VM}" .
             " --vm-id=$self->{iVmIdx}" .
             " --module=" . $self->{oTest}->{&TEST_MODULE} .

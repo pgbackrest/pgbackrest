@@ -105,7 +105,6 @@ sub process
     (
         my $strOperation,
         $self->{strVm},
-        $self->{strVmHost},
         $self->{iVmId},
         $self->{strBasePath},
         $self->{strTestPath},
@@ -128,7 +127,6 @@ sub process
         (
             __PACKAGE__ . '->process', \@_,
             {name => 'strVm'},
-            {name => 'strVmHost'},
             {name => 'iVmId'},
             {name => 'strBasePath'},
             {name => 'strTestPath'},
