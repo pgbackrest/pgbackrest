@@ -355,10 +355,7 @@ my $oTestDef =
 
                     &TESTDEF_TEST_COVERAGE =>
                     {
-                        &TESTDEF_TEST_ALL =>
-                        {
-                            &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
-                        }
+                        &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
                     },
                 },
 

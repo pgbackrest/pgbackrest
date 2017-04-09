@@ -95,6 +95,10 @@ sub run
 
         $self->testResult(
             sub {iniParse($strIni, {bRelaxed => true})}, '{section => {key => (value1, value2, value3)}}', 'relaxed array read');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        # $self->testResult(
+        #     sub {iniParse("[section]\nkey=\"value1\"", {bRelaxed => false})}, '[undef]', 'relaxed read of empty data');
     }
 
     ################################################################################################################################

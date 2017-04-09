@@ -289,7 +289,7 @@ sub iniParse
         }
 
         # Error if the file is empty
-        if (!$bRelaxed && !defined($oContent))
+        if (!($bRelaxed || defined($oContent)))
         {
             confess &log(ERROR, 'no key/value pairs found', ERROR_CONFIG);
         }
