@@ -22,6 +22,7 @@ use pgBackRest::Common::Wait;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Constant to use when bogus data is required
@@ -527,7 +528,7 @@ sub backrestExe {return shift->{strBackRestExe}}
 sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {my $self = shift; return $self->{strVm} eq $self->{strVmHost}}
+sub coverage {vmBaseTest(shift->{strVm}, VM_OS_BASE_DEBIAN)}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}

@@ -275,4 +275,17 @@ sub vmGet
 
 push @EXPORT, qw(vmGet);
 
+####################################################################################################################################
+# vmBaseTest
+####################################################################################################################################
+sub vmBaseTest
+{
+    my $strVm = shift;
+    my $strDistroTest = shift;
+
+    return $oyVm->{$strVm}{&VM_OS_BASE} eq $strDistroTest ? true : false;
+}
+
+push @EXPORT, qw(vmBaseTest);
+
 1;

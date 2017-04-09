@@ -28,6 +28,7 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # new
@@ -166,7 +167,7 @@ sub run
         # Create command
         my $strCommand =
             ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-            ($self->{strVmHost} eq $self->{oTest}->{&TEST_VM} ? testRunExe(
+            (vmBaseTest($self->{oTest}->{&TEST_VM}, VM_OS_BASE_DEBIAN) ? testRunExe(
                 abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
                 $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
                 abs_path($0)) .

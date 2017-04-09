@@ -115,7 +115,7 @@ my $bHelp = false;
 my $bQuiet = false;
 my $strDbVersion = 'minimal';
 my $bLogForce = false;
-my $strVm = VM_ALL;
+my $strVm;
 my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
@@ -234,15 +234,25 @@ eval
 
     if ($bCoverageOnly)
     {
-        if ($strVm eq VM_ALL)
+        if (!defined($strVm))
         {
             &log(INFO, "Set --vm=${strVmHost} for coverage testing");
             $strVm = $strVmHost;
         }
-        elsif ($strVm ne $strVmHost)
+        elsif ($strVm eq VM_ALL)
         {
-            confess &log(ERROR, "only --vm=${strVmHost} can be used for coverage testing");
+            confess &log(ERROR, "select a single Debian-based VM for coverage testing");
         }
+        elsif (!vmBaseTest($strVm, VM_OS_BASE_DEBIAN))
+        {
+            confess &log(ERROR, "only Debian-based VMs can be used for coverage testing");
+        }
+    }
+
+    # If VM is not defined then set it to all
+    if (!defined($strVm))
+    {
+        $strVm = VM_ALL;
     }
 
     # Get the base backrest path
@@ -669,7 +679,7 @@ eval
         #-----------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
-        if (($strVm eq VM_ALL || $strVm eq $strVmHost)  && !$bDryRun)
+        if (vmBaseTest($strVm, VM_OS_BASE_DEBIAN)  && !$bDryRun)
         {
             &log(INFO, 'writing coverage report');
             executeTest("rm -rf ${strBackRestBase}/test/coverage");
@@ -689,21 +699,18 @@ eval
                 # Build a hash of all modules, tests, and runs that were executed
                 foreach my $hTestRun (@{$oyTestRun})
                 {
-                    if ($hTestRun->{&TEST_VM} eq $strVmHost)
+                    # Get coverage for the module
+                    my $strModule = $hTestRun->{&TEST_MODULE};
+                    my $hModule = testDefModule($strModule);
+
+                    # Get coverage for the test
+                    my $strTest = $hTestRun->{&TEST_NAME};
+                    my $hTest = testDefModuleTest($strModule, $strTest);
+
+                    # If no tests are listed it means all of them were run
+                    if (@{$hTestRun->{&TEST_RUN}} == 0)
                     {
-                        # Get coverage for the module
-                        my $strModule = $hTestRun->{&TEST_MODULE};
-                        my $hModule = testDefModule($strModule);
-
-                        # Get coverage for the test
-                        my $strTest = $hTestRun->{&TEST_NAME};
-                        my $hTest = testDefModuleTest($strModule, $strTest);
-
-                        # If no tests are listed it means all of them were run
-                        if (@{$hTestRun->{&TEST_RUN}} == 0)
-                        {
-                            $hModuleTest->{$strModule}{$strTest} = true;
-                        }
+                        $hModuleTest->{$strModule}{$strTest} = true;
                     }
                 }
 
