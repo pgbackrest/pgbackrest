@@ -457,17 +457,19 @@ eval
                         ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
                         "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                         ($bContainerExists ? "'" : ''),
-                        {bShowOutputAsync => $bLogDetail});
+                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath}",
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                        "make -C ${strBuildPath} test", {bShowOutputAsync => $bLogDetail});
+                        "make -C ${strBuildPath} test",
+                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : 'sudo ') .
-                        "make -C ${strBuildPath} install", {bShowOutputAsync => $bLogDetail});
+                        "make -C ${strBuildPath} install",
+                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
 
                     if ($bContainerExists)
                     {
@@ -476,7 +478,7 @@ eval
 
                     if ($strBuildVM eq $strVmHost)
                     {
-                        executeTest("sudo make -C ${strBuildPath} install");
+                        executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
 
                         # Load the module dynamically
                         require pgBackRest::LibC;
