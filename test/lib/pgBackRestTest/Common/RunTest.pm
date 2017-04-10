@@ -17,6 +17,7 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 
 use pgBackRestTest::Common::DefineTest;
@@ -285,6 +286,7 @@ sub testResult
         $strExpected,
         $strDescription,
         $iWaitSeconds,
+        $strLogExpect,
     ) =
         logDebugParam
         (
@@ -293,19 +295,27 @@ sub testResult
             {name => 'strExpected', required => false, trace => true},
             {name => 'strDescription', trace => true},
             {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
+            {name => 'strLogExpect', optional => true, trace => true},
         );
 
     &log(INFO, '    ' . $strDescription);
     my $strActual;
+    my $bWarnValid = true;
 
     my $oWait = waitInit($iWaitSeconds);
     my $bDone = false;
+
+    # Save the current log levels and set the file level to warn, console to off and timestamp false
+    my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
+    logLevelSet(WARN, OFF, undef, false);
+
+    # Clear the cache for this test
+    logFileCacheClear();
 
     do
     {
         eval
         {
-            logDisable();
             my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
             if (@stryResult <= 1)
@@ -317,12 +327,14 @@ sub testResult
                 $strActual = ${logDebugBuild(\@stryResult)};
             }
 
-            logEnable();
+            # Restore the log level
+            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
             return true;
         }
         or do
         {
-            logEnable();
+            # Restore the log level
+            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
 
             if (!isException($EVAL_ERROR))
             {
@@ -346,6 +358,23 @@ sub testResult
             $bDone = true;
         }
     } while (!$bDone);
+
+    # If we get here then test any warning message
+    if (defined($strLogExpect))
+    {
+        my $strLogMessage = trim(logFileCache());
+
+        # Strip leading Process marker and whitespace from each line
+        $strLogMessage =~ s/^(P[0-9]{2})*\s+//mg;
+
+        # If the expected message does not exactly match the logged message or is not at least contained in it, then error
+        if (!($strLogMessage eq $strLogExpect || $strLogMessage =~ $strLogExpect))
+        {
+            confess &log(ERROR,
+                "the log message:\n$strLogMessage\ndoes not match or does not contain the expected message:\n" .
+                $strLogExpect);
+        }
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
