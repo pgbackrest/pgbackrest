@@ -11,6 +11,7 @@ use parent 'pgBackRest::Common::Ini';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
 use File::Basename qw(dirname basename);
@@ -22,11 +23,11 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 
 ####################################################################################################################################
@@ -41,11 +42,11 @@ use constant ARCHIVE_INFO_FILE                                      => 'archive.
 use constant INFO_ARCHIVE_SECTION_DB                                => INFO_BACKUP_SECTION_DB;
     push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
 use constant INFO_ARCHIVE_SECTION_DB_HISTORY                        => INFO_BACKUP_SECTION_DB_HISTORY;
-    push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB);
+    push @EXPORT, qw(INFO_ARCHIVE_SECTION_DB_HISTORY);
 
 use constant INFO_ARCHIVE_KEY_DB_VERSION                            => MANIFEST_KEY_DB_VERSION;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_VERSION);
-use constant INFO_ARCHIVE_KEY_DB_ID                                 => INFO_BACKUP_KEY_HISTORY_ID;
+use constant INFO_ARCHIVE_KEY_DB_ID                                 => MANIFEST_KEY_DB_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_ID);
 use constant INFO_ARCHIVE_KEY_DB_SYSTEM_ID                          => MANIFEST_KEY_SYSTEM_ID;
     push @EXPORT, qw(INFO_ARCHIVE_KEY_DB_SYSTEM_ID);
@@ -249,15 +250,27 @@ sub reconstruct
 
     my $strInvalidFileStructure = undef;
 
-    # Get the upper level directory names, e.g. 9.4-1 - don't error if can't find anything
-    foreach my $strVersionDir (fileList($self->{strArchiveClusterPath}, REGEX_ARCHIVE_DIR_DB_VERSION, 'forward', true))
+    my @stryArchiveId = fileList(
+        $self->{strArchiveClusterPath}, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
+    my %hDbHistoryVersion;
+
+    # Get the db-version and db-id (history id) from the upper level directory names, e.g. 9.4-1
+    foreach my $strArchiveId (@stryArchiveId)
     {
-        # Get the db-version and db-id (history id) from the directory name
-        my ($strDbVersion, $iDbHistoryId) = split("-", $strVersionDir);
+        my ($strDbVersion, $iDbHistoryId) = split("-", $strArchiveId);
+        $hDbHistoryVersion{$iDbHistoryId} = $strDbVersion;
+    }
+
+    # Loop through the DBs in the order they were created as indicated by the db-id so that the last one is set in the db section
+    foreach my $iDbHistoryId (sort {$a <=> $b} keys %hDbHistoryVersion)
+    {
+        my $strDbVersion = $hDbHistoryVersion{$iDbHistoryId};
+        my $strVersionDir = $strDbVersion . "-" . $iDbHistoryId;
 
         # Get the name of the first archive directory
-        my $strArchiveDir =
-            (fileList($self->{strArchiveClusterPath}."/${strVersionDir}", REGEX_ARCHIVE_DIR_WAL, 'forward', true))[0];
+        my $strArchiveDir = (fileList(
+            $self->{strArchiveClusterPath} . "/${strVersionDir}",
+            {strExpression => REGEX_ARCHIVE_DIR_WAL, bIgnoreMissing => true}))[0];
 
         # Continue if any file structure or missing files info
         if (!defined($strArchiveDir))
@@ -267,9 +280,10 @@ sub reconstruct
         }
 
         # ??? Should probably make a function in ArchiveCommon
-        my $strArchiveFile =
-            (fileList($self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
-            "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$", 'forward', true))[0];
+        my $strArchiveFile = (fileList(
+            $self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
+            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$",
+                bIgnoreMissing => true}))[0];
 
         # Continue if any file structure or missing files info
         if (!defined($strArchiveFile))
@@ -293,7 +307,7 @@ sub reconstruct
 
         if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
         {
-            gunzip $hFile => \$tBlock
+            gunzip($hFile => \$tBlock)
                 or confess &log(ERROR,
                     "gunzip failed with error: " . $GunzipError .
                     " on file ${strArchiveFilePath}", ERROR_FILE_READ);
@@ -315,17 +329,38 @@ sub reconstruct
             confess &log(ERROR, "unable to read database system identifier", ERROR_FILE_READ);
         }
 
-        # ??? For stanza-upgrade, need to test that the history does not already exist
         # Fill db section and db history section
         $self->dbSectionSet($strDbVersion, $ullDbSysId, $iDbHistoryId);
     }
 
-    # ??? This is a precursor for stanza-upgrade: If the DB section does not exist, then there were no valid directories to read
-    # from so create the file. Can't raise warning b/c log-log-level console in calling routine is turned off -- determine how to
-    # handle cases above where directory structure or files are causing errors
+    # If the DB section does not exist, then there were no valid directories to read from so create the DB and History sections.
     if (!$self->test(INFO_ARCHIVE_SECTION_DB))
     {
         $self->create($strCurrentDbVersion, $ullCurrentDbSysId, false);
+    }
+    # Else if it does exist but does not match the current DB, then update the DB section
+    else
+    {
+        # Turn off console logging to control when to display the error
+        logDisable();
+
+        eval
+        {
+            $self->check($strCurrentDbVersion, $ullCurrentDbSysId, false);
+            logEnable();
+            return true;
+        }
+        or do
+        {
+            # Reset the console logging
+            logEnable();
+
+            # Confess unhandled errors
+            confess $EVAL_ERROR if (exceptionCode($EVAL_ERROR) != ERROR_ARCHIVE_MISMATCH);
+
+            # Update the DB section if it does not match the current database
+            $self->dbSectionSet($strCurrentDbVersion, $ullCurrentDbSysId, $self->dbHistoryIdGet(false)+1);
+        };
     }
 
     # Return from function and log return values if any
@@ -372,6 +407,40 @@ sub dbHistoryIdGet
     (
         $strOperation,
         {name => 'iDbHistoryId', value => $iDbHistoryId}
+    );
+}
+
+####################################################################################################################################
+# dbHistoryList
+#
+# Get the data from the db history section.
+####################################################################################################################################
+sub dbHistoryList
+{
+    my $self = shift;
+    my
+    (
+        $strOperation,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->dbHistoryList',
+        );
+
+    my %hDbHash;
+
+    foreach my $iHistoryId ($self->keys(INFO_ARCHIVE_SECTION_DB_HISTORY))
+    {
+        $hDbHash{$iHistoryId}{&INFO_DB_VERSION} =
+            $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_VERSION);
+        $hDbHash{$iHistoryId}{&INFO_SYSTEM_ID} =
+            $self->get(INFO_ARCHIVE_SECTION_DB_HISTORY, $iHistoryId, INFO_ARCHIVE_KEY_DB_ID);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hDbHash', value => \%hDbHash}
     );
 }
 

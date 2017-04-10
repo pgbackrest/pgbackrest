@@ -308,7 +308,7 @@ sub docGet
             if ($iStableReleaseTotal == 0)
             {
                 $oSection = $oDoc->nodeAdd('section', undef, {id => 'supported'});
-                $oSection->nodeAdd('title')->textSet("Supported Stable Releases");
+                $oSection->nodeAdd('title')->textSet("Stable Releases");
             }
 
             $iStableReleaseTotal++;
@@ -318,7 +318,7 @@ sub docGet
             if ($iUnsupportedReleaseTotal == 0)
             {
                 $oSection = $oDoc->nodeAdd('section', undef, {id => 'unsupported'});
-                $oSection->nodeAdd('title')->textSet("Unsupported Releases");
+                $oSection->nodeAdd('title')->textSet("Pre-Stable Releases");
             }
 
             $iUnsupportedReleaseTotal++;

@@ -23,6 +23,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
 use pgBackRest::Version;

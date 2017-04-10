@@ -19,6 +19,7 @@ use pgBackRest::BackupInfo;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Common;
 use pgBackRest::Protocol::Protocol;
@@ -49,7 +50,7 @@ use constant INFO_STANZA_STATUS_NO_BACKUP_MESSAGE                   => 'no valid
 use constant INFO_KEY_CODE                                          => 'code';
 use constant INFO_KEY_DELTA                                         => 'delta';
 use constant INFO_KEY_FORMAT                                        => 'format';
-use constant INFO_KEY_ID                                            => 'id';
+use constant INFO_KEY_ID                                            => INFO_HISTORY_ID;
 use constant INFO_KEY_LABEL                                         => 'label';
 use constant INFO_KEY_MAX                                           => 'max';
 use constant INFO_KEY_MIN                                           => 'min';
@@ -59,9 +60,9 @@ use constant INFO_KEY_REFERENCE                                     => 'referenc
 use constant INFO_KEY_SIZE                                          => 'size';
 use constant INFO_KEY_START                                         => 'start';
 use constant INFO_KEY_STOP                                          => 'stop';
-use constant INFO_KEY_SYSTEM_ID                                     => 'system-id';
+use constant INFO_KEY_SYSTEM_ID                                     => INFO_SYSTEM_ID;
 use constant INFO_KEY_TYPE                                          => 'type';
-use constant INFO_KEY_VERSION                                       => 'version';
+use constant INFO_KEY_VERSION                                       => INFO_DB_VERSION;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -344,7 +345,7 @@ sub stanzaList
     # Run locally
     else
     {
-        my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, undef, undef, true);
+        my @stryStanza = $oFile->list(PATH_BACKUP, CMD_BACKUP, {bIgnoreMissing => true});
 
         foreach my $strStanzaFound (@stryStanza)
         {
@@ -388,14 +389,14 @@ sub stanzaList
 
                 if ($oFile->exists(PATH_BACKUP, $strArchivePath))
                 {
-                    my @stryWalMajor = $oFile->list(PATH_BACKUP, $strArchivePath, '^[0-F]{16}$');
+                    my @stryWalMajor = $oFile->list(PATH_BACKUP, $strArchivePath, {strExpression => '^[0-F]{16}$'});
 
                     # Get first WAL segment
                     foreach my $strWalMajor (@stryWalMajor)
                     {
                         my @stryWalFile = $oFile->list(
                             PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
-                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$");
+                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
 
                         if (@stryWalFile > 0)
                         {
@@ -409,7 +410,7 @@ sub stanzaList
                     {
                         my @stryWalFile = $oFile->list(
                             PATH_BACKUP, "${strArchivePath}/${strWalMajor}",
-                            "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", 'reverse');
+                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
 
                         if (@stryWalFile > 0)
                         {
@@ -487,10 +488,10 @@ sub backupList
     {
         my $oDbHash =
         {
-            &INFO_KEY_ID => $iHistoryId,
-            &INFO_KEY_VERSION =>
+            &INFO_HISTORY_ID => $iHistoryId,
+            &INFO_DB_VERSION =>
                 $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
-            &INFO_KEY_SYSTEM_ID =>
+            &INFO_SYSTEM_ID =>
                 $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_SYSTEM_ID)
         };
 

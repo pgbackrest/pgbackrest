@@ -155,7 +155,25 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.18dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where read-only operations that used local worker processes (i.e. <cmd>restore</cmd>) were creating write locks that could interfere with parallel <cmd>archive-push</cmd>.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading to a new major version of <postgres/>.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -164,12 +182,50 @@
                         <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Simplify locking scheme.  Now, only the master process will hold write locks (archive-push, backup) and not all the local and remote worker processes as before.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow functions to accept optional parameters as a hash.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>File->list()</code> and <code>fileList()</code> to accept optional parameters.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Refactor <code>backupLabel()</code> and add unit tests.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Update wording for release note sections.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
 
             <release-test-list>
                 <release-refactor-list>
                     <release-item>
+                        <p>Require description in every call to <code>testResult()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Make <code>iWaitSeconds</code> an optional parameter for <code>testResult()</code>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Updated vagrant to new version and image.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed flapping archive stop tests.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

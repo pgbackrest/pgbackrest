@@ -185,7 +185,7 @@ sub walStatus
     my $bResult = false;
 
     # Find matching status files
-    my @stryStatusFile = fileList($strSpoolPath, '^' . $strWalFile . '\.(ok|error)$', undef, true);
+    my @stryStatusFile = fileList($strSpoolPath, {strExpression => '^' . $strWalFile . '\.(ok|error)$', bIgnoreMissing => true});
 
     if (@stryStatusFile > 0)
     {
@@ -272,7 +272,7 @@ sub readyList
 
     if (defined($self->{strSpoolPath}))
     {
-        foreach my $strOkFile (fileList($self->{strSpoolPath}, '\.ok$', undef, true))
+        foreach my $strOkFile (fileList($self->{strSpoolPath}, {strExpression => '\.ok$', bIgnoreMissing => true}))
         {
             $strOkFile = substr($strOkFile, 0, length($strOkFile) - length('.ok'));
             $hOkFile->{$strOkFile} = true;
@@ -281,7 +281,7 @@ sub readyList
 
     # Read the .ready files
     my $strWalStatusPath = "$self->{strWalPath}/archive_status";
-    my @stryReadyFile = fileList($strWalStatusPath, '\.ready$');
+    my @stryReadyFile = fileList($strWalStatusPath, {strExpression => '\.ready$'});
 
     # Generate a list of new files
     my @stryNewReadyFile;

@@ -13,7 +13,11 @@ use File::Basename;
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::File;
+use pgBackRest::FileCommon;
+use pgBackRest::Manifest;
 
 ####################################################################################################################################
 # Latest backup link constant
@@ -183,5 +187,61 @@ sub backupLabelFormat
 }
 
 push @EXPORT, qw(backupLabelFormat);
+
+####################################################################################################################################
+# backupLabel
+#
+# Get unique backup label.
+####################################################################################################################################
+sub backupLabel
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oFile,
+        $strType,
+        $strBackupLabelLast,
+        $lTimestampStop
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::backupLabelFormat', \@_,
+            {name => 'oFile', trace => true},
+            {name => 'strType', trace => true},
+            {name => 'strBackupLabelLast', required => false, trace => true},
+            {name => 'lTimestampStop', trace => true}
+        );
+
+    # Create backup label
+    my $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, $lTimestampStop);
+
+    # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
+    # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
+    # clocks.  In practice this is most useful for making offline testing faster since it allows the wait after manifest build to
+    # be skipped by dealing with any backup label collisions here.
+    if (fileList($oFile->pathGet(PATH_BACKUP_CLUSTER),
+                 {strExpression =>
+                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStop) .
+                    ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
+        fileList($oFile->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
+                 {strExpression =>
+                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStop) .
+                    ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . $oFile->{strCompressExtension}),
+                    bIgnoreMissing => true}))
+    {
+        waitRemainder();
+        $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, time());
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strBackupLabel', value => $strBackupLabel, trace => true}
+    );
+}
+
+push @EXPORT, qw(backupLabel);
 
 1;

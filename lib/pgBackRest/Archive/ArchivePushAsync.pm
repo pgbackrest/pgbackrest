@@ -218,10 +218,19 @@ sub processQueue
             'push ' . @{$stryWalFile} . ' WAL file(s) to archive: ' .
                 ${$stryWalFile}[0] . (@{$stryWalFile} > 1 ? "...${$stryWalFile}[-1]" : ''));
 
+        # Protocol created below so errors are handled correctly
+        my $oProtocol;
+
         eval
         {
+            # Hold a lock when the repo is remote to be sure no other process is pushing WAL
+            $oProtocol = protocolGet(BACKUP);
+
             while (my $hyJob = $self->{oArchiveProcess}->process())
             {
+                # Send keep alives to protocol
+                $oProtocol->keepAlive();
+
                 foreach my $hJob (@{$hyJob})
                 {
                     my $strWalFile = @{$hJob->{rParam}}[1];
