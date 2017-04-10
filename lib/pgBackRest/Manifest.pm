@@ -305,7 +305,7 @@ sub new
     $bLoad = defined($bLoad) ? $bLoad : true;
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strFileName, $bLoad);
+    my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad});
 
     # Return from function and log return values if any
     return logDebugReturn

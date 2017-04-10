@@ -2272,22 +2272,6 @@ P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00  ERROR: [115]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
 P00   INFO: restore command end: aborted with exception [115]
 
-restore, backup '[BACKUP-DIFF-2]', expect exit 104 - fail on undef format (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
-P00   INFO: restore backup set [BACKUP-DIFF-2]
-P00  ERROR: [104]: format of [TEST_PATH]/db-master/db/base/backup.manifest is 0 but 5 is required
-P00   INFO: restore command end: aborted with exception [104]
-
-restore, backup '[BACKUP-DIFF-2]', expect exit 104 - fail on mismatch format (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
-P00   INFO: restore backup set [BACKUP-DIFF-2]
-P00  ERROR: [104]: format of [TEST_PATH]/db-master/db/base/backup.manifest is 0 but 5 is required
-P00   INFO: restore command end: aborted with exception [104]
-
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------

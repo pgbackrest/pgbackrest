@@ -77,6 +77,11 @@ use constant TESTDEF_MODULE_ARCHIVE_PUSH_FILE                       => TESTDEF_M
 use constant TESTDEF_MODULE_BACKUP_COMMON                           => 'BackupCommon';
     push @EXPORT, qw(TESTDEF_MODULE_BACKUP_COMMON);
 
+use constant TESTDEF_MODULE_COMMON                                  => 'Common';
+    push @EXPORT, qw(TESTDEF_MODULE_COMMON);
+use constant TESTDEF_MODULE_COMMON_INI                              => TESTDEF_MODULE_COMMON . '/Ini';
+    push @EXPORT, qw(TESTDEF_MODULE_COMMON_INI);
+
 use constant TESTDEF_MODULE_INFO                                    => 'Info';
     push @EXPORT, qw(TESTDEF_MODULE_INFO);
 
@@ -206,6 +211,16 @@ my $oTestDef =
 
             &TESTDEF_TEST =>
             [
+                {
+                    &TESTDEF_NAME => 'ini-unit',
+                    &TESTDEF_CONTAINER => true,
+                    &TESTDEF_TOTAL => 10,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
+                    },
+                },
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 1,

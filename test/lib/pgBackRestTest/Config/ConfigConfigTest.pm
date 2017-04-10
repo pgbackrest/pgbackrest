@@ -15,6 +15,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::FileCommon;
 
 use pgBackRestTest::Common::RunTest;
 
@@ -71,7 +72,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza() . ':' . &CMD_BACKUP}{&OPTION_PROCESS_MAX} = 2;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -85,7 +86,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza()}{&OPTION_PROCESS_MAX} = 3;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -99,7 +100,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{'thread-max'} = 2;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -113,7 +114,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = 5;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -126,7 +127,7 @@ sub run
     if ($self->begin('default - option ' . OPTION_PROCESS_MAX))
     {
         $oConfig = {};
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -140,7 +141,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = 9;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -155,7 +156,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'Y';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -168,7 +169,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = BOGUS;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -181,7 +182,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(INFO);
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -202,7 +203,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza() . ':' . &CMD_EXPIRE}{&OPTION_RETENTION_FULL} = 2;
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -215,7 +216,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_COMPRESS} = 'n';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -229,7 +230,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_RESTORE}{&OPTION_RESTORE_RECOVERY_OPTION} = 'bogus=';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -242,7 +243,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_RESTORE}{&OPTION_RESTORE_RECOVERY_OPTION} = '=bogus';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -256,7 +257,7 @@ sub run
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CMD_RESTORE}{&OPTION_RESTORE_RECOVERY_OPTION} =
             'archive-command=/path/to/pgbackrest';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -270,7 +271,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza()}{&OPTION_RESTORE_RECOVERY_OPTION} = ['standby-mode=on', 'a=b'];
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -285,7 +286,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza()}{&OPTION_DB_PATH} = '/path/to/db';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -298,7 +299,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza()}{&OPTION_DB_PATH} = '/path/to/db';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -313,7 +314,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{$self->stanza()}{&OPTION_DB_PATH} = '/path/to/db';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_CONFIG, $strConfigFile);
@@ -326,7 +327,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = '/repo';
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
@@ -340,7 +341,7 @@ sub run
     {
         $oConfig = {};
         $$oConfig{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = ['/repo', '/repo2'];
-        iniSave($strConfigFile, $oConfig, true);
+        fileStringWrite($strConfigFile, iniRender($oConfig, true));
 
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
         $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
