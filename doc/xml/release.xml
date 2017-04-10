@@ -227,6 +227,14 @@
                     <release-item>
                         <p>Fixed flapping archive stop tests.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added ability to test warning messages.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

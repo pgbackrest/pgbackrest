@@ -2734,7 +2734,7 @@ sub optionValidate
 ####################################################################################################################################
 # configFileValidate
 #
-# Determine if the configuration file contains any invalid options or placements
+# Determine if the configuration file contains any invalid options or placements.
 ####################################################################################################################################
 sub configFileValidate
 {
@@ -2772,7 +2772,7 @@ sub configFileValidate
                     if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
                     {
                         &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is not valid for command " .
-                            "'$strCommand'");
+                            "'${strCommand}'");
                         $bFileValid = false;
                     }
                 }
