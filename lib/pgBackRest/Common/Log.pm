@@ -355,7 +355,7 @@ sub logDebugProcess
                 $$oParamHash{$strParamName}{default} = true;
             }
 
-            $oValue = $oyResult[@oyResult - 1];
+            $oValue = $oyResult[-1];
 
             if (!defined($oValue) && $bParamRequired)
             {

@@ -55,44 +55,32 @@ severity = 5
 # Natural ordering here indicates the order in which they should be addressed.
 #-----------------------------------------------------------------------------------------------------------------------------------
 
-# S4 - Requires array offset from end to use negative syntax.
-[-Variables::RequireNegativeIndices]
-
-# S3 - Requires all variables to be used.
-[-Variables::ProhibitUnusedVariables]
-
-# S2 - Requires all long numbers to have thousand separators.
+# S2 - Requires all long numbers to have thousand separators. Probably a good idea bit need to change a fair amount of code.
 [-ValuesAndExpressions::RequireNumberSeparators]
 
-# S4 - Requires simple assignments in declarations. (TEST ONLY)
-[-Variables::ProhibitAugmentedAssignmentInDeclaration]
-
-# S4 - Requires parans when logical and bitwise booleans are mixed.
+# S4 - Requires parens when logical and bitwise booleans are mixed.
 [-ValuesAndExpressions::ProhibitMixedBooleanOperators]
 
 # S4 - Requires that sub names not overlap with built-ins - a bummer for object members.
 [-Subroutines::ProhibitBuiltinHomonyms]
 
-# S4 - Requires block form of grep for readability.
+# S4 - Requires block form of grep for readability. Needs to be fixed in about 15 places.
 [-BuiltinFunctions::RequireBlockGrep]
 
-# S4 - Requires modification of certain vars (e.g. $SIG) to have local scope.
+# S4 - Requires modification of certain vars (e.g. $SIG) to have local scope. Needs to be fixed in about 20 places.
 [-Variables::RequireLocalizedPunctuationVars]
 
 # S4 - Requires close() to be called soon after open but seems arbitrary.
 [-InputOutput::RequireBriefOpen]
 
-# S1 - Requires reverse keyword for reverse sorts instead of block.
+# S1 - Requires reverse keyword for reverse sorts instead of block. May not be able to since $a $b are passed as a parameter.
 [-BuiltinFunctions::ProhibitReverseSortBlock]
 
-# S3 - Requires use of Carp instead of die or warn.
+# S3 - Requires use of Carp instead of die or warn. Doesn't seem useful.
 [-ErrorHandling::RequireCarping]
 
-# S3 - Requires use of local vars in packages.
+# S3 - Requires use of local vars in packages. Can't use as it prohibits use of $DBI::errstr.
 [-Variables::ProhibitPackageVars]
-
-# S3 - Require conditional use statements to use dynamic load logic
-[-Modules::ProhibitConditionalUseStatements]
 
 # S3 - Requires that certain operators not be mixed.
 [-ValuesAndExpressions::ProhibitMismatchedOperators]

@@ -203,6 +203,14 @@
                     <release-item>
                         <p>Refactor <code>backupLabel()</code> and add unit tests.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Silence some perl critic warnings.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

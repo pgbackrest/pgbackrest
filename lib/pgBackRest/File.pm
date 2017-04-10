@@ -1245,7 +1245,6 @@ sub copy
     if ($bSourceRemote || $bDestinationRemote)
     {
         # Build the command and open the local file
-        my $hFile;
         my $hIn,
         my $hOut;
         my $strRemote;
@@ -1312,8 +1311,6 @@ sub copy
         if ($bController)
         {
             # Test for an error when reading output
-            my $strOutput;
-
             eval
             {
                 ($bResult, my $strResultChecksum, my $iResultFileSize, my $rResultExtra) =

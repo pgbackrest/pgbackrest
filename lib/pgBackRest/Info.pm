@@ -264,7 +264,7 @@ sub formatTextBackup
             {name => 'oBackupInfo', trace => true},
         );
 
-    my $strOutput .=
+    my $strOutput =
         '    ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
 
         '        timestamp start/stop: ' .

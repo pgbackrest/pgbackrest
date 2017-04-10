@@ -151,7 +151,7 @@ sub supplementalAdd
     open(my $hFile, '<', $strFileName)
         or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
 
-    my $strHeader .= "+ supplemental file: " . $self->regExpReplaceAll($strFileName);
+    my $strHeader = "+ supplemental file: " . $self->regExpReplaceAll($strFileName);
 
     if (defined($strComment))
     {
