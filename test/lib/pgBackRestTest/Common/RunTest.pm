@@ -22,6 +22,7 @@ use pgBackRest::Common::Wait;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Constant to use when bogus data is required
@@ -118,7 +119,6 @@ sub process
         $self->{bDryRun},
         $self->{bCleanup},
         $self->{bLogForce},
-        $self->{bCoverage},
         $self->{strPgUser},
         $self->{strBackRestUser},
         $self->{strGroup},
@@ -141,7 +141,6 @@ sub process
             {name => 'bDryRun'},
             {name => 'bCleanup'},
             {name => 'bLogForce'},
-            {name => 'bCoverage'},
             {name => 'strPgUser'},
             {name => 'strBackRestUser'},
             {name => 'strGroup'},
@@ -157,12 +156,11 @@ sub process
     $self->cleanModule();
 
     # Make sure the correct number of tests ran
-    my $hModule = testDefModuleGet($self->{strModule});
-    my $hModuleTest = testDefModuleTestGet($hModule, $self->{strModuleTest});
+    my $hModuleTest = testDefModuleTest($self->{strModule}, $self->{strModuleTest});
 
-    if ($hModuleTest->{&TESTDEF_TEST_TOTAL} != $self->runCurrent())
+    if ($hModuleTest->{&TESTDEF_TOTAL} != $self->runCurrent())
     {
-        confess &log(ASSERT, "expected $hModuleTest->{&TESTDEF_TEST_TOTAL} tests to run but $self->{iRun} ran");
+        confess &log(ASSERT, "expected $hModuleTest->{&TESTDEF_TOTAL} tests to run but $self->{iRun} ran");
     }
 
     # Return from function and log return values if any
@@ -205,14 +203,7 @@ sub begin
     # Else get the default expect setting
     else
     {
-        my $hModule = testDefModuleGet($self->{strModule});
-        my $hModuleTest = testDefModuleTestGet($hModule, $self->{strModuleTest});
-        $self->{bExpect} =
-            defined($hModuleTest->{&TESTDEF_EXPECT}) ?
-                ($hModuleTest->{&TESTDEF_EXPECT} ? true : false) :
-                (defined($hModule->{&TESTDEF_EXPECT}) ?
-                    ($hModule->{&TESTDEF_EXPECT} ? true : false) :
-                    false);
+        $self->{bExpect} = (testDefModuleTest($self->{strModule}, $self->{strModuleTest}))->{&TESTDEF_EXPECT};
     }
 
     # Increment the run counter;
@@ -494,33 +485,9 @@ sub testRunExe
     my $bLog = shift;
 
     # Limit Perl modules tested to what is defined in the test coverage (if it exists)
+    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
     my $strPerlModule;
     my $strPerlModuleLog;
-    my $hTestCoverage;
-    my $hTestDef = testDefGet();
-
-    foreach my $hTestModule (@{$hTestDef->{&TESTDEF_MODULE}})
-    {
-        if ($hTestModule->{&TESTDEF_MODULE_NAME} eq $strModule)
-        {
-            $hTestCoverage = $hTestModule->{&TESTDEF_TEST_COVERAGE};
-
-            foreach my $hTest (@{$hTestModule->{&TESTDEF_TEST}})
-            {
-                if (defined($strTest) && $hTest->{&TESTDEF_TEST_NAME} eq $strTest)
-                {
-                    $hTestCoverage =
-                        defined($hTest->{&TESTDEF_TEST_COVERAGE}{$iRun}) ? $hTest->{&TESTDEF_TEST_COVERAGE}{$iRun} :
-                            $hTest->{&TESTDEF_TEST_COVERAGE}{&TESTDEF_TEST_ALL};
-
-                    if (!defined($hTestCoverage))
-                    {
-                        $hTestCoverage = $hTestModule->{&TESTDEF_TEST_COVERAGE};
-                    }
-                }
-            }
-        }
-    }
 
     if (defined($hTestCoverage))
     {
@@ -535,9 +502,8 @@ sub testRunExe
     if (defined($strPerlModule))
     {
         $strExe =
-            'perl -MDevel::Cover=-silent,1,-dir,' . $strCoveragePath . ',-subs_only,1' .
-            ",-select${strPerlModule},+inc," . $strBackRestBasePath .
-            ',-coverage,statement,branch,condition,path,subroutine' . " ${strExe}";
+            "perl -MDevel::Cover=-silent,1,-dir,${strCoveragePath},-select${strPerlModule},+inc,${strBackRestBasePath}" .
+            ",-coverage,statement,branch,condition,path,subroutine ${strExe}";
 
         if (defined($bLog) && $bLog)
         {
@@ -559,7 +525,7 @@ sub backrestExe {return shift->{strBackRestExe}}
 sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {return shift->{bCoverage}}
+sub coverage {vmBaseTest(shift->{strVm}, VM_OS_BASE_DEBIAN)}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}

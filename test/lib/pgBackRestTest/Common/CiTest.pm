@@ -94,23 +94,20 @@ sub process
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
-        my $hTestDef = testDefGet();
         my $hVm = vmGet();
         my @stryModule;
-        my $hFullModule = undef;
+        my $strFullModule = undef;
 
         # Get all modules but full to break up the tests
-        foreach my $hModule (@{$hTestDef->{&TESTDEF_MODULE}})
+        foreach my $strModule (testDefModuleList())
         {
-            my $strModule = $hModule->{&TESTDEF_MODULE_NAME};
-
             if ($strModule ne 'full')
             {
                 push(@stryModule, $strModule);
             }
             else
             {
-                $hFullModule = $hModule;
+                $strFullModule = $strModule;
             }
         }
 
@@ -124,20 +121,18 @@ sub process
         $bFirst = false;
 
         # Now generate full tests
-        my $hRealTest = undef;
+        my $strRealTest = undef;
 
-        if (!defined($hFullModule))
+        if (!defined($strFullModule))
         {
-            confess "the full module is not defined, has the name changed?";
+            confess "${strFullModule} module not found, has the name changed?";
         }
 
-        foreach my $hTest (@{$hFullModule->{&TESTDEF_TEST}})
+        foreach my $strTest (testDefModuleTestList($strFullModule))
         {
-            my $strTest = $hTest->{&TESTDEF_TEST_NAME};
-
             if ($strTest eq 'real')
             {
-                $hRealTest = $hTest;
+                $strRealTest = $strTest;
 
                 foreach my $strDbVersion (sort {$b cmp $a} @{$hVm->{$strVm}{&VM_DB_MINIMAL}})
                 {
@@ -155,9 +150,9 @@ sub process
             }
         }
 
-        if (!defined($hRealTest))
+        if (!defined($strRealTest))
         {
-            confess 'real test not found in full module, has the name changed?';
+            confess "${strRealTest} test not found in ${strFullModule} module, has the name changed?";
         }
     }
 
@@ -166,7 +161,12 @@ sub process
         "\n" .
         "before_install:\n" .
         "  - sudo apt-get -qq update\n" .
-        "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libdevel-cover-perl\n" .
+        "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl" .
+            " libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl\n" .
+        "  - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
+        '  - cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
+        '  - sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
+        '  - ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .
         "  - sudo adduser --ingroup=\${USER?} --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .

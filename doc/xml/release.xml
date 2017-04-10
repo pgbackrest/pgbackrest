@@ -213,6 +213,10 @@
             <release-test-list>
                 <release-refactor-list>
                     <release-item>
+                        <p>Coverage testing always enabled on Debian-based containers.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Require description in every call to <code>testResult()</code>.</p>
                     </release-item>
 

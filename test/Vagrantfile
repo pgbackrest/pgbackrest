@@ -13,6 +13,7 @@ Vagrant.configure(2) do |config|
 
     # Provision the VM
     config.vm.provision "shell", inline: <<-SHELL
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build Begin' && date
 
         # Suppress "dpkg-reconfigure: unable to re-open stdin: No file or directory" warning
@@ -22,18 +23,32 @@ Vagrant.configure(2) do |config|
         sed -i 's/^127\.0\.0\.1\t.*/127\.0\.0\.1\tlocalhost pgbackrest-test/' /etc/hosts
         hostnamectl set-hostname pgbackrest-test
 
-        # Update Apt
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Update Apt' && date
         apt-get update
 
-        # Install build tools
-        apt-get install -y devscripts build-essential lintian git txt2man debhelper
-
-        # Synchronize date
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Synchronize Date' && date
         apt-get install -y ntpdate
         ntpdate pool.ntp.org
 
-        # Install Docker
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Install Perl Modules' && date
+        apt-get install -y libdbd-pg-perl libxml-checker-perl libperl-critic-perl libdevel-nytprof-perl
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Install Build Tools' && date
+        apt-get install -y devscripts build-essential lintian git txt2man debhelper
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Build Devel::Cover' && date
+        apt-get install -y libpod-coverage-perl libtest-differences-perl libhtml-parser-perl libtemplate-perl
+        git clone --branch debian/1.23-2 \
+            https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git /root/libdevel-cover-perl
+        cd /root/libdevel-cover-perl && debuild --no-lintian -i -us -uc -b > /dev/null
+        dpkg -i /root/libdevel-cover-perl_1.23-2_amd64.deb
+
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Docker' && date
         apt-get install -y apt-transport-https ca-certificates
         apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
@@ -44,31 +59,28 @@ Vagrant.configure(2) do |config|
         service docker start
         sudo usermod -aG docker ubuntu
 
-        # Install Perl modules
-        echo 'Install Perl Modules' && date
-        apt-get install -y libdbd-pg-perl libxml-checker-perl libperl-critic-perl libdevel-nytprof-perl libdevel-cover-perl
-
-        # Install utilities
-        echo 'Install Utilities' && date
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Install Dev Utilities' && date
         apt-get install -y vim htop
 
-        # Install TeX Live
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install TeX Live' && date
         apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended
         apt-get install -y texlive-font-utils
 
-        # Create backrest user and postgres group
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Create Postgres Group & pgBackRest User' && date
         groupadd -g5000 postgres
         adduser --uid=5001 --ingroup=ubuntu --disabled-password --gecos "" backrest
 
-        # Build VM images
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build VM Images' && date
         rm -rf /backrest/test/.vagrant/docker/*
         rm -rf /backrest/test/.vagrant/libc/*
         rm -rf /backrest/test/.vagrant/package/*
         sudo su - ubuntu -c '/backrest/test/test.pl --vm-build'
 
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build End' && date
     SHELL
 
