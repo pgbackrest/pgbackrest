@@ -502,8 +502,7 @@ sub testRunExe
     if (defined($strPerlModule))
     {
         $strExe =
-            'perl -MDevel::Cover=-silent,1,-dir,' . $strCoveragePath . ',-subs_only,1' .
-            ",-select${strPerlModule},+inc," . $strBackRestBasePath .
+            'perl -MDevel::Cover=-silent,1,-dir,' . $strCoveragePath .  ",-select${strPerlModule},+inc," . $strBackRestBasePath .
             ',-coverage,statement,branch,condition,path,subroutine' . " ${strExe}";
 
         if (defined($bLog) && $bLog)
