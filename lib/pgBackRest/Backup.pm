@@ -130,16 +130,11 @@ sub fileNotInManifest
                 # To be preserved the checksum must be defined
                 my $strChecksum = $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, false);
 
-                # The timestamp should also match and the size if the file is not compressed.  If the file is compressed it's
-                # not worth extracting the size - it will be hashed later to verify its authenticity.
-                if (defined($strChecksum) &&
-                    ($bCompressed || ($oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_SIZE) ==
-                        $hFile->{$strName}{size})) &&
-                    $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_TIMESTAMP) ==
-                        $hFile->{$strName}{modification_time})
+                if (defined($strChecksum))
                 {
                     $oManifest->set(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
 
+                    # Also copy page checksum results if they exist
                     my $bChecksumPage =
                         $oAbortedManifest->get(MANIFEST_SECTION_TARGET_FILE, $strFile, MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
 

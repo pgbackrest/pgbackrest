@@ -193,6 +193,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Do not set timestamps of files in the backup directories to match timestamps in the cluster directory.  This was originally done to enable backup resume, but that process is now implemented with checksums.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files.  In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
                     </release-item>
 

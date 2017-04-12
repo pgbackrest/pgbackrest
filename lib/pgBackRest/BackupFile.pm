@@ -232,7 +232,7 @@ sub backupFile
             false,                                                  # Source is not compressed since it is the db directory
             $bDestinationCompress,                                  # Destination should be compressed based on backup settings
             $bIgnoreMissing,                                        # Ignore missing files
-            $lModificationTime,                                     # Set modification time - this is required for resume
+            undef,                                                  # Do not set modification time
             undef,                                                  # Do not set original mode
             true,                                                   # Create the destination directory if it does not exist
             undef, undef, undef, undef,                             # Unused
