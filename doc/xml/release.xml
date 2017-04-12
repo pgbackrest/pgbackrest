@@ -153,7 +153,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.18dev" title="UNDER DEVELOPMENT">
+        <release date="2017-04-12" version="1.18" title="Stanza Upgrade, Refactoring, and Locking Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -185,7 +185,7 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Simplify locking scheme.  Now, only the master process will hold write locks (archive-push, backup) and not all the local and remote worker processes as before.</p>
+                        <p>Simplify locking scheme.  Now, only the master process will hold write locks (for <cmd>archive-push</cmd> and <cmd>backup</cmd> commands) and not all local and remote worker processes as before.</p>
                     </release-item>
 
                     <release-item>

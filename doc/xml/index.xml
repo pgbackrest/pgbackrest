@@ -76,6 +76,16 @@
             <p>All operations utilize file and directory level fsync to ensure durability.</p>
         </section>
 
+        <section id="page-checksum">
+            <title>Page Checksums</title>
+
+            <p><postgres/> has supported page-level checksums since 9.3.  If page checksums are enabled <backrest/> will validate the checksums for every file that is copied during a backup.  All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.</p>
+
+            <p>Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.</p>
+
+            <p>This feature allows page-level corruption to be detected early, before backups that contain valid copies of the data have expired.</p>
+        </section>
+
         <section id="backup-resume">
             <title>Backup Resume</title>
 

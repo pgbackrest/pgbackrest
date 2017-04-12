@@ -133,7 +133,7 @@ eval
         fileRemove("${strDocPath}/resource/exe.cache", true);
 
         # Remove all docker containers to get consistent IP address assignments
-        executeTest('docker rm -f $(docker ps -a -q)');
+        executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
         # Generate deployment docs for RHEL/Centos 6
         &log(INFO, "Generate RHEL/CentOS 6 documentation");

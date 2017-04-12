@@ -6,7 +6,7 @@ pgBackRest aims to be a simple, reliable backup and restore system that can seam
 
 Instead of relying on traditional backup tools like tar and rsync, pgBackRest implements all backup features internally and uses a custom protocol for communicating with remote systems. Removing reliance on tar and rsync allows for better solutions to database-specific backup challenges. The custom remote protocol allows for more flexibility and limits the types of connections that are required to perform a backup which increases security.
 
-pgBackRest [v1.17](https://github.com/pgbackrest/pgbackrest/releases/tag/release/1.17) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v1.18](https://github.com/pgbackrest/pgbackrest/releases/tag/release/1.18) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 ## Features
 
@@ -35,6 +35,14 @@ Checksums are calculated for every file in the backup and rechecked during a res
 Backups in the repository are stored in the same format as a standard PostgreSQL cluster (including tablespaces). If compression is disabled and hard links are enabled it is possible to snapshot a backup in the repository and bring up a PostgreSQL cluster directly on the snapshot. This is advantageous for terabyte-scale databases that are time consuming to restore in the traditional way.
 
 All operations utilize file and directory level fsync to ensure durability.
+
+### Page Checksums
+
+PostgreSQL has supported page-level checksums since 9.3. If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
+
+Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.
+
+This feature allows page-level corruption to be detected early, before backups that contain valid copies of the data have expired.
 
 ### Backup Resume
 
