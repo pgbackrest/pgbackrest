@@ -128,7 +128,7 @@ sub close
             }
 
             &log(WARN,
-                $strError . ($iExitStatus == ERROR_UNKNOWN ? '' : ' [' . $oException->code() . ']') . ': ' .
+                $strError . ($iExitStatus == ERROR_UNKNOWN ? '' : sprintf(' [%03d]', $oException->code())) . ': ' .
                 ($iExitStatus == ERROR_UNKNOWN ? $oException : $oException->message()) .
                 ($bComplete ? "\n${strHint}" : ''));
         };

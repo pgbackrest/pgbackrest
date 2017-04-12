@@ -15,9 +15,9 @@ use Exporter qw(import);
 ####################################################################################################################################
 # Exception codes
 ####################################################################################################################################
-use constant ERROR_MINIMUM                                          => 100;
+use constant ERROR_MINIMUM                                          => 25;
     push @EXPORT, qw(ERROR_MINIMUM);
-use constant ERROR_MAXIMUM                                          => 199;
+use constant ERROR_MAXIMUM                                          => 125;
     push @EXPORT, qw(ERROR_MAXIMUM);
 
 use constant ERROR_ASSERT                                           => ERROR_MINIMUM;

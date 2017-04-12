@@ -5,11 +5,11 @@ run 002 - rmt 0, cmp 0, arc_async 1
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --archive-max-mb=24 --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: 'archive-max-mb' is no longer not longer valid, use 'archive-queue-max' instead
-P00  ERROR: [130]: raised on local-1 host: archive.info does not exist but is required to push/get WAL segments
+P00  ERROR: [055]: raised on local-1 host: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-P00   INFO: archive-push command end: aborted with exception [130]
+P00   INFO: archive-push command end: aborted with exception [055]
 
 stanza-create db - create required data for stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -58,16 +58,16 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [119]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
+P00  ERROR: [044]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [119]
+P00   INFO: archive-push command end: aborted with exception [044]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [119]: raised on local-1 host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
+P00  ERROR: [044]: raised on local-1 host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [119]
+P00   INFO: archive-push command end: aborted with exception [044]
 
 stop all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --force stop
@@ -85,14 +85,14 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db --test --test-delay=5 --test-point=archive-push-async-start=y
 P00   TEST:         PgBaCkReStTeSt-ARCHIVE-PUSH-ASYNC-START-PgBaCkReStTeSt
-P00  ERROR: [138]: terminated on signal [SIGTERM]
+P00  ERROR: [063]: terminated on signal [SIGTERM]
 P00   INFO: archive-push command end: terminated on signal [SIGTERM]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [137]: stop file exists for all stanzas
-P00   INFO: archive-push command end: aborted with exception [137]
+P00  ERROR: [062]: stop file exists for all stanzas
+P00   INFO: archive-push command end: aborted with exception [062]
 
 start all stanzas (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf start
@@ -116,8 +116,8 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [120]: raised on local-1 host: WAL segment 000000010000000100000001 already exists in the archive
-P00   INFO: archive-push command end: aborted with exception [120]
+P00  ERROR: [045]: raised on local-1 host: WAL segment 000000010000000100000001 already exists in the archive
+P00   INFO: archive-push command end: aborted with exception [045]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -136,8 +136,8 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [120]: raised on local-1 host: WAL segment 000000010000000100000001.partial already exists in the archive
-P00   INFO: archive-push command end: aborted with exception [120]
+P00  ERROR: [045]: raised on local-1 host: WAL segment 000000010000000100000001.partial already exists in the archive
+P00   INFO: archive-push command end: aborted with exception [045]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -166,16 +166,16 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [119]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
+P00  ERROR: [044]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [119]
+P00   INFO: archive-push command end: aborted with exception [044]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [119]: raised on local-1 host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
+P00  ERROR: [044]: raised on local-1 host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [119]
+P00   INFO: archive-push command end: aborted with exception [044]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -188,8 +188,8 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [120]: raised on local-1 host: WAL segment 000000010000000100000005 already exists in the archive
-P00   INFO: archive-push command end: aborted with exception [120]
+P00  ERROR: [045]: raised on local-1 host: WAL segment 000000010000000100000005 already exists in the archive
+P00   INFO: archive-push command end: aborted with exception [045]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -208,8 +208,8 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [120]: raised on local-1 host: WAL segment 000000010000000100000005.partial already exists in the archive
-P00   INFO: archive-push command end: aborted with exception [120]
+P00  ERROR: [045]: raised on local-1 host: WAL segment 000000010000000100000005.partial already exists in the archive
+P00   INFO: archive-push command end: aborted with exception [045]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -238,16 +238,16 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [119]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
+P00  ERROR: [044]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [119]
+P00   INFO: archive-push command end: aborted with exception [044]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [119]: raised on local-1 host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
+P00  ERROR: [044]: raised on local-1 host: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [119]
+P00   INFO: archive-push command end: aborted with exception [044]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -260,8 +260,8 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [120]: raised on local-1 host: WAL segment 000000010000000100000009 already exists in the archive
-P00   INFO: archive-push command end: aborted with exception [120]
+P00  ERROR: [045]: raised on local-1 host: WAL segment 000000010000000100000009 already exists in the archive
+P00   INFO: archive-push command end: aborted with exception [045]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -280,8 +280,8 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --spool-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [120]: raised on local-1 host: WAL segment 000000010000000100000009.partial already exists in the archive
-P00   INFO: archive-push command end: aborted with exception [120]
+P00  ERROR: [045]: raised on local-1 host: WAL segment 000000010000000100000009.partial already exists in the archive
+P00   INFO: archive-push command end: aborted with exception [045]
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------

@@ -474,7 +474,7 @@
             <execute-list keyword="debug" host="{[host-db-master]}">
                 <title>Example of an invalid configuration</title>
 
-                <execute output="y" err-expect="157">
+                <execute output="y" err-expect="82">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --archive-timeout=.1 check</exe-cmd>
                     <exe-highlight>could not find WAL segment|did not reach the archive</exe-highlight>
                 </execute>
@@ -700,7 +700,7 @@
                     <exe-cmd>chmod 550 {[backrest-repo-path]}/temp</exe-cmd>
                 </execute>
 
-                <execute output="y" err-expect="122">
+                <execute output="y" err-expect="47">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
                         --log-level-console=info backup</exe-cmd>
                     <exe-highlight>ERROR:</exe-highlight>
@@ -716,7 +716,7 @@
                     <exe-cmd>chmod 750 {[backrest-repo-path]}/temp</exe-cmd>
                 </execute>
 
-                <execute output="y" err-expect="132">
+                <execute output="y" err-expect="57">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
                         --log-level-console=info backup</exe-cmd>
                     <exe-highlight>ERROR:</exe-highlight>
@@ -1632,7 +1632,7 @@
         <execute-list host="{[host-backup]}">
             <title>Attempt a backup</title>
 
-            <execute user="backrest" err-expect="137" output="y">
+            <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for all stanzas</exe-highlight>
             </execute>
@@ -1673,7 +1673,7 @@
         <execute-list host="{[host-backup]}">
             <title>Attempt a backup</title>
 
-            <execute user="backrest" err-expect="137" output="y">
+            <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
                 <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for stanza demo</exe-highlight>
             </execute>

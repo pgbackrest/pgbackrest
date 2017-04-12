@@ -55,8 +55,8 @@ full backup - error on identical link destinations (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [145]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
-P00   INFO: backup command end: aborted with exception [145]
+P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
+P00   INFO: backup command end: aborted with exception [070]
 
 full backup - error on link to a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
@@ -64,8 +64,8 @@ full backup - error on link to a link (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [145]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
-P00   INFO: backup command end: aborted with exception [145]
+P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
+P00   INFO: backup command end: aborted with exception [070]
 
 full backup - create pg_stat link, pg_clog dir (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --manifest-save-threshold=3 --no-repo-sync --buffer-size=16384 --checksum-page --type=full --stanza=db backup
@@ -365,7 +365,7 @@ full backup - invalid cmd line (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=bogus backup
 ------------------------------------------------------------------------------------------------------------------------------------
 STDERR:
-ERROR [112]: backup command requires option: db-path
+ERROR [037]: : backup command requires option: db-path
 HINT: does this stanza exist?
 
 stop all stanzas (db-master host)
@@ -424,13 +424,13 @@ P00  DEBUG:     Backup->process: create temp backup path [TEST_PATH]/db-master/r
 P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
 P00  DEBUG:     Backup->processManifest(): bCompress = false, bHardLink = false, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = full
 P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
-P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 138, oException = [undef], strSignal = TERM
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 63, oException = [undef], strSignal = TERM
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00  ERROR: [138]: terminated on signal [SIGTERM]
+P00  ERROR: [063]: terminated on signal [SIGTERM]
 P00   INFO: backup command end: terminated on signal [SIGTERM]
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 138
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 63
 
 full backup - global stop (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
@@ -439,13 +439,13 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TES
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
-P00  ERROR: [137]: stop file exists for all stanzas
+P00  ERROR: [062]: stop file exists for all stanzas
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00   INFO: backup command end: aborted with exception [137]
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 137
+P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 62
 
 stop db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stop
@@ -477,13 +477,13 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TES
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
-P00  ERROR: [137]: stop file exists for stanza db
+P00  ERROR: [062]: stop file exists for stanza db
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00   INFO: backup command end: aborted with exception [137]
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 137
+P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 62
 
 start db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db start
@@ -833,8 +833,8 @@ full backup - invalid repo (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=/bogus_path --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [148]: repo-path '/bogus_path' does not exist
-P00   INFO: backup command end: aborted with exception [148]
+P00  ERROR: [073]: repo-path '/bogus_path' does not exist
+P00   INFO: backup command end: aborted with exception [073]
 
 restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
@@ -1130,31 +1130,31 @@ P00   INFO: restore command end: completed successfully
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
 
-restore delta, backup '[BACKUP-FULL-2]', expect exit 145 - restore all links by mapping (db-master host)
+restore delta, backup '[BACKUP-FULL-2]', expect exit 70 - restore all links by mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=warn --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_stat/postgresql.conf  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00  ERROR: [145]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_stat) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_stat (../pg_stat)
+P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_stat) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_stat (../pg_stat)
 
-restore, backup '[BACKUP-FULL-2]', expect exit 115 - error on existing linked path (db-master host)
+restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00  ERROR: [115]: cannot restore to path '[TEST_PATH]/db-master/db/pg_stat' that contains files - try using --delta if this is what you intended
+P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/pg_stat' that contains files - try using --delta if this is what you intended
 
-restore, backup '[BACKUP-FULL-2]', expect exit 115 - error on existing linked file (db-master host)
+restore, backup '[BACKUP-FULL-2]', expect exit 40 - error on existing linked file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
-P00  ERROR: [115]: cannot restore file '[TEST_PATH]/db-master/db/pg_config/postgresql.conf' that already exists - try using --delta if this is what you intended
+P00  ERROR: [040]: cannot restore file '[TEST_PATH]/db-master/db/pg_config/postgresql.conf' that already exists - try using --delta if this is what you intended
 
-restore, backup '[BACKUP-FULL-2]', expect exit 113 - error on postmaster.pid exists (db-master host)
+restore, backup '[BACKUP-FULL-2]', expect exit 38 - error on postmaster.pid exists (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [113]: unable to restore while PostgreSQL is running
+P00  ERROR: [038]: unable to restore while PostgreSQL is running
             HINT: presence of 'postmaster.pid' in '[TEST_PATH]/db-master/db/base' indicates PostgreSQL is running.
             HINT: remove 'postmaster.pid' only if PostgreSQL is not running.
 
@@ -1190,7 +1190,7 @@ P00   INFO: restore command end: completed successfully
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
 
-restore delta, force, backup '[BACKUP-FULL-2]', expect exit 115 - fail on missing PG_VERSION (db-master host)
+restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
@@ -1201,8 +1201,8 @@ P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, 
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location
 P00   WARN: file link postgresql.conf will be restored as a file at the same location
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00  ERROR: [115]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
-P00   INFO: restore command end: aborted with exception [115]
+P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
+P00   INFO: restore command end: aborted with exception [040]
 
 restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.manifest file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
@@ -1247,9 +1247,9 @@ incr backup - invalid database version (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [126]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 8.0, system-id = 6353949018581704918
+P00  ERROR: [051]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 8.0, system-id = 6353949018581704918
             HINT: is this the correct stanza?
-P00   INFO: backup command end: aborted with exception [126]
+P00   INFO: backup command end: aborted with exception [051]
 
 incr backup - invalid system id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1257,9 +1257,9 @@ incr backup - invalid system id (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [126]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 9.4, system-id = 6999999999999999999
+P00  ERROR: [051]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 9.4, system-id = 6999999999999999999
             HINT: is this the correct stanza?
-P00   INFO: backup command end: aborted with exception [126]
+P00   INFO: backup command end: aborted with exception [051]
 
 incr backup - invalid control version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1267,9 +1267,9 @@ incr backup - invalid control version (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [126]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 842, catalog-version = 201409291
+P00  ERROR: [051]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 842, catalog-version = 201409291
             HINT: this may be a symptom of database or repository corruption!
-P00   INFO: backup command end: aborted with exception [126]
+P00   INFO: backup command end: aborted with exception [051]
 
 incr backup - invalid catalog version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1277,9 +1277,9 @@ incr backup - invalid catalog version (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [126]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 942, catalog-version = 197208141
+P00  ERROR: [051]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 942, catalog-version = 197208141
             HINT: this may be a symptom of database or repository corruption!
-P00   INFO: backup command end: aborted with exception [126]
+P00   INFO: backup command end: aborted with exception [051]
 
 incr backup - invalid path in pg_tblspc (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1289,8 +1289,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [144]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
-P00   INFO: backup command end: aborted with exception [144]
+P00  ERROR: [069]: pg_tblspc/path is not a symlink - pg_tblspc should contain only symlinks
+P00   INFO: backup command end: aborted with exception [069]
 
 incr backup - invalid relative tablespace is ../ (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1300,8 +1300,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [146]: tablespace symlink ../ destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [146]
+P00  ERROR: [071]: tablespace symlink ../ destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [071]
 
 incr backup - invalid relative tablespace is .. (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1311,8 +1311,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [146]: tablespace symlink .. destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [146]
+P00  ERROR: [071]: tablespace symlink .. destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [071]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1322,8 +1322,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [146]: tablespace symlink ../../base/ destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [146]
+P00  ERROR: [071]: tablespace symlink ../../base/ destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [071]
 
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1333,8 +1333,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [146]: tablespace symlink ../../base destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [146]
+P00  ERROR: [071]: tablespace symlink ../../base destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [071]
 
 incr backup - tablespace link references a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1344,8 +1344,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [145]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' -> '[TEST_PATH]/db-master/db/intermediate_link' cannot reference another link
-P00   INFO: backup command end: aborted with exception [145]
+P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/pg_tblspc/99999' -> '[TEST_PATH]/db-master/db/intermediate_link' cannot reference another link
+P00   INFO: backup command end: aborted with exception [070]
 
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1355,8 +1355,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [146]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [146]
+P00  ERROR: [071]: tablespace symlink ../invalid_tblspc destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [071]
 
 incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing err expected) (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1366,8 +1366,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [130]: unable to stat [TEST_PATH]/db-master/db/base_tbs: No such file or directory
-P00   INFO: backup command end: aborted with exception [130]
+P00  ERROR: [055]: unable to stat [TEST_PATH]/db-master/db/base_tbs: No such file or directory
+P00   INFO: backup command end: aborted with exception [055]
 
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
@@ -1377,8 +1377,8 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00  ERROR: [146]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
-P00   INFO: backup command end: aborted with exception [146]
+P00  ERROR: [071]: tablespace symlink [TEST_PATH]/db-master/db/base/invalid_tblspc destination must not be in $PGDATA
+P00   INFO: backup command end: aborted with exception [071]
 
 incr backup - add tablespace 1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --test --stanza=db backup
@@ -2270,14 +2270,14 @@ db-version="9.4"
 [db:history]
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
 
-restore, backup '[BACKUP-DIFF-2]', expect exit 115 - fail on used path (db-master host)
+restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
-P00  ERROR: [115]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
-P00   INFO: restore command end: aborted with exception [115]
+P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
+P00   INFO: restore command end: aborted with exception [040]
 
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
@@ -2516,17 +2516,17 @@ incr backup - update files - fail on missing backup.info (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [130]: [TEST_PATH]/db-master/repo/backup/db/backup.info does not exist and is required to perform a backup.
+P00  ERROR: [055]: [TEST_PATH]/db-master/repo/backup/db/backup.info does not exist and is required to perform a backup.
             HINT: has a stanza-create been performed?
-P00   INFO: backup command end: aborted with exception [130]
+P00   INFO: backup command end: aborted with exception [055]
 
 stanza-create db - fail on backup directory not empty and missing backup.info (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [115]: backup directory and/or archive directory not empty
+P00  ERROR: [040]: backup directory and/or archive directory not empty
             HINT: Use --force to force the stanza data to be created.
-P00   INFO: stanza-create command end: aborted with exception [115]
+P00   INFO: stanza-create command end: aborted with exception [040]
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -3974,17 +3974,17 @@ P00   INFO: restore command end: completed successfully
 ------------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
 
-restore delta, remap, expect exit 155 - error on invalid id (db-master host)
+restore delta, remap, expect exit 80 - error on invalid id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=7777  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [155]: database to include '7777' does not exist
+P00  ERROR: [080]: database to include '7777' does not exist
 
-restore delta, remap, expect exit 156 - error on system id (db-master host)
+restore delta, remap, expect exit 81 - error on system id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=1  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [156]: system databases (template0, postgres, etc.) are included by default
+P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by default
 
-restore, remap, expect exit 148 - no tablespace remap - error when tablespace dir does not exist (db-master host)
+restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir does not exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
@@ -3993,8 +3993,8 @@ P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/base exists
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2/tablespace exists
-P00  ERROR: [148]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
-P00   INFO: restore command end: aborted with exception [148]
+P00  ERROR: [073]: cannot restore to missing path [TEST_PATH]/db-master/db/base-2/tablespace
+P00   INFO: restore command end: aborted with exception [073]
 
 restore - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace --log-level-console=detail  --stanza=db restore

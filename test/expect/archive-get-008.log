@@ -19,7 +19,7 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/backup/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  ERROR: [130]: raised on backup host: archive.info does not exist but is required to push/get WAL segments
+P00  ERROR: [055]: raised on backup host: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
@@ -29,8 +29,8 @@ P00  DEBUG:     Protocol::Protocol::protocolDestroy: found cached protocol: iRem
 P00  DEBUG:     Protocol::CommandMaster->close=>: iExitStatus = 0
 P00  DEBUG:     Protocol::Protocol::protocolDestroy=>: iExitStatus = 0
 P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
-P00   INFO: archive-get command end: aborted with exception [130]
-P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 130
+P00   INFO: archive-get command end: aborted with exception [055]
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 55
 
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create

@@ -205,6 +205,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sharma.yogesh"/>
+                        </release-item-contributor-list>
+
+                        <p>Renumber return codes between 25 and 125 to avoid PostgreSQL interpreting some as fatal signal exceptions.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files.  In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
                     </release-item>
 

@@ -5,11 +5,11 @@ stanza-upgrade db - fail on stanza not initialized since archive.info is missing
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [130]: archive.info does not exist but is required to push/get WAL segments
+P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-P00   INFO: stanza-upgrade command end: aborted with exception [130]
+P00   INFO: stanza-upgrade command end: aborted with exception [055]
 
 stanza-create db - successfully create the stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -92,9 +92,9 @@ stanza-upgrade db - fail on stanza not initialized since backup.info is missing 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [130]: [TEST_PATH]/db-master/repo/backup/db/backup.info does not exist and is required to perform a backup.
+P00  ERROR: [055]: [TEST_PATH]/db-master/repo/backup/db/backup.info does not exist and is required to perform a backup.
             HINT: has a stanza-create been performed?
-P00   INFO: stanza-upgrade command end: aborted with exception [130]
+P00   INFO: stanza-upgrade command end: aborted with exception [055]
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -151,7 +151,7 @@ db-version="9.3"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [119]: WAL segment version 9.4 does not match archive version 9.3
+P00  ERROR: [044]: WAL segment version 9.4 does not match archive version 9.3
             WAL segment system-id 6353949018581704918 does not match archive system-id 6395542721432104958
             HINT: are you archiving to the correct stanza?
 

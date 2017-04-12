@@ -633,7 +633,7 @@ sub log
         $iCode = ERROR_UNKNOWN;
     }
 
-    $strMessageFormat = (defined($iCode) ? "[${iCode}]: " : '') . $strMessageFormat;
+    $strMessageFormat = (defined($iCode) ? sprintf('[%03d]: ', $iCode) : '') . $strMessageFormat;
 
     # Indent subsequent lines of the message if it has more than one line - makes the log more readable
     if (defined($iIndent))
@@ -677,7 +677,7 @@ sub log
         {
             if ($strLogLevelStdErr ne PROTOCOL)
             {
-                syswrite(*STDERR, $strLevel . (defined($iCode) ? " [${iCode}]" : '') . ': ');
+                syswrite(*STDERR, $strLevel . (defined($iCode) ? sprintf(' [%03d]: ', $iCode) : '') . ': ');
             }
 
             syswrite(*STDERR, "${strMessage}\n");

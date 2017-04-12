@@ -266,11 +266,11 @@ repo-path=[TEST_PATH]/backup/repo
 archive-copy=y
 start-fast=y
 
-restore, type 'default', expect exit 113 - postmaster running (db-master host)
+restore, type 'default', expect exit 38 - postmaster running (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
-restore, type 'default', expect exit 115 - path not empty (db-master host)
+restore, type 'default', expect exit 40 - path not empty (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 

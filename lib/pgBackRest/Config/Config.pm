@@ -3161,7 +3161,7 @@ sub commandEnd
             "${strCommand} command end: " . (defined($iExitCode) && $iExitCode != 0 ?
                 ($iExitCode == ERROR_TERM ? "terminated on signal " .
                     (defined($strSignal) ? "[SIG${strSignal}]" : 'from child process') :
-                "aborted with exception [${iExitCode}]") :
+                sprintf('aborted with exception [%03d]', $iExitCode)) :
                 'completed successfully'));
     }
 }

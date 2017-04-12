@@ -5,8 +5,8 @@ stanza-create db - fail on missing control file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [116]: unable to open [TEST_PATH]/db-master/db/base/global/pg_control
-P00   INFO: stanza-create command end: aborted with exception [116]
+P00  ERROR: [041]: unable to open [TEST_PATH]/db-master/db/base/global/pg_control
+P00   INFO: stanza-create command end: aborted with exception [041]
 
 stanza-create db - successfully create the stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -118,9 +118,9 @@ stanza-create db - fail on archive info file missing from non-empty dir (db-mast
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [115]: backup directory and/or archive directory not empty
+P00  ERROR: [040]: backup directory and/or archive directory not empty
             HINT: Use --force to force the stanza data to be created.
-P00   INFO: stanza-create command end: aborted with exception [115]
+P00   INFO: stanza-create command end: aborted with exception [040]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -144,8 +144,8 @@ stanza-create db - gunzip fail on forced stanza-create (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
-P00  ERROR: [116]: unable to open [TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
-P00   INFO: stanza-create command end: aborted with exception [116]
+P00  ERROR: [041]: unable to open [TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
+P00   INFO: stanza-create command end: aborted with exception [041]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -283,9 +283,9 @@ stanza-create db - hash check fails requiring force (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
-P00  ERROR: [103]: archive file invalid
+P00  ERROR: [028]: archive file invalid
             HINT: use stanza-upgrade if the database has been upgraded or use --force
-P00   INFO: stanza-create command end: aborted with exception [103]
+P00   INFO: stanza-create command end: aborted with exception [028]
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -345,9 +345,9 @@ stanza-create db - fail on database mismatch without force option (db-master hos
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
-P00  ERROR: [103]: archive file invalid
+P00  ERROR: [028]: archive file invalid
             HINT: use stanza-upgrade if the database has been upgraded or use --force
-P00   INFO: stanza-create command end: aborted with exception [103]
+P00   INFO: stanza-create command end: aborted with exception [028]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
