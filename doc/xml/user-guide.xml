@@ -61,7 +61,7 @@
         <variable key="host-os" keyword="default">u14</variable>
         <variable key="host-os" keyword="co6">co6</variable>
 
-        <variable key="host-user" eval="y">use English '-no_match_vars'; return getpwuid($UID) . '';</variable>
+        <variable key="host-user">ubuntu</variable>
         <variable key="host-mount">/backrest:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
@@ -171,14 +171,14 @@
         <title>Installation</title>
 
         <host-add name="{[host-db-master]}" user="{[host-db-master-user]}" image="{[host-db-master-image]}" os="{[host-os]}" mount="{[host-db-master-mount]}">
-            <execute user="{[host-user]}">
-                <exe-cmd>mkdir /home/{[host-user]}/pgbackrest-release-{[version]}</exe-cmd>
+            <execute user="root">
+                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
-            <execute user="{[host-user]}">
-                <exe-cmd>cp -r /backrest/bin /home/{[host-user]}/pgbackrest-release-{[version]}</exe-cmd>
+            <execute user="root">
+                <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
-            <execute user="{[host-user]}">
-                <exe-cmd>cp -r /backrest/lib /home/{[host-user]}/pgbackrest-release-{[version]}</exe-cmd>
+            <execute user="root">
+                <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
         </host-add>
 
@@ -212,10 +212,10 @@
         <execute-list host="{[host-db-master]}">
             <title>Download version <id>{[version]}</id> of <backrest/></title>
 
-            <execute user="{[host-user]}" skip="y">
+            <execute user="root" skip="y">
                 <exe-cmd>wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
-                    tar zx -C ~</exe-cmd>
+                    tar zx -C /root</exe-cmd>
             </execute>
         </execute-list>
 
@@ -250,7 +250,7 @@
             <title>Install <backrest/></title>
 
             <execute user="root">
-                <exe-cmd>cp -r ~/pgbackrest-release-{[version]}/lib/pgBackRest
+                <exe-cmd>cp -r /root/pgbackrest-release-{[version]}/lib/pgBackRest
                     {[perl-lib-path]}</exe-cmd>
             </execute>
             <execute user="root">
@@ -260,7 +260,7 @@
                 <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
             </execute>
             <execute user="root">
-                <exe-cmd>cp ~/pgbackrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+                <exe-cmd>cp /root/pgbackrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
             </execute>
             <execute user="root">
                 <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
