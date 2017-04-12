@@ -1048,7 +1048,11 @@ sub process
     # Make sure that Postgres is not running
     if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . DB_FILE_POSTMASTERPID))
     {
-        confess &log(ERROR, 'unable to restore while Postgres is running', ERROR_POSTMASTER_RUNNING);
+        confess &log(ERROR,
+            "unable to restore while PostgreSQL is running\n" .
+            "HINT: presence of '" . DB_FILE_POSTMASTERPID . "' in '$self->{strDbClusterPath}' indicates PostgreSQL is running.\n" .
+            "HINT: remove '" . DB_FILE_POSTMASTERPID . "' only if PostgreSQL is not running.",
+            ERROR_POSTMASTER_RUNNING);
     }
 
     # If the restore will be destructive attempt to verify that $PGDATA is valid

@@ -543,6 +543,15 @@ sub run
                 $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
                 'error on existing linked file', ERROR_PATH_NOT_EMPTY, '--log-level-console=warn --link-all');
 
+            # Error when postmaster.pid is present
+            executeTest('touch ' . $oHostDbMaster->dbBasePath() . qw(/) . DB_FILE_POSTMASTERPID);
+
+            $oHostDbMaster->restore(
+                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                'error on postmaster.pid exists', ERROR_POSTMASTER_RUNNING, '--log-level-console=warn');
+
+            executeTest('rm ' . $oHostDbMaster->dbBasePath() . qw(/) . DB_FILE_POSTMASTERPID);
+
             # Now a combination of remapping
             $bDelta = true;
 

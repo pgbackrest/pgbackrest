@@ -1151,6 +1151,13 @@ P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a n
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
 P00  ERROR: [115]: cannot restore file '[TEST_PATH]/db-master/db/pg_config/postgresql.conf' that already exists - try using --delta if this is what you intended
 
+restore, backup '[BACKUP-FULL-2]', expect exit 113 - error on postmaster.pid exists (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+P00  ERROR: [113]: unable to restore while PostgreSQL is running
+            HINT: presence of 'postmaster.pid' in '[TEST_PATH]/db-master/db/base' indicates PostgreSQL is running.
+            HINT: remove 'postmaster.pid' only if PostgreSQL is not running.
+
 restore delta, backup '[BACKUP-FULL-2]' - restore all links --link-all and mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=detail  --link-map=pg_stat=../pg_stat  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------

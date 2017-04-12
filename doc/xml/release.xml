@@ -197,6 +197,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sharma.yogesh"/>
+                        </release-item-contributor-list>
+
+                        <p>Improved error message when the <cmd>restore</cmd> command detects the presence of <file>postmaster.pid</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files.  In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
                     </release-item>
 
