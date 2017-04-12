@@ -144,7 +144,9 @@ sub restoreFile
             undef, undef,
             $lModificationTime, $strMode,
             undef,
-            $strUser, $strGroup);
+            $strUser, $strGroup,
+            undef, undef, undef, undef,
+            false);                                                 # Don't copy via a temp file
 
         if ($lCopySize != 0 && $strCopyChecksum ne $strChecksum)
         {

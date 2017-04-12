@@ -193,6 +193,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files.  In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow functions to accept optional parameters as a hash.</p>
                     </release-item>
 

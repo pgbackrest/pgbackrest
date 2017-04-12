@@ -238,7 +238,8 @@ sub backupFile
             undef, undef, undef, undef,                             # Unused
             $bChecksumPage ?                                        # Function to process page checksums
                 'pgBackRest::BackupFile::backupChecksumPage' : undef,
-            $hExtraParam);                                          # Start LSN to pass to extra function
+            $hExtraParam,                                           # Start LSN to pass to extra function
+            false);                                                 # Don't copy via a temp file
 
         # If source file is missing then assume the database removed it (else corruption and nothing we can do!)
         if (!$bCopyResult)

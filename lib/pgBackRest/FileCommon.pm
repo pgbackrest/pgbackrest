@@ -566,6 +566,26 @@ sub fileMode
 push @EXPORT, qw(fileMode);
 
 ####################################################################################################################################
+# fileModeDefaultGet
+#
+# Get the default mode to be used when creating files.
+####################################################################################################################################
+sub fileModeDefaultGet
+{
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '::fileModeDefaultGet');
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strFileModeDefault', value => $strFileModeDefault, trace => true}
+    );
+}
+
+push @EXPORT, qw(fileModeDefaultGet);
+
+####################################################################################################################################
 # fileModeDefaultSet
 #
 # Set the default mode to be used when creating files.
