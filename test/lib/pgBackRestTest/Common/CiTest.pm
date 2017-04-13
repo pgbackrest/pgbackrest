@@ -177,7 +177,7 @@ sub process
         "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?} \${PGB_BUILD_PARAM?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
+        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm-max=2 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
 
     fileStringWrite("$self->{strBackRestBase}/.travis.yml", $strConfig, false);
 

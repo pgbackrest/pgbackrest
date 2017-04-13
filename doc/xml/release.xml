@@ -153,6 +153,16 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.19dev" title="UNDER DEVELOPMENT">
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Set <setting>--vm-max=2</setting> for CI.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
         <release date="2017-04-12" version="1.18" title="Stanza Upgrade, Refactoring, and Locking Improvements">
             <release-core-list>
                 <release-bug-list>
