@@ -155,6 +155,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.19dev" title="UNDER DEVELOPMENT">
             <release-test-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed an undefined variable when a module had no uncoverable code exceptions.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Set <setting>--vm-max=2</setting> for CI.</p>

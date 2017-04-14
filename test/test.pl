@@ -773,10 +773,13 @@ eval
                     }
 
                     # Check that all code has been covered
+                    my $iCoverageTotal = $hCoverageResultAll->{total};
+                    my $iCoverageUncoverable = coalesce($hCoverageResultAll->{uncoverable}, 0);
+                    my $iCoverageCovered = $hCoverageResultAll->{covered};
+
                     if ($hCoverageActual->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
                     {
-                        my $iUncoveredLines =
-                            $hCoverageResultAll->{total} - $hCoverageResultAll->{covered} - $hCoverageResultAll->{uncoverable};
+                        my $iUncoveredLines = $iCoverageTotal - $iCoverageCovered - $iCoverageUncoverable;
 
                         if ($iUncoveredLines != 0)
                         {
@@ -787,9 +790,7 @@ eval
                     # Else test how much partial coverage where was
                     else
                     {
-                        my $iCoveragePercent = int(
-                            ($hCoverageResultAll->{covered} + $hCoverageResultAll->{uncoverable}) * 100 /
-                                $hCoverageResultAll->{total});
+                        my $iCoveragePercent = int(($iCoverageCovered + $iCoverageUncoverable) * 100 / $iCoverageTotal);
 
                         if ($iCoveragePercent == 100)
                         {

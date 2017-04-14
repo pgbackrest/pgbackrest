@@ -213,7 +213,6 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'ini-unit',
-                    &TESTDEF_CONTAINER => true,
                     &TESTDEF_TOTAL => 10,
 
                     &TESTDEF_COVERAGE =>
