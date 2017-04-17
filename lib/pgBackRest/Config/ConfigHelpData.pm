@@ -725,7 +725,7 @@ my $oConfigHelpData =
                     "are compressed and moved to the repository. Depending on the volume of WAL generated this directory could " .
                     "become very large so be sure to plan accordingly.\n" .
                 "\n" .
-                "The max-archive-mb option can be used to limit the amount of WAL that will be spooled locally."
+                "The archive-queue-max option can be used to limit the amount of WAL that will be spooled locally."
         },
 
         # STANZA Option Help

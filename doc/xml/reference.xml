@@ -196,7 +196,7 @@
 
                         <text>When asynchronous archiving is enabled <backrest/> needs a local directory to store WAL segments before they are compressed and moved to the repository.  Depending on the volume of WAL generated this directory could become very large so be sure to plan accordingly.
 
-                        The <setting>max-archive-mb</setting> option can be used to limit the amount of WAL that will be spooled locally.</text>
+                        The <setting>archive-queue-max</setting> option can be used to limit the amount of WAL that will be spooled locally.</text>
 
                         <example>/backup/db/spool</example>
                     </config-key>
