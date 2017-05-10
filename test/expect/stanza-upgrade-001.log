@@ -391,8 +391,8 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
 [
     {
         "archive" : {
-            "max" : null,
-            "min" : null
+            "max" : "000000010000000100000001",
+            "min" : "000000010000000100000001"
         },
         "backup" : [
             {
