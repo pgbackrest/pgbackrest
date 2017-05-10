@@ -653,23 +653,34 @@ sub process
         # Wait for replay on the standby to catch up
         if (optionGet(OPTION_BACKUP_STANDBY))
         {
-            my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
-            $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
+            if (defined($oDbStandby))
+            {
+                my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
+                $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
 
-            $oDbStandby->configValidate();
+                $oDbStandby->configValidate();
 
-            &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
+                &log(INFO, "wait for replay on the standby to reach ${strLsnStart}");
 
-            my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
+                my ($strReplayedLSN, $strCheckpointLSN) = $oDbStandby->replayWait($strLsnStart);
 
-            &log(
-                INFO,
-                "replay on the standby reached ${strReplayedLSN}" .
-                    (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
+                &log(
+                    INFO,
+                    "replay on the standby reached ${strReplayedLSN}" .
+                        (defined($strCheckpointLSN) ? ", checkpoint ${strCheckpointLSN}" : ''));
 
-            # The standby db object won't be used anymore so undef it to catch any subsequent references
-            undef($oDbStandby);
-            protocolDestroy(DB, $self->{iCopyRemoteIdx}, true);
+                # The standby db object won't be used anymore so undef it to catch any subsequent references
+                undef($oDbStandby);
+                protocolDestroy(DB, $self->{iCopyRemoteIdx}, true);
+            }
+            # Backup from standby option is set but the configuration is not correct. Turn off OPTION_BACKUP_STANDBY and warn that
+            # the backup will be from the master.
+            else
+            {
+                optionSet(OPTION_BACKUP_STANDBY, false);
+                &log(WARN, 'option backup-standby is enabled but standby is not properly configured; ' .
+                    'backup will be perfromed from the master');
+            }
         }
     }
 
