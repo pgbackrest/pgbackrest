@@ -82,6 +82,16 @@ sub initTest
     $self->{oExpireTest} = new pgBackRestTest::Expire::ExpireEnvTest(undef, $self->backrestExe(), $self->{oFile}, undef, $self);
 
     # Set options for stanzaCreate
+    $self->optionStanzaCreate();
+
+    $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
+}
+
+sub optionStanzaCreate
+{
+    my $self = shift;
+
+    # Set options for stanzaCreate
     my $oOption = {};
     $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
     $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
@@ -92,8 +102,6 @@ sub initTest
     $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
 
     $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
-
-    $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
 }
 
 ####################################################################################################################################
@@ -171,6 +179,17 @@ sub run
             "        database size: 0B, backup size: 0B\n" .
             "        repository size: 0B, repository backup size: 0B",
             "incr backup text output");
+
+        # Upgrade the stanza, generate archive and confirm the min/max archive is for the new (current) DB version
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionStanzaCreate();
+        $self->{oExpireTest}->stanzaUpgrade($self->stanza(), PG_VERSION_95);
+        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 2);
+        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+
+        $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
+            "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000000000004",
+            "stanza text output");
     }
 }
 
