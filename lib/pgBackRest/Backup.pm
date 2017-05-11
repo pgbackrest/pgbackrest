@@ -490,15 +490,6 @@ sub process
     # Get the database objects
     ($oDbMaster, $self->{iMasterRemoteIdx}, $oDbStandby, $self->{iCopyRemoteIdx}) = dbObjectGet();
 
-    # Backup from standby option is set but the configuration is not correct. Turn off OPTION_BACKUP_STANDBY and warn that
-    # the backup will be performed from the master.
-    if (!defined($oDbStandby) && optionGet(OPTION_BACKUP_STANDBY))
-    {
-        optionSet(OPTION_BACKUP_STANDBY, false);
-        &log(WARN, 'option backup-standby is enabled but standby is not properly configured - ' .
-            'backup will be performed from the master');
-    }
-
     # If remote copy was not explicitly set then set it equal to master
     if (!defined($self->{iCopyRemoteIdx}))
     {
