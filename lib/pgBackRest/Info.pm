@@ -381,11 +381,23 @@ sub stanzaList
             # Get the first/last WAL
             my $strArchiveStart;
             my $strArchiveStop;
-            my $hDbInfo = @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}}[0];
 
-            if (defined($hDbInfo->{&INFO_KEY_ID}) && defined($hDbInfo->{&INFO_KEY_VERSION}))
+            # Loop through the DB history from oldest to newest
+            foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
             {
-                my $strArchivePath = "archive/${strStanzaFound}/" . $hDbInfo->{&INFO_KEY_VERSION} . '-' . $hDbInfo->{&INFO_KEY_ID};
+                $strArchiveStart = undef;
+                $strArchiveStop = undef;
+
+                my $strArchiveStanzaPath = "archive/" . $strStanzaFound;
+                my $strDbVersion = $hDbInfo->{&INFO_KEY_VERSION};
+                my $ullDbSysId = $hDbInfo->{&INFO_KEY_SYSTEM_ID};
+
+                # With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
+                # archive path must be built by retrieving the archive id given the db version and system id of the backup
+                my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo(optionGet(OPTION_REPO_PATH) . "/" . $strArchiveStanzaPath);
+                my $strArchiveId = $oArchiveInfo->archiveId({strDbVersion => $hDbInfo->{&INFO_KEY_VERSION},
+                    ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
+                my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
 
                 if ($oFile->exists(PATH_BACKUP, $strArchivePath))
                 {
@@ -421,6 +433,7 @@ sub stanzaList
                 }
             }
 
+            # Store only the last (current) database's archive min/max
             $oStanzaInfo->{&INFO_SECTION_ARCHIVE} =
             {
                 &INFO_KEY_MIN => $strArchiveStart,

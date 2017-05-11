@@ -175,14 +175,54 @@ sub archiveId
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->archiveId');
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->archiveId', \@_,
+            {name => 'strDbVersion', optional => true},
+            {name => 'ullDbSysId', optional => true},
+        );
+
+    my $strArchiveId = undef;
+
+    # If neither optional version and system-id are passed then set the archive id to the current one
+    if (!defined($strDbVersion) && !defined($ullDbSysId))
+    {
+        $strArchiveId = $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
+            $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID);
+    }
+    # If both the optional version and system-id are passed
+    elsif (defined($strDbVersion) && defined($ullDbSysId))
+    {
+        # Get the version and system-id for all known databases
+        my $hDbList = $self->dbHistoryList();
+
+        foreach my $iDbHistoryId (sort(keys(%$hDbList)))
+        {
+            # If the version and system-id match then construct the archive id
+            if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
+                ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
+            {
+                $strArchiveId = $strDbVersion . "-" . $iDbHistoryId;
+            }
+        }
+    }
+
+    # If the archive id has still not been found, then error
+    if (!defined($strArchiveId))
+    {
+        confess &log(ERROR, 'unable to retrieve the archive id');
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strArchiveId', value => $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION) . "-" .
-                                          $self->get(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_ID)}
+        {name => 'strArchiveId', value => $strArchiveId}
     );
 }
 
