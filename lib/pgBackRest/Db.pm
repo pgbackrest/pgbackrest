@@ -1049,12 +1049,12 @@ sub dbObjectGet
     }
 
     # If backup from standby option is set but we could not get the standby object then, turn off OPTION_BACKUP_STANDBY & warn that
-    # the backup will be performed from the master.
-    if (!defined($oDbStandby) && optionGet(OPTION_BACKUP_STANDBY))
+    # backups will be performed from the master.
+    if (!defined($oDbStandby) && optionValid(OPTION_BACKUP_STANDBY) && optionGet(OPTION_BACKUP_STANDBY))
     {
         optionSet(OPTION_BACKUP_STANDBY, false);
         &log(WARN, 'option backup-standby is enabled but standby is not properly configured - ' .
-            'backup will be performed from the master');
+            'backups will be performed from the master');
     }
 
     # Return from function and log return values if any
