@@ -340,6 +340,22 @@ sub run
 
             # Remove the aborted backup so the next backup is not a resume
             testPathRemove($oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp');
+
+#CSHANG
+# # if ($bNeutralTest)
+# # {
+#     $oHostBackup->executeSimple("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save",
+#         undef, 'root');
+#     $oHostBackup->executeSimple("echo thread-timeout=2 >> " . $oHostBackup->backrestConfig(), undef, 'root');
+#
+#     # if ($bRemote)
+#     # {
+#         my $strFullBackup = $oHostBackup->backup(
+#             $strType, 'warn only on local',
+#             {oExpectedManifest => \%oManifest});
+#     # } # WARN: /home/ubuntu/test/test-0/backup/pgbackrest.conf file contains invalid option 'thread-timeout'
+# # }
+# exit;
         }
 
         # Stop operations and make sure the correct error occurs

@@ -121,7 +121,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 7,
+                    &TESTDEF_TOTAL => 1,
                 },
                 {
                     &TESTDEF_NAME => 'option',
