@@ -171,6 +171,28 @@ sub run
             {
                 $oHostBackup->check($strComment, {iTimeout => 5});
             }
+            
+#CSHANG BEGIN
+            $strComment = 'config file not validated on remote';
+            executeTest("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save");
+            $oHostBackup->executeSimple("echo thread-timeout=2 >> " . $oHostBackup->backrestConfig(), undef, 'root');
+# If running the remote tests
+            if ($bHostBackup)
+            {
+                $oHostDbMaster->check($strComment, {iTimeout => 5});
+            }
+            # Can't seem to get this to work - it returns an error code of 0 but then the output is on stderr as ERROR_UNKNOWN
+            else
+            {
+                $oHostDbMaster->check($strComment, {iTimeout => 5});
+                # , iExpectedExitStatus => ERROR_UNKNOWN});
+    # 2017-05-11 21:43:48.499 P00   INFO:     check db - config file not validated on remote (db-master host)
+    # 2017-05-11 21:43:49.991 P00  ERROR: [125]: output found on STDERR:
+    #                                         WARN: /home/ubuntu/test/test-0/db-master/pgbackrest.conf file contains invalid option 'thread-timeout'
+            }
+            executeTest('sudo rm '. $oHostBackup->backrestConfig());
+            executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
+#CSHANG END
 
             # Check archive mismatch due to upgrade error
             $strComment = 'fail on archive mismatch after upgrade';
