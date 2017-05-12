@@ -159,6 +159,22 @@
                     <release-item>
                         <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <br-setting>archive-queue-max</br-setting>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Modified the <cmd>info</cmd> command so the wal archive min/max displayed is for the current database version.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Modified the <cmd>backup</cmd> command to reset the <br-setting>backup-standby</br-setting> option if the standby is not reachable.</p>
+                    </release-item>
                 </release-bug-list>
             </release-doc-list>
 
