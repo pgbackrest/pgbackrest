@@ -183,6 +183,10 @@
                     <release-item>
                         <p>Fixed an undefined variable when a module had no uncoverable code exceptions.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed issue with <setting>--dry-run</setting> requiring <setting>--vm-out</setting> to work properly.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-refactor-list>
