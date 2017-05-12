@@ -340,22 +340,6 @@ sub run
 
             # Remove the aborted backup so the next backup is not a resume
             testPathRemove($oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp');
-
-#CSHANG
-# # if ($bNeutralTest)
-# # {
-#     $oHostBackup->executeSimple("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save",
-#         undef, 'root');
-#     $oHostBackup->executeSimple("echo thread-timeout=2 >> " . $oHostBackup->backrestConfig(), undef, 'root');
-#
-#     # if ($bRemote)
-#     # {
-#         my $strFullBackup = $oHostBackup->backup(
-#             $strType, 'warn only on local',
-#             {oExpectedManifest => \%oManifest});
-#     # } # WARN: /home/ubuntu/test/test-0/backup/pgbackrest.conf file contains invalid option 'thread-timeout'
-# # }
-# exit;
         }
 
         # Stop operations and make sure the correct error occurs
@@ -1169,6 +1153,39 @@ sub run
             $strBackup = $oHostBackup->backup(
                 $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
                     strOptionalParam => '--log-level-console=detail --' . OPTION_BACKUP_STANDBY});
+        }
+
+        # Test config file validation
+        #-----------------------------------------------------------------------------------------------------------------------
+        if ($bNeutralTest)
+        {
+            if ($bRemote)
+            {
+                # Save off config file and add an invalid option to the remote (DB master) and confirm no warning thrown
+                executeTest("cp " . $oHostDbMaster->backrestConfig() . " " . $oHostDbMaster->backrestConfig() . ".save");
+                $oHostDbMaster->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostDbMaster->backrestConfig(), undef,
+                    'root');
+
+                $strBackup = $oHostBackup->backup(
+                    $strType, 'config file not validated on remote', {oExpectedManifest => \%oManifest,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                executeTest('sudo rm '. $oHostDbMaster->backrestConfig());
+                executeTest("mv " . $oHostDbMaster->backrestConfig() . ".save" . " " . $oHostDbMaster->backrestConfig());
+            }
+            else
+            {
+                # Save off config file and add an invalid option to the local backup host and confirm a warning is thrown
+                executeTest("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save");
+                $oHostBackup->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostBackup->backrestConfig(), undef, 'root');
+
+                $strBackup = $oHostBackup->backup(
+                    $strType, 'config file warning on local', {oExpectedManifest => \%oManifest,
+                        strOptionalParam => '--log-level-console=detail 2>&1'});
+
+                executeTest('sudo rm '. $oHostBackup->backrestConfig());
+                executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
+            }
         }
     }
     }

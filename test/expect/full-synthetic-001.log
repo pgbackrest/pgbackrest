@@ -4201,7 +4201,7 @@ diff backup - option backup-standby reset - backup performed from master (db-mas
 P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
+P00   WARN: option backup-standby is enabled but standby is not properly configured - backup will be performed from the master
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
@@ -4336,6 +4336,160 @@ backrest-version="[VERSION-1]"
 [BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-DIFF-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+
+[db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=6353949018581704918
+db-version="9.4"
+
+[db:history]
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+
+diff backup - config file warning on local (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail 2>&1 --type=diff --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+WARN: [TEST_PATH]/db-master/pgbackrest.conf file contains invalid option 'bogus'
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   WARN: option retention-full is not set, the repository may run out of space
+            HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
+P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
+P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P00   INFO: diff backup size = 9B
+P00   INFO: new backup label = [BACKUP-DIFF-7]
+P00   INFO: backup command end: completed successfully
+P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
+P00   INFO: expire command end: completed successfully
+
++ supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
+----------------------------------------------------------
+[db]
+db-path=[TEST_PATH]/db-master/db/base-2/base
+
+[db:restore]
+
+[global]
+compress=n
+lock-path=[TEST_PATH]/db-master/repo/lock
+log-level-console=debug
+log-level-file=trace
+log-level-stderr=off
+log-path=[TEST_PATH]/db-master/repo/log
+repo-path=[TEST_PATH]/db-master/repo
+
+[global:backup]
+archive-copy=y
+start-fast=y
+bogus=bogus
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-DIFF-7]/backup.manifest
+-----------------------------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup]
+backup-label="[BACKUP-DIFF-7]"
+backup-prior="[BACKUP-FULL-3]"
+backup-timestamp-copy-start=[TIMESTAMP]
+backup-timestamp-start=[TIMESTAMP]
+backup-timestamp-stop=[TIMESTAMP]
+backup-type="diff"
+
+[backup:db]
+db-catalog-version=201409291
+db-control-version=942
+db-id=1
+db-system-id=6353949018581704918
+db-version="9.4"
+
+[backup:option]
+option-archive-check=true
+option-archive-copy=true
+option-backup-standby=false
+option-checksum-page=false
+option-compress=false
+option-hardlink=false
+option-online=false
+
+[backup:target]
+pg_data={"path":"[TEST_PATH]/db-master/db/base-2/base","type":"path"}
+pg_tblspc/2={"path":"../../tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
+
+[target:file]
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init={"checksum":"bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+
+[target:file:default]
+group="[GROUP-1]"
+master=false
+mode="0600"
+user="[USER-1]"
+
+[target:link]
+pg_data/pg_tblspc/2={"destination":"../../tablespace/ts2"}
+
+[target:link:default]
+group="[GROUP-1]"
+user="[USER-1]"
+
+[target:path]
+pg_data={}
+pg_data/base={}
+pg_data/base/1={}
+pg_data/base/16384={}
+pg_data/base/32768={}
+pg_data/global={}
+pg_data/pg_clog={}
+pg_data/pg_dynshmem={}
+pg_data/pg_notify={}
+pg_data/pg_replslot={}
+pg_data/pg_serial={}
+pg_data/pg_snapshots={}
+pg_data/pg_stat={}
+pg_data/pg_stat_tmp={}
+pg_data/pg_subtrans={}
+pg_data/pg_tblspc={}
+pg_tblspc={}
+pg_tblspc/2={}
+pg_tblspc/2/[TS_PATH-1]={}
+pg_tblspc/2/[TS_PATH-1]/32768={}
+
+[target:path:default]
+group="[GROUP-1]"
+mode="0700"
+user="[USER-1]"
+
++ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
+---------------------------------------------------------------------
+[backrest]
+backrest-checksum="[CHECKSUM]"
+backrest-format=5
+backrest-version="[VERSION-1]"
+
+[backup:current]
+[BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
+[BACKUP-DIFF-7]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
 
 [db]
 db-catalog-version=201409291

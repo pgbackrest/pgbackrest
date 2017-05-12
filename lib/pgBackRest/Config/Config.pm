@@ -2105,7 +2105,6 @@ sub configLoad
     # If this is not the remote and logging is allowed (to not overwrite log levels for tests) then set the log level so that
     # INFO/WARN messages can be displayed (the user may still disable them).  This should be run before any WARN logging is
     # generated.
-# CSHANG This was changed by David - it used to test for !commandTest(CMD_REMOTE) so why was it changed? The only thing it does now is allow us to turn logging off (used during testing) since the default is that bInitLogging is undefined so it will always turn logging on for the valid options
     if (!defined($bInitLogging) || $bInitLogging)
     {
         configLogging(true);
