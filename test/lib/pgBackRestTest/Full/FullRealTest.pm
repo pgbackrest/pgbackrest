@@ -210,9 +210,6 @@ sub run
             # Check backup mismatch error
             $strComment = 'fail on backup info mismatch';
 
-            # First run a successful backup to create the backup.info file
-            $oHostBackup->backup($strType, 'run a successful backup');
-
             # Load the backup.info file and munge it for testing by breaking the database version and system id
             $oHostBackup->infoMunge(
                 $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),

@@ -496,6 +496,15 @@ sub process
         $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
     }
 
+    # If backup from standby option is set but we could not get the standby object then, turn off OPTION_BACKUP_STANDBY & warn that
+    # backups will be performed from the master.
+    if (!defined($oDbStandby) && optionGet(OPTION_BACKUP_STANDBY))
+    {
+        optionSet(OPTION_BACKUP_STANDBY, false);
+        &log(WARN, 'option backup-standby is enabled but standby is not properly configured - ' .
+            'backups will be performed from the master');
+    }
+
     # Initialize the master file object
     my $oFileMaster = new pgBackRest::File
     (
