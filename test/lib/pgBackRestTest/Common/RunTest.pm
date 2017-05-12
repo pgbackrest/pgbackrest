@@ -474,7 +474,8 @@ sub testRun
     }
 
     my $strModuleName =
-        'pgBackRestTest::' . testRunName($strModule) . '::' . testRunName($strModule) . testRunName($strModuleTest) . 'Test';
+        'pgBackRestTest::Module::' . testRunName($strModule) . '::' . testRunName($strModule) . testRunName($strModuleTest) .
+        'Test';
 
     $oTestRun = eval(                                                ## no critic (BuiltinFunctions::ProhibitStringyEval)
         "require ${strModuleName}; ${strModuleName}->import(); return new ${strModuleName}();")
