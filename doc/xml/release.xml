@@ -167,6 +167,14 @@
 
                         <p>Fixed the <cmd>info</cmd> command so the WAL archive min/max displayed is for the current database version.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the master) if the standby is not configured and/or reachable.</p>
+                    </release-item>
                 </release-bug-list>
             </release-doc-list>
 
