@@ -4201,7 +4201,7 @@ diff backup - option backup-standby reset - backup performed from master (db-mas
 P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   WARN: option backup-standby is enabled but standby is not properly configured - backup will be performed from the master
+P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
