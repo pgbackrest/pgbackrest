@@ -4362,16 +4362,6 @@ info bogus stanza - bogus stanza (db-master host)
     }
 ]
 
-diff backup - protocol shutdown timeout (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --protocol-timeout=2 --db-timeout=.5 --log-level-console=warn --type=diff --stanza=db backup --test --test-delay=2 --test-point=backup-stop=y
-------------------------------------------------------------------------------------------------------------------------------------
-P00   WARN: option retention-full is not set, the repository may run out of space
-            HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   TEST:         PgBaCkReStTeSt-BACKUP-STOP-PgBaCkReStTeSt
-P00  ERROR: [066]: remote process terminated on db-master host: unable to read line after 2 second(s)
-P00   WARN: unable to shutdown protocol [066]: remote process terminated on db-master host: unable to read line after 2 second(s)
-            HINT: the process completed all operations successfully but protocol-timeout may need to be increased.
-
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=detail --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -4527,7 +4517,6 @@ backrest-version="[VERSION-1]"
 [backup:current]
 [BACKUP-FULL-3]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"full","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-DIFF-5]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
-[BACKUP-DIFF-7]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
 [BACKUP-DIFF-6]={"backrest-format":5,"backrest-version":"[VERSION-1]","backup-archive-start":null,"backup-archive-stop":null,"backup-info-repo-size":[SIZE],"backup-info-repo-size-delta":[DELTA],"backup-info-size":[SIZE],"backup-info-size-delta":[DELTA],"backup-prior":"[BACKUP-FULL-3]","backup-reference":["[BACKUP-FULL-3]"],"backup-timestamp-start":[TIMESTAMP],"backup-timestamp-stop":[TIMESTAMP],"backup-type":"diff","db-id":1,"option-archive-check":true,"option-archive-copy":true,"option-backup-standby":false,"option-checksum-page":false,"option-compress":false,"option-hardlink":false,"option-online":false}
 
 [db]

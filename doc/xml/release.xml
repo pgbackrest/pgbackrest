@@ -197,6 +197,10 @@
                     <release-item>
                         <p>Set <setting>--vm-max=2</setting> for CI.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove flapping protocol timeout test that will be replaced in the upcoming storage patch.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
