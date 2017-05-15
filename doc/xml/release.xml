@@ -154,12 +154,8 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.19dev" title="UNDER DEVELOPMENT">
-            <release-doc-list>
+            <release-core-list>
                 <release-bug-list>
-                    <release-item>
-                        <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <br-setting>archive-queue-max</br-setting>.</p>
-                    </release-item>
-
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -174,6 +170,20 @@
                         </release-item-contributor-list>
 
                         <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the master) if the standby is not configured and/or reachable.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Move modules in <path>Protocol</path> directory in subdirectories.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <br-setting>archive-queue-max</br-setting>.</p>
                     </release-item>
                 </release-bug-list>
             </release-doc-list>

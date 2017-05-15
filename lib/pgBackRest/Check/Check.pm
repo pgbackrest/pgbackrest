@@ -17,8 +17,8 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
 # constructor

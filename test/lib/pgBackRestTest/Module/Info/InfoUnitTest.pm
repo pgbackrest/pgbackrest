@@ -25,8 +25,8 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Info;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -52,7 +52,7 @@ sub initModule
         (
             $self->stanza(),
             $self->{strRepoPath},
-            new pgBackRest::Protocol::Common
+            new pgBackRest::Protocol::Common::Common
             (
                 OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
                 OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level

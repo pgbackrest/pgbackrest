@@ -19,7 +19,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Version;
 
 ####################################################################################################################################

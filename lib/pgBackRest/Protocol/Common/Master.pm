@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL COMMON MASTER MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::CommonMaster;
-use parent 'pgBackRest::Protocol::Common';
+package pgBackRest::Protocol::Common::Master;
+use parent 'pgBackRest::Protocol::Common::Common';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,7 +15,7 @@ use Time::HiRes qw(gettimeofday);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Version;
 
 ####################################################################################################################################

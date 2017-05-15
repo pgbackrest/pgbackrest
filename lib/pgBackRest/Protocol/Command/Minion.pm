@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL COMMAND MINION MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::CommandMinion;
-use parent 'pgBackRest::Protocol::CommonMinion';
+package pgBackRest::Protocol::Command::Minion;
+use parent 'pgBackRest::Protocol::Common::Minion';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,8 +15,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Protocol::CommonMinion;
-use pgBackRest::Protocol::IO::ProcessIO;
+use pgBackRest::Protocol::Common::Minion;
+use pgBackRest::Protocol::Common::Io::Process;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -51,7 +51,7 @@ sub new
     # Create the class hash
     my $self = $class->SUPER::new(
         $strName, $strCommand,
-        new pgBackRest::Protocol::IO::ProcessIO(*STDIN, *STDOUT, *STDERR, undef, undef, $iProtocolTimeout, $iBufferMax),
+        new pgBackRest::Protocol::Common::Io::Process(*STDIN, *STDOUT, *STDERR, undef, undef, $iProtocolTimeout, $iBufferMax),
         $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
 

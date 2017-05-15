@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# PROTOCOL MODULE
+# PROTOCOL HELPER MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::Protocol;
+package pgBackRest::Protocol::Helper;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,8 +12,8 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::RemoteMaster;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Remote::Master;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -97,7 +97,7 @@ sub protocolGet
     {
         logDebugMisc($strOperation, 'create local protocol');
 
-        $oProtocol = new pgBackRest::Protocol::Common
+        $oProtocol = new pgBackRest::Protocol::Common::Common
         (
             optionGet(OPTION_BUFFER_SIZE),
             commandTest(CMD_EXPIRE) ? OPTION_DEFAULT_COMPRESS_LEVEL : optionGet(OPTION_COMPRESS_LEVEL),
@@ -155,7 +155,7 @@ sub protocolGet
                         undef : optionGet(optionIndex(OPTION_DB_SOCKET_PATH, $iRemoteIdx));
             }
 
-            $oProtocol = new pgBackRest::Protocol::RemoteMaster
+            $oProtocol = new pgBackRest::Protocol::Remote::Master
             (
                 $strRemoteType,
                 optionGet(OPTION_CMD_SSH),

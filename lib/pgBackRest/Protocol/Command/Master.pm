@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL COMMAND MASTER MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::CommandMaster;
-use parent 'pgBackRest::Protocol::CommonMaster';
+package pgBackRest::Protocol::Command::Master;
+use parent 'pgBackRest::Protocol::Common::Master';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,8 +15,8 @@ use Time::HiRes qw(gettimeofday);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::IO::ProcessIO;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Common::Io::Process;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -59,7 +59,7 @@ sub new
     }
 
     # Execute the command
-    my $oIO = pgBackRest::Protocol::IO::ProcessIO->new3($strId, $strCommand, $iProtocolTimeout, $iBufferMax);
+    my $oIO = pgBackRest::Protocol::Common::Io::Process->new3($strId, $strCommand, $iProtocolTimeout, $iBufferMax);
 
     # Create the class hash
     my $self = $class->SUPER::new(

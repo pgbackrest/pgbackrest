@@ -15,8 +15,8 @@ use English '-no_match_vars';
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::RemoteMaster;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Remote::Master;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -37,14 +37,14 @@ sub initModule
         or confess "Unable to create repo directory: ${strRepoPath}";
 
     # Create local
-    $self->{oLocal} = new pgBackRest::Protocol::Common(
+    $self->{oLocal} = new pgBackRest::Protocol::Common::Common(
         262144,
         1,
         OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,
         HOST_PROTOCOL_TIMEOUT);
 
     # Create remote
-    $self->{oRemote} = new pgBackRest::Protocol::RemoteMaster(
+    $self->{oRemote} = new pgBackRest::Protocol::Remote::Master(
         BACKUP,
         OPTION_DEFAULT_CMD_SSH,
         $self->backrestExeOriginal() . ' --stanza=' . $self->stanza() .

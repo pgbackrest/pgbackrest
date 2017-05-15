@@ -113,7 +113,7 @@ sub new
     $self->{oFile} = new pgBackRest::File(
         $self->stanza(),
         $self->repoPath(),
-        new pgBackRest::Protocol::Common
+        new pgBackRest::Protocol::Common::Common
         (
             OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
             OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level

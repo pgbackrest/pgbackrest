@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL REMOTE MASTER MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::RemoteMaster;
-use parent 'pgBackRest::Protocol::CommandMaster';
+package pgBackRest::Protocol::Remote::Master;
+use parent 'pgBackRest::Protocol::Command::Master';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,7 +12,7 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::CommandMaster;
+use pgBackRest::Protocol::Command::Master;
 
 ####################################################################################################################################
 # CONSTRUCTOR

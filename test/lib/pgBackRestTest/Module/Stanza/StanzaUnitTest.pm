@@ -26,8 +26,8 @@ use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
 use pgBackRest::Stanza;
 
 use pgBackRestTest::Env::HostEnvTest;

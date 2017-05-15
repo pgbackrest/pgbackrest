@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL LOCAL MASTER MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::LocalMaster;
-use parent 'pgBackRest::Protocol::CommandMaster';
+package pgBackRest::Protocol::Local::Master;
+use parent 'pgBackRest::Protocol::Command::Master';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -11,8 +11,8 @@ use Carp qw(confess);
 use pgBackRest::BackupFile;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::CommandMaster;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Command::Master;
+use pgBackRest::Protocol::Common::Common;
 
 ####################################################################################################################################
 # CONSTRUCTOR

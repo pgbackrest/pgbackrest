@@ -30,9 +30,9 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::LocalProcess;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Local::Process;
+use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -154,7 +154,7 @@ sub initServer
     filePathCreate($self->{strSpoolPath}, undef, true, true);
 
     # Initialize the archive process
-    $self->{oArchiveProcess} = new pgBackRest::Protocol::LocalProcess(
+    $self->{oArchiveProcess} = new pgBackRest::Protocol::Local::Process(
         BACKUP, optionGet(OPTION_PROTOCOL_TIMEOUT) < 60 ? optionGet(OPTION_PROTOCOL_TIMEOUT) / 2 : 30,
         $self->{strBackRestBin}, false);
     $self->{oArchiveProcess}->hostAdd(1, optionGet(OPTION_PROCESS_MAX));

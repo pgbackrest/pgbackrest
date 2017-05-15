@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # PROTOCOL COMMON MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::Common;
+package pgBackRest::Protocol::Common::Common;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -16,7 +16,7 @@ use JSON::PP;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::IO::ProcessIO;
+use pgBackRest::Protocol::Common::Io::Process;
 
 ####################################################################################################################################
 # DB/BACKUP Constants
@@ -271,7 +271,7 @@ sub binaryXfer
     }
     else
     {
-        $oIn = new pgBackRest::Protocol::IO::ProcessIO(
+        $oIn = new pgBackRest::Protocol::Common::Io::Process(
             $hIn, undef, $self->{io}->{hErr}, $self->{io}->{pid}, $self->{io}->{strId}, $self->{iProtocolTimeout},
             $self->{iBufferMax});
     }
@@ -285,7 +285,7 @@ sub binaryXfer
     }
     elsif ($hOut ne 'none')
     {
-        $oOut = new pgBackRest::Protocol::IO::ProcessIO(
+        $oOut = new pgBackRest::Protocol::Common::Io::Process(
             undef, $hOut, $self->{io}->{hErr}, $self->{io}->{pid}, $self->{io}->{strId}, $self->{iProtocolTimeout},
             $self->{iBufferMax});
     }

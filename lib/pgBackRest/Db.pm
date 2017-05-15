@@ -23,8 +23,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::Manifest;
 use pgBackRest::Version;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
 # Backup advisory lock

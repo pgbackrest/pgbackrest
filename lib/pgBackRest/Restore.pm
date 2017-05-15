@@ -21,9 +21,9 @@ use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::LocalProcess;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Local::Process;
+use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -1202,7 +1202,7 @@ sub process
     }
 
     # Initialize the restore process
-    my $oRestoreProcess = new pgBackRest::Protocol::LocalProcess(BACKUP);
+    my $oRestoreProcess = new pgBackRest::Protocol::Local::Process(BACKUP);
     $oRestoreProcess->hostAdd(1, optionGet(OPTION_PROCESS_MAX));
 
     # Variables used for parallel copy

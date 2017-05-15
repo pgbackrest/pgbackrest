@@ -24,8 +24,8 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
-use pgBackRest::Protocol::Common;
-use pgBackRest::Protocol::Protocol;
+use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
 # Run in eval block to catch errors
@@ -71,11 +71,11 @@ local $EVAL_ERROR = undef; eval
         }
 
         # Load module dynamically
-        require pgBackRest::Protocol::RemoteMinion;
-        pgBackRest::Protocol::RemoteMinion->import();
+        require pgBackRest::Protocol::Remote::Minion;
+        pgBackRest::Protocol::Remote::Minion->import();
 
         # Create the remote object
-        my $oRemote = new pgBackRest::Protocol::RemoteMinion
+        my $oRemote = new pgBackRest::Protocol::Remote::Minion
         (
             optionGet(OPTION_COMMAND),
             optionGet(OPTION_BUFFER_SIZE),
@@ -105,11 +105,11 @@ local $EVAL_ERROR = undef; eval
         logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
 
         # Load module dynamically
-        require pgBackRest::Protocol::LocalMinion;
-        pgBackRest::Protocol::LocalMinion->import();
+        require pgBackRest::Protocol::Local::Minion;
+        pgBackRest::Protocol::Local::Minion->import();
 
         # Create the local object
-        my $oLocal = new pgBackRest::Protocol::LocalMinion(optionGet(OPTION_COMMAND));
+        my $oLocal = new pgBackRest::Protocol::Local::Minion(optionGet(OPTION_COMMAND));
 
         # Process local requests
         exitSafe($oLocal->process());

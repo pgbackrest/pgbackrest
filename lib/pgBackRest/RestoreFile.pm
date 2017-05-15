@@ -20,7 +20,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Common::Common;
 
 ####################################################################################################################################
 # restoreFile

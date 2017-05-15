@@ -19,7 +19,7 @@ use pgBackRest::Common::String;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Common::Common;
 
 ####################################################################################################################################
 # Result constants

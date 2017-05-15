@@ -3,7 +3,7 @@
 #
 # This module can be extended by commands that want to perform jobs in parallel.
 ####################################################################################################################################
-package pgBackRest::Protocol::LocalProcess;
+package pgBackRest::Protocol::Local::Process;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,7 +15,7 @@ use IO::Select;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Protocol::LocalMaster;
+use pgBackRest::Protocol::Local::Master;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -178,7 +178,7 @@ sub hostConnect
                 {name => 'iHostIdx', value => $iHostIdx},
                 {name => 'iProcessId', value => $iProcessId});
 
-            my $oLocal = new pgBackRest::Protocol::LocalMaster
+            my $oLocal = new pgBackRest::Protocol::Local::Master
             (
                 commandWrite(
                     CMD_LOCAL, true, $self->{strBackRestBin}, undef,

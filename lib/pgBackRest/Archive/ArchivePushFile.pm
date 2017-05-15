@@ -18,7 +18,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Common::Common;
 
 ####################################################################################################################################
 # archivePushCheck

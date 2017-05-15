@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL PROCESS IO MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::IO::ProcessIO;
-use parent 'pgBackRest::Protocol::IO::IO';
+package pgBackRest::Protocol::Common::Io::Process;
+use parent 'pgBackRest::Protocol::Common::Io::Handle';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -22,7 +22,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Protocol::IO::IO;
+use pgBackRest::Protocol::Common::Io::Handle;
 
 ####################################################################################################################################
 # CONSTRUCTOR

@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # PROTOCOL REMOTE MINION MODULE
 ####################################################################################################################################
-package pgBackRest::Protocol::RemoteMinion;
-use parent 'pgBackRest::Protocol::CommandMinion';
+package pgBackRest::Protocol::Remote::Minion;
+use parent 'pgBackRest::Protocol::Command::Minion';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -19,8 +19,8 @@ use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::File;
 use pgBackRest::Info;
-use pgBackRest::Protocol::CommandMinion;
-use pgBackRest::Protocol::Common;
+use pgBackRest::Protocol::Command::Minion;
+use pgBackRest::Protocol::Common::Common;
 
 ####################################################################################################################################
 # CONSTRUCTOR
