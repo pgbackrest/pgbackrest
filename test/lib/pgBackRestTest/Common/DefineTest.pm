@@ -98,6 +98,24 @@ my $oTestDef =
 {
     &TESTDEF_MODULE =>
     [
+        # Common tests
+        {
+            &TESTDEF_NAME => 'common',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'ini',
+                    &TESTDEF_TOTAL => 10,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+            ]
+        },
         # Help tests
         {
             &TESTDEF_NAME => 'help',
@@ -211,15 +229,6 @@ my $oTestDef =
 
             &TESTDEF_TEST =>
             [
-                {
-                    &TESTDEF_NAME => 'ini-unit',
-                    &TESTDEF_TOTAL => 10,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
-                    },
-                },
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 1,

@@ -32,9 +32,9 @@ use pgBackRest::Manifest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::VmTest;
-use pgBackRestTest::Common::Host::HostBackupTest;
-use pgBackRestTest::Common::Host::HostDbCommonTest;
-use pgBackRestTest::Common::Host::HostDbTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
+use pgBackRestTest::Env::Host::HostDbCommonTest;
+use pgBackRestTest::Env::Host::HostDbTest;
 
 ####################################################################################################################################
 # testLinkCreate

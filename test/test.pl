@@ -808,20 +808,13 @@ eval
 
         # Print test info and exit
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bDryRun)
-        {
-            &log(INFO, 'DRY RUN COMPLETED');
-        }
-        else
-        {
-            &log(INFO,
-                'TESTS COMPLETED ' . ($iTestFail == 0 ? 'SUCCESSFULLY' .
-                    ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
-                "WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
-                    ' (' . (time() - $lStartTime) . 's)');
+        &log(INFO,
+            ($bDryRun ? 'DRY RUN COMPLETED' : 'TESTS COMPLETED') . ($iTestFail == 0 ? ' SUCCESSFULLY' .
+                ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
+            " WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
+                ' (' . (time() - $lStartTime) . 's)');
 
-            exit 1 if ($iTestFail > 0 || $iUncoveredCodeModuleTotal > 0);
-        }
+        exit 1 if ($iTestFail > 0 || $iUncoveredCodeModuleTotal > 0);
 
         exit 0;
     }

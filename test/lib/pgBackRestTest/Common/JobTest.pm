@@ -129,14 +129,14 @@ sub run
         $strDbVersion =~ s/\.//;
 
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
-             ($self->{bDryRun} || $self->{bShowOutputAsync} ? "\n" : ''));
+             (!($self->{bDryRun} || !$self->{bVmOut}) || $self->{bShowOutputAsync} ? "\n" : ''));
 
         my $strVmTestPath = '/home/' . TEST_USER . "/test/${strImage}";
         my $strHostTestPath = "$self->{strTestPath}/${strImage}";
 
         # Don't create the container if this is a dry run unless output from the VM is required.  Ouput can be requested
         # to get more information about the specific tests that will be run.
-        if (!$self->{bDryRun} || $self->{bDryRun})
+        if (!$self->{bDryRun} || $self->{bVmOut})
         {
             # Create host test directory
             filePathCreate($strHostTestPath, '0770');

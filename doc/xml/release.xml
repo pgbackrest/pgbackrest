@@ -165,7 +165,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Modified the <cmd>info</cmd> command so the wal archive min/max displayed is for the current database version.</p>
+                        <p>Fixed the <cmd>info</cmd> command so the WAL archive min/max displayed is for the current database version.</p>
                     </release-item>
 
                     <release-item>
@@ -173,15 +173,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Modified the <cmd>backup</cmd> command to reset the <br-setting>backup-standby</br-setting> option if the standby is not reachable.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Modified the configuration file validation process to be bypassed on remote commands.</p>
+                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the master) if the standby is not configured and/or reachable.</p>
                     </release-item>
                 </release-bug-list>
             </release-doc-list>
@@ -191,9 +183,17 @@
                     <release-item>
                         <p>Fixed an undefined variable when a module had no uncoverable code exceptions.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed issue with <setting>--dry-run</setting> requiring <setting>--vm-out</setting> to work properly.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-refactor-list>
+                    <release-item>
+                        <p>Moved test and env modules to new directories to avoid namespace conflicts with common tests.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Set <setting>--vm-max=2</setting> for CI.</p>
                     </release-item>
