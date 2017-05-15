@@ -13,7 +13,7 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::BackupCommon;
+use pgBackRest::Backup::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;

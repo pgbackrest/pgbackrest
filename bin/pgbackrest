@@ -253,10 +253,10 @@ local $EVAL_ERROR = undef; eval
         if (commandTest(CMD_BACKUP))
         {
             # Load module dynamically
-            require pgBackRest::Backup;
-            pgBackRest::Backup->import();
+            require pgBackRest::Backup::Backup;
+            pgBackRest::Backup::Backup->import();
 
-            new pgBackRest::Backup()->process();
+            new pgBackRest::Backup::Backup()->process();
 
             commandSet(CMD_EXPIRE);
         }

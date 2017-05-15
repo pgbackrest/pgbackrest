@@ -15,7 +15,7 @@ use English '-no_match_vars';
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -79,7 +79,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("BackupInfo::confirmDb()"))
     {
-        my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false);
         $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, '937', '201306121', true);
 
         my $strBackupLabel = "20170403-175647F";

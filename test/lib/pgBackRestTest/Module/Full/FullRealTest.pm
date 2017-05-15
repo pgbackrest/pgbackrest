@@ -14,7 +14,7 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
@@ -282,7 +282,7 @@ sub run
                 {strOptionalParam => ' --' . OPTION_DB_PATH . '=' . $oHostDbMaster->dbPath() . '/testbase/ --no-' . OPTION_ONLINE .
                 ' --' . OPTION_FORCE});
             my $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo($oHostBackup->repoPath() . '/archive/' . $self->stanza());
-            my $oBackupInfo = new pgBackRest::BackupInfo($oHostBackup->repoPath() . '/backup/' . $self->stanza());
+            my $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoPath() . '/backup/' . $self->stanza());
 
             # Read info files to confirm the files were created with a different database version
             if ($self->pgVersion() eq PG_VERSION_94)
@@ -305,7 +305,7 @@ sub run
 
             # Reread the info files and confirm the result
             $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo($oHostBackup->repoPath() . '/archive/' . $self->stanza());
-            $oBackupInfo = new pgBackRest::BackupInfo($oHostBackup->repoPath() . '/backup/' . $self->stanza());
+            $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoPath() . '/backup/' . $self->stanza());
             $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');
             $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,

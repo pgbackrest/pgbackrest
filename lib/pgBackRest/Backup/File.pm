@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # BACKUP FILE MODULE
 ####################################################################################################################################
-package pgBackRest::BackupFile;
+package pgBackRest::Backup::File;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -237,7 +237,7 @@ sub backupFile
             true,                                                   # Create the destination directory if it does not exist
             undef, undef, undef, undef,                             # Unused
             $bChecksumPage ?                                        # Function to process page checksums
-                'pgBackRest::BackupFile::backupChecksumPage' : undef,
+                'pgBackRest::Backup::File::backupChecksumPage' : undef,
             $hExtraParam,                                           # Start LSN to pass to extra function
             false);                                                 # Don't copy via a temp file
 

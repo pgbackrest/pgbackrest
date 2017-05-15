@@ -177,6 +177,10 @@
                     <release-item>
                         <p>Move modules in <path>Protocol</path> directory in subdirectories.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Move backup modules into <path>Backup</path> directory.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

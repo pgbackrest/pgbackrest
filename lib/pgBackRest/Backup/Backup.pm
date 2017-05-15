@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # BACKUP MODULE
 ####################################################################################################################################
-package pgBackRest::Backup;
+package pgBackRest::Backup::Backup;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -20,9 +20,9 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::BackupCommon;
-use pgBackRest::BackupFile;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Common;
+use pgBackRest::Backup::File;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
@@ -474,7 +474,7 @@ sub process
     $oFileLocal->pathCreate(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY, undef, true, true, optionGet(OPTION_REPO_SYNC));
 
     # Load the backup.info
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFileLocal->pathGet(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new pgBackRest::Backup::Info($oFileLocal->pathGet(PATH_BACKUP_CLUSTER));
 
     # Build backup tmp and config
     my $strBackupTmpPath = $oFileLocal->pathGet(PATH_BACKUP_TMP);

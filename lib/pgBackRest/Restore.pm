@@ -11,7 +11,7 @@ use Cwd qw(abs_path);
 use File::Basename qw(basename dirname);
 use File::stat qw(lstat);
 
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -1073,7 +1073,7 @@ sub process
     $self->{oFile}->copy(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO,
                          PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
 
-    my $oBackupInfo = new pgBackRest::BackupInfo($self->{strDbClusterPath}, false);
+    my $oBackupInfo = new pgBackRest::Backup::Info($self->{strDbClusterPath}, false);
 
     $self->{oFile}->remove(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO, undef, false, true);
 

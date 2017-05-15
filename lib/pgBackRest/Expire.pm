@@ -17,8 +17,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupCommon;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Common;
+use pgBackRest::Backup::Info;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
@@ -136,7 +136,7 @@ sub process
     my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
 
     # Load the backup.info
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new pgBackRest::Backup::Info($oFile->pathGet(PATH_BACKUP_CLUSTER));
 
     # Find all the expired full backups
     if (defined($iFullRetention))

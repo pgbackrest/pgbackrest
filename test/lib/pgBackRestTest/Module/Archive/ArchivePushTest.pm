@@ -14,7 +14,7 @@ use Carp qw(confess);
 use File::Basename qw(dirname);
 
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;

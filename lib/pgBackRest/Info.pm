@@ -14,8 +14,8 @@ use File::Basename qw(dirname);
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::String;
-use pgBackRest::BackupCommon;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Common;
+use pgBackRest::Backup::Info;
 use pgBackRest::Config::Config;
 use pgBackRest::File;
 use pgBackRest::FileCommon;
@@ -492,7 +492,7 @@ sub backupList
         );
 
     # Load the backup.info but do not attempt to validate it or confirm it's existence
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"), false, false);
+    my $oBackupInfo = new pgBackRest::Backup::Info($oFile->pathGet(PATH_BACKUP, CMD_BACKUP . "/${strStanza}"), false, false);
 
     # Build the db list
     my @oyDbList;

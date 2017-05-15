@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # BACKUP INFO MODULE
 ####################################################################################################################################
-package pgBackRest::BackupInfo;
+package pgBackRest::Backup::Info;
 use parent 'pgBackRest::Common::Ini';
 
 use strict;
@@ -15,7 +15,7 @@ use File::Basename qw(dirname basename);
 use File::stat;
 
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupCommon;
+use pgBackRest::Backup::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;

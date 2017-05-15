@@ -17,7 +17,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -98,7 +98,7 @@ sub run
         my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
         $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
-        my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false);
         $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
 
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
@@ -122,7 +122,7 @@ sub run
         $oArchiveInfo->create('9.4', 6353949018581704918, true);
 
         # Create the backup file with outdated data
-        my $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath}, false, false);
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false);
         $oBackupInfo->create('9.3', 6999999999999999999, '937', '201306121', true);
 
         # Confirm upgrade is needed for backup
@@ -154,7 +154,7 @@ sub run
         $oStanza->process();
 
         $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath});
-        $oBackupInfo = new pgBackRest::BackupInfo($self->{strBackupPath});
+        $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
 
         $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
             'archive upgrade not necessary');

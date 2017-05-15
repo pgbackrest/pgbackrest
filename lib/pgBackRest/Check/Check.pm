@@ -10,7 +10,7 @@ use English '-no_match_vars';
 
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveGet;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
@@ -221,7 +221,7 @@ sub backupInfoCheck
     }
     else
     {
-        $iDbHistoryId = (new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER)))->check(
+        $iDbHistoryId = (new pgBackRest::Backup::Info($oFile->pathGet(PATH_BACKUP_CLUSTER)))->check(
             $strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
     }
 

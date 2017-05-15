@@ -17,7 +17,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::File;
@@ -149,7 +149,7 @@ sub stanzaCreate
     {
         # Create the backup.info file
         ($iResult, $strResultMessage) =
-            $self->infoFileCreate((new pgBackRest::BackupInfo($strParentPathBackup, false, false)), $oFile,
+            $self->infoFileCreate((new pgBackRest::Backup::Info($strParentPathBackup, false, false)), $oFile,
                 PATH_BACKUP_CLUSTER, $strParentPathBackup, \@stryFileListBackup);
     }
 
@@ -190,7 +190,7 @@ sub stanzaUpgrade
 
     # Get the archive info and backup info files; if either does not exist an error will be thrown
     my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE));
-    my $oBackupInfo = new pgBackRest::BackupInfo($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new pgBackRest::Backup::Info($oFile->pathGet(PATH_BACKUP_CLUSTER));
     my $bBackupUpgraded = false;
     my $bArchiveUpgraded = false;
 
@@ -459,7 +459,7 @@ sub reconstructCheck
     if ($oInfo->{bExists})
     {
         my $oInfoOnDisk =
-            ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::BackupInfo($strParentPath)
+            ($strPathType eq PATH_BACKUP_CLUSTER ? new pgBackRest::Backup::Info($strParentPath)
             : new pgBackRest::Archive::ArchiveInfo($strParentPath));
 
         # If the hashes are the same, then no need to reconstruct the file since it already exists and is valid

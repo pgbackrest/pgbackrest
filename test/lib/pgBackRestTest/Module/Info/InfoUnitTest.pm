@@ -15,7 +15,7 @@ use English '-no_match_vars';
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;

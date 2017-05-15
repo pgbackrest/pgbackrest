@@ -12,8 +12,8 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::BackupCommon;
-use pgBackRest::BackupInfo;
+use pgBackRest::Backup::Common;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -108,7 +108,7 @@ sub stanzaSet
     $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
     my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE));
-    my $oBackupInfo = new pgBackRest::BackupInfo($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new pgBackRest::Backup::Info($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
 
     if ($bStanzaUpgrade)
     {
@@ -300,7 +300,7 @@ sub backupCreate
     $self->{oFile}->compress(PATH_BACKUP_ABSOLUTE, $strManifestFile, false);
 
     # Add the backup to info
-    my $oBackupInfo = new pgBackRest::BackupInfo($$oStanza{strBackupClusterPath}, false);
+    my $oBackupInfo = new pgBackRest::Backup::Info($$oStanza{strBackupClusterPath}, false);
 
     $oBackupInfo->check($$oStanza{strDbVersion}, $$oStanza{iControlVersion}, $$oStanza{iCatalogVersion}, $$oStanza{ullDbSysId});
     $oBackupInfo->add($oManifest);
