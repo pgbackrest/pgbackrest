@@ -92,16 +92,6 @@ sub optionStanzaCreate
     my $self = shift;
 
     # Set options for stanzaCreate
-    $self->optionStanzaCreate();
-
-    $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
-}
-
-sub optionStanzaCreate
-{
-    my $self = shift;
-
-    # Set options for stanzaCreate
     my $oOption = {};
     $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
     $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});

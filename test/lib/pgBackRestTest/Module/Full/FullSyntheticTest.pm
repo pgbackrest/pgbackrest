@@ -1135,26 +1135,6 @@ sub run
                         {oLogTest => $self->expect(), bRemote => $bRemote});
         }
 
-        # Test protocol shutdown timeout
-        #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest && $bRemote)
-        {
-            $oHostBackup->backup(
-                $strType, 'protocol shutdown timeout',
-                {oExpectedManifest => \%oManifest,
-                 strOptionalParam => '--protocol-timeout=2 --db-timeout=.5 --log-level-console=warn',
-                 strTest => TEST_BACKUP_STOP, fTestDelay => 2, bSupplemental => false});
-        }
-
-        # Test backup from standby warning that standby not configured so option reset
-        #-----------------------------------------------------------------------------------------------------------------------
-        if (!defined($oHostDbStandby) && $bNeutralTest)
-        {
-            $strBackup = $oHostBackup->backup(
-                $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
-                    strOptionalParam => '--log-level-console=detail --' . OPTION_BACKUP_STANDBY});
-        }
-
         # Test config file validation
         #-----------------------------------------------------------------------------------------------------------------------
         if ($bNeutralTest)
@@ -1186,6 +1166,26 @@ sub run
                 executeTest('sudo rm '. $oHostBackup->backrestConfig());
                 executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
             }
+        }
+
+        # Test protocol shutdown timeout
+        #-----------------------------------------------------------------------------------------------------------------------
+        if ($bNeutralTest && $bRemote)
+        {
+            $oHostBackup->backup(
+                $strType, 'protocol shutdown timeout',
+                {oExpectedManifest => \%oManifest,
+                 strOptionalParam => '--protocol-timeout=2 --db-timeout=.5 --log-level-console=warn',
+                 strTest => TEST_BACKUP_STOP, fTestDelay => 2, bSupplemental => false});
+        }
+
+        # Test backup from standby warning that standby not configured so option reset
+        #-----------------------------------------------------------------------------------------------------------------------
+        if (!defined($oHostDbStandby) && $bNeutralTest)
+        {
+            $strBackup = $oHostBackup->backup(
+                $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
+                    strOptionalParam => '--log-level-console=detail --' . OPTION_BACKUP_STANDBY});
         }
     }
     }
