@@ -92,6 +92,11 @@
             <contributor-id type="github">blogh</contributor-id>
         </contributor>
 
+        <contributor id="loxo.lætitia">
+            <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
+            <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
         <contributor id="odonnell.jason">
             <contributor-name-display>Jason O'Donnell</contributor-name-display>
             <contributor-id type="github">Dwaligon</contributor-id>
@@ -188,6 +193,14 @@
                 <release-bug-list>
                     <release-item>
                         <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <br-setting>archive-queue-max</br-setting>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="loxo.lætitia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed missing <code>sudo</code> in installation section.</p>
                     </release-item>
                 </release-bug-list>
             </release-doc-list>

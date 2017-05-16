@@ -215,7 +215,7 @@
             <execute user="root" skip="y">
                 <exe-cmd>wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
-                    tar zx -C /root</exe-cmd>
+                    sudo tar zx -C /root</exe-cmd>
             </execute>
         </execute-list>
 
