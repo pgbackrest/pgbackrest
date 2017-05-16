@@ -1135,6 +1135,39 @@ sub run
                         {oLogTest => $self->expect(), bRemote => $bRemote});
         }
 
+        # Test config file validation
+        #-----------------------------------------------------------------------------------------------------------------------
+        if ($bNeutralTest)
+        {
+            if ($bRemote)
+            {
+                # Save off config file and add an invalid option to the remote (DB master) and confirm no warning thrown
+                executeTest("cp " . $oHostDbMaster->backrestConfig() . " " . $oHostDbMaster->backrestConfig() . ".save");
+                $oHostDbMaster->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostDbMaster->backrestConfig(), undef,
+                    'root');
+
+                $strBackup = $oHostBackup->backup(
+                    $strType, 'config file not validated on remote', {oExpectedManifest => \%oManifest,
+                        strOptionalParam => '--log-level-console=detail'});
+
+                executeTest('sudo rm '. $oHostDbMaster->backrestConfig());
+                executeTest("mv " . $oHostDbMaster->backrestConfig() . ".save" . " " . $oHostDbMaster->backrestConfig());
+            }
+            else
+            {
+                # Save off config file and add an invalid option to the local backup host and confirm a warning is thrown
+                executeTest("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save");
+                $oHostBackup->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostBackup->backrestConfig(), undef, 'root');
+
+                $strBackup = $oHostBackup->backup(
+                    $strType, 'config file warning on local', {oExpectedManifest => \%oManifest,
+                        strOptionalParam => '--log-level-console=detail 2>&1'});
+
+                executeTest('sudo rm '. $oHostBackup->backrestConfig());
+                executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
+            }
+        }
+
         # Test backup from standby warning that standby not configured so option reset
         #-----------------------------------------------------------------------------------------------------------------------
         if (!defined($oHostDbStandby) && $bNeutralTest)

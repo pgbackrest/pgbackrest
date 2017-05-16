@@ -2734,7 +2734,7 @@ sub optionValidate
 ####################################################################################################################################
 # configFileValidate
 #
-# Determine if the configuration file contains any invalid options or placements.
+# Determine if the configuration file contains any invalid options or placements. Not valid on remote.
 ####################################################################################################################################
 sub configFileValidate
 {
@@ -2742,49 +2742,52 @@ sub configFileValidate
 
     my $bFileValid = true;
 
-    foreach my $strSectionKey (keys(%$oConfig))
+    if (!commandTest(CMD_REMOTE))
     {
-        my ($strSection, $strCommand) = ($strSectionKey =~ m/([^:]*):*(\w*-*\w*)/);
-
-        foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
+        foreach my $strSectionKey (keys(%$oConfig))
         {
-            my $strValue = $$oConfig{$strSectionKey}{$strOption};
+            my ($strSection, $strCommand) = ($strSectionKey =~ m/([^:]*):*(\w*-*\w*)/);
 
-            # Is the option listed as an alternate name for another option? If so, replace it with the recognized option.
-            my $strOptionAltName = optionAltName($strOption);
+            foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
+            {
+                my $strValue = $$oConfig{$strSectionKey}{$strOption};
 
-            if (defined($strOptionAltName))
-            {
-                $strOption = $strOptionAltName;
-            }
+                # Is the option listed as an alternate name for another option? If so, replace it with the recognized option.
+                my $strOptionAltName = optionAltName($strOption);
 
-            # Is the option a valid pgbackrest option?
-            if (!(exists($oOptionRule{$strOption}) || defined($strOptionAltName)))
-            {
-                &log(WARN, optionGet(OPTION_CONFIG) . " file contains invalid option '${strOption}'");
-                $bFileValid = false;
-            }
-            else
-            {
-                # Is the option valid for the command section in which it is located?
-                if (defined($strCommand) && $strCommand ne '')
+                if (defined($strOptionAltName))
                 {
-                    if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
-                    {
-                        &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is not valid for command " .
-                            "'${strCommand}'");
-                        $bFileValid = false;
-                    }
+                    $strOption = $strOptionAltName;
                 }
 
-                # Is the valid option a stanza-only option and not located in a global section?
-                if ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
-                    $strSection eq CONFIG_SECTION_GLOBAL)
+                # Is the option a valid pgbackrest option?
+                if (!(exists($oOptionRule{$strOption}) || defined($strOptionAltName)))
                 {
-                    &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is a stanza section option and is not " .
-                        "valid in section ${strSection}\n" .
-                        "HINT: global options can be specified in global or stanza sections but not visa-versa");
+                    &log(WARN, optionGet(OPTION_CONFIG) . " file contains invalid option '${strOption}'");
                     $bFileValid = false;
+                }
+                else
+                {
+                    # Is the option valid for the command section in which it is located?
+                    if (defined($strCommand) && $strCommand ne '')
+                    {
+                        if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
+                        {
+                            &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is not valid for command " .
+                                "'${strCommand}'");
+                            $bFileValid = false;
+                        }
+                    }
+
+                    # Is the valid option a stanza-only option and not located in a global section?
+                    if ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
+                        $strSection eq CONFIG_SECTION_GLOBAL)
+                    {
+                        &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is a stanza section option and is not " .
+                            "valid in section ${strSection}\n" .
+                            "HINT: global options can be specified in global or stanza sections but not visa-versa");
+                        $bFileValid = false;
+                    }
                 }
             }
         }
