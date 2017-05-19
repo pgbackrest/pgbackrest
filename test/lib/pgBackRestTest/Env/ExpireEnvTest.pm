@@ -18,16 +18,17 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Stanza;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # new
@@ -45,7 +46,7 @@ sub new
         my $strOperation,
         $self->{oHostBackup},
         $self->{strBackRestExe},
-        $self->{oFile},
+        $self->{oStorageRepo},
         $self->{oLogTest},
         $self->{oRunTest},
     ) =
@@ -54,7 +55,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'oHostBackup', required => false, trace => true},
             {name => 'strBackRestExe', trace => true},
-            {name => 'oFile', trace => true},
+            {name => 'oStorageRepo', trace => true},
             {name => 'oLogTest', required => false, trace => true},
             {name => 'oRunTest', required => false, trace => true},
         );
@@ -107,8 +108,8 @@ sub stanzaSet
     $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
     $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE));
-    my $oBackupInfo = new pgBackRest::Backup::Info($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE));
+    my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP));
 
     if ($bStanzaUpgrade)
     {
@@ -122,9 +123,9 @@ sub stanzaSet
     }
 
     # Get the archive and directory paths for the stanza
-    $$oStanza{strArchiveClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
-    $$oStanza{strBackupClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER);
-    filePathCreate($$oStanza{strArchiveClusterPath}, undef, undef, true);
+    $$oStanza{strArchiveClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
+    $$oStanza{strBackupClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP);
+    storageTest()->pathCreate($$oStanza{strArchiveClusterPath}, {bCreateParent => true});
 
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
@@ -159,7 +160,7 @@ sub stanzaCreate
     my $strDbPath = optionGet(OPTION_DB_PATH);
 
     # Create the test path for pg_control
-    filePathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), undef, true);
+    storageTest()->pathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
 
     # Copy pg_control for stanza-create
     executeTest(
@@ -199,7 +200,7 @@ sub stanzaUpgrade
     $strDbVersionTemp =~ s/\.//;
 
     # Remove pg_control
-    fileRemove(optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+    storageTest()->remove(optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     # Copy pg_control for stanza-upgrade
     executeTest(
@@ -257,7 +258,7 @@ sub backupCreate
                           $lTimestamp);
 
     my $strBackupClusterSetPath = "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
-    filePathCreate($strBackupClusterSetPath);
+    storageTest()->pathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");
 
@@ -297,7 +298,7 @@ sub backupCreate
     $$oStanza{oManifest} = $oManifest;
 
     # Create the compressed history manifest
-    $self->{oFile}->compress(PATH_BACKUP_ABSOLUTE, $strManifestFile, false);
+    executeTest("gzip -c ${strManifestFile} > ${strManifestFile}." . COMPRESS_EXT);
 
     # Add the backup to info
     my $oBackupInfo = new pgBackRest::Backup::Info($$oStanza{strBackupClusterPath}, false);
@@ -401,7 +402,7 @@ sub archiveCreate
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        filePathCreate($strPath, undef, true);
+        storageTest()->pathCreate($strPath, {bIgnoreExists => true});
 
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
         testFileCreate($strFile, 'ARCHIVE');

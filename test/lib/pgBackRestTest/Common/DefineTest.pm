@@ -58,11 +58,6 @@ use constant TESTDEF_COVERAGE_PARTIAL                               => false;
 ################################################################################################################################
 # Code modules
 ################################################################################################################################
-use constant TESTDEF_MODULE_FILE                                    => 'File';
-    push @EXPORT, qw(TESTDEF_MODULE_FILE);
-use constant TESTDEF_MODULE_FILE_COMMON                             => TESTDEF_MODULE_FILE . 'Common';
-    push @EXPORT, qw(TESTDEF_MODULE_FILE_COMMON);
-
 use constant TESTDEF_MODULE_ARCHIVE                                 => 'Archive';
     push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE);
 use constant TESTDEF_MODULE_ARCHIVE_COMMON                          => TESTDEF_MODULE_ARCHIVE . '/ArchiveCommon';
@@ -111,6 +106,33 @@ my $oTestDef =
                         &TESTDEF_MODULE_COMMON_INI => TESTDEF_COVERAGE_FULL,
                     },
                 },
+                {
+                    &TESTDEF_NAME => 'io-handle',
+                    &TESTDEF_TOTAL => 7,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Io/Handle' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'io-buffered',
+                    &TESTDEF_TOTAL => 3,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Io/Buffered' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'io-process',
+                    &TESTDEF_TOTAL => 2,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Io/Process' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
             ]
         },
         # Help tests
@@ -148,75 +170,85 @@ my $oTestDef =
                 }
             ]
         },
-        # File tests
+        # Storage tests
         {
-            &TESTDEF_NAME => 'file',
+            &TESTDEF_NAME => 'storage',
             &TESTDEF_CONTAINER => true,
-
-            &TESTDEF_COVERAGE =>
-            {
-                &TESTDEF_MODULE_FILE => TESTDEF_COVERAGE_PARTIAL,
-                &TESTDEF_MODULE_FILE_COMMON => TESTDEF_COVERAGE_PARTIAL,
-            },
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_NAME => 'filter-gzip',
+                    &TESTDEF_TOTAL => 3,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Filter/Gzip' => TESTDEF_COVERAGE_FULL,
+                    },
                 },
                 {
-                    &TESTDEF_NAME => 'owner',
-                    &TESTDEF_TOTAL => 8,
-                },
-                {
-                    &TESTDEF_NAME => 'path-create',
-                    &TESTDEF_TOTAL => 8,
-                },
-                {
-                    &TESTDEF_NAME => 'move',
-                    &TESTDEF_TOTAL => 24,
-                },
-                {
-                    &TESTDEF_NAME => 'compress',
-                    &TESTDEF_TOTAL => 4,
-                },
-                {
-                    &TESTDEF_NAME => 'wait',
+                    &TESTDEF_NAME => 'filter-sha',
                     &TESTDEF_TOTAL => 2,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Filter/Sha' => TESTDEF_COVERAGE_FULL,
+                    },
                 },
                 {
-                    &TESTDEF_NAME => 'link',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_NAME => 'posix-file',
+                    &TESTDEF_TOTAL => 3,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Posix/File' => TESTDEF_COVERAGE_PARTIAL,
+                    },
                 },
                 {
-                    &TESTDEF_NAME => 'stat',
-                    &TESTDEF_TOTAL => 1,
-                },
-                {
-                    &TESTDEF_NAME => 'manifest',
-                    &TESTDEF_TOTAL => 5,
-                },
-                {
-                    &TESTDEF_NAME => 'list',
-                    &TESTDEF_TOTAL => 72,
-                },
-                {
-                    &TESTDEF_NAME => 'remove',
-                    &TESTDEF_TOTAL => 32,
-                },
-                {
-                    &TESTDEF_NAME => 'hash',
-                    &TESTDEF_TOTAL => 16,
-                },
-                {
-                    &TESTDEF_NAME => 'exists',
+                    &TESTDEF_NAME => 'posix-driver',
                     &TESTDEF_TOTAL => 6,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Posix/Driver' => TESTDEF_COVERAGE_PARTIAL,
+                    },
                 },
                 {
-                    &TESTDEF_NAME => 'copy',
-                    &TESTDEF_TOTAL => 144,
-                }
+                    &TESTDEF_NAME => 'local',
+                    &TESTDEF_TOTAL => 7,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Local' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'helper',
+                    &TESTDEF_TOTAL => 4,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Helper' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+            ]
+        },
+        # Protocol tests
+        {
+            &TESTDEF_NAME => 'protocol',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'common-minion',
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Protocol/Common/Minion' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
             ]
         },
         # Info tests
@@ -234,34 +266,6 @@ my $oTestDef =
                     {
                         &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_PARTIAL,
                     },
-                },
-            ]
-        },
-        # Stanza tests
-        {
-            &TESTDEF_NAME => 'stanza',
-
-            &TESTDEF_COVERAGE =>
-            {
-                &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_PARTIAL,
-            },
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_CONTAINER => true,
-                },
-                {
-                    &TESTDEF_NAME => 'create',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_EXPECT => true,
-                },
-                {
-                    &TESTDEF_NAME => 'upgrade',
-                    &TESTDEF_TOTAL => 2,
-                    &TESTDEF_EXPECT => true,
                 },
             ]
         },
@@ -352,6 +356,36 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'expire',
                     &TESTDEF_TOTAL => 2,
+                },
+            ]
+        },
+        # Stanza tests
+        {
+            &TESTDEF_NAME => 'stanza',
+
+            &TESTDEF_COVERAGE =>
+            {
+                &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_PARTIAL,
+            },
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_CONTAINER => true,
+                },
+                {
+                    &TESTDEF_NAME => 'create',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_EXPECT => true,
+                    &TESTDEF_INDIVIDUAL => true,
+                },
+                {
+                    &TESTDEF_NAME => 'upgrade',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_EXPECT => true,
+                    &TESTDEF_INDIVIDUAL => true,
                 },
             ]
         },

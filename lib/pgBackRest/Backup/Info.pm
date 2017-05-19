@@ -20,12 +20,11 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # File/path constants
@@ -126,7 +125,7 @@ sub new
 
     # Build the backup info path/file name
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
-    my $bExists = fileExists($strBackupInfoFile);
+    my $bExists = storageLocal()->exists($strBackupInfoFile);
 
     # If the backup info file does not exist and is required, then throw an error
     # The backup.info is only allowed not to exist when running a stanza-create on a new install
@@ -209,14 +208,16 @@ sub reconstruct
     );
 
     # Check for backups that are not in FILE_BACKUP_INFO
-    foreach my $strBackup (fileList($self->{strBackupClusterPath}, {strExpression => backupRegExpGet(true, true, true)}))
+    my $oStorageRepo = storageRepo();
+
+    foreach my $strBackup ($oStorageRepo->list($self->{strBackupClusterPath}, {strExpression => backupRegExpGet(true, true, true)}))
     {
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
 
         # ??? Check for and move history files that were not moved before and maybe don't consider it to be an error when they
         # can't be moved.  This would also be true for the first move attempt in Backup->process();
 
-        if (!$self->current($strBackup) && fileExists($strManifestFile))
+        if (!$self->current($strBackup) && $oStorageRepo->exists($strManifestFile))
         {
             my $oManifest = pgBackRest::Manifest->new($strManifestFile);
 
@@ -298,12 +299,12 @@ sub reconstruct
         my $strManifestFile = "$self->{strBackupClusterPath}/${strBackup}/" . FILE_MANIFEST;
         my $strBackupPath = "$self->{strBackupClusterPath}/${strBackup}";
 
-        if (!fileExists($strBackupPath))
+        if (!$oStorageRepo->exists($strBackupPath))
         {
             &log(WARN, "backup ${strBackup} missing in repository removed from " . FILE_BACKUP_INFO);
             $self->delete($strBackup);
         }
-        elsif (!fileExists($strManifestFile))
+        elsif (!$oStorageRepo->exists($strManifestFile))
         {
             &log(WARN, "backup ${strBackup} missing manifest removed from " . FILE_BACKUP_INFO);
             $self->delete($strBackup);

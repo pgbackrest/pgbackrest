@@ -12,14 +12,17 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::DbVersion;
+use pgBackRest::Backup::Filter::PageChecksum;
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
+use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Filter::Gzip;
+use pgBackRest::Storage::Filter::Sha;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # Result constants
@@ -34,126 +37,6 @@ use constant BACKUP_FILE_SKIP                                       => 3;
     push @EXPORT, qw(BACKUP_FILE_SKIP);
 
 ####################################################################################################################################
-# Load the C library if present
-####################################################################################################################################
-my $bLibC = false;
-
-eval
-{
-    # Load the C library only if page checksums are required
-    require pgBackRest::LibC;
-    pgBackRest::LibC->import(qw(:checksum));
-
-    $bLibC = true;
-
-    return 1;
-} or do {};
-
-####################################################################################################################################
-# isLibC
-#
-# Does the C library exist?
-####################################################################################################################################
-sub isLibC
-{
-    return $bLibC;
-}
-
-push @EXPORT, qw(isLibC);
-
-####################################################################################################################################
-# backupChecksumPage
-####################################################################################################################################
-sub backupChecksumPage
-{
-    my $rExtraParam = shift;
-    my $tBufferRef = shift;
-    my $iBufferSize = shift;
-    my $iBufferOffset = shift;
-    my $hExtra = shift;
-
-    # Initialize the extra hash
-    if (!defined($hExtra->{bValid}))
-    {
-        $hExtra->{bValid} = true;
-    }
-
-    # Return when buffer is 0
-    if ($iBufferSize == 0)
-    {
-        # Make sure valid is set for 0 length files
-        if ($iBufferOffset == 0 && !defined($hExtra->{bValid}))
-        {
-            $hExtra->{bValid} = true;
-        }
-
-        return;
-    }
-
-    # Error if offset is not divisible by page size
-    if ($iBufferOffset % PG_PAGE_SIZE != 0)
-    {
-        confess &log(ASSERT, "should not be possible to see misaligned buffer offset ${iBufferOffset}, buffer size ${iBufferSize}");
-    }
-
-    # If the buffer is not divisible by 0 then it's not valid
-    if ($iBufferSize % PG_PAGE_SIZE != 0)
-    {
-        if (defined($hExtra->{bAlign}))
-        {
-            confess &log(ASSERT, "should not be possible to see two misaligned blocks in a row");
-        }
-
-        $hExtra->{bValid} = false;
-        $hExtra->{bAlign} = false;
-        delete($hExtra->{iyPageError});
-    }
-    elsif ($iBufferSize > 0)
-    {
-        # Calculate offset to the first block in the buffer
-        my $iBlockOffset = int($iBufferOffset / PG_PAGE_SIZE) + ($rExtraParam->{iSegmentNo} * 131072);
-
-        if (!pageChecksumBufferTest(
-                $$tBufferRef, $iBufferSize, $iBlockOffset, PG_PAGE_SIZE, $rExtraParam->{iWalId},
-                $rExtraParam->{iWalOffset}))
-        {
-            $hExtra->{bValid} = false;
-
-            # Now figure out exactly where the errors occurred.  It would be more efficient if the checksum function returned an
-            # array, but we're hoping there won't be that many errors to scan so this should work fine.
-            for (my $iBlockNo = 0; $iBlockNo < int($iBufferSize / PG_PAGE_SIZE); $iBlockNo++)
-            {
-                my $iBlockNoStart = $iBlockOffset + $iBlockNo;
-
-                if (!pageChecksumTest(
-                        substr($$tBufferRef, $iBlockNo * PG_PAGE_SIZE, PG_PAGE_SIZE), $iBlockNoStart, PG_PAGE_SIZE,
-                        $rExtraParam->{iWalId}, $rExtraParam->{iWalOffset}))
-                {
-                    my $iLastIdx = defined($hExtra->{iyPageError}) ? @{$hExtra->{iyPageError}} - 1 : 0;
-                    my $iyLast = defined($hExtra->{iyPageError}) ? $hExtra->{iyPageError}[$iLastIdx] : undef;
-
-                    if (!defined($iyLast) || (!ref($iyLast) && $iyLast != $iBlockNoStart - 1) ||
-                        (ref($iyLast) && $iyLast->[1] != $iBlockNoStart - 1))
-                    {
-                        push(@{$hExtra->{iyPageError}}, $iBlockNoStart);
-                    }
-                    elsif (!ref($iyLast))
-                    {
-                        $hExtra->{iyPageError}[$iLastIdx] = undef;
-                        push(@{$hExtra->{iyPageError}[$iLastIdx]}, $iyLast);
-                        push(@{$hExtra->{iyPageError}[$iLastIdx]}, $iBlockNoStart);
-                    }
-                    else
-                    {
-                        $hExtra->{iyPageError}[$iLastIdx][1] = $iBlockNoStart;
-                    }
-                }
-            }
-        }
-    }
-}
-
-####################################################################################################################################
 # backupFile
 ####################################################################################################################################
 sub backupFile
@@ -162,7 +45,6 @@ sub backupFile
     my
     (
         $strOperation,
-        $oFile,                                     # File object
         $strDbFile,                                 # Database file to backup
         $strRepoFile,                               # Location in the repository to copy to
         $lSizeFile,                                 # File size
@@ -176,7 +58,6 @@ sub backupFile
         logDebugParam
         (
             __PACKAGE__ . '::backupFile', \@_,
-            {name => 'oFile', trace => true},
             {name => 'strDbFile', trace => true},
             {name => 'strRepoFile', trace => true},
             {name => 'lSizeFile', trace => true},
@@ -188,6 +69,7 @@ sub backupFile
             {name => 'hExtraParam', required => false, trace => true},
         );
 
+    my $oStorageRepo = storageRepo();               # Repo storage
     my $iCopyResult = BACKUP_FILE_COPY;             # Copy result
     my $strCopyChecksum;                            # Copy checksum
     my $rExtra;                                     # Page checksum result
@@ -198,12 +80,12 @@ sub backupFile
     my $bCopy = true;
 
     # Add compression suffix if needed
-    my $strFileOp = $strRepoFile . ($bDestinationCompress ? '.' . $oFile->{strCompressExtension} : '');
+    my $strFileOp = $strRepoFile . ($bDestinationCompress ? '.' . COMPRESS_EXT : '');
 
     if (defined($strChecksum))
     {
         ($strCopyChecksum, $lCopySize) =
-            $oFile->hashSize(PATH_BACKUP_TMP, $strFileOp, $bDestinationCompress);
+            $oStorageRepo->hashSize(STORAGE_REPO_BACKUP_TMP . "/${strFileOp}", $bDestinationCompress);
 
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
@@ -217,32 +99,46 @@ sub backupFile
         }
     }
 
+    # Copy the file
     if ($bCopy)
     {
-        # Determine which segment no this is by checking for a numeric extension.  No extension means segment 0.
+        # Add sha filter
+        my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
+
+        # Add page checksum filter
         if ($bChecksumPage)
         {
-            $hExtraParam->{iSegmentNo} = ($strDbFile =~ /\.[0-9]+$/) ? substr(($strDbFile =~ m/\.[0-9]+$/g)[0], 1) + 0 : 0;
+            # Determine which segment no this is by checking for a numeric extension.  No extension means segment 0.
+            my $iSegmentNo = ($strDbFile =~ /\.[0-9]+$/) ? substr(($strDbFile =~ m/\.[0-9]+$/g)[0], 1) + 0 : 0;
+
+            push(
+                @{$rhyFilter},
+                {strClass => BACKUP_FILTER_PAGECHECKSUM,
+                    rxyParam => [$iSegmentNo, $hExtraParam->{iWalId}, $hExtraParam->{iWalOffset}]});
+        };
+
+        # Open the file
+        my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => true});
+
+        # If source file exists
+        if (defined($oSourceFileIo))
+        {
+            my $oDestinationFileIo = $oStorageRepo->openWrite(
+                STORAGE_REPO_BACKUP_TMP . "/${strFileOp}",
+                {rhyFilter => $bDestinationCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef, bPathCreate => true});
+
+            # Copy the file
+            $oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo);
+
+            # Get sha checksum and size
+            $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);
+            $lCopySize = $oSourceFileIo->result(COMMON_IO_HANDLE);
+
+            # Get results of page checksum validation
+            $rExtra = $bChecksumPage ? $oSourceFileIo->result(BACKUP_FILTER_PAGECHECKSUM) : undef;
         }
-
-        # Copy the file from the database to the backup (will return false if the source file is missing)
-        (my $bCopyResult, $strCopyChecksum, $lCopySize, $rExtra) = $oFile->copy(
-            PATH_DB_ABSOLUTE, $strDbFile,
-            PATH_BACKUP_TMP, $strFileOp,
-            false,                                                  # Source is not compressed since it is the db directory
-            $bDestinationCompress,                                  # Destination should be compressed based on backup settings
-            $bIgnoreMissing,                                        # Ignore missing files
-            undef,                                                  # Do not set modification time
-            undef,                                                  # Do not set original mode
-            true,                                                   # Create the destination directory if it does not exist
-            undef, undef, undef, undef,                             # Unused
-            $bChecksumPage ?                                        # Function to process page checksums
-                'pgBackRest::Backup::File::backupChecksumPage' : undef,
-            $hExtraParam,                                           # Start LSN to pass to extra function
-            false);                                                 # Don't copy via a temp file
-
-        # If source file is missing then assume the database removed it (else corruption and nothing we can do!)
-        if (!$bCopyResult)
+        # Else if source file is missing the database removed it
+        else
         {
             $iCopyResult = BACKUP_FILE_SKIP;
         }
@@ -252,7 +148,7 @@ sub backupFile
     # compression may affect the actual repo size and this cannot be calculated in stream.
     if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
-        $lRepoSize = (fileStat($oFile->pathGet(PATH_BACKUP_TMP, $strFileOp)))->size;
+        $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP_TMP . "/${strFileOp}"))->size;
     }
 
     # Return from function and log return values if any

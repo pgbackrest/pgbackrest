@@ -20,16 +20,16 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Backup::Info;
-use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
+use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -48,11 +48,11 @@ sub run
         if (!$self->begin($bRemote ? "remote" : "local")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote});
 
         # Create the test path for pg_control
-        filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
 
         # Copy pg_control for stanza-create
         executeTest(
@@ -61,7 +61,7 @@ sub run
 
         # Create the xlog path for pushing WAL
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        filePathCreate($strXlogPath, undef, false, true);
+        storageTest()->pathCreate($strXlogPath, {bCreateParent => true});
         my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
 
         # Attempt an upgrade before stanza-create has been performed
@@ -79,7 +79,7 @@ sub run
 
         # Fail upgrade when backup.info missing
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since backup.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
@@ -111,37 +111,37 @@ sub run
         # Push a WAL segment so have a valid file in the latest DB archive dir only
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1);
         $self->testResult(
-            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-2/0000000100000001')},
-            "000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.$oFile->{strCompressExtension}",
+            sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-2/0000000100000001')},
+            "000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27." . COMPRESS_EXT,
             'check that WAL is in the archive at -2');
 
         # Create a DB history mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the archive info file and force reconstruction
-        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
         # Create a DB-ID mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->executeSimple('rm ' . $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
         # Confirm successful backup at db-1 although archive at db-2
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
-        filePathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
         $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
             OPTION_ONLINE . ' --log-level-console=detail'}, false);
 
         # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the 10.0-3 directory and copy a WAL file to it (something that has a different system id)
-        $oHostBackup->executeSimple('mkdir ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/' . '10.0-3');
-        $oHostBackup->executeSimple('mkdir ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/' . '10.0-3/0000000100000001');
+        $oHostBackup->executeSimple('mkdir ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/' . '10.0-3');
+        $oHostBackup->executeSimple('mkdir ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/' . '10.0-3/0000000100000001');
         $oHostBackup->executeSimple('cp ' . $self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin '
-            . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/' . '10.0-3/0000000100000001/000000010000000100000001');
+            . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/' . '10.0-3/0000000100000001/000000010000000100000001');
 
         # Copy pg_control for 9.5
         executeTest(

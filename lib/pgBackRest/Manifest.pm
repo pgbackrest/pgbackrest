@@ -18,9 +18,10 @@ use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
+use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::Protocol::Helper;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # File/path constants
@@ -554,7 +555,7 @@ sub build
     my
     (
         $strOperation,
-        $oFile,
+        $oStorageDbMaster,
         $strDbVersion,
         $strPath,
         $oLastManifest,
@@ -569,7 +570,7 @@ sub build
         logDebugParam
         (
             __PACKAGE__ . '->build', \@_,
-            {name => 'oFile'},
+            {name => 'oStorageDbMaster'},
             {name => 'strDbVersion'},
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
@@ -589,7 +590,7 @@ sub build
         # If not online then build the tablespace map from pg_tblspc path
         if (!$bOnline && !defined($hTablespaceMap))
         {
-            my $hTablespaceManifest = $oFile->manifest(PATH_DB_ABSOLUTE, $strPath . '/' . DB_PATH_PGTBLSPC);
+            my $hTablespaceManifest = $oStorageDbMaster->manifest($strPath . '/' . DB_PATH_PGTBLSPC);
             $hTablespaceMap = {};
 
             foreach my $strOid (sort(CORE::keys(%{$hTablespaceManifest})))
@@ -632,11 +633,11 @@ sub build
             confess &log(ASSERT, "cannot get manifest for '${strPath}' when no parent path is specified");
         }
 
-        $strPath = pathAbsolute($strParentPath, $strPath);
+        $strPath = $oStorageDbMaster->pathAbsolute($strParentPath, $strPath);
     }
 
     # Get the manifest for this level
-    my $hManifest = $oFile->manifest(PATH_DB_ABSOLUTE, $strPath);
+    my $hManifest = $oStorageDbMaster->manifest($strPath);
     my $strManifestType = MANIFEST_VALUE_LINK;
 
     # Loop though all paths/files/links in the manifest
@@ -740,7 +741,7 @@ sub build
             # Check for tablespaces in PGDATA
             if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
                 (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
-                 index(pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
+                 index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
                        $hManifest->{$strName}{link_destination}) . '/', "${strPath}/") == 0))
             {
                 confess &log(ERROR, 'tablespace symlink ' . $hManifest->{$strName}{link_destination} .
@@ -805,7 +806,7 @@ sub build
 
             $strPath = dirname("${strPath}/${strName}");
 
-            $self->build($oFile, $strDbVersion, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap,
+            $self->build($oStorageDbMaster, $strDbVersion, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap,
                          $strFile, $bTablespace, $strPath, $strFilter, $strLinkDestination);
         }
     }
@@ -820,7 +821,9 @@ sub build
         # lead to an invalid diff/incr backup later when using timestamps to determine which files have changed.  Offline backups do
         # not wait because it makes testing much faster and Postgres should not be running (if it is the backup will not be
         # consistent anyway and the one-second resolution problem is the least of our worries).
-        my $lTimeBegin = $oFile->wait(PATH_DB_ABSOLUTE, $bOnline);
+        my $lTimeBegin =
+            $oStorageDbMaster->can('protocol') ?
+                $oStorageDbMaster->protocol()->cmdExecute(OP_WAIT, [$bOnline]) : waitRemainder($bOnline);
 
         # Check that links are valid
         $self->linkCheck();
@@ -963,8 +966,8 @@ sub linkCheck
                 {
                     my $strChildPath = $self->get(MANIFEST_SECTION_BACKUP_TARGET, $strTargetChild, MANIFEST_SUBKEY_PATH);
 
-                    if (index(
-                        pathAbsolute($strBasePath, $strChildPath) . '/', pathAbsolute($strBasePath, $strParentPath) . '/') == 0)
+                    if (index(storageLocal()->pathAbsolute(
+                        $strBasePath, $strChildPath) . '/', storageLocal()->pathAbsolute($strBasePath, $strParentPath) . '/') == 0)
                     {
                         confess &log(ERROR, 'link ' . $self->dbPathGet($strBasePath, $strTargetChild) .
                                             " (${strChildPath}) references a subdirectory of or" .

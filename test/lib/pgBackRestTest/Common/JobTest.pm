@@ -22,7 +22,6 @@ use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -44,6 +43,7 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
+        $self->{oStorageTest},
         $self->{strBackRestBase},
         $self->{strTestPath},
         $self->{strCoveragePath},
@@ -63,6 +63,7 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'oStorageTest'},
             {name => 'strBackRestBase'},
             {name => 'strTestPath'},
             {name => 'strCoveragePath'},
@@ -139,7 +140,7 @@ sub run
         if (!$self->{bDryRun} || $self->{bVmOut})
         {
             # Create host test directory
-            filePathCreate($strHostTestPath, '0770');
+            $self->{oStorageTest}->pathCreate($strHostTestPath, {strMode => '0770'});
 
             if ($self->{oTest}->{&TEST_CONTAINER})
             {

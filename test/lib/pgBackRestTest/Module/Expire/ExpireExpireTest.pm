@@ -23,14 +23,13 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Expire;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 
-use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::ExpireEnvTest;
+use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
 # initStanzaOption
@@ -68,14 +67,14 @@ sub run
     if ($self->begin("local"))
     {
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(true, $self->expect());
 
         $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
         $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 
         # Create the test object
-        my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
-            $self);
+        my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
+            $oHostBackup, $self->backrestExe(), storageRepo(), $self->expect(), $self);
 
         $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 
@@ -165,14 +164,14 @@ sub run
     if ($self->begin("Expire::stanzaUpgrade"))
     {
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(true, $self->expect());
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(true, $self->expect());
 
         $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
         $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 
         # Create the test object
-        my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest($oHostBackup, $self->backrestExe(), $oFile, $self->expect(),
-            $self);
+        my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
+            $oHostBackup, $self->backrestExe(), storageRepo(), $self->expect(), $self);
 
         $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 
@@ -226,7 +225,7 @@ sub run
         my $oExpire = new pgBackRest::Expire();
 
         # Mismatched version
-        $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+        $oHostBackup->infoMunge(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
             {&INFO_ARCHIVE_SECTION_DB =>
                 {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93, &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => WAL_VERSION_95_SYS_ID},
              &INFO_ARCHIVE_SECTION_DB_HISTORY =>
@@ -239,10 +238,10 @@ sub run
             "HINT: has a stanza-upgrade been performed?");
 
         # Restore the info file
-        $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+        $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
 
         # Mismatched system ID
-        $oHostBackup->infoMunge($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+        $oHostBackup->infoMunge(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
             {&INFO_ARCHIVE_SECTION_DB =>
                 {&INFO_ARCHIVE_KEY_DB_SYSTEM_ID => 6999999999999999999},
              &INFO_ARCHIVE_SECTION_DB_HISTORY =>
@@ -255,7 +254,7 @@ sub run
             "HINT: has a stanza-upgrade been performed?");
 
         # Restore the info file
-        $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+        $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
     }
 }
 
