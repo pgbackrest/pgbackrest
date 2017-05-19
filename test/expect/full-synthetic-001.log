@@ -230,7 +230,6 @@ P00  DEBUG:     Storage::Local->move(): bPathCreate = true, strDestinationPathEx
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = false
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-FULL-1]
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=16384 --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
@@ -708,7 +707,6 @@ P00  DEBUG:     Storage::Local->move(): bPathCreate = true, strDestinationPathEx
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecursive = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
@@ -1562,7 +1560,6 @@ P00  DEBUG:     Storage::Local->move(): bPathCreate = true, strDestinationPathEx
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecursive = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
@@ -1869,7 +1866,6 @@ P00  DEBUG:     Storage::Local->move(): bPathCreate = true, strDestinationPathEx
 P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
-P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecursive = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully

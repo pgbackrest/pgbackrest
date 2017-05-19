@@ -206,12 +206,10 @@ sub pathCreate
             }
 
             # Create parent path
-            $self->pathCreate(
-                dirname($strPath), {strMode => $strMode, bIgnoreExists => true, bCreateParent => $bCreateParent});
+            $self->pathCreate(dirname($strPath), {strMode => $strMode, bIgnoreExists => true, bCreateParent => $bCreateParent});
 
             # Create path
-            $self->pathCreate(
-                $strPath, {strMode => $strMode, bIgnoreExists => true});
+            $self->pathCreate($strPath, {strMode => $strMode, bIgnoreExists => true});
         }
         # Else if path already exists
         elsif ($OS_ERROR{EEXIST})
@@ -220,6 +218,70 @@ sub pathCreate
             {
                 confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
             }
+        }
+        else
+        {
+            logErrorResult(ERROR_PATH_CREATE, ${strMessage}, $OS_ERROR);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# linkCreate
+####################################################################################################################################
+sub linkCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSourcePath,
+        $strDestinationPath,
+        $bHard,
+        $bPathCreate,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->linkCreate', \@_,
+            {name => 'strSourcePath', trace => true},
+            {name => 'strDestinationPath', trace => true},
+            {name => 'bHard', optional=> true, default => false, trace => true},
+            {name => 'bPathCreate', optional=> true, default => true, trace => true},
+        );
+
+    if (!($bHard ? link($strSourcePath, $strDestinationPath) : symlink($strSourcePath, $strDestinationPath)))
+    {
+        my $strMessage = "unable to create link '${strDestinationPath}'";
+
+        # If parent path or source is missing
+        if ($OS_ERROR{ENOENT})
+        {
+            # Check if source is missing
+            if (!$self->exists($strSourcePath))
+            {
+                confess &log(ERROR, "${strMessage} because source '${strSourcePath}' does not exist", ERROR_FILE_MISSING);
+            }
+
+            if (!$bPathCreate)
+            {
+                confess &log(ERROR, "${strMessage} because parent does not exist", ERROR_PATH_MISSING);
+            }
+
+            # Create parent path
+            $self->pathCreate(dirname($strDestinationPath), {bIgnoreExists => true, bCreateParent => true});
+
+            # Create link
+            $self->linkCreate($strSourcePath, $strDestinationPath, {bHard => $bHard});
+        }
+        # Else if link already exists
+        elsif ($OS_ERROR{EEXIST})
+        {
+            confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
         }
         else
         {
@@ -376,6 +438,40 @@ sub owner
             logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
         }
     }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# pathSync
+####################################################################################################################################
+sub pathSync
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathSync', \@_,
+            {name => 'strPathExp', trace => true},
+        );
+
+    open(my $hPath, "<", $strPath)
+        or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
+    open(my $hPathDup, ">&", $hPath)
+        or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
+
+    $hPathDup->sync
+        or confess &log(ERROR, "unable to sync path '${strPath}'", ERROR_PATH_SYNC);
+
+    close($hPathDup);
+    close($hPath);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

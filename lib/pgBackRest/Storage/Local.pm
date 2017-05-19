@@ -359,23 +359,16 @@ sub linkCreate
             {name => 'bPathCreate', optional=> true, default => true},
         );
 
-    # Generate source and destination files
-    my $strSource = $self->pathGet($strSourcePathExp);
-    my $strDestination = $self->pathGet($strDestinationPathExp);
-
-    # If the destination path is backup and does not exist, create it
-    # ??? This should only happen when the link create errors
-    if ($bPathCreate)
-    {
-        $self->pathCreate(dirname($strDestination), {bIgnoreExists => true, bCreateParent => true});
-    }
+    # Get source and destination paths
+    my $strSourcePath = $self->pathGet($strSourcePathExp);
+    my $strDestinationPath = $self->pathGet($strDestinationPathExp);
 
     # Generate relative path if requested
     if ($bRelative)
     {
         # Determine how much of the paths are common
-        my @strySource = split('/', $strSource);
-        my @stryDestination = split('/', $strDestination);
+        my @strySource = split('/', $strSourcePath);
+        my @stryDestination = split('/', $strDestinationPath);
 
         while (defined($strySource[0]) && defined($stryDestination[0]) && $strySource[0] eq $stryDestination[0])
         {
@@ -384,33 +377,25 @@ sub linkCreate
         }
 
         # Add relative path sections
-        $strSource = '';
+        $strSourcePath = '';
 
         for (my $iIndex = 0; $iIndex < @stryDestination - 1; $iIndex++)
         {
-            $strSource .= '../';
+            $strSourcePath .= '../';
         }
 
         # Add path to source
-        $strSource .= join('/', @strySource);
+        $strSourcePath .= join('/', @strySource);
 
         logDebugMisc
         (
             $strOperation, 'apply relative path',
-            {name => 'strSource', value => $strSource, trace => true}
+            {name => 'strSourcePath', value => $strSourcePath, trace => true}
         );
     }
 
-    if ($bHard)
-    {
-        link($strSource, $strDestination)
-            or confess &log(ERROR, "unable to create hardlink from ${strSource} to ${strDestination}");
-    }
-    else
-    {
-        symlink($strSource, $strDestination)
-            or confess &log(ERROR, "unable to create symlink from ${strSource} to ${strDestination}");
-    }
+    # Create the link
+    $self->{oDriver}->linkCreate($strSourcePath, $strDestinationPath, {bHard => $bHard, bPathCreate => $bPathCreate});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -418,7 +403,6 @@ sub linkCreate
 
 ####################################################################################################################################
 # move - move a file
-# !!! MOVE TO DRIVER
 ####################################################################################################################################
 sub move
 {
@@ -489,7 +473,6 @@ sub pathCreate
 
 ####################################################################################################################################
 # pathSync
-# !!! MOVE TO DRIVER
 ####################################################################################################################################
 sub pathSync
 {
@@ -536,18 +519,7 @@ sub pathSync
     # Only sync the specified path
     else
     {
-        my $strPath = $self->pathGet($strPathExp);
-
-        open(my $hPath, "<", $strPath)
-            or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
-        open(my $hPathDup, ">&", $hPath)
-            or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
-
-        $hPathDup->sync
-            or confess &log(ERROR, "unable to sync path '${strPath}'", ERROR_PATH_SYNC);
-
-        close($hPathDup);
-        close($hPath);
+        $self->{oDriver}->pathSync($self->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
