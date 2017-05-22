@@ -1157,15 +1157,15 @@ sub infoMunge
     }
 
     # Modify the file/directory permissions so it can be saved
-    executeTest("sudo rm -f ${strFileName} && sudo chmod 770 " . dirname($strFileName));
+    executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
 
     # Save the munged data to the file
     $oMungeIni->save();
 
     # Fix permissions
     executeTest(
-        "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
-        ' && sudo chown ' . $self->userGet() . " ${strFileName}");
+        "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
+        ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
 
     # Clear the cache is requested
     if (!$bCache)
@@ -1207,14 +1207,14 @@ sub infoRestore
         if ($bSave)
         {
             # Modify the file/directory permissions so it can be saved
-            executeTest("sudo rm -f ${strFileName} && sudo chmod 770 " . dirname($strFileName));
+            executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
 
             # Save the munged data to the file
             $self->{hInfoFile}{$strFileName}->{bModified} = true;
             $self->{hInfoFile}{$strFileName}->save();
 
             # Fix permissions
-            executeTest("sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName));
+            executeTest("sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName));
         }
     }
     else

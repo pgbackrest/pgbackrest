@@ -84,6 +84,7 @@ sub run
 
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT;
+        $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 1;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
@@ -435,6 +436,7 @@ sub run
             {&MANIFEST_SECTION_TARGET_FILE =>
                 {(&MANIFEST_TARGET_PGDATA . '/' . &DB_FILE_PGVERSION) => {&MANIFEST_SUBKEY_CHECKSUM => undef}}},
             false);
+        executeTest("sudo rm -f ${strTmpPath}/" . FILE_MANIFEST);
 
         # Create a temp file in backup temp root to be sure it's deleted correctly
         executeTest("touch ${strTmpPath}/file.tmp" . ($bCompress ? '.gz' : ''),
@@ -780,6 +782,7 @@ sub run
             {&MANIFEST_SECTION_TARGET_FILE =>
                 {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') => {&MANIFEST_SUBKEY_CHECKSUM => BOGUS}}},
             false);
+        executeTest("sudo rm -f ${strTmpPath}/" . FILE_MANIFEST);
 
         # Add tablespace 2
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 2);
@@ -830,6 +833,7 @@ sub run
 
         testPathMove($oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}", $strTmpPath);
         executeTest("sudo chown -R " . $oHostBackup->userGet() . ' ' . dirname($strTmpPath));
+        executeTest("sudo rm -f ${strTmpPath}/" . FILE_MANIFEST);
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
@@ -900,7 +904,7 @@ sub run
         # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
         if ($bNeutralTest)
         {
-            executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            executeTest('sudo rm -f ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info*');
         }
 
         $oHostDbMaster->manifestFileCreate(

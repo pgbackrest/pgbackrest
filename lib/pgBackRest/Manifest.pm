@@ -29,6 +29,8 @@ use constant PATH_BACKUP_HISTORY                                    => 'backup.h
     push @EXPORT, qw(PATH_BACKUP_HISTORY);
 use constant FILE_MANIFEST                                          => 'backup.manifest';
     push @EXPORT, qw(FILE_MANIFEST);
+use constant FILE_MANIFEST_COPY                                     => FILE_MANIFEST . INI_COPY_EXT;
+    push @EXPORT, qw(FILE_MANIFEST_COPY);
 
 ####################################################################################################################################
 # Default match factor

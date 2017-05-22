@@ -448,7 +448,8 @@ sub backupManifestUpdate
 
     if ($lManifestSaveCurrent >= $lManifestSaveSize)
     {
-        $oManifest->save();
+        $oManifest->saveCopy();
+
         logDebugMisc
         (
             $strOperation, 'save manifest',

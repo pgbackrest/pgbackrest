@@ -40,8 +40,16 @@ use constant INI_KEY_CHECKSUM                                       => 'backrest
     push @EXPORT, qw(INI_KEY_CHECKSUM);
 use constant INI_KEY_FORMAT                                         => 'backrest-format';
     push @EXPORT, qw(INI_KEY_FORMAT);
+use constant INI_KEY_SEQUENCE                                       => 'backrest-sequence';
+    push @EXPORT, qw(INI_KEY_SEQUENCE);
 use constant INI_KEY_VERSION                                        => 'backrest-version';
     push @EXPORT, qw(INI_KEY_VERSION);
+
+####################################################################################################################################
+# Ini file copy extension
+####################################################################################################################################
+use constant INI_COPY_EXT                                           => '.copy';
+    push @EXPORT, qw(INI_COPY_EXT);
 
 ####################################################################################################################################
 # Ini sort orders
@@ -106,6 +114,7 @@ sub new
     # Else initialize
     else
     {
+        $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 0 + 0;
         $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, $self->{iInitFormat});
         $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, $self->{strInitVersion});
     }
@@ -120,7 +129,105 @@ sub load
 {
     my $self = shift;
 
-    $self->{oContent} = iniParse(fileStringRead($self->{strFileName}));
+    my $strContentCopy = fileStringRead($self->{strFileName} . INI_COPY_EXT, {bIgnoreMissing => true});
+    my $strContent = fileStringRead($self->{strFileName}, {bIgnoreMissing => true});
+
+    # If both exist then select an authoritative version
+    if (defined($strContent) && defined($strContentCopy))
+    {
+        my $oContentCopy = iniParse($strContentCopy, {bIgnoreInvalid => true});
+        my $oContent = iniParse($strContent, {bIgnoreInvalid => true});
+
+        # If both files parse then select an authoritative version
+        if (defined($oContent) && defined($oContentCopy))
+        {
+            $self->{oContent} = dclone($oContentCopy);
+            my $bContentCopyHeader = $self->headerCheck({bIgnoreInvalid => true});
+            $self->{oContent} = dclone($oContent);
+            my $bContentHeader = $self->headerCheck({bIgnoreInvalid => true});
+
+            # If both headers are valid then select an authoritative version
+            if ($bContentHeader && $bContentCopyHeader)
+            {
+                # If both files have the same checksum then they are identical
+                if ($oContent->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} eq
+                    $oContentCopy->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM})
+                {
+                    $self->{oContent} = $oContent;
+                }
+                # Else use the sequence to determine the authoritative version
+                else
+                {
+                    # Use main if it has the largest sequence
+                    if ($oContent->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} >
+                        $oContentCopy->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE})
+                    {
+                        $self->{oContent} = $oContent;
+                    }
+                    # Else use copy if it has the largest sequence
+                    elsif ($oContent->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} <
+                           $oContentCopy->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE})
+                    {
+                        $self->{oContent} = $oContentCopy;
+                    }
+                    else
+                    {
+                        confess &log(ERROR,
+                            "$self->{strFileName} and $self->{strFileName}" . INI_COPY_EXT .
+                            ' have different checksums but the same sequence number, likely due to corruption', ERROR_CONFIG);
+                    }
+                }
+            }
+            # If neither header is valid then error on main
+            elsif (!$bContentHeader && !$bContentCopyHeader)
+            {
+                $self->{oContent} = $oContent;
+            }
+            # Else only one header is valid and must be considered authoritative
+            else
+            {
+                if (!$bContentHeader)
+                {
+                    $self->{oContent} = $oContentCopy;
+                }
+            }
+        }
+        # If neither parses then error on main
+        elsif (!defined($oContent) && !defined($oContentCopy))
+        {
+            iniParse($strContent);
+        }
+        # Else only one parses and must considered authoritative as long as the header is valid
+        else
+        {
+            if (defined($oContent))
+            {
+                $self->{oContent} = $oContent;
+            }
+            else
+            {
+                $self->{oContent} = $oContentCopy;
+            }
+        }
+    }
+    # If neither exists then error
+    elsif (!defined($strContent) && !defined($strContentCopy))
+    {
+        confess &log(ERROR, "unable to open $self->{strFileName} or $self->{strFileName}" . INI_COPY_EXT, ERROR_FILE_OPEN);
+    }
+    # Else only one exists and must considered authoritative as long as it parses and has a valid header
+    else
+    {
+        if (defined($strContent))
+        {
+            $self->{oContent} = iniParse($strContent);
+        }
+        else
+        {
+            $self->{oContent} = iniParse($strContentCopy);
+        }
+    }
+
     $self->headerCheck();
     $self->{bExists} = true;
 }
@@ -149,6 +256,36 @@ sub headerCheck
 
     eval
     {
+        # Make sure that the sequence is an integer >= 1
+        my $iSequence = $self->get(INI_SECTION_BACKREST, INI_KEY_SEQUENCE, undef, false);
+
+        eval
+        {
+            # Error if not defined
+            if (!defined($iSequence))
+            {
+                return false;
+            }
+
+            # Error if not a number
+            $iSequence += 0;
+
+            # Error if < 1 or not an integer
+            if ($iSequence < 1 || $iSequence != int($iSequence))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        or do
+        {
+            confess &log(ERROR,
+                "invalid sequence in '$self->{strFileName}', expected integer >= 1 but found " .
+                    (defined($iSequence) ? "'${iSequence}'" : '[undef]'),
+                ERROR_CHECKSUM);
+        };
+
         # Make sure the ini is valid by testing checksum
         my $strChecksum = $self->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef, false);
         my $strTestChecksum = $self->hash();
@@ -323,6 +460,7 @@ sub save
 {
     my $self = shift;
 
+    # Save only if modified
     if ($self->{bModified})
     {
         # Calculate the hash
@@ -330,6 +468,7 @@ sub save
 
         # Save the file
         fileStringWrite($self->{strFileName}, iniRender($self->{oContent}));
+        fileStringWrite($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
         $self->{bModified} = false;
 
         # Indicate the file now exists
@@ -341,6 +480,22 @@ sub save
 
     # File was not saved
     return false;
+}
+
+####################################################################################################################################
+# saveCopy - save only a copy of the file.
+####################################################################################################################################
+sub saveCopy
+{
+    my $self = shift;
+
+    if (fileExists($self->{strFileName}))
+    {
+        confess &log(ASSERT, "cannot save copy only when '$self->{strFileName}' exists");
+    }
+
+    $self->hash();
+    fileStringWrite("$self->{strFileName}" . INI_COPY_EXT, iniRender($self->{oContent}));
 }
 
 ####################################################################################################################################
@@ -431,17 +586,18 @@ sub hash
 {
     my $self = shift;
 
-    # Remove the old checksum
+    # Remove the old checksum and save the sequence
+    my $iSequence = $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE};
     delete($self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
+    delete($self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE});
 
-    # Calculate the checksum
-    my $oChecksumContent = dclone($self->{oContent});
     my $oSHA = Digest::SHA->new('sha1');
     my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
     $oSHA->add($oJSON->encode($self->{oContent}));
 
     # Set the new checksum
     $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oSHA->hexdigest();
+    $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = $iSequence + 0;
 
     return $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM};
 }
@@ -571,6 +727,7 @@ sub set
         if (!$self->{bModified})
         {
             $self->{bModified} = true;
+            $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE}++;
         }
 
         return true;
@@ -651,6 +808,7 @@ sub remove
         if (!$self->{bModified})
         {
             $self->{bModified} = true;
+            $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE}++;
         }
 
         return true;

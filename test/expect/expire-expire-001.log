@@ -10,6 +10,7 @@ run 001 - local
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -309,6 +310,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -603,6 +605,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -916,6 +919,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -960,6 +964,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1282,6 +1287,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1597,6 +1603,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1940,6 +1947,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1992,6 +2000,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2061,6 +2070,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2109,6 +2119,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2172,6 +2183,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2227,6 +2239,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2317,6 +2330,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2367,6 +2381,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2454,6 +2469,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2518,6 +2534,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2611,6 +2628,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2684,6 +2702,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2780,6 +2799,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2851,6 +2871,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2951,6 +2972,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -3041,6 +3063,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -3140,6 +3163,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
