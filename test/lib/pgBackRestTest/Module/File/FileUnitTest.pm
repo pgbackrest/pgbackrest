@@ -60,9 +60,6 @@ sub run
         $self->testException(
             sub {$oLocalFile->pathGet(PATH_BACKUP_ARCHIVE_OUT, undef, true)},
             ERROR_ASSERT, "strFile must be defined when temp file specified");
-        $self->testException(
-            sub {$oLocalFile->pathGet(PATH_BACKUP_TMP, undef, true)},
-            ERROR_ASSERT, "strFile must be defined when temp file specified");
 
         # Test absolute path
         $self->testException(
@@ -78,17 +75,8 @@ sub run
 
         # Error when stanza not defined
         $self->testException(
-            sub {(new pgBackRest::File(undef, $self->testPath(), $self->local()))->pathGet(PATH_BACKUP_TMP)},
+            sub {(new pgBackRest::File(undef, $self->testPath(), $self->local()))->pathGet(PATH_BACKUP_CLUSTER)},
             ERROR_ASSERT, "strStanza not defined");
-
-        # Test backup tmp path
-        $self->testResult(
-            sub {$oLocalFile->pathGet(PATH_BACKUP_TMP, 'file', true)}, $self->testPath() . '/temp/db.tmp/file.pgbackrest.tmp',
-            'backup temp path temp file');
-        $self->testResult(
-            sub {$oLocalFile->pathGet(PATH_BACKUP_TMP, 'file')}, $self->testPath() . '/temp/db.tmp/file', 'backup temp path file');
-        $self->testResult(
-            sub {$oLocalFile->pathGet(PATH_BACKUP_TMP, undef)}, $self->testPath() . '/temp/db.tmp', 'backup temp path');
 
         # Test archive path
         $self->testResult(

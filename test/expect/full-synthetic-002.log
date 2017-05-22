@@ -97,6 +97,10 @@ P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, 
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Backup::Info->check(): bRequired = <true>, iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Backup::Info->check=>: iDbHistoryId = 1
+P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
+P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+P00  DEBUG:     File->list=>: stryFileList = ()
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = [undef], hDatabaseMap = [undef], hTablespaceMap = [undef], oFile = [object], oLastManifest = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = [undef], strParentPath = [undef], strPath = [TEST_PATH]/db-master/db/base
@@ -107,34 +111,34 @@ P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_stat, st
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oFile = [object], oLastManifest = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_config/postgresql.conf, strPathType = db:absolute
 P00  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
-P00  DEBUG:     Backup::Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = full
+P00  DEBUG:     Backup::Backup->process: create backup path [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [BACKUP-FULL-1], strPathType = backup:cluster
+P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strBackupLabel = [BACKUP-FULL-1], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = full
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, [undef], 0, 0, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, [undef], 0, 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, [undef], 0, 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-1]/pg_data/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 16384, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
@@ -199,9 +203,7 @@ P00   INFO: full backup size = 160KB
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
 P00   INFO: new backup label = [BACKUP-FULL-1]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
-P00  DEBUG:     Backup::Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]
-P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = false, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [BACKUP-FULL-1]/backup.manifest.gz, strDestinationPathType = backup:cluster, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [BACKUP-FULL-1]/backup.manifest, strSourcePathType = backup:cluster, strUser = [undef]
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = false, strDestinationFile = backup.history/[YEAR-1]/[BACKUP-FULL-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-1]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = false
@@ -368,6 +370,8 @@ P00  DEBUG:     Backup::Info->new(): bRequired = <true>, bValidate = <true>, str
 P00  DEBUG:     Backup::Info->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
 P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
+P00  DEBUG:     Backup::Info->current=>: bTest = false
 P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
 P00  DEBUG:     Backup::Info->delete(): strBackupLabel = [BACKUP-FULL-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
@@ -382,6 +386,14 @@ P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, 
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Backup::Info->check(): bRequired = <true>, iCatalogVersion = 201409291, iControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Backup::Info->check=>: iDbHistoryId = 1
+P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
+P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+P00  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-2])
+P00  DEBUG:     File->exists(): strPath = [BACKUP-FULL-2]/backup.manifest.copy, strPathType = backup:cluster
+P00  DEBUG:     File->exists=>: bExists = true
+P00  DEBUG:     File->exists(): strPath = [BACKUP-FULL-2]/backup.manifest, strPathType = backup:cluster
+P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = true
 P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like the postmaster is running and the backup will probably not be consistent
@@ -393,39 +405,39 @@ P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_stat, st
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oFile = [object], oLastManifest = [undef], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/pg_config/postgresql.conf, strPathType = db:absolute
 P00  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
-P00   WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
+P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
-P00 DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
-P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     File->manifest(): strPath = [BACKUP-FULL-2], strPathType = backup:cluster
 P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (file.tmp, pg_data/PG_VERSION)
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/PG_VERSION
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/file.tmp
-P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = full
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/file.tmp
+P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strBackupLabel = [BACKUP-FULL-2], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = full
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, 89373d9f2973502940de06bc5212489df3f8a912, 0, 0, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, 22c98d248ff548311eda88559e4a8405ed77c003, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-FULL-2]/pg_data/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, 89373d9f2973502940de06bc5212489df3f8a912, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, 22c98d248ff548311eda88559e4a8405ed77c003, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
@@ -475,22 +487,20 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 163878
 P00   INFO: full backup size = 160KB
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
+P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [BACKUP-FULL-2], strPathType = backup:cluster
+P00  DEBUG:     File->manifest(): strPath = [BACKUP-FULL-2], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-FULL-2]/pg_data/pg_tblspc, strPathType = backup:cluster
 P00   INFO: new backup label = [BACKUP-FULL-2]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
-P00  DEBUG:     Backup::Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
-P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-FULL-2], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = false, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [BACKUP-FULL-2]/backup.manifest.gz, strDestinationPathType = backup:cluster, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [BACKUP-FULL-2]/backup.manifest, strSourcePathType = backup:cluster, strUser = [undef]
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/[YEAR-1]/[BACKUP-FULL-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = true
@@ -1021,6 +1031,14 @@ P00  DEBUG:     Backup::Info->last=>: strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->dbHistoryList=>: hDbHash = [hash]
 P00  DEBUG:     Backup::Info->confirmDb=>: bConfirmDb = true
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
+P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+P00  DEBUG:     File->list=>: stryFileList = ([BACKUP-FULL-2])
+P00  DEBUG:     File->exists(): strPath = [BACKUP-FULL-2]/backup.manifest.copy, strPathType = backup:cluster
+P00  DEBUG:     File->exists=>: bExists = true
+P00  DEBUG:     File->exists(): strPath = [BACKUP-FULL-2]/backup.manifest, strPathType = backup:cluster
+P00  DEBUG:     File->exists=>: bExists = true
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -1031,53 +1049,53 @@ P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/base, strPa
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], oFile = [object], oLastManifest = [undef], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/1, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts1
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/tablespace/ts1, strPathType = db:absolute
 P00  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
-P00  DEBUG:     Backup::Backup->process: create temp backup path [TEST_PATH]/db-master/repo/temp/db.tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = incr
+P00  DEBUG:     Backup::Backup->process: create backup path [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
+P00  DEBUG:     File->pathCreate(): bCreateParents = true, bIgnoreExists = false, strMode = <0750>, strPath = [BACKUP-INCR-1], strPathType = backup:cluster
+P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strBackupLabel = [BACKUP-INCR-1], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = incr
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1], strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
-P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = pg_data/pg_tblspc/1, strDestinationPathType = backup:tmp, strSourceFile = pg_tblspc/1, strSourcePathType = backup:tmp
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_data/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_tblspc/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = [BACKUP-INCR-1]/pg_data/pg_tblspc/1, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1]/pg_tblspc/1, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/33001 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/33001, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33001, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/32768/33001, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33001, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/33000.32767, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000.32767, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/32768/33000.32767, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000.32767, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/33000 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/33000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/32768/33000, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/16384/17000 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/16384/17000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/16384/17000, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/global/pg_control to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/global/pg_control, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/1/12000 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/12000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/12000, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/1/12000, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/12000, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/postgresql.conf, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/postgresql.conf, strSourcePathType = backup:cluster
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/postgresql.conf, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/postgresql.conf, strSourcePathType = backup:cluster
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, [undef], 0, [BACKUP-INCR-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/pg_stat/global.stat, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/pg_stat/global.stat, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/pg_stat/global.stat, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/pg_stat/global.stat, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/32768/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/16384/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/16384/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/base/1/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-1]/pg_data/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
@@ -1098,26 +1116,24 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 18
 P00   INFO: incr backup size = 18B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1/[TS_PATH-1], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
+P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [BACKUP-INCR-1], strPathType = backup:cluster
+P00  DEBUG:     File->manifest(): strPath = [BACKUP-INCR-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_data/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_tblspc/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-1]/pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:cluster
 P00   INFO: new backup label = [BACKUP-INCR-1]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
-P00  DEBUG:     Backup::Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-1]
-P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-INCR-1], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = false, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [BACKUP-INCR-1]/backup.manifest.gz, strDestinationPathType = backup:cluster, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [BACKUP-INCR-1]/backup.manifest, strSourcePathType = backup:cluster, strUser = [undef]
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/[YEAR-1]/[BACKUP-INCR-1].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-1]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = true
@@ -1297,6 +1313,8 @@ P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferenti
 P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
+P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-INCR-2]
+P00  DEBUG:     Backup::Info->current=>: bTest = false
 P00   WARN: backup [BACKUP-INCR-1] missing in repository removed from backup.info
 P00  DEBUG:     Backup::Info->delete(): strBackupLabel = [BACKUP-INCR-1]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
@@ -1320,6 +1338,14 @@ P00  DEBUG:     Backup::Info->last=>: strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->dbHistoryList=>: hDbHash = [hash]
 P00  DEBUG:     Backup::Info->confirmDb=>: bConfirmDb = true
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
+P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferential = true, bFull = true, bIncremental = true
+P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
+P00  DEBUG:     File->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPath = [undef], strPathType = backup:cluster, strSortOrder = reverse
+P00  DEBUG:     File->list=>: stryFileList = ([BACKUP-INCR-2], [BACKUP-FULL-2])
+P00  DEBUG:     File->exists(): strPath = [BACKUP-INCR-2]/backup.manifest.copy, strPathType = backup:cluster
+P00  DEBUG:     File->exists=>: bExists = true
+P00  DEBUG:     File->exists(): strPath = [BACKUP-INCR-2]/backup.manifest, strPathType = backup:cluster
+P00  DEBUG:     File->exists=>: bExists = false
 P00  DEBUG:     File->exists(): strPath = [TEST_PATH]/db-master/db/base/postmaster.pid, strPathType = db:absolute
 P00  DEBUG:     File->exists=>: bExists = false
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
@@ -1333,75 +1359,75 @@ P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/tablespace/
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabaseMap = [undef], hTablespaceMap = [hash], oFile = [object], oLastManifest = [undef], strDbVersion = 9.4, strFilter = [TS_PATH-1], strLevel = pg_tblspc/2, strParentPath = [TEST_PATH]/db-master/db/base/pg_tblspc/pg_tblspc, strPath = [TEST_PATH]/db-master/db/tablespace/ts2
 P00  DEBUG:     File->manifest(): strPath = [TEST_PATH]/db-master/db/tablespace/ts2, strPathType = db:absolute
 P00  DEBUG:     File->wait(): bWait = false, strPathType = db:absolute
-P00   WARN: aborted backup of same type exists, will be cleaned to remove invalid files and resumed
+P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
-P00 DETAIL: clean backup temp path: [TEST_PATH]/db-master/repo/temp/db.tmp
-P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
+P00  DEBUG:     File->manifest(): strPath = [BACKUP-INCR-2], strPathType = backup:cluster
 P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (pg_data/PG_VERSION, pg_data/base/1/12000, pg_data/base/1/PG_VERSION, pg_data/base/16384/17000, pg_data/base/16384/PG_VERSION, pg_data/base/32768/33000, pg_data/base/32768/33000.32767, pg_data/base/32768/33001, pg_data/base/32768/PG_VERSION, pg_data/global/pg_control, pg_data/pg_stat/global.stat, pg_data/pg_tblspc/1, pg_data/postgresql.conf)
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/postgresql.conf
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/pg_tblspc/1
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/pg_stat/global.stat
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/global/pg_control
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/32768/PG_VERSION
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/32768/33001
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/32768/33000.32767
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/32768/33000
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/16384/PG_VERSION
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/16384/17000
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/1/PG_VERSION
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/base/1/12000
-P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/temp/db.tmp/pg_data/PG_VERSION
-P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = incr
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/postgresql.conf
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_tblspc/1
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_stat/global.stat
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/global/pg_control
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/PG_VERSION
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33001
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33000.32767
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33000
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/16384/PG_VERSION
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/16384/17000
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/1/PG_VERSION
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/1/12000
+P00  DEBUG:     Backup::Backup->tmpClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/PG_VERSION
+P00  DEBUG:     Backup::Backup->processManifest(): bCompress = false, bHardLink = true, oBackupManifest = [object], oFileMaster = [object], strBackupLabel = [BACKUP-INCR-2], strDbCopyPath = [TEST_PATH]/db-master/db/base, strDbMasterPath = [TEST_PATH]/db-master/db/base, strDbVersion = 9.4, strLsnStart = [undef], strType = incr
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Protocol::Local::Process->new(): bConfessError = <true>, iSelectTimeout = <915>, strBackRestBin = <[BACKREST-BIN]>, strHostType = db
 P00  DEBUG:     Protocol::Local::Process->hostAdd(): iHostConfigIdx = 1, iProcessMax = 1
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1], strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/2, strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/2/[TS_PATH-1], strPathType = backup:tmp
-P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:tmp
-P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = pg_data/pg_tblspc/1, strDestinationPathType = backup:tmp, strSourceFile = pg_tblspc/1, strSourcePathType = backup:tmp
-P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = pg_data/pg_tblspc/2, strDestinationPathType = backup:tmp, strSourceFile = pg_tblspc/2, strSourcePathType = backup:tmp
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_data/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc/2, strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathCreate(): bCreateParents = <false>, bIgnoreExists = true, strMode = <0750>, strPath = [BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = [BACKUP-INCR-2]/pg_data/pg_tblspc/1, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2]/pg_tblspc/1, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = false, bPathCreate = <true>, bRelative = true, strDestinationFile = [BACKUP-INCR-2]/pg_data/pg_tblspc/2, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2]/pg_tblspc/2, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/33001 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/33001, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33001, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/32768/33001, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33001, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/33000.32767 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/33000.32767, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000.32767, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/32768/33000.32767, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000.32767, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/33000 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/33000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/32768/33000, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/33000, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/16384/17000 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/16384/17000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/16384/17000, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/17000, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/global/pg_control to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/global/pg_control, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/global/pg_control, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/global/pg_control, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/1/12000 to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/12000, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/12000, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/1/12000, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/12000, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/postgresql.conf, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/postgresql.conf, strSourcePathType = backup:cluster
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, bogus, 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, 1, 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/postgresql.conf, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/postgresql.conf, strSourcePathType = backup:cluster
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, bogus, 0, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, 1, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/pg_stat/global.stat, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/pg_stat/global.stat, strSourcePathType = backup:cluster
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, 4, [undef], 0, 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, strOp = backupFile, strQueue = pg_tblspc/2
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/pg_stat/global.stat, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/pg_stat/global.stat, strSourcePathType = backup:cluster
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, 4, [undef], 0, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_tblspc/2/[TS_PATH-1]/32768/pg_internal.init, strOp = backupFile, strQueue = pg_tblspc/2
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/32768/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/32768/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/32768/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/16384/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/16384/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/16384/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/base/1/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/base/1/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/base/1/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Backup::Backup->processManifest: hardlink pg_data/PG_VERSION to [BACKUP-FULL-2]
-P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = pg_data/PG_VERSION, strDestinationPathType = backup:tmp, strSourceFile = [BACKUP-FULL-2]/pg_data/PG_VERSION, strSourcePathType = backup:cluster
+P00  DEBUG:     File->linkCreate(): bHard = true, bPathCreate = true, bRelative = false, strDestinationFile = [BACKUP-INCR-2]/pg_data/PG_VERSION, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-FULL-2]/pg_data/PG_VERSION, strSourcePathType = backup:cluster
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 1830, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --host-id=1 --lock-path=[TEST_PATH]/db-master/repo/lock --log-path=[TEST_PATH]/db-master/repo/log --process=1 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1, strName = local, strRemoteType = none
@@ -1429,29 +1455,27 @@ P00  DEBUG:     Backup::Backup->processManifest=>: lSizeTotal = 29
 P00   INFO: incr backup size = 29B
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->manifest(): strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [undef], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/base/32768, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/global, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_clog, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_stat, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_data/pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1/[TS_PATH-1], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/2, strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/2/[TS_PATH-1], strPathType = backup:tmp
-P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:tmp
+P00  DEBUG:     File->pathSync(): bRecursive = true, strPath = [BACKUP-INCR-2], strPathType = backup:cluster
+P00  DEBUG:     File->manifest(): strPath = [BACKUP-INCR-2], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/base, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/base/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/base/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/base/32768, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/global, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/pg_clog, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/pg_stat, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_data/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc/1, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc/1/[TS_PATH-1]/16384, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc/2, strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1], strPathType = backup:cluster
+P00  DEBUG:     File->pathSync(): bRecursive = <false>, strPath = [BACKUP-INCR-2]/pg_tblspc/2/[TS_PATH-1]/32768, strPathType = backup:cluster
 P00   INFO: new backup label = [BACKUP-INCR-2]
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = backup.manifest.gz, strDestinationPathType = backup:tmp, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = backup.manifest, strSourcePathType = backup:tmp, strUser = [undef]
-P00  DEBUG:     Backup::Backup->process: move [TEST_PATH]/db-master/repo/temp/db.tmp to [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
-P00  DEBUG:     File->move(): bDestinationPathCreate = <false>, bPathSync = <false>, strDestinationFile = [BACKUP-INCR-2], strDestinationPathType = backup:cluster, strSourceFile = [undef], strSourcePathType = backup:tmp
+P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = true, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = <false>, bTempFile = false, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [BACKUP-INCR-2]/backup.manifest.gz, strDestinationPathType = backup:cluster, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = [BACKUP-INCR-2]/backup.manifest, strSourcePathType = backup:cluster, strUser = [undef]
 P00  DEBUG:     File->move(): bDestinationPathCreate = true, bPathSync = true, strDestinationFile = backup.history/[YEAR-1]/[BACKUP-INCR-2].manifest.gz, strDestinationPathType = backup:cluster, strSourceFile = [BACKUP-INCR-2]/backup.manifest.gz, strSourcePathType = backup:cluster
 P00  DEBUG:     File->remove(): bIgnoreMissing = <true>, bPathSync = <false>, bTemp = [undef], strPath = latest, strPathType = backup:cluster
 P00  DEBUG:     File->remove=>: bRemoved = true
@@ -1626,11 +1650,11 @@ diff backup - cannot resume - new diff (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   WARN: backup [BACKUP-INCR-2] missing in repository removed from backup.info
+P00   WARN: backup [BACKUP-INCR-2] missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: aborted backup exists, but cannot be resumed (new backup-type 'diff' does not match aborted backup-type 'incr') - will be dropped and recreated
+P00   WARN: aborted backup [BACKUP-INCR-2] exists, but cannot be resumed (new backup-type 'diff' does not match aborted backup-type 'incr') - will be dropped
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
+P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 62%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
@@ -1641,6 +1665,7 @@ P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: remove expired backup [BACKUP-INCR-2]
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -1783,11 +1808,11 @@ diff backup - cannot resume - disabled / no repo link (db-master host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --hardlink --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --no-online --no-repo-link --repo-path=[TEST_PATH]/db-master/repo --no-resume --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00   WARN: backup [BACKUP-DIFF-1] missing in repository removed from backup.info
+P00   WARN: backup [BACKUP-DIFF-1] missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P00   WARN: aborted backup exists, but cannot be resumed (resume is disabled) - will be dropped and recreated
+P00   WARN: aborted backup [BACKUP-DIFF-1] exists, but cannot be resumed (resume is disabled) - will be dropped
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
+P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 62%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
@@ -1798,6 +1823,7 @@ P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 

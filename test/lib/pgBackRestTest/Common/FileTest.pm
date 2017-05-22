@@ -100,37 +100,6 @@ sub testPathRemove
 push(@EXPORT, qw(testPathRemove));
 
 ####################################################################################################################################
-# testPathCopy
-#
-# Copy a path.
-####################################################################################################################################
-sub testPathCopy
-{
-    my $strSourcePath = shift;
-    my $strDestinationPath = shift;
-    my $bSuppressError = shift;
-
-    executeTest("cp -RpP ${strSourcePath} ${strDestinationPath}", {bSuppressError => $bSuppressError});
-}
-
-####################################################################################################################################
-# testPathMove
-#
-# Copy a path.
-####################################################################################################################################
-sub testPathMove
-{
-    my $strSourcePath = shift;
-    my $strDestinationPath = shift;
-    my $bSuppressError = shift;
-
-    testPathCopy($strSourcePath, $strDestinationPath, $bSuppressError);
-    testPathRemove($strSourcePath, $bSuppressError);
-}
-
-push(@EXPORT, qw(testPathMove));
-
-####################################################################################################################################
 # testFileCreate
 #
 # Create a file specifying content, mode, and time.

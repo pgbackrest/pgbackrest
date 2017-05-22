@@ -426,22 +426,27 @@ sub run
         testFileCreate($oHostDbMaster->tablespacePath(2, 2) . '/donotdelete.txt', 'DONOTDELETE-2-2');
         filePathCreate($oHostDbMaster->tablespacePath(11), undef, undef, true);
 
-        my $strTmpPath = $oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp';
-        executeTest("sudo chmod g+w " . dirname($strTmpPath));
+        # Resume by copying the valid full backup over the last aborted full backup if it exists, or by creating a new path
+        my $strResumeBackup = ($oFile->list(
+            PATH_BACKUP_CLUSTER, undef, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))[0];
+        my $strResumePath = $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/' .
+            ($strResumeBackup ne $strFullBackup ? $strResumeBackup : backupLabel($oFile, $strType, undef, time()));
 
-        testPathMove($oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strFullBackup}", $strTmpPath);
+        executeTest("sudo rm -rf ${strResumePath}");
+        executeTest(
+            'sudo mv ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strFullBackup} ${strResumePath}");
 
-        $oHostBackup->infoMunge(
-            "$strTmpPath/" . FILE_MANIFEST,
+        $oHostBackup->manifestMunge(
+            basename($strResumePath),
             {&MANIFEST_SECTION_TARGET_FILE =>
                 {(&MANIFEST_TARGET_PGDATA . '/' . &DB_FILE_PGVERSION) => {&MANIFEST_SUBKEY_CHECKSUM => undef}}},
             false);
-        executeTest("sudo rm -f ${strTmpPath}/" . FILE_MANIFEST);
+        executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
 
         # Create a temp file in backup temp root to be sure it's deleted correctly
-        executeTest("touch ${strTmpPath}/file.tmp" . ($bCompress ? '.gz' : ''),
+        executeTest("sudo touch ${strResumePath}/file.tmp" . ($bCompress ? '.gz' : ''),
                     {bRemote => $bRemote});
-        executeTest("sudo chown -R " . $oHostBackup->userGet() . ' ' . dirname($strTmpPath));
+        executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp" . ($bCompress ? '.gz' : ''));
 
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
@@ -771,18 +776,18 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $strType = BACKUP_TYPE_INCR;
 
-        # Move database from backup to temp
-        $strTmpPath = $oHostBackup->repoPath() . '/temp/' .$self->stanza() . '.tmp';
+        # Create resumable backup from last backup
+        $strResumePath =
+            $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/' .
+            backupLabel($oFile, $strType, substr($strBackup, 0, 16), time());
+        executeTest('sudo mv ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup} ${strResumePath}");
 
-        testPathMove($oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}", $strTmpPath);
-        executeTest("sudo chown -R " . $oHostBackup->userGet() . ' ' . dirname($strTmpPath));
-
-        $oHostBackup->infoMunge(
-            "$strTmpPath/" . FILE_MANIFEST,
+        $oHostBackup->manifestMunge(
+            basename($strResumePath),
             {&MANIFEST_SECTION_TARGET_FILE =>
                 {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') => {&MANIFEST_SUBKEY_CHECKSUM => BOGUS}}},
             false);
-        executeTest("sudo rm -f ${strTmpPath}/" . FILE_MANIFEST);
+        executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
 
         # Add tablespace 2
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 2);
@@ -815,10 +820,9 @@ sub run
             $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 11);
         }
 
-        $strTmpPath = $oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp';
-
-        testPathMove($oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}", $strTmpPath);
-        executeTest("sudo chown -R " . $oHostBackup->userGet() . ' ' . dirname($strTmpPath));
+        # Create resumable backup from last backup
+        $strResumePath = $oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}";
+        executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
@@ -829,11 +833,9 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $strType = BACKUP_TYPE_DIFF;
 
-        $strTmpPath = $oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp';
-
-        testPathMove($oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}", $strTmpPath);
-        executeTest("sudo chown -R " . $oHostBackup->userGet() . ' ' . dirname($strTmpPath));
-        executeTest("sudo rm -f ${strTmpPath}/" . FILE_MANIFEST);
+        # Create resumable backup from last backup
+        $strResumePath = $oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}";
+        executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
