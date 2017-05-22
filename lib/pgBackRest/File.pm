@@ -40,8 +40,6 @@ use constant PATH_BACKUP_ABSOLUTE                                   => 'backup:a
     push @EXPORT, qw(PATH_BACKUP_ABSOLUTE);
 use constant PATH_BACKUP_CLUSTER                                    => 'backup:cluster';
     push @EXPORT, qw(PATH_BACKUP_CLUSTER);
-use constant PATH_BACKUP_TMP                                        => 'backup:tmp';
-    push @EXPORT, qw(PATH_BACKUP_TMP);
 use constant PATH_BACKUP_ARCHIVE                                    => 'backup:archive';
     push @EXPORT, qw(PATH_BACKUP_ARCHIVE);
 use constant PATH_BACKUP_ARCHIVE_OUT                                => 'backup:archive:out';
@@ -159,7 +157,7 @@ sub pathGet
     my
     (
         $strOperation,
-        $strType,                                   # Base type of the path to get (PATH_DB_ABSOLUTE, PATH_BACKUP_TMP, etc)
+        $strType,                                   # Base type of the path to get (PATH_DB_ABSOLUTE, PATH_BACKUP_CLUSTER, etc)
         $strFile,                                   # File to append to the base path (can include a path as well)
         $bTemp                                      # Return the temp file for this path type - only some types have temp files
     ) =
@@ -180,8 +178,8 @@ sub pathGet
     # Make sure a temp file is valid for this type and file
     if ($bTemp)
     {
-        # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, PATH_BACKUP_TMP and any absolute path
-        if (!($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_TMP || $bAbsolute))
+        # Only allow temp files for PATH_BACKUP_ARCHIVE, PATH_BACKUP_ARCHIVE_OUT, and any absolute path
+        if (!($strType eq PATH_BACKUP_ARCHIVE || $strType eq PATH_BACKUP_ARCHIVE_OUT || $bAbsolute))
         {
             confess &log(ASSERT, "temp file not supported for path type '${strType}'");
         }
@@ -225,13 +223,8 @@ sub pathGet
             confess &log(ASSERT, 'strStanza not defined');
         }
 
-        # Get the backup tmp path
-        if ($strType eq PATH_BACKUP_TMP)
-        {
-            $strPath .= "/temp/$self->{strStanza}.tmp";
-        }
-        # Else get archive paths
-        elsif ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
+        # Get archive paths
+        if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
         {
             $strPath .= "/archive/$self->{strStanza}";
 

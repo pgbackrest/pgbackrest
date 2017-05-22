@@ -127,14 +127,14 @@ sub backupLabelFormat
         $strOperation,
         $strType,
         $strBackupLabelLast,
-        $lTimestampStop
+        $lTimestampStart
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::backupLabelFormat', \@_,
             {name => 'strType', trace => true},
             {name => 'strBackupLabelLast', required => false, trace => true},
-            {name => 'lTimestampStop', trace => true}
+            {name => 'lTimestampTart', trace => true}
         );
 
     # Full backup label
@@ -149,7 +149,7 @@ sub backupLabelFormat
         }
 
         # Format the timestamp and add the full indicator
-        $strBackupLabel = timestampFileFormat(undef, $lTimestampStop) . 'F';
+        $strBackupLabel = timestampFileFormat(undef, $lTimestampStart) . 'F';
     }
     # Else diff or incr label
     else
@@ -164,7 +164,7 @@ sub backupLabelFormat
         $strBackupLabel = substr($strBackupLabelLast, 0, 16);
 
         # Format the timestamp
-        $strBackupLabel .= '_' . timestampFileFormat(undef, $lTimestampStop);
+        $strBackupLabel .= '_' . timestampFileFormat(undef, $lTimestampStart);
 
         # Add the diff indicator
         if ($strType eq BACKUP_TYPE_DIFF)
@@ -202,7 +202,7 @@ sub backupLabel
         $oFile,
         $strType,
         $strBackupLabelLast,
-        $lTimestampStop
+        $lTimestampStart
     ) =
         logDebugParam
         (
@@ -210,11 +210,11 @@ sub backupLabel
             {name => 'oFile', trace => true},
             {name => 'strType', trace => true},
             {name => 'strBackupLabelLast', required => false, trace => true},
-            {name => 'lTimestampStop', trace => true}
+            {name => 'lTimestampStart', trace => true}
         );
 
     # Create backup label
-    my $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, $lTimestampStop);
+    my $strBackupLabel = backupLabelFormat($strType, $strBackupLabelLast, $lTimestampStart);
 
     # Make sure that the timestamp has not already been used by a prior backup.  This is unlikely for online backups since there is
     # already a wait after the manifest is built but it's still possible if the remote and local systems don't have synchronized
@@ -222,11 +222,11 @@ sub backupLabel
     # be skipped by dealing with any backup label collisions here.
     if (fileList($oFile->pathGet(PATH_BACKUP_CLUSTER),
                  {strExpression =>
-                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStop) .
+                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
                     ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
-        fileList($oFile->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStop)),
+        fileList($oFile->pathGet(PATH_BACKUP_CLUSTER, PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart)),
                  {strExpression =>
-                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStop) .
+                    ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
                     ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . $oFile->{strCompressExtension}),
                     bIgnoreMissing => true}))
     {

@@ -168,6 +168,7 @@ sub backupFile
         $lSizeFile,                                 # File size
         $strChecksum,                               # File checksum to be checked
         $bChecksumPage,                             # Should page checksums be calculated?
+        $strBackupLabel,                            # Label of current backup
         $bDestinationCompress,                      # Compress destination file
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
@@ -182,6 +183,7 @@ sub backupFile
             {name => 'lSizeFile', trace => true},
             {name => 'strChecksum', required => false, trace => true},
             {name => 'bChecksumPage', trace => true},
+            {name => 'strBackupLabel', trace => true},
             {name => 'bDestinationCompress', trace => true},
             {name => 'lModificationTime', trace => true},
             {name => 'bIgnoreMissing', default => true, trace => true},
@@ -203,7 +205,7 @@ sub backupFile
     if (defined($strChecksum))
     {
         ($strCopyChecksum, $lCopySize) =
-            $oFile->hashSize(PATH_BACKUP_TMP, $strFileOp, $bDestinationCompress);
+            $oFile->hashSize(PATH_BACKUP_CLUSTER, "${strBackupLabel}/${strFileOp}", $bDestinationCompress);
 
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
 
@@ -228,7 +230,7 @@ sub backupFile
         # Copy the file from the database to the backup (will return false if the source file is missing)
         (my $bCopyResult, $strCopyChecksum, $lCopySize, $rExtra) = $oFile->copy(
             PATH_DB_ABSOLUTE, $strDbFile,
-            PATH_BACKUP_TMP, $strFileOp,
+            PATH_BACKUP_CLUSTER, "${strBackupLabel}/${strFileOp}",
             false,                                                  # Source is not compressed since it is the db directory
             $bDestinationCompress,                                  # Destination should be compressed based on backup settings
             $bIgnoreMissing,                                        # Ignore missing files
@@ -252,7 +254,7 @@ sub backupFile
     # compression may affect the actual repo size and this cannot be calculated in stream.
     if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
-        $lRepoSize = (fileStat($oFile->pathGet(PATH_BACKUP_TMP, $strFileOp)))->size;
+        $lRepoSize = (fileStat($oFile->pathGet(PATH_BACKUP_CLUSTER, "${strBackupLabel}/${strFileOp}")))->size;
     }
 
     # Return from function and log return values if any
