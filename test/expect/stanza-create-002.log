@@ -19,6 +19,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -36,6 +37,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -57,6 +59,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -74,6 +77,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -123,6 +127,7 @@ P00   INFO: stanza-create command end: aborted with exception [040]
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -148,6 +153,7 @@ P00   INFO: stanza-create command end: aborted with exception [041]
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -171,6 +177,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -188,6 +195,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -209,6 +217,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -226,6 +235,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -247,6 +257,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -264,6 +275,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -288,6 +300,7 @@ P00   INFO: stanza-create command end: aborted with exception [028]
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -309,6 +322,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -326,6 +340,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -350,6 +365,7 @@ P00   INFO: stanza-create command end: aborted with exception [028]
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -367,6 +383,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -388,6 +405,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -405,6 +423,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -427,6 +446,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -444,6 +464,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -466,6 +487,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -483,6 +505,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]

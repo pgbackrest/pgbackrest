@@ -393,11 +393,12 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'TS_PATH', "PG\\_[0-9]\\.[0-9]\\_[0-9]{9}");
     $strLine = $self->regExpReplace($strLine, 'VERSION',
         "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . BACKREST_VERSION, BACKREST_VERSION . '$');
+    $strLine = $self->regExpReplace($strLine, 'SEQUENCE', '^backrest\-sequence\=[0-9]+$', '[0-9]+', false);
 
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]{10}$');
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]{10}','[0-9]{10}$');
 
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
-        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]{10}$', false);
+        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', "start\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', "stop\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', TEST_GROUP . '\, [0-9]{10}', '[0-9]{10}$', false);

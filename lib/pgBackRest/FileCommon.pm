@@ -703,28 +703,28 @@ sub fileOpen
         $strFile,
         $lFlags,
         $strMode,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileOpen', \@_,
             {name => 'strFile', trace => true},
             {name => 'lFlags', trace => true},
-            {name => 'strMode', default => $strFileModeDefault, trace => true},
+            {name => 'strMode', optional => true, default => $strFileModeDefault, trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
+    # Attempt to open the file
     my $hFile;
 
     if (!sysopen($hFile, $strFile, $lFlags, oct($strMode)))
     {
-        my $strError = $!;
-
-        # If file exists then throw the error
-        if (fileExists($strFile))
+        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
         {
-            confess &log(ERROR, "unable to open ${strFile}" . (defined($strError) ? ": $strError" : ''), ERROR_FILE_OPEN);
+            logErrorResult($OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to open ${strFile}", $OS_ERROR);
         }
 
-        confess &log(ERROR, "${strFile} does not exist", ERROR_FILE_MISSING);
+        undef($hFile);
     }
 
     # Return from function and log return values if any
@@ -879,7 +879,8 @@ push @EXPORT, qw(fileStat);
 ####################################################################################################################################
 # fileStringRead
 #
-# Read the specified file as a string.
+# Read the specified file as a string.  Returns [undef] when bIgnoreMissing is specified and the file is missing.  Otherwise returns
+# the contents of the file, '' if the file is empty.
 ####################################################################################################################################
 sub fileStringRead
 {
@@ -887,37 +888,42 @@ sub fileStringRead
     my
     (
         $strOperation,
-        $strFileName
+        $strFileName,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::fileStringRead', \@_,
-            {name => 'strFileName', trace => true}
+            {name => 'strFileName', trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
     # Open the file for writing
-    sysopen(my $hFile, $strFileName, O_RDONLY)
-        or confess &log(ERROR, "unable to open ${strFileName}");
-
-    # Read the string
-    my $iBytesRead;
-    my $iBytesTotal = 0;
     my $strContent;
+    my $hFile = fileOpen($strFileName, O_RDONLY, {bIgnoreMissing => $bIgnoreMissing});
 
-    do
+    if (defined($hFile))
     {
-        $iBytesRead = sysread($hFile, $strContent, 65536, $iBytesTotal);
+        # Read the string
+        $strContent = '';
+        my $iBytesRead;
+        my $iBytesTotal = 0;
 
-        if (!defined($iBytesRead))
+        do
         {
-            confess &log(ERROR, "unable to read string from ${strFileName}: $!", ERROR_FILE_READ);
+            $iBytesRead = sysread($hFile, $strContent, 65536, $iBytesTotal);
+
+            if (!defined($iBytesRead))
+            {
+                confess &log(ERROR, "unable to read string from ${strFileName}: $!", ERROR_FILE_READ);
+            }
+
+            $iBytesTotal += $iBytesRead;
         }
+        while ($iBytesRead != 0);
 
-        $iBytesTotal += $iBytesRead;
+        close($hFile);
     }
-    while ($iBytesRead != 0);
-
-    close($hFile);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -956,7 +962,7 @@ sub fileStringWrite
     my $strFileNameTemp = $strFileName . '.' . BACKREST_EXE . '.tmp';
 
     # Open file for writing
-    my $hFile = fileOpen($strFileNameTemp, O_WRONLY | O_CREAT | O_TRUNC, $strFileModeDefault);
+    my $hFile = fileOpen($strFileNameTemp, O_WRONLY | O_CREAT | O_TRUNC, {strMode => $strFileModeDefault});
 
     # Write content
     if (defined($strContent) && length($strContent) > 0)

@@ -22,6 +22,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -39,6 +40,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -254,6 +256,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -333,6 +336,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -542,6 +546,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -621,6 +626,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1171,6 +1177,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1255,6 +1262,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1503,6 +1511,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1594,6 +1603,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1658,6 +1668,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1749,6 +1760,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1813,6 +1825,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -1904,6 +1917,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2050,6 +2064,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2137,6 +2152,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2165,6 +2181,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2187,6 +2204,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -2242,6 +2260,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2329,6 +2348,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2400,6 +2420,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2487,6 +2508,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2550,6 +2572,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2637,6 +2660,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2708,6 +2732,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2793,6 +2818,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -2871,6 +2897,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -2956,6 +2983,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -3370,6 +3398,7 @@ start-fast=y
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup]
@@ -3457,6 +3486,7 @@ user="[USER-1]"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]

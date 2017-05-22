@@ -95,7 +95,7 @@ sub fileNotInManifest
     foreach my $strName (sort(keys(%{$hFile})))
     {
         # Ignore certain files that will never be in the manifest
-        if ($strName eq FILE_MANIFEST ||
+        if ($strName eq FILE_MANIFEST_COPY ||
             $strName eq '.')
         {
             next;
@@ -835,7 +835,7 @@ sub process
     }
 
     # Save the backup manifest
-    $oBackupManifest->save();
+    $oBackupManifest->saveCopy();
 
     # Perform the backup
     my $lBackupSizeTotal =
@@ -900,8 +900,8 @@ sub process
     # will be consistent - at least not here.
     if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
     {
-        # Save the backup manifest a second time - before getting archive logs in case that fails
-        $oBackupManifest->save();
+        # Save the backup manifest before getting archive logs in case of failure
+        $oBackupManifest->saveCopy();
 
         # Create the modification time for the archive logs
         my $lModificationTime = time();

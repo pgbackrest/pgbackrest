@@ -79,7 +79,7 @@ sub restoreFile
         $bCopy = false;
 
         # Open the file truncating to zero bytes in case it already exists
-        my $hFile = fileOpen($strDbFile, O_WRONLY | O_CREAT | O_TRUNC, $strMode);
+        my $hFile = fileOpen($strDbFile, O_WRONLY | O_CREAT | O_TRUNC, {strMode => $strMode});
 
         # Now truncate to the original size.  This will create a sparse file which is very efficient for this use case.
         truncate($hFile, $lSize);
