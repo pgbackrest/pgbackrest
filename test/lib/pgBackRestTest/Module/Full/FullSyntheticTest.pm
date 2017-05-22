@@ -22,11 +22,10 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -69,7 +68,7 @@ sub run
         if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardLink}", $self->processMax() == 1)) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bHardLink => $bHardLink});
 
         # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
@@ -109,7 +108,7 @@ sub run
                                               '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, undef, true);
 
         # Load sample page
-        my $tBasePage = fileStringRead($self->dataPath() . '/page.bin');
+        my $tBasePage = ${storageTest()->get($self->dataPath() . '/page.bin')};
         my $iBasePageChecksum = 0x1B99;
 
         # Create base path
@@ -273,7 +272,7 @@ sub run
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Create a file link
-        filePathCreate($oHostDbMaster->dbPath() . '/pg_config', undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_config', {strMode => '0700', bCreateParent => true});
         testFileCreate(
             $oHostDbMaster->dbPath() . '/pg_config/postgresql.conf', "listen_addresses = *\n", $lTime - 100);
         testLinkCreate($oHostDbMaster->dbPath() . '/pg_config/postgresql.conf.link', './postgresql.conf');
@@ -307,7 +306,7 @@ sub run
         $oHostDbMaster->manifestLinkRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'postgresql.conf.bad');
 
         # Create stat directory link and file
-        filePathCreate($oHostDbMaster->dbPath() . '/pg_stat', undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_stat', {strMode => '0700', bCreateParent => true});
         $oHostDbMaster->manifestLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../pg_stat');
         $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA . '/pg_stat', 'global.stat', 'stats',
                                               'e350d5ce0153f3e22d5db21cf2a4eff00f3ee877', $lTime - 100, undef, true);
@@ -337,7 +336,7 @@ sub run
             $oHostBackup->backup(
                 $strType, 'protocol timeout',
                 {oExpectedManifest => \%oManifest, strOptionalParam => '--protocol-timeout=1 --db-timeout=.1',
-                 strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_PROTOCOL_TIMEOUT});
+                 strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
 
             # Remove the aborted backup so the next backup is not a resume
             testPathRemove($oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp');
@@ -415,22 +414,22 @@ sub run
         # Create files in root tblspc paths that should not be copied or deleted.
         # This will be checked later after a --force restore.
         my $strDoNotDeleteFile = $oHostDbMaster->tablespacePath(1, 2) . '/donotdelete.txt';
-        filePathCreate(dirname($strDoNotDeleteFile), undef, undef, true);
+        storageTest()->pathCreate(dirname($strDoNotDeleteFile), {strMode => '0700', bCreateParent => true});
         testFileCreate($strDoNotDeleteFile, 'DONOTDELETE-1-2');
 
-        filePathCreate($oHostDbMaster->tablespacePath(1), undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700', bCreateParent => true});
         testFileCreate($oHostDbMaster->tablespacePath(1) . '/donotdelete.txt', 'DONOTDELETE-1');
-        filePathCreate($oHostDbMaster->tablespacePath(2), undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->tablespacePath(2), {strMode => '0700', bCreateParent => true});
         testFileCreate($oHostDbMaster->tablespacePath(2) . '/donotdelete.txt', 'DONOTDELETE-2');
-        filePathCreate($oHostDbMaster->tablespacePath(2, 2), undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->tablespacePath(2, 2), {strMode => '0700', bCreateParent => true});
         testFileCreate($oHostDbMaster->tablespacePath(2, 2) . '/donotdelete.txt', 'DONOTDELETE-2-2');
-        filePathCreate($oHostDbMaster->tablespacePath(11), undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->tablespacePath(11), {strMode => '0700', bCreateParent => true});
 
         # Resume by copying the valid full backup over the last aborted full backup if it exists, or by creating a new path
-        my $strResumeBackup = ($oFile->list(
-            PATH_BACKUP_CLUSTER, undef, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))[0];
+        my $strResumeBackup = (storageRepo()->list(
+            STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))[0];
         my $strResumePath = $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/' .
-            ($strResumeBackup ne $strFullBackup ? $strResumeBackup : backupLabel($oFile, $strType, undef, time()));
+            ($strResumeBackup ne $strFullBackup ? $strResumeBackup : backupLabel(storageRepo(), $strType, undef, time()));
 
         executeTest("sudo rm -rf ${strResumePath}");
         executeTest(
@@ -606,7 +605,7 @@ sub run
 
         # Break the database version
         $oHostBackup->infoMunge(
-            $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
         $oHostBackup->backup(
@@ -616,7 +615,7 @@ sub run
 
         # Break the database system id
         $oHostBackup->infoMunge(
-            $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
 
         $oHostBackup->backup(
@@ -626,7 +625,7 @@ sub run
 
         # Break the control version
         $oHostBackup->infoMunge(
-            $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CONTROL => 842}});
 
         $oHostBackup->backup(
@@ -636,7 +635,7 @@ sub run
 
         # Break the catalog version
         $oHostBackup->infoMunge(
-            $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_CATALOG => 197208141}});
 
         $oHostBackup->backup(
@@ -645,7 +644,7 @@ sub run
                 strOptionalParam => '--log-level-console=detail'});
 
         # Restore the file to its original condition
-        $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+        $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
 
         # Test broken tablespace configuration
         #-----------------------------------------------------------------------------------------------------------------------
@@ -653,7 +652,7 @@ sub run
         my $strTblSpcPath = $oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC;
 
         # Create a directory in pg_tablespace
-        filePathCreate("${strTblSpcPath}/path");
+        storageTest()->pathCreate("${strTblSpcPath}/path", {strMode => '0700', bCreateParent => true});
 
         $oHostBackup->backup(
             $strType, 'invalid path in ' . DB_PATH_PGTBLSPC,
@@ -779,7 +778,7 @@ sub run
         # Create resumable backup from last backup
         $strResumePath =
             $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/' .
-            backupLabel($oFile, $strType, substr($strBackup, 0, 16), time());
+            backupLabel(storageRepo(), $strType, substr($strBackup, 0, 16), time());
         executeTest('sudo mv ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . "/${strBackup} ${strResumePath}");
 
         $oHostBackup->manifestMunge(
@@ -855,7 +854,7 @@ sub run
         # Remap the base and tablespace paths
         my %oRemapHash;
         $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbMaster->dbBasePath(2);
-        filePathCreate($oHostDbMaster->dbBasePath(2));
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath(2), {strMode => '0700', bCreateParent => true});
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbMaster->tablespacePath(1, 2);
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbMaster->tablespacePath(2, 2);
 
@@ -1102,7 +1101,7 @@ sub run
         executeTest('rm -rf ' . $oHostDbMaster->dbBasePath(2) . "/*");
 
         my $strDbPath = $oHostDbMaster->dbBasePath(2) . '/base';
-        filePathCreate($strDbPath);
+        storageTest()->pathCreate($strDbPath, {strMode => '0700'});
 
         $oRemapHash{&MANIFEST_TARGET_PGDATA} = $strDbPath;
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
@@ -1112,7 +1111,7 @@ sub run
             'no tablespace remap - error when tablespace dir does not exist', ERROR_PATH_MISSING,
             '--log-level-console=detail --tablespace-map-all=../../tablespace', false);
 
-        filePathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace');
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
 
         $oHostDbMaster->restore(
             OPTION_DEFAULT_RESTORE_SET, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
@@ -1124,7 +1123,7 @@ sub run
         # Backup Info (with an empty stanza)
         #-----------------------------------------------------------------------------------------------------------------------
         executeTest('sudo chmod g+w ' . $oHostBackup->repoPath() . '/backup');
-        filePathCreate($oHostBackup->repoPath() . '/backup/db_empty', '0770');
+        storageTest()->pathCreate($oHostBackup->repoPath() . '/backup/db_empty', {strMode => '0770'});
 
         $oHostBackup->info('normal output');
         $oHostDbMaster->info('normal output', {strOutput => INFO_OUTPUT_JSON});

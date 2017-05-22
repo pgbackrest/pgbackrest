@@ -23,8 +23,7 @@ use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Storage::Local;
 use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
@@ -86,7 +85,8 @@ local $EVAL_ERROR = undef; eval
 
         # Acquire a remote lock (except for commands that are read-only or local processes)
         if (!(optionTest(OPTION_COMMAND, CMD_ARCHIVE_GET) || optionTest(OPTION_COMMAND, CMD_INFO) ||
-              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK) || optionTest(OPTION_PROCESS)))
+              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK) ||
+              optionTest(OPTION_COMMAND, CMD_LOCAL)))
         {
             lockAcquire(optionGet(OPTION_COMMAND), undef, true);
         }

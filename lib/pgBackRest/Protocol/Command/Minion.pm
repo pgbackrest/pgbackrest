@@ -16,7 +16,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Protocol::Common::Minion;
-use pgBackRest::Protocol::Common::Io::Process;
+use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -48,11 +48,13 @@ sub new
             {name => 'iProtocolTimeout'},
         );
 
+    # Open buffered protocol io
+    my $oIo =
+        new pgBackRest::Common::Io::Buffered(
+            new pgBackRest::Common::Io::Handle('stdio', *STDIN, *STDOUT), $iProtocolTimeout, $iBufferMax);
+
     # Create the class hash
-    my $self = $class->SUPER::new(
-        $strName, $strCommand,
-        new pgBackRest::Protocol::Common::Io::Process(*STDIN, *STDOUT, *STDERR, undef, undef, $iProtocolTimeout, $iBufferMax),
-        $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
+    my $self = $class->SUPER::new($strName, $oIo);
     bless $self, $class;
 
     # Return from function and log return values if any

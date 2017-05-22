@@ -23,12 +23,10 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Stanza;
+use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -57,13 +55,13 @@ sub initTest
     my $self = shift;
 
     # Create archive info path
-    filePathCreate($self->{strArchivePath}, undef, true, true);
+    storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Create backup info path
-    filePathCreate($self->{strBackupPath}, undef, true, true);
+    storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Create pg_control path
-    filePathCreate(($self->{strDbPath} . '/' . DB_PATH_GLOBAL), undef, false, true);
+    storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
 
     # Copy a pg_control file into the pg_control path
     executeTest(
@@ -95,6 +93,8 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaUpgrade"))
     {
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+
         my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
         $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
@@ -126,27 +126,27 @@ sub run
         $oBackupInfo->create('9.3', 6999999999999999999, '937', '201306121', true);
 
         # Confirm upgrade is needed for backup
-        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, true,
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH)}, true,
             'backup upgrade needed');
-        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
             'archive upgrade not needed');
 
         # Change archive file to contain outdated data
         $oArchiveInfo->create('9.3', 6999999999999999999, true);
 
         # Confirm upgrade is needed for both
-        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
             'archive upgrade needed');
-        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, true,
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH)}, true,
             'backup upgrade needed');
 
         # Change the backup file to contain current data
         $oBackupInfo->create('9.4', 6353949018581704918, '942', '201409291', true);
 
         # Confirm upgrade is needed for archive
-        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, false,
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH)}, false,
             'backup upgrade not needed');
-        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
             'archive upgrade needed');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -156,9 +156,9 @@ sub run
         $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath});
         $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
 
-        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
+        $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,
             'archive upgrade not necessary');
-        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_BACKUP_MISMATCH)}, false,
+        $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH)}, false,
             'backup upgrade not necessary');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -167,11 +167,12 @@ sub run
         $oStanza->{oDb}{ullDbSysId} = 6999999999999999999;
 
         # Pass an expected error that is different than the actual error and confirm an error is thrown
-        $self->testException(sub {$oStanza->upgradeCheck($oArchiveInfo, PATH_BACKUP_ARCHIVE, ERROR_ASSERT)}, ERROR_ARCHIVE_MISMATCH,
+        $self->testException(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ASSERT)},
+            ERROR_ARCHIVE_MISMATCH,
             "WAL segment version 9.3 does not match archive version 9.4\n" .
             "WAL segment system-id 6999999999999999999 does not match archive system-id 6353949018581704918\n" .
             "HINT: are you archiving to the correct stanza?");
-        $self->testException(sub {$oStanza->upgradeCheck($oBackupInfo, PATH_BACKUP_CLUSTER, ERROR_ASSERT)}, ERROR_BACKUP_MISMATCH,
+        $self->testException(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_ASSERT)}, ERROR_BACKUP_MISMATCH,
             "database version = 9.3, system-id 6999999999999999999 does not match backup version = 9.4, " .
             "system-id = 6353949018581704918\nHINT: is this the correct stanza?");
     }

@@ -15,7 +15,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Config::ConfigHelp;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -410,7 +409,7 @@ sub helpDataWrite
         "1;\n";
 
     # Write the perl module into the lib path
-    fileStringWrite(dirname(dirname($0)) . '/lib/pgBackRest/Config/ConfigHelpData.pm', $strHelpData, false);
+    $oManifest->storage()->put(dirname(dirname($0)) . '/lib/pgBackRest/Config/ConfigHelpData.pm', $strHelpData);
 
     # Return from function and log return values if any
     logDebugReturn($strOperation);

@@ -23,8 +23,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::DbVersion;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -222,7 +222,7 @@ sub manifestFileCreate
     my $strPathFile = $self->dbFileCreate($oManifestRef, $strTarget, $strFile, $strContent, $lTime, $strMode);
 
     # Stat the file
-    my $oStat = fileStat($strPathFile);
+    my $oStat = storageTest()->info($strPathFile);
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
@@ -336,7 +336,7 @@ sub manifestLinkCreate
     my $strDbFile = $self->dbLinkCreate($oManifestRef, $strPath, $strFile, $strDestination);
 
     # Stat the link
-    my $oStat = fileStat($strDbFile);
+    my $oStat = storageTest()->info($strDbFile);
 
     # Check for errors in stat
     if (!defined($oStat))
@@ -358,7 +358,7 @@ sub manifestLinkCreate
                               (defined(dirname($strPath)) ? dirname($strPath) : '') . "/${strDestination}";
     }
 
-    $oStat = fileStat($strDestinationFile);
+    $oStat = storageTest()->info($strDestinationFile);
 
     my $strSection = MANIFEST_SECTION_TARGET_PATH;
 
@@ -367,7 +367,7 @@ sub manifestLinkCreate
         $strSection = MANIFEST_SECTION_TARGET_FILE;
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
-        ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM} = fileHash($strDestinationFile);
+        (${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM}) = storageTest()->hashSize($strDestinationFile);
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
             defined($bMaster) ? ($bMaster ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
 
@@ -467,7 +467,7 @@ sub manifestPathCreate
     my $strManifestKey = $self->manifestKeyGet($oManifestRef, $strPath, $strSubPath);
 
     # Create the db path
-    my $strDbPath = $self->dbPathCreate($oManifestRef, $strPath, $strSubPath, $strMode);
+    my $strDbPath = $self->dbPathCreate($oManifestRef, $strPath, $strSubPath, defined($strMode) ? $strMode : '0700');
 
     # Stat the file
     my $oStat = lstat($strDbPath);
@@ -554,7 +554,7 @@ sub manifestTablespaceCreate
     # Load linked path into manifest
     my $strLinkPath = $self->tablespacePath($iOid);
     my $strTarget = MANIFEST_TARGET_PGTBLSPC . "/${iOid}";
-    my $oStat = fileStat($strLinkPath);
+    my $oStat = storageTest()->info($strLinkPath);
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{$strTarget}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{$strTarget}{&MANIFEST_SUBKEY_USER} = getpwuid($oStat->uid);
@@ -576,11 +576,11 @@ sub manifestTablespaceCreate
 
     if (!-e $strTablespacePath)
     {
-        filePathCreate($strTablespacePath, $strMode);
+        storageTest()->pathCreate($strTablespacePath, {strMode => defined($strMode) ? $strMode : '0700'});
     }
 
     # Load tablespace path into manifest
-    $oStat = fileStat($strTablespacePath);
+    $oStat = storageTest()->info($strTablespacePath);
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC} =
         ${$oManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA};
@@ -597,7 +597,7 @@ sub manifestTablespaceCreate
         or confess "unable to link ${strLink} to ${strLinkPath}";
 
     # Load link into the manifest
-    $oStat = fileStat($strLink);
+    $oStat = storageTest()->info($strLink);
     my $strLinkTarget = MANIFEST_TARGET_PGDATA . "/${strTarget}";
 
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_LINK}{$strLinkTarget}{&MANIFEST_SUBKEY_GROUP} = getgrgid($oStat->gid);
@@ -677,7 +677,7 @@ sub dbPathCreate
     # Create the path
     if (!(-e $strFinalPath))
     {
-        filePathCreate($strFinalPath, $strMode);
+        storageTest()->pathCreate($strFinalPath, {strMode => $strMode});
     }
 
     return $strFinalPath;

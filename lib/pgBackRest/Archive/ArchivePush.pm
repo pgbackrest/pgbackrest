@@ -20,10 +20,9 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # WAL status constants
@@ -79,8 +78,7 @@ sub process
     if (optionGet(OPTION_ARCHIVE_ASYNC))
     {
         # Get the spool path
-        $self->{strSpoolPath} = (new pgBackRest::File(
-            optionGet(OPTION_STANZA), optionGet(OPTION_SPOOL_PATH), protocolGet(NONE)))->pathGet(PATH_BACKUP_ARCHIVE_OUT);
+        $self->{strSpoolPath} = storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_OUT);
 
         # Loop to check for status files and launch async process
         my $bPushed = false;
@@ -119,14 +117,6 @@ sub process
         require pgBackRest::Archive::ArchivePushFile;
         pgBackRest::Archive::ArchivePushFile->import();
 
-        # Create the file object
-        my $oFile = new pgBackRest::File
-        (
-            optionGet(OPTION_STANZA),
-            optionGet(OPTION_REPO_PATH),
-            protocolGet(BACKUP)
-        );
-
         # Drop file if queue max has been exceeded
         $self->{strWalPath} = $strWalPath;
 
@@ -138,7 +128,7 @@ sub process
         # Else push the WAL file
         else
         {
-            archivePushFile($oFile, $strWalPath, $strWalFile, optionGet(OPTION_COMPRESS), optionGet(OPTION_REPO_SYNC));
+            archivePushFile($strWalPath, $strWalFile, optionGet(OPTION_COMPRESS), optionGet(OPTION_REPO_SYNC));
         }
     }
 
@@ -185,7 +175,8 @@ sub walStatus
     my $bResult = false;
 
     # Find matching status files
-    my @stryStatusFile = fileList($strSpoolPath, {strExpression => '^' . $strWalFile . '\.(ok|error)$', bIgnoreMissing => true});
+    my @stryStatusFile = storageSpool()->list(
+        $strSpoolPath, {strExpression => '^' . $strWalFile . '\.(ok|error)$', bIgnoreMissing => true});
 
     if (@stryStatusFile > 0)
     {
@@ -197,7 +188,8 @@ sub walStatus
         }
 
         # Read the status file
-        my @stryWalStatus = split("\n", fileStringRead("${strSpoolPath}/$stryStatusFile[0]"));
+        my $rstrWalStatus = storageSpool()->get("${strSpoolPath}/$stryStatusFile[0]");
+        my @stryWalStatus = split("\n", defined($$rstrWalStatus) ? $$rstrWalStatus : '');
 
         # Status file must have at least two lines if it has content
         my $iCode;
@@ -272,7 +264,7 @@ sub readyList
 
     if (defined($self->{strSpoolPath}))
     {
-        foreach my $strOkFile (fileList($self->{strSpoolPath}, {strExpression => '\.ok$', bIgnoreMissing => true}))
+        foreach my $strOkFile (storageSpool()->list($self->{strSpoolPath}, {strExpression => '\.ok$', bIgnoreMissing => true}))
         {
             $strOkFile = substr($strOkFile, 0, length($strOkFile) - length('.ok'));
             $hOkFile->{$strOkFile} = true;
@@ -281,7 +273,7 @@ sub readyList
 
     # Read the .ready files
     my $strWalStatusPath = "$self->{strWalPath}/archive_status";
-    my @stryReadyFile = fileList($strWalStatusPath, {strExpression => '\.ready$'});
+    my @stryReadyFile = storageDb()->list($strWalStatusPath, {strExpression => '\.ready$'});
 
     # Generate a list of new files
     my @stryNewReadyFile;
@@ -308,7 +300,7 @@ sub readyList
     {
         if (!defined($hReadyFile->{$strOkFile}))
         {
-            fileRemove("$self->{strSpoolPath}/${strOkFile}.ok");
+            storageSpool()->remove("$self->{strSpoolPath}/${strOkFile}.ok");
         }
     }
 

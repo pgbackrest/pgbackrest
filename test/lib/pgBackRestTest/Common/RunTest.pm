@@ -19,6 +19,9 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
+use pgBackRest::Config::Config;
+use pgBackRest::Storage::Posix::Driver;
+use pgBackRest::Storage::Local;
 
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -36,6 +39,7 @@ use constant BOGUS =>                                               'bogus';
 # affecting the next run.  Of course multiple subtests can be executed in a single run.
 ####################################################################################################################################
 my $oTestRun;
+my $oStorage;
 
 ####################################################################################################################################
 # new
@@ -149,6 +153,9 @@ sub process
 
     # Init will only be run on first test, clean/init on subsequent tests
     $self->{bFirstTest} = true;
+
+    # Initialize test storage
+    $oStorage = new pgBackRest::Storage::Local($self->testPath(), new pgBackRest::Storage::Posix::Driver());
 
     # Init, run, and end the test(s)
     $self->initModule();
@@ -312,11 +319,13 @@ sub testResult
     # Clear the cache for this test
     logFileCacheClear();
 
+    my @stryResult;
+
     do
     {
         eval
         {
-            my @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
+            @stryResult = ref($fnSub) eq 'CODE' ? $fnSub->() : $fnSub;
 
             if (@stryResult <= 1)
             {
@@ -377,7 +386,11 @@ sub testResult
     }
 
     # Return from function and log return values if any
-    return logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'result', value => \@stryResult, trace => true}
+    );
 }
 
 ####################################################################################################################################
@@ -391,11 +404,12 @@ sub testException
     my $strMessageExpected = shift;
 
     # Output first line of the error message
-    my @stryErrorMessage = split('\n', $strMessageExpected);
-    &log(INFO, "    [${iCodeExpected}] " . $stryErrorMessage[0]);
+    &log(INFO,
+        "    [${iCodeExpected}] " . (defined($strMessageExpected) ? (split('\n', $strMessageExpected))[0] : 'undef error message'));
 
     my $bError = false;
-    my $strError = "exception ${iCodeExpected}, \"${strMessageExpected}\" was expected";
+    my $strError =
+        "exception ${iCodeExpected}, " . (defined($strMessageExpected) ? "'${strMessageExpected}'" : '[UNDEF]') . " was expected";
 
     eval
     {
@@ -414,9 +428,14 @@ sub testException
         }
 
         if (!($EVAL_ERROR->code() == $iCodeExpected &&
-            ($EVAL_ERROR->message() eq $strMessageExpected || $EVAL_ERROR->message() =~ $strMessageExpected)))
+            (!defined($strMessageExpected) && !defined($EVAL_ERROR->message()) ||
+                (defined($strMessageExpected) && defined($EVAL_ERROR->message()) &&
+                    ($EVAL_ERROR->message() eq $strMessageExpected || $EVAL_ERROR->message() =~ "^${strMessageExpected}\$" ||
+                     $EVAL_ERROR->message() =~ "^${strMessageExpected} at ")))))
         {
-            confess "${strError} but actual was " . $EVAL_ERROR->code() . ", \"" . $EVAL_ERROR->message() . "\"";
+            confess
+                "${strError} but actual was " . $EVAL_ERROR->code() . ', ' .
+                (defined($EVAL_ERROR->message()) ? qw{'} . $EVAL_ERROR->message() . qw{'} : '[UNDEF]');
         }
 
         $bError = true;
@@ -547,6 +566,14 @@ sub testRunExe
 push(@EXPORT, qw(testRunExe));
 
 ####################################################################################################################################
+# storageTest - get the storage for the current test
+####################################################################################################################################
+sub storageTest
+{
+    return $oStorage;
+}
+
+push(@EXPORT, qw(storageTest));
 
 ####################################################################################################################################
 # Getters

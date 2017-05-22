@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA;
 use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl qw(:mode O_WRONLY O_CREAT O_TRUNC);
@@ -19,7 +20,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -91,6 +91,10 @@ sub new
             {name => 'strInitVersion', optional => true, default => BACKREST_VERSION, trace => true},
         );
 
+    # Load Storage::Helper module
+    require pgBackRest::Storage::Helper;
+    pgBackRest::Storage::Helper->import();
+
     # Set variables
     $self->{oContent} = {};
 
@@ -129,14 +133,17 @@ sub load
 {
     my $self = shift;
 
-    my $strContentCopy = fileStringRead($self->{strFileName} . INI_COPY_EXT, {bIgnoreMissing => true});
-    my $strContent = fileStringRead($self->{strFileName}, {bIgnoreMissing => true});
+    my $oStorageLocal = storageLocal();
+
+    my $rstrContentCopy = $oStorageLocal->get(
+        storageLocal()->openRead($self->{strFileName} . INI_COPY_EXT, {bIgnoreMissing => true}));
+    my $rstrContent = $oStorageLocal->get(storageLocal()->openRead($self->{strFileName}, {bIgnoreMissing => true}));
 
     # If both exist then select an authoritative version
-    if (defined($strContent) && defined($strContentCopy))
+    if (defined($rstrContent) && defined($rstrContentCopy))
     {
-        my $oContentCopy = iniParse($strContentCopy, {bIgnoreInvalid => true});
-        my $oContent = iniParse($strContent, {bIgnoreInvalid => true});
+        my $oContentCopy = iniParse($$rstrContentCopy, {bIgnoreInvalid => true});
+        my $oContent = iniParse($$rstrContent, {bIgnoreInvalid => true});
 
         # If both files parse then select an authoritative version
         if (defined($oContent) && defined($oContentCopy))
@@ -195,7 +202,7 @@ sub load
         # If neither parses then error on main
         elsif (!defined($oContent) && !defined($oContentCopy))
         {
-            iniParse($strContent);
+            iniParse($$rstrContent);
         }
         # Else only one parses and must considered authoritative as long as the header is valid
         else
@@ -211,20 +218,20 @@ sub load
         }
     }
     # If neither exists then error
-    elsif (!defined($strContent) && !defined($strContentCopy))
+    elsif (!defined($rstrContent) && !defined($rstrContentCopy))
     {
-        confess &log(ERROR, "unable to open $self->{strFileName} or $self->{strFileName}" . INI_COPY_EXT, ERROR_FILE_OPEN);
+        confess &log(ERROR, "unable to open $self->{strFileName} or $self->{strFileName}" . INI_COPY_EXT, ERROR_FILE_MISSING);
     }
     # Else only one exists and must considered authoritative as long as it parses and has a valid header
     else
     {
-        if (defined($strContent))
+        if (defined($rstrContent))
         {
-            $self->{oContent} = iniParse($strContent);
+            $self->{oContent} = iniParse($$rstrContent);
         }
         else
         {
-            $self->{oContent} = iniParse($strContentCopy);
+            $self->{oContent} = iniParse($$rstrContentCopy);
         }
     }
 
@@ -353,7 +360,7 @@ sub iniParse
         logDebugParam
         (
             __PACKAGE__ . '::iniParse', \@_,
-            {name => 'strContent', trace => true},
+            {name => 'strContent', required => false, trace => true},
             {name => 'bRelaxed', optional => true, default => false, trace => true},
             {name => 'bIgnoreInvalid', optional => true, default => false, trace => true},
         );
@@ -369,7 +376,7 @@ sub iniParse
     eval
     {
         # Read the INI file
-        foreach my $strLine (split("\n", $strContent))
+        foreach my $strLine (split("\n", defined($strContent) ? $strContent : ''))
         {
             $strLine = trim($strLine);
 
@@ -467,8 +474,8 @@ sub save
         $self->hash();
 
         # Save the file
-        fileStringWrite($self->{strFileName}, iniRender($self->{oContent}));
-        fileStringWrite($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
+        storageLocal()->put($self->{strFileName}, iniRender($self->{oContent}));
+        storageLocal()->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
         $self->{bModified} = false;
 
         # Indicate the file now exists
@@ -489,13 +496,13 @@ sub saveCopy
 {
     my $self = shift;
 
-    if (fileExists($self->{strFileName}))
+    if (storageLocal()->exists($self->{strFileName}))
     {
         confess &log(ASSERT, "cannot save copy only when '$self->{strFileName}' exists");
     }
 
     $self->hash();
-    fileStringWrite("$self->{strFileName}" . INI_COPY_EXT, iniRender($self->{oContent}));
+    storageLocal()->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
 }
 
 ####################################################################################################################################

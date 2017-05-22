@@ -18,7 +18,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -562,7 +561,7 @@ sub backrestConfig
             my $strLocalFile = '/home/' . DOC_USER . '/data/pgbackrest.conf';
 
             # Save the ini file
-            fileStringWrite($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}, true));
+            $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}, true));
 
             $oHost->copyTo(
                 $strLocalFile, $$hCacheKey{file},
@@ -579,10 +578,10 @@ sub backrestConfig
                 delete($$oConfigClean{&CONFIG_SECTION_GLOBAL});
             }
 
-            fileStringWrite("${strLocalFile}.clean", iniRender($oConfigClean, true));
+            $self->{oManifest}->storage()->put("${strLocalFile}.clean", iniRender($oConfigClean, true));
 
             # Push config file into the cache
-            $strConfig = fileStringRead("${strLocalFile}.clean");
+            $strConfig = ${$self->{oManifest}->storage()->get("${strLocalFile}.clean")};
 
             my @stryConfig = undef;
 
@@ -662,7 +661,8 @@ sub postgresConfig
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
             {
-                ${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base} = fileStringRead($strLocalFile);
+                ${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base} =
+                    ${$self->{oManifest}->storage()->get($strLocalFile)};
             }
 
             my $oConfigHash = $self->{'pg-config'}{$strHostName}{$$hCacheKey{file}};
@@ -712,7 +712,7 @@ sub postgresConfig
             # Save the conf file
             if ($self->{bExe})
             {
-                fileStringWrite($strLocalFile, $$oConfigHash{base} .
+                $self->{oManifest}->storage()->put($strLocalFile, $$oConfigHash{base} .
                                 (defined($strConfig) ? "\n# pgBackRest Configuration\n${strConfig}\n" : ''));
 
                 $oHost->copyTo($strLocalFile, $$hCacheKey{file}, 'postgres:postgres', '640');

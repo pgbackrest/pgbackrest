@@ -1384,8 +1384,6 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
-                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
-
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
                 <backrest-config-option section="global" key="backup-user">backrest</backrest-config-option>
 
@@ -1634,7 +1632,7 @@
 
             <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for all stanzas</exe-highlight>
+                <exe-highlight>process .* terminated unexpectedly.*: stop file exists for all stanzas</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1675,7 +1673,7 @@
 
             <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for stanza demo</exe-highlight>
+                <exe-highlight>process .* terminated unexpectedly.*: stop file exists for stanza demo</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1759,7 +1757,6 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
-                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
 
                 <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>

@@ -21,9 +21,9 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -48,21 +48,23 @@ sub run
         if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version'))) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true});
 
+        my $oStorage = storageRepo();
+
         # Create compression extension
-        my $strCompressExt = $bCompress ? ".$oFile->{strCompressExtension}" : '';
+        my $strCompressExt = $bCompress ? qw{.} . COMPRESS_EXT : '';
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        filePathCreate($strXlogPath, undef, false, true);
+        $oStorage->pathCreate($strXlogPath, {bCreateParent => true});
 
         # Create the test path for pg_control and copy pg_control for stanza-create
-        filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        $oStorage->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+        $oStorage->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
@@ -74,16 +76,16 @@ sub run
         if ($iError == 0)
         {
             $oHostBackup->infoMunge(
-                $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                $oStorage->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
         }
 
         # Push two more segments with errors to exceed archive-max-mb
         $oHostDbMaster->archivePush(
-            $strXlogPath, $strArchiveTestFile, 2, $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
+            $strXlogPath, $strArchiveTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         $oHostDbMaster->archivePush(
-            $strXlogPath, $strArchiveTestFile, 3, $iError ? ERROR_HOST_CONNECT : ERROR_ARCHIVE_MISMATCH);
+            $strXlogPath, $strArchiveTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 4);
@@ -91,13 +93,14 @@ sub run
         # Fix the database version
         if ($iError == 0)
         {
-            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->infoRestore($oStorage->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {$oFile->list(
-                PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001', {strExpression => '^(?!000000010000000100000002).+'})},
+            sub {$oStorage->list(
+                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001',
+                {strExpression => '^(?!000000010000000100000002).+'})},
             "000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}",
             'segment 2-4 not pushed (2 is pushed sometimes when remote but ignore)', {iWaitSeconds => 5});
 
@@ -105,8 +108,9 @@ sub run
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5);
 
         $self->testResult(
-            sub {$oFile->list(
-                PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001', {strExpression => '^(?!000000010000000100000002).+'})},
+            sub {$oStorage->list(
+                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001',
+                {strExpression => '^(?!000000010000000100000002).+'})},
             "(000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " .
                 "000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt})",
             'segment 5 is pushed', {iWaitSeconds => 5});

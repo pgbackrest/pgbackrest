@@ -19,8 +19,9 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -64,7 +65,6 @@ sub getCheck
     my
     (
         $strOperation,
-        $oFile,
         $strDbVersion,
         $ullDbSysId,
         $strWalFile,
@@ -72,7 +72,6 @@ sub getCheck
         logDebugParam
     (
         __PACKAGE__ . '->getCheck', \@_,
-        {name => 'oFile'},
         {name => 'strDbVersion', required => false},
         {name => 'ullDbSysId', required => false},
         {name => 'strWalFile', required => false},
@@ -88,20 +87,22 @@ sub getCheck
         ($strDbVersion, my $iControlVersion, my $iCatalogVersion, $ullDbSysId) = dbMasterGet()->info();
     }
 
-    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
+    # Get db info from the repo
+    if (!isRepoLocal())
     {
-        ($strArchiveId, $strArchiveFile) = $oFile->{oProtocol}->cmdExecute(
+        ($strArchiveId, $strArchiveFile) = protocolGet(BACKUP)->cmdExecute(
             OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strWalFile], true);
     }
     else
     {
         # check that the archive info is compatible with the database
         $strArchiveId =
-            (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
+            (new pgBackRest::Archive::ArchiveInfo(
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
 
         if (defined($strWalFile))
         {
-            $strArchiveFile = walSegmentFind($oFile, ${strArchiveId}, $strWalFile);
+            $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile);
         }
     }
 

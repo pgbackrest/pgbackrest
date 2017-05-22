@@ -22,7 +22,6 @@ use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -45,12 +44,12 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{strBackRestBase},
+        $self->{oStorage},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strBackRestBase'},
+            {name => 'oStorage'},
         );
 
     # Return from function and log return values if any
@@ -179,7 +178,7 @@ sub process
         "script:\n" .
         "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm-max=2 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
 
-    fileStringWrite("$self->{strBackRestBase}/.travis.yml", $strConfig, false);
+    $self->{oStorage}->put('.travis.yml', $strConfig);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

@@ -21,9 +21,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
@@ -92,7 +91,7 @@ sub new
     {
         $self->{strLogPath} = $self->repoPath() . '/' . HOST_PATH_LOG;
         $self->{strLockPath} = $self->repoPath() . '/' . HOST_PATH_LOCK;
-        filePathCreate($self->repoPath(), '0770');
+        storageTest()->pathCreate($self->repoPath(), {strMode => '0770'});
     }
 
     $self->{strBackRestConfig} =  $self->testPath() . '/' . BACKREST_CONF;
@@ -108,18 +107,6 @@ sub new
 
     # Default hardlink to false
     $self->{bHardLink} = false;
-
-    # Create the local file object
-    $self->{oFile} = new pgBackRest::File(
-        $self->stanza(),
-        $self->repoPath(),
-        new pgBackRest::Protocol::Common::Common
-        (
-            OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
-            OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
-            OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
-            HOST_PROTOCOL_TIMEOUT                       # Protocol timeout
-        ));
 
     # Create a placeholder hash for file munging
     $self->{hInfoFile} = {};
@@ -242,14 +229,14 @@ sub backupEnd
     if (!$self->synthetic())
     {
         $oExpectedManifest = iniParse(
-            fileStringRead($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST));
+            ${storageTest()->get($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST)});
     }
 
     # Make sure tablespace links are correct
     if ($strType eq BACKUP_TYPE_FULL || $self->hardLink())
     {
-        my $hTablespaceManifest = $self->{oFile}->manifest(
-            PATH_BACKUP_CLUSTER, "${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
+        my $hTablespaceManifest = storageRepo()->manifest(
+            STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
 
         # Remove . and ..
         delete($hTablespaceManifest->{'.'});
@@ -310,14 +297,14 @@ sub backupEnd
         }
     }
     # Else there should not be a tablespace directory at all
-    elsif ($self->{oFile}->exists(PATH_BACKUP_CLUSTER, "${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
+    elsif (storageRepo()->exists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
     {
         confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
     }
 
     # Check that latest link exists unless repo links are disabled
-    my $strLatestLink = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, LINK_LATEST);
-    my $bLatestLinkExists = fileExists($strLatestLink);
+    my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
+    my $bLatestLinkExists = storageTest()->exists($strLatestLink);
 
     if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
     {
@@ -368,7 +355,7 @@ sub backupEnd
 
         if ($self->synthetic() && $bManifestCompare)
         {
-            $self->{oLogTest}->supplementalAdd($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST));
+            $self->{oLogTest}->supplementalAdd(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST));
             $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
         }
     }
@@ -441,7 +428,7 @@ sub backupCompare
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL} = $strBackup;
 
     my $oActualManifest = new pgBackRest::Manifest(
-        $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST));
+        storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST));
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
         $oActualManifest->get(MANIFEST_SECTION_BACKUP, &MANIFEST_KEY_TIMESTAMP_START);
@@ -463,7 +450,7 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (fileStat($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/${strFileKey}.gz")))->size;
+                    (storageTest->info(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}.gz")))->size;
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -495,13 +482,13 @@ sub backupCompare
 
     my $strTestPath = $self->testPath();
 
-    fileStringWrite("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
-    fileStringWrite("${strTestPath}/expected.manifest", iniRender($oExpectedManifest));
+    storageTest()->put("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
+    storageTest()->put("${strTestPath}/expected.manifest", iniRender($oExpectedManifest));
 
     executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
-    fileRemove("${strTestPath}/expected.manifest");
-    fileRemove("${strTestPath}/actual.manifest");
+    storageTest()->remove("${strTestPath}/expected.manifest");
+    storageTest()->remove("${strTestPath}/actual.manifest");
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -587,9 +574,8 @@ sub backupLast
 {
     my $self = shift;
 
-    my @stryBackup = $self->{oFile}->list(
-        PATH_BACKUP_CLUSTER, undef,
-        {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
+    my @stryBackup = storageRepo()->list(
+        STORAGE_REPO_BACKUP, {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
 
     if (!defined($stryBackup[0]))
     {
@@ -755,13 +741,13 @@ sub stanzaCreate
 
     # If the info file was created, then add it to the expect log
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        storageTest()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
     {
         $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        storageTest()->exists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
     {
         $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
     }
@@ -808,13 +794,13 @@ sub stanzaUpgrade
 
     # If the info file was created, then add it to the expect log
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        fileExists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        storageTest()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
     {
         $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        fileExists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        storageTest()->exists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
     {
         $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
     }
@@ -924,9 +910,11 @@ sub configCreate
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_FILE} = lc(TRACE);
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR} = lc(OFF);
 
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = $self->repoPath();
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
+
+    # $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROTOCOL_TIMEOUT} = 5;
+    # $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_DB_TIMEOUT} = 4;
 
     if ($self->processMax() > 1)
     {
@@ -940,6 +928,8 @@ sub configCreate
 
     if ($self->isHostBackup())
     {
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = $self->repoPath();
+
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
             $self->{bHardLink} = true;
@@ -1033,7 +1023,7 @@ sub configCreate
     }
 
     # Write out the configuration file
-    fileStringWrite($self->backrestConfig(), iniRender(\%oParamHash, true));
+    storageTest()->put($self->backrestConfig(), iniRender(\%oParamHash, true));
 
     # Modify the file permissions so it can be read/saved by all test users
     executeTest('sudo chmod 660 ' . $self->backrestConfig());
@@ -1065,7 +1055,7 @@ sub manifestMunge
             {name => 'bCache', default => true},
         );
 
-    $self->infoMunge($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), $hParam, $bCache);
+    $self->infoMunge(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), $hParam, $bCache);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1092,7 +1082,7 @@ sub manifestRestore
             {name => 'bSave', default => true},
         );
 
-    $self->infoRestore($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), $bSave);
+    $self->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), $bSave);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1214,7 +1204,9 @@ sub infoRestore
             $self->{hInfoFile}{$strFileName}->save();
 
             # Fix permissions
-            executeTest("sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName));
+            executeTest(
+                "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
+                ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
         }
     }
     else

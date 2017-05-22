@@ -25,10 +25,10 @@ use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # File/path constants
@@ -71,7 +71,7 @@ sub new
     my
     (
         $strOperation,
-        $strArchiveClusterPath,                     # Backup cluster path
+        $strArchiveClusterPath,                     # Archive cluster path
         $bRequired                                  # Is archive info required?
     ) =
         logDebugParam
@@ -83,7 +83,7 @@ sub new
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
-    my $bExists = fileExists($strArchiveInfoFile);
+    my $bExists = storageRepo()->exists($strArchiveInfoFile);
 
     if (!$bExists && $bRequired)
     {
@@ -276,21 +276,19 @@ sub reconstruct
     my
     (
         $strOperation,
-        $oFile,
         $strCurrentDbVersion,
         $ullCurrentDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
-        {name => 'oFile'},
         {name => 'strCurrentDbVersion'},
         {name => 'ullCurrentDbSysId'},
     );
 
     my $strInvalidFileStructure = undef;
 
-    my @stryArchiveId = fileList(
+    my @stryArchiveId = storageRepo()->list(
         $self->{strArchiveClusterPath}, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
     my %hDbHistoryVersion;
 
@@ -308,7 +306,7 @@ sub reconstruct
         my $strVersionDir = $strDbVersion . "-" . $iDbHistoryId;
 
         # Get the name of the first archive directory
-        my $strArchiveDir = (fileList(
+        my $strArchiveDir = (storageRepo()->list(
             $self->{strArchiveClusterPath} . "/${strVersionDir}",
             {strExpression => REGEX_ARCHIVE_DIR_WAL, bIgnoreMissing => true}))[0];
 
@@ -320,9 +318,9 @@ sub reconstruct
         }
 
         # ??? Should probably make a function in ArchiveCommon
-        my $strArchiveFile = (fileList(
+        my $strArchiveFile = (storageRepo()->list(
             $self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
-            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$",
+            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\." . COMPRESS_EXT . "){0,1}\$",
                 bIgnoreMissing => true}))[0];
 
         # Continue if any file structure or missing files info
@@ -345,7 +343,7 @@ sub reconstruct
         sysopen(my $hFile, $strArchiveFilePath, O_RDONLY)
             or confess &log(ERROR, "unable to open ${strArchiveFilePath}", ERROR_FILE_OPEN);
 
-        if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
+        if ($strArchiveFile =~ "^.*\." . COMPRESS_EXT . "\$")
         {
             gunzip($hFile => \$tBlock)
                 or confess &log(ERROR,

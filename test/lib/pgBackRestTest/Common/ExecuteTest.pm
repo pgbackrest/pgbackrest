@@ -17,9 +17,10 @@ use IPC::Open3;
 use POSIX ':sys_wait_h';
 use Symbol 'gensym';
 
+use pgBackRest::Common::Io::Handle;
+use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Protocol::Common::Io::Process;
 
 ####################################################################################################################################
 # new
@@ -99,7 +100,7 @@ sub begin
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
     # Create select objects
-    $self->{oIO} = new pgBackRest::Protocol::Common::Io::Process($self->{hOut}, undef, $self->{hError}, undef, undef, 30, 65536);
+    $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 120, 65536);
 
     if (!defined($self->{hError}))
     {
@@ -137,14 +138,14 @@ sub endRetry
 
         # # Drain the stderr stream
         # ??? This is a good idea but can only be done when the IO object has separate buffers for stdin and stderr
-        # while (my $strLine = $self->{oIO}->lineRead(0, false, false))
+        # while (my $strLine = $self->{oIo}->readLine())
         # {
         #     $bFound = true;
         #     $self->{strErrorLog} .= "$strLine\n";
         # }
 
         # Drain the stdout stream and look for test points
-        while (defined(my $strLine = $self->{oIO}->lineRead(0, true, false)))
+        while (defined(my $strLine = $self->{oIo}->readLine(true)))
         {
             $self->{strOutLog} .= "${strLine}\n";
             $bFound = true;
@@ -176,7 +177,7 @@ sub endRetry
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
     # Drain the stdout stream
-    while (defined(my $strLine = $self->{oIO}->lineRead(0, true, false)))
+    while (defined(my $strLine = $self->{oIo}->readLine(true)))
     {
         $self->{strOutLog} .= "${strLine}\n";
 
@@ -187,7 +188,9 @@ sub endRetry
     }
 
     # Drain the stderr stream
-    while (defined(my $strLine = $self->{oIO}->lineRead(0, false, false)))
+    my $oIoError = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
+
+    while (defined(my $strLine = $oIoError->readLine(true, false)))
     {
         $self->{strErrorLog} .= "${strLine}\n";
     }
@@ -236,7 +239,7 @@ sub endRetry
 
     if ($self->{strErrorLog} ne '' && !$self->{bSuppressStdErr} && !$self->{bSuppressError})
     {
-        confess &log(ERROR, "output found on STDERR:\n$self->{strErrorLog}");
+        confess &log(ERROR, "STDOUT:\n$self->{strOutLog}\n\noutput found on STDERR:\n$self->{strErrorLog}");
     }
 
     if ($self->{bShowOutput})

@@ -20,8 +20,8 @@ use Pod::Usage qw(pod2usage);
 use Storable;
 
 use lib dirname($0) . '/lib';
-use lib dirname($0) . '/../lib';
-use lib dirname($0) . '/../test/lib';
+use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/test/lib';
 
 use BackRestDoc::Common::Doc;
 use BackRestDoc::Common::DocConfig;
@@ -35,7 +35,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::FileCommon;
+use pgBackRest::Storage::Local;
+use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -205,6 +206,9 @@ eval
     # Get the base path
     my $strBasePath = abs_path(dirname($0));
 
+    my $oStorageDoc = new pgBackRest::Storage::Local(
+        $strBasePath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+
     if (!defined($strDocPath))
     {
         $strDocPath = $strBasePath;
@@ -221,7 +225,8 @@ eval
 
     # Load the manifest
     my $oManifest = new BackRestDoc::Common::DocManifest(
-        \@stryKeyword, \@stryRequire, \@stryInclude, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy, $bCacheOnly);
+        $oStorageDoc, \@stryKeyword, \@stryRequire, \@stryInclude, \@stryExclude, $oVariableOverride, $strDocPath, $bDeploy,
+        $bCacheOnly);
 
     if (!$bNoCache)
     {
@@ -276,8 +281,9 @@ eval
             }
             else
             {
-                filePathCreate("${strBasePath}/output/man", '0770', true, true);
-                fileStringWrite("${strBasePath}/output/man/" . lc(BACKREST_NAME) . '.1.txt', $oDocConfig->manGet($oManifest), false);
+                $oStorageDoc->pathCreate(
+                    "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+                $oStorageDoc->put("${strBasePath}/output/man/" . lc(BACKREST_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
             }
         }
         elsif ($strOutput eq 'html')

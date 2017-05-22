@@ -15,7 +15,6 @@ use English '-no_match_vars';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -113,12 +112,12 @@ sub run
         $self->testResult($oIni->exists(), false, 'file does not exist after saveCopy()');
 
         $self->testResult(
-            sub {fileStringRead($strTestFile . INI_COPY_EXT)},
+            sub {${storageTest()->get($strTestFile . INI_COPY_EXT)}},
             $self->iniHeader(undef, 1, 4, '1.01', '488e5ca1a018cd7cd6d4e15150548f39f493dacd'),
             'empty with synthetic format and version');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFile . INI_COPY_EXT);
+        storageTest()->put($strTestFile . INI_COPY_EXT);
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CONFIG, 'no key/value pairs found');
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -126,20 +125,20 @@ sub run
         $oIni->saveCopy();
 
         $self->testResult(
-            sub {fileStringRead($strTestFile . INI_COPY_EXT)},
+            sub {${storageTest()->get($strTestFile . INI_COPY_EXT)}},
             $self->iniHeader(undef, 1, BACKREST_FORMAT, BACKREST_VERSION, $oIni->hash()),
             'empty with default format and version');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {fileList($self->testPath())},
+            sub {storageTest()->list($self->testPath())},
             'test.ini.copy',
             'only copy is saved');
 
         $oIni->save();
 
         $self->testResult(
-            sub {fileList($self->testPath())},
+            sub {storageTest()->list($self->testPath())},
             '(test.ini, test.ini.copy)',
             'both versions are saved');
 
@@ -151,10 +150,10 @@ sub run
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'normal load');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $hIni = iniParse(fileStringRead($strTestFile));
+        my $hIni = iniParse(${storageTest()->get($strTestFile)});
         $hIni->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = BOGUS;
-        fileStringWrite($strTestFile, iniRender($hIni));
-        fileStringWrite($strTestFileCopy, iniRender($hIni));
+        storageTest()->put($strTestFile, iniRender($hIni));
+        storageTest()->put($strTestFileCopy, iniRender($hIni));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CHECKSUM,
@@ -162,7 +161,7 @@ sub run
                 $oIni->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM) . "' but found 'bogus'");
 
         $hIni->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oIni->hash();
-        fileStringWrite($strTestFile, iniRender($hIni));
+        storageTest()->put($strTestFile, iniRender($hIni));
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oIni->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, BACKREST_FORMAT - 1);
@@ -180,7 +179,7 @@ sub run
         $oIni->save();
 
         $self->testResult(
-            sub {fileStringRead($strTestFile . INI_COPY_EXT)},
+            sub {${storageTest()->get($strTestFile . INI_COPY_EXT)}},
             $self->iniHeader($oIni, undef, undef, '1.01'),
             'verify old version was written');
 
@@ -190,7 +189,7 @@ sub run
         $oIni->save();
 
         $self->testResult(
-            sub {fileStringRead($strTestFile . INI_COPY_EXT)},
+            sub {${storageTest()->get($strTestFile . INI_COPY_EXT)}},
             $self->iniHeader($oIni, undef, undef, BACKREST_VERSION),
             'verify version is updated on load');
 
@@ -198,18 +197,18 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {new pgBackRest::Common::Ini($strTestFile, {bLoad => false, strContent => fileStringRead($strTestFile)})},
+            sub {new pgBackRest::Common::Ini($strTestFile, {bLoad => false, strContent => ${storageTest()->get($strTestFile)}})},
             '[object]', 'new() passing content as a string');
 
         #---------------------------------------------------------------------------------------------------------------------------
         executeTest("rm -rf ${strTestFile}*");
 
         $self->testException(
-            sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_FILE_OPEN,
-            "unable to open ${strTestFile} or ${strTestFileCopy}");
+            sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_FILE_MISSING,
+            "unable to open ${strTestFile} or ${strTestFile}" . INI_COPY_EXT);
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFileCopy, BOGUS);
+        storageTest()->put($strTestFileCopy, BOGUS);
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFileCopy)}, ERROR_CONFIG,
@@ -218,7 +217,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oIniSource = new pgBackRest::Common::Ini($strTestFile, {bLoad => false});
 
-        fileStringWrite($strTestFileCopy, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniSource->{oContent}));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFileCopy)}, ERROR_CHECKSUM,
@@ -228,7 +227,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oIniSource->hash();
         delete($oIniSource->{oContent}->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE});
-        fileStringWrite($strTestFileCopy, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniSource->{oContent}));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFileCopy)}, ERROR_CHECKSUM,
@@ -236,7 +235,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oIniSource->{oContent}->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = BOGUS;
-        fileStringWrite($strTestFileCopy, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniSource->{oContent}));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFileCopy)}, ERROR_CHECKSUM,
@@ -245,7 +244,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oIniSource->{oContent}->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 0;
         $oIniSource->hash();
-        fileStringWrite($strTestFileCopy, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniSource->{oContent}));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFileCopy)}, ERROR_CHECKSUM,
@@ -254,7 +253,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oIniSource->{oContent}->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 1.1;
         $oIniSource->hash();
-        fileStringWrite($strTestFileCopy, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniSource->{oContent}));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFileCopy)}, ERROR_CHECKSUM,
@@ -263,54 +262,54 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oIniSource->{oContent}->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 1;
         $oIniSource->hash();
-        fileStringWrite($strTestFileCopy, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniSource->{oContent}));
 
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'main missing - load copy');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFile, BOGUS);
+        storageTest()->put($strTestFile, BOGUS);
 
         # main invalid, copy ok
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'invalid main - load copy');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileRemove($strTestFileCopy);
+        storageTest()->remove($strTestFileCopy);
 
-        fileStringWrite($strTestFile, "[section]\n" . BOGUS);
+        storageTest()->put($strTestFile, "[section]\n" . BOGUS);
 
         # main invalid, copy missing
         $self->testException(sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CONFIG, "unable to find '=' in 'bogus'");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFile, iniRender($oIniSource->{oContent}));
+        storageTest()->put($strTestFile, iniRender($oIniSource->{oContent}));
 
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'main ok, copy missing');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFileCopy, BOGUS);
+        storageTest()->put($strTestFileCopy, BOGUS);
 
         # main ok, copy invalid
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'main ok, copy invalid');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFile, BOGUS);
+        storageTest()->put($strTestFile, BOGUS);
 
         # main invalid, copy invalid
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CONFIG, "key/value pair 'bogus' found outside of a section");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        fileStringWrite($strTestFile, iniRender($hIni));
+        storageTest()->put($strTestFile, iniRender($hIni));
         $hIni->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = BOGUS;
-        fileStringWrite($strTestFileCopy, iniRender($hIni));
+        storageTest()->put($strTestFileCopy, iniRender($hIni));
 
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'invalid copy header - load main');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $hIni->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = $oIni->hash();
-        fileStringWrite($strTestFileCopy, iniRender($hIni));
+        storageTest()->put($strTestFileCopy, iniRender($hIni));
         $hIni->{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM} = BOGUS;
-        fileStringWrite($strTestFile, iniRender($hIni));
+        storageTest()->put($strTestFile, iniRender($hIni));
 
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'invalid main header - load copy');
 
@@ -322,7 +321,7 @@ sub run
         my $oIniCopy = new pgBackRest::Common::Ini($strTestFile, {bLoad => false});
         $oIniCopy->set($strSection, $strKey, $strSubKey, "${strValue}2");
         $oIniCopy->hash();
-        fileStringWrite($strTestFileCopy, iniRender($oIniCopy->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniCopy->{oContent}));
 
         $self->testException(
             sub {new pgBackRest::Common::Ini($strTestFile)}, ERROR_CONFIG,
@@ -332,7 +331,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oIniMain->set($strSection, $strKey, $strSubKey, "${strValue}3");
         $oIniMain->hash();
-        fileStringWrite($strTestFile, iniRender($oIniMain->{oContent}));
+        storageTest()->put($strTestFile, iniRender($oIniMain->{oContent}));
 
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'higher sequence - load main');
 
@@ -346,7 +345,7 @@ sub run
         $oIniCopy->{bModified} = false;
         $oIniCopy->set($strSection, $strKey, $strSubKey, "${strValue}5");
         $oIniCopy->hash();
-        fileStringWrite($strTestFileCopy, iniRender($oIniCopy->{oContent}));
+        storageTest()->put($strTestFileCopy, iniRender($oIniCopy->{oContent}));
 
         $self->testResult(sub {new pgBackRest::Common::Ini($strTestFile)}, '[object]', 'higher sequence - load copy');
 

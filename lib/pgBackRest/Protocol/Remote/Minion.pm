@@ -12,15 +12,17 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::Io::Buffered;
+use pgBackRest::Common::Wait;
 use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::Archive::ArchivePushFile;
 use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
-use pgBackRest::File;
 use pgBackRest::Info;
 use pgBackRest::Protocol::Command::Minion;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -50,8 +52,8 @@ sub new
         );
 
     # Init object and store variables
-    my $self = $class->SUPER::new(CMD_REMOTE, $strCommand, $iBufferMax, $iCompressLevel,
-                                  $iCompressLevelNetwork, $iProtocolTimeout);
+    my $self = $class->SUPER::new(
+        CMD_REMOTE, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
     bless $self, $class;
 
     # Return from function and log return values if any
@@ -73,30 +75,25 @@ sub init
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->init');
 
     # Create objects
-    my $oFile = new pgBackRest::File
-    (
-        optionGet(OPTION_STANZA, false),
-        optionGet(OPTION_REPO_PATH, false),
-        $self
-    );
+    my $oStorage = optionTest(OPTION_TYPE, DB) ? storageDb() : storageRepo();
 
-    my $oArchiveGet = new pgBackRest::Archive::ArchiveGet();
-    my $oCheck = new pgBackRest::Check::Check();
-    my $oInfo = new pgBackRest::Info();
-    my $oDb = new pgBackRest::Db();
+    my $oArchiveGet = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Archive::ArchiveGet() : undef;
+    my $oCheck = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Check::Check() : undef;
+    my $oInfo = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Info() : undef;
+    my $oDb = optionTest(OPTION_TYPE, DB) ? new pgBackRest::Db() : undef;
 
     # Create anonymous subs for each command
     my $hCommandMap =
     {
         # ArchiveGet commands
-        &OP_ARCHIVE_GET_ARCHIVE_ID => sub {$oArchiveGet->getArchiveId($oFile)},
-        &OP_ARCHIVE_GET_CHECK => sub {$oArchiveGet->getCheck($oFile, @{shift()})},
+        &OP_ARCHIVE_GET_ARCHIVE_ID => sub {$oArchiveGet->getArchiveId()},
+        &OP_ARCHIVE_GET_CHECK => sub {$oArchiveGet->getCheck(@{shift()})},
 
         # ArchivePush commands
-        &OP_ARCHIVE_PUSH_CHECK => sub {archivePushCheck($oFile, @{shift()})},
+        &OP_ARCHIVE_PUSH_CHECK => sub {archivePushCheck(@{shift()})},
 
         # Check commands
-        &OP_CHECK_BACKUP_INFO_CHECK => sub {$oCheck->backupInfoCheck($oFile, @{shift()})},
+        &OP_CHECK_BACKUP_INFO_CHECK => sub {$oCheck->backupInfoCheck(@{shift()})},
 
         # Db commands
         &OP_DB_CONNECT => sub {$oDb->connect()},
@@ -104,17 +101,38 @@ sub init
         &OP_DB_INFO => sub {$oDb->info(@{shift()})},
 
         # File commands
-        &OP_FILE_COPY => sub {my $rParam = shift; $oFile->copy(PATH_ABSOLUTE, shift(@{$rParam}), PATH_ABSOLUTE, @{$rParam})},
-        &OP_FILE_COPY_IN => sub {my $rParam = shift; $oFile->copy(PIPE_STDIN, shift(@{$rParam}), PATH_ABSOLUTE, @{$rParam})},
-        &OP_FILE_COPY_OUT => sub {my $rParam = shift; $oFile->copy(PATH_ABSOLUTE, shift(@{$rParam}), PIPE_STDOUT, @{$rParam})},
-        &OP_FILE_EXISTS => sub {$oFile->exists(PATH_ABSOLUTE, @{shift()})},
-        &OP_FILE_LIST => sub {$oFile->list(PATH_ABSOLUTE, @{shift()})},
-        &OP_FILE_MANIFEST => sub {$oFile->manifest(PATH_ABSOLUTE, @{shift()})},
-        &OP_FILE_PATH_CREATE => sub {$oFile->pathCreate(PATH_ABSOLUTE, @{shift()})},
-        &OP_FILE_WAIT => sub {$oFile->wait(PATH_ABSOLUTE, @{shift()})},
+        &OP_STORAGE_OPEN_READ => sub
+        {
+            my $oSourceFileIo = $oStorage->openRead(@{shift()});
+
+            # If the source file exists
+            if (defined($oSourceFileIo))
+            {
+                $self->outputWrite(true);
+
+                $oStorage->copy($oSourceFileIo, new pgBackRest::Protocol::Storage::File($self, $oSourceFileIo));
+
+                return true;
+            }
+
+            return false;
+        },
+        &OP_STORAGE_OPEN_WRITE => sub
+        {
+            my $oDestinationFileIo = $oStorage->openWrite(@{shift()});
+            $oStorage->copy(new pgBackRest::Protocol::Storage::File($self, $oDestinationFileIo), $oDestinationFileIo);
+        },
+        &OP_STORAGE_EXISTS => sub {$oStorage->exists(@{shift()})},
+        &OP_STORAGE_LIST => sub {$oStorage->list(@{shift()})},
+        &OP_STORAGE_MANIFEST => sub {$oStorage->manifest(@{shift()})},
+        &OP_STORAGE_MOVE => sub {$oStorage->move(@{shift()})},
+        &OP_STORAGE_PATH_GET => sub {$oStorage->pathGet(@{shift()})},
 
         # Info commands
-        &OP_INFO_STANZA_LIST => sub {$oInfo->stanzaList($oFile, @{shift()})},
+        &OP_INFO_STANZA_LIST => sub {$oInfo->stanzaList(@{shift()})},
+
+        # Wait command
+        &OP_WAIT => sub {waitRemainder(@{shift()})},
     };
 
     # Return from function and log return values if any

@@ -25,10 +25,10 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Filter::Gzip;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # process
@@ -86,23 +86,18 @@ sub get
 
     lockStopTest();
 
-    # Create the file object
-    my $oFile = new pgBackRest::File
-    (
-        optionGet(OPTION_STANZA),
-        optionGet(OPTION_REPO_PATH),
-        protocolGet(BACKUP)
-    );
+    # Get the repo storage
+    my $oStorageRepo = storageRepo();
 
     # Construct absolute path to the WAL file when it is relative
     $strDestinationFile = walPath($strDestinationFile, optionGet(OPTION_DB_PATH, false), commandGet());
 
     # Get the wal segment filename
     my ($strArchiveId, $strArchiveFile) = $self->getCheck(
-        $oFile, undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef);
+        undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef);
 
     if (!defined($strArchiveFile) && !walIsSegment($strSourceArchive) &&
-        $oFile->exists(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSourceArchive}"))
+        $oStorageRepo->exists(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSourceArchive}"))
     {
         $strArchiveFile = $strSourceArchive;
     }
@@ -122,13 +117,14 @@ sub get
     else
     {
         # Determine if the source file is already compressed
-        my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
+        my $bSourceCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '$') ? true : false;
 
         # Copy the archive file to the requested location
-        $oFile->copy(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strArchiveFile}",  # Source file
-                     PATH_DB_ABSOLUTE, $strDestinationFile,                     # Destination file
-                     $bSourceCompressed,                                        # Source compression based on detection
-                     false);                                                    # Destination is not compressed
+        $oStorageRepo->copy(
+            $oStorageRepo->openRead(
+                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
+                {rhyFilter => $bSourceCompressed ? [{strClass => STORAGE_FILTER_GZIP}] : undef}),
+            storageDb()->openWrite($strDestinationFile));
     }
 
     # Return from function and log return values if any
@@ -149,20 +145,19 @@ sub get
 sub getArchiveId
 {
     my $self = shift;
-    my $oFile = shift;
 
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->getArchiveId');
 
     my $strArchiveId;
 
-    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
+    if (!isRepoLocal())
     {
-        $strArchiveId = $oFile->{oProtocol}->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
+        $strArchiveId = protocolGet(BACKUP)->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
     }
     else
     {
-        $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true))->archiveId();
+        $strArchiveId = (new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->archiveId();
     }
 
     # Return from function and log return values if any
