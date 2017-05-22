@@ -6,18 +6,15 @@ run 002 - rmt 0, cmp 0, exists 1
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000001
 P00  DEBUG:     Archive::ArchiveGet->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Archive::Archive->getCheck(): strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = db
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
             HINT: has a stanza-create been performed?
@@ -87,28 +84,29 @@ db-version="9.4"
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000001
 P00  DEBUG:     Archive::ArchiveGet->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Archive::Archive->getCheck(): strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = db
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists=>: bExists = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Archive::ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Archive::ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive::ArchiveInfo->check=>: strArchiveId = 9.4-1
-P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
-P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001-[0-f]{40}(\.gz){0,1}$, strPath = 9.4-1/0000000100000001, strPathType = backup:archive, strSortOrder = <forward>
-P00  DEBUG:     File->list=>: stryFileList = (000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
+P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
+P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.4-1/0000000100000001, strSortOrder = <forward>
+P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive::Archive->getCheck=>: strArchiveFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strArchiveId = 9.4-1
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = false, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strDestinationPathType = db:absolute, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = 9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = backup:archive, strUser = [undef]
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchiveGet->get=>: iResult = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -122,28 +120,29 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000002
 P00  DEBUG:     Archive::ArchiveGet->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strSourceArchive = 000000010000000100000002
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], strWalFile = 000000010000000100000002, ullDbSysId = [undef]
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Archive::Archive->getCheck(): strDbVersion = [undef], strWalFile = 000000010000000100000002, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = db
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists=>: bExists = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Archive::ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Archive::ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive::ArchiveInfo->check=>: strArchiveId = 9.4-1
-P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000002
-P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002-[0-f]{40}(\.gz){0,1}$, strPath = 9.4-1/0000000100000001, strPathType = backup:archive, strSortOrder = <forward>
-P00  DEBUG:     File->list=>: stryFileList = (000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
+P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000002
+P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.4-1/0000000100000001, strSortOrder = <forward>
+P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = 000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive::Archive->getCheck=>: strArchiveFile = 000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strArchiveId = 9.4-1
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = false, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strDestinationPathType = db:absolute, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = 9.4-1/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = backup:archive, strUser = [undef]
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchiveGet->get=>: iResult = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -157,28 +156,29 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000003
 P00  DEBUG:     Archive::ArchiveGet->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strSourceArchive = 000000010000000100000003
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
-P00  DEBUG:     Archive::Archive->getCheck(): oFile = [object], strDbVersion = [undef], strWalFile = 000000010000000100000003, ullDbSysId = [undef]
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Archive::Archive->getCheck(): strDbVersion = [undef], strWalFile = 000000010000000100000003, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
-P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = db
-P00  DEBUG:     Protocol::Helper::protocolGet: create local protocol
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     File->new(): oProtocol = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strRepoPath = [TEST_PATH]/db-master/repo, strStanza = db
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
+P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists=>: bExists = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Archive::ArchiveInfo->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Archive::ArchiveInfo->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive::ArchiveInfo->check=>: strArchiveId = 9.4-1
-P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind(): iWaitSeconds = [undef], oFile = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000003
-P00  DEBUG:     File->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000003-[0-f]{40}(\.gz){0,1}$, strPath = 9.4-1/0000000100000001, strPathType = backup:archive, strSortOrder = <forward>
-P00  DEBUG:     File->list=>: stryFileList = (000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
+P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000003
+P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000003-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.4-1/0000000100000001, strSortOrder = <forward>
+P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = 000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive::Archive->getCheck=>: strArchiveFile = 000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strArchiveId = 9.4-1
-P00  DEBUG:     File->copy(): bAppendChecksum = <false>, bDestinationCompress = false, bDestinationPathCreate = <false>, bIgnoreMissingSource = <false>, bPathSync = <false>, bSourceCompressed = false, bTempFile = <true>, lModificationTime = [undef], rExtraParam = [undef], strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strDestinationPathType = db:absolute, strExtraFunction = [undef], strGroup = [undef], strMode = <0640>, strSourceFile = 9.4-1/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathType = backup:archive, strUser = [undef]
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchiveGet->get=>: iResult = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]

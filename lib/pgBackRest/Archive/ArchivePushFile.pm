@@ -10,15 +10,18 @@ use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(basename);
+use File::Basename qw(basename dirname);
 
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Filter::Gzip;
+use pgBackRest::Storage::Filter::Sha;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # archivePushCheck
@@ -32,7 +35,6 @@ sub archivePushCheck
     my
     (
         $strOperation,
-        $oFile,
         $strArchiveFile,
         $strDbVersion,
         $ullDbSysId,
@@ -41,7 +43,6 @@ sub archivePushCheck
         logDebugParam
         (
             __PACKAGE__ . '::archivePushCheck', \@_,
-            {name => 'oFile'},
             {name => 'strArchiveFile'},
             {name => 'strDbVersion', required => false},
             {name => 'ullDbSysId', required => false},
@@ -49,16 +50,17 @@ sub archivePushCheck
         );
 
     # Set operation and debug strings
+    my $oStorageRepo = storageRepo();
     my $strArchiveId;
     my $strChecksum;
 
     # WAL file is segment?
     my $bWalSegment = walIsSegment($strArchiveFile);
 
-    if ($oFile->isRemote(PATH_BACKUP_ARCHIVE))
+    if (!isRepoLocal())
     {
         # Execute the command
-        ($strArchiveId, $strChecksum) = $oFile->{oProtocol}->cmdExecute(
+        ($strArchiveId, $strChecksum) = protocolGet(BACKUP)->cmdExecute(
             OP_ARCHIVE_PUSH_CHECK, [$strArchiveFile, $strDbVersion, $ullDbSysId], true);
     }
     else
@@ -67,11 +69,11 @@ sub archivePushCheck
         if ($bWalSegment)
         {
             # If the info file exists check db version and system-id else error
-            $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->check(
-                $strDbVersion, $ullDbSysId);
+            $strArchiveId = (new pgBackRest::Archive::ArchiveInfo(
+                $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
             # Check if the WAL segment already exists in the archive
-            my $strFoundFile = walSegmentFind($oFile, $strArchiveId, $strArchiveFile);
+            my $strFoundFile = walSegmentFind($oStorageRepo, $strArchiveId, $strArchiveFile);
 
             if (defined($strFoundFile))
             {
@@ -81,7 +83,7 @@ sub archivePushCheck
         # Else just get the archive id
         else
         {
-            $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE)))->archiveId();
+            $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->archiveId();
         }
     }
 
@@ -89,7 +91,7 @@ sub archivePushCheck
 
     if (defined($strChecksum) && !commandTest(CMD_REMOTE))
     {
-        my $strChecksumNew = $oFile->hash(PATH_DB_ABSOLUTE, $strWalFile);
+        my ($strChecksumNew) = storageDb()->hashSize($strWalFile);
 
         if ($strChecksumNew ne $strChecksum)
         {
@@ -126,7 +128,6 @@ sub archivePushFile
     my
     (
         $strOperation,
-        $oFile,
         $strWalPath,
         $strWalFile,
         $bCompress,
@@ -135,7 +136,6 @@ sub archivePushFile
         logDebugParam
         (
             __PACKAGE__ . '::archivePushFile', \@_,
-            {name => 'oFile'},
             {name => 'strWalPath'},
             {name => 'strWalFile'},
             {name => 'bCompress'},
@@ -143,6 +143,7 @@ sub archivePushFile
         );
 
     # Get cluster info from the WAL
+    my $oStorageRepo = storageRepo();
     my $strDbVersion;
     my $ullDbSysId;
 
@@ -153,7 +154,7 @@ sub archivePushFile
 
     # Check if the WAL already exists in the repo
     my ($strArchiveId, $strChecksum, $strWarning) = archivePushCheck(
-        $oFile, $strWalFile, $strDbVersion, $ullDbSysId, walIsSegment($strWalFile) ? "${strWalPath}/${strWalFile}" : undef);
+        $strWalFile, $strDbVersion, $ullDbSysId, walIsSegment($strWalFile) ? "${strWalPath}/${strWalFile}" : undef);
 
     # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already exists
     # in the repository with the same checksum (else there would have been an error on checksum mismatch).
@@ -161,25 +162,42 @@ sub archivePushFile
     {
         my $strArchiveFile = "${strArchiveId}/${strWalFile}";
 
+        # Copy the segment to a temp file
+        my $strTempFile = $strArchiveFile;
+
+        if (walIsSegment($strWalFile) && $bCompress)
+        {
+            $strTempFile .= qw{.} . COMPRESS_EXT;
+        }
+
+        $strTempFile .= qw{.} . STORAGE_TEMP_EXT;
+
+        # Open source file
+        my $oSourceFileIo = storageDb()->openRead(
+            "${strWalPath}/${strWalFile}", {rhyFilter => [{strClass => STORAGE_FILTER_SHA}]});
+
+        $oStorageRepo->copy(
+            $oSourceFileIo,
+            $oStorageRepo->openWrite(
+                STORAGE_REPO_ARCHIVE . "/${strTempFile}",
+                {rhyFilter => walIsSegment($strWalFile) && $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef,
+                    bPathCreate => true}));
+
+        # Append digest if this is a WAL segment
+        if (walIsSegment($strWalFile))
+        {
+            $strArchiveFile .= '-' . $oSourceFileIo->result(STORAGE_FILTER_SHA);
+        }
+
         # Append compression extension
         if (walIsSegment($strWalFile) && $bCompress)
         {
-            $strArchiveFile .= '.' . $oFile->{strCompressExtension};
+            $strArchiveFile .= '.' . COMPRESS_EXT;
         }
 
-        # Copy the WAL segment
-        $oFile->copy(
-            PATH_DB_ABSOLUTE, "${strWalPath}/${strWalFile}",        # Source type/file
-            PATH_BACKUP_ARCHIVE, $strArchiveFile,                   # Destination type/file
-            false,                                                  # Source is not compressed
-            walIsSegment($strWalFile) && $bCompress,                # Destination compress is configurable
-            undef, undef, undef,                                    # Unused params
-            true,                                                   # Create path if it does not exist
-            undef, undef,                                           # Default User and group
-            walIsSegment($strWalFile),                              # Append checksum if WAL segment
-            $bRepoSync);                                            # Sync repo directories?
+        # Move to final location
+        $oStorageRepo->move(STORAGE_REPO_ARCHIVE . "/${strTempFile}", STORAGE_REPO_ARCHIVE . "/${strArchiveFile}");
     }
-
 
     # Return from function and log return values if any
     return logDebugReturn

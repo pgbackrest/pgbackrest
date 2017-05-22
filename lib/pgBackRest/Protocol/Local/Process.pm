@@ -197,7 +197,7 @@ sub hostConnect
                 iProcessId => $iProcessId,
                 iHostProcessIdx => $iHostProcessIdx,
                 oLocal => $oLocal,
-                hndIn => fileno($oLocal->{io}->{hIn}),
+                hndIn => fileno($oLocal->io()->handleRead()),
             };
 
             push(@{$self->{hyLocal}}, $hLocal);
@@ -335,7 +335,7 @@ sub process
                 confess $oException if (!isException($oException));
 
                 # If the process is has terminated throw the exception
-                if (!defined($hLocal->{oLocal}->{io}->processId()))
+                if (!defined($hLocal->{oLocal}->io()->processId()))
                 {
                     confess logException($oException);
                 }

@@ -21,18 +21,16 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Info;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
 
-use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::ExpireEnvTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
+use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
 # initModule
@@ -45,21 +43,6 @@ sub initModule
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
     $self->{strDbPath} = $self->testPath() . '/db';
-
-    # Create the local file object
-    $self->{oFile} =
-        new pgBackRest::File
-        (
-            $self->stanza(),
-            $self->{strRepoPath},
-            new pgBackRest::Protocol::Common::Common
-            (
-                OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
-                OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
-                OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
-                HOST_PROTOCOL_TIMEOUT                       # Protocol timeout
-            )
-        );
 }
 
 ####################################################################################################################################
@@ -70,19 +53,19 @@ sub initTest
     my $self = shift;
 
     # Create parent path for pg_control
-    filePathCreate(($self->{strDbPath} . '/' . DB_PATH_GLOBAL), undef, false, true);
+    storageTest()->pathCreate(($self->{strDbPath} . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
 
     # Create archive info path
-    filePathCreate($self->{strArchivePath}, undef, true, true);
+    storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Create backup info path
-    filePathCreate($self->{strBackupPath}, undef, true, true);
-
-    # Create the test object
-    $self->{oExpireTest} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), $self->{oFile}, undef, $self);
+    storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Set options for stanzaCreate
     $self->optionStanzaCreate();
+
+    # Create the test object
+    $self->{oExpireTest} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), storageRepo(), undef, $self);
 
     $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
 }
@@ -93,6 +76,7 @@ sub optionStanzaCreate
 
     # Set options for stanzaCreate
     my $oOption = {};
+
     $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
     $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
     $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
@@ -113,7 +97,7 @@ sub run
 
     my $oOption = {};
 
-    # $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
     $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
 
     # Used to create backups and WAL to test
@@ -123,18 +107,18 @@ sub run
     ################################################################################################################################
     if ($self->begin("Info->formatTextStanza() && Info->formatTextBackup()"))
     {
-        $self->configLoadExpect(dclone($oOption), CMD_INFO);
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
 
         my $oInfo = new pgBackRest::Info();
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+        my $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[0])},
             "stanza: db\n    status: error (no valid backups)\n    wal archive min/max: none present", "stanza text output");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
-        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
             "stanza: db\n    status: ok\n    wal archive min/max: none present",
@@ -150,7 +134,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
             "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000000000005",
@@ -166,7 +150,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 256);
-        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
             "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000100000008",
@@ -185,7 +169,7 @@ sub run
         $self->optionStanzaCreate();
         $self->{oExpireTest}->stanzaUpgrade($self->stanza(), PG_VERSION_95);
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 2);
-        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
             "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000000000004",

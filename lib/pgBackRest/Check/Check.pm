@@ -16,9 +16,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
-use pgBackRest::File;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
 
 ####################################################################################################################################
 # constructor
@@ -56,14 +55,6 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
-    # Initialize default file object
-    my $oFile = new pgBackRest::File
-    (
-        optionGet(OPTION_STANZA),
-        optionGet(OPTION_REPO_PATH),
-        protocolGet(isRepoLocal() ? DB : BACKUP)
-    );
-
     # Initialize the database object
     my $oDb = dbMasterGet();
 
@@ -88,7 +79,7 @@ sub process
     eval
     {
         # Check that the backup info file is written and is valid for the current database of the stanza
-        $self->backupInfoCheck($oFile);
+        $self->backupInfoCheck();
         return true;
     }
     # If there is an unhandled error then confess
@@ -105,7 +96,7 @@ sub process
         eval
         {
             # Check that the archive info file is written and is valid for the current database of the stanza
-            ($strArchiveId) = new pgBackRest::Archive::ArchiveGet()->getCheck($oFile);
+            ($strArchiveId) = new pgBackRest::Archive::ArchiveGet()->getCheck();
             return true;
         }
         or do
@@ -123,7 +114,7 @@ sub process
 
         eval
         {
-            $strArchiveFile = walSegmentFind($oFile, $strArchiveId, $strWalSegment, $iArchiveTimeout);
+            $strArchiveFile = walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, $iArchiveTimeout);
             return true;
         }
         # If this is a backrest error then capture the code and message else confess
@@ -146,7 +137,7 @@ sub process
         {
             &log(INFO,
             "WAL segment ${strWalSegment} successfully stored in the archive at '" .
-            $oFile->pathGet(PATH_BACKUP_ARCHIVE, "$strArchiveId/${strArchiveFile}") . "'");
+            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/$strArchiveId/${strArchiveFile}") . "'");
         }
         else
         {
@@ -163,7 +154,7 @@ sub process
             &log(WARN,
                 "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
                 "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
-                "HINT: Check the PostreSQL server log for errors.");
+                "HINT: Check the PostgreSQL server log for errors.");
         }
     }
 
@@ -173,7 +164,6 @@ sub process
         $strOperation,
         {name => 'iResult', value => $iResult, trace => true}
     );
-
 }
 
 ####################################################################################################################################
@@ -189,16 +179,14 @@ sub backupInfoCheck
     my
     (
         $strOperation,
-        $oFile,
         $strDbVersion,
         $iControlVersion,
         $iCatalogVersion,
-        $ullDbSysId
+        $ullDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->backupInfoCheck', \@_,
-        {name => 'oFile'},
         {name => 'strDbVersion', required => false},
         {name => 'iControlVersion', required => false},
         {name => 'iCatalogVersion', required => false},
@@ -214,14 +202,14 @@ sub backupInfoCheck
         ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = dbMasterGet()->info();
     }
 
-    if ($oFile->isRemote(PATH_BACKUP))
+    if (!isRepoLocal())
     {
-        $iDbHistoryId = $oFile->{oProtocol}->cmdExecute(
+        $iDbHistoryId = protocolGet(BACKUP)->cmdExecute(
             OP_CHECK_BACKUP_INFO_CHECK, [$strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId]);
     }
     else
     {
-        $iDbHistoryId = (new pgBackRest::Backup::Info($oFile->pathGet(PATH_BACKUP_CLUSTER)))->check(
+        $iDbHistoryId = (new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP)))->check(
             $strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId);
     }
 

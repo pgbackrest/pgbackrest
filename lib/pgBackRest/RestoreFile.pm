@@ -14,13 +14,15 @@ use File::Basename qw(dirname);
 use File::stat qw(lstat);
 
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Filter::Gzip;
+use pgBackRest::Storage::Filter::Sha;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # restoreFile
@@ -33,7 +35,6 @@ sub restoreFile
     my
     (
         $strOperation,
-        $oFile,                                     # File object
         $strDbFile,
         $lSize,
         $lModificationTime,
@@ -53,7 +54,6 @@ sub restoreFile
         logDebugParam
         (
             __PACKAGE__ . '::restoreFile', \@_,
-            {name => 'oFile', trace => true},
             {name => 'strDbFile', trace => true},
             {name => 'lSize', trace => true},
             {name => 'lModificationTime', trace => true},
@@ -71,35 +71,24 @@ sub restoreFile
             {name => 'bSourceCompressed', trace => true},
         );
 
-    # Copy flag and log message
+    # Does the file need to be copied?
+    my $oStorageDb = storageDb();
     my $bCopy = true;
 
     if ($bZero)
     {
         $bCopy = false;
 
-        # Open the file truncating to zero bytes in case it already exists
-        my $hFile = fileOpen($strDbFile, O_WRONLY | O_CREAT | O_TRUNC, $strMode);
+        my $oDestinationFileIo = $oStorageDb->openWrite(
+            $strDbFile, {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lModificationTime});
+        $oDestinationFileIo->open();
 
         # Now truncate to the original size.  This will create a sparse file which is very efficient for this use case.
-        truncate($hFile, $lSize);
+        truncate($oDestinationFileIo->handle(), $lSize);
 
-        # Sync the file
-        $hFile->sync()
-            or confess &log(ERROR, "unable to sync ${strDbFile}", ERROR_FILE_SYNC);
-
-        # Close the file
-        close($hFile)
-            or confess &log(ERROR, "unable to close ${strDbFile}", ERROR_FILE_CLOSE);
-
-        # Fix the timestamp - not really needed in this case but good for testing
-        utime($lModificationTime, $lModificationTime, $strDbFile)
-            or confess &log(ERROR, "unable to set time for ${strDbFile}");
-
-        # Set file ownership
-        $oFile->owner(PATH_DB_ABSOLUTE, $strDbFile, $strUser, $strGroup);
+        $oDestinationFileIo->close();
     }
-    elsif ($oFile->exists(PATH_DB_ABSOLUTE, $strDbFile))
+    elsif ($oStorageDb->exists($strDbFile))
     {
         # Perform delta if requested
         if ($bDelta)
@@ -118,7 +107,7 @@ sub restoreFile
             }
             else
             {
-                my ($strActualChecksum, $lActualSize) = $oFile->hashSize(PATH_DB_ABSOLUTE, $strDbFile);
+                my ($strActualChecksum, $lActualSize) = $oStorageDb->hashSize($strDbFile);
 
                 if ($lActualSize == $lSize && ($lSize == 0 || $strActualChecksum eq $strChecksum))
                 {
@@ -133,25 +122,30 @@ sub restoreFile
         }
     }
 
-    # Copy the file from the backup to the database
+    # Copy file from repository to database
     if ($bCopy)
     {
-        my ($bCopyResult, $strCopyChecksum, $lCopySize) = $oFile->copy(
-            PATH_BACKUP_CLUSTER, (defined($strReference) ? $strReference : $strBackupPath) .
-                "/${strRepoFile}" . ($bSourceCompressed ? '.' . $oFile->{strCompressExtension} : ''),
-            PATH_DB_ABSOLUTE, $strDbFile,
-            $bSourceCompressed,
-            undef, undef,
-            $lModificationTime, $strMode,
-            undef,
-            $strUser, $strGroup,
-            undef, undef, undef, undef,
-            false);                                                 # Don't copy via a temp file
+        # Open source file
+        my $oSourceFileIo = storageRepo()->openRead(
+            STORAGE_REPO_BACKUP . qw(/) . (defined($strReference) ? $strReference : $strBackupPath) .
+                "/${strRepoFile}" . ($bSourceCompressed ? qw{.} . COMPRESS_EXT : ''),
+                {rhyFilter => $bSourceCompressed ? [{strClass => STORAGE_FILTER_GZIP}] : undef});
 
-        if ($lCopySize != 0 && $strCopyChecksum ne $strChecksum)
+        # Open destination file
+        my $oDestinationFileIo = $oStorageDb->openWrite(
+            $strDbFile,
+            {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lModificationTime,
+                rhyFilter => [{strClass => STORAGE_FILTER_SHA}]});
+
+        # Copy file
+        storageRepo()->copy($oSourceFileIo, $oDestinationFileIo);
+
+        # Validate checksum
+        if ($oDestinationFileIo->result(COMMON_IO_HANDLE) != 0 && $oDestinationFileIo->result(STORAGE_FILTER_SHA) ne $strChecksum)
         {
-            confess &log(ERROR, "error restoring ${strDbFile}: actual checksum ${strCopyChecksum} " .
-                                "does not match expected checksum ${strChecksum}", ERROR_CHECKSUM);
+            confess &log(ERROR,
+                "error restoring ${strDbFile}: actual checksum '" . $oDestinationFileIo->digest() .
+                "' does not match expected checksum ${strChecksum}", ERROR_CHECKSUM);
         }
     }
 

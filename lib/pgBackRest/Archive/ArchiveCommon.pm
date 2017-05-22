@@ -9,7 +9,7 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use Fcntl qw(SEEK_CUR O_RDONLY); # !!! Only needed until read from buffer
+use Fcntl qw(SEEK_CUR O_RDONLY);
 use File::Basename qw(dirname);
 
 use pgBackRest::Db;
@@ -18,9 +18,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # RegEx constants
@@ -260,7 +259,7 @@ sub walSegmentFind
     my
     (
         $strOperation,
-        $oFile,
+        $oStorageRepo,
         $strArchiveId,
         $strWalSegment,
         $iWaitSeconds,
@@ -268,7 +267,7 @@ sub walSegmentFind
         logDebugParam
         (
             __PACKAGE__ . '::walSegmentFind', \@_,
-            {name => 'oFile'},
+            {name => 'oStorageRepo'},
             {name => 'strArchiveId'},
             {name => 'strWalSegment'},
             {name => 'iWaitSeconds', required => false},
@@ -298,8 +297,8 @@ sub walSegmentFind
         }
         else
         {
-            @stryTimelineMajor = $oFile->list(
-                PATH_BACKUP_ARCHIVE, $strArchiveId,
+            @stryTimelineMajor = $oStorageRepo->list(
+                STORAGE_REPO_ARCHIVE . "/${strArchiveId}",
                 {strExpression => '[0-F]{8}' . substr($strWalSegment, 0, 8), bIgnoreMissing => true});
         }
 
@@ -310,8 +309,8 @@ sub walSegmentFind
             my $strWalSegmentFind = $bTimeline ? substr($strWalSegment, 0, 24) : $strTimelineMajor . substr($strWalSegment, 8, 16);
 
             # Get the name of the requested WAL segment (may have hash info and compression extension)
-            push(@stryWalFileName, $oFile->list(
-                PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strTimelineMajor}",
+            push(@stryWalFileName, $oStorageRepo->list(
+                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strTimelineMajor}",
                 {strExpression =>
                     "^${strWalSegmentFind}" . (walIsPartial($strWalSegment) ? "\\.partial" : '') .
                     "-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$",

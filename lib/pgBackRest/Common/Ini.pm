@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA;
 use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl qw(:mode O_WRONLY O_CREAT O_TRUNC);
@@ -19,7 +20,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -120,7 +120,11 @@ sub load
 {
     my $self = shift;
 
-    $self->{oContent} = iniParse(fileStringRead($self->{strFileName}));
+    # Load Storage::Helper module
+    require pgBackRest::Storage::Helper;
+    pgBackRest::Storage::Helper->import();
+
+    $self->{oContent} = iniParse(${storageLocal()->get($self->{strFileName})});
     $self->headerCheck();
     $self->{bExists} = true;
 }
@@ -216,7 +220,7 @@ sub iniParse
         logDebugParam
         (
             __PACKAGE__ . '::iniParse', \@_,
-            {name => 'strContent', trace => true},
+            {name => 'strContent', required => false, trace => true},
             {name => 'bRelaxed', optional => true, default => false, trace => true},
             {name => 'bIgnoreInvalid', optional => true, default => false, trace => true},
         );
@@ -232,7 +236,7 @@ sub iniParse
     eval
     {
         # Read the INI file
-        foreach my $strLine (split("\n", $strContent))
+        foreach my $strLine (split("\n", defined($strContent) ? $strContent : ''))
         {
             $strLine = trim($strLine);
 
@@ -328,8 +332,12 @@ sub save
         # Calculate the hash
         $self->hash();
 
+        # Load Storage::Helper module
+        require pgBackRest::Storage::Helper;
+        pgBackRest::Storage::Helper->import();
+
         # Save the file
-        fileStringWrite($self->{strFileName}, iniRender($self->{oContent}));
+        storageLocal()->put($self->{strFileName}, iniRender($self->{oContent}));
         $self->{bModified} = false;
 
         # Indicate the file now exists

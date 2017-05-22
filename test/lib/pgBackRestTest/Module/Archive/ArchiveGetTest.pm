@@ -21,9 +21,9 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Filter::Gzip;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -49,16 +49,20 @@ sub run
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}")) {next}
 
-        # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
+        # Create hosts and config
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress});
+
+        # Get storage repo
+        my $oStorageRepo = storageRepo();
+        my $oStorageDb = storageDb();
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        filePathCreate($strXlogPath, undef, false, true);
+        $oStorageDb->pathCreate($strXlogPath, {bCreateParent => true});
 
         # Create the test path for pg_control and copy pg_control for stanza-create
-        filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+        $oStorageDb->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
         executeTest(
             'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() .  '/' .
             DB_FILE_PGCONTROL);
@@ -78,7 +82,7 @@ sub run
 
         if (defined($self->expect()))
         {
-            $self->expect()->supplementalAdd($oFile->pathGet(PATH_BACKUP_ARCHIVE) . '/archive.info');
+            $self->expect()->supplementalAdd($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE) . '/archive.info');
         }
 
         if ($bExists)
@@ -107,20 +111,27 @@ sub run
                 }
 
                 # Change the directory permissions to enable file creation
-                executeTest('sudo chmod 770 ' . dirname($oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . "-1")));
-                filePathCreate(
-                    dirname(
-                        $oFile->pathGet(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . "-1/${strSourceFile}")), '0770', true, true);
+                executeTest('sudo chmod 770 ' . $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE));
+                $oStorageRepo->pathCreate(
+                    STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16),
+                    {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-                $oFile->copy(
-                    PATH_DB_ABSOLUTE, $strArchiveTestFile,  # Source file $strArchiveTestFile
-                    PATH_BACKUP_ARCHIVE, PG_VERSION_94 .    # Destination file
-                        "-1/${strSourceFile}",
-                    false,                                  # Source is not compressed
-                    $bCompress,                             # Destination compress based on test
-                    undef, undef,                           # Unused params
-                    '0660',                                 # Mode
-                    true);                                  # Create path if it does not exist
+                storageTest()->copy(
+                    $strArchiveTestFile,
+                    $oStorageRepo->openWrite(
+                        STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . "-1/${strSourceFile}",
+                        {rhyFilter => $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef,
+                            strMode => '0660', bCreateParent => true}));
+
+                my ($strActualChecksum) = $oStorageRepo->hashSize(
+                    $oStorageRepo->openRead(
+                        STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . "-1/${strSourceFile}",
+                        {rhyFilter => $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef}));
+
+                if ($strActualChecksum ne $strArchiveChecksum)
+                {
+                    confess "archive file hash '${strActualChecksum}' does not match expected '${strArchiveChecksum}'";
+                }
 
                 my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
 
@@ -130,11 +141,13 @@ sub run
                     {oLogTest => $self->expect()});
 
                 # Check that the destination file exists
-                if ($oFile->exists(PATH_DB_ABSOLUTE, $strDestinationFile))
+                if ($oStorageRepo->exists($strDestinationFile))
                 {
-                    if ($oFile->hash(PATH_DB_ABSOLUTE, $strDestinationFile) ne $strArchiveChecksum)
+                    my ($strActualChecksum) = $oStorageRepo->hashSize($strDestinationFile);
+
+                    if ($strActualChecksum ne $strArchiveChecksum)
                     {
-                        confess "archive file hash does not match ${strArchiveChecksum}";
+                        confess "recovered file hash '${strActualChecksum}' does not match expected '${strArchiveChecksum}'";
                     }
                 }
                 else

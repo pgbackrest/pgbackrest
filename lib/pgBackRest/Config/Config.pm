@@ -18,8 +18,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -72,6 +70,16 @@ use constant CMD_STOP                                               => 'stop';
 use constant CMD_VERSION                                            => 'version';
     push @EXPORT, qw(CMD_VERSION);
     $oCommandHash{&CMD_VERSION} = true;
+
+####################################################################################################################################
+# DB/BACKUP Constants
+####################################################################################################################################
+use constant DB                                                     => 'db';
+    push @EXPORT, qw(DB);
+use constant BACKUP                                                 => 'backup';
+    push @EXPORT, qw(BACKUP);
+use constant NONE                                                   => 'none';
+    push @EXPORT, qw(NONE);
 
 ####################################################################################################################################
 # BACKUP Type Constants
@@ -1886,6 +1894,14 @@ my %oOptionRule =
             },
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_LOCAL =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
+            &CMD_REMOTE =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
             &CMD_STANZA_UPGRADE => true,
@@ -2421,7 +2437,11 @@ sub optionValidate
                                 confess &log(ERROR, "'${strConfigFile}' is not a file", ERROR_FILE_INVALID);
                             }
 
-                            $oConfig = iniParse(fileStringRead($strConfigFile), {bRelaxed => true});
+                            # Load Storage::Helper module
+                            require pgBackRest::Storage::Helper;
+                            pgBackRest::Storage::Helper->import();
+
+                            $oConfig = iniParse(${storageLocal->('/')->get($strConfigFile)}, {bRelaxed => true});
                         }
                     }
 
@@ -2742,7 +2762,7 @@ sub configFileValidate
 
     my $bFileValid = true;
 
-    if (!commandTest(CMD_REMOTE))
+    if (!commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL))
     {
         foreach my $strSectionKey (keys(%$oConfig))
         {
