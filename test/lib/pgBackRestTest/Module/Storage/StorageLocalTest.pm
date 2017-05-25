@@ -323,6 +323,30 @@ sub run
             true, 'copy io->io');
         $self->testResult(sub {${$self->storageLocal()->get($strFileCopy)}}, $strFileContent, '    check copy');
     }
+
+    ################################################################################################################################
+    if ($self->begin('info()'))
+    {
+        $self->testResult(sub {$self->storageLocal()->info($self->{strPathLocal})}, "[object]", 'stat dir successfully');
+
+        $self->testException(sub {$self->storageLocal()->info($strFile)}, ERROR_FILE_MISSING,
+            "unable to stat '". $self->{strPathLocal} . "/" . $strFile ."': No such file or directory");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('pathCreate()'))
+    {
+        my $strTestPath = $self->{strPathLocal} . "/" . BOGUS;
+
+        $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath)}, "[undef]",
+            "test creation of path " . $strTestPath);
+
+        $self->testException(sub {$self->storageLocal()->pathCreate($strTestPath)}, ERROR_PATH_EXISTS,
+            "unable to create path '". $strTestPath. "' because it already exists");
+
+        $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath, {bIgnoreExists => true})}, "[undef]",
+            "ignore path exists");
+    }
 }
 
 ####################################################################################################################################

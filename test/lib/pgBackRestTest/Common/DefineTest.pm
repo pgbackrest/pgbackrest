@@ -215,7 +215,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'local',
-                    &TESTDEF_TOTAL => 7,
+                    &TESTDEF_TOTAL => 9,
 
                     &TESTDEF_COVERAGE =>
                     {
