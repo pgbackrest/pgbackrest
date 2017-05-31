@@ -81,7 +81,7 @@
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
-        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -4 | head -1</variable>
+        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -5 | head -1</variable>
 
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>
@@ -697,7 +697,8 @@
                 <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
-                    <exe-cmd>chmod 550 {[backrest-repo-path]}/temp</exe-cmd>
+
+                    <exe-cmd>chmod 550 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
                 </execute>
 
                 <execute output="y" err-expect="47">
@@ -713,7 +714,7 @@
                 <title>Restore write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
-                    <exe-cmd>chmod 750 {[backrest-repo-path]}/temp</exe-cmd>
+                    <exe-cmd>chmod 750 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
                 </execute>
 
                 <execute output="y" err-expect="57">
@@ -2078,7 +2079,7 @@
     </section>
 
     <!-- SECTION => STANZA UPGRADE -->
-    <section id="upgrade-stanza" depend="standby-backup">
+    <section id="upgrade-stanza">
         <title>Upgrading <postgres/></title>
         <cmd-description key="stanza-upgrade"/>
 
