@@ -31,20 +31,14 @@ sub new
     (
         $strOperation,
         $strName,                                   # Name of the protocol
-        $strCommand,                                # Command the master process is running
         $iBufferMax,                                # Maximum buffer size
-        $iCompressLevel,                            # Set compression level
-        $iCompressLevelNetwork,                     # Set compression level for network only compression
         $iProtocolTimeout,                          # Protocol timeout
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strName'},
-            {name => 'strCommand'},
             {name => 'iBufferMax'},
-            {name => 'iCompressLevel'},
-            {name => 'iCompressLevelNetwork'},
             {name => 'iProtocolTimeout'},
         );
 

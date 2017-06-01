@@ -89,7 +89,7 @@ sub fileNotInManifest
             {name => 'oAbortedManifest', trace => true}
         );
 
-    # Build manifest for aborted temp path
+    # Build manifest for aborted backup path
     my $hFile = $oStorageRepo->manifest("${strPathType}/${strPath}");
 
     # Get compress flag
@@ -99,7 +99,7 @@ sub fileNotInManifest
 
     foreach my $strName (sort(keys(%{$hFile})))
     {
-        # Ignore certain files that will never be in the manifest
+        # Ignore files that will never be in the manifest but should be preserved
         if ($strName eq FILE_MANIFEST_COPY ||
             $strName eq '.')
         {
@@ -175,11 +175,11 @@ sub fileNotInManifest
 }
 
 ####################################################################################################################################
-# tmpClean
+# resumeClean
 #
-# Cleans the temp directory from a previous failed backup so it can be reused
+# Cleans the directory from a previous failed backup so it can be reused
 ####################################################################################################################################
-sub tmpClean
+sub resumeClean
 {
     my $self = shift;
 
@@ -194,7 +194,7 @@ sub tmpClean
     ) =
         logDebugParam
     (
-        __PACKAGE__ . '->tmpClean', \@_,
+        __PACKAGE__ . '->resumeClean', \@_,
         {name => 'oStorageRepo', trace => true},
         {name => 'strBackupLabel', trace => true},
         {name => 'oManifest', trace => true},
@@ -203,7 +203,7 @@ sub tmpClean
 
     &log(DETAIL, 'clean resume backup path: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}"));
 
-    # Get the list of files that should be deleted from temp
+    # Get the list of files that should be deleted
     my @stryFile = $self->fileNotInManifest($oStorageRepo, STORAGE_REPO_BACKUP, $strBackupLabel, $oManifest, $oAbortedManifest);
 
     foreach my $strFile (sort {$b cmp $a} @stryFile)
@@ -847,8 +847,8 @@ sub process
         &log(WARN, "aborted backup ${strBackupLabel} of same type exists, will be cleaned to remove invalid files and resumed");
         &log(TEST, TEST_BACKUP_RESUME);
 
-        # Clean the old backup tmp path
-        $self->tmpClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest);
+        # Clean the backup path before resuming
+        $self->resumeClean($oStorageRepo, $strBackupLabel, $oBackupManifest, $oAbortedManifest);
     }
     # Else create the backup path
     else
@@ -957,7 +957,8 @@ sub process
                 my $strFileLog = "${strPathLog}/${strArchive}";
 
                 # Add file to manifest
-                $oBackupManifest->fileAdd($strFileLog, $lModificationTime, 16777216, substr($strArchiveFile, 25, 40), true);
+                $oBackupManifest->fileAdd(
+                    $strFileLog, $lModificationTime, PG_WAL_SEGMENT_SIZE, substr($strArchiveFile, 25, 40), true);
             }
         }
     }
@@ -983,7 +984,7 @@ sub process
         STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST,
         $oStorageRepo->openWrite(
             STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4) .
-                "/${strBackupLabel}.manifest.gz",
+                "/${strBackupLabel}.manifest." . COMPRESS_EXT,
             {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}], bPathCreate => true, bAtomic => true}));
 
     # Create a link to the most recent backup

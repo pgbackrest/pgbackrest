@@ -697,7 +697,6 @@
                 <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
-
                     <exe-cmd>chmod 550 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
                 </execute>
 

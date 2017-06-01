@@ -123,6 +123,18 @@ sub run
             $tData = "\n";
             $oIoHandle->write(\$tData);
             while (length($tResponse) != 1) {$oIoHandle->read(\$tResponse, 1)};
+
+            # Write char with no linefeed
+            $tResponse = '';
+            $tData = "A";
+            $oIoHandle->write(\$tData);
+            while (length($tResponse) != 1) {$oIoHandle->read(\$tResponse, 1)};
+
+            # Write linefeed
+            $tResponse = '';
+            $tData = "\n";
+            $oIoHandle->write(\$tData);
+            while (length($tResponse) != 1) {$oIoHandle->read(\$tResponse, 1)};
         });
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -150,9 +162,23 @@ sub run
         $oIoBuffered->writeLine();
 
         #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oIoBuffered->readLine(undef, false)}, undef, 'read ignoring error');
+
+        $self->testException(
+            sub {$oIoBuffered->readLine(undef, true)}, ERROR_FILE_READ,
+            'unable to read line after 1 second(s) from socket client');
+
+        # Clear buffer so EOF tests pass
+        $oIoBuffered->writeLine();
+        $oIoBuffered->readLine();
+        $oIoBuffered->writeLine();
+
+        #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(sub {$oIoBuffered->readLine()}, ERROR_FILE_READ, 'unexpected EOF reading line from socket client');
+
         $self->testException(
             sub {$oIoBuffered->readLine(false)}, ERROR_FILE_READ, 'unexpected EOF reading line from socket client');
+
         $self->testResult(sub {$oIoBuffered->readLine(true)}, undef, 'ignore EOF');
     }
 

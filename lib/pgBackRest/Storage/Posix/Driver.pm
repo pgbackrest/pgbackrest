@@ -459,7 +459,7 @@ sub pathSync
         logDebugParam
         (
             __PACKAGE__ . '->pathSync', \@_,
-            {name => 'strPathExp', trace => true},
+            {name => 'strPath', trace => true},
         );
 
     open(my $hPath, "<", $strPath)
@@ -597,7 +597,7 @@ sub list
     # Else process errors
     else
     {
-        # Ignore the error is the file is missing and missing files should be ignored
+        # Ignore the error if the file is missing and missing files should be ignored
         if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
         {
             logErrorResult($OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to read path '${strPath}'", $OS_ERROR);

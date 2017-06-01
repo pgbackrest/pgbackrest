@@ -112,7 +112,6 @@ sub open
         $self->{fhFile}, $strFile, $self->type() eq STORAGE_FILE_READ ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC,
         oct(defined($self->{strMode}) ? $self->{strMode} : '0666')))
     {
-            # &log(WARN, "GOT HERE $self->{bPathCreate}");
         # If the path does not exist create it if requested
         if ($OS_ERROR{ENOENT} && $self->{bPathCreate})
         {

@@ -26,7 +26,6 @@ sub new
     (
         $strOperation,
         $oProtocol,
-        $lBufferMax,
     ) =
         logDebugParam
         (

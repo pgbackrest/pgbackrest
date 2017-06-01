@@ -124,7 +124,7 @@ sub read
             $self->{hResult}{bAlign} = false;
             delete($self->{hResult}{iyPageError});
         }
-        elsif ($iActualSize > 0)
+        else
         {
             # Calculate offset to the first block in the buffer
             my $iBlockOffset = int(($self->size() - $iActualSize) / PG_PAGE_SIZE) + ($self->{iSegmentNo} * 131072);

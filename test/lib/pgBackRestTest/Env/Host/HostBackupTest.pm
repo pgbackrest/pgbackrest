@@ -913,9 +913,6 @@ sub configCreate
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
 
-    # $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROTOCOL_TIMEOUT} = 5;
-    # $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_DB_TIMEOUT} = 4;
-
     if ($self->processMax() > 1)
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = $self->processMax();

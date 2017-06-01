@@ -136,14 +136,6 @@ sub endRetry
     {
         my $bFound = false;
 
-        # # Drain the stderr stream
-        # ??? This is a good idea but can only be done when the IO object has separate buffers for stdin and stderr
-        # while (my $strLine = $self->{oIo}->readLine())
-        # {
-        #     $bFound = true;
-        #     $self->{strErrorLog} .= "$strLine\n";
-        # }
-
         # Drain the stdout stream and look for test points
         while (defined(my $strLine = $self->{oIo}->readLine(true)))
         {

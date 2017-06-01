@@ -121,12 +121,12 @@ my $oTestDef =
 
                     &TESTDEF_COVERAGE =>
                     {
-                        'Common/Io/Buffered' => TESTDEF_COVERAGE_PARTIAL,
+                        'Common/Io/Buffered' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {
                     &TESTDEF_NAME => 'io-process',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 1,
 
                     &TESTDEF_COVERAGE =>
                     {

@@ -118,7 +118,7 @@ sub read
         }
     }
 
-    # Actual size is the lesser to the local buffer size or requested size - if the local buffer is smaller than the requested size
+    # Actual size is the lesser of the local buffer size or requested size - if the local buffer is smaller than the requested size
     # it means that there was nothing more to be read.
     my $iActualSize = $self->{lUncompressedBufferSize} < $iSize ? $self->{lUncompressedBufferSize} : $iSize;
 

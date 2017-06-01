@@ -35,25 +35,18 @@ sub new
     my
     (
         $strOperation,
-        $strCommand,                                # Command the master process is running
         $iBufferMax,                                # Maximum buffer size
-        $iCompressLevel,                            # Set compression level
-        $iCompressLevelNetwork,                     # Set compression level for network only compression,
         $iProtocolTimeout                           # Protocol timeout
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strCommand'},
             {name => 'iBufferMax'},
-            {name => 'iCompressLevel'},
-            {name => 'iCompressNetworkLevel'},
             {name => 'iProtocolTimeout'}
         );
 
     # Init object and store variables
-    my $self = $class->SUPER::new(
-        CMD_REMOTE, $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
+    my $self = $class->SUPER::new(CMD_REMOTE, $iBufferMax, $iProtocolTimeout);
     bless $self, $class;
 
     # Return from function and log return values if any

@@ -74,14 +74,7 @@ local $EVAL_ERROR = undef; eval
         pgBackRest::Protocol::Remote::Minion->import();
 
         # Create the remote object
-        my $oRemote = new pgBackRest::Protocol::Remote::Minion
-        (
-            optionGet(OPTION_COMMAND),
-            optionGet(OPTION_BUFFER_SIZE),
-            optionGet(OPTION_COMPRESS_LEVEL),
-            optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-            optionGet(OPTION_PROTOCOL_TIMEOUT)
-        );
+        my $oRemote = new pgBackRest::Protocol::Remote::Minion(optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_PROTOCOL_TIMEOUT));
 
         # Acquire a remote lock (except for commands that are read-only or local processes)
         if (!(optionTest(OPTION_COMMAND, CMD_ARCHIVE_GET) || optionTest(OPTION_COMMAND, CMD_INFO) ||
@@ -109,7 +102,7 @@ local $EVAL_ERROR = undef; eval
         pgBackRest::Protocol::Local::Minion->import();
 
         # Create the local object
-        my $oLocal = new pgBackRest::Protocol::Local::Minion(optionGet(OPTION_COMMAND));
+        my $oLocal = new pgBackRest::Protocol::Local::Minion();
 
         # Process local requests
         exitSafe($oLocal->process());

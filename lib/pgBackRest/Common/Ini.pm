@@ -118,7 +118,7 @@ sub new
     # Else initialize
     else
     {
-        $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 0 + 0;
+        $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 0;
         $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, $self->{iInitFormat});
         $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, $self->{strInitVersion});
     }

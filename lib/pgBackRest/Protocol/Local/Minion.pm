@@ -26,21 +26,10 @@ sub new
     my $class = shift;                  # Class name
 
     # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strCommand,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->new', \@_,
-            {name => 'strCommand'},
-        );
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Init object and store variables
-    my $self = $class->SUPER::new(
-        CMD_LOCAL, $strCommand, optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_COMPRESS_LEVEL),
-        optionGet(OPTION_COMPRESS_LEVEL_NETWORK), optionGet(OPTION_PROTOCOL_TIMEOUT));
+    my $self = $class->SUPER::new(CMD_LOCAL, optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_PROTOCOL_TIMEOUT));
     bless $self, $class;
 
     # Return from function and log return values if any

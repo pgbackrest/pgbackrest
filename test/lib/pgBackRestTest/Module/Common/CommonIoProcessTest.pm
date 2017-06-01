@@ -41,27 +41,6 @@ sub run
                     new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'")}, '[object]', 'new - echo');
         $self->testResult(sub {defined($oIoProcess->processId())}, true, '   process id defined');
     }
-
-    ################################################################################################################################
-    if ($self->begin('close()'))
-    {
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # my $oIoProcess = $self->testResult(sub {
-        #     new pgBackRest::Common::Io::Process(
-        #         new pgBackRest::Common::Io::Buffered(
-        #             new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'")}, '[object]', 'new - echo');
-        # $self->testResult(sub {$oIoProcess->readLine()}, $strFileContent, '   check content');
-        # $self->testResult(sub {$oIoProcess->close()}, true, '   close');
-        #
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $oIoProcess = $self->testResult(sub {
-        #     new pgBackRest::Common::Io::Process(
-        #         new pgBackRest::Common::Io::Buffered(
-        #             new pgBackRest::Common::Io::Handle('test'), 1, 32), "cat ${strFile}")}, '[object]', 'new - echo');
-        # $self->testException(
-        #     sub {$oIoProcess->close()}, ERROR_FILE_READ,
-        #     "test terminated with status 1: cat: ${strFile}: No such file or directory");
-    }
 }
 
 1;
