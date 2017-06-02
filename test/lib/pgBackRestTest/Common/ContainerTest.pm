@@ -487,7 +487,8 @@ sub containerBuild
             $strScript .=
                 "RUN mkdir /var/run/sshd\n";
         }
-        elsif ($strOS eq VM_U14 || $strOS eq VM_D8 || $strOS eq VM_U16)
+
+        if ($strOS eq VM_U14 || $strOS eq VM_D8 || $strOS eq VM_U16)
         {
             $strScript .=
                 "ENTRYPOINT service ssh restart && bash";
