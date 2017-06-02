@@ -637,6 +637,17 @@ my $oConfigHelpData =
                     "this option allows them to be disabled."
         },
 
+        # REPO-TYPE Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-type' =>
+        {
+            section => 'general',
+            summary =>
+                "Type of storage used for the repository.",
+            description =>
+                "!!! TBD !!!"
+        },
+
         # RESUME Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'resume' =>
@@ -848,6 +859,7 @@ my $oConfigHelpData =
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -890,6 +902,7 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'spool-path' => 'section',
                 'stanza' => 'default'
             }
@@ -962,6 +975,7 @@ my $oConfigHelpData =
                 'repo-link' => 'section',
                 'repo-path' => 'section',
                 'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'resume' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
@@ -1038,6 +1052,7 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1068,6 +1083,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
                 'retention-diff' => 'section',
@@ -1137,6 +1153,7 @@ my $oConfigHelpData =
 
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1200,6 +1217,7 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'recovery-option' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
 
                 # SET Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -1342,6 +1360,7 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1385,6 +1404,7 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1418,6 +1438,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1467,6 +1488,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },

@@ -240,6 +240,15 @@
                         <example>/backup/db/backrest</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - REPO-TYPE KEY -->
+                    <config-key id="repo-type" name="Repository Type">
+                        <summary>Type of storage used for the repository.</summary>
+
+                        <text>!!! TBD !!!</text>
+
+                        <example>posix</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - REPO-SYNC KEY -->
                     <config-key id="repo-sync" name="Repository Sync">
                         <summary>Sync directories in repository.</summary>
