@@ -82,7 +82,9 @@ sub run
 
         if (defined($self->expect()))
         {
-            $self->expect()->supplementalAdd($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE) . '/archive.info');
+            $self->expect()->supplementalAdd(
+                $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
+                ${$oStorageRepo->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
         }
 
         if ($bExists)

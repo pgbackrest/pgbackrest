@@ -259,10 +259,9 @@ P00   INFO: new backup label = [BACKUP-FULL-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-FULL-1].manifest.gz, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = false
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-FULL-1]
-P00  DEBUG:     Storage::Posix::Driver->linkCreate(): bHard = false, bIgnoreExists = false, bPathCreate = true, strDestinationPath = [TEST_PATH]/backup/repo/backup/db/latest, strSourcePath = [BACKUP-FULL-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00   INFO: backup command end: completed successfully
@@ -962,10 +961,10 @@ P00 DETAIL: clean resume backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (file.tmp, pg_data/PG_VERSION)
 P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/file.tmp
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/file.tmp
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/file.tmp
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
@@ -1065,10 +1064,9 @@ P00   INFO: new backup label = [BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-FULL-2].manifest.gz, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
-P00  DEBUG:     Storage::Posix::Driver->linkCreate(): bHard = false, bIgnoreExists = false, bPathCreate = true, strDestinationPath = [TEST_PATH]/backup/repo/backup/db/latest, strSourcePath = [BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
@@ -1285,7 +1283,7 @@ P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.info.copy
 P00  ERROR: [055]: unable to open '[TEST_PATH]/db-master/db/base/backup.info.copy': No such file or directory
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.info
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/backup.info
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/backup.info
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
@@ -1297,7 +1295,7 @@ P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Restore->manifestOwnershipCheck(): oManifest = [object]
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/global/pg_control
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/global/pg_control
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Restore->clean(): oManifest = [object]
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
@@ -1326,16 +1324,16 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/recovery.done
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/recovery.done
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/recovery.done
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00 DETAIL: remove path [TEST_PATH]/db-master/db/base/deleteme
 P00 DETAIL: set mode 0700 on [TEST_PATH]/db-master/db/base/base
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/backup_label.old
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/backup_label.old
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00   INFO: cleanup removed 3 files, 1 path
 P00  DEBUG:     Restore->build(): oManifest = [object]
@@ -1444,7 +1442,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and m
 P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = [TEST_PATH]/db-master/db/base
@@ -1460,7 +1458,7 @@ P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TE
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathExp = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -1765,10 +1763,9 @@ P00   INFO: new backup label = [BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-INCR-1].manifest.gz, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-INCR-1]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-1]/backup.manifest
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-INCR-1]
-P00  DEBUG:     Storage::Posix::Driver->linkCreate(): bHard = false, bIgnoreExists = false, bPathCreate = true, strDestinationPath = [TEST_PATH]/backup/repo/backup/db/latest, strSourcePath = [BACKUP-INCR-1]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
@@ -2120,10 +2117,9 @@ P00   INFO: new backup label = [BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = <REPO:BACKUP>/backup.history/[YEAR-1]/[BACKUP-INCR-2].manifest.gz, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->linkCreate(): bHard = <false>, bIgnoreExists = <false>, bPathCreate = <true>, bRelative = true, strDestinationPathExp = <REPO:BACKUP>/latest, strSourcePathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
-P00  DEBUG:     Storage::Posix::Driver->linkCreate(): bHard = false, bIgnoreExists = false, bPathCreate = true, strDestinationPath = [TEST_PATH]/backup/repo/backup/db/latest, strSourcePath = [BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/backup.info.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>

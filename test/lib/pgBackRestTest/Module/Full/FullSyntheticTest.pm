@@ -448,8 +448,8 @@ sub run
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
                 strOptionalParam => '--force --' . OPTION_CHECKSUM_PAGE});
 
-        # Remove postmaster.pid so restore will succeed (the rest will be cleaned up)
-        testFileRemove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
+        # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
+        storageDb->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
 
         # Misconfigure repo-path and check errors
         #-----------------------------------------------------------------------------------------------------------------------

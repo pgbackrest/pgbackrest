@@ -9,7 +9,6 @@ use Carp qw(confess);
 
 use Exporter qw(import);
 use File::Basename qw(dirname);
-use File::Path qw(remove_tree);
 use Scalar::Util qw(looks_like_number);
 
 use pgBackRest::Archive::ArchiveCommon;
@@ -204,8 +203,7 @@ sub process
         {
             &log(INFO, "remove expired backup ${strBackup}");
 
-            remove_tree("${strBackupClusterPath}/${strBackup}") > 0
-                or confess &log(ERROR, "unable to remove backup ${strBackup}", ERROR_PATH_REMOVE);
+            $oStorageRepo->remove("${strBackupClusterPath}/${strBackup}", {bRecurse => true});
         }
     }
 
@@ -278,8 +276,7 @@ sub process
                     {
                         my $strFullPath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}");
 
-                        remove_tree($strFullPath) > 0
-                            or confess &log(ERROR, "unable to remove archive path ${strFullPath}", ERROR_PATH_REMOVE);
+                        $oStorageRepo->remove($strFullPath, {bRecurse => true});
 
                         &log(INFO, "remove archive path: ${strFullPath}");
                     }
@@ -398,8 +395,7 @@ sub process
                             {
                                 my $strFullPath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}") . "/${strPath}";
 
-                                remove_tree($strFullPath) > 0
-                                    or confess &log(ERROR, "unable to remove ${strFullPath}", ERROR_PATH_REMOVE);
+                                $oStorageRepo->remove($strFullPath, {bRecurse => true});
 
                                 # Log expire info
                                 logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");

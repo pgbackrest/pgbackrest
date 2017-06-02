@@ -147,9 +147,7 @@ sub supplementalAdd
     my $self = shift;
     my $strFileName = shift;
     my $strComment = shift;
-
-    open(my $hFile, '<', $strFileName)
-        or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
+    my $strContent = shift;
 
     my $strHeader = "+ supplemental file: " . $self->regExpReplaceAll($strFileName);
 
@@ -160,12 +158,28 @@ sub supplementalAdd
 
     $self->{strLog} .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
 
-    while (my $strLine = readline($hFile))
+    if (!defined($strContent))
     {
-        $self->{strLog} .= $self->regExpReplaceAll($strLine);
-    }
+        open(my $hFile, '<', $strFileName)
+            or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
 
-    close($hFile);
+        while (my $strLine = readline($hFile))
+        {
+            $self->{strLog} .= $self->regExpReplaceAll($strLine);
+        }
+
+        close($hFile);
+    }
+    else
+    {
+        if (defined($strContent) && length($strContent) > 0)
+        {
+            foreach my $strLine (split("\n", $strContent))
+            {
+                $self->{strLog} .= $self->regExpReplaceAll($strLine) . "\n";
+            }
+        }
+    }
 }
 
 ####################################################################################################################################

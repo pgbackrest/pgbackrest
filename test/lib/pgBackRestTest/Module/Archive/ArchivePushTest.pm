@@ -338,8 +338,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($self->expect()))
         {
-            sleep(1); # Ugly hack to ensure repo is stable before checking files - replace in new tests
-            $self->expect()->supplementalAdd(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+            $self->expect()->supplementalAdd(
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
+                ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
         }
     }
     }

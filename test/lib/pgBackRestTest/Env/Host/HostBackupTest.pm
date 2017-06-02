@@ -16,13 +16,16 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Backup::Common;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
@@ -242,8 +245,8 @@ sub backupEnd
         delete($hTablespaceManifest->{'.'});
         delete($hTablespaceManifest->{'..'});
 
-        # Only check links if repo links are disabled
-        if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
+        # Only check links if repo links are enabled
+        if ($self->hasLink() && (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink}))
         {
             # Iterate file links
             for my $strFile (sort(keys(%{$hTablespaceManifest})))
@@ -303,22 +306,22 @@ sub backupEnd
     }
 
     # Check that latest link exists unless repo links are disabled
-    my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
-    my $bLatestLinkExists = storageTest()->exists($strLatestLink);
+        my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
+        my $bLatestLinkExists = storageTest()->exists($strLatestLink);
 
-    if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
-    {
-        my $strLatestLinkDestination = readlink($strLatestLink);
-
-        if ($strLatestLinkDestination ne $strBackup)
+        if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
         {
-            confess &log(ERROR, "'" . LINK_LATEST . "' link should be '${strBackup}' but is '${strLatestLinkDestination}");
+            my $strLatestLinkDestination = readlink($strLatestLink);
+
+            if ($strLatestLinkDestination ne $strBackup)
+            {
+                confess &log(ERROR, "'" . LINK_LATEST . "' link should be '${strBackup}' but is '${strLatestLinkDestination}");
+            }
         }
-    }
-    elsif ($bLatestLinkExists)
-    {
-        confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist when --no-" . OPTION_REPO_LINK);
-    }
+        elsif ($bLatestLinkExists)
+        {
+            confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist when --no-" . OPTION_REPO_LINK);
+        }
 
     # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
     if ($self->synthetic())
@@ -355,8 +358,12 @@ sub backupEnd
 
         if ($self->synthetic() && $bManifestCompare)
         {
-            $self->{oLogTest}->supplementalAdd(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST));
-            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            $self->{oLogTest}->supplementalAdd(
+                storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), undef,
+                ${storageRepo->get(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST)});
+            $self->{oLogTest}->supplementalAdd(
+                $self->repoPath() . '/backup/' . $self->stanza() . '/backup.info', undef,
+                ${storageRepo->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
         }
     }
 
@@ -741,15 +748,19 @@ sub stanzaCreate
 
     # If the info file was created, then add it to the expect log
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        storageRepo()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO, undef,
+            ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        storageRepo()->exists($self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE, undef,
+            ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
     }
 
     # Return from function and log return values if any
@@ -794,15 +805,19 @@ sub stanzaUpgrade
 
     # If the info file was created, then add it to the expect log
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        storageRepo()->exists($self->repoPath() . '/backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO, undef,
+            ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        storageRepo()->exists($self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE, undef,
+            ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
     }
 
     # Return from function and log return values if any
@@ -1145,15 +1160,15 @@ sub infoMunge
     }
 
     # Modify the file/directory permissions so it can be saved
-    executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
+        executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
 
     # Save the munged data to the file
     $oMungeIni->save();
 
     # Fix permissions
-    executeTest(
-        "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
-        ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+        executeTest(
+            "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
+            ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
 
     # Clear the cache is requested
     if (!$bCache)
@@ -1195,18 +1210,18 @@ sub infoRestore
         if ($bSave)
         {
             # Modify the file/directory permissions so it can be saved
-            executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
+                executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
 
             # Save the munged data to the file
             $self->{hInfoFile}{$strFileName}->{bModified} = true;
             $self->{hInfoFile}{$strFileName}->save();
 
             # Fix permissions
-            executeTest(
-                "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
-                ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+                executeTest(
+                    "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
+                    ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+            }
         }
-    }
     else
     {
         confess &log(ASSERT, "There is no original data cached for $strFileName. infoMunge must be called first.");
@@ -1226,6 +1241,7 @@ sub backrestConfig {return shift->{strBackRestConfig}}
 sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
 sub hardLink {return shift->{bHardLink}}
+sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}

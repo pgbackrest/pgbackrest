@@ -315,7 +315,7 @@ sub linkCreate
             {name => 'strDestinationPath', trace => true},
             {name => 'bHard', optional=> true, default => false, trace => true},
             {name => 'bPathCreate', optional=> true, default => true, trace => true},
-            {name => 'bIgnoreExists', optional => true, default => false},
+            {name => 'bIgnoreExists', optional => true, default => false, trace => true},
         );
 
     if (!($bHard ? link($strSourcePath, $strDestinationPath) : symlink($strSourcePath, $strDestinationPath)))
@@ -597,28 +597,63 @@ sub remove
     my
     (
         $strOperation,
-        $strFile,
+        $strPath,
         $bIgnoreMissing,
+        $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'strFile', trace => true},
+            {name => 'strPath', trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
+            {name => 'bRecurse', optional => true, default => false, trace => true},
         );
 
     # Working variables
     my $bRemoved = true;
 
-    # Remove the file
-    if (unlink($strFile) != 1)
+    # Remove a tree
+    if ($bRecurse)
     {
-        $bRemoved = false;
+        my $oManifest = $self->manifest($strPath);
 
-        # If path exists then throw the error
-        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+        # Iterate all files in the manifest
+        foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
         {
-            logErrorResult($OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to remove '${strFile}'", $OS_ERROR);
+            # remove directory
+            if ($oManifest->{$strFile}{type} eq 'd')
+            {
+                my $strPathRemove = $strFile eq '.' ? $strPath : "${strPath}/${strFile}";
+
+                if (!rmdir($strPathRemove))
+                {
+                    # If any error but missing then raise the error
+                    if (!$OS_ERROR{ENOENT})
+                    {
+                        logErrorResult(ERROR_PATH_REMOVE, "unable to remove path '${strFile}'", $OS_ERROR);
+                    }
+                }
+            }
+            # Remove file
+            else
+            {
+                $self->remove("${strPath}/${strFile}", {bIgnoreMissing => true});
+            }
+        }
+    }
+    # Only remove the specified file
+    else
+    {
+        if (unlink($strPath) != 1)
+        {
+            $bRemoved = false;
+
+            # If path exists then throw the error
+            if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+            {
+                logErrorResult(
+                    $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to remove file '${strPath}'", $OS_ERROR);
+            }
         }
     }
 

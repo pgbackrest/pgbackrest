@@ -9,9 +9,7 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use Exporter qw(import);
-use Fcntl 'SEEK_CUR';
 use File::Basename;
-use File::Path qw(remove_tree);
 
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveGet;

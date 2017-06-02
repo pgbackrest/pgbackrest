@@ -143,7 +143,7 @@ sub archivePush
     {
         $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
-        storageTest()->copy($strArchiveTestFile, storageRepo()->openWrite($strSourceFile, {bPathCreate => true}));
+        storageTest()->copy($strArchiveTestFile, storageTest()->openWrite($strSourceFile, {bPathCreate => true}));
 
         storageTest()->pathCreate("${strXlogPath}/archive_status/", {bIgnoreExists => true, bCreateParent => true});
         storageTest()->put("${strXlogPath}/archive_status/" . uc(sprintf('0000000100000001%08x', $iArchiveNo)) . '.ready');
