@@ -52,7 +52,7 @@ sub run
                     new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'");
         $oIoProcess->close();
         $self->testException(
-            sub {$oIoProcess->error()}, ERROR_MINIMUM, 'cannot call error() after process has been closed');
+            sub {$oIoProcess->error()}, ERROR_ASSERT, 'cannot call error() after process has been closed');
     }
 }
 
