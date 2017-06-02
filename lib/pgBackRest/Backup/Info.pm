@@ -115,6 +115,7 @@ sub new
         $bValidate,
         $bRequired,
         $oStorage,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
@@ -123,23 +124,22 @@ sub new
             {name => 'bValidate', default => true},
             {name => 'bRequired', default => true},
             {name => 'oStorage', optional => true, default => storageRepo()},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     # Build the backup info path/file name
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
-    my $bExists = $oStorage->exists($strBackupInfoFile);
+
+    # Init object and store variables
+    my $self = $class->SUPER::new($strBackupInfoFile, {bIgnoreMissing => $bIgnoreMissing, oStorage => $oStorage});
 
     # If the backup info file does not exist and is required, then throw an error
-    # The backup.info is only allowed not to exist when running a stanza-create on a new install
-    if (!$bExists && $bRequired)
+    # The backup info is only allowed not to exist when running a stanza-create on a new install
+    if (!$self->{bExists} && $bRequired)
     {
         confess &log(ERROR, "${strBackupClusterPath}/$strBackupInfoMissingMsg", ERROR_FILE_MISSING);
     }
 
-    # Init object and store variables
-    my $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bExists, oStorage => $oStorage});
-
-    $self->{bExists} = $bExists;
     $self->{strBackupClusterPath} = $strBackupClusterPath;
     $self->{oStorage} = $oStorage;
 

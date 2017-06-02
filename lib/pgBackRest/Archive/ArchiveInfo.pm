@@ -72,28 +72,30 @@ sub new
     (
         $strOperation,
         $strArchiveClusterPath,                     # Archive cluster path
-        $bRequired                                  # Is archive info required?
+        $bRequired,                                 # Is archive info required?
+        $bIgnoreMissing,                            # Don't error on missing files
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
-            {name => 'bRequired', default => true}
+            {name => 'bRequired', default => true},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
-    my $bExists = storageRepo()->exists($strArchiveInfoFile);
 
-    if (!$bExists && $bRequired)
+    # Init object and store variables
+    my $self = $class->SUPER::new($strArchiveInfoFile, {bIgnoreMissing => $bIgnoreMissing, oStorage => storageRepo()});
+
+    # If the file does not exist but is required to exist, then error
+    # The archive info is only allowed not to exist when running a stanza-create on a new install
+    if (!$self->{bExists} && $bRequired)
     {
         confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
     }
 
-    # Init object and store variables
-    my $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bExists, oStorage => storageRepo()});
-
-    $self->{bExists} = $bExists;
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;
 
     # Return from function and log return values if any

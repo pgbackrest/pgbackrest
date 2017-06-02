@@ -79,7 +79,7 @@ sub run
         # With data existing in the archive dir, remove the info file and confirm failure
         $oHostBackup->executeSimple('rm ' . $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . qw{*}));
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-            {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Change the permissions of the archive file so it cannot be read
         executeTest('sudo chmod 220 ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
@@ -100,14 +100,7 @@ sub run
         # stanza already exists
         $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Remove the backup info file and confirm success with backup dir empty
-        # Backup Full tests will confirm failure when backup dir not empty
-        $oHostBackup->executeSimple('rm ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . qw{*}));
-        $oHostBackup->stanzaCreate('force not needed when backup dir empty, archive.info exists but backup.info is missing',
-            {strOptionalParam => '--no-' . OPTION_ONLINE});
-
-        # Remove the backup.info file then munge and save the archive info file
-        $oHostBackup->executeSimple('rm ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . qw{*}));
+        # Munge and save the archive info file
         $oHostBackup->infoMunge(
             $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
