@@ -41,6 +41,19 @@ sub run
                     new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'")}, '[object]', 'new - echo');
         $self->testResult(sub {defined($oIoProcess->processId())}, true, '   process id defined');
     }
+
+    ################################################################################################################################
+    if ($self->begin('close() & error()'))
+    {
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oIoProcess =
+            new pgBackRest::Common::Io::Process(
+                new pgBackRest::Common::Io::Buffered(
+                    new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'");
+        $oIoProcess->close();
+        $self->testException(
+            sub {$oIoProcess->error()}, ERROR_ASSERT, 'cannot call error() after process has been closed');
+    }
 }
 
 1;
