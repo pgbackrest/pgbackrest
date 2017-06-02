@@ -21,6 +21,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
@@ -294,21 +295,25 @@ sub new
     my
     (
         $strOperation,
-        $strFileName,                               # Manifest filename
-        $bLoad                                      # Load the manifest?
+        $strFileName,
+        $bLoad,
+        $bMainOnly,
+        $oStorage,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strFileName', trace => true},
-            {name => 'bLoad', required => false, trace => true}
+            {name => 'bLoad', required => false, trace => true},
+            {name => 'bMainOnly', optional => true, trace => true},
+            {name => 'oStorage', optional => true, default => storageRepo(), trace => true},
         );
 
     # Set defaults
     $bLoad = defined($bLoad) ? $bLoad : true;
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad});
+    my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad, bMainOnly => $bMainOnly, oStorage => $oStorage});
 
     # Return from function and log return values if any
     return logDebugReturn

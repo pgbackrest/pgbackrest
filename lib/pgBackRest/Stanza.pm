@@ -245,7 +245,7 @@ sub parentPathGet
     my $strParentPath = storageRepo()->pathGet($strPathType);
 
     # If the info path does not exist, create it
-    if (!storageRepo()->exists($strParentPath))
+    if (!storageRepo()->pathExists($strParentPath))
     {
         # Create the cluster repo path
         storageRepo()->pathCreate($strPathType, {bIgnoreExists => true, bCreateParent => true});

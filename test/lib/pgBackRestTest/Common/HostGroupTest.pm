@@ -57,18 +57,22 @@ sub hostAdd
     my
     (
         $strOperation,
-        $oHost
+        $oHost,
+        $rstryHostName,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->hostAdd', \@_,
-            {name => 'oHost'}
+            {name => 'oHost'},
+            {name => 'rstryHostName', optional => true},
         );
 
     $self->{host}{$oHost->{strName}} = $oHost;
 
     $oHost->executeSimple("echo \"\" >> /etc/hosts", undef, 'root');
     $oHost->executeSimple("echo \"# Test Hosts\" >> /etc/hosts", undef, 'root');
+
+    my $strHostList = $oHost->{strName} . (defined($rstryHostName) ? ' ' . join(' ', @{$rstryHostName}) : '');
 
     # Iterate hosts to add IP mappings
     foreach my $strOtherHostName (sort(keys(%{$self->{host}})))
@@ -78,7 +82,7 @@ sub hostAdd
         if ($strOtherHostName ne $oHost->{strName})
         {
             # Add this host IP to all hosts
-            $oOtherHost->executeSimple("echo \"$oHost->{strIP} $oHost->{strName}\" >> /etc/hosts", undef, 'root');
+            $oOtherHost->executeSimple("echo \"$oHost->{strIP} ${strHostList}\" >> /etc/hosts", undef, 'root');
 
             # Add all other host IPs to this host
             $oHost->executeSimple("echo \"$oOtherHost->{strIP} ${strOtherHostName}\" >> /etc/hosts", undef, 'root');

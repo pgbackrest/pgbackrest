@@ -548,7 +548,7 @@ sub restoreCompare
         $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
 
     $oActualManifest->build(
-        storageRepo(), ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
+        storageTest(), ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
         $oLastManifest, false, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);

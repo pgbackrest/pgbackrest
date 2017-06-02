@@ -162,41 +162,34 @@ sub archivePushFile
     {
         my $strArchiveFile = "${strArchiveId}/${strWalFile}";
 
-        # Copy the segment to a temp file
-        my $strTempFile = $strArchiveFile;
-
-        if (walIsSegment($strWalFile) && $bCompress)
+        # If a WAL segment
+        if (walIsSegment($strWalFile))
         {
-            $strTempFile .= qw{.} . COMPRESS_EXT;
-        }
+            # Get hash
+            my ($strSourceHash) = storageDb()->hashSize("${strWalPath}/${strWalFile}");
 
-        $strTempFile .= qw{.} . STORAGE_TEMP_EXT;
+            $strArchiveFile .= "-${strSourceHash}";
+
+            # Add compress extension
+            if ($bCompress)
+            {
+                $strArchiveFile .= qw{.} . COMPRESS_EXT;
+            }
+        }
 
         # Open source file
         my $oSourceFileIo = storageDb()->openRead(
             "${strWalPath}/${strWalFile}", {rhyFilter => [{strClass => STORAGE_FILTER_SHA}]});
 
+        # Copy
         $oStorageRepo->copy(
             $oSourceFileIo,
             $oStorageRepo->openWrite(
-                STORAGE_REPO_ARCHIVE . "/${strTempFile}",
+                STORAGE_REPO_ARCHIVE . "/${strArchiveFile}",
                 {rhyFilter => walIsSegment($strWalFile) && $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef,
-                    bPathCreate => true}));
+                    bPathCreate => true, bAtomic => true}));
 
-        # Append digest if this is a WAL segment
-        if (walIsSegment($strWalFile))
-        {
-            $strArchiveFile .= '-' . $oSourceFileIo->result(STORAGE_FILTER_SHA);
-        }
-
-        # Append compression extension
-        if (walIsSegment($strWalFile) && $bCompress)
-        {
-            $strArchiveFile .= '.' . COMPRESS_EXT;
-        }
-
-        # Move to final location
-        $oStorageRepo->move(STORAGE_REPO_ARCHIVE . "/${strTempFile}", STORAGE_REPO_ARCHIVE . "/${strArchiveFile}");
+        # !!! Add code to make sure that the hash did not change
     }
 
     # Return from function and log return values if any

@@ -91,6 +91,12 @@ use constant BACKUP_TYPE_INCR                                       => 'incr';
     push @EXPORT, qw(BACKUP_TYPE_INCR);
 
 ####################################################################################################################################
+# REPO Type Constants
+####################################################################################################################################
+use constant REPO_TYPE_POSIX                                        => 'posix';
+    push @EXPORT, qw(REPO_TYPE_POSIX);
+
+####################################################################################################################################
 # INFO Output Constants
 ####################################################################################################################################
 use constant INFO_OUTPUT_TEXT                                       => 'text';
@@ -265,14 +271,10 @@ use constant OPTION_COMPRESS_LEVEL_NETWORK                          => 'compress
     push @EXPORT, qw(OPTION_COMPRESS_LEVEL_NETWORK);
 use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-umask';
     push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
-use constant OPTION_REPO_SYNC                                       => 'repo-sync';
-    push @EXPORT, qw(OPTION_REPO_SYNC);
 use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
     push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
 use constant OPTION_PROCESS_MAX                                     => 'process-max';
     push @EXPORT, qw(OPTION_PROCESS_MAX);
-use constant OPTION_REPO_LINK                                       => 'repo-link';
-    push @EXPORT, qw(OPTION_REPO_LINK);
 
 # Commands
 use constant OPTION_CMD_SSH                                         => 'cmd-ssh';
@@ -283,10 +285,18 @@ use constant OPTION_LOCK_PATH                                       => 'lock-pat
     push @EXPORT, qw(OPTION_LOCK_PATH);
 use constant OPTION_LOG_PATH                                        => 'log-path';
     push @EXPORT, qw(OPTION_LOG_PATH);
-use constant OPTION_REPO_PATH                                       => 'repo-path';
-    push @EXPORT, qw(OPTION_REPO_PATH);
 use constant OPTION_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(OPTION_SPOOL_PATH);
+
+# Repository
+use constant OPTION_REPO_LINK                                       => 'repo-link';
+    push @EXPORT, qw(OPTION_REPO_LINK);
+use constant OPTION_REPO_PATH                                       => 'repo-path';
+    push @EXPORT, qw(OPTION_REPO_PATH);
+use constant OPTION_REPO_SYNC                                       => 'repo-sync';
+    push @EXPORT, qw(OPTION_REPO_SYNC);
+use constant OPTION_REPO_TYPE                                       => 'repo-type';
+    push @EXPORT, qw(OPTION_REPO_TYPE);
 
 # Log level
 use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
@@ -478,6 +488,8 @@ use constant OPTION_DEFAULT_REPO_LINK                               => true;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_LINK);
 use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
+use constant OPTION_DEFAULT_REPO_TYPE                               => REPO_TYPE_POSIX;
+    push @EXPORT, qw(OPTION_DEFAULT_REPO_TYPE);
 use constant OPTION_DEFAULT_SPOOL_PATH                              => '/var/spool/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_SPOOL_PATH);
 use constant OPTION_DEFAULT_PROCESS_MAX                              => 1;
@@ -1274,6 +1286,29 @@ my %oOptionRule =
         },
     },
 
+    &OPTION_REPO_TYPE =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_TYPE,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_INFO => true,
+            &CMD_LOCAL => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true,
+            &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+    },
+
     &OPTION_SPOOL_PATH =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1961,6 +1996,38 @@ my %oOptionRule =
         },
     },
 );
+
+####################################################################################################################################
+# Process rule defaults
+####################################################################################################################################
+foreach my $strKey (sort(keys(%oOptionRule)))
+{
+    # If the rule is a scalar then copy the entire rule from the referenced option
+    if (!ref($oOptionRule{$strKey}))
+    {
+        $oOptionRule{$strKey} = dclone($oOptionRule{$oOptionRule{$strKey}});
+    }
+
+    # Default type is string
+    if (!defined($oOptionRule{$strKey}{&OPTION_RULE_TYPE}))
+    {
+        $oOptionRule{$strKey}{&OPTION_RULE_TYPE} = OPTION_TYPE_STRING;
+    }
+
+    # If the command section is a scalar then copy the section from the referenced option
+    if (defined($oOptionRule{$strKey}{&OPTION_RULE_COMMAND}) && !ref($oOptionRule{$strKey}{&OPTION_RULE_COMMAND}))
+    {
+        $oOptionRule{$strKey}{&OPTION_RULE_COMMAND} =
+            dclone($oOptionRule{$oOptionRule{$strKey}{&OPTION_RULE_COMMAND}}{&OPTION_RULE_COMMAND});
+    }
+
+    # If the required section is a scalar then copy the section from the referenced option
+    if (defined($oOptionRule{$strKey}{&OPTION_RULE_DEPEND}) && !ref($oOptionRule{$strKey}{&OPTION_RULE_DEPEND}))
+    {
+        $oOptionRule{$strKey}{&OPTION_RULE_DEPEND} =
+            dclone($oOptionRule{$oOptionRule{$strKey}{&OPTION_RULE_DEPEND}}{&OPTION_RULE_DEPEND});
+    }
+}
 
 ####################################################################################################################################
 # Module variables

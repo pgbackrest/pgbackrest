@@ -141,9 +141,9 @@ sub run
                     {oLogTest => $self->expect()});
 
                 # Check that the destination file exists
-                if ($oStorageRepo->exists($strDestinationFile))
+                if ($oStorageDb->exists($strDestinationFile))
                 {
-                    my ($strActualChecksum) = $oStorageRepo->hashSize($strDestinationFile);
+                    my ($strActualChecksum) = $oStorageDb->hashSize($strDestinationFile);
 
                     if ($strActualChecksum ne $strArchiveChecksum)
                     {
@@ -152,7 +152,7 @@ sub run
                 }
                 else
                 {
-                    confess 'archive file is not in destination';
+                    confess "archive file '${strDestinationFile}' is not in destination";
                 }
             }
         }

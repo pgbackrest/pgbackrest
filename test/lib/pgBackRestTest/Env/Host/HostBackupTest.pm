@@ -229,7 +229,7 @@ sub backupEnd
     if (!$self->synthetic())
     {
         $oExpectedManifest = iniParse(
-            ${storageTest()->get($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST)});
+            ${storageRepo()->get($self->repoPath() . '/backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST)});
     }
 
     # Make sure tablespace links are correct
@@ -297,7 +297,7 @@ sub backupEnd
         }
     }
     # Else there should not be a tablespace directory at all
-    elsif (storageRepo()->exists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
+    elsif (storageRepo()->pathExists(STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC))
     {
         confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
     }
@@ -1115,12 +1115,13 @@ sub infoMunge
     # If the original file content does not exist then load it
     if (!defined($self->{hInfoFile}{$strFileName}))
     {
-        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini($strFileName);
+        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini($strFileName, {oStorage => storageRepo()});
     }
 
     # Make a copy of the original file contents
     my $oMungeIni = new pgBackRest::Common::Ini(
-        $strFileName, {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent})});
+        $strFileName,
+        {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}), oStorage => storageRepo()});
 
     # Load params
     foreach my $strSection (keys(%{$hParam}))

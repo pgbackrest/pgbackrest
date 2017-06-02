@@ -62,7 +62,7 @@ sub new
     $self->{strDefaultFileMode} = $strDefaultFileMode;
 
     # Set temp extension in driver
-    $self->{oDriver}->tempExtensionSet($self->{strTempExtension});
+    $self->driver()->tempExtensionSet($self->{strTempExtension}) if $self->driver()->can('tempExtensionSet');
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -207,7 +207,7 @@ sub info
         );
 
     # Stat the file/path
-    my $oInfo = $self->{oDriver}->info($self->pathGet($strFileExp), $bIgnoreMissing);
+    my $oInfo = $self->driver()->info($self->pathGet($strFileExp), $bIgnoreMissing);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -251,7 +251,7 @@ sub openWrite
         );
 
     # Open the file
-    my $oFileIo = $self->{oDriver}->openWrite($self->pathGet($strFileExp),
+    my $oFileIo = $self->driver()->openWrite($self->pathGet($strFileExp),
         {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
             bAtomic => $bAtomic});
 
@@ -300,7 +300,7 @@ sub openRead
 
     eval
     {
-        $oFileIo = $self->{oDriver}->openRead($self->pathGet($strFileExp));
+        $oFileIo = $self->driver()->openRead($self->pathGet($strFileExp));
         return 1;
     }
     # On error check if missing file should be ignored, otherwise error
@@ -345,6 +345,7 @@ sub linkCreate
         $bHard,
         $bRelative,
         $bPathCreate,
+        $bIgnoreExists,
     ) =
         logDebugParam
         (
@@ -354,6 +355,7 @@ sub linkCreate
             {name => 'bHard', optional=> true, default => false},
             {name => 'bRelative', optional=> true, default => false},
             {name => 'bPathCreate', optional=> true, default => true},
+            {name => 'bIgnoreExists', optional => true, default => false},
         );
 
     # Get source and destination paths
@@ -392,7 +394,8 @@ sub linkCreate
     }
 
     # Create the link
-    $self->{oDriver}->linkCreate($strSourcePath, $strDestinationPath, {bHard => $bHard, bPathCreate => $bPathCreate});
+    $self->driver()->linkCreate(
+        $strSourcePath, $strDestinationPath, {bHard => $bHard, bPathCreate => $bPathCreate, bIgnoreExists => $bIgnoreExists});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -422,7 +425,7 @@ sub move
         );
 
     # Set operation variables
-    $self->{oDriver}->move(
+    $self->driver()->move(
         $self->pathGet($strSourcePathExp), $self->pathGet($strDestinationPathExp), {bPathCreate => $bPathCreate});
 
     # Return from function and log return values if any
@@ -458,7 +461,7 @@ sub pathCreate
         );
 
     # Create path
-    $self->{oDriver}->pathCreate(
+    $self->driver()->pathCreate(
         $self->pathGet($strPathExp), {strMode => $strMode, bIgnoreExists => $bIgnoreExists, bCreateParent => $bCreateParent});
 
     # Return from function and log return values if any
@@ -516,7 +519,7 @@ sub pathSync
     # Only sync the specified path
     else
     {
-        $self->{oDriver}->pathSync($self->pathGet($strPathExp));
+        $self->driver()->pathSync($self->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any
@@ -538,16 +541,46 @@ sub exists
     my
     (
         $strOperation,
-        $strPathExp,
+        $strFileExp,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->exists', \@_,
+            {name => 'strFileExp'},
+        );
+
+    # Check exists
+    my $bExists = $self->driver()->exists($self->pathGet($strFileExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bExists', value => $bExists}
+    );
+}
+
+####################################################################################################################################
+# pathExists
+####################################################################################################################################
+sub pathExists
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathExists', \@_,
             {name => 'strPathExp'},
         );
 
     # Check exists
-    my $bExists = $self->{oDriver}->exists($self->pathGet($strPathExp));
+    my $bExists = $self->driver()->pathExists($self->pathGet($strPathExp));
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -579,7 +612,7 @@ sub remove
         );
 
     # Remove file
-    my $bRemoved = $self->{oDriver}->remove($self->pathGet($strFileExp), {bIgnoreMissing => $bIgnoreMissing});
+    my $bRemoved = $self->driver()->remove($self->pathGet($strFileExp), {bIgnoreMissing => $bIgnoreMissing});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -669,7 +702,7 @@ sub owner
         );
 
     # Set ownership
-    $self->{oDriver}->owner($self->pathGet($strPathExp), {strUser => $strUser, strGroup => $strGroup});
+    $self->driver()->owner($self->pathGet($strPathExp), {strUser => $strUser, strGroup => $strGroup});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -704,7 +737,7 @@ sub list
         );
 
     # Get file list
-    my $rstryFileList = $self->{oDriver}->list($self->pathGet($strPathExp), {bIgnoreMissing => $bIgnoreMissing});
+    my $rstryFileList = $self->driver()->list($self->pathGet($strPathExp), {bIgnoreMissing => $bIgnoreMissing});
 
     # Apply expression if defined
     if (defined($strExpression))
@@ -722,7 +755,6 @@ sub list
     {
         @{$rstryFileList} = sort @{$rstryFileList};
     }
-
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -754,7 +786,7 @@ sub manifest
             {name => 'strPathExp'},
         );
 
-    my $hManifest = $self->{oDriver}->manifest($self->pathGet($strPathExp));
+    my $hManifest = $self->driver()->manifest($self->pathGet($strPathExp));
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -768,5 +800,6 @@ sub manifest
 # Getters
 ####################################################################################################################################
 sub pathBase {shift->{strPathBase}}
+sub driver {shift->{oDriver}}
 
 1;

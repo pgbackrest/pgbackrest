@@ -256,7 +256,7 @@ sub sudoSetup
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\nRUN apt-get -y install sudo && \\\n" .
+            "\nRUN apt-get -y install sudo && \\" .
             "\n    echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
     }
     else
@@ -366,6 +366,8 @@ sub containerBuild
         executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 1024 -N ''", {bSuppressStdErr => true});
     }
 
+    # VM Images
+    ################################################################################################################################
     my $oVm = vmGet();
 
     foreach my $strOS (sort(keys(%$oVm)))
@@ -394,7 +396,7 @@ sub containerBuild
         {
             $strScript .=
                 "RUN apt-get update && \\\n" .
-                "    apt-get -y install openssh-server wget\n";
+                "    apt-get -y install openssh-server wget vim net-tools iputils-ping\n";
 
             $strScript .=
                 "\n# Fix root tty\n" .
@@ -485,8 +487,7 @@ sub containerBuild
             $strScript .=
                 "RUN mkdir /var/run/sshd\n";
         }
-
-        if ($strOS eq VM_U14 || $strOS eq VM_D8 || $strOS eq VM_U16)
+        elsif ($strOS eq VM_U14 || $strOS eq VM_D8 || $strOS eq VM_U16)
         {
             $strScript .=
                 "ENTRYPOINT service ssh restart && bash";
@@ -794,7 +795,7 @@ sub imageRemove
 {
     my $strRegExp = shift;
 
-    foreach my $strImage (sort(split("\n", trim(executeTest('docker images --format "{{.Repository}}"')))))
+    foreach my $strImage (sort(split("\n", trim(executeTest('docker images --format "{{.Repository}}/{{.Tag}}"')))))
     {
         if ($strImage =~ $strRegExp)
         {

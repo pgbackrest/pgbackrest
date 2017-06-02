@@ -201,9 +201,9 @@ sub manifestLoad
     my ($strOperation) = logDebugParam (__PACKAGE__ . '->manifestLoad');
 
     # Error if the backup set does not exist
-    if (!storageRepo()->exists(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}"))
+    if (!storageRepo()->exists(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST))
     {
-        confess &log(ERROR, 'backup ' . $self->{strBackupSet} . ' does not exist');
+        confess &log(ERROR, "backup '$self->{strBackupSet}' does not exist");
     }
 
     # Copy the backup manifest to the db cluster path
@@ -212,7 +212,9 @@ sub manifestLoad
         $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
     # Load the manifest into a hash
-    my $oManifest = new pgBackRest::Manifest(storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST));
+    my $oManifest = new pgBackRest::Manifest(
+        storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), undef,
+        {oStorage => storageDb(), bMainOnly => true});
 
     # If backup is latest then set it equal to backup label, else verify that requested backup and label match
     my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
@@ -506,7 +508,7 @@ sub clean
         &log(DETAIL, "check ${strCheckPath} exists");
 
         # Check if the path exists
-        if (!$oStorageDb->exists($strCheckPath))
+        if (!$oStorageDb->pathExists($strCheckPath))
         {
             confess &log(ERROR, "cannot restore to missing path ${strCheckPath}", ERROR_PATH_MISSING);
         }
@@ -542,7 +544,7 @@ sub clean
                 ${$self->{oTargetPath}}{$strTarget} = "${$self->{oTargetPath}}{$strTarget}/" . $oManifest->tablespacePathGet();
 
                 # If this path does not exist then skip the rest of the checking - the path will be created later
-                if (!$oStorageDb->exists(${$self->{oTargetPath}}{$strTarget}))
+                if (!$oStorageDb->pathExists(${$self->{oTargetPath}}{$strTarget}))
                 {
                     next;
                 }
@@ -583,7 +585,7 @@ sub clean
             &log(INFO, "remove invalid files/paths/links from ${$self->{oTargetPath}}{$strTarget}");
 
             # OK for the special tablespace path to not exist yet - it will be created later
-            if (!$oStorageDb->exists(${$self->{oTargetPath}}{$strTarget}) &&
+            if (!$oStorageDb->pathExists(${$self->{oTargetPath}}{$strTarget}) &&
                 $oManifest->isTargetTablespace($strTarget))
             {
                 next;
@@ -779,7 +781,7 @@ sub build
                 $strPath = dirname($strPath);
             }
 
-            if (!$oStorageDb->exists($strPath))
+            if (!$oStorageDb->pathExists($strPath))
             {
                 $oStorageDb->pathCreate(
                     $strPath, {strMode => $oManifest->get(MANIFEST_SECTION_TARGET_PATH, $strTarget, MANIFEST_SUBKEY_MODE)});
@@ -831,7 +833,7 @@ sub build
 
                     # If the path/link does not already exist then create it.  The clean() method should have determined if the
                     # permissions, destinations, etc. are correct
-                    if (!$oStorageDb->exists($strDbPath))
+                    if (!$oStorageDb->pathExists($strDbPath) && !$oStorageDb->exists($strDbPath))
                     {
                         # Create a path
                         if ($strSection eq &MANIFEST_SECTION_TARGET_PATH)
@@ -851,7 +853,7 @@ sub build
                             $oStorageDb->linkCreate(
                                 $oStorageDb->pathAbsolute(
                                     dirname($strDbPath), $strDestination), $strDbPath,
-                                    {bRelative => (index($strDestination, '/') != 0)});
+                                    {bRelative => (index($strDestination, '/') != 0, bIgnoreExists => true)});
                         }
 
                         # Set ownership (??? this could be done better inside the file functions)
@@ -1026,7 +1028,7 @@ sub process
     # Db storage
     my $oStorageDb = storageDb();
 
-    if (!$oStorageDb->exists($self->{strDbClusterPath}))
+    if (!$oStorageDb->pathExists($self->{strDbClusterPath}))
     {
         confess &log(ERROR, "\$PGDATA directory $self->{strDbClusterPath} does not exist");
     }
@@ -1060,7 +1062,7 @@ sub process
         storageRepo()->openRead(STORAGE_REPO_BACKUP . qw(/) . FILE_BACKUP_INFO),
         $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
 
-    my $oBackupInfo = new pgBackRest::Backup::Info($self->{strDbClusterPath}, false);
+    my $oBackupInfo = new pgBackRest::Backup::Info($self->{strDbClusterPath}, false, undef, {oStorage => storageDb()});
 
     $oStorageDb->remove($self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
 

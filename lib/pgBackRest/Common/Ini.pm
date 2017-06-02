@@ -72,12 +72,18 @@ sub new
     my $self = {};
     bless $self, $class;
 
+    # Load Storage::Helper module
+    require pgBackRest::Storage::Helper;
+    pgBackRest::Storage::Helper->import();
+
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
         $self->{strFileName},
         my $bLoad,
         my $strContent,
+        $self->{bMainOnly},
+        $self->{oStorage},
         $self->{iInitFormat},
         $self->{strInitVersion},
     ) =
@@ -87,13 +93,11 @@ sub new
             {name => 'strFileName', trace => true},
             {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'strContent', optional => true, trace => true},
+            {name => 'bMainOnly', optional => true, default => false, trace => true},
+            {name => 'oStorage', optional => true, default => storageLocal(), trace => true},
             {name => 'iInitFormat', optional => true, default => BACKREST_FORMAT, trace => true},
             {name => 'strInitVersion', optional => true, default => BACKREST_VERSION, trace => true},
         );
-
-    # Load Storage::Helper module
-    require pgBackRest::Storage::Helper;
-    pgBackRest::Storage::Helper->import();
 
     # Set variables
     $self->{oContent} = {};
@@ -133,11 +137,17 @@ sub load
 {
     my $self = shift;
 
-    my $oStorageLocal = storageLocal();
+    # Load the copy if required
+    my $rstrContentCopy;
 
-    my $rstrContentCopy = $oStorageLocal->get(
-        storageLocal()->openRead($self->{strFileName} . INI_COPY_EXT, {bIgnoreMissing => true}));
-    my $rstrContent = $oStorageLocal->get(storageLocal()->openRead($self->{strFileName}, {bIgnoreMissing => true}));
+    if (!$self->{bMainOnly})
+    {
+        $rstrContentCopy = $self->{oStorage}->get(
+            $self->{oStorage}->openRead($self->{strFileName} . INI_COPY_EXT, {bIgnoreMissing => true}));
+    }
+
+    # Main is always loaded
+    my $rstrContent = $self->{oStorage}->get($self->{oStorage}->openRead($self->{strFileName}, {bIgnoreMissing => true}));
 
     # If both exist then select an authoritative version
     if (defined($rstrContent) && defined($rstrContentCopy))
@@ -474,8 +484,8 @@ sub save
         $self->hash();
 
         # Save the file
-        storageLocal()->put($self->{strFileName}, iniRender($self->{oContent}));
-        storageLocal()->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
+        $self->{oStorage}->put($self->{strFileName}, iniRender($self->{oContent}));
+        $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
         $self->{bModified} = false;
 
         # Indicate the file now exists
@@ -496,13 +506,13 @@ sub saveCopy
 {
     my $self = shift;
 
-    if (storageLocal()->exists($self->{strFileName}))
+    if ($self->{oStorage}->exists($self->{strFileName}))
     {
         confess &log(ASSERT, "cannot save copy only when '$self->{strFileName}' exists");
     }
 
     $self->hash();
-    storageLocal()->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
+    $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
 }
 
 ####################################################################################################################################

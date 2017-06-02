@@ -13,7 +13,7 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
@@ -94,7 +94,7 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -131,7 +131,7 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -168,7 +168,7 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info

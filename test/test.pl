@@ -448,7 +448,7 @@ eval
                 my $strBuildPath = "${strLibCPath}/${strBuildVM}";
                 my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
 
-                if (!$oStorageBackRest->exists($strBuildPath))
+                if (!$oStorageBackRest->pathExists($strBuildPath))
                 {
                     &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
@@ -528,7 +528,7 @@ eval
                 {
                     my $strBuildPath = "${strPackagePath}/${strBuildVM}/src";
 
-                    if (!$oStorageBackRest->exists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                    if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
                         &log(INFO, "Build package for ${strBuildVM} (${strBuildPath})");
 

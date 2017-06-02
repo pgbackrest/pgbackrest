@@ -135,7 +135,7 @@ sub get
 
         do
         {
-            $lSizeRead = $oFileIo->read(\$tContent, $self->{lBufferMax}, $lSize);
+            $lSizeRead = $oFileIo->read(\$tContent, $self->{lBufferMax});
             $lSize += $lSizeRead;
         }
         while ($lSizeRead != 0);

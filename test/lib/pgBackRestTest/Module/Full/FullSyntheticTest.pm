@@ -397,10 +397,6 @@ sub run
             }
         }
 
-        # Cleanup any garbage left in the temp backup path
-        executeTest(
-            'sudo rm -rf ' . $oHostBackup->repoPath() . '/temp/' . $self->stanza() . '.tmp', {bRemote => $bRemote});
-
         # Resume Full Backup
         #-----------------------------------------------------------------------------------------------------------------------
         $strType = BACKUP_TYPE_FULL;

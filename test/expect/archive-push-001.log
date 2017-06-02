@@ -12,7 +12,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
@@ -75,7 +75,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -89,10 +89,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -112,7 +114,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -136,7 +138,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -195,7 +197,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -235,7 +237,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -269,7 +271,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -283,10 +285,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.partial.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.partial.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001.partial
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -306,7 +310,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -346,7 +350,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -380,7 +384,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -394,10 +398,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000002.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000002.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000002
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -417,7 +423,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000003, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -431,10 +437,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000003.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000003.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000003
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -454,7 +462,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000004, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -468,10 +476,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000004.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000004.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000004
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -491,7 +501,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -505,10 +515,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000005
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -528,7 +540,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -552,7 +564,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -576,7 +588,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -616,7 +628,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -650,7 +662,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -664,10 +676,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.partial.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.partial.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000005.partial
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -687,7 +701,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -727,7 +741,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000005.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -761,7 +775,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000006, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -775,10 +789,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000006.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000006.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000006
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -798,7 +814,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000007, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -812,10 +828,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000007.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000007.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000007
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -835,7 +853,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000008, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -849,10 +867,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000008.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000008.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000008
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -872,7 +892,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -886,10 +906,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000009
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -909,7 +931,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -933,7 +955,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -957,7 +979,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -997,7 +1019,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -1031,7 +1053,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -1045,10 +1067,12 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::ArchiveCommon::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.partial.pgbackrest.tmp, strGroup = [undef], strMode = <0640>, strUser = [undef]
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strSourcePathExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.partial.pgbackrest.tmp
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000009.partial
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -1068,7 +1092,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
@@ -1108,7 +1132,7 @@ P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-m
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000009.partial, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Archive::ArchiveInfo->new(): bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db
-P00  DEBUG:     Storage::Local->exists(): strPathExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
+P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info.copy
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info

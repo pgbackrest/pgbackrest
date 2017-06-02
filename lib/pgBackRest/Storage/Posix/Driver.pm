@@ -8,6 +8,8 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(basename dirname);
 use Fcntl qw(:mode);
 use File::stat qw{lstat};
@@ -16,6 +18,12 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Posix::File;
+
+####################################################################################################################################
+# Package name constant
+####################################################################################################################################
+use constant STORAGE_POSIX_DRIVER                                      => __PACKAGE__;
+    push @EXPORT, qw(STORAGE_POSIX_DRIVER);
 
 ####################################################################################################################################
 # new
@@ -146,14 +154,68 @@ sub exists
 
     # Does the path/file exist?
     my $bExists = true;
+    my $oStat = lstat($strFile);
 
     # Use stat to test if file exists
-    if (!defined(lstat($strFile)))
+    if (defined($oStat))
+    {
+        # Check that it is actually a file
+        $bExists = !S_ISDIR($oStat->mode) ? true : false;
+    }
+    else
     {
         # If the error is not entry missing, then throw error
         if (!$OS_ERROR{ENOENT})
         {
-            logErrorResult(ERROR_FILE_EXISTS, "unable to test if '${strFile}' exists", $OS_ERROR);
+            logErrorResult(ERROR_FILE_EXISTS, "unable to test if file '${strFile}' exists", $OS_ERROR);
+        }
+
+        $bExists = false;
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bExists', value => $bExists, trace => true}
+    );
+}
+
+####################################################################################################################################
+# pathExists
+####################################################################################################################################
+sub pathExists
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathExists', \@_,
+            {name => 'strPath', trace => true},
+        );
+
+    # Does the path/file exist?
+    my $bExists = true;
+    my $oStat = lstat($strPath);
+
+    # Use stat to test if path exists
+    if (defined($oStat))
+    {
+        # Check that it is actually a path
+        $bExists = S_ISDIR($oStat->mode) ? true : false;
+    }
+    else
+    {
+        # If the error is not entry missing, then throw error
+        if (!$OS_ERROR{ENOENT})
+        {
+            logErrorResult(ERROR_FILE_EXISTS, "unable to test if path '${strPath}' exists", $OS_ERROR);
         }
 
         $bExists = false;
@@ -244,6 +306,7 @@ sub linkCreate
         $strDestinationPath,
         $bHard,
         $bPathCreate,
+        $bIgnoreExists,
     ) =
         logDebugParam
         (
@@ -252,6 +315,7 @@ sub linkCreate
             {name => 'strDestinationPath', trace => true},
             {name => 'bHard', optional=> true, default => false, trace => true},
             {name => 'bPathCreate', optional=> true, default => true, trace => true},
+            {name => 'bIgnoreExists', optional => true, default => false},
         );
 
     if (!($bHard ? link($strSourcePath, $strDestinationPath) : symlink($strSourcePath, $strDestinationPath)))
@@ -281,7 +345,10 @@ sub linkCreate
         # Else if link already exists
         elsif ($OS_ERROR{EEXIST})
         {
-            confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
+            if (!$bIgnoreExists)
+            {
+                confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
+            }
         }
         else
         {
@@ -612,7 +679,6 @@ sub list
     );
 }
 
-
 ####################################################################################################################################
 # manifest - recursively generate a complete list of all path/links/files in a path
 ####################################################################################################################################
@@ -860,5 +926,6 @@ sub linkDestination
 ####################################################################################################################################
 sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}
 sub tempExtension {shift->{strTempExtension}}
+sub className {STORAGE_POSIX_DRIVER}
 
 1;

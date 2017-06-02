@@ -390,7 +390,7 @@ sub stanzaList
                     ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
                 my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
 
-                if (storageRepo()->exists($strArchivePath))
+                if (storageRepo()->pathExists($strArchivePath))
                 {
                     my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
 

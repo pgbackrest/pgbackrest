@@ -80,12 +80,12 @@ sub run
         executeTest("sudo mkdir ${strPathSub} && sudo chmod 700 ${strPathSub}");
 
         $self->testResult(
-            sub {$oPosix->exists($strPathSub)}, true, 'path');
+            sub {$oPosix->pathExists($strPathSub)}, true, 'path');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
             sub {$oPosix->exists("${strPathSub}/file")}, ERROR_FILE_EXISTS,
-            "unable to test if '${strPathSub}/file' exists: Permission denied");
+            "unable to test if file '${strPathSub}/file' exists: Permission denied");
     }
 
     ################################################################################################################################
@@ -98,7 +98,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oPosix->pathCreate($strPathParent)}, undef, 'parent path');
         $self->testResult(
-            sub {$oPosix->exists($strPathParent)}, true, '    check path');
+            sub {$oPosix->pathExists($strPathParent)}, true, '    check path');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
@@ -127,7 +127,7 @@ sub run
         $self->testResult(
             sub {$oPosix->pathCreate($strPathSub, {bCreateParent => true})}, undef, 'path with parents');
         $self->testResult(
-            sub {$oPosix->exists($strPathSub)}, true, '    check path');
+            sub {$oPosix->pathExists($strPathSub)}, true, '    check path');
     }
 
     ################################################################################################################################

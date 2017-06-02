@@ -148,7 +148,7 @@ sub backupFile
     # compression may affect the actual repo size and this cannot be calculated in stream.
     if ($iCopyResult == BACKUP_FILE_COPY || $iCopyResult == BACKUP_FILE_RECOPY || $iCopyResult == BACKUP_FILE_CHECKSUM)
     {
-        $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->size;
+        $lRepoSize = ($oStorageRepo->info(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}"))->size();
     }
 
     # Return from function and log return values if any
