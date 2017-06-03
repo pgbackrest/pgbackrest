@@ -86,6 +86,7 @@ sub new
         $self->{oStorage},
         $self->{iInitFormat},
         $self->{strInitVersion},
+        my $bIgnoreMissing,
     ) =
         logDebugParam
         (
@@ -97,6 +98,7 @@ sub new
             {name => 'oStorage', optional => true, default => storageLocal(), trace => true},
             {name => 'iInitFormat', optional => true, default => BACKREST_FORMAT, trace => true},
             {name => 'strInitVersion', optional => true, default => BACKREST_VERSION, trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
     # Set variables
@@ -111,7 +113,7 @@ sub new
     # Load the file if requested
     if ($bLoad)
     {
-        $self->load();
+        $self->load($bIgnoreMissing);
     }
     # Load from a string if provided
     elsif (defined($strContent))
@@ -119,8 +121,9 @@ sub new
         $self->{oContent} = iniParse($strContent);
         $self->headerCheck();
     }
-    # Else initialize
-    else
+
+    # Initialize if not loading from string and file does not exist
+    if (!$self->{bExists} && !defined($strContent))
     {
         $self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE} = 0;
         $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, $self->{iInitFormat});
@@ -136,6 +139,7 @@ sub new
 sub load
 {
     my $self = shift;
+    my $bIgnoreMissing = shift;
 
     # Load the copy if required
     my $rstrContentCopy;
@@ -227,10 +231,17 @@ sub load
             }
         }
     }
-    # If neither exists then error
+    # If neither exists then error if no ignoring missing, else just return
     elsif (!defined($rstrContent) && !defined($rstrContentCopy))
     {
-        confess &log(ERROR, "unable to open $self->{strFileName} or $self->{strFileName}" . INI_COPY_EXT, ERROR_FILE_MISSING);
+        if (!$bIgnoreMissing)
+        {
+            confess &log(ERROR, "unable to open $self->{strFileName} or $self->{strFileName}" . INI_COPY_EXT, ERROR_FILE_MISSING);
+        }
+        else
+        {
+            return;
+        }
     }
     # Else only one exists and must considered authoritative as long as it parses and has a valid header
     else
