@@ -11,6 +11,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use File::Basename qw(basename);
+
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
@@ -125,7 +127,7 @@ sub stanzaSet
     # Get the archive and directory paths for the stanza
     $$oStanza{strArchiveClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
     $$oStanza{strBackupClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP);
-    storageTest()->pathCreate($$oStanza{strArchiveClusterPath}, {bCreateParent => true});
+    storageRepo()->pathCreate($$oStanza{strArchiveClusterPath}, {bCreateParent => true});
 
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
@@ -258,7 +260,7 @@ sub backupCreate
                           $lTimestamp);
 
     my $strBackupClusterSetPath = "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
-    storageTest()->pathCreate($strBackupClusterSetPath);
+    storageRepo()->pathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");
 
@@ -296,9 +298,6 @@ sub backupCreate
 
     $oManifest->save();
     $$oStanza{oManifest} = $oManifest;
-
-    # Create the compressed history manifest
-    executeTest("gzip -c ${strManifestFile} > ${strManifestFile}." . COMPRESS_EXT);
 
     # Add the backup to info
     my $oBackupInfo = new pgBackRest::Backup::Info($$oStanza{strBackupClusterPath}, false);
@@ -402,10 +401,10 @@ sub archiveCreate
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        storageTest()->pathCreate($strPath, {bIgnoreExists => true});
+        storageRepo()->pathCreate($strPath, {bIgnoreExists => true});
 
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
-        testFileCreate($strFile, 'ARCHIVE');
+        storageRepo()->put($strFile, 'ARCHIVE');
 
         $iArchiveIdx++;
 
@@ -450,16 +449,42 @@ sub supplementalLog
 
     if (defined($self->{oLogTest}))
     {
-        $self->{oLogTest}->supplementalAdd($self->{oHostBackup}->repoPath() .
-                                           "/backup/${strStanza}/backup.info", $$oStanza{strBackupDescription});
+        $self->{oLogTest}->supplementalAdd(
+            $self->{oHostBackup}->repoPath() . "/backup/${strStanza}/backup.info", $$oStanza{strBackupDescription},
+            ${storageRepo->get($self->{oHostBackup}->repoPath() . "/backup/${strStanza}/backup.info")});
 
-        executeTest(
-            'ls ' . $self->{oHostBackup}->repoPath() . "/backup/${strStanza} | grep -v \"backup.*\"",
-            {oLogTest => $self->{oLogTest}});
+        # Output backup list
+        $self->{oLogTest}->logAdd(
+            'ls ' . $self->{oHostBackup}->repoPath() . "/backup/${strStanza} | grep -v \"backup.*\"", undef,
+            join("\n", grep(!/^backup\.info.*$/i, storageRepo()->list("backup/${strStanza}"))));
 
-        executeTest(
-            'ls -R ' . $self->{oHostBackup}->repoPath() . "/archive/${strStanza} | grep -v \"archive.info\"",
-            {oLogTest => $self->{oLogTest}});
+        # Output archive manifest
+        my $rhManifest = storageRepo()->manifest(STORAGE_REPO_ARCHIVE);
+        my $strManifest;
+        my $strPrefix = '';
+
+        foreach my $strEntry (sort(keys(%{$rhManifest})))
+        {
+            # Skip files
+            next if $strEntry eq ARCHIVE_INFO_FILE || $strEntry eq ARCHIVE_INFO_FILE . INI_COPY_EXT;
+
+            if ($rhManifest->{$strEntry}->{type} eq 'd')
+            {
+                $strEntry = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . ($strEntry eq '.' ? '' : "/${strEntry}");
+
+                # &log(WARN, "DIR $strEntry");
+                $strManifest .= (defined($strManifest) ? "\n" : '') . "${strEntry}:\n";
+                $strPrefix = $strEntry;
+            }
+            else
+            {
+                # &log(WARN, "FILE $strEntry");
+                $strManifest .= basename($strEntry) . "\n";
+            }
+        }
+
+        $self->{oLogTest}->logAdd(
+            'ls -R ' . $self->{oHostBackup}->repoPath() . "/archive/${strStanza} | grep -v \"archive.info\"", undef, $strManifest);
     }
 
     return logDebugReturn($strOperation);

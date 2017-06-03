@@ -315,10 +315,9 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'create pg_stat link, pg_clog dir',
             {oExpectedManifest => \%oManifest,
-             strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                ' --no-' . OPTION_REPO_SYNC . ' --' . OPTION_BUFFER_SIZE . '=16384 --' . OPTION_CHECKSUM_PAGE,
-             strTest => $strTestPoint,
-             fTestDelay => 0});
+                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . ' --' . OPTION_BUFFER_SIZE .
+                    '=16384 --' . OPTION_CHECKSUM_PAGE,
+                strRepoType => REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         # Error on backup option to check logging
         #-----------------------------------------------------------------------------------------------------------------------
@@ -448,8 +447,8 @@ sub run
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
                 strOptionalParam => '--force --' . OPTION_CHECKSUM_PAGE});
 
-        # Remove postmaster.pid so restore will succeed (the rest will be cleaned up)
-        testFileRemove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
+        # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
+        storageDb->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
 
         # Misconfigure repo-path and check errors
         #-----------------------------------------------------------------------------------------------------------------------
@@ -834,7 +833,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME, bRepoLink => false,
+            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
                 strOptionalParam => '--no-resume --log-level-console=detail'});
 
         # Restore

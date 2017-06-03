@@ -373,12 +373,9 @@ sub infoFileCreate
     {
         $oInfo->save();
 
-        # Sync path if requested
-        if (optionGet(OPTION_REPO_SYNC))
-        {
-            storageRepo()->pathSync(
-                defined($oInfo->{strArchiveClusterPath}) ? $oInfo->{strArchiveClusterPath} : $oInfo->{strBackupClusterPath});
-        }
+        # Sync path
+        storageRepo()->pathSync(
+            defined($oInfo->{strArchiveClusterPath}) ? $oInfo->{strArchiveClusterPath} : $oInfo->{strBackupClusterPath});
     }
 
     # If a warning was issued, raise it

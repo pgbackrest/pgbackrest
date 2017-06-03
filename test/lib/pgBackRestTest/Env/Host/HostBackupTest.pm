@@ -16,13 +16,16 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
+use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Backup::Common;
+use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
@@ -160,7 +163,7 @@ sub backupBegin
         (defined($oExpectedManifest) ? " --no-online" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
-        (defined($oParam->{bRepoLink}) && !$oParam->{bRepoLink} ? ' --no-repo-link' : '') .
+        (defined($oParam->{strRepoType}) ? " --repo-type=$oParam->{strRepoType}" : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
@@ -233,7 +236,7 @@ sub backupEnd
     }
 
     # Make sure tablespace links are correct
-    if ($strType eq BACKUP_TYPE_FULL || $self->hardLink())
+    if (($strType eq BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
     {
         my $hTablespaceManifest = storageRepo()->manifest(
             STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
@@ -242,58 +245,49 @@ sub backupEnd
         delete($hTablespaceManifest->{'.'});
         delete($hTablespaceManifest->{'..'});
 
-        # Only check links if repo links are disabled
-        if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
+        # Iterate file links
+        for my $strFile (sort(keys(%{$hTablespaceManifest})))
         {
-            # Iterate file links
-            for my $strFile (sort(keys(%{$hTablespaceManifest})))
+            # Make sure the link is in the expected manifest
+            my $hManifestTarget =
+                $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+
+            if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
+                $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
             {
-                # Make sure the link is in the expected manifest
-                my $hManifestTarget =
-                    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
-
-                if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
-                    $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
-                {
-                    confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
-                }
-
-                # Make sure the link really is a link
-                if ($hTablespaceManifest->{$strFile}{type} ne 'l')
-                {
-                    confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
-                }
-
-                # Make sure the link destination is correct
-                my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
-
-                if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
-                {
-                    confess &log(ERROR,
-                        "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
-                        "'$hTablespaceManifest->{$strFile}{link_destination}'");
-                }
+                confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
             }
 
-            # Iterate manifest targets
-            for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
+            # Make sure the link really is a link
+            if ($hTablespaceManifest->{$strFile}{type} ne 'l')
             {
-                my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
-                my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
+                confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
+            }
 
-                # Make sure the target exists as a link on disk
-                if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
-                    !defined($hTablespaceManifest->{$strTablespaceId}))
-                {
-                    confess &log(ERROR,
-                        "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
-                }
+            # Make sure the link destination is correct
+            my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
+
+            if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
+            {
+                confess &log(ERROR,
+                    "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
+                    "'$hTablespaceManifest->{$strFile}{link_destination}'");
             }
         }
-        # Else make sure the tablespace directory is empty
-        elsif (keys(%{$hTablespaceManifest}) > 0)
+
+        # Iterate manifest targets
+        for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
         {
-            confess &log(ERROR, DB_PATH_PGTBLSPC . ' directory should be empty when --no-' . OPTION_REPO_LINK);
+            my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
+            my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
+
+            # Make sure the target exists as a link on disk
+            if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
+                !defined($hTablespaceManifest->{$strTablespaceId}))
+            {
+                confess &log(ERROR,
+                    "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
+            }
         }
     }
     # Else there should not be a tablespace directory at all
@@ -304,9 +298,9 @@ sub backupEnd
 
     # Check that latest link exists unless repo links are disabled
     my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
-    my $bLatestLinkExists = storageTest()->exists($strLatestLink);
+    my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if (!defined($oParam->{bRepoLink}) || $oParam->{bRepoLink})
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq REPO_TYPE_POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
@@ -317,7 +311,7 @@ sub backupEnd
     }
     elsif ($bLatestLinkExists)
     {
-        confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist when --no-" . OPTION_REPO_LINK);
+        confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist");
     }
 
     # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
@@ -355,8 +349,12 @@ sub backupEnd
 
         if ($self->synthetic() && $bManifestCompare)
         {
-            $self->{oLogTest}->supplementalAdd(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST));
-            $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            $self->{oLogTest}->supplementalAdd(
+                storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), undef,
+                ${storageRepo->get(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST)});
+            $self->{oLogTest}->supplementalAdd(
+                $self->repoPath() . '/backup/' . $self->stanza() . '/backup.info', undef,
+                ${storageRepo->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
         }
     }
 
@@ -741,15 +739,19 @@ sub stanzaCreate
 
     # If the info file was created, then add it to the expect log
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        storageRepo()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO, undef,
+            ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        storageRepo()->exists($self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE, undef,
+            ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
     }
 
     # Return from function and log return values if any
@@ -794,15 +796,19 @@ sub stanzaUpgrade
 
     # If the info file was created, then add it to the expect log
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info'))
+        storageRepo()->exists($self->repoPath() . '/backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO, undef,
+            ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
     }
 
     if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageTest()->exists($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info'))
+        storageRepo()->exists($self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
-        $self->{oLogTest}->supplementalAdd($self->repoPath() . '/archive/' . $self->stanza() . '/archive.info');
+        $self->{oLogTest}->supplementalAdd(
+            $self->repoPath() . '/archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE, undef,
+            ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
     }
 
     # Return from function and log return values if any
@@ -1145,15 +1151,15 @@ sub infoMunge
     }
 
     # Modify the file/directory permissions so it can be saved
-    executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
+        executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
 
     # Save the munged data to the file
     $oMungeIni->save();
 
     # Fix permissions
-    executeTest(
-        "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
-        ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+        executeTest(
+            "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
+            ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
 
     # Clear the cache is requested
     if (!$bCache)
@@ -1195,18 +1201,18 @@ sub infoRestore
         if ($bSave)
         {
             # Modify the file/directory permissions so it can be saved
-            executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
+                executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
 
             # Save the munged data to the file
             $self->{hInfoFile}{$strFileName}->{bModified} = true;
             $self->{hInfoFile}{$strFileName}->save();
 
             # Fix permissions
-            executeTest(
-                "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
-                ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+                executeTest(
+                    "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
+                    ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+            }
         }
-    }
     else
     {
         confess &log(ASSERT, "There is no original data cached for $strFileName. infoMunge must be called first.");
@@ -1226,6 +1232,7 @@ sub backrestConfig {return shift->{strBackRestConfig}}
 sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
 sub hardLink {return shift->{bHardLink}}
+sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}

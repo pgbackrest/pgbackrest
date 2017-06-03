@@ -603,16 +603,18 @@ sub remove
         $strOperation,
         $strFileExp,
         $bIgnoreMissing,
+        $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
             {name => 'strFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => true},
+            {name => 'bRecurse', optional => true, default => false, trace => true},
         );
 
     # Remove file
-    my $bRemoved = $self->driver()->remove($self->pathGet($strFileExp), {bIgnoreMissing => $bIgnoreMissing});
+    my $bRemoved = $self->driver()->remove($self->pathGet($strFileExp), {bIgnoreMissing => $bIgnoreMissing, bRecurse => $bRecurse});
 
     # Return from function and log return values if any
     return logDebugReturn

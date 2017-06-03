@@ -293,7 +293,7 @@ sub run
                     &log(INFO, "        test .partial archive");
                     $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
                     $oHostDbMaster->executeSimple(
-                        $strCommand . " --no-" . OPTION_REPO_SYNC . " ${strXlogPath}/${strSourceFile}.partial",
+                        $strCommand . " ${strXlogPath}/${strSourceFile}.partial",
                         {oLogTest => $self->expect()});
                     $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
                         $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
@@ -338,8 +338,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($self->expect()))
         {
-            sleep(1); # Ugly hack to ensure repo is stable before checking files - replace in new tests
-            $self->expect()->supplementalAdd(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+            $self->expect()->supplementalAdd(
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
+                ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
         }
     }
     }

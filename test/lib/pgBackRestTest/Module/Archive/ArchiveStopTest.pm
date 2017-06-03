@@ -61,8 +61,8 @@ sub run
         $oStorage->pathCreate($strXlogPath, {bCreateParent => true});
 
         # Create the test path for pg_control and copy pg_control for stanza-create
-        $oStorage->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-        $oStorage->copy(
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+        storageTest()->copy(
             $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 

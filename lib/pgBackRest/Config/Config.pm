@@ -93,6 +93,8 @@ use constant BACKUP_TYPE_INCR                                       => 'incr';
 ####################################################################################################################################
 # REPO Type Constants
 ####################################################################################################################################
+use constant REPO_TYPE_CIFS                                         => 'cifs';
+    push @EXPORT, qw(REPO_TYPE_CIFS);
 use constant REPO_TYPE_POSIX                                        => 'posix';
     push @EXPORT, qw(REPO_TYPE_POSIX);
 
@@ -289,12 +291,8 @@ use constant OPTION_SPOOL_PATH                                      => 'spool-pa
     push @EXPORT, qw(OPTION_SPOOL_PATH);
 
 # Repository
-use constant OPTION_REPO_LINK                                       => 'repo-link';
-    push @EXPORT, qw(OPTION_REPO_LINK);
 use constant OPTION_REPO_PATH                                       => 'repo-path';
     push @EXPORT, qw(OPTION_REPO_PATH);
-use constant OPTION_REPO_SYNC                                       => 'repo-sync';
-    push @EXPORT, qw(OPTION_REPO_SYNC);
 use constant OPTION_REPO_TYPE                                       => 'repo-type';
     push @EXPORT, qw(OPTION_REPO_TYPE);
 
@@ -1215,21 +1213,6 @@ my %oOptionRule =
         },
     },
 
-    &OPTION_REPO_SYNC =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_SYNC,
-        &OPTION_RULE_NEGATE => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        },
-    },
-
     &OPTION_PROTOCOL_TIMEOUT =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1250,17 +1233,6 @@ my %oOptionRule =
             &CMD_STANZA_CREATE => true,
             &CMD_STANZA_UPGRADE => true,
         }
-    },
-
-    &OPTION_REPO_LINK =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_LINK,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-        },
     },
 
     &OPTION_REPO_PATH =>
@@ -1291,6 +1263,11 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_TYPE,
+        &OPTION_RULE_ALLOW_LIST =>
+        {
+            &REPO_TYPE_POSIX    => true,
+            &REPO_TYPE_CIFS     => true,
+        },
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
