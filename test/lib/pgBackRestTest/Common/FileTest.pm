@@ -26,8 +26,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::Storage::Local;
 use pgBackRest::Manifest;
+use pgBackRest::Storage::Local;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
@@ -150,5 +150,65 @@ sub testFileRemove
 }
 
 push(@EXPORT, qw(testFileRemove));
+
+####################################################################################################################################
+# forceStorageMode - force mode on a file or path
+####################################################################################################################################
+sub forceStorageMode
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strPathExp,
+        $strMode,
+        $bRecurse
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::forceStorageMode', \@_,
+            {name => 'oStorage'},
+            {name => 'strPathExp'},
+            {name => 'strMode'},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageMode));
+
+####################################################################################################################################
+# forceStorageRemove - force remove a file or path from storage
+####################################################################################################################################
+sub forceStorageRemove
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strPathExp,
+        $bRecurse
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->forceStorageRemove', \@_,
+            {name => 'oStorage'},
+            {name => 'strPathExp'},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    executeTest('sudo rm ' . ($bRecurse ? '-rf ' : '') . $oStorage->pathGet($strPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageRemove));
 
 1;

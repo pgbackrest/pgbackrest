@@ -1,5 +1,5 @@
-run 002 - remote
-================
+run 002 - remote 1
+==================
 
 stanza-create db - fail on missing control file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -153,7 +153,7 @@ stanza-create db - gunzip fail on forced stanza-create (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --force --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
-P00  ERROR: [041]: unable to open [TEST_PATH]/backup/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
+P00  ERROR: [041]: unable to open '[TEST_PATH]/backup/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz': Permission denied
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 + supplemental file: [TEST_PATH]/backup/repo/backup/db/backup.info
@@ -446,7 +446,6 @@ stanza-create db - force with missing WAL archive file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --force --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db
-P00   WARN: found empty directory [TEST_PATH]/backup/repo/archive/db/9.4-1/0000000100000001
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/backup/repo/backup/db/backup.info

@@ -14,27 +14,26 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname basename);
-use File::stat;
-use Fcntl qw(O_RDONLY);
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
+use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Common::Exception;
+use pgBackRest::Config::Config;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
 use constant ARCHIVE_INFO_FILE                                      => 'archive.info';
-    our @EXPORT = qw(ARCHIVE_INFO_FILE);
+    push @EXPORT, qw(ARCHIVE_INFO_FILE);
 
 ####################################################################################################################################
 # Archive info constants
@@ -337,27 +336,15 @@ sub reconstruct
         # Get the db-system-id from the WAL file depending on the version of postgres
         my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
 
-        # If the file is a compressed file, unzip it, else open the first 8KB
+        # Read first 8k of WAL segment
         my $tBlock;
 
-        sysopen(my $hFile, $strArchiveFilePath, O_RDONLY)
-            or confess &log(ERROR, "unable to open ${strArchiveFilePath}", ERROR_FILE_OPEN);
+        my $oFileIo = storageRepo()->openRead(
+            $strArchiveFilePath,
+            {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ? [{strClass => STORAGE_FILTER_GZIP}] : undef});
 
-        if ($strArchiveFile =~ "^.*\." . COMPRESS_EXT . "\$")
-        {
-            gunzip($hFile => \$tBlock)
-                or confess &log(ERROR,
-                    "gunzip failed with error: " . $GunzipError .
-                    " on file ${strArchiveFilePath}", ERROR_FILE_READ);
-        }
-        else
-        {
-            # Read part of the file
-            sysread($hFile, $tBlock, 8192) == 8192
-                or confess &log(ERROR, "unable to read ${strArchiveFilePath}", ERROR_FILE_READ);
-        }
-
-        close($hFile);
+        $oFileIo->read(\$tBlock, 512, true);
+        $oFileIo->close();
 
         # Get the required data from the file that was pulled into scalar $tBlock
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);

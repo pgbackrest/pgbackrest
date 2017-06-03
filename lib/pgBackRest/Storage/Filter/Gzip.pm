@@ -106,7 +106,7 @@ sub read
         {
             if (!defined($self->{tCompressedBuffer}) || length($self->{tCompressedBuffer}) == 0)
             {
-                $self->SUPER::read(\$self->{tCompressedBuffer}, $self->{lBufferMax} );
+                $self->SUPER::read(\$self->{tCompressedBuffer}, $self->{lBufferMax});
             }
 
             $iZLibStatus = $self->{oZLib}->inflate($self->{tCompressedBuffer}, $self->{tUncompressedBuffer});

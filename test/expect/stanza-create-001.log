@@ -1,5 +1,5 @@
-run 001 - local
-===============
+run 001 - remote 0
+==================
 
 stanza-create db - fail on missing control file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -158,7 +158,7 @@ stanza-create db - gunzip fail on forced stanza-create (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
-P00  ERROR: [041]: unable to open [TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
+P00  ERROR: [041]: unable to open '[TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz': Permission denied
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -451,7 +451,6 @@ stanza-create db - force with missing WAL archive file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00   WARN: found empty directory [TEST_PATH]/db-master/repo/archive/db/9.4-1/0000000100000001
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
