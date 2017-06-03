@@ -315,10 +315,9 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'create pg_stat link, pg_clog dir',
             {oExpectedManifest => \%oManifest,
-                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                    ' --' . OPTION_BUFFER_SIZE . '=16384 --' . OPTION_CHECKSUM_PAGE,
-             strTest => $strTestPoint,
-             fTestDelay => 0});
+                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . ' --' . OPTION_BUFFER_SIZE .
+                    '=16384 --' . OPTION_CHECKSUM_PAGE,
+                strRepoType => REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         # Error on backup option to check logging
         #-----------------------------------------------------------------------------------------------------------------------

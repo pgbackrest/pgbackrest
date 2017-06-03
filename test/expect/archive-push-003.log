@@ -6,7 +6,7 @@ run 003 - rmt 0, cmp 1, arc_async 0
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-max-mb=24 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: 'archive-max-mb' is no longer not longer valid, use 'archive-queue-max' instead
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -69,7 +69,7 @@ db-version="9.4"
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -108,7 +108,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -132,7 +132,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 44
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -156,7 +156,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 44
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -196,7 +196,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -226,11 +226,11 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: archive-push command end: aborted with exception [045]
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 45
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --no-repo-sync --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = false, strWalFile = 000000010000000100000001.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -269,7 +269,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -309,7 +309,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000001.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -343,7 +343,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 45
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000002, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000002, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -382,7 +382,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000003, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000003, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -421,7 +421,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000004, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000004, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -460,7 +460,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -499,7 +499,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -523,7 +523,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 44
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -547,7 +547,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 44
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -587,7 +587,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -617,11 +617,11 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: archive-push command end: aborted with exception [045]
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 45
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --no-repo-sync --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = false, strWalFile = 000000010000000100000005.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -660,7 +660,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -700,7 +700,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000005.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000005.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -734,7 +734,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 45
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000006, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000006, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -773,7 +773,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000007, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000007, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -812,7 +812,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000008, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000008, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -851,7 +851,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -890,7 +890,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -914,7 +914,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 44
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -938,7 +938,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 44
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -978,7 +978,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -1008,11 +1008,11 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: archive-push command end: aborted with exception [045]
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 45
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --no-repo-sync --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = false, strWalFile = 000000010000000100000009.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -1051,7 +1051,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -1091,7 +1091,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, bRepoSync = true, strWalFile = 000000010000000100000009.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000009.partial, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
 P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918

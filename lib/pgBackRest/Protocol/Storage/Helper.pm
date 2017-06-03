@@ -181,9 +181,23 @@ sub storageRepo
                 }
             };
 
+            # Select a driver
+            my $oDriver;
+
+            if (optionTest(OPTION_REPO_TYPE, REPO_TYPE_CIFS))
+            {
+                require pgBackRest::Storage::Cifs::Driver;
+
+                $oDriver = new pgBackRest::Storage::Cifs::Driver();
+            }
+            else
+            {
+                $oDriver = new pgBackRest::Storage::Posix::Driver();
+            }
+
             # Create local storage
             $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Storage::Local(
-                optionGet(OPTION_REPO_PATH), new pgBackRest::Storage::Posix::Driver(),
+                optionGet(OPTION_REPO_PATH), $oDriver,
                 {hRule => $hRule, bAllowTemp => false, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
         }
         else

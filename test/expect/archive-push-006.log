@@ -122,9 +122,9 @@ P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --bac
 P00  ERROR: [045]: raised on 'local-1' host: WAL segment 000000010000000100000001 already exists in the archive
 P00   INFO: archive-push command end: aborted with exception [045]
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --no-repo-sync --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --spool-path=[TEST_PATH]/db-master/spool --stanza=db
 P00   INFO: pushed WAL segment 000000010000000100000001.partial asynchronously
 P00   INFO: archive-push command end: completed successfully
 
@@ -194,9 +194,9 @@ P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --bac
 P00  ERROR: [045]: raised on 'local-1' host: WAL segment 000000010000000100000005 already exists in the archive
 P00   INFO: archive-push command end: aborted with exception [045]
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --no-repo-sync --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --spool-path=[TEST_PATH]/db-master/spool --stanza=db
 P00   INFO: pushed WAL segment 000000010000000100000005.partial asynchronously
 P00   INFO: archive-push command end: completed successfully
 
@@ -266,9 +266,9 @@ P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --bac
 P00  ERROR: [045]: raised on 'local-1' host: WAL segment 000000010000000100000009 already exists in the archive
 P00   INFO: archive-push command end: aborted with exception [045]
 
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push --no-repo-sync [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --no-repo-sync --spool-path=[TEST_PATH]/db-master/spool --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --archive-async --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-1] --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/spool/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/spool/log --spool-path=[TEST_PATH]/db-master/spool --stanza=db
 P00   INFO: pushed WAL segment 000000010000000100000009.partial asynchronously
 P00   INFO: archive-push command end: completed successfully
 

@@ -163,6 +163,7 @@ sub backupBegin
         (defined($oExpectedManifest) ? " --no-online" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
+        (defined($oParam->{strRepoType}) ? " --repo-type=$oParam->{strRepoType}" : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
@@ -297,9 +298,9 @@ sub backupEnd
 
     # Check that latest link exists unless repo links are disabled
     my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
-    my $bLatestLinkExists = storageTest()->exists($strLatestLink);
+    my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if ($self->hasLink())
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq REPO_TYPE_POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
