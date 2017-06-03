@@ -315,8 +315,8 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'create pg_stat link, pg_clog dir',
             {oExpectedManifest => \%oManifest,
-             strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                ' --no-' . OPTION_REPO_SYNC . ' --' . OPTION_BUFFER_SIZE . '=16384 --' . OPTION_CHECKSUM_PAGE,
+                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                    ' --' . OPTION_BUFFER_SIZE . '=16384 --' . OPTION_CHECKSUM_PAGE,
              strTest => $strTestPoint,
              fTestDelay => 0});
 
@@ -834,7 +834,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
-            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME, bRepoLink => false,
+            {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
                 strOptionalParam => '--no-resume --log-level-console=detail'});
 
         # Restore

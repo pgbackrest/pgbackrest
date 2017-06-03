@@ -31,6 +31,7 @@ use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Common::Io::Handle;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
@@ -297,7 +298,7 @@ sub processManifest
             storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strPath}", {bIgnoreExists => true});
         }
 
-        if (optionGet(OPTION_REPO_LINK))
+        if (storageRepo()->driver()->capability(STORAGE_CAPABILITY_LINK))
         {
             for my $strTarget ($oBackupManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
             {
@@ -477,8 +478,7 @@ sub process
 
     # Create the cluster backup and history path
     $oStorageRepo->pathCreate(
-        STORAGE_REPO_BACKUP . qw(/) . PATH_BACKUP_HISTORY,
-        {bIgnoreExists => true, bCreateParent => true, bPathSync => optionGet(OPTION_REPO_SYNC)});
+        STORAGE_REPO_BACKUP . qw(/) . PATH_BACKUP_HISTORY, {bIgnoreExists => true, bCreateParent => true});
 
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
@@ -967,10 +967,7 @@ sub process
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
 
     # Sync all paths in the backup cluster path
-    if (optionGet(OPTION_REPO_SYNC))
-    {
-        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}", {bRecurse => true});
-    }
+    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . "/${strBackupLabel}", {bRecurse => true});
 
     # Final save of the backup manifest
     $oBackupManifest->save();
@@ -985,10 +982,13 @@ sub process
                 "/${strBackupLabel}.manifest." . COMPRESS_EXT,
             {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}], bPathCreate => true, bAtomic => true}));
 
+    # Sync history path
+    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);
+
     # Create a link to the most recent backup
     $oStorageRepo->remove(STORAGE_REPO_BACKUP . qw(/) . LINK_LATEST);
 
-    if (optionGet(OPTION_REPO_LINK))
+    if (storageRepo()->driver()->capability(STORAGE_CAPABILITY_LINK))
     {
         $oStorageRepo->linkCreate(
             STORAGE_REPO_BACKUP . "/${strBackupLabel}", STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST, {bRelative => true});
@@ -997,11 +997,8 @@ sub process
     # Save backup info
     $oBackupInfo->add($oBackupManifest);
 
-    # Sync the cluster path
-    if (optionGet(OPTION_REPO_SYNC))
-    {
-        $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
-    }
+    # Sync backup root path
+    $oStorageRepo->pathSync(STORAGE_REPO_BACKUP);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

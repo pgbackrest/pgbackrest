@@ -131,7 +131,6 @@ sub archivePushFile
         $strWalPath,
         $strWalFile,
         $bCompress,
-        $bRepoSync,
     ) =
         logDebugParam
         (
@@ -139,7 +138,6 @@ sub archivePushFile
             {name => 'strWalPath'},
             {name => 'strWalFile'},
             {name => 'bCompress'},
-            {name => 'bRepoSync'},
         );
 
     # Get cluster info from the WAL

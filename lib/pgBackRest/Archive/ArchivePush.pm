@@ -128,7 +128,7 @@ sub process
         # Else push the WAL file
         else
         {
-            archivePushFile($strWalPath, $strWalFile, optionGet(OPTION_COMPRESS), optionGet(OPTION_REPO_SYNC));
+            archivePushFile($strWalPath, $strWalFile, optionGet(OPTION_COMPRESS));
         }
     }
 

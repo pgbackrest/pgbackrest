@@ -293,7 +293,7 @@ sub run
                     &log(INFO, "        test .partial archive");
                     $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
                     $oHostDbMaster->executeSimple(
-                        $strCommand . " --no-" . OPTION_REPO_SYNC . " ${strXlogPath}/${strSourceFile}.partial",
+                        $strCommand . " ${strXlogPath}/${strSourceFile}.partial",
                         {oLogTest => $self->expect()});
                     $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
                         $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
