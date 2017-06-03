@@ -115,7 +115,8 @@ sub new
         $bValidate,
         $bRequired,
         $oStorage,
-        $bIgnoreMissing,
+        $bLoad,                                     # Should the file attemp to be loaded?
+        $bIgnoreMissing,                            # Don't error on missing files
     ) =
         logDebugParam
         (
@@ -124,6 +125,7 @@ sub new
             {name => 'bValidate', default => true},
             {name => 'bRequired', default => true},
             {name => 'oStorage', optional => true, default => storageRepo()},
+            {name => 'bLoad', optional => true, default => true},
             {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
@@ -131,7 +133,8 @@ sub new
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strBackupInfoFile, {bIgnoreMissing => $bIgnoreMissing, oStorage => $oStorage});
+    my $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing, 
+        oStorage => $oStorage});
 
     # If the backup info file does not exist and is required, then throw an error
     # The backup info is only allowed not to exist when running a stanza-create on a new install

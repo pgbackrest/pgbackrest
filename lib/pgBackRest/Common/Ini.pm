@@ -231,7 +231,7 @@ sub load
             }
         }
     }
-    # If neither exists then error if no ignoring missing, else just return
+    # If neither exists then error if not ignoring missing, else just return
     elsif (!defined($rstrContent) && !defined($rstrContentCopy))
     {
         if (!$bIgnoreMissing)

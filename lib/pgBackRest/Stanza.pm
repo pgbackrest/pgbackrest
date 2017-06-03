@@ -148,21 +148,19 @@ sub stanzaCreate
         }
     }
 
-    # Instantiate the info objects but don't load even if exists - if the info file or info.copy exists the exists flag will still
-    # be set. the data will be reconstructed and only rewritten
-    # if the reconstructed file does not match a valid info file on disk
+    # Instantiate the info objects. Throws an error and aborts if force not used and an error occurs during instantiation.
+    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive);
+    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup);
+
+    # Create the archive info object
     my ($iResult, $strResultMessage) =
-        $self->infoFileCreate(
-            (new pgBackRest::Archive::ArchiveInfo($strParentPathArchive, false, {bIgnoreMissing => true})), STORAGE_REPO_ARCHIVE,
-                $strParentPathArchive, \@stryFileListArchive);
+        $self->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $strParentPathArchive, \@stryFileListArchive);
 
     if ($iResult == 0)
     {
         # Create the backup.info file
         ($iResult, $strResultMessage) =
-            $self->infoFileCreate(
-                (new pgBackRest::Backup::Info($strParentPathBackup, false, false, {bIgnoreMissing => true})), STORAGE_REPO_BACKUP,
-                    $strParentPathBackup, \@stryFileListBackup);
+            $self->infoFileCreate($oBackupInfo, STORAGE_REPO_BACKUP, $strParentPathBackup, \@stryFileListBackup);
     }
 
     if ($iResult != 0)
@@ -276,6 +274,83 @@ sub parentPathGet
     (
         $strOperation,
         {name => 'strParentPath', value => $strParentPath},
+    );
+}
+
+####################################################################################################################################
+# infoObject
+#
+# Attempt to load an info object. Ignores missing files. Throws an error and aborts if force not used and an error occurs during
+# loading, else instatiates the object without loading it.
+####################################################################################################################################
+sub  infoObject
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathType,
+        $strParentPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->infoObject', \@_,
+            {name => 'strPathType'},
+            {name => 'strParentPath'},
+        );
+
+    my $iResult = 0;
+    my $strResultMessage;
+    my $oInfo;
+
+    # Turn off console logging to control when to display the error
+    logDisable();
+
+    # Instantiate the info object in an eval block to trap errors. If force is not used and an error occurs, throw the error
+    # along with a directive that force will need to be used to attempt to correct the issue
+    eval
+    {
+        # Ignore missing files but if the info or info.copy file exists the exists flag will still be set and data will attempt
+        # to be loaded
+        $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
+            new pgBackRest::Backup::Info($strParentPath, false, false, {bIgnoreMissing => true}) :
+            new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bIgnoreMissing => true}));
+
+        # Reset the console logging
+        logEnable();
+        return true;
+    }
+    or do
+    {
+        # Reset console logging and capture error information
+        logEnable();
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+    };
+
+    if ($iResult != 0)
+    {
+        # If force was not used, then confess the error with hint to use force
+        if (!optionGet(OPTION_FORCE))
+        {
+            confess &log(ERROR, $strResultMessage . $strHintForce, $iResult);
+        }
+        # Else instatiate the object without loading it
+        else
+        {
+            $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
+                new pgBackRest::Backup::Info($strParentPath, false, false, {bLoad => false, bIgnoreMissing => true}) :
+                new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bLoad => false, bIgnoreMissing => true}));
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oInfo', value => $oInfo},
     );
 }
 
