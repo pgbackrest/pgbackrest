@@ -317,7 +317,7 @@ sub perlInstall
     elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strImage .=
-            'RUN apt-get install -y libdbd-pg-perl libdbi-perl';
+            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libhtml-parser-perl';
 
         if ($strOS eq VM_U12 || $strOS eq VM_U14)
         {
