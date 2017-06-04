@@ -33,6 +33,7 @@ use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
@@ -52,16 +53,16 @@ sub run
             true, $self->expect(), {bHostBackup => $bRemote});
 
         # Create the test path for pg_control
-        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+        storageDb()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
 
         # Copy pg_control for stanza-create
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         # Create the xlog path for pushing WAL
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        storageTest()->pathCreate($strXlogPath, {bCreateParent => true});
+        storageDb()->pathCreate($strXlogPath, {bCreateParent => true});
         my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
 
         # Attempt an upgrade before stanza-create has been performed
@@ -79,7 +80,9 @@ sub run
 
         # Fail upgrade when backup.info missing
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since backup.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
@@ -90,14 +93,11 @@ sub run
 
         # Fail on archive push due to mismatch of DB since stanza not upgraded
         #--------------------------------------------------------------------------------------------------------------------------
-        # Push a WAL segment so have a valid file in archive dir
-        # $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_93 . '.bin', 1);
-
         # Upgrade the DB by copying new pg_control
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
-        executeTest('sudo chmod 600 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # Fail on attempt to push an archive
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
@@ -118,13 +118,17 @@ sub run
         # Create a DB history mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the archive info file and force reconstruction
-        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
         # Create a DB-ID mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
@@ -138,16 +142,18 @@ sub run
         # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the 10.0-3 directory and copy a WAL file to it (something that has a different system id)
-        $oHostBackup->executeSimple('mkdir ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/' . '10.0-3');
-        $oHostBackup->executeSimple('mkdir ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/' . '10.0-3/0000000100000001');
-        $oHostBackup->executeSimple('cp ' . $self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin '
-            . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/' . '10.0-3/0000000100000001/000000010000000100000001');
+        forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001', {bCreateParent => true});
+        storageRepo()->copy(
+            storageDb()->openRead($self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin'),
+            STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001/000000010000000100000001');
+        forceStorageOwner(storageRepo(), STORAGE_REPO_ARCHIVE . '/10.0-3', $oHostBackup->userGet(), {bRecurse => true});
 
         # Copy pg_control for 9.5
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
-        executeTest('sudo chmod 600 ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
 

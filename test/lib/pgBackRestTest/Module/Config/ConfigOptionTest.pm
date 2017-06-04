@@ -220,12 +220,12 @@ sub run
         $self->configLoadExpect($oOption, CMD_RESTORE);
     }
 
-    if ($self->begin('invalid ' . OPTION_BUFFER_SIZE))
+    if ($self->begin('invalid ' . OPTION_COMPRESS_LEVEL))
     {
         $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_BUFFER_SIZE, '512');
+        $self->optionSetTest($oOption, OPTION_COMPRESS_LEVEL, '12');
 
-        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_RANGE, '512', OPTION_BUFFER_SIZE);
+        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_RANGE, '12', OPTION_COMPRESS_LEVEL);
     }
 
     if ($self->begin(CMD_BACKUP . ' invalid value ' . OPTION_RETENTION_ARCHIVE_TYPE))

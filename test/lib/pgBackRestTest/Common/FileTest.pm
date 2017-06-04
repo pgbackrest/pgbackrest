@@ -183,6 +183,37 @@ sub forceStorageMode
 push(@EXPORT, qw(forceStorageMode));
 
 ####################################################################################################################################
+# forceStorageOwner - force ownership on a file or path
+####################################################################################################################################
+sub forceStorageOwner
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strPathExp,
+        $strOwner,
+        $bRecurse
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::forceStorageOwner', \@_,
+            {name => 'oStorage'},
+            {name => 'strPathExp'},
+            {name => 'strOwner'},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageOwner));
+
+####################################################################################################################################
 # forceStorageRemove - force remove a file or path from storage
 ####################################################################################################################################
 sub forceStorageRemove

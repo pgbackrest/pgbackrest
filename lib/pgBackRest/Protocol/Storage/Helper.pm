@@ -181,7 +181,7 @@ sub storageRepo
                 }
             };
 
-            # Select a driver
+            # Create the driver
             my $oDriver;
 
             if (optionTest(OPTION_REPO_TYPE, REPO_TYPE_CIFS))
