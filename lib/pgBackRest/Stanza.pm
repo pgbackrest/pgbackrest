@@ -27,7 +27,7 @@ use pgBackRest::Protocol::Storage::Helper;
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-my $strHintForce = "\nHINT: Use --force to force the stanza data to be created.";
+my $strHintForce = "\nHINT: Use stanza-create --force to force the stanza data to be created.";
 my $strStanzaCreateErrorMsg = "not empty" . $strHintForce;
 
 ####################################################################################################################################
@@ -149,8 +149,8 @@ sub stanzaCreate
     }
 
     # Instantiate the info objects. Throws an error and aborts if force not used and an error occurs during instantiation.
-    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive);
-    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup);
+    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive, {bIgnoreMissing => true});
+    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup, {bIgnoreMissing => true});
 
     # Create the archive info object
     my ($iResult, $strResultMessage) =
@@ -191,38 +191,28 @@ sub stanzaUpgrade
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
 
     # Get the archive info and backup info files; if either does not exist an error will be thrown
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE));
-    my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP));
+    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, storageRepo()->pathGet(STORAGE_REPO_ARCHIVE));
+    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, storageRepo()->pathGet(STORAGE_REPO_BACKUP));
     my $bBackupUpgraded = false;
     my $bArchiveUpgraded = false;
 
     # If the DB section does not match, then upgrade
     if ($self->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH))
     {
-        # Determine if it is necessary to reconstruct the file
-        my ($bReconstruct, $strWarningMsgArchive) = $self->reconstructCheck(
-            $oBackupInfo, STORAGE_REPO_BACKUP, storageRepo()->pathGet(STORAGE_REPO_BACKUP));
-
-        # If reconstruction was required then save the reconstructed file
-        if ($bReconstruct)
-        {
-            $oBackupInfo->save();
-            $bBackupUpgraded = true;
-        }
+        # Reconstruct the file and save it
+        my ($bReconstruct, $strWarningMsgArchive) = $oBackupInfo->reconstruct(false, false, $self->{oDb}{strDbVersion},
+            $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion}, $self->{oDb}{iCatalogVersion});
+        $oBackupInfo->save();
+        $bBackupUpgraded = true;
     }
 
     if ($self->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH))
     {
-        # Determine if it is necessary to reconstruct the file
-        my ($bReconstruct, $strWarningMsgArchive) = $self->reconstructCheck(
-            $oArchiveInfo, STORAGE_REPO_ARCHIVE, storageRepo()->pathGet(STORAGE_REPO_ARCHIVE));
-
-        # If reconstruction was required then save the reconstructed file
-        if ($bReconstruct)
-        {
-            $oArchiveInfo->save();
-            $bArchiveUpgraded = true;
-        }
+        # Reconstruct the file and save it
+        my ($bReconstruct, $strWarningMsgArchive) = $oArchiveInfo->reconstruct($self->{oDb}{strDbVersion},
+            $self->{oDb}{ullDbSysId});
+        $oArchiveInfo->save();
+        $bArchiveUpgraded = true;
     }
 
     # If neither file needed upgrading then provide informational message that an upgrade was not necessary
@@ -280,8 +270,8 @@ sub parentPathGet
 ####################################################################################################################################
 # infoObject
 #
-# Attempt to load an info object. Ignores missing files. Throws an error and aborts if force not used and an error occurs during
-# loading, else instatiates the object without loading it.
+# Attempt to load an info object. Ignores missing files if directed. Throws an error and aborts if force not used and an error
+# occurs during loading, else instatiates the object without loading it.
 ####################################################################################################################################
 sub  infoObject
 {
@@ -293,12 +283,14 @@ sub  infoObject
         $strOperation,
         $strPathType,
         $strParentPath,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->infoObject', \@_,
             {name => 'strPathType'},
             {name => 'strParentPath'},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     my $iResult = 0;
@@ -315,8 +307,8 @@ sub  infoObject
         # Ignore missing files but if the info or info.copy file exists the exists flag will still be set and data will attempt
         # to be loaded
         $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
-            new pgBackRest::Backup::Info($strParentPath, false, false, {bIgnoreMissing => true}) :
-            new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bIgnoreMissing => true}));
+            new pgBackRest::Backup::Info($strParentPath, false, false, {bIgnoreMissing => $bIgnoreMissing}) :
+            new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bIgnoreMissing => $bIgnoreMissing}));
 
         # Reset the console logging
         logEnable();
@@ -332,17 +324,18 @@ sub  infoObject
 
     if ($iResult != 0)
     {
-        # If force was not used, then confess the error with hint to use force
-        if (!optionGet(OPTION_FORCE))
+        # If force was not used, then confess the error with hint to use force (force is not configurable for stanza-upgrade so this
+        # will always confess errors on stanza-upgrade
+        if (optionValid(OPTION_FORCE) && !optionGet(OPTION_FORCE))
         {
             confess &log(ERROR, $strResultMessage . $strHintForce, $iResult);
         }
-        # Else instatiate the object without loading it
+        # Else instatiate the object without loading it so we can reconstruct and overqrite the invalid files
         else
         {
             $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
-                new pgBackRest::Backup::Info($strParentPath, false, false, {bLoad => false, bIgnoreMissing => true}) :
-                new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bLoad => false, bIgnoreMissing => true}));
+                new pgBackRest::Backup::Info($strParentPath, false, false, {bLoad => false}) :
+                new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bLoad => false}));
         }
     }
 
@@ -494,71 +487,6 @@ sub dbInfoGet
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# reconstructCheck
-#
-# Reconstruct the file based on disk data. If the info file already exists, it compares the reconstructed file to the existing file
-# and indicates if reconstruction is required. If the file does not yet exist on disk, it will still indicate reconstruction is
-# needed. The oInfo object contains the reconstructed data and can be saved by the calling routine.
-####################################################################################################################################
-sub reconstructCheck
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oInfo,
-        $strPathType,
-        $strParentPath,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->reconstructCheck', \@_,
-            {name => 'oInfo'},
-            {name => 'strPathType'},
-            {name => 'strParentPath'},
-        );
-
-    my $bReconstruct = true;
-    my $strWarningMsgArchive = undef;
-
-    # Reconstruct the file from the data in the directory if there is any else initialize the file
-    if ($strPathType eq STORAGE_REPO_BACKUP)
-    {
-        $oInfo->reconstruct(false, false, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
-            $self->{oDb}{iCatalogVersion});
-    }
-    # If this is the archive.info reconstruction then catch any warnings
-    else
-    {
-        $strWarningMsgArchive = $oInfo->reconstruct($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
-    }
-
-    # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
-    if ($oInfo->{bExists})
-    {
-        my $oInfoOnDisk =
-            ($strPathType eq STORAGE_REPO_BACKUP ?
-                new pgBackRest::Backup::Info($strParentPath) : new pgBackRest::Archive::ArchiveInfo($strParentPath));
-
-        # If the hashes are the same, then no need to reconstruct the file since it already exists and is valid
-        if ($oInfoOnDisk->hash() eq $oInfo->hash())
-        {
-            $bReconstruct = false;
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bReconstruct', value => $bReconstruct},
-        {name => 'strWarningMsgArchive', value => $strWarningMsgArchive},
-    );
 }
 
 ####################################################################################################################################

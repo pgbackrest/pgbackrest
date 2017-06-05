@@ -79,7 +79,7 @@ sub run
 
         # Fail upgrade when backup.info missing
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
+        $oHostBackup->executeSimple('rm ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . "*"));
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since backup.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
