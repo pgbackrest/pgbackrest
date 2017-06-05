@@ -149,8 +149,8 @@ sub stanzaCreate
     }
 
     # Instantiate the info objects. Throws an error and aborts if force not used and an error occurs during instantiation.
-    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive, {bIgnoreMissing => true});
-    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup, {bIgnoreMissing => true});
+    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive, {bRequired => false, bIgnoreMissing => true});
+    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup, {bRequired => false, bIgnoreMissing => true});
 
     # Create the archive info object
     my ($iResult, $strResultMessage) =
@@ -273,7 +273,7 @@ sub parentPathGet
 # Attempt to load an info object. Ignores missing files if directed. Throws an error and aborts if force not used and an error
 # occurs during loading, else instatiates the object without loading it.
 ####################################################################################################################################
-sub  infoObject
+sub infoObject
 {
     my $self = shift;
 
@@ -283,6 +283,7 @@ sub  infoObject
         $strOperation,
         $strPathType,
         $strParentPath,
+        $bRequired,
         $bIgnoreMissing,
     ) =
         logDebugParam
@@ -290,6 +291,7 @@ sub  infoObject
             __PACKAGE__ . '->infoObject', \@_,
             {name => 'strPathType'},
             {name => 'strParentPath'},
+            {name => 'bRequired', optional => true, default => true},
             {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
@@ -304,11 +306,11 @@ sub  infoObject
     # along with a directive that force will need to be used to attempt to correct the issue
     eval
     {
-        # Ignore missing files but if the info or info.copy file exists the exists flag will still be set and data will attempt
-        # to be loaded
+        # Ignore missing files if directed but if the info or info.copy file exists the exists flag will still be set and data will
+        # attempt to be loaded
         $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
-            new pgBackRest::Backup::Info($strParentPath, false, false, {bIgnoreMissing => $bIgnoreMissing}) :
-            new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bIgnoreMissing => $bIgnoreMissing}));
+            new pgBackRest::Backup::Info($strParentPath, false, $bRequired, {bIgnoreMissing => $bIgnoreMissing}) :
+            new pgBackRest::Archive::ArchiveInfo($strParentPath, $bRequired, {bIgnoreMissing => $bIgnoreMissing}));
 
         # Reset the console logging
         logEnable();
@@ -325,12 +327,13 @@ sub  infoObject
     if ($iResult != 0)
     {
         # If force was not used, then confess the error with hint to use force (force is not configurable for stanza-upgrade so this
-        # will always confess errors on stanza-upgrade
-        if (optionValid(OPTION_FORCE) && !optionGet(OPTION_FORCE))
+        # will always confess errors on stanza-upgrade)
+        if ((optionValid(OPTION_FORCE) && !optionGet(OPTION_FORCE)) ||
+            (!optionValid(OPTION_FORCE)))
         {
             confess &log(ERROR, $strResultMessage . $strHintForce, $iResult);
         }
-        # Else instatiate the object without loading it so we can reconstruct and overqrite the invalid files
+        # Else instatiate the object without loading it so we can reconstruct and overwrite the invalid files
         else
         {
             $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
@@ -418,7 +421,7 @@ sub infoFileCreate
                 {
                     $iResult = ERROR_FILE_INVALID;
                     $strResultMessage =
-                        ($strPathType eq STORAGE_REPO_BACKUP ? 'backup file ' : 'archive file ') . "invalid\n" .
+                        ($strPathType eq STORAGE_REPO_BACKUP ? 'backup info file ' : 'archive info file ') . "invalid\n" .
                         'HINT: use stanza-upgrade if the database has been upgraded or use --force';
                 }
             }

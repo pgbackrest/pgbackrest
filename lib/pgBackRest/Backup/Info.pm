@@ -133,7 +133,7 @@ sub new
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing, 
+    my $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
         oStorage => $oStorage});
 
     # If the backup info file does not exist and is required, then throw an error

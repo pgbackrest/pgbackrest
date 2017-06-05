@@ -19,6 +19,7 @@ use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Ini;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -30,6 +31,7 @@ use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::RunTest;
 
@@ -88,10 +90,239 @@ sub run
     $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
     $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
 
-    # ??? Currently only contains unit tests for stanza-upgrade. TODO stanza-create
+    ################################################################################################################################
+    if ($self->begin("Stanza::new"))
+    {
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionBoolSetTest($oOption, OPTION_ONLINE, true);
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        # my $oStanza = new pgBackRest::Stanza();
+
+        $self->testException(sub {(new pgBackRest::Stanza())}, ERROR_DB_CONNECT,
+            "could not connect to server: No such file or directory\n");
+
+        $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+    }
 
     ################################################################################################################################
-    if ($self->begin("Stanza::stanzaUpgrade"))
+    if ($self->begin("Stanza::process()"))
+    {
+        #---------------------------------------------------------------------------------------------------------------------------
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_CHECK); logEnable();
+        my $oStanza = new pgBackRest::Stanza();
+
+        $self->testException(sub {$oStanza->process()}, ERROR_ASSERT,
+            "stanza->process() called with invalid command: " . CMD_CHECK);
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        rmdir($self->{strArchivePath});
+        rmdir($self->{strBackupPath});
+        $self->testResult(sub {$oStanza->process()}, 0, 'parent paths recreated successfully');
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Stanza::stanzaCreate()"))
+    {
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        my $oStanza = new pgBackRest::Stanza();
+
+        my $strBackupInfoFile = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+        my $strBackupInfoFileCopy = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+        my $strArchiveInfoFile = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+
+        # No force. Archive dir not empty. No archive.info file. Backup directory empty.
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/9.4-1");
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
+            "archive directory not empty" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # No force. Archive dir not empty. No archive.info file. Backup directory not empty. No backup.info file.
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/12345");
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
+            "backup directory and/or archive directory not empty" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # No force. Archive dir empty. No archive.info file. Backup directory not empty. No backup.info file.
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/9.4-1", {bRecurse => true});
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
+            "backup directory not empty" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # No force. No archive.info file and no archive sub-directories or files. Backup.info exists and no backup sub-directories
+        # or files
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . "/12345", {bRecurse => true});
+        (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+             WAL_VERSION_94_SYS_ID, '942', '201409291', true);
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
+            "archive information missing" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # No force. No backup.info file (backup.info.copy only) and no backup sub-directories or files. Archive.info exists and no
+        # archive sub-directories or files
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+        (new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+            WAL_VERSION_94_SYS_ID, true);
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
+            "backup information missing" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # No force. Valid archive.info exists. Invalid backup.info exists.
+        #---------------------------------------------------------------------------------------------------------------------------
+        (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false))->create(PG_VERSION_94, WAL_VERSION_93_SYS_ID, '942',
+            '201409291', true);
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_INVALID,
+            "backup info file invalid" .
+            "\nHINT: use stanza-upgrade if the database has been upgraded or use --force");
+
+        # No force. Invalid archive.info exists. Invalid backup.info exists.
+        #---------------------------------------------------------------------------------------------------------------------------
+        (new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false))->create(PG_VERSION_94, WAL_VERSION_93_SYS_ID, true);
+        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_INVALID,
+            "archive info file invalid" .
+            "\nHINT: use stanza-upgrade if the database has been upgraded or use --force");
+
+        # Create stanza without force
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), $strBackupInfoFile . "*");
+        forceStorageRemove(storageRepo(), $strArchiveInfoFile . "*");
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza without force');
+
+        # Create stanza successfully with .info and .info.copy files already existing
+        #--------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza without force with existing info files');
+
+        # Remove only backup.info.copy file - confirm stanza create does not throw an error
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), $strBackupInfoFileCopy);
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'no error on missing copy file');
+        $self->testResult(sub {storageRepo()->exists($strBackupInfoFile) &&
+            !storageRepo()->exists($strBackupInfoFileCopy)},
+            true, '    and only backup.info exists');
+
+        # Force on, Repo-Sync off. Archive dir empty. No archive.info file. Backup directory not empty. No backup.info file.
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+
+        forceStorageRemove(storageRepo(), $strBackupInfoFile . "*");
+        forceStorageRemove(storageRepo(), $strArchiveInfoFile . "*");
+        storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/12345");
+        $oStanza = new pgBackRest::Stanza();
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza with force');
+        $self->testResult(sub {(new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}))->check(PG_VERSION_94,
+            WAL_VERSION_94_SYS_ID) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94, '942',
+            '201409291', WAL_VERSION_94_SYS_ID)}, 1, '    new info files correct');
+
+        $self->optionReset($oOption, OPTION_FORCE);
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Stanza::infoFileCreate"))
+    {
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        my $oStanza = new pgBackRest::Stanza();
+
+        my @stryFileList = ('anything');
+        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
+
+        # If infoFileCreate is ever called directly, confirm it errors if something other than the info file exists in archive dir
+        # when --force is not used
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(sub {$oStanza->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $self->{strArchivePath},
+            \@stryFileList)}, ERROR_PATH_NOT_EMPTY,
+            "archive directory not empty" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # If infoFileCreate is ever called directly, confirm it errors if something other than the info file exists in backup dir
+        # when --force is not used
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(sub {$oStanza->infoFileCreate($oBackupInfo, STORAGE_REPO_BACKUP, $self->{strBackupPath},
+            \@stryFileList)}, ERROR_PATH_NOT_EMPTY,
+            "backup directory not empty" .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # Set force option --------
+        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+
+        # Force. Invalid archive.info exists.
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+
+        $oArchiveInfo->create(PG_VERSION_94, 12345, true);
+        $oStanza = new pgBackRest::Stanza();
+        $self->testResult(sub {$oStanza->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $self->{strArchivePath},
+            \@stryFileList)}, "(0, [undef])", 'force successful for invalid info file');
+
+        # Cause an error to be thrown by changing the permissions of the archive file so it cannot be read for the hash comparison
+        #---------------------------------------------------------------------------------------------------------------------------
+        executeTest('sudo chmod 220 ' . $self->{strArchivePath} . "/archive.info");
+        $self->testResult(sub {$oStanza->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $self->{strArchivePath},
+            \@stryFileList)},
+            "(" . &ERROR_FILE_OPEN . ", unable to open '" . $self->{strArchivePath} . "/archive.info': Permission denied)",
+            'exception code path');
+        executeTest('sudo chmod 640 ' . $self->{strArchivePath} . "/archive.info");
+
+        # Force. Archive dir not empty. Warning returned.
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageTest()->pathCreate($self->{strArchivePath} . "/9.3-0", {bIgnoreExists => true, bCreateParent => true});
+        $self->testResult(sub {$oStanza->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $self->{strArchivePath},
+            \@stryFileList)}, "(0, [undef])", 'force successful with archive.info file warning',
+            {strLogExpect => "WARN: found empty directory " . $self->{strArchivePath} . "/9.3-0"});
+
+        # Reset force option --------
+        $self->optionReset($oOption, OPTION_FORCE);
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Stanza::infoObject()"))
+    {
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+        my $oStanza = new pgBackRest::Stanza();
+
+        $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_MISSING,
+            "unable to open " . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) . " or " .
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT) .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+        # Force valid but not set.
+        #---------------------------------------------------------------------------------------------------------------------------
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $oStanza = new pgBackRest::Stanza();
+
+        $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_MISSING,
+            "unable to open " . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) . " or " .
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT) .
+            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+
+                    # Cause an error to be thrown by changing the permissions of the archive file so it cannot be read
+                    #---------------------------------------------------------------------------------------------------------------------------
+        # Set force option --------
+        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+
+        # Force.
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+
+        $self->testResult(sub {$oStanza->infoObject(STORAGE_REPO_ARCHIVE, $self->{strArchivePath})}, "[object]",
+            'archive force successful');
+        $self->testResult(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, "[object]",
+            'backup force successful');
+
+        # Reset force option --------
+        $self->optionReset($oOption, OPTION_FORCE);
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Stanza::stanzaUpgrade()"))
     {
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
 
@@ -112,7 +343,7 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("Stanza::upgradeCheck"))
+    if ($self->begin("Stanza::upgradeCheck()"))
     {
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
         my $oStanza = new pgBackRest::Stanza();
