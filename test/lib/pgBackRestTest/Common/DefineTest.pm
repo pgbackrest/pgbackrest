@@ -183,7 +183,7 @@ my $oTestDef =
 
                     &TESTDEF_COVERAGE =>
                     {
-                        'Storage/Filter/Gzip' => TESTDEF_COVERAGE_FULL,
+                        'Storage/Filter/Gzip' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {

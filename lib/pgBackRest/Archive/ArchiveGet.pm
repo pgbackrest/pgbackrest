@@ -27,6 +27,7 @@ use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
@@ -122,9 +123,11 @@ sub get
         # Copy the archive file to the requested location
         $oStorageRepo->copy(
             $oStorageRepo->openRead(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
-                {rhyFilter => $bSourceCompressed ? [{strClass => STORAGE_FILTER_GZIP}] : undef}),
-            storageDb()->openWrite($strDestinationFile));
+                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}", {bProtocolCompress => !$bSourceCompressed}),
+            storageDb()->openWrite(
+                $strDestinationFile,
+                {rhyFilter => $bSourceCompressed ?
+                    [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
     }
 
     # Return from function and log return values if any

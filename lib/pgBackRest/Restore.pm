@@ -208,7 +208,7 @@ sub manifestLoad
 
     # Copy the backup manifest to the db cluster path
     storageDb()->copy(
-        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST),
+        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST, {bProtocolCompress => true}),
         $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
     # Load the manifest into a hash
@@ -1059,7 +1059,7 @@ sub process
 
     # Copy backup info, load it, then delete
     $oStorageDb->copy(
-        storageRepo()->openRead(STORAGE_REPO_BACKUP . qw(/) . FILE_BACKUP_INFO),
+        storageRepo()->openRead(STORAGE_REPO_BACKUP . qw(/) . FILE_BACKUP_INFO, {bProtocolCompress => true}),
         $self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
 
     my $oBackupInfo = new pgBackRest::Backup::Info($self->{strDbClusterPath}, false, undef, {oStorage => storageDb()});

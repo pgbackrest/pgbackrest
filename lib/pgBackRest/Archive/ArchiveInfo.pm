@@ -26,6 +26,7 @@ use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
@@ -341,7 +342,8 @@ sub reconstruct
 
         my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
-            {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ? [{strClass => STORAGE_FILTER_GZIP}] : undef});
+            {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
+                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef});
 
         $oFileIo->read(\$tBlock, 512, true);
         $oFileIo->close();

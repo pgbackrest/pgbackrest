@@ -73,7 +73,8 @@ sub run
     {
         #---------------------------------------------------------------------------------------------------------------------------
         my $oGzipIo = $self->testResult(
-            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFileGz, STORAGE_FILE_WRITE))}, '[object]', 'new write');
+            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFileGz, STORAGE_FILE_WRITE))}, '[object]',
+            'new write compress');
 
         my $tBuffer = substr($strFileContent, 0, 2);
         $self->testResult(sub {$oGzipIo->write(\$tBuffer)}, 2, '    write 2 bytes');
@@ -90,6 +91,23 @@ sub run
 
         executeTest("gzip -d ${strFileGz}");
         $self->testResult(sub {${storageTest()->get($strFile)}}, $strFileContent, '    check content');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        executeTest("gzip ${strFile}");
+        my $tFile = ${storageTest()->get($strFileGz)};
+
+        $oGzipIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo(
+                $strFile, STORAGE_FILE_WRITE), {strCompressType => STORAGE_DECOMPRESS})}, '[object]', 'new write decompress');
+
+        $tBuffer = substr($tFile, 0, 10);
+        $self->testResult(sub {$oGzipIo->write(\$tBuffer)}, 10, '     write bytes');
+        $tBuffer = substr($tFile, 10);
+        $self->testResult(sub {$oGzipIo->write(\$tBuffer)}, length($tFile) - 10, '     write bytes');
+        $self->testResult(sub {$oGzipIo->close()}, true, '    close');
+
+        $self->testResult(sub {${storageTest()->get($strFile)}}, $strFileContent, '    check content');
+
     }
 
     ################################################################################################################################
@@ -100,14 +118,15 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oGzipIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFileGz, STORAGE_FILE_WRITE), {bWantGzip => false})},
-            '[object]', 'new write');
+            '[object]', 'new write compress');
         $self->testResult(sub {$oGzipIo->write(\$strFileContent, $iFileLength)}, $iFileLength, '    write');
         $self->testResult(sub {$oGzipIo->close()}, true, '    close');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oGzipIo = $self->testResult(
-            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFileGz, STORAGE_FILE_READ), {bWantGzip => false})},
-            '[object]', 'new read');
+            sub {new pgBackRest::Storage::Filter::Gzip(
+                $self->posixIo($strFileGz, STORAGE_FILE_READ), {bWantGzip => false, strCompressType => STORAGE_DECOMPRESS})},
+            '[object]', 'new read decompress');
 
         $self->testResult(sub {$oGzipIo->read(\$tBuffer, 4)}, 4, '    read 4 bytes');
         $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2)}, 2, '    read 2 bytes');
@@ -121,13 +140,31 @@ sub run
         storageTest()->remove($strFileGz);
 
         #---------------------------------------------------------------------------------------------------------------------------
+        $tBuffer = 'AA';
+        storageTest()->put($strFile, $strFileContent);
+
+        $oGzipIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFile, STORAGE_FILE_READ))},
+            '[object]', 'new read compress');
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2)}, 10, '    read 10 bytes (request 2)');
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2)}, 18, '    read 18 bytes (request 2)');
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2)}, 0, '    read 0 bytes (request 2)');
+        $self->testResult(sub {$oGzipIo->close()}, true, '    close');
+
+        $self->testResult(sub {storageTest()->put($strFileGz, substr($tBuffer, 2))}, 28, '    put content');
+        executeTest("gzip -df ${strFileGz}");
+        $self->testResult(sub {${storageTest()->get($strFile)}}, $strFileContent, '    check content');
+
+        #---------------------------------------------------------------------------------------------------------------------------
         $tBuffer = undef;
 
         executeTest('cat ' . $self->dataPath() . "/filecopy.archive2.bin | gzip -c > ${strFileGz}");
 
         $oGzipIo = $self->testResult(
-            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFileGz, STORAGE_FILE_READ), {lBufferMax => 4096})},
-            '[object]', 'new read');
+            sub {new pgBackRest::Storage::Filter::Gzip(
+                $self->posixIo($strFileGz, STORAGE_FILE_READ),
+                {lCompressBufferMax => 4096, strCompressType => STORAGE_DECOMPRESS})},
+            '[object]', 'new read decompress');
 
         $self->testResult(sub {$oGzipIo->read(\$tBuffer, 8388608)}, 8388608, '    read 8388608 bytes');
         $self->testResult(sub {$oGzipIo->read(\$tBuffer, 4194304)}, 4194304, '    read 4194304 bytes');
@@ -137,12 +174,34 @@ sub run
         $self->testResult(sub {$oGzipIo->close()}, true, '    close');
         $self->testResult(sha1_hex($tBuffer), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
 
+        storageTest()->remove($strFileGz);
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $tBuffer = undef;
+
+        executeTest('cp ' . $self->dataPath() . "/filecopy.archive2.bin ${strFile}");
+
+        $oGzipIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::Gzip(
+                $self->posixIo($strFile, STORAGE_FILE_READ), {strCompressType => STORAGE_COMPRESS})},
+            '[object]', 'new read compress');
+
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2000000) > 0}, true, '    read bytes');
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2000000) > 0}, true, '    read bytes');
+        $self->testResult(sub {$oGzipIo->close()}, true, '    close');
+
+        $self->testResult(sub {storageTest()->put($strFileGz, $tBuffer) > 0}, true, '    put content');
+        executeTest("gzip -df ${strFileGz}");
+        $self->testResult(
+            sub {sha1_hex(${storageTest()->get($strFile)})}, '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
+
         #---------------------------------------------------------------------------------------------------------------------------
         storageTest()->put($strFileGz, $strFileContent);
 
         $oGzipIo = $self->testResult(
-            sub {new pgBackRest::Storage::Filter::Gzip($self->posixIo($strFileGz, STORAGE_FILE_READ))},
-            '[object]', 'new read');
+            sub {new pgBackRest::Storage::Filter::Gzip(
+                $self->posixIo($strFileGz, STORAGE_FILE_READ), {strCompressType => STORAGE_DECOMPRESS})},
+            '[object]', 'new read decompress');
 
         $self->testException(
             sub {$oGzipIo->read(\$tBuffer, 1)}, ERROR_FILE_READ, "unable to inflate '${strFileGz}': incorrect header check");

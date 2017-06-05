@@ -71,7 +71,8 @@ sub storageLocal
         # Create local storage
         $hStorage->{&STORAGE_LOCAL}{$strPath} = new pgBackRest::Storage::Local(
             $strPath, new pgBackRest::Storage::Posix::Driver(),
-            {lBufferMax => optionValid(OPTION_BUFFER_SIZE, false) ? optionGet(OPTION_BUFFER_SIZE, false) : undef});
+            {strTempExtension => STORAGE_TEMP_EXT,
+                lBufferMax => optionValid(OPTION_BUFFER_SIZE, false) ? optionGet(OPTION_BUFFER_SIZE, false) : undef});
     }
 
     # Return from function and log return values if any
@@ -113,8 +114,7 @@ sub storageSpool
         # Create local storage
         $hStorage->{&STORAGE_SPOOL}{$strStanza} = new pgBackRest::Storage::Local(
             optionGet(OPTION_SPOOL_PATH), new pgBackRest::Storage::Posix::Driver(),
-            {hRule => $hRule, bAllowTemp => true, strTempExtension => STORAGE_TEMP_EXT,
-                lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
+            {hRule => $hRule, strTempExtension => STORAGE_TEMP_EXT, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
     }
 
     # Return from function and log return values if any

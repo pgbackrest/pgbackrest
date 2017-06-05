@@ -19,6 +19,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
@@ -124,20 +125,28 @@ sub restoreFile
     # Copy file from repository to database
     if ($bCopy)
     {
-        # Open source file
-        my $oSourceFileIo = storageRepo()->openRead(
-            STORAGE_REPO_BACKUP . qw(/) . (defined($strReference) ? $strReference : $strBackupPath) .
-                "/${strRepoFile}" . ($bSourceCompressed ? qw{.} . COMPRESS_EXT : ''),
-                {rhyFilter => $bSourceCompressed ? [{strClass => STORAGE_FILTER_GZIP}] : undef});
+        # Add sha filter
+        my $rhyFilter = [{strClass => STORAGE_FILTER_SHA}];
+
+        # Add compression
+        if ($bSourceCompressed)
+        {
+            unshift(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+        }
 
         # Open destination file
         my $oDestinationFileIo = $oStorageDb->openWrite(
             $strDbFile,
             {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lModificationTime,
-                rhyFilter => [{strClass => STORAGE_FILTER_SHA}]});
+                rhyFilter => $rhyFilter});
 
         # Copy file
-        storageRepo()->copy($oSourceFileIo, $oDestinationFileIo);
+        storageRepo()->copy(
+            storageRepo()->openRead(
+                STORAGE_REPO_BACKUP . qw(/) . (defined($strReference) ? $strReference : $strBackupPath) .
+                    "/${strRepoFile}" . ($bSourceCompressed ? qw{.} . COMPRESS_EXT : ''),
+                {bProtocolCompress => !$bSourceCompressed}),
+            $oDestinationFileIo);
 
         # Validate checksum
         if ($oDestinationFileIo->result(COMMON_IO_HANDLE) != 0 && $oDestinationFileIo->result(STORAGE_FILTER_SHA) ne $strChecksum)

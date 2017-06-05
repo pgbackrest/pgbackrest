@@ -6,7 +6,7 @@ run 003 - rmt 0, cmp 1, exists 0
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000001
 P00  DEBUG:     Archive::ArchiveGet->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, strSourceArchive = 000000010000000100000001
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Archive->getCheck(): strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
@@ -123,7 +123,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/repo/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000090000000900000009
 P00  DEBUG:     Archive::ArchiveGet->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000090000000900000009
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Archive->getCheck(): strDbVersion = [undef], strWalFile = 000000090000000900000009, ullDbSysId = [undef]
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]

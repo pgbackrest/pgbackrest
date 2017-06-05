@@ -24,6 +24,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Helper;
 
@@ -155,7 +156,8 @@ sub run
 
         storageRepo()->copy(
             storageRepo()->openRead(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz", {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}]}),
+                STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz",
+                {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}]}),
             STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
 
         $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',

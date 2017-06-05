@@ -25,6 +25,14 @@ use constant STORAGE_FILE_WRITE                                     => 'write';
     push @EXPORT, qw(STORAGE_FILE_WRITE);
 
 ####################################################################################################################################
+# Compress constants
+####################################################################################################################################
+use constant STORAGE_COMPRESS                                       => 'compress';
+    push @EXPORT, qw(STORAGE_COMPRESS);
+use constant STORAGE_DECOMPRESS                                     => 'decompress';
+    push @EXPORT, qw(STORAGE_DECOMPRESS);
+
+####################################################################################################################################
 # Capability constants
 ####################################################################################################################################
 use constant STORAGE_CAPABILITY_LINK                                => 'link';

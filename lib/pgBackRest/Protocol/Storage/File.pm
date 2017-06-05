@@ -44,6 +44,9 @@ sub new
     $self->{oProtocol} = $oProtocol;
     $self->{oFileIo} = $oFileIo;
 
+    # Set read/write
+    $self->{bWrite} = false;
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -91,17 +94,23 @@ sub write
     my $self = shift;
     my $rtBuffer = shift;
 
+    # Set write
+    $self->{bWrite} = true;
+
     # Get the buffer size
     my $lBlockSize = defined($rtBuffer) ? length($$rtBuffer) : 0;
 
-    # Write block header to the protocol stream
-    $self->{oProtocol}->io()->writeLine("BRBLOCK${lBlockSize}");
-
-    # Write block if size > 0
+    # Write if size > 0 (0 ends the copy stream so it should only be done in close())
     if ($lBlockSize > 0)
     {
+        # Write block header to the protocol stream
+        $self->{oProtocol}->io()->writeLine("BRBLOCK${lBlockSize}");
+
+        # Write block if size
         $self->{oProtocol}->io()->write($rtBuffer);
     }
+
+    return length($$rtBuffer);
 }
 
 ####################################################################################################################################
@@ -114,6 +123,12 @@ sub close
     # Close if protocol is defined (to prevent this from running more than once)
     if (defined($self->{oProtocol}))
     {
+        # If writing output terminator
+        if ($self->{bWrite})
+        {
+            $self->{oProtocol}->io()->writeLine("BRBLOCK0");
+        }
+
         # On master read the results
         if ($self->{oProtocol}->master())
         {

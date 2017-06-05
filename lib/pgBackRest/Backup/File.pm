@@ -20,6 +20,7 @@ use pgBackRest::Common::String;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 use pgBackRest::Storage::Filter::Sha;
 use pgBackRest::Storage::Helper;
@@ -90,7 +91,8 @@ sub backupFile
         ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
             $oStorageRepo->openRead(
                 STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {rhyFilter => $bDestinationCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef}));
+                {rhyFilter => $bDestinationCompress ?
+                    [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
 
         # Determine if the file needs to be recopied
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
@@ -117,18 +119,24 @@ sub backupFile
                     rxyParam => [$iSegmentNo, $hExtraParam->{iWalId}, $hExtraParam->{iWalOffset}]});
         };
 
+        # Add compression
+        if ($bDestinationCompress)
+        {
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP});
+        }
+
         # Open the file
         my $oSourceFileIo = storageDb()->openRead($strDbFile, {rhyFilter => $rhyFilter, bIgnoreMissing => true});
 
         # If source file exists
         if (defined($oSourceFileIo))
         {
-            my $oDestinationFileIo = $oStorageRepo->openWrite(
-                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {rhyFilter => $bDestinationCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef, bPathCreate => true});
-
             # Copy the file
-            $oStorageRepo->copy($oSourceFileIo, $oDestinationFileIo);
+            $oStorageRepo->copy(
+                $oSourceFileIo,
+                $oStorageRepo->openWrite(
+                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+                    {bPathCreate => true, bProtocolCompress => !$bDestinationCompress}));
 
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);

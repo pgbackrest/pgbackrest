@@ -23,6 +23,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 
 use pgBackRestTest::Env::HostEnvTest;
@@ -126,7 +127,8 @@ sub run
                 my ($strActualChecksum) = storageRepo()->hashSize(
                     storageRepo()->openRead(
                         STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . "-1/${strSourceFile}",
-                        {rhyFilter => $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef}));
+                        {rhyFilter => $bCompress ?
+                            [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
 
                 if ($strActualChecksum ne $strArchiveChecksum)
                 {
