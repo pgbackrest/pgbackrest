@@ -145,7 +145,7 @@ sub restoreFile
             storageRepo()->openRead(
                 STORAGE_REPO_BACKUP . qw(/) . (defined($strReference) ? $strReference : $strBackupPath) .
                     "/${strRepoFile}" . ($bSourceCompressed ? qw{.} . COMPRESS_EXT : ''),
-                {bProtocolCompress => !$bSourceCompressed}),
+                {bProtocolCompress => !$bSourceCompressed && $lSize != 0}),
             $oDestinationFileIo);
 
         # Validate checksum

@@ -77,7 +77,7 @@ sub read
     $lBlockSize = substr($strBlockHeader, 7);
 
     # Read block if size > 0
-    if ($lBlockSize >= 0)
+    if ($lBlockSize > 0)
     {
         $self->{oProtocol}->io()->read($rtBuffer, $lBlockSize, true);
     }
