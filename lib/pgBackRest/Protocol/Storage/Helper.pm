@@ -181,7 +181,7 @@ sub storageRepo
                 }
             };
 
-            # Select a driver
+            # Create the driver
             my $oDriver;
 
             if (optionTest(OPTION_REPO_TYPE, REPO_TYPE_CIFS))
@@ -198,7 +198,7 @@ sub storageRepo
             # Create local storage
             $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Storage::Local(
                 optionGet(OPTION_REPO_PATH), $oDriver,
-                {hRule => $hRule, bAllowTemp => false, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
+                {strTempExtension => STORAGE_TEMP_EXT, hRule => $hRule, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
         }
         else
         {

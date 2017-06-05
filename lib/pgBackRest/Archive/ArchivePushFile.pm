@@ -175,19 +175,13 @@ sub archivePushFile
             }
         }
 
-        # Open source file
-        my $oSourceFileIo = storageDb()->openRead(
-            "${strWalPath}/${strWalFile}", {rhyFilter => [{strClass => STORAGE_FILTER_SHA}]});
-
         # Copy
         $oStorageRepo->copy(
-            $oSourceFileIo,
+            storageDb()->openRead("${strWalPath}/${strWalFile}",
+                {rhyFilter => walIsSegment($strWalFile) && $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef}),
             $oStorageRepo->openWrite(
                 STORAGE_REPO_ARCHIVE . "/${strArchiveFile}",
-                {rhyFilter => walIsSegment($strWalFile) && $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef,
-                    bPathCreate => true, bAtomic => true}));
-
-        # !!! Add code to make sure that the hash did not change
+                {bPathCreate => true, bAtomic => true, bProtocolCompress => !walIsSegment($strWalFile) || !$bCompress}));
     }
 
     # Return from function and log return values if any

@@ -95,10 +95,10 @@ sub run
     {
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
 
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
+        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
         $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
-        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false);
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
         $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
 
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
@@ -118,11 +118,11 @@ sub run
         my $oStanza = new pgBackRest::Stanza();
 
         # Create the archive file with current data
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
+        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
         $oArchiveInfo->create('9.4', 6353949018581704918, true);
 
         # Create the backup file with outdated data
-        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false);
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
         $oBackupInfo->create('9.3', 6999999999999999999, '937', '201306121', true);
 
         # Confirm upgrade is needed for backup

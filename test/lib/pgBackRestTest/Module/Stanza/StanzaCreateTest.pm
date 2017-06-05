@@ -24,9 +24,13 @@ use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Filter::Gzip;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
@@ -36,30 +40,26 @@ sub run
 {
     my $self = shift;
 
-    for (my $bRemote = false; $bRemote <= true; $bRemote++)
+    foreach my $bRemote (false, true)
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin($bRemote ? "remote" : "local")) {next}
+        if (!$self->begin("remote ${bRemote}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote});
-
-        # Storage
-        my $oStorageDb = storageDb();
-        my $oStorageRepo = storageRepo();
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
             strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Create the test path for pg_control
-        $oStorageDb->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
+        storageDb()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
 
         # Copy pg_control for stanza-create
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
@@ -68,7 +68,7 @@ sub run
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        $oStorageDb->pathCreate($strXlogPath, {bCreateParent => true});
+        storageDb()->pathCreate($strXlogPath, {bCreateParent => true});
 
         # Generate WAL then push to get valid archive data in the archive directory
         my ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strXlogPath, 1, 1, WAL_VERSION_94);
@@ -76,23 +76,30 @@ sub run
             ' --stanza=db archive-push';
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
 
-        # With data existing in the archive dir, remove the info file and confirm failure
-        $oHostBackup->executeSimple('rm ' . $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . qw{*}));
+        # With data existing in the archive dir, remove the info files and confirm failure
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Change the permissions of the archive file so it cannot be read
-        executeTest('sudo chmod 220 ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-            substr($strArchiveFile, 0, 16) . "/*.gz");
+        forceStorageMode(
+            storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
+                COMPRESS_EXT,
+            '220');
 
         # Force creation of the info file but fail on gunzip
         $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
             {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-        # Change permissions back and force creation of archive info from the gz file
-        executeTest('sudo chmod 640 ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-            substr($strArchiveFile, 0, 16) . "/*.gz");
+        # Change permissions back
+        forceStorageMode(
+            storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
+                COMPRESS_EXT,
+            '640');
 
+        # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
@@ -102,7 +109,7 @@ sub run
 
         # Munge and save the archive info file
         $oHostBackup->infoMunge(
-            $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
+            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
         $oHostBackup->stanzaCreate('hash check fails requiring force',
@@ -112,38 +119,54 @@ sub run
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
         # Cleanup the global hash but don't save the file (permission issues may prevent it anyway)
-        $oHostBackup->infoRestore($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), false);
+        $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), false);
 
         # Change the database version by copying a new pg_control file
-        executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        executeTest('cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $oHostDbMaster->dbBasePath() .
-            '/' . DB_FILE_PGCONTROL);
+        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaCreate('fail on database mismatch without force option',
             {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Restore pg_control
-        executeTest('sudo rm ' . $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        executeTest('cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' .
+        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         # Unzip the archive file and recreate the archive.info file from it
-        executeTest('sudo gunzip ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-            substr($strArchiveFile, 0, 16) . "/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz");
+        my $strArchiveTest = PG_VERSION_94 . "-1/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
+
+        forceStorageMode(
+            storageRepo(), dirname(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz")), 'g+w',
+            {bRecursive => true});
+
+        storageRepo()->copy(
+            storageRepo()->openRead(
+                STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz",
+                {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}]}),
+            STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
+
         $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
         # Remove the uncompressed WAL archive file and archive.info
-        executeTest('sudo rm ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-            substr($strArchiveFile, 0, 16) . "/${strArchiveFile}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27");
-        $oHostBackup->executeSimple('rm ' . $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . qw{*}));
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+
         $oHostBackup->stanzaCreate('force with missing WAL archive file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
         # Remove the WAL archive directory
-        executeTest('sudo rm -rf ' . $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-            substr($strArchiveFile, 0, 16));
-        $oHostBackup->executeSimple('rm ' . $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
+        forceStorageRemove(
+            storageRepo(),
+            STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16), {bRecurse => true});
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+
         $oHostBackup->stanzaCreate('force with missing WAL archive directory',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
     }

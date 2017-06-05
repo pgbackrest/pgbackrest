@@ -90,7 +90,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -240,7 +240,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001.partial
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -338,7 +338,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000002-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -372,7 +372,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000003-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -406,7 +406,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000004-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -440,7 +440,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -590,7 +590,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000005.partial
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000005.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -688,7 +688,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000006
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000006-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -722,7 +722,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000007
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000007-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -756,7 +756,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000008
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000008-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -790,7 +790,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
@@ -940,7 +940,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBu
 P00  DEBUG:     Storage::Local->hashSize(): xFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Sha}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), strFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000009.partial
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000009.partial-72b9da071c13957fb4ca31f05dbd5c644297c2f7.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]

@@ -23,10 +23,12 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
@@ -53,16 +55,12 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress});
 
-        # Get storage repo
-        my $oStorageRepo = storageRepo();
-        my $oStorageDb = storageDb();
-
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        $oStorageDb->pathCreate($strXlogPath, {bCreateParent => true});
+        storageDb()->pathCreate($strXlogPath, {bCreateParent => true});
 
         # Create the test path for pg_control and copy pg_control for stanza-create
-        $oStorageDb->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+        storageDb()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
         executeTest(
             'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() .  '/' .
             DB_FILE_PGCONTROL);
@@ -83,8 +81,8 @@ sub run
         if (defined($self->expect()))
         {
             $self->expect()->supplementalAdd(
-                $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
-                ${$oStorageRepo->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
+                ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
         }
 
         if ($bExists)
@@ -113,22 +111,24 @@ sub run
                 }
 
                 # Change the directory permissions to enable file creation
-                executeTest('sudo chmod 770 ' . $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE));
-                $oStorageRepo->pathCreate(
+                forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
+
+                storageRepo()->pathCreate(
                     STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16),
                     {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
                 storageTest()->copy(
                     $strArchiveTestFile,
-                    $oStorageRepo->openWrite(
+                    storageRepo()->openWrite(
                         STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . "-1/${strSourceFile}",
                         {rhyFilter => $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef,
                             strMode => '0660', bCreateParent => true}));
 
-                my ($strActualChecksum) = $oStorageRepo->hashSize(
-                    $oStorageRepo->openRead(
+                my ($strActualChecksum) = storageRepo()->hashSize(
+                    storageRepo()->openRead(
                         STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . "-1/${strSourceFile}",
-                        {rhyFilter => $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef}));
+                        {rhyFilter => $bCompress ?
+                            [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
 
                 if ($strActualChecksum ne $strArchiveChecksum)
                 {
@@ -143,9 +143,9 @@ sub run
                     {oLogTest => $self->expect()});
 
                 # Check that the destination file exists
-                if ($oStorageDb->exists($strDestinationFile))
+                if (storageDb()->exists($strDestinationFile))
                 {
-                    my ($strActualChecksum) = $oStorageDb->hashSize($strDestinationFile);
+                    my ($strActualChecksum) = storageDb()->hashSize($strDestinationFile);
 
                     if ($strActualChecksum ne $strArchiveChecksum)
                     {

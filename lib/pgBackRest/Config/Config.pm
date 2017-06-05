@@ -436,8 +436,6 @@ use constant OPTION_DEFAULT_BUFFER_SIZE                             => COMMON_IO
     push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE);
 use constant OPTION_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
     push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MIN);
-use constant OPTION_DEFAULT_BUFFER_SIZE_MAX                         => COMMON_IO_BUFFER_MAX * 2;
-    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MAX);
 
 use constant OPTION_DEFAULT_COMPRESS                                => true;
     push @EXPORT, qw(OPTION_DEFAULT_COMPRESS);
@@ -1025,7 +1023,20 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BUFFER_SIZE,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_BUFFER_SIZE_MIN, OPTION_DEFAULT_BUFFER_SIZE_MAX],
+        &OPTION_RULE_ALLOW_LIST =>
+        {
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN         => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 2     => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 4     => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 8     => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 16    => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 32    => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 64    => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 128   => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 256   => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 512   => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 1024  => true,
+        },
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
@@ -1265,8 +1276,8 @@ my %oOptionRule =
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_TYPE,
         &OPTION_RULE_ALLOW_LIST =>
         {
-            &REPO_TYPE_POSIX    => true,
             &REPO_TYPE_CIFS     => true,
+            &REPO_TYPE_POSIX    => true,
         },
         &OPTION_RULE_COMMAND =>
         {

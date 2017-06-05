@@ -115,7 +115,8 @@ sub run
             $strType = BACKUP_TYPE_FULL;
 
             # Remove the files in the archive directory
-            executeTest('sudo rm -rf ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . "/*");
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
+
             $oHostDbMaster->check(
                 'fail on missing archive.info file',
                 {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
@@ -245,7 +246,9 @@ sub run
             # Stanza Create
             #-----------------------------------------------------------------------------------------------------------------------
             # With data existing in the archive and backup directory, remove backup info file and confirm failure
-            executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+
             $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
@@ -253,23 +256,24 @@ sub run
             $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . OPTION_FORCE});
 
             # Remove the backup info file
-            executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
 
             # Change the database version by copying a new pg_control file to a new db-path to use for db mismatch test
-            storageTest()->pathCreate(
+            storageDb()->pathCreate(
                 $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
 
             if ($self->pgVersion() eq PG_VERSION_94)
             {
-                executeTest(
-                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbPath() .
-                    '/testbase/' . DB_FILE_PGCONTROL);
+                storageDb()->copy(
+                    $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
+                    $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
             } else
             {
-                executeTest(
-                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbPath() .
-                    '/testbase/' . DB_FILE_PGCONTROL);
+                storageDb()->copy(
+                    $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+                    $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
             }
 
             # Run stanza-create online to confirm proper handling of configValidation error against new db-path
@@ -510,7 +514,7 @@ sub run
             $strType, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                 strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK .
-                    ' --' . OPTION_BUFFER_SIZE . '=24576'});
+                    ' --' . OPTION_BUFFER_SIZE . '=32768'});
 
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');

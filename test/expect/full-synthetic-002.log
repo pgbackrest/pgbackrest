@@ -79,7 +79,7 @@ P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/repo/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/repo/log
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 16384, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 16384, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -430,7 +430,7 @@ P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/repo/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/repo/log
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -758,7 +758,7 @@ P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/PG_VERSION
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = <REPO:BACKUP>/backup.info
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/db/base/backup.info, xSourceFile = [object]
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
@@ -1123,7 +1123,7 @@ P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/repo/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/repo/log
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -1454,7 +1454,7 @@ P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/repo/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/repo/log
-P00  DEBUG:     Storage::Local->new(): bAllowTemp = false, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = <tmp>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/backup.history
 P00  DEBUG:     Backup::Info->new(): bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info

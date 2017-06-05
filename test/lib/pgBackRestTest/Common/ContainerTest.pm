@@ -295,28 +295,34 @@ sub perlInstall
 {
     my $strOS = shift;
 
+    my $oVm = vmGet();
     my $strImage =
         "# Install Perl packages\n";
 
-    if ($strOS eq VM_CO6)
+    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strImage .=
-            'RUN yum install -y perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg';
+        $strImage .= 'RUN yum install -y perl';
+
+        if ($strOS eq VM_CO6)
+        {
+            $strImage .= ' perl-Time-HiRes perl-parent perl-JSON';
+        }
+        else
+        {
+            $strImage .= ' perl-JSON-PP';
+        }
+
+        $strImage .= ' perl-Digest-SHA perl-DBD-Pg';
     }
-    elsif ($strOS eq VM_CO7)
-    {
-        $strImage .=
-            'RUN yum install -y perl perl-JSON-PP perl-Digest-SHA perl-DBD-Pg';
-    }
-    elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
-    {
-        $strImage .=
-            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl libhtml-parser-perl';
-    }
-    elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
+    elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strImage .=
             'RUN apt-get install -y libdbd-pg-perl libdbi-perl libhtml-parser-perl';
+
+        if ($strOS eq VM_U12 || $strOS eq VM_U14)
+        {
+            $strImage .= ' libnet-daemon-perl libplrpc-perl';
+        }
     }
     else
     {
