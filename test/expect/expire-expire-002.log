@@ -11,6 +11,7 @@ run 002 - Expire::stanzaUpgrade
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -37,10 +38,8 @@ db-version="9.2"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.2-1
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -77,6 +76,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -103,10 +103,8 @@ db-version="9.2"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.2-1
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -139,6 +137,7 @@ db-version="9.2"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -174,11 +173,8 @@ db-version="9.3"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.2-1
-9.3-2
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -201,8 +197,6 @@ db-version="9.3"
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -492,6 +486,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -523,11 +518,8 @@ db-version="9.3"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.2-1
-9.3-2
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
 00000001000000000000000C-0000000000000000000000000000000000000000.gz
@@ -538,8 +530,6 @@ db-version="9.3"
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -820,6 +810,7 @@ db-version="9.3"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -854,12 +845,8 @@ db-version="9.5"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.2-1
-9.3-2
-9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.2-1/0000000100000000:
 00000001000000000000000C-0000000000000000000000000000000000000000.gz
@@ -870,8 +857,6 @@ db-version="9.5"
 000000010000000000000011-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -1145,7 +1130,6 @@ db-version="9.5"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -1175,6 +1159,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1203,12 +1188,8 @@ db-version="9.5"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.3-2
-9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
@@ -1227,7 +1208,6 @@ db-version="9.5"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -1245,6 +1225,7 @@ db-version="9.5"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1275,12 +1256,8 @@ db-version="9.5"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.3-2
-9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
@@ -1299,7 +1276,6 @@ db-version="9.5"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -1333,6 +1309,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1361,12 +1338,8 @@ db-version="9.5"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.3-2
-9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
@@ -1385,7 +1358,6 @@ db-version="9.5"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -1403,6 +1375,7 @@ db-version="9.5"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1431,12 +1404,8 @@ db-version="9.5"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.3-2
-9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2:
-0000000100000000
-0000000100000001
 
 [TEST_PATH]/db-master/repo/archive/db/9.3-2/0000000100000000:
 0000000100000000000000FF-0000000000000000000000000000000000000000.gz
@@ -1455,7 +1424,6 @@ db-version="9.5"
 00000001000000010000000A-0000000000000000000000000000000000000000.gz
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz
@@ -1484,6 +1452,7 @@ P00   INFO: expire command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -1510,10 +1479,8 @@ db-version="9.5"
 > ls -R [TEST_PATH]/db-master/repo/archive/db | grep -v "archive.info"
 ------------------------------------------------------------------------------------------------------------------------------------
 [TEST_PATH]/db-master/repo/archive/db:
-9.5-3
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3:
-0000000100000000
 
 [TEST_PATH]/db-master/repo/archive/db/9.5-3/0000000100000000:
 000000010000000000000000-0000000000000000000000000000000000000000.gz

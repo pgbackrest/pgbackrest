@@ -13,11 +13,11 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
+use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
@@ -25,6 +25,7 @@ use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::Host::HostDbSyntheticTest;
 use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # Constants
@@ -45,16 +46,6 @@ use constant WAL_VERSION_95                                      => '95';
     push @EXPORT, qw(WAL_VERSION_95);
 use constant WAL_VERSION_95_SYS_ID                               => 6392579261579036436;
     push @EXPORT, qw(WAL_VERSION_95_SYS_ID);
-
-####################################################################################################################################
-# initModule
-####################################################################################################################################
-sub initModule
-{
-    # Set file and path modes
-    pathModeDefaultSet('0700');
-    fileModeDefaultSet('0600');
-}
 
 ####################################################################################################################################
 # setup
@@ -115,21 +106,6 @@ sub setup
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
-    # Create the local file object
-    my $oFile =
-        new pgBackRest::File
-        (
-            $oHostDbMaster->stanza(),
-            $oHostDbMaster->repoPath(),
-            new pgBackRest::Protocol::Common::Common
-            (
-                OPTION_DEFAULT_BUFFER_SIZE,                 # Buffer size
-                OPTION_DEFAULT_COMPRESS_LEVEL,              # Compress level
-                OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,      # Compress network level
-                HOST_PROTOCOL_TIMEOUT                       # Protocol timeout
-            )
-        );
-
     # Create db master config
     $oHostDbMaster->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
@@ -160,7 +136,14 @@ sub setup
             bArchiveAsync => $$oConfigParam{bArchiveAsync}});
     }
 
-    return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile;
+    # Set options needed for storage helper
+    my $oOption = {};
+    $self->optionSetTest($oOption, OPTION_DB_PATH, $oHostDbMaster->dbBasePath());
+    $self->optionSetTest($oOption, OPTION_REPO_PATH, $oHostBackup->repoPath());
+    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+    $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
+
+    return $oHostDbMaster, $oHostDbStandby, $oHostBackup;
 }
 
 ####################################################################################################################################
@@ -171,7 +154,6 @@ sub setup
 sub archiveGenerate
 {
     my $self = shift;
-    my $oFile = shift;
     my $strXlogPath = shift;
     my $iSourceNo = shift;
     my $iArchiveNo = shift;
@@ -184,10 +166,7 @@ sub archiveGenerate
 
     my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
 
-    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                 PATH_DB_ABSOLUTE, $strSourceFile,      # Destination file
-                 false,                                 # Source is not compressed
-                 false);                                # Destination is not compressed
+    storageTest()->copy($strArchiveTestFile, $strSourceFile);
 
     return $strArchiveFile, $strSourceFile;
 }
@@ -215,7 +194,6 @@ sub walSegment
 sub walGenerate
 {
     my $self = shift;
-    my $oFile = shift;
     my $strWalPath = shift;
     my $strPgVersion = shift;
     my $iSourceNo = shift;
@@ -225,12 +203,9 @@ sub walGenerate
     my $strWalFile = "${strWalPath}/${strWalSegment}" . (defined($bPartial) && $bPartial ? '.partial' : '');
     my $strArchiveTestFile = $self->dataPath() . "/backup.wal${iSourceNo}_${strPgVersion}.bin";
 
-    $oFile->copy(PATH_DB_ABSOLUTE, $strArchiveTestFile, # Source file
-                 PATH_DB_ABSOLUTE, $strWalFile,         # Destination file
-                 false,                                 # Source is not compressed
-                 false);                                # Destination is not compressed
+    storageTest()->copy($strArchiveTestFile, $strWalFile);
 
-    fileStringWrite("${strWalPath}/archive_status/${strWalSegment}.ready");
+    storageTest()->put("${strWalPath}/archive_status/${strWalSegment}.ready");
 
     return $strWalFile;
 }
@@ -246,8 +221,8 @@ sub walRemove
     my $strWalPath = shift;
     my $strWalFile = shift;
 
-    fileRemove("$self->{strWalPath}/${strWalFile}");
-    fileRemove("$self->{strWalPath}/archive_status/${strWalFile}.ready");
+    storageTest()->remove("$self->{strWalPath}/${strWalFile}");
+    storageTest()->remove("$self->{strWalPath}/archive_status/${strWalFile}.ready");
 }
 
 1;

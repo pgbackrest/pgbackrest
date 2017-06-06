@@ -592,23 +592,6 @@ my $oConfigHelpData =
                     "edit/check recovery.conf before manually restarting."
         },
 
-        # REPO-LINK Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'repo-link' =>
-        {
-            section => 'general',
-            summary =>
-                "Create convenience symlinks in repository.",
-            description =>
-                "Creates the convenience link latest in the stanza directory and internal tablespace symlinks in each backup " .
-                    "directory. The internal tablespace symlinks allow clusters to be brought up manually in-place using " .
-                    "filesystem snapshots as long as the backup is not compressed.\n" .
-                "\n" .
-                "This option should be disabled when the repository is located on a filesystem that does not support symlinks. " .
-                    "No pgBackRest functionality will be affected, but certain manual operations on the repository may be less " .
-                    "convenient."
-        },
-
         # REPO-PATH Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-path' =>
@@ -625,16 +608,15 @@ my $oConfigHelpData =
                     "need, though of course requirements will likely change over time as your database evolves."
         },
 
-        # REPO-SYNC Option Help
+        # REPO-TYPE Option Help
         #---------------------------------------------------------------------------------------------------------------------------
-        'repo-sync' =>
+        'repo-type' =>
         {
             section => 'general',
             summary =>
-                "Sync directories in repository.",
+                "Type of storage used for the repository.",
             description =>
-                "Syncs directories when writing to the repository. Not all file systems support directory syncs (e.g., NTFS) so " .
-                    "this option allows them to be disabled."
+                "!!! TBD !!!"
         },
 
         # RESUME Option Help
@@ -848,6 +830,7 @@ my $oConfigHelpData =
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -889,7 +872,7 @@ my $oConfigHelpData =
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
-                'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'spool-path' => 'section',
                 'stanza' => 'default'
             }
@@ -959,9 +942,8 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
-                'repo-link' => 'section',
                 'repo-path' => 'section',
-                'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'resume' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
@@ -1038,6 +1020,7 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1068,6 +1051,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
                 'retention-diff' => 'section',
@@ -1137,6 +1121,7 @@ my $oConfigHelpData =
 
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1200,6 +1185,7 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'recovery-option' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
 
                 # SET Option Help
                 #-------------------------------------------------------------------------------------------------------------------
@@ -1341,7 +1327,7 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
-                'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1384,7 +1370,7 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
-                'repo-sync' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1418,6 +1404,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },
@@ -1467,6 +1454,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-type' => 'section',
                 'stanza' => 'default'
             }
         },

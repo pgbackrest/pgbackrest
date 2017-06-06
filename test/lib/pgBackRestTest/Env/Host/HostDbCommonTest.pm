@@ -25,15 +25,15 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # Host defaults
@@ -84,7 +84,7 @@ sub new
     $self->{strDbBasePath} = $self->dbPath() . '/' . HOST_PATH_DB_BASE;
     $self->{strTablespacePath} = $self->dbPath() . '/tablespace';
 
-    filePathCreate($self->dbBasePath(), undef, undef, true);
+    storageTest()->pathCreate($self->dbBasePath(), {strMode => '0700', bCreateParent => true});
 
     if ($$oParam{strBackupDestination} ne $self->nameGet())
     {
@@ -92,7 +92,7 @@ sub new
         $self->{strLogPath} = $self->spoolPath() . '/' . HOST_PATH_LOG;
         $self->{strLockPath} = $self->spoolPath() . '/' . HOST_PATH_LOCK;
 
-        filePathCreate($self->spoolPath());
+        storageTest()->pathCreate($self->spoolPath());
     }
     else
     {
@@ -143,16 +143,10 @@ sub archivePush
     {
         $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
-        $self->{oFile}->copy(
-            PATH_DB_ABSOLUTE, $strArchiveTestFile,                      # Source file
-            PATH_DB_ABSOLUTE, $strSourceFile,                           # Destination file
-            false,                                                      # Source is not compressed
-            false,                                                      # Destination is not compressed
-            undef, undef, undef,                                        # Unused params
-            true);                                                      # Create path if it does not exist
+        storageTest()->copy($strArchiveTestFile, storageTest()->openWrite($strSourceFile, {bPathCreate => true}));
 
-        filePathCreate("${strXlogPath}/archive_status/", undef, true, true);
-        fileStringWrite("${strXlogPath}/archive_status/" . uc(sprintf('0000000100000001%08x', $iArchiveNo)) . '.ready');
+        storageTest()->pathCreate("${strXlogPath}/archive_status/", {bIgnoreExists => true, bCreateParent => true});
+        storageTest()->put("${strXlogPath}/archive_status/" . uc(sprintf('0000000100000001%08x', $iArchiveNo)) . '.ready');
     }
 
     $self->executeSimple(
@@ -160,7 +154,7 @@ sub archivePush
         ' --config=' . $self->backrestConfig() .
         ' --log-level-console=warn --archive-queue-max=' . int(2 * PG_WAL_SIZE) .
         ' --stanza=' . $self->stanza() .
-        (defined($iExpectedError) && $iExpectedError == ERROR_HOST_CONNECT ? ' --backup-host=bogus' : '') .
+        (defined($iExpectedError) && $iExpectedError == ERROR_FILE_READ ? ' --backup-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .
         " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : ''),
         {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
@@ -182,7 +176,7 @@ sub configRecovery
     my $strStanza = $self->stanza();
 
     # Load db config file
-    my $oConfig = iniParse(fileStringRead($self->backrestConfig()), {bRelaxed => true});
+    my $oConfig = iniParse(${storageTest->get($self->backrestConfig())}, {bRelaxed => true});
 
     # Rewrite recovery options
     my @stryRecoveryOption;
@@ -198,7 +192,7 @@ sub configRecovery
     }
 
     # Save db config file
-    fileStringWrite($self->backrestConfig(), iniRender($oConfig, true));
+    storageTest()->put($self->backrestConfig(), iniRender($oConfig, true));
 }
 
 ####################################################################################################################################
@@ -214,7 +208,7 @@ sub configRemap
     my $strStanza = $self->stanza();
 
     # Load db config file
-    my $oConfig = iniParse(fileStringRead($self->backrestConfig()), {bRelaxed => true});
+    my $oConfig = iniParse(${storageTest()->get($self->backrestConfig())}, {bRelaxed => true});
 
     # Load backup config file
     my $oRemoteConfig;
@@ -224,7 +218,7 @@ sub configRemap
 
     if (defined($oHostBackup))
     {
-        $oRemoteConfig = iniParse(fileStringRead($oHostBackup->backrestConfig()), {bRelaxed => true});
+        $oRemoteConfig = iniParse(${storageTest()->get($oHostBackup->backrestConfig())}, {bRelaxed => true});
     }
 
     # Rewrite recovery section
@@ -262,7 +256,7 @@ sub configRemap
     }
 
     # Save db config file
-    fileStringWrite($self->backrestConfig(), iniRender($oConfig, true));
+    storageTest()->put($self->backrestConfig(), iniRender($oConfig, true));
 
     # Save backup config file (but not is this is the standby which is not the source of backups)
     if (defined($oHostBackup))
@@ -271,7 +265,7 @@ sub configRemap
         executeTest(
             'sudo chmod 660 ' . $oHostBackup->backrestConfig() . ' && sudo chmod 770 ' . dirname($oHostBackup->backrestConfig()));
 
-        fileStringWrite($oHostBackup->backrestConfig(), iniRender($oRemoteConfig, true));
+        storageTest()->put($oHostBackup->backrestConfig(), iniRender($oRemoteConfig, true));
 
         # Fix permissions
         executeTest(
@@ -369,9 +363,10 @@ sub restore
     {
         # Load the manifest
         my $oExpectedManifest = new pgBackRest::Manifest(
-            $self->{oFile}->pathGet(
-                PATH_BACKUP_CLUSTER, ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . '/' . FILE_MANIFEST),
-            true);
+            storageRepo()->pathGet(
+                STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . qw{/} .
+                    FILE_MANIFEST),
+                true);
 
         $oExpectedManifestRef = $oExpectedManifest->{oContent};
 
@@ -481,17 +476,17 @@ sub restoreCompare
     {
         my $oExpectedManifest =
             new pgBackRest::Manifest(
-                $self->{oFile}->pathGet(
-                    PATH_BACKUP_CLUSTER,
-                    ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) .
-                    '/'. FILE_MANIFEST), true);
+                storageRepo()->pathGet(
+                    STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) .
+                        '/'. FILE_MANIFEST),
+                true);
 
         $oLastManifest =
             new pgBackRest::Manifest(
-                $self->{oFile}->pathGet(
-                    PATH_BACKUP_CLUSTER,
-                    ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} .
-                    '/' . FILE_MANIFEST), true);
+                storageRepo()->pathGet(
+                    STORAGE_REPO_BACKUP . qw{/} .
+                        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST),
+                true);
     }
 
     # Generate the tablespace map for real backups
@@ -553,7 +548,7 @@ sub restoreCompare
         $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
 
     $oActualManifest->build(
-        $self->{oFile}, ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
+        storageTest(), ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
         $oLastManifest, false, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
@@ -614,13 +609,14 @@ sub restoreCompare
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
-            my $oStat = fileStat($oActualManifest->dbPathGet($strSectionPath, $strName));
+            my $oStat = storageTest()->info($oActualManifest->dbPathGet($strSectionPath, $strName));
 
             if ($oStat->blocks > 0 || S_ISLNK($oStat->mode))
             {
+                my ($strHash) = storageTest()->hashSize($oActualManifest->dbPathGet($strSectionPath, $strName));
+
                 $oActualManifest->set(
-                    MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM,
-                    $self->{oFile}->hash(PATH_DB_ABSOLUTE, $oActualManifest->dbPathGet($strSectionPath, $strName)));
+                    MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_CHECKSUM, $strHash);
             }
             else
             {
@@ -723,13 +719,17 @@ sub restoreCompare
 
     $self->manifestDefault($oExpectedManifestRef);
 
-    fileStringWrite("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
-    fileStringWrite("${strTestPath}/expected.manifest", iniRender($oExpectedManifestRef));
+    # Delete sequences
+    delete($oActualManifest->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE});
+    delete($oExpectedManifestRef->{&INI_SECTION_BACKREST}{&INI_KEY_SEQUENCE});
+
+    storageTest()->put("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
+    storageTest()->put("${strTestPath}/expected.manifest", iniRender($oExpectedManifestRef));
 
     executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
 
-    fileRemove("${strTestPath}/expected.manifest");
-    fileRemove("${strTestPath}/actual.manifest");
+    storageTest()->remove("${strTestPath}/expected.manifest");
+    storageTest()->remove("${strTestPath}/actual.manifest");
 }
 
 ####################################################################################################################################

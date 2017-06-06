@@ -22,6 +22,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -39,6 +40,7 @@ db-version="9.3"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -61,6 +63,7 @@ P00   INFO: stanza-upgrade command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -78,6 +81,7 @@ db-version="9.3"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -101,6 +105,7 @@ P00   INFO: stanza-upgrade command end: aborted with exception [055]
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -122,6 +127,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -139,6 +145,7 @@ db-version="9.3"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -151,7 +158,7 @@ db-version="9.3"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: raised on backup host: WAL segment version 9.4 does not match archive version 9.3
+P00  ERROR: [044]: raised on 'backup remote' host: WAL segment version 9.4 does not match archive version 9.3
             WAL segment system-id 6353949018581704918 does not match archive system-id 6395542721432104958
             HINT: are you archiving to the correct stanza?
 
@@ -166,6 +173,7 @@ P00   INFO: stanza-upgrade command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -184,6 +192,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -209,6 +218,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -227,6 +237,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -248,6 +259,7 @@ P00   INFO: stanza-create command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -265,6 +277,7 @@ db-version="9.4"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -304,7 +317,6 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/spool/log
-repo-path=[TEST_PATH]/backup/repo
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -338,6 +350,7 @@ P00   INFO: stanza-upgrade command end: completed successfully
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [backup:current]
@@ -359,6 +372,7 @@ db-version="9.5"
 [backrest]
 backrest-checksum="[CHECKSUM]"
 backrest-format=5
+backrest-sequence=[SEQUENCE]
 backrest-version="[VERSION-1]"
 
 [db]
@@ -404,7 +418,6 @@ log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/spool/log
-repo-path=[TEST_PATH]/backup/repo
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------

@@ -14,7 +14,6 @@ use XML::Checker::Parser;
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -33,53 +32,44 @@ sub new
     (
         my $strOperation,
         $self->{strFileName},
-        my $bCached
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strFileName', required => false},
-            {name => 'bCached', default => false}
         );
 
     # Load the doc from a file if one has been defined
     if (defined($self->{strFileName}))
     {
-        if ($bCached)
+        my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
+        $oParser->set_sgml_search_path(dirname(dirname($0)) . '/doc/xml/dtd');
+
+        my $oTree;
+
+        eval
         {
-            $self->oDoc = XMLin(fileStringRead($self->{strFileName}));
-        }
-        else
-        {
-            my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-            $oParser->set_sgml_search_path(dirname(dirname($0)) . '/doc/xml/dtd');
-
-            my $oTree;
-
-            eval
+            local $XML::Checker::FAIL = sub
             {
-                local $XML::Checker::FAIL = sub
-                {
-                    my $iCode = shift;
+                my $iCode = shift;
 
-                    die XML::Checker::error_string($iCode, @_);
-                };
-
-                $oTree = $oParser->parsefile($self->{strFileName});
-
-                return true;
-            }
-            # Report any error that stopped parsing
-            or do
-            {
-                my $strException = $EVAL_ERROR;
-                $strException =~ s/at \/.*?$//s;               # remove module line number
-                die "malformed xml in '$self->{strFileName}':\n" . trim($strException);
+                die XML::Checker::error_string($iCode, @_);
             };
 
-            # Parse and build the doc
-            $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
+            $oTree = $oParser->parsefile($self->{strFileName});
+
+            return true;
         }
+        # Report any error that stopped parsing
+        or do
+        {
+            my $strException = $EVAL_ERROR;
+            $strException =~ s/at \/.*?$//s;               # remove module line number
+            die "malformed xml in '$self->{strFileName}':\n" . trim($strException);
+        };
+
+        # Parse and build the doc
+        $self->{oDoc} = $self->build($self->parse(${$oTree}[0], ${$oTree}[1]));
     }
     # Else create a blank doc
     else

@@ -2,7 +2,6 @@
 # PROTOCOL COMMON MINION MODULE
 ####################################################################################################################################
 package pgBackRest::Protocol::Common::Minion;
-use parent 'pgBackRest::Protocol::Common::Common';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,7 +14,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Protocol::Common::Master;
+use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -25,45 +25,31 @@ sub new
 {
     my $class = shift;                  # Class name
 
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
     # Assign function parameters, defaults, and log debug info
-    my
     (
-        $strOperation,
-        $strName,                                   # Name of the protocol
-        $strCommand,                                # Command the master process is running
-        $oIO,                                       # IO object
-        $iBufferMax,                                # Maximum buffer size
-        $iCompressLevel,                            # Set compression level
-        $iCompressLevelNetwork,                     # Set compression level for network only compression
-        $iProtocolTimeout,                          # Protocol timeout
+        my $strOperation,
+        $self->{strName},
+        $self->{oIo},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strName', trace => true},
-            {name => 'strCommand', trace => true},
-            {name => 'oIO', trace => true},
-            {name => 'iBufferMax', trace => true},
-            {name => 'iCompressLevel', trace => true},
-            {name => 'iCompressLevelNetwork', trace => true},
-            {name => 'iProtocolTimeout', trace => true},
+            {name => 'oIo', trace => true},
         );
 
-    # Create the class hash
-    my $self = $class->SUPER::new($iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout, $strName);
-    bless $self, $class;
-
-    # Set IO Object
-    $self->{io} = $oIO;
-
-    # Set command the master is running
-    $self->{strCommand} = $strCommand;
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Write the greeting so master process knows who we are
     $self->greetingWrite();
 
     # Initialize module variables
-    $self->{hCommandMap} = $self->init();
+    $self->{hCommandMap} = $self->can('init') ? $self->init() : undef;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -83,24 +69,8 @@ sub greetingWrite
     my $self = shift;
 
     # Write the greeting
-    $self->{io}->lineWrite((JSON::PP->new()->canonical()->allow_nonref())->encode(
+    $self->io()->writeLine((JSON::PP->new()->canonical()->allow_nonref())->encode(
         {name => BACKREST_NAME, service => $self->{strName}, version => BACKREST_VERSION}));
-
-    # Exchange one protocol message to catch errors early
-    $self->outputWrite();
-}
-
-####################################################################################################################################
-# binaryXferAbort
-#
-# Abort transfer when source file does not exist.
-####################################################################################################################################
-sub binaryXferAbort
-{
-    my $self = shift;
-
-    # Only allow in the backend process
-    $self->{io}->lineWrite('block -1');
 }
 
 ####################################################################################################################################
@@ -120,7 +90,7 @@ sub errorWrite
     }
 
     # Write error code and message
-    $self->{io}->lineWrite($self->{oJSON}->encode({err => $oException->code(), out => $oException->message()}));
+    $self->io()->writeLine($self->{oJSON}->encode({err => $oException->code(), out => $oException->message()}));
 }
 
 ####################################################################################################################################
@@ -132,7 +102,7 @@ sub outputWrite
 {
     my $self = shift;
 
-    $self->{io}->lineWrite($self->{oJSON}->encode({out => \@_}));
+    $self->io()->writeLine($self->{oJSON}->encode({out => \@_}));
 }
 
 ####################################################################################################################################
@@ -144,7 +114,7 @@ sub cmdRead
 {
     my $self = shift;
 
-    my $hCommand = $self->{oJSON}->decode($self->{io}->lineRead());
+    my $hCommand = $self->{oJSON}->decode($self->io()->readLine());
 
     return $hCommand->{cmd}, $hCommand->{param};
 }
@@ -178,17 +148,12 @@ sub process
                 # Run the standard NOOP command.  This this can be overridden in hCommandMap to implement a custom NOOP.
                 elsif ($strCommand eq OP_NOOP)
                 {
+                    protocolKeepAlive();
                     $self->outputWrite();
                 }
                 else
                 {
                     confess "invalid command: ${strCommand}";
-                }
-
-                # Run the post command if defined
-                if (defined($self->{hCommandMap}{&OP_POST}))
-                {
-                    $self->{hCommandMap}{&OP_POST}->($strCommand, $rParam);
                 }
 
                 return true;
@@ -221,5 +186,11 @@ sub process
 
     return 0;
 }
+
+####################################################################################################################################
+# Getters
+####################################################################################################################################
+sub io {shift->{oIo}}
+sub master {false}
 
 1;

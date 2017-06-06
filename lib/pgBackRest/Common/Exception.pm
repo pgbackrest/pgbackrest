@@ -152,6 +152,10 @@ use constant ERROR_OPTION_COMMAND                                   => ERROR_MIN
     push @EXPORT, qw(ERROR_OPTION_COMMAND);
 use constant ERROR_GROUP_MISSING                                    => ERROR_MINIMUM + 66;
     push @EXPORT, qw(ERROR_GROUP_MISSING);
+use constant ERROR_PATH_EXISTS                                      => ERROR_MINIMUM + 67;
+    push @EXPORT, qw(ERROR_PATH_EXISTS);
+use constant ERROR_FILE_EXISTS                                      => ERROR_MINIMUM + 68;
+    push @EXPORT, qw(ERROR_FILE_EXISTS);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

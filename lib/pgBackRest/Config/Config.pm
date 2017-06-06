@@ -16,10 +16,9 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
+use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -74,6 +73,14 @@ use constant CMD_VERSION                                            => 'version'
     $oCommandHash{&CMD_VERSION} = true;
 
 ####################################################################################################################################
+# DB/BACKUP Constants
+####################################################################################################################################
+use constant DB                                                     => 'db';
+    push @EXPORT, qw(DB);
+use constant BACKUP                                                 => 'backup';
+    push @EXPORT, qw(BACKUP);
+
+####################################################################################################################################
 # BACKUP Type Constants
 ####################################################################################################################################
 use constant BACKUP_TYPE_FULL                                       => 'full';
@@ -82,6 +89,14 @@ use constant BACKUP_TYPE_DIFF                                       => 'diff';
     push @EXPORT, qw(BACKUP_TYPE_DIFF);
 use constant BACKUP_TYPE_INCR                                       => 'incr';
     push @EXPORT, qw(BACKUP_TYPE_INCR);
+
+####################################################################################################################################
+# REPO Type Constants
+####################################################################################################################################
+use constant REPO_TYPE_CIFS                                         => 'cifs';
+    push @EXPORT, qw(REPO_TYPE_CIFS);
+use constant REPO_TYPE_POSIX                                        => 'posix';
+    push @EXPORT, qw(REPO_TYPE_POSIX);
 
 ####################################################################################################################################
 # INFO Output Constants
@@ -258,14 +273,10 @@ use constant OPTION_COMPRESS_LEVEL_NETWORK                          => 'compress
     push @EXPORT, qw(OPTION_COMPRESS_LEVEL_NETWORK);
 use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-umask';
     push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
-use constant OPTION_REPO_SYNC                                       => 'repo-sync';
-    push @EXPORT, qw(OPTION_REPO_SYNC);
 use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
     push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
 use constant OPTION_PROCESS_MAX                                     => 'process-max';
     push @EXPORT, qw(OPTION_PROCESS_MAX);
-use constant OPTION_REPO_LINK                                       => 'repo-link';
-    push @EXPORT, qw(OPTION_REPO_LINK);
 
 # Commands
 use constant OPTION_CMD_SSH                                         => 'cmd-ssh';
@@ -276,10 +287,14 @@ use constant OPTION_LOCK_PATH                                       => 'lock-pat
     push @EXPORT, qw(OPTION_LOCK_PATH);
 use constant OPTION_LOG_PATH                                        => 'log-path';
     push @EXPORT, qw(OPTION_LOG_PATH);
-use constant OPTION_REPO_PATH                                       => 'repo-path';
-    push @EXPORT, qw(OPTION_REPO_PATH);
 use constant OPTION_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(OPTION_SPOOL_PATH);
+
+# Repository
+use constant OPTION_REPO_PATH                                       => 'repo-path';
+    push @EXPORT, qw(OPTION_REPO_PATH);
+use constant OPTION_REPO_TYPE                                       => 'repo-type';
+    push @EXPORT, qw(OPTION_REPO_TYPE);
 
 # Log level
 use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
@@ -417,12 +432,10 @@ use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN                     => WAIT_TIME
 use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX                     => 86400;
     push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX);
 
-use constant OPTION_DEFAULT_BUFFER_SIZE                             => 4194304;
+use constant OPTION_DEFAULT_BUFFER_SIZE                             => COMMON_IO_BUFFER_MAX;
     push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE);
 use constant OPTION_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
     push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MIN);
-use constant OPTION_DEFAULT_BUFFER_SIZE_MAX                         => 8388608;
-    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MAX);
 
 use constant OPTION_DEFAULT_COMPRESS                                => true;
     push @EXPORT, qw(OPTION_DEFAULT_COMPRESS);
@@ -471,6 +484,8 @@ use constant OPTION_DEFAULT_REPO_LINK                               => true;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_LINK);
 use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
+use constant OPTION_DEFAULT_REPO_TYPE                               => REPO_TYPE_POSIX;
+    push @EXPORT, qw(OPTION_DEFAULT_REPO_TYPE);
 use constant OPTION_DEFAULT_SPOOL_PATH                              => '/var/spool/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_SPOOL_PATH);
 use constant OPTION_DEFAULT_PROCESS_MAX                              => 1;
@@ -1008,7 +1023,20 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BUFFER_SIZE,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_BUFFER_SIZE_MIN, OPTION_DEFAULT_BUFFER_SIZE_MAX],
+        &OPTION_RULE_ALLOW_LIST =>
+        {
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN         => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 2     => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 4     => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 8     => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 16    => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 32    => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 64    => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 128   => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 256   => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 512   => true,
+            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 1024  => true,
+        },
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
@@ -1196,21 +1224,6 @@ my %oOptionRule =
         },
     },
 
-    &OPTION_REPO_SYNC =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_SYNC,
-        &OPTION_RULE_NEGATE => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        },
-    },
-
     &OPTION_PROTOCOL_TIMEOUT =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1233,22 +1246,39 @@ my %oOptionRule =
         }
     },
 
-    &OPTION_REPO_LINK =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_LINK,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-        },
-    },
-
     &OPTION_REPO_PATH =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
         &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_PATH,
+        &OPTION_RULE_COMMAND =>
+        {
+            &CMD_ARCHIVE_GET => true,
+            &CMD_ARCHIVE_PUSH => true,
+            &CMD_BACKUP => true,
+            &CMD_CHECK => true,
+            &CMD_EXPIRE => true,
+            &CMD_INFO => true,
+            &CMD_LOCAL => true,
+            &CMD_REMOTE => true,
+            &CMD_RESTORE => true,
+            &CMD_STANZA_CREATE => true,
+            &CMD_STANZA_UPGRADE => true,
+            &CMD_START => true,
+            &CMD_STOP => true,
+        },
+    },
+
+    &OPTION_REPO_TYPE =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_TYPE,
+        &OPTION_RULE_ALLOW_LIST =>
+        {
+            &REPO_TYPE_CIFS     => true,
+            &REPO_TYPE_POSIX    => true,
+        },
         &OPTION_RULE_COMMAND =>
         {
             &CMD_ARCHIVE_GET => true,
@@ -1886,6 +1916,14 @@ my %oOptionRule =
             },
             &CMD_BACKUP => true,
             &CMD_CHECK => true,
+            &CMD_LOCAL =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
+            &CMD_REMOTE =>
+            {
+                &OPTION_RULE_REQUIRED => false
+            },
             &CMD_RESTORE => true,
             &CMD_STANZA_CREATE => true,
             &CMD_STANZA_UPGRADE => true,
@@ -1946,6 +1984,38 @@ my %oOptionRule =
         },
     },
 );
+
+####################################################################################################################################
+# Process rule defaults
+####################################################################################################################################
+foreach my $strKey (sort(keys(%oOptionRule)))
+{
+    # If the rule is a scalar then copy the entire rule from the referenced option
+    if (!ref($oOptionRule{$strKey}))
+    {
+        $oOptionRule{$strKey} = dclone($oOptionRule{$oOptionRule{$strKey}});
+    }
+
+    # Default type is string
+    if (!defined($oOptionRule{$strKey}{&OPTION_RULE_TYPE}))
+    {
+        $oOptionRule{$strKey}{&OPTION_RULE_TYPE} = OPTION_TYPE_STRING;
+    }
+
+    # If the command section is a scalar then copy the section from the referenced option
+    if (defined($oOptionRule{$strKey}{&OPTION_RULE_COMMAND}) && !ref($oOptionRule{$strKey}{&OPTION_RULE_COMMAND}))
+    {
+        $oOptionRule{$strKey}{&OPTION_RULE_COMMAND} =
+            dclone($oOptionRule{$oOptionRule{$strKey}{&OPTION_RULE_COMMAND}}{&OPTION_RULE_COMMAND});
+    }
+
+    # If the required section is a scalar then copy the section from the referenced option
+    if (defined($oOptionRule{$strKey}{&OPTION_RULE_DEPEND}) && !ref($oOptionRule{$strKey}{&OPTION_RULE_DEPEND}))
+    {
+        $oOptionRule{$strKey}{&OPTION_RULE_DEPEND} =
+            dclone($oOptionRule{$oOptionRule{$strKey}{&OPTION_RULE_DEPEND}}{&OPTION_RULE_DEPEND});
+    }
+}
 
 ####################################################################################################################################
 # Module variables
@@ -2421,7 +2491,11 @@ sub optionValidate
                                 confess &log(ERROR, "'${strConfigFile}' is not a file", ERROR_FILE_INVALID);
                             }
 
-                            $oConfig = iniParse(fileStringRead($strConfigFile), {bRelaxed => true});
+                            # Load Storage::Helper module
+                            require pgBackRest::Storage::Helper;
+                            pgBackRest::Storage::Helper->import();
+
+                            $oConfig = iniParse(${storageLocal->('/')->get($strConfigFile)}, {bRelaxed => true});
                         }
                     }
 
@@ -2742,7 +2816,7 @@ sub configFileValidate
 
     my $bFileValid = true;
 
-    if (!commandTest(CMD_REMOTE))
+    if (!commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL))
     {
         foreach my $strSectionKey (keys(%$oConfig))
         {

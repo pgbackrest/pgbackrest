@@ -21,8 +21,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::DbVersion;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -123,7 +123,7 @@ sub new
     }
 
     # Create pg_xlog directory
-    filePathCreate($self->dbPath() . '/pg_xlog');
+    storageTest()->pathCreate($self->dbPath() . '/pg_xlog', {strMode => '0700'});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -476,13 +476,13 @@ sub clusterStop
     }
 
     # Grep for errors in postgresql.log
-    if (!$bIgnoreLogError && fileExists($self->pgLogFile()))
+    if (!$bIgnoreLogError && storageTest()->exists($self->pgLogFile()))
     {
         $self->executeSimple('grep ERROR ' . $self->pgLogFile(), {iExpectedExitStatus => 1});
     }
 
     # Remove the log file
-    fileRemove($self->pgLogFile(), true);
+    storageTest()->remove($self->pgLogFile(), {bIgnoreMissing => true});
 }
 
 ####################################################################################################################################

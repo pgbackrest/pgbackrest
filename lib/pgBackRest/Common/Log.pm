@@ -6,6 +6,7 @@ package pgBackRest::Common::Log;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess longmess);
+use English '-no_match_vars';
 
 use Exporter qw(import);
     our @EXPORT = qw();
@@ -118,13 +119,20 @@ sub logFileSet
     # Only open the log file if file logging is enabled
     if ($strLogLevelFile ne OFF)
     {
-        filePathCreate(dirname($strFile), '0770', true, true);
+        # Load Storage::Helper module
+        require pgBackRest::Storage::Helper;
+        pgBackRest::Storage::Helper->import();
+
+        storageLocal()->pathCreate(dirname($strFile), {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
         $strFile .= '.log';
         $bLogFileExists = -e $strFile ? true : false;
         $bLogFileFirst = true;
 
-        $hLogFile = fileOpen($strFile, O_WRONLY | O_CREAT | O_APPEND);
+        if (!sysopen($hLogFile, $strFile, O_WRONLY | O_CREAT | O_APPEND, oct('0660')))
+        {
+            logErrorResult(ERROR_FILE_OPEN, "unable to open log file '${strFile}'", $OS_ERROR);
+        }
 
         # Write out anything that was cached before the file was opened
         if (defined($strLogFileCache))
@@ -137,7 +145,6 @@ sub logFileSet
 }
 
 push @EXPORT, qw(logFileSet);
-
 
 ####################################################################################################################################
 # logBanner
@@ -168,10 +175,6 @@ sub logLevelSet
     my $strLevelConsoleParam = shift;
     my $strLevelStdErrParam = shift;
     my $bLogTimestampParam = shift;
-
-    # Load FileCommon module
-    require pgBackRest::FileCommon;
-    pgBackRest::FileCommon->import();
 
     if (defined($strLevelFileParam))
     {
@@ -690,6 +693,14 @@ sub log
             if (!$bSuppressLog)
             {
                 syswrite(*STDOUT, $strMessageFormat);
+
+                # This is here for debugging purposes - it's not clear how best to make it into a switch
+                # if ($strLevel eq ASSERT || $strLevel eq ERROR)
+                # {
+                #     my $strStackTrace = longmess() . "\n";
+                #     $strStackTrace =~ s/\n/\n                                   /g;
+                #     syswrite(*STDOUT, $strStackTrace);
+                # }
             }
 
             # If in test mode and this is a test messsage then delay so the calling process has time to read the message

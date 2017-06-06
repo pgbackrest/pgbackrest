@@ -19,7 +19,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -138,8 +137,8 @@ sub process
         {
             $strHtml = $self->{oManifest}->variableReplace(
                 new BackRestDoc::Html::DocHtmlPage(
-                    $self->{oManifest}, $strPageId, $bMenu, $self->{bExe}, $bCompact, fileStringRead($self->{strCssFile}),
-                    $bPretty)->process());
+                    $self->{oManifest}, $strPageId, $bMenu, $self->{bExe}, $bCompact,
+                    ${$self->{oManifest}->storage()->get($self->{strCssFile})}, $bPretty)->process());
 
             return true;
         }
@@ -154,8 +153,8 @@ sub process
 
                 $strHtml = $self->{oManifest}->variableReplace(
                     new BackRestDoc::Html::DocHtmlPage(
-                        $self->{oManifest}, $strPageId, $bMenu, $self->{bExe}, $bCompact, fileStringRead($self->{strCssFile}),
-                        $bPretty)->process());
+                        $self->{oManifest}, $strPageId, $bMenu, $self->{bExe}, $bCompact,
+                        ${$self->{oManifest}->storage()->get($self->{strCssFile})}, $bPretty)->process());
             }
             else
             {
@@ -165,7 +164,7 @@ sub process
 
         # Save the html page
         my $strFile = "$self->{strHtmlPath}/" . (defined($$oRenderOut{file}) ? $$oRenderOut{file} : "${strPageId}.html");
-        fileStringWrite($strFile, $strHtml, false);
+        $self->{oManifest}->storage()->put($strFile, $strHtml);
     }
 
     # Return from function and log return values if any

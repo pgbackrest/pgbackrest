@@ -1,8 +1,8 @@
 ####################################################################################################################################
-# FileLinkTest.pm - Tests for FileCommon::fileLinkDestination
+# CommonIoProcessTest.pm - tests for Common::Io::Process module
 ####################################################################################################################################
-package pgBackRestTest::Module::File::FileLinkTest;
-use parent 'pgBackRestTest::Module::File::FileCommonTest';
+package pgBackRestTest::Module::Common::CommonIoProcessTest;
+use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -12,12 +12,10 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use Fcntl qw(:mode);
-use File::stat;
-
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Io::Buffered;
+use pgBackRest::Common::Io::Process;
 use pgBackRest::Common::Log;
-use pgBackRest::FileCommon;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
@@ -29,29 +27,32 @@ sub run
 {
     my $self = shift;
 
+    # Test data
+    my $strFile = $self->testPath() . qw{/} . 'file.txt';
+    my $strFileContent = 'TESTDATA';
+
     ################################################################################################################################
-    if ($self->begin("FileCommon::fileLinkDestination()"))
+    if ($self->begin('new() & processId()'))
     {
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strTestLink = $self->testPath() . '/public_dir_link';
+        my $oIoProcess = $self->testResult(sub {
+            new pgBackRest::Common::Io::Process(
+                new pgBackRest::Common::Io::Buffered(
+                    new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'")}, '[object]', 'new - echo');
+        $self->testResult(sub {defined($oIoProcess->processId())}, true, '   process id defined');
+    }
 
-        $self->testException(
-            sub {fileLinkDestination($strTestLink)}, ERROR_FILE_MISSING,
-            "unable to get destination for link ${strTestLink}: No such file or directory");
-
+    ################################################################################################################################
+    if ($self->begin('close() & error()'))
+    {
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strTestPath = $self->testPath() . '/public_dir';
-        filePathCreate($strTestPath);
-
+        my $oIoProcess =
+            new pgBackRest::Common::Io::Process(
+                new pgBackRest::Common::Io::Buffered(
+                    new pgBackRest::Common::Io::Handle('test'), 1, 32), "echo '${strFileContent}'");
+        $oIoProcess->close();
         $self->testException(
-            sub {fileLinkDestination($strTestPath)}, ERROR_FILE_OPEN,
-            "unable to get destination for link ${strTestPath}: Invalid argument");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        symlink($strTestPath, $strTestLink)
-            or confess &log(ERROR, "unable to create symlink from ${strTestPath} to ${strTestLink}");
-
-        $self->testResult(sub {fileLinkDestination($strTestLink)}, $strTestPath, 'get link destination');
+            sub {$oIoProcess->error()}, ERROR_ASSERT, 'cannot call error() after process has been closed');
     }
 }
 

@@ -21,9 +21,9 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -37,7 +37,6 @@ use pgBackRestTest::Common::RunTest;
 sub archiveCheck
 {
     my $self = shift;
-    my $oFile = shift;
     my $strArchiveFile = shift;
     my $strArchiveChecksum = shift;
     my $bCompress = shift;
@@ -56,18 +55,18 @@ sub archiveCheck
 
     do
     {
-        $bFound = $oFile->exists(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+        $bFound = storageRepo()->exists(STORAGE_REPO_ARCHIVE . "/${strArchiveCheck}");
     }
     while (!$bFound && waitMore($oWait));
 
     if (!$bFound)
     {
-        confess 'unable to find ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveCheck);
+        confess 'unable to find ' . storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveCheck}");
     }
 
     if (defined($strSpoolPath))
     {
-        fileRemove("${strSpoolPath}/archive/" . $self->stanza() . "/out/${strArchiveFile}.ok");
+        storageTest()->remove("${strSpoolPath}/archive/" . $self->stanza() . "/out/${strArchiveFile}.ok");
     }
 }
 
@@ -91,20 +90,20 @@ sub run
         if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, arc_async ${bArchiveAsync}", $self->processMax() == 1)) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        filePathCreate($strXlogPath, undef, false, true);
+        storageTest()->pathCreate($strXlogPath, {bCreateParent => true});
 
         # Create the test path for pg_control
-        filePathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), undef, false, true);
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
 
         # Copy pg_control for stanza-create
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        storageTest()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            $oHostDbMaster->dbBasePath() . qw{/} . DB_FILE_PGCONTROL);
 
         my $strCommand =
             $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
@@ -113,12 +112,13 @@ sub run
         # Test missing archive.info file
         &log(INFO, '    test archive.info missing');
         my $strSourceFile1 = $self->walSegment(1, 1, 1);
-        filePathCreate("${strXlogPath}/archive_status");
-        my $strArchiveFile1 = $self->walGenerate($oFile, $strXlogPath, WAL_VERSION_94, 1, $strSourceFile1);
+        storageTest()->pathCreate("${strXlogPath}/archive_status");
+        my $strArchiveFile1 = $self->walGenerate($strXlogPath, WAL_VERSION_94, 1, $strSourceFile1);
 
         $oHostDbMaster->executeSimple($strCommand . " ${strXlogPath}/${strSourceFile1} --archive-max-mb=24",
             {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
-        fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile1}.error") if $bArchiveAsync;
+        storageTest()->remove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile1}.error")
+            if $bArchiveAsync;
 
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza',
@@ -145,7 +145,7 @@ sub run
                 }
 
                 $strSourceFile = $self->walSegment(1, 1, $iArchiveNo);
-                $strArchiveFile = $self->walGenerate($oFile, $strXlogPath, WAL_VERSION_94, 2, $strSourceFile);
+                $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, $strSourceFile);
 
                 &log(INFO, '    backup ' . sprintf('%02d', $iBackup) .
                            ', archive ' .sprintf('%02x', $iArchive) .
@@ -153,24 +153,25 @@ sub run
 
                 my $strArchiveTmp = undef;
 
-                if ($iBackup == 1 && $iArchive == 2)
-                {
-                    # Should succeed when temp file already exists
-                    &log(INFO, '        test archive when tmp file exists');
-
-                    $strArchiveTmp =
-                        $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-                        substr($strSourceFile, 0, 16) . "/${strSourceFile}" .
-                        ($bCompress ? ".$oFile->{strCompressExtension}" : '') . '.pgbackrest.tmp';
-
-                    executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
-                    fileStringWrite($strArchiveTmp, 'JUNK');
-
-                    if ($bRemote)
-                    {
-                        executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
-                    }
-                }
+                # !!! REMOVE IF REMOVED BELOW
+                # if ($iBackup == 1 && $iArchive == 2)
+                # {
+                #     # Should succeed when temp file already exists
+                #     &log(INFO, '        test archive when tmp file exists');
+                #
+                #     $strArchiveTmp =
+                #         $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
+                #         substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}" . ($bCompress ? qw{.} .
+                #         COMPRESS_EXT : '') . qw{.} . STORAGE_TEMP_EXT;
+                #
+                #     executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
+                #     storageTest()->put($strArchiveTmp, 'JUNK');
+                #
+                #     if ($bRemote)
+                #     {
+                #         executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
+                #     }
+                # }
 
                 $oHostDbMaster->executeSimple(
                     $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
@@ -178,56 +179,63 @@ sub run
                     {oLogTest => $self->expect()});
                 push(
                     @stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}" .
-                    ($bCompress ? ".$oFile->{strCompressExtension}" : ''));
+                    ($bCompress ? qw{.} . COMPRESS_EXT : ''));
 
                 # Make sure the temp file no longer exists
-                if (defined($strArchiveTmp))
-                {
-                    my $oWait = waitInit(5);
-                    my $bFound = true;
-
-                    do
-                    {
-                        $bFound = fileExists($strArchiveTmp);
-                    }
-                    while ($bFound && waitMore($oWait));
-
-                    if ($bFound)
-                    {
-                        confess "${strArchiveTmp} should have been removed by archive command";
-                    }
-                }
+                # !!! NOT SURE THIS TEST MAKES SENSE ANYMORE
+                # if (defined($strArchiveTmp))
+                # {
+                #     my $oWait = waitInit(5);
+                #     my $bFound = true;
+                #
+                #     do
+                #     {
+                #         $bFound = storageTest()->exists($strArchiveTmp);
+                #     }
+                #     while ($bFound && waitMore($oWait));
+                #
+                #     if ($bFound)
+                #     {
+                #         confess "${strArchiveTmp} should have been removed by archive command";
+                #     }
+                # }
 
                 if ($iArchive == $iBackup)
                 {
-                    fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.ok") if $bArchiveAsync;
+                    storageTest()->remove(
+                        $oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.ok")
+                            if $bArchiveAsync;
 
                     &log(INFO, '        test db version mismatch error');
 
                     $oHostBackup->infoMunge(
-                        $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                        storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
                         {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
                     $oHostDbMaster->executeSimple(
                         $strCommand . " ${strXlogPath}/${strSourceFile}",
                         {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
-                    fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error") if $bArchiveAsync;
+                    storageTest()->remove(
+                        $oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error")
+                            if $bArchiveAsync;
 
                     &log(INFO, '        test db system-id mismatch error');
 
                     $oHostBackup->infoMunge(
-                        $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
-                        {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
+                        storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
+                            {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
 
                     $oHostDbMaster->executeSimple(
                         $strCommand . " ${strXlogPath}/${strSourceFile}",
                         {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
-                    fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error") if $bArchiveAsync;;
+                    storageTest()->remove(
+                        $oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error")
+                            if $bArchiveAsync;
 
                     # Restore the file to its original condition
-                    $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+                    $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
 
                     # Fail because the process was killed
                     if ($iBackup == 1 && !$bCompress)
@@ -264,70 +272,75 @@ sub run
 
                     $oHostDbMaster->executeSimple($strCommand . " ${strXlogPath}/${strSourceFile}", {oLogTest => $self->expect()});
 
-                    fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.ok") if $bArchiveAsync;
+                    storageTest()->remove(
+                        $oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.ok")
+                            if $bArchiveAsync;
 
                     # Now it should break on archive duplication (because checksum is different
                     &log(INFO, "        test archive duplicate error");
 
-                    $strArchiveFile = $self->walGenerate($oFile, $strXlogPath, WAL_VERSION_94, 1, $strSourceFile);
+                    $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 1, $strSourceFile);
 
                     $oHostDbMaster->executeSimple(
                         $strCommand . " ${strXlogPath}/${strSourceFile}",
                         {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
 
-                    fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error") if $bArchiveAsync;
+                    storageTest()->remove(
+                        $oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error")
+                            if $bArchiveAsync;
 
                     # Test .partial archive
                     &log(INFO, "        test .partial archive");
-                    $strArchiveFile = $self->walGenerate($oFile, $strXlogPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
+                    $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
                     $oHostDbMaster->executeSimple(
-                        $strCommand . " --no-" . OPTION_REPO_SYNC . " ${strXlogPath}/${strSourceFile}.partial",
+                        $strCommand . " ${strXlogPath}/${strSourceFile}.partial",
                         {oLogTest => $self->expect()});
-                    $self->archiveCheck(
-                        $oFile, "${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
+                    $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
                         $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
 
                     push(
                         @stryExpectedWAL, "${strSourceFile}.partial-${strArchiveChecksum}" .
-                        ($bCompress ? ".$oFile->{strCompressExtension}" : ''));
+                        ($bCompress ? qw{.} . COMPRESS_EXT : ''));
 
                     # Test .partial archive duplicate
                     &log(INFO, '        test .partial archive duplicate');
                     $oHostDbMaster->executeSimple(
                         $strCommand . " ${strXlogPath}/${strSourceFile}.partial", {oLogTest => $self->expect()});
                     $self->archiveCheck(
-                        $oFile, "${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
+                        "${strSourceFile}.partial", $strArchiveChecksum, $bCompress,
                         $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
 
                     # Test .partial archive with different checksum
                     &log(INFO, '        test .partial archive with different checksum');
-                    $strArchiveFile = $self->walGenerate($oFile, $strXlogPath, WAL_VERSION_94, 1, "${strSourceFile}.partial");
+                    $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 1, "${strSourceFile}.partial");
                     $oHostDbMaster->executeSimple(
                         $strCommand . " ${strXlogPath}/${strSourceFile}.partial",
                         {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
 
-                    fileRemove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error") if $bArchiveAsync;
+                    storageTest()->remove(
+                        $oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.error")
+                            if $bArchiveAsync;
                 }
                 else
                 {
                     $self->archiveCheck(
-                        $oFile, $strSourceFile, $strArchiveChecksum, $bCompress,
-                        $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
+                        $strSourceFile, $strArchiveChecksum, $bCompress, $bArchiveAsync ? $oHostDbMaster->spoolPath() : undef);
                 }
             }
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {$oFile->list(PATH_BACKUP_ARCHIVE, PG_VERSION_94 . '-1/0000000100000001')},
+            sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001')},
             '(' . join(', ', @stryExpectedWAL) . ')',
             'all WAL in archive', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($self->expect()))
         {
-            sleep(1); # Ugly hack to ensure repo is stable before checking files - replace in new tests
-            $self->expect()->supplementalAdd($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $self->expect()->supplementalAdd(
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
+                ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
         }
     }
     }

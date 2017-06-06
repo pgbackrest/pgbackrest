@@ -9,23 +9,20 @@ use Carp qw(confess);
 
 use Exporter qw(import);
 use File::Basename qw(dirname);
-use File::Path qw(remove_tree);
 use Scalar::Util qw(looks_like_number);
 
-use pgBackRest::Common::Exception;
-use pgBackRest::Common::Log;
 use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Archive::ArchiveGet;
 use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Common::Exception;
+use pgBackRest::Common::Log;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
 
 ####################################################################################################################################
 # new
@@ -41,14 +38,6 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
-    # Initialize file object
-    $self->{oFile} = new pgBackRest::File
-    (
-        optionGet(OPTION_STANZA),
-        optionGet(OPTION_REPO_PATH),
-        protocolGet(NONE)
-    );
-
     # Initialize total archive expired
     $self->{iArchiveExpireTotal} = 0;
 
@@ -58,22 +47,6 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
-}
-
-####################################################################################################################################
-# DESTROY
-####################################################################################################################################
-sub DESTROY
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->DESTROY');
-
-    undef($self->{oFile});
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -128,15 +101,15 @@ sub process
 
     my @stryPath;
 
-    my $oFile = $self->{oFile};
-    my $strBackupClusterPath = $oFile->pathGet(PATH_BACKUP_CLUSTER);
+    my $oStorageRepo = storageRepo();
+    my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
     my $iFullRetention = optionGet(OPTION_RETENTION_FULL, false);
     my $iDifferentialRetention = optionGet(OPTION_RETENTION_DIFF, false);
     my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
     my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
 
     # Load the backup.info
-    my $oBackupInfo = new pgBackRest::Backup::Info($oFile->pathGet(PATH_BACKUP_CLUSTER));
+    my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
 
     # Find all the expired full backups
     if (defined($iFullRetention))
@@ -158,7 +131,7 @@ sub process
 
                 foreach my $strPath ($oBackupInfo->list('^' . $stryPath[$iFullIdx] . '.*'))
                 {
-                    $oFile->remove(PATH_BACKUP_CLUSTER, "${strPath}/" . FILE_MANIFEST);
+                    $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}/" . FILE_MANIFEST);
                     $oBackupInfo->delete($strPath);
 
                     if ($strPath ne $stryPath[$iFullIdx])
@@ -204,7 +177,7 @@ sub process
                     # Remove all differential and incremental backups before the oldest valid differential
                     if ($strPath lt $stryPath[$iDiffIdx + 1])
                     {
-                        $oFile->remove(PATH_BACKUP_CLUSTER, "/${strPath}" . FILE_MANIFEST);
+                        $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strPath}" . FILE_MANIFEST);
                         $oBackupInfo->delete($strPath);
 
                         if ($strPath ne $stryPath[$iDiffIdx])
@@ -223,15 +196,14 @@ sub process
     $oBackupInfo->save();
 
     # Remove backups from disk
-    foreach my $strBackup ($oFile->list(
-        PATH_BACKUP_CLUSTER, undef, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
+    foreach my $strBackup ($oStorageRepo->list(
+        STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
     {
         if (!$oBackupInfo->current($strBackup))
         {
             &log(INFO, "remove expired backup ${strBackup}");
 
-            remove_tree("${strBackupClusterPath}/${strBackup}") > 0
-                or confess &log(ERROR, "unable to remove backup ${strBackup}", ERROR_PATH_REMOVE);
+            $oStorageRepo->remove("${strBackupClusterPath}/${strBackup}", {bRecurse => true});
         }
     }
 
@@ -264,9 +236,9 @@ sub process
 
         if ($iBackupTotal > 0)
         {
-            my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oFile->pathGet(PATH_BACKUP_ARCHIVE), true);
-            my @stryListArchiveDisk = fileList(
-                $oFile->pathGet(PATH_BACKUP_ARCHIVE), {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
+            my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
+            my @stryListArchiveDisk = $oStorageRepo->list(
+                STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
 
             # Make sure the current database versions match between the two files
             if (!($oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
@@ -288,23 +260,23 @@ sub process
                 # From the global list of backups to retain, create a list of backups, oldest to newest, associated with this
                 # archiveId (e.g. 9.4-1)
                 my @stryLocalBackupRetention = $oBackupInfo->listByArchiveId($strArchiveId,
-                    $oFile->pathGet(PATH_BACKUP_ARCHIVE), \@stryGlobalBackupRetention, 'reverse');
+                    $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), \@stryGlobalBackupRetention, 'reverse');
 
                 # If no backup to retain was found
                 if (!@stryLocalBackupRetention)
                 {
                     # Get the backup db-id corresponding to this archiveId
-                    my $iDbHistoryId = $oBackupInfo->backupArchiveDbHistoryId($strArchiveId, $oFile->pathGet(PATH_BACKUP_ARCHIVE));
+                    my $iDbHistoryId = $oBackupInfo->backupArchiveDbHistoryId(
+                        $strArchiveId, $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE));
 
                     # If this is not the current database, then delete the archive directory else do nothing since the current
                     # DB archive directory must not be deleted
                     if (!defined($iDbHistoryId) || !$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID, undef,
                         $iDbHistoryId))
                     {
-                        my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId);
+                        my $strFullPath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}");
 
-                        remove_tree($strFullPath) > 0
-                            or confess &log(ERROR, "unable to remove archive path ${strFullPath}", ERROR_PATH_REMOVE);
+                        $oStorageRepo->remove($strFullPath, {bRecurse => true});
 
                         &log(INFO, "remove archive path: ${strFullPath}");
                     }
@@ -370,8 +342,9 @@ sub process
                         my @stryBackupList = $oBackupInfo->list();
 
                         # With the full list of backups, loop through only those associated with this archiveId
-                        foreach my $strBackup ($oBackupInfo->listByArchiveId($strArchiveId,
-                                                    $oFile->pathGet(PATH_BACKUP_ARCHIVE), \@stryBackupList))
+                        foreach my $strBackup (
+                            $oBackupInfo->listByArchiveId(
+                                $strArchiveId, $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), \@stryBackupList))
                         {
                             if ($strBackup le $strArchiveRetentionBackup &&
                                 $oBackupInfo->test(INFO_BACKUP_SECTION_BACKUP_CURRENT, $strBackup, INFO_BACKUP_KEY_ARCHIVE_START))
@@ -400,8 +373,8 @@ sub process
                         }
 
                         # Get all major archive paths (timeline and first 32 bits of LSN)
-                        foreach my $strPath ($oFile->list(
-                            PATH_BACKUP_ARCHIVE, $strArchiveId, {strExpression => REGEX_ARCHIVE_DIR_WAL}))
+                        foreach my $strPath ($oStorageRepo->list(
+                            STORAGE_REPO_ARCHIVE . "/${strArchiveId}", {strExpression => REGEX_ARCHIVE_DIR_WAL}))
                         {
                             logDebugMisc($strOperation, "found major WAL path: ${strPath}");
                             $bRemove = true;
@@ -420,10 +393,9 @@ sub process
                             # Remove the entire directory if all archive is expired
                             if ($bRemove)
                             {
-                                my $strFullPath = $oFile->pathGet(PATH_BACKUP_ARCHIVE, $strArchiveId) . "/${strPath}";
+                                my $strFullPath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}") . "/${strPath}";
 
-                                remove_tree($strFullPath) > 0
-                                    or confess &log(ERROR, "unable to remove ${strFullPath}", ERROR_PATH_REMOVE);
+                                $oStorageRepo->remove($strFullPath, {bRecurse => true});
 
                                 # Log expire info
                                 logDebugMisc($strOperation, "remove major WAL path: ${strFullPath}");
@@ -435,8 +407,8 @@ sub process
                             elsif ($strPath le substr($strArchiveExpireMax, 0, 16))
                             {
                                 # Look for files in the archive directory
-                                foreach my $strSubPath ($oFile->list(
-                                    PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strPath}", {strExpression => "^[0-F]{24}.*\$"}))
+                                foreach my $strSubPath ($oStorageRepo->list(
+                                    STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strPath}", {strExpression => "^[0-F]{24}.*\$"}))
                                 {
                                     $bRemove = true;
 
@@ -454,7 +426,7 @@ sub process
                                     # Remove archive log if it is not used in a backup
                                     if ($bRemove)
                                     {
-                                        fileRemove($oFile->pathGet(PATH_BACKUP_ARCHIVE, "${strArchiveId}/${strSubPath}"));
+                                        $oStorageRepo->remove(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSubPath}");
 
                                         logDebugMisc($strOperation, "remove WAL segment: ${strArchiveId}/${strSubPath}");
 

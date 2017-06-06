@@ -20,11 +20,10 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
 use pgBackRest::Manifest;
-use pgBackRest::Version;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Version;
 
 ####################################################################################################################################
 # Backup advisory lock
@@ -87,11 +86,11 @@ sub new
     if (defined($self->{iRemoteIdx}))
     {
         $self->{strDbPath} = optionGet(optionIndex(OPTION_DB_PATH, $self->{iRemoteIdx}));
-        $self->{oProtocol} = protocolGet(DB, $self->{iRemoteIdx});
-    }
-    else
-    {
-        $self->{oProtocol} = protocolGet(NONE);
+
+        if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
+        {
+            $self->{oProtocol} = protocolGet(DB, $self->{iRemoteIdx});
+        }
     }
 
     # Return from function and log return values if any
@@ -145,7 +144,7 @@ sub connect
     my $bResult = true;
 
     # Run remotely
-    if ($self->{oProtocol}->isRemote())
+    if (defined($self->{oProtocol}))
     {
         # Set bResult to false if undef is returned
         $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
@@ -246,7 +245,7 @@ sub executeSql
     my @stryResult;
 
     # Run remotely
-    if ($self->{oProtocol}->isRemote())
+    if (defined($self->{oProtocol}))
     {
         # Execute the command
         @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
@@ -465,22 +464,14 @@ sub info
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!defined($self->{info}{$strDbPath}))
     {
-        # Initialize file object
-        my $oFile = new pgBackRest::File
-        (
-            optionGet(OPTION_STANZA),
-            optionGet(OPTION_REPO_PATH),
-            $self->{oProtocol}
-        );
-
         # Get info from remote
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($oFile->isRemote(PATH_DB_ABSOLUTE))
+        if (defined($self->{oProtocol}))
         {
             # Execute the command
             ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
                 $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
-                    $oFile->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
+                    $self->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
         }
         # Get info locally
         #---------------------------------------------------------------------------------------------------------------------------

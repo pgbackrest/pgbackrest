@@ -15,8 +15,8 @@ use Time::HiRes qw(gettimeofday);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::Common::Common;
-use pgBackRest::Protocol::Common::Io::Process;
+use pgBackRest::Common::Io::Process;
+use pgBackRest::Protocol::Common::Master;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -30,7 +30,6 @@ sub new
     my
     (
         $strOperation,
-        $strRemoteType,                             # Type of remote (DB or BACKUP)
         $strName,                                   # Name of the protocol
         $strId,                                     # Id of this process for error messages
         $strCommand,                                # Command to execute on local/remote
@@ -42,7 +41,6 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strRemoteType'},
             {name => 'strName'},
             {name => 'strId'},
             {name => 'strCommand'},
@@ -59,11 +57,12 @@ sub new
     }
 
     # Execute the command
-    my $oIO = pgBackRest::Protocol::Common::Io::Process->new3($strId, $strCommand, $iProtocolTimeout, $iBufferMax);
+    my $oIo = new pgBackRest::Common::Io::Process(
+        new pgBackRest::Common::Io::Buffered(
+            new pgBackRest::Common::Io::Handle($strId), $iProtocolTimeout, $iBufferMax), $strCommand);
 
     # Create the class hash
-    my $self = $class->SUPER::new(
-        $strRemoteType, $strName, $strId, $oIO, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout);
+    my $self = $class->SUPER::new($strName, $strId, $oIo);
     bless $self, $class;
 
     # Return from function and log return values if any
@@ -98,13 +97,13 @@ sub close
     my $bClosed = false;
 
     # Only send the exit command if the process is running
-    if (defined($self->{io}) && defined($self->{io}->processId()))
+    if (defined($self->io()) && defined($self->io()->processId()))
     {
         &log(TRACE, "sending exit command to process");
 
         eval
         {
-            $self->cmdWrite('exit');
+            $self->cmdWrite(OP_EXIT);
             return true;
         }
         or do
@@ -133,7 +132,8 @@ sub close
                 ($bComplete ? "\n${strHint}" : ''));
         };
 
-        undef($self->{io});
+        $self->{oIo}->close();
+        undef($self->{oIo});
         $bClosed = true;
     }
 

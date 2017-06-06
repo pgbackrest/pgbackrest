@@ -20,7 +20,6 @@ use Getopt::Long qw(GetOptions);
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -144,6 +143,7 @@ sub backrestConfigCreate
 ####################################################################################################################################
 sub containerWrite
 {
+    my $oStorageDocker = shift;
     my $strTempPath = shift;
     my $strOS = shift;
     my $strTitle = shift;
@@ -162,7 +162,7 @@ sub containerWrite
     }
     elsif (!defined($bPre))
     {
-        containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bForce, true);
+        containerWrite($oStorageDocker, $strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bForce, true);
 
         if (defined($bPreOnly) && $bPreOnly)
         {
@@ -179,7 +179,7 @@ sub containerWrite
         $strScript;
 
     # Write the image
-    fileStringWrite("${strTempPath}/${strImage}", trim($strScript) . "\n", false);
+    $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
     executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
                 " -f ${strTempPath}/${strImage} -t ${strTag} ${strTempPath}",
                 {bSuppressStdErr => true});
@@ -256,7 +256,7 @@ sub sudoSetup
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\nRUN apt-get -y install sudo && \\\n" .
+            "\nRUN apt-get -y install sudo && \\" .
             "\n    echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
     }
     else
@@ -295,28 +295,34 @@ sub perlInstall
 {
     my $strOS = shift;
 
+    my $oVm = vmGet();
     my $strImage =
         "# Install Perl packages\n";
 
-    if ($strOS eq VM_CO6)
+    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strImage .=
-            'RUN yum install -y perl perl-Time-HiRes perl-parent perl-JSON perl-Digest-SHA perl-DBD-Pg';
+        $strImage .= 'RUN yum install -y perl';
+
+        if ($strOS eq VM_CO6)
+        {
+            $strImage .= ' perl-Time-HiRes perl-parent perl-JSON';
+        }
+        else
+        {
+            $strImage .= ' perl-JSON-PP';
+        }
+
+        $strImage .= ' perl-Digest-SHA perl-DBD-Pg';
     }
-    elsif ($strOS eq VM_CO7)
-    {
-        $strImage .=
-            'RUN yum install -y perl perl-JSON-PP perl-Digest-SHA perl-DBD-Pg';
-    }
-    elsif ($strOS eq VM_U12 || $strOS eq VM_U14)
-    {
-        $strImage .=
-            'RUN apt-get install -y libdbd-pg-perl libdbi-perl libnet-daemon-perl libplrpc-perl libhtml-parser-perl';
-    }
-    elsif ($strOS eq VM_U16 || $strOS eq VM_D8)
+    elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strImage .=
             'RUN apt-get install -y libdbd-pg-perl libdbi-perl libhtml-parser-perl';
+
+        if ($strOS eq VM_U12 || $strOS eq VM_U14)
+        {
+            $strImage .= ' libnet-daemon-perl libplrpc-perl';
+        }
     }
     else
     {
@@ -331,13 +337,14 @@ sub perlInstall
 ####################################################################################################################################
 sub containerBuild
 {
+    my $oStorageDocker = shift;
     my $strVm = shift;
     my $bVmForce = shift;
     my $strDbVersionBuild = shift;
 
     # Create temp path
-    my $strTempPath = dirname(abs_path($0)) . '/.vagrant/docker';
-    filePathCreate($strTempPath, '0770', true, true);
+    my $strTempPath = $oStorageDocker->pathGet('test/.vagrant/docker');
+    $oStorageDocker->pathCreate($strTempPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
     # Remove old images on force
     if ($bVmForce)
@@ -365,6 +372,8 @@ sub containerBuild
         executeTest("ssh-keygen -f ${strTempPath}/id_rsa -t rsa -b 1024 -N ''", {bSuppressStdErr => true});
     }
 
+    # VM Images
+    ################################################################################################################################
     my $oVm = vmGet();
 
     foreach my $strOS (sort(keys(%$oVm)))
@@ -393,7 +402,7 @@ sub containerBuild
         {
             $strScript .=
                 "RUN apt-get update && \\\n" .
-                "    apt-get -y install openssh-server wget\n";
+                "    apt-get -y install openssh-server wget vim net-tools iputils-ping\n";
 
             $strScript .=
                 "\n# Fix root tty\n" .
@@ -497,7 +506,7 @@ sub containerBuild
         }
 
         # Write the image
-        containerWrite($strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strScript, $bVmForce, false);
+        containerWrite($oStorageDocker, $strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strScript, $bVmForce, false);
 
         # Base pre image
         ###########################################################################################################################
@@ -509,7 +518,9 @@ sub containerBuild
             perlInstall($strOS) . "\n";
 
         # Write the image
-        containerWrite($strTempPath, $strOS, 'Base (Pre-Installed)', $strImageParent, $strImage, $strScript, $bVmForce, false);
+        containerWrite(
+            $oStorageDocker, $strTempPath, $strOS, 'Base (Pre-Installed)', $strImageParent, $strImage, $strScript, $bVmForce,
+            false);
 
         # Build image
         ###########################################################################################################################
@@ -536,7 +547,7 @@ sub containerBuild
         }
 
         # Write the image
-        containerWrite($strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strScript, $bVmForce, false);
+        containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strScript, $bVmForce, false);
 
         # Copy Devel::Cover to host so it can be installed in other containers
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -612,8 +623,9 @@ sub containerBuild
             }
 
             # Write the image
-            containerWrite($strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bVmForce,
-                           $bDocBuildVersion ? undef : true, $bDocBuildVersion ? undef : true);
+            containerWrite(
+                $oStorageDocker, $strTempPath, $strOS, $strTitle, $strImageParent, $strImage, $strScript, $bVmForce,
+                $bDocBuildVersion ? undef : true, $bDocBuildVersion ? undef : true);
 
             # Db doc image
             ########################################################################################################################
@@ -629,7 +641,8 @@ sub containerBuild
                 $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
                 # Write the image
-                containerWrite($strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce);
+                containerWrite(
+                    $oStorageDocker, $strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce);
             }
 
             # Db test image
@@ -644,7 +657,9 @@ sub containerBuild
             $strScript .= coverSetup($strOS);
 
             # Write the image
-            containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
+            containerWrite(
+                $oStorageDocker, $strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true,
+                true);
         }
 
         # Db test image (for synthetic tests)
@@ -659,7 +674,9 @@ sub containerBuild
         $strScript .= coverSetup($strOS);
 
         # Write the image
-        containerWrite($strTempPath, $strOS, 'Db Synthetic Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
+        containerWrite(
+            $oStorageDocker, $strTempPath, $strOS, 'Db Synthetic Test', $strImageParent, $strImage, $strScript, $bVmForce, true,
+            true);
 
         # Loop test image
         ########################################################################################################################
@@ -689,7 +706,8 @@ sub containerBuild
         $strScript .= coverSetup($strOS);
 
         # Write the image
-        containerWrite($strTempPath, $strOS, 'Loop Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
+        containerWrite(
+            $oStorageDocker, $strTempPath, $strOS, 'Loop Test', $strImageParent, $strImage, $strScript, $bVmForce, true, true);
 
         # Backup image
         ###########################################################################################################################
@@ -721,7 +739,9 @@ sub containerBuild
             $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
             # Write the image
-            containerWrite($strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
+            containerWrite(
+                $oStorageDocker, $strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce, true,
+                true);
         }
 
         # Backup Test image
@@ -745,7 +765,9 @@ sub containerBuild
         $strScript .= coverSetup($strOS);
 
         # Write the image
-        containerWrite($strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true, true);
+        containerWrite(
+            $oStorageDocker, $strTempPath, $strOS, "${strTitle} Test", $strImageParent, $strImage, $strScript, $bVmForce, true,
+            true);
     }
 }
 
@@ -780,7 +802,7 @@ sub imageRemove
 {
     my $strRegExp = shift;
 
-    foreach my $strImage (sort(split("\n", trim(executeTest('docker images --format "{{.Repository}}"')))))
+    foreach my $strImage (sort(split("\n", trim(executeTest('docker images --format "{{.Repository}}/{{.Tag}}"')))))
     {
         if ($strImage =~ $strRegExp)
         {
