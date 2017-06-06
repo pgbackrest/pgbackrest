@@ -71,7 +71,8 @@ sub run
     ################################################################################################################################
     if ($self->begin("BackupInfo::confirmDb()"))
     {
-        my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorage}->pathGet(STORAGE_REPO_BACKUP), false, false);
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorage}->pathGet(STORAGE_REPO_BACKUP), false, false,
+            {bIgnoreMissing => true});
         $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, '937', '201306121', true);
 
         my $strBackupLabel = "20170403-175647F";

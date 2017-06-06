@@ -64,7 +64,7 @@ sub initTest
 
     my $oOption = $self->initOption();
     logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false);
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
     $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
 
     $self->{strArchiveId} = $oArchiveInfo->archiveId();
