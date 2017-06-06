@@ -131,16 +131,46 @@ sub new
 
     # Build the backup info path/file name
     my $strBackupInfoFile = "${strBackupClusterPath}/" . FILE_BACKUP_INFO;
+    my $self = {};
+    my $iResult = 0;
+    my $strResultMessage;
+
+    # Disable logging to control output
+    logDisable();
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-        oStorage => $oStorage});
-
-    # If the backup info file does not exist and is required, then throw an error
-    # The backup info is only allowed not to exist when running a stanza-create on a new install
-    if (!$self->{bExists} && $bRequired)
+    eval
     {
-        confess &log(ERROR, "${strBackupClusterPath}/$strBackupInfoMissingMsg", ERROR_FILE_MISSING);
+        $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
+            oStorage => storageRepo()});
+        logEnable();
+        return true;
+    }
+    or do
+    {
+        # Reset the console logging
+        logEnable();
+
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+    };
+
+    if ($iResult != 0)
+    {
+        # If the backup info file does not exist and is required, then throw an error
+        # The backup info is only allowed not to exist when running a stanza-create on a new install
+        if ($iResult == ERROR_FILE_MISSING)
+        {
+            if ($bRequired)
+            {
+                confess &log(ERROR, "${strBackupClusterPath}/$strBackupInfoMissingMsg", ERROR_FILE_MISSING);
+            }
+        }
+        else
+        {
+            confess &log(ERROR, $strResultMessage, $iResult);
+        }
     }
 
     $self->{strBackupClusterPath} = $strBackupClusterPath;

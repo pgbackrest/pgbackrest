@@ -27,7 +27,8 @@ use pgBackRest::Protocol::Storage::Helper;
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-my $strHintForce = "\nHINT: Use stanza-create --force to force the stanza data to be created.";
+my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data to be created.";
+my $strInfoMissing = " information missing";
 my $strStanzaCreateErrorMsg = "not empty" . $strHintForce;
 
 ####################################################################################################################################
@@ -129,11 +130,11 @@ sub stanzaCreate
             # which requires force option
             if (!$bArchiveInfoFileExists && $bBackupInfoFileExists)
             {
-                confess &log(ERROR, 'archive information missing' . $strHintForce, ERROR_FILE_MISSING);
+                confess &log(ERROR, 'archive' . $strInfoMissing . $strHintForce, ERROR_FILE_MISSING);
             }
             elsif (!$bBackupInfoFileExists && $bArchiveInfoFileExists)
             {
-                confess &log(ERROR, 'backup information missing' . $strHintForce, ERROR_FILE_MISSING);
+                confess &log(ERROR, 'backup' . $strInfoMissing . $strHintForce, ERROR_FILE_MISSING);
             }
             # If we get here then either both exist or neither exist so if neither file exists then something still exists in the
             # directories since one or both of them are not empty so need to use force option
@@ -326,12 +327,20 @@ sub infoObject
 
     if ($iResult != 0)
     {
-        # If force was not used, then confess the error with hint to use force (force is not configurable for stanza-upgrade so this
-        # will always confess errors on stanza-upgrade)
+        # If force was not used, and the file is missing, then confess the error with hint to use force if the option is
+        # configurable (force is not configurable for stanza-upgrade so this will always confess errors on stanza-upgrade)
+        # else confess all other errors
         if ((optionValid(OPTION_FORCE) && !optionGet(OPTION_FORCE)) ||
             (!optionValid(OPTION_FORCE)))
         {
-            confess &log(ERROR, $strResultMessage . $strHintForce, $iResult);
+            if ($iResult == ERROR_FILE_MISSING)
+            {
+                confess &log(ERROR, (optionValid(OPTION_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage), $iResult);
+            }
+            else
+            {
+                confess &log(ERROR, $strResultMessage, $iResult);
+            }
         }
         # Else instatiate the object without loading it so we can reconstruct and overwrite the invalid files
         else

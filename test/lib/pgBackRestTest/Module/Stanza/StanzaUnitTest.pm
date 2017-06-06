@@ -136,21 +136,21 @@ sub run
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/9.4-1");
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
             "archive directory not empty" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # No force. Archive dir not empty. No archive.info file. Backup directory not empty. No backup.info file.
         #---------------------------------------------------------------------------------------------------------------------------
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/12345");
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
             "backup directory and/or archive directory not empty" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # No force. Archive dir empty. No archive.info file. Backup directory not empty. No backup.info file.
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/9.4-1", {bRecurse => true});
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
             "backup directory not empty" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # No force. No archive.info file and no archive sub-directories or files. Backup.info exists and no backup sub-directories
         # or files
@@ -160,7 +160,7 @@ sub run
              WAL_VERSION_94_SYS_ID, '942', '201409291', true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "archive information missing" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # No force. No backup.info file (backup.info.copy only) and no backup sub-directories or files. Archive.info exists and no
         # archive sub-directories or files
@@ -170,7 +170,7 @@ sub run
             WAL_VERSION_94_SYS_ID, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "backup information missing" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # No force. Valid archive.info exists. Invalid backup.info exists.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ sub run
         $self->testException(sub {$oStanza->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $self->{strArchivePath},
             \@stryFileList)}, ERROR_PATH_NOT_EMPTY,
             "archive directory not empty" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # If infoFileCreate is ever called directly, confirm it errors if something other than the info file exists in backup dir
         # when --force is not used
@@ -246,7 +246,7 @@ sub run
         $self->testException(sub {$oStanza->infoFileCreate($oBackupInfo, STORAGE_REPO_BACKUP, $self->{strBackupPath},
             \@stryFileList)}, ERROR_PATH_NOT_EMPTY,
             "backup directory not empty" .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # Set force option --------
         $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
@@ -288,9 +288,9 @@ sub run
         my $oStanza = new pgBackRest::Stanza();
 
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_MISSING,
-            "unable to open " . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) . " or " .
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT) .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) .
+            " does not exist and is required to perform a backup." .
+            "\nHINT: has a stanza-create been performed?");
 
         # Force valid but not set.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -298,14 +298,10 @@ sub run
         $oStanza = new pgBackRest::Stanza();
 
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_MISSING,
-            "unable to open " . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) . " or " .
-            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT) .
-            "\nHINT: Use stanza-create --force to force the stanza data to be created.");
-
-                    # Cause an error to be thrown by changing the permissions of the archive file so it cannot be read
-                    #---------------------------------------------------------------------------------------------------------------------------
-        # Set force option --------
-        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+            storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) .
+            " does not exist and is required to perform a backup." .
+            "\nHINT: has a stanza-create been performed?" .
+            "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # Force.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -319,6 +315,19 @@ sub run
 
         # Reset force option --------
         $self->optionReset($oOption, OPTION_FORCE);
+
+        # Cause an error to be thrown by changing the permissions of the archive file so it cannot be read
+        #---------------------------------------------------------------------------------------------------------------------------
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+
+        (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+             WAL_VERSION_94_SYS_ID, '942', '201409291', true);
+        forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT));
+        executeTest('sudo chmod 220 ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
+        $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_OPEN,
+            "unable to open '" . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) .
+            "': Permission denied");
+        executeTest('sudo chmod 640 ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
     }
 
     ################################################################################################################################

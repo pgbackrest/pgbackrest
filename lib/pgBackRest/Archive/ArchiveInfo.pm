@@ -87,16 +87,46 @@ sub new
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
+    my $self = {};
+    my $iResult = 0;
+    my $strResultMessage;
+
+    # Disable logging to control output
+    logDisable();
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-        oStorage => storageRepo()});
-
-    # If the file does not exist but is required to exist, then error
-    # The archive info is only allowed not to exist when running a stanza-create on a new install
-    if (!$self->{bExists} && $bRequired)
+    eval
     {
-        confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
+        $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
+            oStorage => storageRepo()});
+        logEnable();
+        return true;
+    }
+    or do
+    {
+        # Reset the console logging
+        logEnable();
+
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+    };
+
+    if ($iResult != 0)
+    {
+        # If the file does not exist but is required to exist, then error
+        # The archive info is only allowed not to exist when running a stanza-create on a new install
+        if ($iResult == ERROR_FILE_MISSING)
+        {
+            if ($bRequired)
+            {
+                confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
+            }
+        }
+        else
+        {
+            confess &log(ERROR, $strResultMessage, $iResult);
+        }
     }
 
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;

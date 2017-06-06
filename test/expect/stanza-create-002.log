@@ -127,7 +127,7 @@ stanza-create db - fail on archive info file missing from non-empty dir (backup 
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-path=[TEST_PATH]/db-master/db/base --db-user=[USER-1] --lock-path=[TEST_PATH]/backup/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/repo/log --no-online --repo-path=[TEST_PATH]/backup/repo --stanza=db
 P00  ERROR: [055]: archive information missing
-            HINT: Use stanza-create --force to force the stanza data to be created.
+            HINT: use stanza-create --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [055]
 
 + supplemental file: [TEST_PATH]/backup/repo/backup/db/backup.info
