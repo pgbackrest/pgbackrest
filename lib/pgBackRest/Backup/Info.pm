@@ -142,7 +142,7 @@ sub new
     eval
     {
         $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => storageRepo()});
+            oStorage => $oStorage});
         logEnable();
         return true;
     }

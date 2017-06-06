@@ -73,7 +73,7 @@ sub new
         $strOperation,
         $strArchiveClusterPath,                     # Archive cluster path
         $bRequired,                                 # Is archive info required?
-        $bLoad,                                     # Should the file attemp to be loaded?
+        $bLoad,                                     # Should the file attempt to be loaded?
         $bIgnoreMissing,                            # Don't error on missing files
     ) =
         logDebugParam

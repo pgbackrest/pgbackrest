@@ -363,17 +363,17 @@ my $oTestDef =
         {
             &TESTDEF_NAME => 'stanza',
 
-            &TESTDEF_COVERAGE =>
-            {
-                &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_FULL,
-            },
-
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_CONTAINER => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_FULL,
+                    },
                 },
                 {
                     &TESTDEF_NAME => 'create',
