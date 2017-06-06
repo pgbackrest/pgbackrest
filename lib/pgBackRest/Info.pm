@@ -481,7 +481,7 @@ sub backupList
         );
 
     # Load the backup.info but do not attempt to validate it or confirm it's existence
-    my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(CMD_BACKUP . "/${strStanza}"), false, false);
+    my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(CMD_BACKUP . "/${strStanza}"), false, false, {bIgnoreMissing => true});
 
     # Build the db list
     my @oyDbList;
