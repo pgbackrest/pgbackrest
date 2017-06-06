@@ -81,7 +81,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-            {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
         # Change the permissions of the archive file so it cannot be read
         forceStorageMode(
@@ -107,18 +107,7 @@ sub run
         # stanza already exists
         $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Remove the backup info file and confirm success with backup dir empty
-        # Backup Full tests will confirm failure when backup dir not empty
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
-
-        $oHostBackup->stanzaCreate('force not needed when backup dir empty, archive.info exists but backup.info is missing',
-            {strOptionalParam => '--no-' . OPTION_ONLINE});
-
-        # Remove the backup.info file then munge and save the archive info file
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
-
+        # Munge and save the archive info file
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});

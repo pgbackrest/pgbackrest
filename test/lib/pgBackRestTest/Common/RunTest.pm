@@ -430,7 +430,7 @@ sub testException
         if (!($EVAL_ERROR->code() == $iCodeExpected &&
             (!defined($strMessageExpected) && !defined($EVAL_ERROR->message()) ||
                 (defined($strMessageExpected) && defined($EVAL_ERROR->message()) &&
-                    ($EVAL_ERROR->message() eq $strMessageExpected || $EVAL_ERROR->message() =~ "^${strMessageExpected}\$" ||
+                    ($EVAL_ERROR->message() eq $strMessageExpected || $EVAL_ERROR->message() =~ "^${strMessageExpected}" ||
                      $EVAL_ERROR->message() =~ "^${strMessageExpected} at ")))))
         {
             confess

@@ -245,9 +245,11 @@ sub run
 
             # Stanza Create
             #-----------------------------------------------------------------------------------------------------------------------
-            # With data existing in the archive and backup directory, remove backup info file and confirm failure
+            # With data existing in the archive and backup directory, remove info files and confirm failure
             forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
             forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
             $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});

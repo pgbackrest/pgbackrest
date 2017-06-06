@@ -72,28 +72,63 @@ sub new
     (
         $strOperation,
         $strArchiveClusterPath,                     # Archive cluster path
-        $bRequired                                  # Is archive info required?
+        $bRequired,                                 # Is archive info required?
+        $bLoad,                                     # Should the file attempt to be loaded?
+        $bIgnoreMissing,                            # Don't error on missing files
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
-            {name => 'bRequired', default => true}
+            {name => 'bRequired', default => true},
+            {name => 'bLoad', optional => true, default => true},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
-    my $bExists = storageRepo()->exists($strArchiveInfoFile);
+    my $self = {};
+    my $iResult = 0;
+    my $strResultMessage;
 
-    if (!$bExists && $bRequired)
-    {
-        confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
-    }
+    # Disable logging to control output
+    logDisable();
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bExists, oStorage => storageRepo()});
+    eval
+    {
+        $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
+            oStorage => storageRepo()});
+        logEnable();
+        return true;
+    }
+    or do
+    {
+        # Reset the console logging
+        logEnable();
 
-    $self->{bExists} = $bExists;
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+    };
+
+    if ($iResult != 0)
+    {
+        # If the file does not exist but is required to exist, then error
+        # The archive info is only allowed not to exist when running a stanza-create on a new install
+        if ($iResult == ERROR_FILE_MISSING)
+        {
+            if ($bRequired)
+            {
+                confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
+            }
+        }
+        else
+        {
+            confess &log(ERROR, $strResultMessage, $iResult);
+        }
+    }
+
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;
 
     # Return from function and log return values if any

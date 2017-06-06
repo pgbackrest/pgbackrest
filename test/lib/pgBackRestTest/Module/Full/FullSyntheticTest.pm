@@ -915,8 +915,8 @@ sub run
              strOptionalParam => '--log-level-console=detail'});
 
             # Fail on attempt to create the stanza data since force was not used
-            $oHostBackup->stanzaCreate('fail on backup directory not empty and missing backup.info',
-                {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY, strOptionalParam => '--no-' . OPTION_ONLINE});
+            $oHostBackup->stanzaCreate('fail on backup directory missing backup.info',
+                {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
             # Use force to create the stanza
             $oHostBackup->stanzaCreate('create required data for stanza',
