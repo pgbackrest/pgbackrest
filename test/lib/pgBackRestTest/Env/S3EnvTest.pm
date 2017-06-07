@@ -50,7 +50,7 @@ sub initS3
 
     # Initialize the driver
     return new pgBackRest::Storage::S3::Driver(
-        $strBucket, $strEndPoint, $strRegion, $strAccessKeyId, $strSecretAccessKey, {bVerifySsl => false});
+        $strBucket, $strEndPoint, $strRegion, $strAccessKeyId, $strSecretAccessKey, {bVerifySsl => false, lBufferMax => 1048576});
 }
 
 1;

@@ -14,11 +14,12 @@ use Exporter qw(import);
 use IO::Socket::SSL;
 
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Http::Client;
+use pgBackRest::Common::Http::Common;
+use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Xml;
-use pgBackRest::Common::Http::Client;
-use pgBackRest::Common::Http::Common;
 use pgBackRest::Storage::S3::Auth;
 
 ####################################################################################################################################
@@ -66,6 +67,7 @@ sub new
         $self->{strSecretAccessKey},
         $self->{strHost},
         $self->{bVerifySsl},
+        $self->{lBufferMax},
     ) =
         logDebugParam
         (
@@ -77,6 +79,7 @@ sub new
             {name => 'strSecretAccessKey', trace => true},
             {name => 'strHost', optional => true, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
+            {name => 'lBufferMax', optional => true, default => COMMON_IO_BUFFER_MAX, trace => true},
         );
 
     # If host is not set then it will be bucket + endpoint
@@ -137,7 +140,7 @@ sub request
     my $oHttpClient = new pgBackRest::Common::Http::Client(
         $self->{strHost}, $strVerb,
         {strUri => $strUri, hQuery => $hQuery, hRequestHeader => $hHeader, rstrRequestBody => $rstrBody,
-            bVerifySsl => $self->{bVerifySsl}});
+            bVerifySsl => $self->{bVerifySsl}, lBufferMax => $self->{lBufferMax}});
 
     # Check response code
     my $iReponseCode = $oHttpClient->responseCode();

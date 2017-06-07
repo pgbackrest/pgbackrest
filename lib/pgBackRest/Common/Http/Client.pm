@@ -54,7 +54,7 @@ sub new
         $hRequestHeader,
         $rstrRequestBody,
         $iProtocolTimeout,
-        $iBufferSize,
+        $lBufferMax,
         $bVerifySsl,
     ) =
         logDebugParam
@@ -67,7 +67,7 @@ sub new
             {name => 'hRequestHeader', optional => true, trace => true},
             {name => 'rstrRequestBody', optional => true, trace => true},
             {name => 'iProtocolTimeout', optional => true, default => 30, trace => true},
-            {name => 'iBufferSize', optional => true, default => 32768, trace => true},
+            {name => 'lBufferMax', optional => true, default => 32768, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
         );
 
@@ -82,7 +82,7 @@ sub new
 
     # Create the buffered IO object
     my $self = new pgBackRest::Common::Io::Buffered(
-        new pgBackRest::Common::Io::Handle('httpClient', $oSocket, $oSocket), $iProtocolTimeout, $iBufferSize);
+        new pgBackRest::Common::Io::Handle('httpClient', $oSocket, $oSocket), $iProtocolTimeout, $lBufferMax);
 
     # Bless with the class
     @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
@@ -108,17 +108,15 @@ sub new
     $self->write(\$self->{strRequestHeader});
 
     # Write content
-    # !!! NEEDS TO BE OPTIMIZED
     if (defined($rstrRequestBody))
     {
         my $iTotalSize = length($$rstrRequestBody);
         my $iTotalSent = 0;
 
+        # Write the request body in buffer-sized chunks
         do
         {
-            my $strBufferWrite = substr(
-                $$rstrRequestBody, $iTotalSent, $iTotalSize - $iTotalSent > 16384 ? 16384 : $iTotalSize - $iTotalSent);
-
+            my $strBufferWrite = substr($$rstrRequestBody, $iTotalSent, $lBufferMax);
             $iTotalSent += $self->write(\$strBufferWrite);
         } while ($iTotalSent < $iTotalSize);
     }
