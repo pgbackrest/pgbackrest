@@ -137,9 +137,6 @@ sub manifest
     # Continuation token - returned from requests where there is more data to be fetched
     my $strContinuationToken;
 
-    my $iFileTotal = 0;
-    my $iPathTotal = 0;
-
     do
     {
         # Get the file list
@@ -175,7 +172,6 @@ sub manifest
 
             $hManifest->{$strName}->{type} = 'f';
             $hManifest->{$strName}->{size} = xmlTagText($oFile, "Size");
-            $iFileTotal++;
 
             # Generate paths from the name if recursing
             if ($bRecurse)
@@ -212,7 +208,6 @@ sub manifest
                 $strName = substr($strName, 0, length($strName) - 1);
 
                 $hManifest->{$strName}->{type} = 'd';
-                $iPathTotal++;
             }
         }
 

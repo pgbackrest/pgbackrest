@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Process S3 requests
+# Process S3 Requests
 ####################################################################################################################################
 package pgBackRest::Storage::S3::Request;
 
@@ -94,7 +94,7 @@ sub new
 }
 
 ####################################################################################################################################
-# request - send a request to S3.
+# request - send a request to S3
 ####################################################################################################################################
 sub request
 {
@@ -146,7 +146,7 @@ sub request
     my $iReponseCode = $oHttpClient->responseCode();
     my $oResponse;
 
-    if ($oHttpClient->responseCode() == 200)
+    if ($iReponseCode == 200)
     {
         # Save the response headers locally
         $self->{hResponseHeader} = $oHttpClient->responseHeader();
@@ -173,7 +173,7 @@ sub request
     }
     else
     {
-        if ($oHttpClient->responseCode() == 404)
+        if ($iReponseCode == 404)
         {
             if (!$bIgnoreMissing)
             {
@@ -185,7 +185,7 @@ sub request
             my $rstrResponseBody = $oHttpClient->responseBody();
 
             confess &log(ERROR,
-                "S3 request error [$iReponseCode] " . $oHttpClient->responseCode() .
+                "S3 request error [$iReponseCode] " . $oHttpClient->responseMessage() .
                     (defined($$rstrResponseBody) ? ":\n${$rstrResponseBody}" : ''),
                 ERROR_PROTOCOL);
         }
