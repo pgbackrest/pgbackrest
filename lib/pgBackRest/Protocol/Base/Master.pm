@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# PROTOCOL COMMON MASTER MODULE
+# Protocol Master Base
 ####################################################################################################################################
-package pgBackRest::Protocol::Common::Master;
+package pgBackRest::Protocol::Base::Master;
 
 use strict;
 use warnings FATAL => qw(all);

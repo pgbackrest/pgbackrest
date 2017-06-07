@@ -13,7 +13,7 @@ use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Storage::Local;
-use pgBackRest::Protocol::Common::Master;
+use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Protocol::Command::Minion;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::RestoreFile;

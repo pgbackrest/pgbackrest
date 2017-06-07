@@ -2,7 +2,7 @@
 # PROTOCOL COMMAND MINION MODULE
 ####################################################################################################################################
 package pgBackRest::Protocol::Command::Minion;
-use parent 'pgBackRest::Protocol::Common::Minion';
+use parent 'pgBackRest::Protocol::Base::Minion';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,7 +15,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Protocol::Common::Minion;
+use pgBackRest::Protocol::Base::Minion;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Version;
 
