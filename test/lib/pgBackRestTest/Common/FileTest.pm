@@ -31,11 +31,14 @@ use pgBackRest::Storage::Local;
 use pgBackRest::Storage::S3::Driver;
 
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::VmTest;
+use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
+use pgBackRestTest::Env::Host::HostS3Test;
 
 ####################################################################################################################################
 # testLinkCreate
@@ -82,20 +85,6 @@ sub testPathRemove
     my $bSuppressError = shift;
 
     executeTest('sudo rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
-
-    # remove_tree($strPath, {result => \my $oError});
-    #
-    # if (@$oError)
-    # {
-    #     my $strMessage = "error(s) occurred while removing ${strPath}:";
-    #
-    #     for my $strFile (@$oError)
-    #     {
-    #         $strMessage .= "\nunable to remove: " . $strFile;
-    #     }
-    #
-    #     confess $strMessage;
-    # }
 }
 
 push(@EXPORT, qw(testPathRemove));
@@ -188,6 +177,46 @@ sub forceStorageMode
 push(@EXPORT, qw(forceStorageMode));
 
 ####################################################################################################################################
+# forceStorageMove - force move a directory or file
+####################################################################################################################################
+sub forceStorageMove
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strSourcePathExp,
+        $strDestinationPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->forceStorageMove', \@_,
+            {name => 'oStorage'},
+            {name => 'strSourcePathExp'},
+            {name => 'strDestinationPathExp'},
+        );
+
+    # If S3 then use storage commands to remove
+    if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
+    {
+        hostGroupGet()->hostGet(HOST_S3)->executeS3(
+            'mv --recursive s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
+                ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strDestinationPathExp));
+    }
+    # Else remove using filesystem commands
+    else
+    {
+        executeTest('sudo mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageMove));
+
+####################################################################################################################################
 # forceStorageOwner - force ownership on a file or path
 ####################################################################################################################################
 sub forceStorageOwner
@@ -251,7 +280,7 @@ sub forceStorageRemove
     # Else remove using filesystem commands
     else
     {
-        executeTest('sudo rm ' . ($bRecurse ? '-rf ' : '') . $oStorage->pathGet($strPathExp));
+        executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
     }
 
     # Return from function and log return values if any

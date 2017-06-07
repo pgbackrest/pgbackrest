@@ -29,12 +29,12 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostS3Test;
+use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
 # Build PostgreSQL pages for testing
@@ -425,21 +425,8 @@ sub run
         my $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . '/' .
             ($strResumeBackup ne $strFullBackup ? $strResumeBackup : backupLabel(storageRepo(), $strType, undef, time())));
 
-        # !!! CHANGE RM COMMANDS TO NEW FORCE FUNCTIONS AND ADD A NEW FUNCTION FOR MOVE
-        if ($bS3)
-        {
-            $oHostS3->executeS3('rm --recursive s3://' . HOST_S3_BUCKET . "${strResumePath}");
-            $oHostS3->executeS3(
-                'mv --recursive s3://' . HOST_S3_BUCKET .
-                    storageRepo()->pathGet('/backup/' . $self->stanza() . "/${strFullBackup}") .
-                    ' s3://' . HOST_S3_BUCKET . $strResumePath);
-        }
-        else
-        {
-            executeTest("sudo rm -rf ${strResumePath}");
-            executeTest(
-                'sudo mv ' . storageRepo()->pathGet('backup/' . $self->stanza() . "/${strFullBackup}") . " ${strResumePath}");
-        }
+        forceStorageRemove(storageRepo(), $strResumePath, {bRecurse => true});
+        forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strFullBackup}", $strResumePath);
 
         $oHostBackup->manifestMunge(
             basename($strResumePath),
@@ -448,14 +435,7 @@ sub run
             false);
 
         # Remove the main manifest so the backup appears aborted
-        if ($bS3)
-        {
-            storageRepo()->remove("${strResumePath}/" . FILE_MANIFEST);
-        }
-        else
-        {
-            executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
-        }
+        forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         # Create a temp file in backup temp root to be sure it's deleted correctly
         my $strTempFile = "${strResumePath}/file.tmp" . ($bCompress ? '.gz' : '');
@@ -803,17 +783,8 @@ sub run
             storageRepo()->pathGet('backup/' . $self->stanza() . '/' .
             backupLabel(storageRepo(), $strType, substr($strBackup, 0, 16), time()));
 
-        if ($bS3)
-        {
-            $oHostS3->executeS3('rm --recursive s3://' . HOST_S3_BUCKET . "${strResumePath}");
-            $oHostS3->executeS3(
-                'mv --recursive s3://' . HOST_S3_BUCKET . storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}") .
-                ' s3://' . HOST_S3_BUCKET . $strResumePath);
-        }
-        else
-        {
-            executeTest('sudo mv ' . storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}") . " ${strResumePath}");
-        }
+        forceStorageRemove(storageRepo(), $strResumePath);
+        forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strBackup}", $strResumePath);
 
         $oHostBackup->manifestMunge(
             basename($strResumePath),
@@ -822,14 +793,7 @@ sub run
             false);
 
         # Remove the main manifest so the backup appears aborted
-        if ($bS3)
-        {
-            storageRepo()->remove("${strResumePath}/" . FILE_MANIFEST);
-        }
-        else
-        {
-            executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
-        }
+        forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         # Add tablespace 2
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 2);
@@ -866,14 +830,7 @@ sub run
         $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}");
 
         # Remove the main manifest so the backup appears aborted
-        if ($bS3)
-        {
-            storageRepo()->remove("${strResumePath}/" . FILE_MANIFEST);
-        }
-        else
-        {
-            executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
-        }
+        forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
@@ -888,14 +845,7 @@ sub run
         $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}");
 
         # Remove the main manifest so the backup appears aborted
-        if ($bS3)
-        {
-            storageRepo()->remove("${strResumePath}/" . FILE_MANIFEST);
-        }
-        else
-        {
-            executeTest("sudo rm -f ${strResumePath}/" . FILE_MANIFEST);
-        }
+        forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
@@ -966,15 +916,8 @@ sub run
         # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
         if ($bNeutralTest)
         {
-            if ($bS3)
-            {
-                storageRepo()->remove(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-                storageRepo()->remove(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
-            }
-            else
-            {
-                executeTest('sudo rm -f ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/backup.info') . qw{*});
-            }
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
         }
 
         $oHostDbMaster->manifestFileCreate(
@@ -1191,11 +1134,7 @@ sub run
 
         # Backup Info (with an empty stanza)
         #-----------------------------------------------------------------------------------------------------------------------
-        if (!$bS3)
-        {
-            executeTest('sudo chmod g+w ' . storageRepo()->pathGet('backup'));
-        }
-
+        forceStorageMode(storageRepo(), 'backup', 'g+w');
         storageRepo()->pathCreate(storageRepo()->pathGet('backup/db_empty'), {strMode => '0770'});
 
         $oHostBackup->info('normal output');

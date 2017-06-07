@@ -64,7 +64,7 @@ sub new
 
     # Create the host
     my $self = $class->SUPER::new(
-        's3-server', 'test-' . testRunGet()->vmId() . '-s3-server', containerRepo() . ':' . testRunGet()->vm() . '-s3-server',
+        HOST_S3, 'test-' . testRunGet()->vmId() . '-s3-server', containerRepo() . ':' . testRunGet()->vm() . '-s3-server',
         'root', testRunGet()->vm());
     bless $self, $class;
 
