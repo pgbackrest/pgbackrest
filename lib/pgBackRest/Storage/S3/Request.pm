@@ -181,7 +181,7 @@ sub request
         }
         else
         {
-            my $rstrResponseBody = $self->responseBody();
+            my $rstrResponseBody = $oHttpClient->responseBody();
 
             confess &log(ERROR,
                 "S3 request error [$iReponseCode] " . $oHttpClient->responseCode() .
