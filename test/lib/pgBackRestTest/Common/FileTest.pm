@@ -81,20 +81,6 @@ sub testPathRemove
     my $bSuppressError = shift;
 
     executeTest('sudo rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
-
-    # remove_tree($strPath, {result => \my $oError});
-    #
-    # if (@$oError)
-    # {
-    #     my $strMessage = "error(s) occurred while removing ${strPath}:";
-    #
-    #     for my $strFile (@$oError)
-    #     {
-    #         $strMessage .= "\nunable to remove: " . $strFile;
-    #     }
-    #
-    #     confess $strMessage;
-    # }
 }
 
 push(@EXPORT, qw(testPathRemove));
@@ -183,6 +169,35 @@ sub forceStorageMode
 push(@EXPORT, qw(forceStorageMode));
 
 ####################################################################################################################################
+# forceStorageMove - force move a directory or file
+####################################################################################################################################
+sub forceStorageMove
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strSourcePathExp,
+        $strDestinationPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->forceStorageMove', \@_,
+            {name => 'oStorage'},
+            {name => 'strSourcePathExp'},
+            {name => 'strDestinationPathExp'},
+        );
+
+    executeTest('sudo mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageMove));
+
+####################################################################################################################################
 # forceStorageOwner - force ownership on a file or path
 ####################################################################################################################################
 sub forceStorageOwner
@@ -234,7 +249,7 @@ sub forceStorageRemove
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    executeTest('sudo rm ' . ($bRecurse ? '-rf ' : '') . $oStorage->pathGet($strPathExp));
+    executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
