@@ -151,7 +151,8 @@ sub run
                            ', archive ' .sprintf('%02x', $iArchive) .
                            " - ${strArchiveFile}");
 
-                my $strArchiveTmp = undef;
+                # Create a temp file to make sure it is deleted later
+                my $strArchiveTmp;
 
                 if ($iBackup == 1 && $iArchive == 2)
                 {
@@ -180,7 +181,7 @@ sub run
                     @stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}" .
                     ($bCompress ? qw{.} . COMPRESS_EXT : ''));
 
-                # Make sure the temp file no longer exists
+                # Make sure the temp file no longer exists if it was created
                 if (defined($strArchiveTmp))
                 {
                     my $oWait = waitInit(5);
