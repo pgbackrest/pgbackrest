@@ -559,20 +559,33 @@ sub remove
     my
     (
         $strOperation,
-        $strFileExp,
+        $xstryPathFileExp,
         $bIgnoreMissing,
         $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'strFileExp'},
+            {name => 'strPathFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => true},
             {name => 'bRecurse', optional => true, default => false, trace => true},
         );
 
+    # Evaluate expressions for all files
+    my @stryPathFileExp;
+
+    if (ref($xstryPathFileExp))
+    {
+        foreach my $strPathFileExp (@{$xstryPathFileExp})
+        {
+            push(@stryPathFileExp, $self->pathGet($strPathFileExp));
+        }
+    }
+
     # Remove file
-    my $bRemoved = $self->driver()->remove($self->pathGet($strFileExp), {bIgnoreMissing => $bIgnoreMissing, bRecurse => $bRecurse});
+    my $bRemoved = $self->driver()->remove(
+        ref($xstryPathFileExp) ? \@stryPathFileExp : $self->pathGet($xstryPathFileExp),
+        {bIgnoreMissing => $bIgnoreMissing, bRecurse => $bRecurse});
 
     # Return from function and log return values if any
     return logDebugReturn

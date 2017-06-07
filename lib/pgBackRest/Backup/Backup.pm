@@ -204,6 +204,7 @@ sub resumeClean
 
     # Get the list of files that should be deleted
     my @stryFile = $self->fileNotInManifest($oStorageRepo, STORAGE_REPO_BACKUP, $strBackupLabel, $oManifest, $oAbortedManifest);
+    my @stryFileDelete;
 
     foreach my $strFile (sort {$b cmp $a} @stryFile)
     {
@@ -213,16 +214,20 @@ sub resumeClean
         if (!-X $strDelete && -d $strDelete)
         {
             logDebugMisc($strOperation, "remove path ${strDelete}");
-
-            rmdir($strDelete)
-                or confess &log(ERROR, "unable to delete path ${strDelete}, is it empty?", ERROR_PATH_REMOVE);
+            $oStorageRepo->pathRemove($strDelete);
         }
         # Else delete a file
         else
         {
             logDebugMisc($strOperation, "remove file ${strDelete}");
-            $oStorageRepo->remove($strDelete);
+            push(@stryFileDelete, $strDelete);
         }
+    }
+
+    # Delete files in batch for more efficiency
+    if (@stryFileDelete > 0)
+    {
+        $oStorageRepo->remove(\@stryFileDelete, {bIgnoreMissing => false});
     }
 
     # Return from function and log return values if any
@@ -569,7 +574,7 @@ sub process
     foreach my $strAbortedBackup ($oStorageRepo->list(
         STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
     {
-        # Aborted backups have a copy of the manifest but no manifest
+        # Aborted backups have a copy of the manifest but no main
         if ($oStorageRepo->exists(STORAGE_REPO_BACKUP . "/${strAbortedBackup}/" . FILE_MANIFEST_COPY) &&
             !$oStorageRepo->exists(STORAGE_REPO_BACKUP . "/${strAbortedBackup}/" . FILE_MANIFEST))
         {
@@ -666,12 +671,10 @@ sub process
             }
             else
             {
-                &log(WARN,
-                    "aborted backup ${strAbortedBackup} exists, but cannot be resumed (${strReason})" .
-                    ' - will be dropped');
+                &log(WARN, "aborted backup ${strAbortedBackup} cannot be resumed: ${strReason}");
                 &log(TEST, TEST_BACKUP_NORESUME);
 
-                $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}/" . FILE_MANIFEST_COPY);
+                $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strAbortedBackup}", {bRecurse => true});
                 undef($oAbortedManifest);
             }
 
