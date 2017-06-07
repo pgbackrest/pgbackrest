@@ -231,7 +231,7 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 's3',
                     &TESTDEF_TOTAL => 7,
-                    &TESTDEF_VM => [VM_U16],
+                    &TESTDEF_VM => [VM_CO7, VM_U16],
 
                     &TESTDEF_COVERAGE =>
                     {

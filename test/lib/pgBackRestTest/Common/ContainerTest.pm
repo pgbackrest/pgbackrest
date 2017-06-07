@@ -293,17 +293,44 @@ sub coverSetup
 ####################################################################################################################################
 sub s3Setup
 {
+    my $strOS = shift;
+
     # Install node.js
     my $strScript =
-        "\n\n# Install node.js\n" .
-        "RUN wget -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x && \\\n" .
-        "    bash /root/nodejs.sh && \\\n" .
-        "    apt-get install -y nodejs";
+        "\n\n# Install node.js\n";
+
+    if ($strOS eq VM_U16)
+    {
+        $strScript .=
+            "RUN wget -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x && \\\n" .
+            "    bash /root/nodejs.sh && \\\n" .
+            "    apt-get install -y nodejs";
+    }
+    elsif ($strOS eq VM_CO7)
+    {
+        $strScript .=
+            "RUN yum install -y wget && \\\n" .
+            "    wget -O /root/nodejs.sh https://rpm.nodesource.com/setup_6.x && \\\n" .
+            "    bash /root/nodejs.sh && \\\n" .
+            "    yum install -y nodejs";
+    }
 
     # Install Scality S3
     $strScript .=
-        "\n\n# Install Scality S3\n" .
-        "RUN apt-get install -y python build-essential git && \\\n" .
+        "\n\n# Install Scality S3\n";
+
+    if ($strOS eq VM_U16)
+    {
+        $strScript .=
+            "RUN apt-get install -y python build-essential git && \\\n";
+    }
+    elsif ($strOS eq VM_CO7)
+    {
+        $strScript .=
+            "RUN yum install -y python git && \\\n";
+    }
+
+    $strScript .=
         "    wget -O /root/scalitys3.tar.gz https://github.com/scality/S3/archive/GA6.4.2.1.tar.gz && \\\n" .
         "    mkdir /root/scalitys3 && \\\n" .
         "    tar -C /root/scalitys3 --strip-components 1 -xvf /root/scalitys3.tar.gz && \\\n" .
@@ -612,7 +639,7 @@ sub containerBuild
             "    apt-get install -y wget";
 
         # Setup S3 server
-        $strScript .= s3Setup($strOS);
+        $strScript .= s3Setup(VM_U16);
 
         # Fix root tty
         $strScript .=
@@ -769,7 +796,7 @@ sub containerBuild
         # Setup Devel::Cover
         $strScript .= coverSetup($strOS);
 
-        if ($strOS eq VM_U16)
+        if ($strOS eq VM_U16 || $strOS eq VM_CO7)
         {
             # Setup S3 server
             $strScript .= s3Setup($strOS);
@@ -778,8 +805,22 @@ sub containerBuild
             my $strAwsPath = '/home/' . TEST_USER . '/.aws';
 
             $strScript .=
-                "\n\n# Install AWS CLI\n" .
-                "RUN apt-get install -y python-pip && \\\n" .
+                "\n\n# Install AWS CLI\n";
+
+            if ($strOS eq VM_U16)
+            {
+                $strScript .=
+                    "RUN apt-get install -y python-pip && \\\n";
+            }
+            elsif ($strOS eq VM_CO7)
+            {
+                $strScript .=
+                    "RUN yum -y install epel-release && \\\n" .
+                    "    yum -y update && \\\n" .
+                    "    yum -y install python-pip && \\\n";
+            }
+
+            $strScript .=
                 "    pip install --upgrade awscli && \\\n" .
                 '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
                 '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
