@@ -157,25 +157,24 @@ sub run
 
                 my $strArchiveTmp = undef;
 
-                # !!! REMOVE IF REMOVED BELOW
-                # if ($iBackup == 1 && $iArchive == 2)
-                # {
-                #     # Should succeed when temp file already exists
-                #     &log(INFO, '        test archive when tmp file exists');
-                #
-                #     $strArchiveTmp =
-                #         $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
-                #         substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}" . ($bCompress ? qw{.} .
-                #         COMPRESS_EXT : '') . qw{.} . STORAGE_TEMP_EXT;
-                #
-                #     executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
-                #     storageTest()->put($strArchiveTmp, 'JUNK');
-                #
-                #     if ($bRemote)
-                #     {
-                #         executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
-                #     }
-                # }
+                if ($iBackup == 1 && $iArchive == 2)
+                {
+                    # Should succeed when temp file already exists
+                    &log(INFO, '        test archive when tmp file exists');
+
+                    $strArchiveTmp =
+                        $oHostBackup->repoPath() . '/archive/' . $self->stanza() . '/' . PG_VERSION_94 . '-1/' .
+                        substr($strSourceFile, 0, 16) . "/${strSourceFile}-${strArchiveChecksum}" . ($bCompress ? qw{.} .
+                        COMPRESS_EXT : '') . qw{.} . STORAGE_TEMP_EXT;
+
+                    executeTest('sudo chmod 770 ' . dirname($strArchiveTmp));
+                    storageTest()->put($strArchiveTmp, 'JUNK');
+
+                    if ($bRemote)
+                    {
+                        executeTest('sudo chown ' . $oHostBackup->userGet() . " ${strArchiveTmp}");
+                    }
+                }
 
                 $oHostDbMaster->executeSimple(
                     $strCommand .  ($bRemote && $iBackup == $iArchive ? ' --cmd-ssh=/usr/bin/ssh' : '') .
@@ -186,23 +185,22 @@ sub run
                     ($bCompress ? qw{.} . COMPRESS_EXT : ''));
 
                 # Make sure the temp file no longer exists
-                # !!! NOT SURE THIS TEST MAKES SENSE ANYMORE
-                # if (defined($strArchiveTmp))
-                # {
-                #     my $oWait = waitInit(5);
-                #     my $bFound = true;
-                #
-                #     do
-                #     {
-                #         $bFound = storageTest()->exists($strArchiveTmp);
-                #     }
-                #     while ($bFound && waitMore($oWait));
-                #
-                #     if ($bFound)
-                #     {
-                #         confess "${strArchiveTmp} should have been removed by archive command";
-                #     }
-                # }
+                if (defined($strArchiveTmp))
+                {
+                    my $oWait = waitInit(5);
+                    my $bFound = true;
+
+                    do
+                    {
+                        $bFound = storageTest()->exists($strArchiveTmp);
+                    }
+                    while ($bFound && waitMore($oWait));
+
+                    if ($bFound)
+                    {
+                        confess "${strArchiveTmp} should have been removed by archive command";
+                    }
+                }
 
                 if ($iArchive == $iBackup)
                 {
