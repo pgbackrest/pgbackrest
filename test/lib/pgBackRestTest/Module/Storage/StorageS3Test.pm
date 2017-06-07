@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# StorageS3DriverTest.pm - S3 Storage Tests
+# S3 Storage Tests
 ####################################################################################################################################
-package pgBackRestTest::Module::Storage::StorageS3DriverTest;
+package pgBackRestTest::Module::Storage::StorageS3Test;
 use parent 'pgBackRestTest::Env::S3EnvTest';
 
 ####################################################################################################################################
@@ -12,14 +12,14 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA qw(sha1_hex);
+
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Storage::S3::Driver;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
-
-# !!! CONSOLIDATE FILE TESTS INTO THIS MODULE TO REDUCE DUPLICATION
 
 ####################################################################################################################################
 # initTest
@@ -45,6 +45,7 @@ sub run
     # Test variables
     my $strFile = 'file.txt';
     my $strFileContent = 'TESTDATA';
+    my $iFileLength = length($strFileContent);
 
     ################################################################################################################################
     if ($self->begin('exists()'))
@@ -152,6 +153,55 @@ sub run
 
         $self->testResult(sub {$oStorage->info($strFile)->size()}, 8, 'file size');
         $self->testResult(sub {$oStorage->info("/path/to/${strFile}2")->size()}, 9, 'file 2 size');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('openRead() && S3::FileRead'))
+    {
+        # Create a random 1mb file
+        my $strRandomFile = $self->testPath() . '/random1mb.bin';
+        executeTest("dd if=/dev/urandom of=${strRandomFile} bs=1024k count=1", {bSuppressStdErr => true});
+        my $strRandom = ${storageTest()->get($strRandomFile)};
+
+        executeTest("$self->{strS3Command} cp ${strRandomFile} s3://pgbackrest-dev/path/to/${strFile}");
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $tBuffer;
+        my $oFileRead = $self->testResult(sub {$oS3->openRead("/path/to/${strFile}")}, '[object]', 'open read');
+        $self->testResult(sub {$oFileRead->read(\$tBuffer, 524288)}, 524288, '    read half');
+        $self->testResult(sub {$oFileRead->read(\$tBuffer, 524288)}, 524288, '    read half');
+        $self->testResult(sub {$oFileRead->read(\$tBuffer, 512)}, 0, '    read 0');
+        $self->testResult(length($tBuffer), 1048576, '    check length');
+        $self->testResult(sha1_hex($tBuffer), sha1_hex($strRandom), '    check hash');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('openWrite() S3::FileWrite'))
+    {
+        # Create a random 1mb file
+        my $strRandomFile = $self->testPath() . '/random1mb.bin';
+        executeTest("dd if=/dev/urandom of=${strRandomFile} bs=1024k count=1", {bSuppressStdErr => true});
+        my $strRandom = ${storageTest()->get($strRandomFile)};
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');
+        $self->testResult(sub {$oFileWrite->close()}, true, '    close without writing');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');
+        $self->testResult(sub {$oFileWrite->write()}, 0, '    write undef');
+        $self->testResult(sub {$oFileWrite->write(\$strFileContent)}, $iFileLength, '    write');
+        $self->testResult(sub {$oFileWrite->close()}, true, '    close');
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');
+
+        for (my $iIndex = 1; $iIndex <= 17; $iIndex++)
+        {
+            $self->testResult(sub {$oFileWrite->write(\$strRandom)}, 1024 * 1024, '    write 1mb');
+        }
+
+        $self->testResult(sub {$oFileWrite->close()}, true, '    close');
     }
 }
 

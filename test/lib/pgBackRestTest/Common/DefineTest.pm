@@ -229,33 +229,15 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 's3-file-write',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_VM => [VM_U16],
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/S3/FileWrite' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 's3-file-read',
-                    &TESTDEF_TOTAL => 1,
-                    &TESTDEF_VM => [VM_U16],
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/S3/FileRead' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 's3-driver',
-                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_NAME => 's3',
+                    &TESTDEF_TOTAL => 7,
                     &TESTDEF_VM => [VM_U16],
 
                     &TESTDEF_COVERAGE =>
                     {
                         'Storage/S3/Driver' => TESTDEF_COVERAGE_PARTIAL,
+                        'Storage/S3/FileRead' => TESTDEF_COVERAGE_PARTIAL,
+                        'Storage/S3/FileWrite' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {

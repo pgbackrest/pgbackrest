@@ -58,7 +58,6 @@ sub openWrite
     (
         __PACKAGE__ . '->openWrite', \@_,
         {name => 'strFile', trace => true},
-        {name => 'bAtomic', optional => true, trace => true},
     );
 
     my $oFileIO = new pgBackRest::Storage::S3::FileWrite($self, $strFile);
