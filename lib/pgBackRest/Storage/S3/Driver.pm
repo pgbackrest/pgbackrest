@@ -37,6 +37,11 @@ use constant S3_QUERY_LIST_TYPE                                     => 'list-typ
 use constant S3_QUERY_PREFIX                                        => 'prefix';
 
 ####################################################################################################################################
+# Batch maximum size
+####################################################################################################################################
+use constant S3_BATCH_MAX                                           => 1000;
+
+####################################################################################################################################
 # openWrite - open a file for write
 ####################################################################################################################################
 sub openWrite
@@ -435,14 +440,27 @@ sub remove
     if ($bRecurse)
     {
         my $rhManifest = $self->manifest($rstryFile);
+        my @stryRemoveFile;
 
         # Iterate all files in the manifest
         foreach my $strFile (sort({$b cmp $a} keys(%{$rhManifest})))
         {
             next if $rhManifest->{$strFile}->{type} eq 'd';
 
-            # !!! NEED TO SEND REMOVE IN BATCH - THIS IS TERRIBLY SLOW
-            $self->remove("${rstryFile}/${strFile}");
+            push(@stryRemoveFile, "${rstryFile}/${strFile}");
+
+            # Send remove request if batch max has been reached
+            if (@stryRemoveFile == S3_BATCH_MAX)
+            {
+                $self->remove(\@stryRemoveFile);
+                undef(@stryRemoveFile);
+            }
+        }
+
+        # Remove anything that's left over
+        if (@stryRemoveFile > 0)
+        {
+            $self->remove(\@stryRemoveFile);
         }
     }
     # Only remove the specified file

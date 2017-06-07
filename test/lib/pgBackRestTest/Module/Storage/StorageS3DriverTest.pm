@@ -117,11 +117,13 @@ sub run
         $oStorage->put($strFile, $strFileContent);
         $oStorage->put("/path/to/${strFile}2", $strFileContent);
         $oStorage->put("/path/to/${strFile}3", $strFileContent);
+        $oStorage->put("/path/to/${strFile}4", $strFileContent);
 
         $self->testResult(
             sub {$oStorage->manifest('/')},
             '{. => {type => d}, file.txt => {size => 8, type => f}, path => {type => d}, path/to => {type => d},' .
-                ' path/to/file.txt2 => {size => 8, type => f}, path/to/file.txt3 => {size => 8, type => f}}',
+                ' path/to/file.txt2 => {size => 8, type => f}, path/to/file.txt3 => {size => 8, type => f},' .
+                ' path/to/file.txt4 => {size => 8, type => f}}',
             'check manifest');
 
         #---------------------------------------------------------------------------------------------------------------------------
