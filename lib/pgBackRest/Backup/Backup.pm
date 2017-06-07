@@ -60,11 +60,9 @@ sub new
 }
 
 ####################################################################################################################################
-# fileNotInManifest
-#
-# Find all files in a backup path that are not in the supplied manifest.
+# resumeClean - cleans the directory from a previous failed backup so it can be reused
 ####################################################################################################################################
-sub fileNotInManifest
+sub resumeClean
 {
     my $self = shift;
 
@@ -73,27 +71,28 @@ sub fileNotInManifest
     (
         $strOperation,
         $oStorageRepo,
-        $strPathType,
-        $strPath,
+        $strBackupLabel,
         $oManifest,
         $oAbortedManifest
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->fileNotInManifest', \@_,
-            {name => 'oStorageRepo', trace => true},
-            {name => 'strPathType', trace => true},
-            {name => 'strPath', trace => true},
-            {name => 'oManifest', trace => true},
-            {name => 'oAbortedManifest', trace => true}
+            __PACKAGE__ . '->resumeClean', \@_,
+            {name => 'oStorageRepo'},
+            {name => 'strBackupLabel'},
+            {name => 'oManifest'},
+            {name => 'oAbortedManifest'}
         );
 
+    &log(DETAIL, 'clean resumed backup path: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}"));
+
     # Build manifest for aborted backup path
-    my $hFile = $oStorageRepo->manifest("${strPathType}/${strPath}");
+    my $hFile = $oStorageRepo->manifest(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
 
     # Get compress flag
     my $bCompressed = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
 
+    # Find paths and files to delete
     my @stryFile;
 
     foreach my $strName (sort(keys(%{$hFile})))
@@ -161,73 +160,24 @@ sub fileNotInManifest
             }
         }
 
-        # Push the file/path/link to be deleted into the result array
-        push @stryFile, $strName;
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'stryFile', value => \@stryFile}
-    );
-}
-
-####################################################################################################################################
-# resumeClean
-#
-# Cleans the directory from a previous failed backup so it can be reused
-####################################################################################################################################
-sub resumeClean
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $oStorageRepo,
-        $strBackupLabel,
-        $oManifest,
-        $oAbortedManifest
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->resumeClean', \@_,
-        {name => 'oStorageRepo', trace => true},
-        {name => 'strBackupLabel', trace => true},
-        {name => 'oManifest', trace => true},
-        {name => 'oAbortedManifest', trace => true}
-    );
-
-    &log(DETAIL, 'clean resume backup path: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}"));
-
-    # Get the list of files that should be deleted
-    my @stryFile = $self->fileNotInManifest($oStorageRepo, STORAGE_REPO_BACKUP, $strBackupLabel, $oManifest, $oAbortedManifest);
-    my @stryFileDelete;
-
-    foreach my $strFile (sort {$b cmp $a} @stryFile)
-    {
-        my $strDelete = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFile}");
-
-        # If a path then delete it, all the files should have already been deleted since we are going in reverse order
-        if (!-X $strDelete && -d $strDelete)
+        # If a directory then remove it
+        if ($cType eq 'd')
         {
-            logDebugMisc($strOperation, "remove path ${strDelete}");
-            $oStorageRepo->pathRemove($strDelete);
+            logDebugMisc($strOperation, "remove path ${strName}");
+            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
         }
-        # Else delete a file
+        # Else add the file/link to be deleted later
         else
         {
-            logDebugMisc($strOperation, "remove file ${strDelete}");
-            push(@stryFileDelete, $strDelete);
+            logDebugMisc($strOperation, "remove file ${strName}");
+            push(@stryFile, STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}");
         }
     }
 
     # Delete files in batch for more efficiency
-    if (@stryFileDelete > 0)
+    if (@stryFile > 0)
     {
-        $oStorageRepo->remove(\@stryFileDelete, {bIgnoreMissing => false});
+        $oStorageRepo->remove(\@stryFile);
     }
 
     # Return from function and log return values if any
