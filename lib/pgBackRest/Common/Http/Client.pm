@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# HTTP CLIENT MODULE
+# HTTP Client
 ####################################################################################################################################
 package pgBackRest::Common::Http::Client;
 
@@ -104,8 +104,6 @@ sub new
 
     $self->{strRequestHeader} .= "\r\n";
 
-    # &log(WARN, "REQUEST HEADER\n$self->{strRequestHeader}");
-
     # Write request headers
     $self->write(\$self->{strRequestHeader});
 
@@ -136,6 +134,7 @@ sub new
 
     while ($strHeader ne '')
     {
+        # Validate header
         $strResponseHeader .= "${strHeader}\n";
 
         my $iColonPos = index($strHeader, ':');
@@ -145,22 +144,20 @@ sub new
             confess &log(ERROR, "http header '${strHeader}' requires colon separator", ERROR_PROTOCOL);
         }
 
+        # Parse header
         my $strHeaderKey = lc(substr($strHeader, 0, $iColonPos));
         my $strHeaderValue = trim(substr($strHeader, $iColonPos + 1));
 
         # Store the header
         $self->{hResponseHeader}{$strHeaderKey} = $strHeaderValue;
 
+        # Process content length
         if ($strHeaderKey eq HTTP_HEADER_CONTENT_LENGTH)
         {
             $self->{iContentLength} = $strHeaderValue + 0;
             $self->{iContentRemaining} = $self->{iContentLength};
-
-            # if ($self->{iContentLength} > 0)
-            # {
-            #     confess &log(ASSERT, "can't deal with content-length > 0");
-            # }
         }
+        # Process transfer encoding (only chunked is supported)
         elsif ($strHeaderKey eq HTTP_HEADER_TRANSFER_ENCODING)
         {
             if ($strHeaderValue eq 'chunked')
@@ -173,10 +170,9 @@ sub new
             }
         }
 
+        # Read next header
         $strHeader = trim($self->readLine());
     }
-
-    # confess &log(WARN, "RESPONSE HEADER\n${strResponseHeader}");
 
     # Test response code
     if ($self->{iResponseCode} == 200)
@@ -247,33 +243,27 @@ sub responseBody
             __PACKAGE__ . '->responseBody'
         );
 
-    # Error if there is no response body
-    if ($self->{iContentLength} == 0)
-    {
-        confess &log(ERROR, 'content length is zero', ERROR_PROTOCOL);
-    }
-
-    # Read response body
     my $strResponseBody = undef;
-    my $iSize = 0;
 
-    while (1)
+    # Nothing to do if content length is 0
+    if ($self->{iContentLength} != 0)
     {
-        my $strChunkLength = trim($self->readLine());
-        my $iChunkLength = hex($strChunkLength);
+        while (1)
+        {
+            # Read chunk length
+            my $strChunkLength = trim($self->readLine());
+            my $iChunkLength = hex($strChunkLength);
 
-        last if ($iChunkLength == 0);
+            # Exit if chunk length is 0
+            last if ($iChunkLength == 0);
 
-        # !!! NEEDS TO BE OPTIMIZED
-        my $strResponseChunk;
-        $self->SUPER::read(\$strResponseChunk, $iChunkLength, true);
-        $strResponseBody .= $strResponseChunk;
-        $self->readLine();
+            # Read the chunk and consume the terminating LF
+            $self->SUPER::read(\$strResponseBody, $iChunkLength, true);
+            $self->readLine();
+        };
 
-        $iSize += $iChunkLength;
-    };
-
-    $self->close();
+        $self->close();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
