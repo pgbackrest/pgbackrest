@@ -45,8 +45,6 @@ use constant S3_RESPONSE_TYPE_NONE                                  => 'none';
 use constant S3_RESPONSE_TYPE_XML                                   => 'xml';
     push @EXPORT, qw(S3_RESPONSE_TYPE_XML);
 
-# !!! THIS SHOULD PROBABLY BE MERGED WITH THE DRIVER - IT'S NOT ENOUGH CODE TO STAND ALONE ANYMORE
-
 ####################################################################################################################################
 # new
 ####################################################################################################################################
