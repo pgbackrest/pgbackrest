@@ -18,13 +18,15 @@ db-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 compress=n
-lock-path=[TEST_PATH]/db-master/repo/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/repo/log
+log-path=[TEST_PATH]/db-master/log
+protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
-spool-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:archive-push]
 archive-async=y
@@ -34,7 +36,7 @@ archive-copy=y
 start-fast=y
 
 incr backup - update during backup (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=24576 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -46,13 +48,15 @@ db-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 compress=n
-lock-path=[TEST_PATH]/db-master/repo/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/repo/log
+log-path=[TEST_PATH]/db-master/log
+protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
-spool-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:archive-push]
 archive-async=y

@@ -23,8 +23,7 @@ use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::Protocol::Common::Common;
+use pgBackRest::Storage::Local;
 use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
@@ -64,7 +63,6 @@ local $EVAL_ERROR = undef; eval
         optionSet(OPTION_LOG_LEVEL_STDERR, PROTOCOL, true);
         logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
 
-        # Check that the repo path exists if this is a backup remote
         if (optionTest(OPTION_TYPE, BACKUP) && !-e optionGet(OPTION_REPO_PATH))
         {
             confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
@@ -75,18 +73,12 @@ local $EVAL_ERROR = undef; eval
         pgBackRest::Protocol::Remote::Minion->import();
 
         # Create the remote object
-        my $oRemote = new pgBackRest::Protocol::Remote::Minion
-        (
-            optionGet(OPTION_COMMAND),
-            optionGet(OPTION_BUFFER_SIZE),
-            optionGet(OPTION_COMPRESS_LEVEL),
-            optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
-            optionGet(OPTION_PROTOCOL_TIMEOUT)
-        );
+        my $oRemote = new pgBackRest::Protocol::Remote::Minion(optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_PROTOCOL_TIMEOUT));
 
         # Acquire a remote lock (except for commands that are read-only or local processes)
         if (!(optionTest(OPTION_COMMAND, CMD_ARCHIVE_GET) || optionTest(OPTION_COMMAND, CMD_INFO) ||
-              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK) || optionTest(OPTION_PROCESS)))
+              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK) ||
+              optionTest(OPTION_COMMAND, CMD_LOCAL)))
         {
             lockAcquire(optionGet(OPTION_COMMAND), undef, true);
         }
@@ -109,16 +101,10 @@ local $EVAL_ERROR = undef; eval
         pgBackRest::Protocol::Local::Minion->import();
 
         # Create the local object
-        my $oLocal = new pgBackRest::Protocol::Local::Minion(optionGet(OPTION_COMMAND));
+        my $oLocal = new pgBackRest::Protocol::Local::Minion();
 
         # Process local requests
         exitSafe($oLocal->process());
-    }
-
-    # Check that the repo path exists
-    if (isRepoLocal() && !-e optionGet(OPTION_REPO_PATH))
-    {
-        confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }
 
     ################################################################################################################################
@@ -177,6 +163,15 @@ local $EVAL_ERROR = undef; eval
     {
         lockStop();
         exitSafe(0);
+    }
+
+    # Check that the repo path exists
+    require pgBackRest::Protocol::Storage::Helper;
+    pgBackRest::Protocol::Storage::Helper->import();
+
+    if (isRepoLocal() && !storageRepo()->pathExists(''))
+    {
+        confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }
 
     ################################################################################################################################

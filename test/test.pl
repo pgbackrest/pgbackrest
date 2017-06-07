@@ -23,8 +23,8 @@ use POSIX qw(ceil strftime);
 use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/lib';
-use lib dirname($0) . '/../lib';
-use lib dirname($0) . '/../doc/lib';
+use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/doc/lib';
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -33,7 +33,9 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::FileCommon;
+use pgBackRest::Storage::Helper;
+use pgBackRest::Storage::Posix::Driver;
+use pgBackRest::Storage::Local;
 use pgBackRest::Version;
 
 use BackRestDoc::Custom::DocCustomRelease;
@@ -75,7 +77,8 @@ test.pl [options]
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --vm-out --process-max=1
+   --dev                --no-lint --smart --no-package --process-max=1
+   --expect             --no-lint --smart --no-package --process-max=1 --vm=co7 --db=9.5 --log-force
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -126,6 +129,7 @@ my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
 my $bDev = false;
+my $bExpect = false;
 my $iRetry = 0;
 
 GetOptions ('q|quiet' => \$bQuiet,
@@ -156,6 +160,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'coverage-only' => \$bCoverageOnly,
             'smart' => \$bSmart,
             'dev' => \$bDev,
+            'expect' => \$bExpect,
             'retry=s' => \$iRetry)
     or pod2usage(2);
 
@@ -192,8 +197,21 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $bVmOut = true;
         $iProcessMax = 1;
+    }
+
+    ################################################################################################################################
+    # Update options for --expect
+    ################################################################################################################################
+    if ($bExpect)
+    {
+        $bNoLint = true;
+        $bSmart = true;
+        $bNoPackage = true;
+        $iProcessMax = 1;
+        $strVm = VM_CO7;
+        $strDbVersion = '9.5';
+        $bLogForce = true;
     }
 
     ################################################################################################################################
@@ -232,6 +250,9 @@ eval
         $strTestPath = cwd() . '/test';
     }
 
+    my $oStorageTest = new pgBackRest::Storage::Local(
+        $strTestPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+
     if ($bCoverageOnly)
     {
         if (!defined($strVm))
@@ -258,12 +279,15 @@ eval
     # Get the base backrest path
     my $strBackRestBase = dirname(dirname(abs_path($0)));
 
+    my $oStorageBackRest = new pgBackRest::Storage::Local(
+        $strBackRestBase, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+
     ################################################################################################################################
     # Build Docker containers
     ################################################################################################################################
     if ($bVmBuild)
     {
-        containerBuild($strVm, $bVmForce, $strDbVersion);
+        containerBuild($oStorageBackRest, $strVm, $bVmForce, $strDbVersion);
         exit 0;
     }
 
@@ -275,7 +299,7 @@ eval
         # Build CI configuration
         if (!$bNoCiConfig)
         {
-            (new pgBackRestTest::Common::CiTest($strBackRestBase))->process();
+            (new pgBackRestTest::Common::CiTest($oStorageBackRest))->process();
         }
 
         # Load the doc module dynamically since it is not supported on all systems
@@ -351,7 +375,7 @@ eval
             }
 
             executeTest("sudo rm -rf ${strTestPath}/*");
-            filePathCreate($strCoveragePath, '0770', true, true);
+            $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
         }
 
         # Build the C Library and Packages
@@ -371,7 +395,7 @@ eval
             # Find the lastest modified time in the libc dir
             my $lTimestampLibCLast = 0;
 
-            my $hManifest = fileManifest("${strBackRestBase}/libc");
+            my $hManifest = $oStorageBackRest->manifest('libc');
 
             foreach my $strFile (sort(keys(%{$hManifest})))
             {
@@ -382,7 +406,8 @@ eval
             }
 
             # Rebuild if the modification time of the makefile does not equal the latest file in libc
-            if (!$bSmart || !fileExists($strLibCSmart) || fileStat($strLibCSmart)->mtime != $lTimestampLibCLast)
+            if (!$bSmart || !$oStorageBackRest->exists($strLibCSmart) ||
+                $oStorageBackRest->info($strLibCSmart)->mtime != $lTimestampLibCLast)
             {
                 if ($bSmart)
                 {
@@ -397,7 +422,7 @@ eval
             # Find the lastest modified time in the bin, lib dirs
             my $lTimestampPackageLast = $lTimestampLibCLast;
 
-            $hManifest = fileManifest("${strBackRestBase}/bin");
+            $hManifest = $oStorageBackRest->manifest('bin');
 
             foreach my $strFile (sort(keys(%{$hManifest})))
             {
@@ -407,7 +432,7 @@ eval
                 }
             }
 
-            $hManifest = fileManifest("${strBackRestBase}/lib");
+            $hManifest = $oStorageBackRest->manifest('lib');
 
             foreach my $strFile (sort(keys(%{$hManifest})))
             {
@@ -419,7 +444,8 @@ eval
 
             # Rebuild if the modification time of the makefile does not equal the latest file in libc
             if (!$bNoPackage &&
-                (!$bSmart || !fileExists($strPackageSmart) || fileStat($strPackageSmart)->mtime != $lTimestampPackageLast))
+                (!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
+                 $oStorageBackRest->info($strPackageSmart)->mtime != $lTimestampPackageLast))
             {
                 if ($bSmart)
                 {
@@ -438,7 +464,7 @@ eval
                 my $strBuildPath = "${strLibCPath}/${strBuildVM}";
                 my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
 
-                if (!fileExists($strBuildPath))
+                if (!$oStorageBackRest->pathExists($strBuildPath))
                 {
                     &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
 
@@ -450,7 +476,7 @@ eval
                             {bSuppressStdErr => true});
                     }
 
-                    filePathCreate($strBuildPath, undef, true, true);
+                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
                     executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
 
                     executeTest(
@@ -504,7 +530,7 @@ eval
             }
 
             # Write files to indicate the last time a build was successful
-            fileStringWrite($strLibCSmart, undef, false);
+            $oStorageBackRest->put($strLibCSmart);
             utime($lTimestampLibCLast, $lTimestampLibCLast, $strLibCSmart) or
                 confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
 
@@ -512,13 +538,13 @@ eval
             if (!$bNoPackage)
             {
                 my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
-                filePathCreate($strPackagePath, undef, true, true);
+                $oStorageBackRest->pathCreate($strPackagePath, {bIgnoreExists => true, bCreateParent => true});
 
                 foreach my $strBuildVM (sort(@stryBuildVm))
                 {
                     my $strBuildPath = "${strPackagePath}/${strBuildVM}/src";
 
-                    if (!fileExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                    if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
                         &log(INFO, "Build package for ${strBuildVM} (${strBuildPath})");
 
@@ -527,7 +553,8 @@ eval
                             " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
                             {bSuppressStdErr => true});
 
-                        filePathCreate($strBuildPath, undef, true, true);
+                        $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
+
                         executeTest("rsync -r --exclude .vagrant --exclude .git ${strBackRestBase}/ ${strBuildPath}/");
                         executeTest(
                             "docker exec -i test-build " .
@@ -537,23 +564,23 @@ eval
                         # If dev build then override then disable static release date used for reproducibility.
                         if ($bVersionDev)
                         {
-                            my $strRules = fileStringRead("${strBuildPath}/debian/rules");
+                            my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
 
                             $strRules =~ s/\-\-var\=release-date-static\=y/\-\-var\=release-date-static\=n/g;
                             $strRules =~ s/\-\-out\=html \-\-cache\-only/\-\-out\=html \-\-no\-exe/g;
 
-                            fileStringWrite("${strBuildPath}/debian/rules", $strRules, false);
+                            $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
                         }
 
                         # Update changelog to add experimental version
-                        fileStringWrite("${strBuildPath}/debian/changelog",
+                        $oStorageBackRest->put("${strBuildPath}/debian/changelog",
                             "pgbackrest (${strVersionBase}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
                                 ") experimental; urgency=medium\n" .
                             "\n" .
                             '  * Automated experimental ' . ($bVersionDev ? 'development' : 'production') . " build.\n" .
                             "\n" .
                             ' -- David Steele <david@pgbackrest.org>  ' . strftime("%a, %e %b %Y %H:%M:%S %z", gmtime) . "\n\n" .
-                            fileStringRead("${strBuildPath}/debian/changelog"), false);
+                            ${$oStorageBackRest->get("${strBuildPath}/debian/changelog")});
 
                         executeTest(
                             "docker exec -i test-build " .
@@ -571,7 +598,7 @@ eval
                 # Write files to indicate the last time a build was successful
                 if (!$bNoPackage)
                 {
-                    fileStringWrite($strPackageSmart, undef, false);
+                    $oStorageBackRest->put($strPackageSmart);
                     utime($lTimestampPackageLast, $lTimestampPackageLast, $strPackageSmart) or
                         confess "unable to set time for ${strPackageSmart}" . (defined($!) ? ":$!" : '');
                 }
@@ -661,8 +688,8 @@ eval
                 if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
-                        $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx,
-                        $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry);
+                        $oStorageTest, $strBackRestBase, $strTestPath, $strCoveragePath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut,
+                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry);
                     $iTestIdx++;
 
                     if ($oJob->run())
@@ -721,7 +748,7 @@ eval
 
                 # Load the results of coverage testing from JSON
                 my $oJSON = JSON::PP->new()->allow_nonref();
-                my $hCoverageResult = $oJSON->decode(fileStringRead("${strBackRestBase}/test/coverage/cover.json"));
+                my $hCoverageResult = $oJSON->decode(${$oStorageBackRest->get('test/coverage/cover.json')});
 
                 # Now compare against code modules that should have full coverage
                 my $hCoverageList = testDefCoverageList();

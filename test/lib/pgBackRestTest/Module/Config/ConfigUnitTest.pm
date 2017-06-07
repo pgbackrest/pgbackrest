@@ -28,7 +28,7 @@ sub run
     my $oConfig = {};
     my $strConfigFile = $self->testPath() . '/pgbackrest.conf';
     optionSet(OPTION_CONFIG, $strConfigFile, true);
-    commandSet(CMD_LOCAL);
+    commandSet(CMD_ARCHIVE_GET);
 
     if ($self->begin('Config::configFileValidate()'))
     {

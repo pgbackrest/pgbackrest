@@ -81,7 +81,7 @@
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
-        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -4 | head -1</variable>
+        <variable key="cmd-backup-last">ls -1 {[backrest-repo-path]}/backup/demo | tail -5 | head -1</variable>
 
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>
@@ -697,7 +697,7 @@
                 <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
-                    <exe-cmd>chmod 550 {[backrest-repo-path]}/temp</exe-cmd>
+                    <exe-cmd>chmod 550 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
                 </execute>
 
                 <execute output="y" err-expect="47">
@@ -713,7 +713,7 @@
                 <title>Restore write privileges in the <backrest/> repository and attempt a backup</title>
 
                 <execute user="root">
-                    <exe-cmd>chmod 750 {[backrest-repo-path]}/temp</exe-cmd>
+                    <exe-cmd>chmod 750 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
                 </execute>
 
                 <execute output="y" err-expect="57">
@@ -1384,8 +1384,6 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
-                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
-
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
                 <backrest-config-option section="global" key="backup-user">backrest</backrest-config-option>
 
@@ -1634,7 +1632,7 @@
 
             <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for all stanzas</exe-highlight>
+                <exe-highlight>process .* terminated unexpectedly.*: stop file exists for all stanzas</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1675,7 +1673,7 @@
 
             <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>remote process terminated on [^ ]+ host: stop file exists for stanza demo</exe-highlight>
+                <exe-highlight>process .* terminated unexpectedly.*: stop file exists for stanza demo</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1759,7 +1757,6 @@
 
                 <backrest-config-option section="demo" key="db-path">{[db-path]}</backrest-config-option>
 
-                <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
                 <backrest-config-option section="global" key="backup-host">{[host-backup]}</backrest-config-option>
 
                 <backrest-config-option section="demo" key="recovery-option">standby_mode=on</backrest-config-option>
@@ -2081,7 +2078,7 @@
     </section>
 
     <!-- SECTION => STANZA UPGRADE -->
-    <section id="upgrade-stanza" depend="standby-backup">
+    <section id="upgrade-stanza">
         <title>Upgrading <postgres/></title>
         <cmd-description key="stanza-upgrade"/>
 

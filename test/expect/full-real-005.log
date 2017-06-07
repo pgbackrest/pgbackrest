@@ -23,11 +23,13 @@ db2-user=[USER-1]
 
 [global]
 compress=n
-lock-path=[TEST_PATH]/db-master/repo/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/repo/log
+log-path=[TEST_PATH]/db-master/log
+protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
 
 [global:backup]
@@ -47,12 +49,13 @@ backup-config=[TEST_PATH]/db-master/pgbackrest.conf
 backup-host=db-master
 backup-user=[USER-1]
 compress=n
-lock-path=[TEST_PATH]/db-standby/spool/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-standby/spool/log
-repo-path=[TEST_PATH]/db-master/repo
+log-path=[TEST_PATH]/db-standby/log
+protocol-timeout=60
 
 restore, type 'default', remap - restore backup on replica (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --recovery-option=standby_mode=on --recovery-option="primary_conninfo=host=db-master port=6543 user=replicator"  --link-map="pg_xlog=[TEST_PATH]/db-standby/db/pg_xlog" --link-all --stanza=db restore
@@ -82,11 +85,13 @@ db2-user=[USER-1]
 
 [global]
 compress=n
-lock-path=[TEST_PATH]/db-master/repo/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/repo/log
+log-path=[TEST_PATH]/db-master/log
+protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
 
 [global:backup]
@@ -108,19 +113,20 @@ backup-config=[TEST_PATH]/db-master/pgbackrest.conf
 backup-host=db-master
 backup-user=[USER-1]
 compress=n
-lock-path=[TEST_PATH]/db-standby/spool/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-standby/spool/log
-repo-path=[TEST_PATH]/db-master/repo
+log-path=[TEST_PATH]/db-standby/log
+protocol-timeout=60
 
 check db - verify check command on standby (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - update during backup (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=24576 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -137,11 +143,13 @@ db2-user=[USER-1]
 
 [global]
 compress=n
-lock-path=[TEST_PATH]/db-master/repo/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-master/repo/log
+log-path=[TEST_PATH]/db-master/log
+protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
 
 [global:backup]
@@ -163,12 +171,13 @@ backup-config=[TEST_PATH]/db-master/pgbackrest.conf
 backup-host=db-master
 backup-user=[USER-1]
 compress=n
-lock-path=[TEST_PATH]/db-standby/spool/lock
+db-timeout=45
+lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=debug
 log-level-file=trace
 log-level-stderr=off
-log-path=[TEST_PATH]/db-standby/spool/log
-repo-path=[TEST_PATH]/db-master/repo
+log-path=[TEST_PATH]/db-standby/log
+protocol-timeout=60
 
 restore, type 'default' (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --db-include=test1  --link-all --stanza=db restore

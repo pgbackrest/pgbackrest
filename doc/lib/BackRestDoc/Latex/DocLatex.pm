@@ -19,7 +19,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -98,9 +97,10 @@ sub process
     copy("$self->{oManifest}{strDocPath}/resource/latex/cds-logo.eps", "$self->{strLatexPath}/logo.eps")
         or confess &log(ERROR, "unable to copy logo");
 
-    my $strLatex = $self->{oManifest}->variableReplace(fileStringRead($self->{strPreambleFile}), 'latex') . "\n";
+    my $strLatex = $self->{oManifest}->variableReplace(
+        ${$self->{oManifest}->storage()->get($self->{strPreambleFile})}, 'latex') . "\n";
 
-    # !!! Temp hack for underscores in filename
+    # ??? Temp hack for underscores in filename
     $strLatex =~ s/pgaudit\\\_doc/pgaudit\_doc/g;
 
     foreach my $strPageId ($self->{oManifest}->renderOutList(RENDER_TYPE_PDF))
@@ -143,7 +143,7 @@ sub process
 
     my $strLatexFileName = $self->{oManifest}->variableReplace("$self->{strLatexPath}/" . $$oRender{file} . '.tex');
 
-    fileStringWrite($strLatexFileName, $strLatex, false);
+    $self->{oManifest}->storage()->put($strLatexFileName, $strLatex);
 
     executeTest("pdflatex -output-directory=$self->{strLatexPath} -shell-escape $strLatexFileName",
                 {bSuppressStdErr => true});

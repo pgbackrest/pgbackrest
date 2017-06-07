@@ -22,10 +22,9 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -67,7 +66,7 @@ sub run
         }
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oFile) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
              bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
@@ -116,7 +115,8 @@ sub run
             $strType = BACKUP_TYPE_FULL;
 
             # Remove the files in the archive directory
-            executeTest('sudo rm -rf ' . $oFile->pathGet(PATH_BACKUP_ARCHIVE) . "/*");
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
+
             $oHostDbMaster->check(
                 'fail on missing archive.info file',
                 {iTimeout => 0.1, iExpectedExitStatus => ERROR_FILE_MISSING});
@@ -177,7 +177,7 @@ sub run
 
             # load the archive info file and munge it for testing by breaking the database version
             $oHostBackup->infoMunge(
-                $oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE),
+                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
             $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH});
@@ -189,7 +189,7 @@ sub run
             }
 
             # Restore the file to its original condition
-            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE));
+            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
 
             # Check archive_timeout error when WAL segment is not found
             $strComment = 'fail on archive timeout';
@@ -212,7 +212,7 @@ sub run
 
             # Load the backup.info file and munge it for testing by breaking the database version and system id
             $oHostBackup->infoMunge(
-                $oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO),
+                storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
                 {&INFO_BACKUP_SECTION_DB =>
                     {&INFO_BACKUP_KEY_DB_VERSION => '8.0', &INFO_BACKUP_KEY_SYSTEM_ID => 6999999999999999999}});
 
@@ -226,7 +226,7 @@ sub run
             }
 
             # Restore the file to its original condition
-            $oHostBackup->infoRestore($oFile->pathGet(PATH_BACKUP_CLUSTER, FILE_BACKUP_INFO));
+            $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
 
             # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
             # archive.info and backup.info files
@@ -245,8 +245,12 @@ sub run
 
             # Stanza Create
             #-----------------------------------------------------------------------------------------------------------------------
-            # With data existing in the archive and backup directory, remove backup info file and confirm failure
-            executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            # With data existing in the archive and backup directory, remove info files and confirm failure
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+
             $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
 
@@ -254,20 +258,24 @@ sub run
             $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . OPTION_FORCE});
 
             # Remove the backup info file
-            executeTest('sudo rm ' . $oHostBackup->repoPath() . '/backup/' . $self->stanza() . '/backup.info');
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
 
             # Change the database version by copying a new pg_control file to a new db-path to use for db mismatch test
-            filePathCreate($oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL, undef, true, true);
+            storageDb()->pathCreate(
+                $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
+                {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
+
             if ($self->pgVersion() eq PG_VERSION_94)
             {
-                executeTest(
-                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin ' . $oHostDbMaster->dbPath() .
-                    '/testbase/' . DB_FILE_PGCONTROL);
+                storageDb()->copy(
+                    $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
+                    $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
             } else
             {
-                executeTest(
-                    'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $oHostDbMaster->dbPath() .
-                    '/testbase/' . DB_FILE_PGCONTROL);
+                storageDb()->copy(
+                    $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+                    $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
             }
 
             # Run stanza-create online to confirm proper handling of configValidation error against new db-path
@@ -281,8 +289,8 @@ sub run
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
                 {strOptionalParam => ' --' . OPTION_DB_PATH . '=' . $oHostDbMaster->dbPath() . '/testbase/ --no-' . OPTION_ONLINE .
                 ' --' . OPTION_FORCE});
-            my $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo($oHostBackup->repoPath() . '/archive/' . $self->stanza());
-            my $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoPath() . '/backup/' . $self->stanza());
+            my $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet('archive/' . $self->stanza()));
+            my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
 
             # Read info files to confirm the files were created with a different database version
             if ($self->pgVersion() eq PG_VERSION_94)
@@ -304,8 +312,8 @@ sub run
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
-            $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo($oHostBackup->repoPath() . '/archive/' . $self->stanza());
-            $oBackupInfo = new pgBackRest::Backup::Info($oHostBackup->repoPath() . '/backup/' . $self->stanza());
+            $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet('archive/' . $self->stanza()));
+            $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
             $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');
             $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
@@ -470,12 +478,12 @@ sub run
         $strType = BACKUP_TYPE_INCR;
 
         # Create a tablespace directory
-        filePathCreate($oHostDbMaster->tablespacePath(1), undef, undef, true);
+        storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700', bCreateParent => true});
 
         # Also create it on the standby so replay won't fail
         if (defined($oHostDbStandby))
         {
-            filePathCreate($oHostDbStandby->tablespacePath(1), undef, undef, true);
+            storageTest()->pathCreate($oHostDbStandby->tablespacePath(1), {strMode => '0700', bCreateParent => true});
         }
 
         $oHostDbMaster->sqlExecute(
@@ -508,7 +516,7 @@ sub run
             $strType, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                 strOptionalParam => '--' . OPTION_STOP_AUTO . ' --no-' . OPTION_BACKUP_ARCHIVE_CHECK .
-                    ' --' . OPTION_BUFFER_SIZE . '=24576'});
+                    ' --' . OPTION_BUFFER_SIZE . '=32768'});
 
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');
@@ -613,11 +621,11 @@ sub run
 
         # Drop and recreate db path
         testPathRemove($oHostDbMaster->dbBasePath());
-        filePathCreate($oHostDbMaster->dbBasePath());
+        storageTest()->pathCreate($oHostDbMaster->dbBasePath(), {strMode => '0700'});
         testPathRemove($oHostDbMaster->dbPath() . '/pg_xlog');
-        filePathCreate($oHostDbMaster->dbPath() . '/pg_xlog');
+        storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_xlog', {strMode => '0700'});
         testPathRemove($oHostDbMaster->tablespacePath(1));
-        filePathCreate($oHostDbMaster->tablespacePath(1));
+        storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700'});
 
         # Now the restore should work
         $strComment = undef;
@@ -703,8 +711,8 @@ sub run
                 '--tablespace-map-all=../../tablespace', false);
 
             # Save recovery file to test so we can use it in the next test
-            $oFile->copy(PATH_ABSOLUTE, $oHostDbMaster->dbBasePath() . '/recovery.conf',
-                         PATH_ABSOLUTE, $self->testPath() . '/recovery.conf');
+            storageDb()->copy(
+                $oHostDbMaster->dbBasePath() . qw{/} . DB_FILE_RECOVERYCONF, $self->testPath() . qw{/} . DB_FILE_RECOVERYCONF);
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
@@ -736,8 +744,7 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test
-            $oFile->move(PATH_ABSOLUTE, $self->testPath . '/recovery.conf',
-                         PATH_ABSOLUTE, $oHostDbMaster->dbBasePath() . '/recovery.conf');
+            storageDb()->move($self->testPath . '/recovery.conf', $oHostDbMaster->dbBasePath() . '/recovery.conf');
 
             $oHostDbMaster->restore(
                 OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
@@ -869,7 +876,7 @@ sub run
         if ($bTestExtra)
         {
             # Create a postmaster.pid file so it appears that the server is running
-            fileStringWrite($oHostDbMaster->dbBasePath() . '/postmaster.pid', '99999');
+            storageTest()->put($oHostDbMaster->dbBasePath() . '/postmaster.pid', '99999');
 
             # Incr backup - make sure a --no-online backup fails
             #-----------------------------------------------------------------------------------------------------------------------

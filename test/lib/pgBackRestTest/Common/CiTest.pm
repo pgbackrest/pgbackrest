@@ -22,7 +22,6 @@ use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -45,12 +44,12 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{strBackRestBase},
+        $self->{oStorage},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strBackRestBase'},
+            {name => 'oStorage'},
         );
 
     # Return from function and log return values if any
@@ -116,7 +115,7 @@ sub process
         my $strConfigNotFirstOS = '--no-package';
 
         $strConfig .=
-            "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\" PGB_TEST_PARAM=\"--module=" .
+            "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\" PGB_TEST_PARAM=\"--vm-max=2 --module=" .
                 join(' --module=', @stryModule) . ($bFirst ? '' : " ${strConfigNotFirst}") . "\"\n";
         $bFirst = false;
 
@@ -146,7 +145,7 @@ sub process
             {
                 $strConfig .=
                     "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\"" .
-                        " PGB_TEST_PARAM=\"--module=full --test=${strTest} ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
+                        " PGB_TEST_PARAM=\"--vm-max=2 --module=full --test=${strTest} ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
             }
         }
 
@@ -160,26 +159,30 @@ sub process
     $strConfig .=
         "\n" .
         "before_install:\n" .
-        "  - sudo apt-get -qq update\n" .
-        "  - sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl" .
-            " libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl\n" .
-        "  - git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
-        '  - cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
-        '  - sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
-        '  - ' . LIB_COVER_EXE . " -v\n" .
+        "  - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl" .
+            " libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man" .
+            " devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl python-pip\n" .
+        "  - |\n" .
+        "    # Build Devel::Cover\n" .
+        "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
+        '    cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
+        '    sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
+        '    ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .
-        "  - sudo adduser --ingroup=\${USER?} --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
-        "  - umask 0022\n" .
-        "  - cd ~ && pwd && whoami && umask && groups\n" .
-        "  - mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .
-        "  - rm -rf \${TRAVIS_BUILD_DIR?}\n" .
+        "  - |\n" .
+        "    # User Configuration\n" .
+        "    sudo adduser --ingroup=\${USER?} --disabled-password --gecos \"\" " . BACKREST_USER . "\n" .
+        "    umask 0022\n" .
+        "    cd ~ && pwd && whoami && umask && groups\n" .
+        "    mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .
+        "    rm -rf \${TRAVIS_BUILD_DIR?}\n" .
         "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?} \${PGB_BUILD_PARAM?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm-max=2 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
+        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
 
-    fileStringWrite("$self->{strBackRestBase}/.travis.yml", $strConfig, false);
+    $self->{oStorage}->put('.travis.yml', $strConfig);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

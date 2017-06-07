@@ -2,21 +2,29 @@
 # PROTOCOL COMMON MASTER MODULE
 ####################################################################################################################################
 package pgBackRest::Protocol::Common::Master;
-use parent 'pgBackRest::Protocol::Common::Common';
 
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use File::Basename qw(dirname);
+use Exporter qw(import);
+    our @EXPORT = qw();
 use Time::HiRes qw(gettimeofday);
+use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Version;
+
+####################################################################################################################################
+# Operation constants
+####################################################################################################################################
+use constant OP_NOOP                                                => 'noop';
+    push @EXPORT, qw(OP_NOOP);
+use constant OP_EXIT                                                => 'exit';
+    push @EXPORT, qw(OP_EXIT);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -25,51 +33,34 @@ sub new
 {
     my $class = shift;                  # Class name
 
+    # Create the class hash
+    my $self = {};
+    bless $self, $class;
+
     # Assign function parameters, defaults, and log debug info
-    my
     (
-        $strOperation,
-        $strRemoteType,                             # Type of remote (DB or BACKUP)
-        $strName,                                   # Name of the protocol
-        $strId,                                     # Id of this process for error messages
-        $oIO,                                       # IO object
-        $iBufferMax,                                # Maximum buffer size
-        $iCompressLevel,                            # Set compression level
-        $iCompressLevelNetwork,                     # Set compression level for network only compression
-        $iProtocolTimeout,                          # Protocol timeout
+        my $strOperation,
+        $self->{strName},
+        $self->{strId},
+        $self->{oIo},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strRemoteType', trace => true},
             {name => 'strName', trace => true},
             {name => 'strId', trace => true},
-            {name => 'strCommand', trace => true},
-            {name => 'iBufferMax', trace => true},
-            {name => 'iCompressLevel', trace => true},
-            {name => 'iCompressLevelNetwork', trace => true},
-            {name => 'iProtocolTimeout', trace => true},
+            {name => 'oIo', trace => true},
         );
 
-    # Create the class hash
-    my $self = $class->SUPER::new($iBufferMax, $iCompressLevel, $iCompressLevelNetwork, $iProtocolTimeout, $strName);
-    bless $self, $class;
-
-    # Set remote to specified value
-    $self->{strRemoteType} = $strRemoteType;
-
-    # Set IO Object
-    $self->{io} = $oIO;
+    # Create JSON object
+    $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Check greeting to be sure the protocol matches
     $self->greetingRead();
 
     # Setup the keepalive timer
-    $self->{fKeepAliveTimeout} = $iProtocolTimeout / 2 > 120 ? 120 : $iProtocolTimeout / 2;
+    $self->{fKeepAliveTimeout} = $self->io()->timeout() / 2 > 120 ? 120 : $self->io()->timeout() / 2;
     $self->{fKeepAliveTime} = gettimeofday();
-
-    # Set the id to be used for messages (especially error messages)
-    $self->{strId} = $strId;
 
     # Set the error prefix used when raising error messages
     $self->{strErrorPrefix} = 'raised on ' . $self->{strId} . ' host';
@@ -102,9 +93,14 @@ sub greetingRead
     my $self = shift;
 
     # Get the first line of output from the remote if possible
-    my $hGreeting = $self->{oJSON}->decode($self->{io}->lineRead(undef, undef, undef, true));
+    my $strGreeting = $self->io()->readLine(true);
+
+    # Check for errors
+    $self->io()->error();
 
     # Error if greeting parameters do not match
+    my $hGreeting = $self->{oJSON}->decode($strGreeting);
+
     for my $hParam ({strName => 'name', strExpected => BACKREST_NAME},
                     {strName => 'version', strExpected => BACKREST_VERSION},
                     {strName => 'service', strExpected => $self->{strName}})
@@ -117,8 +113,8 @@ sub greetingRead
         }
     }
 
-    # Exchange one protocol message to catch errors early
-    $self->outputRead();
+    # Perform noop to catch errors early
+    $self->noOp();
 }
 
 ####################################################################################################################################
@@ -148,7 +144,7 @@ sub outputRead
             {name => 'bRef', default => false, trace => true},
         );
 
-    my $strProtocolResult = $self->{io}->lineRead();
+    my $strProtocolResult = $self->io()->readLine();
 
     logDebugMisc
     (
@@ -179,7 +175,6 @@ sub outputRead
     # If output is required and there is no output, raise exception
     if ($bOutputRequired && !defined($hResult->{out}))
     {
-        $self->{io}->waitPid();
         confess &log(ERROR, "$self->{strErrorPrefix}: output is not defined", ERROR_PROTOCOL_OUTPUT_REQUIRED);
     }
 
@@ -223,7 +218,7 @@ sub cmdWrite
     );
 
     # Write out the command
-    $self->{io}->lineWrite($strProtocolCommand);
+    $self->io()->writeLine($strProtocolCommand);
 
     # Reset the keep alive time
     $self->{fKeepAliveTime} = gettimeofday();
@@ -280,5 +275,11 @@ sub noOp
     $self->cmdExecute(OP_NOOP, undef, false);
     $self->{fKeepAliveTime} = gettimeofday();
 }
+
+####################################################################################################################################
+# Getters
+####################################################################################################################################
+sub io {shift->{oIo}}
+sub master {true}
 
 1;
