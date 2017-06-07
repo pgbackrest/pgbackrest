@@ -155,9 +155,10 @@ sub run
                            ', archive ' .sprintf('%02x', $iArchive) .
                            " - ${strArchiveFile}");
 
-                my $strArchiveTmp = undef;
+                # Create a temp file to make sure it is deleted later (skip when S3 since it doesn't use temp files)
+                my $strArchiveTmp;
 
-                if ($iBackup == 1 && $iArchive == 2)
+                if (!$bS3 && $iBackup == 1 && $iArchive == 2)
                 {
                     # Should succeed when temp file already exists
                     &log(INFO, '        test archive when tmp file exists');
@@ -184,7 +185,7 @@ sub run
                     @stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}" .
                     ($bCompress ? qw{.} . COMPRESS_EXT : ''));
 
-                # Make sure the temp file no longer exists
+                # Make sure the temp file no longer exists if it was created
                 if (defined($strArchiveTmp))
                 {
                     my $oWait = waitInit(5);
