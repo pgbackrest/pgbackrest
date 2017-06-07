@@ -465,12 +465,12 @@ P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDataba
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
-P00 DETAIL: clean resume backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-FULL-2]
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (file.tmp, pg_data/PG_VERSION)
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/file.tmp
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = false, bRecurse = <false>, strPathFileExp = ([TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/file.tmp)
+P00  DEBUG:     Backup::Backup->resumeClean: remove file file.tmp
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/PG_VERSION
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = (<REPO:BACKUP>/[BACKUP-FULL-2]/file.tmp, <REPO:BACKUP>/[BACKUP-FULL-2]/pg_data/PG_VERSION)
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
@@ -1463,23 +1463,23 @@ P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabas
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
-P00 DETAIL: clean resume backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
+P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-INCR-2]
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
-P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (pg_data/PG_VERSION, pg_data/base/1/12000, pg_data/base/1/PG_VERSION, pg_data/base/16384/17000, pg_data/base/16384/PG_VERSION, pg_data/base/32768/33000, pg_data/base/32768/33000.32767, pg_data/base/32768/33001, pg_data/base/32768/PG_VERSION, pg_data/global/pg_control, pg_data/pg_stat/global.stat, pg_data/pg_tblspc/1, pg_data/postgresql.conf)
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/postgresql.conf
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_tblspc/1
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_stat/global.stat
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/global/pg_control
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/PG_VERSION
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33001
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33000.32767
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33000
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/16384/PG_VERSION
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/16384/17000
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/1/PG_VERSION
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/1/12000
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/PG_VERSION
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = false, bRecurse = <false>, strPathFileExp = ([TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/postgresql.conf, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_tblspc/1, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/pg_stat/global.stat, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/global/pg_control, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/PG_VERSION, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33001, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33000.32767, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/32768/33000, [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/pg_data/base/16384/PG_VERSION, /home/ubuntu/test/t ... <truncated>
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/PG_VERSION
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/1/12000
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/1/PG_VERSION
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/16384/17000
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/16384/PG_VERSION
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/32768/33000
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/32768/33000.32767
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/32768/33001
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/base/32768/PG_VERSION
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/global/pg_control
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/pg_stat/global.stat
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/pg_tblspc/1
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/postgresql.conf
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = (<REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/PG_VERSION, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/1/12000, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/1/PG_VERSION, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/16384/17000, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/16384/PG_VERSION, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/32768/33000, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/32768/33000.32767, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/32768/33001, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/base/32768/PG_VERSION, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/global/pg_control, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/pg_stat/global.stat, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/pg_tblspc/1, <REPO:BACKUP>/[BACKUP-INCR-2]/pg_data/postgresql.conf)
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false

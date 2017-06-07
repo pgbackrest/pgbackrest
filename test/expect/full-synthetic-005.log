@@ -596,9 +596,9 @@ P00  DEBUG:     Protocol::Storage::Remote->manifest(): strPathExp = [TEST_PATH]/
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     Protocol::Storage::Remote->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
-P00 DETAIL: clean resume backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-FULL-2]
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = ()
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
@@ -842,9 +842,9 @@ P00  DEBUG:     Protocol::Storage::Remote->manifest(): strPathExp = [TEST_PATH]/
 P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDatabaseMap = [undef], hTablespaceMap = [hash], oLastManifest = [undef], oStorageDbMaster = [object], strDbVersion = 9.4, strFilter = [undef], strLevel = pg_data/postgresql.conf, strParentPath = [TEST_PATH]/db-master/db/base, strPath = ../pg_config/postgresql.conf
 P00  DEBUG:     Protocol::Storage::Remote->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
-P00 DETAIL: clean resume backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-FULL-2]
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = ()
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
@@ -953,12 +953,12 @@ P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = false, hDataba
 P00  DEBUG:     Protocol::Storage::Remote->manifest(): strPathExp = [TEST_PATH]/db-master/db/pg_config/postgresql.conf
 P00   WARN: aborted backup [BACKUP-FULL-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
-P00 DETAIL: clean resume backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
+P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-FULL-2]
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
-P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (file.tmp, pg_data/PG_VERSION)
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
-P00  DEBUG:     Backup::Backup->resumeClean: remove file [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/file.tmp
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = false, bRecurse = <false>, strPathFileExp = ([TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION, [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/file.tmp)
+P00  DEBUG:     Backup::Backup->resumeClean: remove file file.tmp
+P00  DEBUG:     Backup::Backup->resumeClean: remove file pg_data/PG_VERSION
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = (<REPO:BACKUP>/[BACKUP-FULL-2]/file.tmp, <REPO:BACKUP>/[BACKUP-FULL-2]/pg_data/PG_VERSION)
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
@@ -2007,9 +2007,9 @@ P00  DEBUG:     Manifest->build(): bOnline = false, bTablespace = true, hDatabas
 P00  DEBUG:     Protocol::Storage::Remote->manifest(): strPathExp = [TEST_PATH]/db-master/db/tablespace/ts2
 P00   WARN: aborted backup [BACKUP-INCR-2] of same type exists, will be cleaned to remove invalid files and resumed
 P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
-P00 DETAIL: clean resume backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]
+P00  DEBUG:     Backup::Backup->resumeClean(): oAbortedManifest = [object], oManifest = [object], oStorageRepo = [object], strBackupLabel = [BACKUP-INCR-2]
+P00 DETAIL: clean resumed backup path: [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-INCR-2]
-P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = ()
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/backup/repo/backup/db/[BACKUP-INCR-2]/backup.manifest.copy, strGroup = [undef], strMode = <0640>, strUser = [undef]
