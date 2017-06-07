@@ -258,7 +258,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true,
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = /backup/db/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = /backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = /backup/db
@@ -947,10 +947,8 @@ P00 DETAIL: clean resume backup path: /backup/db/[BACKUP-FULL-2]
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->fileNotInManifest=>: stryFile = (file.tmp, pg_data/PG_VERSION)
 P00  DEBUG:     Backup::Backup->resumeClean: remove file /backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = /backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION
-P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Backup::Backup->resumeClean: remove file /backup/db/[BACKUP-FULL-2]/file.tmp
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = /backup/db/[BACKUP-FULL-2]/file.tmp
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = false, bRecurse = <false>, strPathFileExp = (/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION, /backup/db/[BACKUP-FULL-2]/file.tmp)
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = /backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = false
@@ -1042,7 +1040,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true,
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = /backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = /backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = /backup/db
@@ -1266,7 +1264,7 @@ P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = false, oStorage = [object], strBackupClusterPath = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.info
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/backup.info
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/backup.info
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Backup::Info->current(): strBackup = [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Info->current=>: bTest = true
@@ -1278,7 +1276,7 @@ P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [TEST_PATH]/db-master/
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Restore->manifestOwnershipCheck(): oManifest = [object]
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/global/pg_control
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/global/pg_control
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Restore->clean(): oManifest = [object]
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
@@ -1307,16 +1305,16 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->manifest(): strPathExp = [TEST_PATH]/db-master/db/base
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/recovery.done
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/recovery.done
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/recovery.done
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00 DETAIL: preserve file [TEST_PATH]/db-master/db/base/recovery.conf
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/deleteme/deleteme.txt
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00 DETAIL: remove path [TEST_PATH]/db-master/db/base/deleteme
 P00 DETAIL: set mode 0700 on [TEST_PATH]/db-master/db/base/base
 P00 DETAIL: remove file [TEST_PATH]/db-master/db/base/backup_label.old
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/backup_label.old
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/backup_label.old
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00   INFO: cleanup removed 3 files, 1 path
 P00  DEBUG:     Restore->build(): oManifest = [object]
@@ -1425,14 +1423,14 @@ P01 DETAIL: restore file [TEST_PATH]/db-master/db/base/PG_VERSION - exists and m
 P00  DEBUG:     Protocol::Local::Process->process: all jobs complete
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00   INFO: write [TEST_PATH]/db-master/db/base/recovery.conf
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = true, strPathExp = [TEST_PATH]/db-master/db/base
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00  DEBUG:     Storage::Local->move(): bPathCreate = <false>, strDestinationPathExp = [TEST_PATH]/db-master/db/base/global/pg_control, strSourcePathExp = [TEST_PATH]/db-master/db/base/global/pg_control.pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/db/base
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = [TEST_PATH]/db-master/db/base/backup.manifest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/db/base
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
@@ -1726,7 +1724,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true,
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-INCR-1]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = /backup/db/[BACKUP-INCR-1]/backup.manifest
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = /backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = /backup/db
@@ -2075,7 +2073,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true,
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = <REPO:BACKUP>/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strFileExp = /backup/db/[BACKUP-INCR-2]/backup.manifest
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>/backup.history
-P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strFileExp = <REPO:BACKUP>/latest
+P00  DEBUG:     Storage::Local->remove(): bIgnoreMissing = <true>, bRecurse = <false>, strPathFileExp = <REPO:BACKUP>/latest
 P00  DEBUG:     Storage::Local->remove=>: bRemoved = true
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strFileExp = /backup/db/backup.info, strGroup = [undef], strMode = <0640>, strUser = [undef]
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = /backup/db
@@ -2294,7 +2292,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: backup [BACKUP-INCR-2] missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: aborted backup [BACKUP-INCR-2] exists, but cannot be resumed (new backup-type 'diff' does not match aborted backup-type 'incr') - will be dropped
+P00   WARN: aborted backup [BACKUP-INCR-2] cannot be resumed: new backup-type 'diff' does not match aborted backup-type 'incr'
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2307,7 +2305,6 @@ P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
-P00   INFO: remove expired backup [BACKUP-INCR-2]
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2481,7 +2478,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: backup [BACKUP-DIFF-1] missing manifest removed from backup.info
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
-P00   WARN: aborted backup [BACKUP-DIFF-1] exists, but cannot be resumed (resume is disabled) - will be dropped
+P00   WARN: aborted backup [BACKUP-DIFF-1] cannot be resumed: resume is disabled
 P00   TEST:         PgBaCkReStTeSt-BACKUP-NORESUME-PgBaCkReStTeSt
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/badchecksum.txt (11B, 37%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2494,7 +2491,6 @@ P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-cmd=[BACKREST-BIN] --db-config=[TEST_PATH]/db-master/pgbackrest.conf --db-host=db-master --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
-P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
