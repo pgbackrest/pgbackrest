@@ -28,6 +28,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Storage::Local;
+use pgBackRest::Storage::S3::Driver;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
@@ -174,7 +175,11 @@ sub forceStorageMode
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+    # Mode commands are ignored on S3
+    if ($oStorage->driver()->className() ne STORAGE_S3_DRIVER)
+    {
+        executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -205,7 +210,11 @@ sub forceStorageOwner
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
+    # Mode commands are ignored on S3
+    if ($oStorage->driver()->className() ne STORAGE_S3_DRIVER)
+    {
+        executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -234,7 +243,16 @@ sub forceStorageRemove
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    executeTest('sudo rm ' . ($bRecurse ? '-rf ' : '') . $oStorage->pathGet($strPathExp));
+    # If S3 then use storage commands to remove
+    if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
+    {
+        $oStorage->remove($strPathExp, {bRecurse => $bRecurse});
+    }
+    # Else remove using filesystem commands
+    else
+    {
+        executeTest('sudo rm ' . ($bRecurse ? '-rf ' : '') . $oStorage->pathGet($strPathExp));
+    }
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

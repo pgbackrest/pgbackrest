@@ -29,6 +29,7 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::ExpireEnvTest;
+use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
@@ -40,6 +41,7 @@ sub initStanzaOption
     my $oOption = shift;
     my $strDbBasePath = shift;
     my $strRepoPath = shift;
+    my $oHostS3 = shift;
 
     $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
     $self->optionSetTest($oOption, OPTION_DB_PATH, $strDbBasePath);
@@ -50,6 +52,18 @@ sub initStanzaOption
 
     $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
     $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+
+    if (defined($oHostS3))
+    {
+        $self->optionSetTest($oOption, OPTION_REPO_TYPE, REPO_TYPE_S3);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_BUCKET, HOST_S3_BUCKET);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_REGION, HOST_S3_REGION);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_HOST, $oHostS3->ipGet());
+        $self->optionBoolSetTest($oOption, OPTION_REPO_S3_VERIFY_SSL, false);
+    }
 }
 
 ####################################################################################################################################
@@ -64,12 +78,14 @@ sub run
     my $strDescription;
     my $oOption = {};
 
+    my $bS3 = false;
+
     if ($self->begin("local"))
     {
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(true, $self->expect());
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(true, $self->expect(), {bS3 => $bS3});
 
-        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
         $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 
         # Create the test object
@@ -164,9 +180,9 @@ sub run
     if ($self->begin("Expire::stanzaUpgrade"))
     {
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(true, $self->expect());
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(true, $self->expect(), {bS3 => $bS3});
 
-        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath});
+        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
         $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
 
         # Create the test object

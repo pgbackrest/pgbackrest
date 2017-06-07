@@ -42,18 +42,20 @@ sub run
     my $iArchiveMax = 3;
     my $strArchiveTestFile = $self->dataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
 
-    for (my $bRemote = false; $bRemote <= true; $bRemote++)
+    foreach my $bS3 (false, true)
     {
-    for (my $bCompress = false; $bCompress <= true; $bCompress++)
+    foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
-    for (my $bExists = false; $bExists <= true; $bExists++)
+    foreach my $bCompress ($bS3 ? (true) : (false, true))
+    {
+    foreach my $bExists ($bS3 ? (true) : (false, true))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}")) {next}
+        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}, s3 ${bS3}")) {next}
 
         # Create hosts and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress});
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bS3 => $bS3});
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -172,6 +174,7 @@ sub run
                 $strCommand . " 000000090000000900000009 ${strXlogPath}/RECOVERYXLOG",
                 {iExpectedExitStatus => 1, oLogTest => $self->expect()});
         }
+    }
     }
     }
     }

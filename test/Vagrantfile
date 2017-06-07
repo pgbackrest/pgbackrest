@@ -45,6 +45,22 @@ Vagrant.configure(2) do |config|
         apt-get install -y devscripts build-essential lintian git txt2man debhelper
 
         #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Install AWS CLI' && date
+        apt-get install -y python-pip
+        pip install --upgrade awscli
+
+        # Configure AWS CLI
+        sudo -i -u ubuntu aws configure set region us-east-1
+        sudo -i -u ubuntu aws configure set aws_access_key_id accessKey1
+        sudo -i -u ubuntu aws configure set aws_secret_access_key verySecretKey1
+
+        # Create test alias for AWS CLI
+        echo '' >> /home/ubuntu/.profile
+        echo '# Test alias for AWS CLI' >> /home/ubuntu/.profile
+        echo 'alias s3-test="export PYTHONWARNINGS=ignore && aws s3 --endpoint-url=https://172.17.0.2 --no-verify-ssl"' \
+            >> /home/ubuntu/.profile
+
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Build Devel::Cover' && date
         apt-get install -y libpod-coverage-perl libtest-differences-perl libhtml-parser-perl libtemplate-perl
         git clone --branch debian/1.23-2 \

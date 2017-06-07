@@ -163,6 +163,14 @@ sub process
             " libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man" .
             " devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl python-pip\n" .
         "  - |\n" .
+        "    # Install & Configure AWS CLI\n" .
+        "    pip install --upgrade --user awscli\n" .
+        "    aws configure set region us-east-1\n" .
+        "    aws configure set aws_access_key_id accessKey1\n" .
+        "    aws configure set aws_secret_access_key verySecretKey1\n" .
+        "    aws help --version\n" .
+        "    aws configure list\n" .
+        "  - |\n" .
         "    # Build Devel::Cover\n" .
         "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
         '    cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .

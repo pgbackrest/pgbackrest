@@ -102,6 +102,9 @@ sub testListGet
 
                         my $bFirstDbVersion = true;
 
+                        # Skip this test if it can't run on this VM
+                        next if (defined($hTest->{&TESTDEF_VM}) && grep(/^$strTestOS$/i, @{$hTest->{&TESTDEF_VM}}) == 0);
+
                         for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
                         {
                             if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' || $strDbVersion eq 'minimal' ||

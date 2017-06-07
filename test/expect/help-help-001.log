@@ -78,6 +78,13 @@ compress=n [default=3]
   --protocol-timeout        protocol timeout [default=1830]
   --repo-path               repository path where WAL segments and backups
 stored [default=/var/lib/pgbackrest]
+  --repo-s3-bucket          s3 repository bucket
+  --repo-s3-endpoint        s3 repository endpoint
+  --repo-s3-host            s3 repository host
+  --repo-s3-key             s3 repository access key
+  --repo-s3-key-secret      s3 repository secret access key
+  --repo-s3-region          s3 repository region
+  --repo-s3-verify-ssl      verify S3 server certificate [default=y]
   --repo-type               type of storage used for the repository
 [default=posix]
   --stanza                  defines a stanza [current=main]

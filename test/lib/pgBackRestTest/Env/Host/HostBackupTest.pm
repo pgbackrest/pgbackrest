@@ -26,9 +26,11 @@ use pgBackRest::Config::Config;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Posix::Driver;
+use pgBackRest::Storage::S3::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::Host::HostBaseTest;
+use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -87,10 +89,19 @@ sub new
     my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser});
     bless $self, $class;
 
-    # Create repo path
-    $self->{strRepoPath} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO;
+    # If repo is on local filesystem then set the repo-path locally
+    if ($oParam->{bRepoLocal})
+    {
+        $self->{strRepoPath} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO;
+    }
+    # Else on KV store and repo will be in root
+    else
+    {
+        $self->{strRepoPath} = '/';
+    }
 
-    if ($$oParam{strBackupDestination} eq $self->nameGet())
+    # Create the repo-path if on a local filesystem
+    if ($$oParam{strBackupDestination} eq $self->nameGet() && $oParam->{bRepoLocal})
     {
         storageTest()->pathCreate($self->repoPath(), {strMode => '0770'});
     }
@@ -939,6 +950,18 @@ sub configCreate
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = $self->repoPath();
 
+        # S3 settings
+        if ($oParam->{bS3})
+        {
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_TYPE} = REPO_TYPE_S3;
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_KEY} = HOST_S3_ACCESS_KEY;
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_KEY_SECRET} = HOST_S3_ACCESS_SECRET_KEY;
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_BUCKET} = HOST_S3_BUCKET;
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_ENDPOINT} = HOST_S3_ENDPOINT;
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_REGION} = HOST_S3_REGION;
+            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_VERIFY_SSL} = 'n';
+        }
+
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
             $self->{bHardLink} = true;
@@ -1157,15 +1180,21 @@ sub infoMunge
     }
 
     # Modify the file/directory permissions so it can be saved
+    if ($self->isFS())
+    {
         executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
+    }
 
     # Save the munged data to the file
     $oMungeIni->save();
 
     # Fix permissions
+    if ($self->isFS())
+    {
         executeTest(
             "sudo chmod 640 ${strFileName}* && sudo chmod 750 " . dirname($strFileName) .
             ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
+    }
 
     # Clear the cache is requested
     if (!$bCache)
@@ -1207,18 +1236,24 @@ sub infoRestore
         if ($bSave)
         {
             # Modify the file/directory permissions so it can be saved
+            if ($self->isFS())
+            {
                 executeTest("sudo rm -f ${strFileName}* && sudo chmod 770 " . dirname($strFileName));
+            }
 
             # Save the munged data to the file
             $self->{hInfoFile}{$strFileName}->{bModified} = true;
             $self->{hInfoFile}{$strFileName}->save();
 
             # Fix permissions
+            if ($self->isFS())
+            {
                 executeTest(
                     "sudo chmod 640 ${strFileName} && sudo chmod 750 " . dirname($strFileName) .
                     ' && sudo chown ' . $self->userGet() . " ${strFileName}*");
             }
         }
+    }
     else
     {
         confess &log(ASSERT, "There is no original data cached for $strFileName. infoMunge must be called first.");
@@ -1239,6 +1274,7 @@ sub backupDestination {return shift->{strBackupDestination}}
 sub backrestExe {return testRunGet()->backrestExe()}
 sub hardLink {return shift->{bHardLink}}
 sub hasLink {storageRepo()->driver()->className() eq STORAGE_POSIX_DRIVER}
+sub isFS {storageRepo()->driver()->className() ne STORAGE_S3_DRIVER}
 sub isHostBackup {my $self = shift; return $self->backupDestination() eq $self->nameGet()}
 sub isHostDbMaster {return shift->nameGet() eq HOST_DB_MASTER}
 sub isHostDbStandby {return shift->nameGet() eq HOST_DB_STANDBY}

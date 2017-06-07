@@ -16,6 +16,8 @@ use Exporter qw(import);
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 
+use pgBackRestTest::Common::VmTest;
+
 ################################################################################################################################
 # Test definition constants
 ################################################################################################################################
@@ -47,6 +49,9 @@ use constant TESTDEF_PROCESS                                        => 'process'
 # Total runs in the test
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
+# VMs that the test can run on
+use constant TESTDEF_VM                                             => 'vm';
+    push @EXPORT, qw(TESTDEF_VM);
 
 # The test provides full coverage for the module
 use constant TESTDEF_COVERAGE_FULL                                  => true;
@@ -215,6 +220,45 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 's3-auth',
+                    &TESTDEF_TOTAL => 5,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/S3/Auth' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 's3-file-write',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_VM => [VM_U16],
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/S3/FileWrite' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 's3-file-read',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_VM => [VM_U16],
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/S3/FileRead' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 's3-driver',
+                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_VM => [VM_U16],
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/S3/Driver' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'local',
                     &TESTDEF_TOTAL => 9,
 
@@ -300,20 +344,20 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'push',
-                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_TOTAL => 9,
                     &TESTDEF_PROCESS => true,
                     &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_NAME => 'stop',
-                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_TOTAL => 7,
                     &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_NAME => 'get',
-                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_TOTAL => 9,
                     &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
@@ -378,13 +422,13 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'create',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 3,
                     &TESTDEF_EXPECT => true,
                     &TESTDEF_INDIVIDUAL => true,
                 },
                 {
                     &TESTDEF_NAME => 'upgrade',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 3,
                     &TESTDEF_EXPECT => true,
                     &TESTDEF_INDIVIDUAL => true,
                 },
@@ -401,11 +445,11 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'synthetic',
-                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_TOTAL => 9,
                 },
                 {
                     &TESTDEF_NAME => 'real',
-                    &TESTDEF_TOTAL => 11,
+                    &TESTDEF_TOTAL => 12,
                     &TESTDEF_DB => true,
                 }
             ]
@@ -440,10 +484,10 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_PROCESS, TESTDEF_DB, TESTDEF_INDIVIDUAL)
+            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_PROCESS, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
-                $hModuleTest->{$strVar}, coalesce($hModule->{$strVar}, false));
+                $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
         }
 
         # Set test count

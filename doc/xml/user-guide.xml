@@ -1091,6 +1091,8 @@
         </section>
     </section>
 
+    <!-- !!! ADD S3 DOCUMENTATION -->
+
     <!-- SECTION => PITR -->
     <section id="pitr" depend="quickstart/perform-backup">
         <title>Point-in-Time Recovery</title>
