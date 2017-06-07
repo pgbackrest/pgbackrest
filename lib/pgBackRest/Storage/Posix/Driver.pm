@@ -626,14 +626,14 @@ sub remove
     my
     (
         $strOperation,
-        $strPath,
+        $rstryFile,
         $bIgnoreMissing,
         $bRecurse,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'strPath', trace => true},
+            {name => 'rstryFile', trace => true},
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
             {name => 'bRecurse', optional => true, default => false, trace => true},
         );
@@ -644,7 +644,7 @@ sub remove
     # Remove a tree
     if ($bRecurse)
     {
-        my $oManifest = $self->manifest($strPath);
+        my $oManifest = $self->manifest($rstryFile);
 
         # Iterate all files in the manifest
         foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
@@ -652,9 +652,9 @@ sub remove
             # remove directory
             if ($oManifest->{$strFile}{type} eq 'd')
             {
-                my $strPathRemove = $strFile eq '.' ? $strPath : "${strPath}/${strFile}";
+                my $rstryFileRemove = $strFile eq '.' ? $rstryFile : "${rstryFile}/${strFile}";
 
-                if (!rmdir($strPathRemove))
+                if (!rmdir($rstryFileRemove))
                 {
                     # If any error but missing then raise the error
                     if (!$OS_ERROR{ENOENT})
@@ -666,22 +666,25 @@ sub remove
             # Remove file
             else
             {
-                $self->remove("${strPath}/${strFile}", {bIgnoreMissing => true});
+                $self->remove("${rstryFile}/${strFile}", {bIgnoreMissing => true});
             }
         }
     }
     # Only remove the specified file
     else
     {
-        if (unlink($strPath) != 1)
+        foreach my $strFile (ref($rstryFile) ? @{$rstryFile} : ($rstryFile))
         {
-            $bRemoved = false;
-
-            # If path exists then throw the error
-            if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+            if (unlink($strFile) != 1)
             {
-                logErrorResult(
-                    $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to remove file '${strPath}'", $OS_ERROR);
+                $bRemoved = false;
+
+                # If path exists then throw the error
+                if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+                {
+                    logErrorResult(
+                        $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to remove file '${strFile}'", $OS_ERROR);
+                }
             }
         }
     }
