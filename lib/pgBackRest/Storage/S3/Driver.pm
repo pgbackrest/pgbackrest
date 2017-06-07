@@ -445,18 +445,10 @@ sub remove
         foreach my $strFile (sort({$b cmp $a} keys(%{$rhManifest})))
         {
             next if $rhManifest->{$strFile}->{type} eq 'd';
-
             push(@stryRemoveFile, "${rstryFile}/${strFile}");
-
-            # Send remove request if batch max has been reached
-            if (@stryRemoveFile == S3_BATCH_MAX)
-            {
-                $self->remove(\@stryRemoveFile);
-                undef(@stryRemoveFile);
-            }
         }
 
-        # Remove anything that's left over
+        # Remove files
         if (@stryRemoveFile > 0)
         {
             $self->remove(\@stryRemoveFile);
@@ -479,7 +471,7 @@ sub remove
                 $iTotal++;
                 $strXml .= '<Object><Key>' . substr($strFile, 1) . '</Key></Object>';
 
-                $strFile = $iTotal < 1000 ? shift(@{$rstryFileAll}) : undef;
+                $strFile = $iTotal < 2 ? shift(@{$rstryFileAll}) : undef;
             }
 
             $strXml .= '</Delete>';
