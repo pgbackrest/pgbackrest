@@ -247,7 +247,7 @@ my $oTestDef =
 
                     &TESTDEF_COVERAGE =>
                     {
-                        'Protocol/Common/Minion' => TESTDEF_COVERAGE_PARTIAL,
+                        'Protocol/Base/Minion' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
             ]
