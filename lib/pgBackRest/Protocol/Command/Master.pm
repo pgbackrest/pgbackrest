@@ -2,7 +2,7 @@
 # PROTOCOL COMMAND MASTER MODULE
 ####################################################################################################################################
 package pgBackRest::Protocol::Command::Master;
-use parent 'pgBackRest::Protocol::Common::Master';
+use parent 'pgBackRest::Protocol::Base::Master';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -16,7 +16,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Process;
-use pgBackRest::Protocol::Common::Master;
+use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Version;
 
 ####################################################################################################################################

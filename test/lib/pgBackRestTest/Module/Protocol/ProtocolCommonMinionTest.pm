@@ -19,7 +19,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
-use pgBackRest::Protocol::Common::Minion;
+use pgBackRest::Protocol::Base::Minion;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -102,8 +102,7 @@ sub run
         {
             my $oIoHandle = shift;
 
-            my $oMinion = new pgBackRest::Protocol::Common::Minion(
-                'test', new pgBackRest::Common::Io::Buffered($oIoHandle, 5, 4096));
+            my $oMinion = new pgBackRest::Protocol::Base::Minion('test', new pgBackRest::Common::Io::Buffered($oIoHandle, 5, 4096));
             $oMinion->process();
         });
 

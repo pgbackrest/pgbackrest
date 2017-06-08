@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# PROTOCOL COMMON MINION MODULE
+# Protocol Minion Base
 ####################################################################################################################################
-package pgBackRest::Protocol::Common::Minion;
+package pgBackRest::Protocol::Base::Minion;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -14,7 +14,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Protocol::Common::Master;
+use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
 
