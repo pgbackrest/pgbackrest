@@ -309,8 +309,7 @@ sub s3Setup
     elsif ($strOS eq VM_CO7)
     {
         $strScript .=
-            "RUN yum install -y wget && \\\n" .
-            "    wget -O /root/nodejs.sh https://rpm.nodesource.com/setup_6.x && \\\n" .
+            "RUN wget -O /root/nodejs.sh https://rpm.nodesource.com/setup_6.x && \\\n" .
             "    bash /root/nodejs.sh && \\\n" .
             "    yum install -y nodejs";
     }
@@ -461,7 +460,7 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            $strScript .= "RUN yum -y install openssh-server openssh-clients\n";
+            $strScript .= "RUN yum -y install openssh-server openssh-clients wget\n";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
