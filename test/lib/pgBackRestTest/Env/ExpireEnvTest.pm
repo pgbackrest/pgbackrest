@@ -11,6 +11,8 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use File::Basename qw(basename);
+
 use pgBackRest::Archive::ArchiveInfo;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
@@ -18,16 +20,17 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Stanza;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
+use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
 # new
@@ -45,7 +48,7 @@ sub new
         my $strOperation,
         $self->{oHostBackup},
         $self->{strBackRestExe},
-        $self->{oFile},
+        $self->{oStorageRepo},
         $self->{oLogTest},
         $self->{oRunTest},
     ) =
@@ -54,7 +57,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'oHostBackup', required => false, trace => true},
             {name => 'strBackRestExe', trace => true},
-            {name => 'oFile', trace => true},
+            {name => 'oStorageRepo', trace => true},
             {name => 'oLogTest', required => false, trace => true},
             {name => 'oRunTest', required => false, trace => true},
         );
@@ -107,8 +110,8 @@ sub stanzaSet
     $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
     $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE));
-    my $oBackupInfo = new pgBackRest::Backup::Info($self->{oFile}->pathGet(PATH_BACKUP_CLUSTER));
+    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE));
+    my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP));
 
     if ($bStanzaUpgrade)
     {
@@ -122,9 +125,9 @@ sub stanzaSet
     }
 
     # Get the archive and directory paths for the stanza
-    $$oStanza{strArchiveClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
-    $$oStanza{strBackupClusterPath} = $self->{oFile}->pathGet(PATH_BACKUP_CLUSTER);
-    filePathCreate($$oStanza{strArchiveClusterPath}, undef, undef, true);
+    $$oStanza{strArchiveClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE) . '/' . ($oArchiveInfo->archiveId());
+    $$oStanza{strBackupClusterPath} = $self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP);
+    storageRepo()->pathCreate($$oStanza{strArchiveClusterPath}, {bCreateParent => true});
 
     $self->{oStanzaHash}{$strStanza} = $oStanza;
 
@@ -159,7 +162,7 @@ sub stanzaCreate
     my $strDbPath = optionGet(OPTION_DB_PATH);
 
     # Create the test path for pg_control
-    filePathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), undef, true);
+    storageTest()->pathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
 
     # Copy pg_control for stanza-create
     executeTest(
@@ -199,7 +202,7 @@ sub stanzaUpgrade
     $strDbVersionTemp =~ s/\.//;
 
     # Remove pg_control
-    fileRemove(optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+    storageTest()->remove(optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     # Copy pg_control for stanza-upgrade
     executeTest(
@@ -257,7 +260,7 @@ sub backupCreate
                           $lTimestamp);
 
     my $strBackupClusterSetPath = "$$oStanza{strBackupClusterPath}/${strBackupLabel}";
-    filePathCreate($strBackupClusterSetPath);
+    storageRepo()->pathCreate($strBackupClusterSetPath);
 
     &log(INFO, "create backup ${strBackupLabel}");
 
@@ -295,9 +298,6 @@ sub backupCreate
 
     $oManifest->save();
     $$oStanza{oManifest} = $oManifest;
-
-    # Create the compressed history manifest
-    $self->{oFile}->compress(PATH_BACKUP_ABSOLUTE, $strManifestFile, false);
 
     # Add the backup to info
     my $oBackupInfo = new pgBackRest::Backup::Info($$oStanza{strBackupClusterPath}, false);
@@ -401,10 +401,10 @@ sub archiveCreate
     do
     {
         my $strPath = "$$oStanza{strArchiveClusterPath}/" . substr($strArchive, 0, 16);
-        filePathCreate($strPath, undef, true);
+        storageRepo()->pathCreate($strPath, {bIgnoreExists => true});
 
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
-        testFileCreate($strFile, 'ARCHIVE');
+        storageRepo()->put($strFile, 'ARCHIVE');
 
         $iArchiveIdx++;
 
@@ -449,16 +449,42 @@ sub supplementalLog
 
     if (defined($self->{oLogTest}))
     {
-        $self->{oLogTest}->supplementalAdd($self->{oHostBackup}->repoPath() .
-                                           "/backup/${strStanza}/backup.info", $$oStanza{strBackupDescription});
+        $self->{oLogTest}->supplementalAdd(
+            $self->{oHostBackup}->repoPath() . "/backup/${strStanza}/backup.info", $$oStanza{strBackupDescription},
+            ${storageRepo->get($self->{oHostBackup}->repoPath() . "/backup/${strStanza}/backup.info")});
 
-        executeTest(
-            'ls ' . $self->{oHostBackup}->repoPath() . "/backup/${strStanza} | grep -v \"backup.*\"",
-            {oLogTest => $self->{oLogTest}});
+        # Output backup list
+        $self->{oLogTest}->logAdd(
+            'ls ' . $self->{oHostBackup}->repoPath() . "/backup/${strStanza} | grep -v \"backup.*\"", undef,
+            join("\n", grep(!/^backup\.info.*$/i, storageRepo()->list("backup/${strStanza}"))));
 
-        executeTest(
-            'ls -R ' . $self->{oHostBackup}->repoPath() . "/archive/${strStanza} | grep -v \"archive.info\"",
-            {oLogTest => $self->{oLogTest}});
+        # Output archive manifest
+        my $rhManifest = storageRepo()->manifest(STORAGE_REPO_ARCHIVE);
+        my $strManifest;
+        my $strPrefix = '';
+
+        foreach my $strEntry (sort(keys(%{$rhManifest})))
+        {
+            # Skip files
+            next if $strEntry eq ARCHIVE_INFO_FILE || $strEntry eq ARCHIVE_INFO_FILE . INI_COPY_EXT;
+
+            if ($rhManifest->{$strEntry}->{type} eq 'd')
+            {
+                $strEntry = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . ($strEntry eq '.' ? '' : "/${strEntry}");
+
+                # &log(WARN, "DIR $strEntry");
+                $strManifest .= (defined($strManifest) ? "\n" : '') . "${strEntry}:\n";
+                $strPrefix = $strEntry;
+            }
+            else
+            {
+                # &log(WARN, "FILE $strEntry");
+                $strManifest .= basename($strEntry) . "\n";
+            }
+        }
+
+        $self->{oLogTest}->logAdd(
+            'ls -R ' . $self->{oHostBackup}->repoPath() . "/archive/${strStanza} | grep -v \"archive.info\"", undef, $strManifest);
     }
 
     return logDebugReturn($strOperation);

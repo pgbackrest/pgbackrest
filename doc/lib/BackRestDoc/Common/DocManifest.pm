@@ -15,7 +15,6 @@ use JSON::PP;
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 
 ####################################################################################################################################
 # File constants
@@ -56,6 +55,7 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
+        $self->{oStorage},
         $self->{stryKeyword},
         $self->{stryRequire},
         $self->{stryInclude},
@@ -68,6 +68,7 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
+            {name => 'oStorage'},
             {name => 'stryKeyword'},
             {name => 'stryRequire'},
             {name => 'stryInclude'},
@@ -627,16 +628,16 @@ sub cacheRead
 
     my $strCacheFile = $self->{bDeploy} ? $self->{strExeCacheDeploy} : $self->{strExeCacheLocal};
 
-    if (!fileExists($strCacheFile) && !$self->{bDeploy})
+    if (!$self->storage()->exists($strCacheFile) && !$self->{bDeploy})
     {
         $strCacheFile = $self->{strExeCacheDeploy};
     }
 
-    if (fileExists($strCacheFile))
+    if ($self->storage()->exists($strCacheFile))
     {
         my ($strKeyword, $strRequire) = $self->cacheKey();
         my $oJSON = JSON::PP->new()->allow_nonref();
-        $self->{hCache} = $oJSON->decode(fileStringRead($strCacheFile));
+        $self->{hCache} = $oJSON->decode(${$self->storage()->get($strCacheFile)});
 
         foreach my $strSource (sort(keys(%{${$self->{oManifest}}{source}})))
         {
@@ -681,7 +682,7 @@ sub cacheWrite
     if (defined($self->{hCache}))
     {
         my $oJSON = JSON::PP->new()->canonical()->allow_nonref()->pretty();
-        fileStringWrite($strCacheFile, $oJSON->encode($self->{hCache}), false);
+        $self->storage()->put($strCacheFile, $oJSON->encode($self->{hCache}));
     }
 
     # Return from function and log return values if any
@@ -718,5 +719,10 @@ sub cacheReset
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
 }
+
+####################################################################################################################################
+# Getters
+####################################################################################################################################
+sub storage {shift->{oStorage}};
 
 1;

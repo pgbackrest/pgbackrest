@@ -35,7 +35,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::FileCommon;
+use pgBackRest::Storage::Local;
+use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -123,6 +124,9 @@ eval
     my $strDocHtml = "${strDocPath}/output/html";
     my $strDocExe = "${strDocPath}/doc.pl";
 
+    my $oStorageDoc = new pgBackRest::Storage::Local(
+        $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+
     # Determine if this is a dev release
     my $bDev = BACKREST_VERSION =~ /dev$/;
     my $strVersion = $bDev ? 'dev' : BACKREST_VERSION;
@@ -130,7 +134,7 @@ eval
     if ($bBuild)
     {
         # Remove permanent cache file
-        fileRemove("${strDocPath}/resource/exe.cache", true);
+        $oStorageDoc->remove("${strDocPath}/resource/exe.cache", {bIgnoreMissing => true});
 
         # Remove all docker containers to get consistent IP address assignments
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});

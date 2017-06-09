@@ -126,7 +126,7 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
-        &VM_CONTROL_MASTER => true,
+        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
@@ -152,7 +152,7 @@ my $oyVm =
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'jessie',
         &VM_IMAGE => 'debian:8',
-        &VM_CONTROL_MASTER => true,
+        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
 
@@ -182,6 +182,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'precise',
         &VM_IMAGE => 'ubuntu:12.04',
+        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
 
@@ -211,7 +212,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'trusty',
         &VM_IMAGE => 'ubuntu:14.04',
-        &VM_CONTROL_MASTER => true,
+        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
 
@@ -244,7 +245,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'xenial',
         &VM_IMAGE => 'ubuntu:16.04',
-        &VM_CONTROL_MASTER => true,
+        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 

@@ -8,6 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Digest::SHA;
 use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl qw(:mode O_WRONLY O_CREAT O_TRUNC);
@@ -19,7 +20,6 @@ use Storable qw(dclone);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -44,6 +44,12 @@ use constant INI_KEY_VERSION                                        => 'backrest
     push @EXPORT, qw(INI_KEY_VERSION);
 
 ####################################################################################################################################
+# Ini file copy extension
+####################################################################################################################################
+use constant INI_COPY_EXT                                           => '.copy';
+    push @EXPORT, qw(INI_COPY_EXT);
+
+####################################################################################################################################
 # Ini sort orders
 ####################################################################################################################################
 use constant INI_SORT_FORWARD                                       => 'forward';
@@ -64,14 +70,20 @@ sub new
     my $self = {};
     bless $self, $class;
 
+    # Load Storage::Helper module
+    require pgBackRest::Storage::Helper;
+    pgBackRest::Storage::Helper->import();
+
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
         $self->{strFileName},
         my $bLoad,
         my $strContent,
+        $self->{oStorage},
         $self->{iInitFormat},
         $self->{strInitVersion},
+        my $bIgnoreMissing,
     ) =
         logDebugParam
         (
@@ -79,12 +91,11 @@ sub new
             {name => 'strFileName', trace => true},
             {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'strContent', optional => true, trace => true},
+            {name => 'oStorage', optional => true, default => storageLocal(), trace => true},
             {name => 'iInitFormat', optional => true, default => BACKREST_FORMAT, trace => true},
             {name => 'strInitVersion', optional => true, default => BACKREST_VERSION, trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
-
-    # Set variables
-    $self->{oContent} = {};
 
     # Set changed to false
     $self->{bModified} = false;
@@ -95,7 +106,7 @@ sub new
     # Load the file if requested
     if ($bLoad)
     {
-        $self->load();
+        $self->load($bIgnoreMissing);
     }
     # Load from a string if provided
     elsif (defined($strContent))
@@ -103,8 +114,9 @@ sub new
         $self->{oContent} = iniParse($strContent);
         $self->headerCheck();
     }
-    # Else initialize
-    else
+
+    # Initialize if not loading from string and file does not exist
+    if (!$self->{bExists} && !defined($strContent))
     {
         $self->numericSet(INI_SECTION_BACKREST, INI_KEY_FORMAT, undef, $self->{iInitFormat});
         $self->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, $self->{strInitVersion});
@@ -114,14 +126,59 @@ sub new
 }
 
 ####################################################################################################################################
-# load() - load the ini.
+# loadVersion() - load a version (main or copy) of the ini file
+####################################################################################################################################
+sub loadVersion
+{
+    my $self = shift;
+    my $bCopy = shift;
+    my $bIgnoreError = shift;
+
+    # Load main
+    my $rstrContent = $self->{oStorage}->get(
+        $self->{oStorage}->openRead($self->{strFileName} . ($bCopy ? INI_COPY_EXT : ''), {bIgnoreMissing => $bIgnoreError}));
+
+    # If the file exists then attempt to parse it
+    if (defined($rstrContent))
+    {
+
+        my $rhContent = iniParse($$rstrContent, {bIgnoreInvalid => $bIgnoreError});
+
+        # If the content is valid then check the header
+        if (defined($rhContent))
+        {
+            $self->{oContent} = $rhContent;
+
+            # If the header is invalid then undef content
+            if (!$self->headerCheck({bIgnoreInvalid => $bIgnoreError}))
+            {
+                delete($self->{oContent});
+            }
+        }
+    }
+
+    return defined($self->{oContent});
+}
+
+####################################################################################################################################
+# load() - load the ini
 ####################################################################################################################################
 sub load
 {
     my $self = shift;
+    my $bIgnoreMissing = shift;
 
-    $self->{oContent} = iniParse(fileStringRead($self->{strFileName}));
-    $self->headerCheck();
+    # If main was not loaded then try the copy
+    if (!$self->loadVersion(false, true))
+    {
+        if (!$self->loadVersion(true, true))
+        {
+            return if $bIgnoreMissing;
+
+            confess &log(ERROR, "unable to open $self->{strFileName} or $self->{strFileName}" . INI_COPY_EXT, ERROR_FILE_MISSING);
+        }
+    }
+
     $self->{bExists} = true;
 }
 
@@ -149,6 +206,7 @@ sub headerCheck
 
     eval
     {
+
         # Make sure the ini is valid by testing checksum
         my $strChecksum = $self->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM, undef, false);
         my $strTestChecksum = $self->hash();
@@ -216,7 +274,7 @@ sub iniParse
         logDebugParam
         (
             __PACKAGE__ . '::iniParse', \@_,
-            {name => 'strContent', trace => true},
+            {name => 'strContent', required => false, trace => true},
             {name => 'bRelaxed', optional => true, default => false, trace => true},
             {name => 'bIgnoreInvalid', optional => true, default => false, trace => true},
         );
@@ -232,7 +290,7 @@ sub iniParse
     eval
     {
         # Read the INI file
-        foreach my $strLine (split("\n", $strContent))
+        foreach my $strLine (split("\n", defined($strContent) ? $strContent : ''))
         {
             $strLine = trim($strLine);
 
@@ -323,13 +381,17 @@ sub save
 {
     my $self = shift;
 
+    # Save only if modified
     if ($self->{bModified})
     {
         # Calculate the hash
         $self->hash();
 
         # Save the file
-        fileStringWrite($self->{strFileName}, iniRender($self->{oContent}));
+        $self->{oStorage}->put($self->{strFileName}, iniRender($self->{oContent}));
+        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
+        $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
+        $self->{oStorage}->pathSync(dirname($self->{strFileName}));
         $self->{bModified} = false;
 
         # Indicate the file now exists
@@ -341,6 +403,22 @@ sub save
 
     # File was not saved
     return false;
+}
+
+####################################################################################################################################
+# saveCopy - save only a copy of the file.
+####################################################################################################################################
+sub saveCopy
+{
+    my $self = shift;
+
+    if ($self->{oStorage}->exists($self->{strFileName}))
+    {
+        confess &log(ASSERT, "cannot save copy only when '$self->{strFileName}' exists");
+    }
+
+    $self->hash();
+    $self->{oStorage}->put($self->{strFileName} . INI_COPY_EXT, iniRender($self->{oContent}));
 }
 
 ####################################################################################################################################
@@ -435,7 +513,6 @@ sub hash
     delete($self->{oContent}{&INI_SECTION_BACKREST}{&INI_KEY_CHECKSUM});
 
     # Calculate the checksum
-    my $oChecksumContent = dclone($self->{oContent});
     my $oSHA = Digest::SHA->new('sha1');
     my $oJSON = JSON::PP->new()->canonical()->allow_nonref();
     $oSHA->add($oJSON->encode($self->{oContent}));

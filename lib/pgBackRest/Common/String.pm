@@ -33,9 +33,7 @@ sub trim
 push @EXPORT, qw(trim);
 
 ####################################################################################################################################
-# coalesce
-#
-# Return the first non-null parameter.
+# coalesce - return first defined parameter
 ####################################################################################################################################
 sub coalesce
 {
@@ -46,6 +44,8 @@ sub coalesce
             return $strParam;
         }
     }
+
+    return;
 }
 
 push @EXPORT, qw(coalesce);

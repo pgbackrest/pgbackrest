@@ -17,7 +17,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 
 use pgBackRest::Common::Log;
-use pgBackRest::FileCommon;
+use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -36,6 +36,8 @@ use constant HOST_DB_STANDBY                                        => 'db-stand
     push @EXPORT, qw(HOST_DB_STANDBY);
 use constant HOST_BACKUP                                            => 'backup';
     push @EXPORT, qw(HOST_BACKUP);
+use constant HOST_S3                                                => 's3-server';
+    push @EXPORT, qw(HOST_S3);
 
 ####################################################################################################################################
 # new
@@ -59,7 +61,7 @@ sub new
         );
 
     my $strTestPath = testRunGet()->testPath() . ($strName eq HOST_BASE ? '' : "/${strName}");
-    filePathCreate($strTestPath, '0770');
+    storageTest()->pathCreate($strTestPath, {strMode => '0770'});
 
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));

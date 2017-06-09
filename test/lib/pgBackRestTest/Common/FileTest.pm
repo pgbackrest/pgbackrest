@@ -26,8 +26,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::File;
 use pgBackRest::Manifest;
+use pgBackRest::Storage::Local;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::LogTest;
@@ -81,54 +81,9 @@ sub testPathRemove
     my $bSuppressError = shift;
 
     executeTest('sudo rm -rf ' . $strPath, {bSuppressError => $bSuppressError});
-
-    # remove_tree($strPath, {result => \my $oError});
-    #
-    # if (@$oError)
-    # {
-    #     my $strMessage = "error(s) occurred while removing ${strPath}:";
-    #
-    #     for my $strFile (@$oError)
-    #     {
-    #         $strMessage .= "\nunable to remove: " . $strFile;
-    #     }
-    #
-    #     confess $strMessage;
-    # }
 }
 
 push(@EXPORT, qw(testPathRemove));
-
-####################################################################################################################################
-# testPathCopy
-#
-# Copy a path.
-####################################################################################################################################
-sub testPathCopy
-{
-    my $strSourcePath = shift;
-    my $strDestinationPath = shift;
-    my $bSuppressError = shift;
-
-    executeTest("cp -RpP ${strSourcePath} ${strDestinationPath}", {bSuppressError => $bSuppressError});
-}
-
-####################################################################################################################################
-# testPathMove
-#
-# Copy a path.
-####################################################################################################################################
-sub testPathMove
-{
-    my $strSourcePath = shift;
-    my $strDestinationPath = shift;
-    my $bSuppressError = shift;
-
-    testPathCopy($strSourcePath, $strDestinationPath, $bSuppressError);
-    testPathRemove($strSourcePath, $bSuppressError);
-}
-
-push(@EXPORT, qw(testPathMove));
 
 ####################################################################################################################################
 # testFileCreate
@@ -181,5 +136,125 @@ sub testFileRemove
 }
 
 push(@EXPORT, qw(testFileRemove));
+
+####################################################################################################################################
+# forceStorageMode - force mode on a file or path
+####################################################################################################################################
+sub forceStorageMode
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strPathExp,
+        $strMode,
+        $bRecurse
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::forceStorageMode', \@_,
+            {name => 'oStorage'},
+            {name => 'strPathExp'},
+            {name => 'strMode'},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    executeTest('sudo chmod ' . ($bRecurse ? '-R ' : '') . "${strMode} " . $oStorage->pathGet($strPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageMode));
+
+####################################################################################################################################
+# forceStorageMove - force move a directory or file
+####################################################################################################################################
+sub forceStorageMove
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strSourcePathExp,
+        $strDestinationPathExp,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->forceStorageMove', \@_,
+            {name => 'oStorage'},
+            {name => 'strSourcePathExp'},
+            {name => 'strDestinationPathExp'},
+        );
+
+    executeTest('sudo mv ' . $oStorage->pathGet($strSourcePathExp) . ' ' . $oStorage->pathGet($strDestinationPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageMove));
+
+####################################################################################################################################
+# forceStorageOwner - force ownership on a file or path
+####################################################################################################################################
+sub forceStorageOwner
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strPathExp,
+        $strOwner,
+        $bRecurse
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::forceStorageOwner', \@_,
+            {name => 'oStorage'},
+            {name => 'strPathExp'},
+            {name => 'strOwner'},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    executeTest('sudo chown ' . ($bRecurse ? '-R ' : '') . "${strOwner} " . $oStorage->pathGet($strPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageOwner));
+
+####################################################################################################################################
+# forceStorageRemove - force remove a file or path from storage
+####################################################################################################################################
+sub forceStorageRemove
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $oStorage,
+        $strPathExp,
+        $bRecurse
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->forceStorageRemove', \@_,
+            {name => 'oStorage'},
+            {name => 'strPathExp'},
+            {name => 'bRecurse', optional => true, default => false},
+        );
+
+    executeTest('sudo rm -f' . ($bRecurse ? 'r ' : ' ') . $oStorage->pathGet($strPathExp));
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+push(@EXPORT, qw(forceStorageRemove));
 
 1;

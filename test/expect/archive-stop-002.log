@@ -4,7 +4,7 @@ run 002 - rmt 0, cmp 1, error version
 stanza-create db - create required data for stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/repo/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/repo/log --no-online --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -44,12 +44,12 @@ db-version="9.4"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
+P00  ERROR: [044]: raised on 'local-1' host: WAL segment version 9.4 does not match archive version 8.0
             HINT: are you archiving to the correct stanza?
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: raised on local-1 host: WAL segment version 9.4 does not match archive version 8.0
+P00  ERROR: [044]: raised on 'local-1' host: WAL segment version 9.4 does not match archive version 8.0
             HINT: are you archiving to the correct stanza?
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000004

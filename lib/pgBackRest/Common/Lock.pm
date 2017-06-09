@@ -16,7 +16,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::FileCommon;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # Global lock type and handle
@@ -47,7 +47,7 @@ sub lockFileName
 ####################################################################################################################################
 sub lockPathCreate
 {
-    filePathCreate(optionGet(OPTION_LOCK_PATH), '770', true, true);
+    storageLocal()->pathCreate(optionGet(OPTION_LOCK_PATH), {strMode => '770', bIgnoreExists => true, bCreateParent => true});
 }
 
 ####################################################################################################################################

@@ -188,6 +188,22 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Refactor storage layer to allow for new repository filesystems using drivers.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Refactor IO layer to allow for new compression formats, checksum types, and other capabilities using filters.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move modules in <path>Protocol</path> directory in subdirectories.</p>
                     </release-item>
 

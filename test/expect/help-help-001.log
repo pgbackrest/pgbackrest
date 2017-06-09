@@ -78,6 +78,8 @@ compress=n [default=3]
   --protocol-timeout        protocol timeout [default=1830]
   --repo-path               repository path where WAL segments and backups
 stored [default=/var/lib/pgbackrest]
+  --repo-type               type of storage used for the repository
+[default=posix]
   --stanza                  defines a stanza [current=main]
 
 Log Options:

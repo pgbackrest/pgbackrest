@@ -14,27 +14,27 @@ use Carp qw(confess);
 use English '-no_match_vars';
 
 use Exporter qw(import);
+    our @EXPORT = qw();
 use File::Basename qw(dirname basename);
-use File::stat;
-use Fcntl qw(O_RDONLY);
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
+use pgBackRest::Archive::ArchiveCommon;
 use pgBackRest::Common::Exception;
+use pgBackRest::Config::Config;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
+use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Base;
+use pgBackRest::Storage::Filter::Gzip;
+use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################
 # File/path constants
 ####################################################################################################################################
 use constant ARCHIVE_INFO_FILE                                      => 'archive.info';
-    our @EXPORT = qw(ARCHIVE_INFO_FILE);
+    push @EXPORT, qw(ARCHIVE_INFO_FILE);
 
 ####################################################################################################################################
 # Archive info constants
@@ -71,29 +71,57 @@ sub new
     my
     (
         $strOperation,
-        $strArchiveClusterPath,                     # Backup cluster path
-        $bRequired                                  # Is archive info required?
+        $strArchiveClusterPath,                     # Archive cluster path
+        $bRequired,                                 # Is archive info required?
+        $bLoad,                                     # Should the file attempt to be loaded?
+        $bIgnoreMissing,                            # Don't error on missing files
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strArchiveClusterPath'},
-            {name => 'bRequired', default => true}
+            {name => 'bRequired', default => true},
+            {name => 'bLoad', optional => true, default => true},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     # Build the archive info path/file name
     my $strArchiveInfoFile = "${strArchiveClusterPath}/" . ARCHIVE_INFO_FILE;
-    my $bExists = fileExists($strArchiveInfoFile);
-
-    if (!$bExists && $bRequired)
-    {
-        confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
-    }
+    my $self = {};
+    my $iResult = 0;
+    my $strResultMessage;
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bExists});
+    eval
+    {
+        $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
+            oStorage => storageRepo()});
+        return true;
+    }
+    or do
+    {
+        # Capture error information
+        $iResult = exceptionCode($EVAL_ERROR);
+        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+    };
 
-    $self->{bExists} = $bExists;
+    if ($iResult != 0)
+    {
+        # If the file does not exist but is required to exist, then error
+        # The archive info is only allowed not to exist when running a stanza-create on a new install
+        if ($iResult == ERROR_FILE_MISSING)
+        {
+            if ($bRequired)
+            {
+                confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
+            }
+        }
+        else
+        {
+            confess &log(ERROR, $strResultMessage, $iResult);
+        }
+    }
+
     $self->{strArchiveClusterPath} = $strArchiveClusterPath;
 
     # Return from function and log return values if any
@@ -276,21 +304,19 @@ sub reconstruct
     my
     (
         $strOperation,
-        $oFile,
         $strCurrentDbVersion,
         $ullCurrentDbSysId,
     ) =
         logDebugParam
     (
         __PACKAGE__ . '->reconstruct', \@_,
-        {name => 'oFile'},
         {name => 'strCurrentDbVersion'},
         {name => 'ullCurrentDbSysId'},
     );
 
     my $strInvalidFileStructure = undef;
 
-    my @stryArchiveId = fileList(
+    my @stryArchiveId = storageRepo()->list(
         $self->{strArchiveClusterPath}, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
     my %hDbHistoryVersion;
 
@@ -308,7 +334,7 @@ sub reconstruct
         my $strVersionDir = $strDbVersion . "-" . $iDbHistoryId;
 
         # Get the name of the first archive directory
-        my $strArchiveDir = (fileList(
+        my $strArchiveDir = (storageRepo()->list(
             $self->{strArchiveClusterPath} . "/${strVersionDir}",
             {strExpression => REGEX_ARCHIVE_DIR_WAL, bIgnoreMissing => true}))[0];
 
@@ -320,9 +346,9 @@ sub reconstruct
         }
 
         # ??? Should probably make a function in ArchiveCommon
-        my $strArchiveFile = (fileList(
+        my $strArchiveFile = (storageRepo()->list(
             $self->{strArchiveClusterPath} . "/${strVersionDir}/${strArchiveDir}",
-            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\.$oFile->{strCompressExtension}){0,1}\$",
+            {strExpression => "^[0-F]{24}(\\.partial){0,1}(-[0-f]+){0,1}(\\." . COMPRESS_EXT . "){0,1}\$",
                 bIgnoreMissing => true}))[0];
 
         # Continue if any file structure or missing files info
@@ -339,27 +365,16 @@ sub reconstruct
         # Get the db-system-id from the WAL file depending on the version of postgres
         my $iSysIdOffset = $strDbVersion >= PG_VERSION_93 ? PG_WAL_SYSTEM_ID_OFFSET_GTE_93 : PG_WAL_SYSTEM_ID_OFFSET_LT_93;
 
-        # If the file is a compressed file, unzip it, else open the first 8KB
+        # Read first 8k of WAL segment
         my $tBlock;
 
-        sysopen(my $hFile, $strArchiveFilePath, O_RDONLY)
-            or confess &log(ERROR, "unable to open ${strArchiveFilePath}", ERROR_FILE_OPEN);
+        my $oFileIo = storageRepo()->openRead(
+            $strArchiveFilePath,
+            {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
+                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef});
 
-        if ($strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$")
-        {
-            gunzip($hFile => \$tBlock)
-                or confess &log(ERROR,
-                    "gunzip failed with error: " . $GunzipError .
-                    " on file ${strArchiveFilePath}", ERROR_FILE_READ);
-        }
-        else
-        {
-            # Read part of the file
-            sysread($hFile, $tBlock, 8192) == 8192
-                or confess &log(ERROR, "unable to read ${strArchiveFilePath}", ERROR_FILE_READ);
-        }
-
-        close($hFile);
+        $oFileIo->read(\$tBlock, 512, true);
+        $oFileIo->close();
 
         # Get the required data from the file that was pulled into scalar $tBlock
         my ($iMagic, $iFlag, $junk, $ullDbSysId) = unpack('SSa' . $iSysIdOffset . 'Q', $tBlock);

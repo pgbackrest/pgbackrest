@@ -17,7 +17,6 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::FileCommon;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -96,10 +95,9 @@ sub process
         &log(INFO, "    render out: ${strRenderOutId}");
 
         # Save the html page
-        fileStringWrite($strFile,
-                        $self->{oManifest}->variableReplace((new BackRestDoc::Markdown::DocMarkdownRender($self->{oManifest},
-                            $strRenderOutId, $self->{bExe}))->process()),
-                        false);
+        $self->{oManifest}->storage()->put(
+            $strFile, $self->{oManifest}->variableReplace((new BackRestDoc::Markdown::DocMarkdownRender($self->{oManifest},
+            $strRenderOutId, $self->{bExe}))->process()));
     }
 
     # Return from function and log return values if any

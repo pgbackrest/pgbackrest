@@ -147,9 +147,7 @@ sub supplementalAdd
     my $self = shift;
     my $strFileName = shift;
     my $strComment = shift;
-
-    open(my $hFile, '<', $strFileName)
-        or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
+    my $strContent = shift;
 
     my $strHeader = "+ supplemental file: " . $self->regExpReplaceAll($strFileName);
 
@@ -160,12 +158,28 @@ sub supplementalAdd
 
     $self->{strLog} .= "\n${strHeader}\n" . ('-' x length($strHeader)) . "\n";
 
-    while (my $strLine = readline($hFile))
+    if (!defined($strContent))
     {
-        $self->{strLog} .= $self->regExpReplaceAll($strLine);
-    }
+        open(my $hFile, '<', $strFileName)
+            or confess &log(ERROR, "unable to open ${strFileName} for appending to test log");
 
-    close($hFile);
+        while (my $strLine = readline($hFile))
+        {
+            $self->{strLog} .= $self->regExpReplaceAll($strLine);
+        }
+
+        close($hFile);
+    }
+    else
+    {
+        if (defined($strContent) && length($strContent) > 0)
+        {
+            foreach my $strLine (split("\n", $strContent))
+            {
+                $self->{strLog} .= $self->regExpReplaceAll($strLine) . "\n";
+            }
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -356,11 +370,14 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'CONTAINER-EXEC', '^docker exec -u [a-z]*', '^docker exec -u [a-z]*', false);
 
     $strLine = $self->regExpReplace($strLine, 'PROCESS-ID', 'sent term signal to process [0-9]+', '[0-9]+$', false);
-    $strLine = $self->regExpReplace($strLine, 'YEAR', ' \= backup\.history\/20[0-9]{2}', '20[0-9]{2}$');
+    $strLine = $self->regExpReplace($strLine, 'YEAR', 'backup\.history\/20[0-9]{2}', '20[0-9]{2}$');
 
     $strLine = $self->regExpReplace($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
     $strLine = $self->regExpReplace($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
     $strLine = $self->regExpReplace($strLine, 'BACKUP-FULL', '[0-9]{8}\-[0-9]{6}F');
+
+    $strLine = $self->regExpReplace(
+        $strLine, 'BACKUP-EXPR', 'strExpression \= \_[0-9]{8}\-[0-9]{6}', '\_[0-9]{8}\-[0-9]{6}$', false);
 
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
@@ -394,10 +411,10 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'VERSION',
         "version[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}" . BACKREST_VERSION, BACKREST_VERSION . '$');
 
-    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]+','[0-9]{10}$');
+    $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', 'timestamp"[ ]{0,1}:[ ]{0,1}[0-9]{10}','[0-9]{10}$');
 
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP',
-        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]+", '[0-9]{10}$', false);
+        "timestamp-[a-z-]+[\"]{0,1}[ ]{0,1}[\:\=)]{1}[ ]{0,1}[\"]{0,1}[0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', "start\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', "stop\" : [0-9]{10}", '[0-9]{10}$', false);
     $strLine = $self->regExpReplace($strLine, 'TIMESTAMP', TEST_GROUP . '\, [0-9]{10}', '[0-9]{10}$', false);

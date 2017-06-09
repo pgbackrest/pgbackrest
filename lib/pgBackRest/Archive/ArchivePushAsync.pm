@@ -28,11 +28,9 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
-use pgBackRest::File;
-use pgBackRest::FileCommon;
-use pgBackRest::Protocol::Common::Common;
 use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
+use pgBackRest::Storage::Helper;
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -151,7 +149,7 @@ sub initServer
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->initServer');
 
     # Create the spool path
-    filePathCreate($self->{strSpoolPath}, undef, true, true);
+    storageSpool()->pathCreate($self->{strSpoolPath}, {bIgnoreExists => true, bCreateParent => true});
 
     # Initialize the archive process
     $self->{oArchiveProcess} = new pgBackRest::Protocol::Local::Process(
@@ -203,8 +201,7 @@ sub processQueue
     foreach my $strWalFile (@{$stryWalFile})
     {
         $self->{oArchiveProcess}->queueJob(
-            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE,
-            [$self->{strWalPath}, $strWalFile, optionGet(OPTION_COMPRESS), optionGet(OPTION_REPO_SYNC)]);
+            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE, [$self->{strWalPath}, $strWalFile, optionGet(OPTION_COMPRESS)]);
     }
 
     # Process jobs if there are any
@@ -218,18 +215,15 @@ sub processQueue
             'push ' . @{$stryWalFile} . ' WAL file(s) to archive: ' .
                 ${$stryWalFile}[0] . (@{$stryWalFile} > 1 ? "...${$stryWalFile}[-1]" : ''));
 
-        # Protocol created below so errors are handled correctly
-        my $oProtocol;
-
         eval
         {
             # Hold a lock when the repo is remote to be sure no other process is pushing WAL
-            $oProtocol = protocolGet(BACKUP);
+            !isRepoLocal() && protocolGet(BACKUP);
 
             while (my $hyJob = $self->{oArchiveProcess}->process())
             {
                 # Send keep alives to protocol
-                $oProtocol->keepAlive();
+                protocolKeepAlive();
 
                 foreach my $hJob (@{$hyJob})
                 {
@@ -341,7 +335,7 @@ sub walStatusWrite
     if ($strType ne WAL_STATUS_ERROR)
     {
         # Remove the error file, if any
-        fileRemove("$self->{strSpoolPath}/${strWalFile}.error", true);
+        storageSpool()->remove("$self->{strSpoolPath}/${strWalFile}.error", {bIgnoreMissing => true});
     }
 
     # Write the status file
@@ -361,7 +355,8 @@ sub walStatusWrite
         confess &log(ASSERT, 'error status must have iCode and strMessage set');
     }
 
-    fileStringWrite("$self->{strSpoolPath}/${strWalFile}.${strType}", $strStatus);
+    storageSpool()->put(
+        storageSpool()->openWrite("$self->{strSpoolPath}/${strWalFile}.${strType}", {bAtomic => true}), $strStatus);
 }
 
 1;
