@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Helper functions for creating storage objects that can be either local or remote.
+# Db & Repository Storage Helper
 ####################################################################################################################################
 package pgBackRest::Protocol::Storage::Helper;
 

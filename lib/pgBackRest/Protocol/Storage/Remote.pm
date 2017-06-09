@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Remote storage object that communicates with a local storage object through the protocol layer.
+# Remote Storage
 ####################################################################################################################################
 package pgBackRest::Protocol::Storage::Remote;
 use parent 'pgBackRest::Storage::Base';
@@ -48,173 +48,6 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
-    );
-}
-
-####################################################################################################################################
-# pathGet
-####################################################################################################################################
-sub pathGet
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-        $rhParam,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathGet', \@_,
-            {name => 'strPathExp', required => false},
-            {name => 'rhParam', required => false},
-        );
-
-    my $strPath = $self->{oProtocol}->cmdExecute(OP_STORAGE_PATH_GET, [$strPathExp, $rhParam]);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strPath', value => $strPath}
-    );
-}
-
-####################################################################################################################################
-# openWrite
-####################################################################################################################################
-sub openWrite
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileExp,
-        $rhParam,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->openWrite', \@_,
-            {name => 'strFileExp'},
-            {name => 'rhParam', required => false},
-        );
-
-    # Is protocol compression enabled?
-    my $bProtocolCompress = defined($rhParam->{bProtocolCompress}) && $rhParam->{bProtocolCompress};
-
-    # Decompress on the remote side
-    if ($bProtocolCompress)
-    {
-        push(
-            @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS, bWantGzip => false}]});
-        delete($rhParam->{bProtocolCompress});
-    }
-
-    # Open the remote file
-    $self->{oProtocol}->cmdWrite(OP_STORAGE_OPEN_WRITE, [$strFileExp, $rhParam]);
-    my $oDestinationFileIo = new pgBackRest::Protocol::Storage::File($self->{oProtocol});
-
-    # Compress on local side
-    if ($bProtocolCompress)
-    {
-        $oDestinationFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oDestinationFileIo, {iLevel => optionGet(OPTION_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oFileIo', value => $oDestinationFileIo, trace => true},
-    );
-}
-
-####################################################################################################################################
-# openRead
-####################################################################################################################################
-sub openRead
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFileExp,
-        $rhParam,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->openRead', \@_,
-            {name => 'strFileExp'},
-            {name => 'rhParam', required => false},
-        );
-
-    my $bProtocolCompress = defined($rhParam->{bProtocolCompress}) && $rhParam->{bProtocolCompress};
-
-    # Compress on the remote side
-    if ($bProtocolCompress)
-    {
-        push(
-            @{$rhParam->{rhyFilter}},
-            {strClass => STORAGE_FILTER_GZIP,
-                rxyParam => [{iLevel => optionGet(OPTION_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
-        delete($rhParam->{bProtocolCompress});
-    }
-
-    my $oSourceFileIo =
-        $self->{oProtocol}->cmdExecute(OP_STORAGE_OPEN_READ, [$strFileExp, $rhParam]) ?
-            new pgBackRest::Protocol::Storage::File($self->{oProtocol}) : undef;
-
-    # Decompress on the local side
-    if ($bProtocolCompress)
-    {
-        $oSourceFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oSourceFileIo, {strCompressType => STORAGE_DECOMPRESS, bWantGzip => false});
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oFileIo', value => $oSourceFileIo, trace => true},
-    );
-}
-
-####################################################################################################################################
-# move
-####################################################################################################################################
-sub move
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strSourcePathExp,
-        $strDestinationPathExp,
-        $rhParam,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->move', \@_,
-            {name => 'strSourcePathExp'},
-            {name => 'strDestinationPathExp'},
-            {name => 'rhParam', required => false},
-        );
-
-    $self->{oProtocol}->cmdExecute(OP_STORAGE_MOVE, [$strSourcePathExp, $strDestinationPathExp, $rhParam], false);
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
     );
 }
 
@@ -304,6 +137,173 @@ sub manifest
     (
         $strOperation,
         {name => 'hManifest', value => $hManifest, trace => true}
+    );
+}
+
+####################################################################################################################################
+# openRead
+####################################################################################################################################
+sub openRead
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileExp,
+        $rhParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->openRead', \@_,
+            {name => 'strFileExp'},
+            {name => 'rhParam', required => false},
+        );
+
+    my $bProtocolCompress = defined($rhParam->{bProtocolCompress}) && $rhParam->{bProtocolCompress};
+
+    # Compress on the remote side
+    if ($bProtocolCompress)
+    {
+        push(
+            @{$rhParam->{rhyFilter}},
+            {strClass => STORAGE_FILTER_GZIP,
+                rxyParam => [{iLevel => optionGet(OPTION_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
+        delete($rhParam->{bProtocolCompress});
+    }
+
+    my $oSourceFileIo =
+        $self->{oProtocol}->cmdExecute(OP_STORAGE_OPEN_READ, [$strFileExp, $rhParam]) ?
+            new pgBackRest::Protocol::Storage::File($self->{oProtocol}) : undef;
+
+    # Decompress on the local side
+    if ($bProtocolCompress)
+    {
+        $oSourceFileIo = new pgBackRest::Storage::Filter::Gzip(
+            $oSourceFileIo, {strCompressType => STORAGE_DECOMPRESS, bWantGzip => false});
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oFileIo', value => $oSourceFileIo, trace => true},
+    );
+}
+
+####################################################################################################################################
+# openWrite
+####################################################################################################################################
+sub openWrite
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFileExp,
+        $rhParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->openWrite', \@_,
+            {name => 'strFileExp'},
+            {name => 'rhParam', required => false},
+        );
+
+    # Is protocol compression enabled?
+    my $bProtocolCompress = defined($rhParam->{bProtocolCompress}) && $rhParam->{bProtocolCompress};
+
+    # Decompress on the remote side
+    if ($bProtocolCompress)
+    {
+        push(
+            @{$rhParam->{rhyFilter}},
+            {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS, bWantGzip => false}]});
+        delete($rhParam->{bProtocolCompress});
+    }
+
+    # Open the remote file
+    $self->{oProtocol}->cmdWrite(OP_STORAGE_OPEN_WRITE, [$strFileExp, $rhParam]);
+    my $oDestinationFileIo = new pgBackRest::Protocol::Storage::File($self->{oProtocol});
+
+    # Compress on local side
+    if ($bProtocolCompress)
+    {
+        $oDestinationFileIo = new pgBackRest::Storage::Filter::Gzip(
+            $oDestinationFileIo, {iLevel => optionGet(OPTION_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oFileIo', value => $oDestinationFileIo, trace => true},
+    );
+}
+
+####################################################################################################################################
+# pathGet
+####################################################################################################################################
+sub pathGet
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathExp,
+        $rhParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathGet', \@_,
+            {name => 'strPathExp', required => false},
+            {name => 'rhParam', required => false},
+        );
+
+    my $strPath = $self->{oProtocol}->cmdExecute(OP_STORAGE_PATH_GET, [$strPathExp, $rhParam]);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strPath', value => $strPath}
+    );
+}
+
+####################################################################################################################################
+# move
+####################################################################################################################################
+sub move
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strSourcePathExp,
+        $strDestinationPathExp,
+        $rhParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->move', \@_,
+            {name => 'strSourcePathExp'},
+            {name => 'strDestinationPathExp'},
+            {name => 'rhParam', required => false},
+        );
+
+    $self->{oProtocol}->cmdExecute(OP_STORAGE_MOVE, [$strSourcePathExp, $strDestinationPathExp, $rhParam], false);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation
     );
 }
 

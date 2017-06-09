@@ -1,5 +1,7 @@
 ####################################################################################################################################
-# Posix storage driver.
+# Posix Storage Driver
+#
+# Implements storage functions for Posix-compliant file systems.
 ####################################################################################################################################
 package pgBackRest::Storage::Posix::Driver;
 
@@ -62,81 +64,6 @@ sub new
 }
 
 ####################################################################################################################################
-# openWrite - open a file for write.
-####################################################################################################################################
-sub openWrite
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFile,
-        $strMode,
-        $strUser,
-        $strGroup,
-        $lTimestamp,
-        $bPathCreate,
-        $bAtomic,
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->openWrite', \@_,
-        {name => 'strFile', trace => true},
-        {name => 'strMode', optional => true, trace => true},
-        {name => 'strUser', optional => true, trace => true},
-        {name => 'strGroup', optional => true, trace => true},
-        {name => 'lTimestamp', optional => true, trace => true},
-        {name => 'bPathCreate', optional => true, trace => true},
-        {name => 'bAtomic', optional => true, trace => true},
-    );
-
-    my $oFileIO = new pgBackRest::Storage::Posix::FileWrite(
-        $self, $strFile,
-        {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
-            bAtomic => $bAtomic, bSync => $self->{bFileSync}});
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oFileIO', value => $oFileIO, trace => true},
-    );
-}
-
-####################################################################################################################################
-# openRead
-####################################################################################################################################
-sub openRead
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFile,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-    (
-        __PACKAGE__ . '->openRead', \@_,
-        {name => 'strFile', trace => true},
-        {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
-    );
-
-    my $oFileIO = new pgBackRest::Storage::Posix::FileRead($self, $strFile, {bIgnoreMissing => $bIgnoreMissing});
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oFileIO', value => $oFileIO, trace => true},
-    );
-}
-
-####################################################################################################################################
 # exists - check if a path or file exists
 ####################################################################################################################################
 sub exists
@@ -185,9 +112,9 @@ sub exists
 }
 
 ####################################################################################################################################
-# pathExists
+# info - get information for path/file
 ####################################################################################################################################
-sub pathExists
+sub info
 {
     my $self = shift;
 
@@ -195,103 +122,34 @@ sub pathExists
     my
     (
         $strOperation,
-        $strPath,
+        $strPathFile,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->pathExists', \@_,
-            {name => 'strPath', trace => true},
+            __PACKAGE__ . '->info', \@_,
+            {name => 'strFile', trace => true},
+            {name => 'bIgnoreMissing', default => false, trace => true},
         );
 
-    # Does the path/file exist?
-    my $bExists = true;
-    my $oStat = lstat($strPath);
+    # Stat the path/file
+    my $oInfo = lstat($strPathFile);
 
-    # Use stat to test if path exists
-    if (defined($oStat))
+    # Check for errors
+    if (!defined($oInfo))
     {
-        # Check that it is actually a path
-        $bExists = S_ISDIR($oStat->mode) ? true : false;
-    }
-    else
-    {
-        # If the error is not entry missing, then throw error
-        if (!$OS_ERROR{ENOENT})
+        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
         {
-            logErrorResult(ERROR_FILE_EXISTS, "unable to test if path '${strPath}' exists", $OS_ERROR);
+            logErrorResult($OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to stat '${strPathFile}'", $OS_ERROR);
         }
-
-        $bExists = false;
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bExists', value => $bExists, trace => true}
+        {name => 'oInfo', value => $oInfo, trace => true}
     );
-}
-
-####################################################################################################################################
-# pathCreate - create a directory
-####################################################################################################################################
-sub pathCreate
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPath,
-        $strMode,
-        $bIgnoreExists,
-        $bCreateParent,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathCreate', \@_,
-            {name => 'strPath', trace => true},
-            {name => 'strMode', optional => true, default => '0750', trace => true},
-            {name => 'bIgnoreExists', optional => true, default => false, trace => true},
-            {name => 'bCreateParent', optional => true, default => false, trace => true},
-        );
-
-    # Attempt to create the directory
-    if (!mkdir($strPath, oct($strMode)))
-    {
-        my $strMessage = "unable to create path '${strPath}'";
-
-        # If parent path is missing
-        if ($OS_ERROR{ENOENT})
-        {
-            if (!$bCreateParent)
-            {
-                confess &log(ERROR, "${strMessage} because parent does not exist", ERROR_PATH_MISSING);
-            }
-
-            # Create parent path
-            $self->pathCreate(dirname($strPath), {strMode => $strMode, bIgnoreExists => true, bCreateParent => $bCreateParent});
-
-            # Create path
-            $self->pathCreate($strPath, {strMode => $strMode, bIgnoreExists => true});
-        }
-        # Else if path already exists
-        elsif ($OS_ERROR{EEXIST})
-        {
-            if (!$bIgnoreExists)
-            {
-                confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
-            }
-        }
-        else
-        {
-            logErrorResult(ERROR_PATH_CREATE, ${strMessage}, $OS_ERROR);
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -305,8 +163,8 @@ sub linkCreate
     my
     (
         $strOperation,
-        $strSourcePath,
-        $strDestinationPath,
+        $strSourcePathFile,
+        $strDestinationLink,
         $bHard,
         $bPathCreate,
         $bIgnoreExists,
@@ -314,24 +172,24 @@ sub linkCreate
         logDebugParam
         (
             __PACKAGE__ . '->linkCreate', \@_,
-            {name => 'strSourcePath', trace => true},
-            {name => 'strDestinationPath', trace => true},
+            {name => 'strSourcePathFile', trace => true},
+            {name => 'strDestinationLink', trace => true},
             {name => 'bHard', optional=> true, default => false, trace => true},
             {name => 'bPathCreate', optional=> true, default => true, trace => true},
             {name => 'bIgnoreExists', optional => true, default => false, trace => true},
         );
 
-    if (!($bHard ? link($strSourcePath, $strDestinationPath) : symlink($strSourcePath, $strDestinationPath)))
+    if (!($bHard ? link($strSourcePathFile, $strDestinationLink) : symlink($strSourcePathFile, $strDestinationLink)))
     {
-        my $strMessage = "unable to create link '${strDestinationPath}'";
+        my $strMessage = "unable to create link '${strDestinationLink}'";
 
         # If parent path or source is missing
         if ($OS_ERROR{ENOENT})
         {
             # Check if source is missing
-            if (!$self->exists($strSourcePath))
+            if (!$self->exists($strSourcePathFile))
             {
-                confess &log(ERROR, "${strMessage} because source '${strSourcePath}' does not exist", ERROR_FILE_MISSING);
+                confess &log(ERROR, "${strMessage} because source '${strSourcePathFile}' does not exist", ERROR_FILE_MISSING);
             }
 
             if (!$bPathCreate)
@@ -340,10 +198,10 @@ sub linkCreate
             }
 
             # Create parent path
-            $self->pathCreate(dirname($strDestinationPath), {bIgnoreExists => true, bCreateParent => true});
+            $self->pathCreate(dirname($strDestinationLink), {bIgnoreExists => true, bCreateParent => true});
 
             # Create link
-            $self->linkCreate($strSourcePath, $strDestinationPath, {bHard => $bHard});
+            $self->linkCreate($strSourcePathFile, $strDestinationLink, {bHard => $bHard});
         }
         # Else if link already exists
         elsif ($OS_ERROR{EEXIST})
@@ -364,9 +222,9 @@ sub linkCreate
 }
 
 ####################################################################################################################################
-# move - move a file.
+# linkDestination - get destination of symlink
 ####################################################################################################################################
-sub move
+sub linkDestination
 {
     my $self = shift;
 
@@ -374,331 +232,34 @@ sub move
     my
     (
         $strOperation,
-        $strSourceFile,
-        $strDestinationFile,
-        $bPathCreate,
+        $strLink,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->move', \@_,
-            {name => 'strSourceFile', trace => true},
-            {name => 'strDestinationFile', trace => true},
-            {name => 'bPathCreate', default => false, trace => true},
+            __PACKAGE__ . '->linkDestination', \@_,
+            {name => 'strLink', trace => true},
         );
 
-    # Get source and destination paths
-    my $strSourcePath = dirname($strSourceFile);
-    my $strDestinationPath = dirname($strDestinationFile);
-
-    # Move the file
-    if (!rename($strSourceFile, $strDestinationFile))
-    {
-        my $strMessage = "unable to move '${strSourceFile}'";
-
-        # If something is missing determine if it is the source or destination
-        if ($OS_ERROR{ENOENT})
-        {
-            if (!$self->exists($strSourceFile))
-            {
-                logErrorResult(ERROR_FILE_MISSING, "${strMessage} because it is missing");
-            }
-
-            if ($bPathCreate)
-            {
-                # Attempt to create the path - ignore exists here in case another process creates it first
-                $self->pathCreate($strDestinationPath, {bCreateParent => true, bIgnoreExists => true});
-
-                # Try move again
-                $self->move($strSourceFile, $strDestinationFile);
-            }
-            else
-            {
-                logErrorResult(ERROR_PATH_MISSING, "${strMessage} to missing path '${strDestinationPath}'");
-            }
-        }
-        # Else raise the error
-        else
-        {
-            logErrorResult(ERROR_FILE_MOVE, "${strMessage} to '${strDestinationFile}'", $OS_ERROR);
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# owner
-####################################################################################################################################
-sub owner
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFile,
-        $strUser,
-        $strGroup,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->owner', \@_,
-            {name => 'strFile', trace => true},
-            {name => 'strUser', optional => true, trace => true},
-            {name => 'strGroup', optional => true, trace => true},
-        );
-
-    # Only proceed if user or group was specified
-    if (defined($strUser) || defined($strGroup))
-    {
-        my $strMessage = "unable to set ownership for '${strFile}'";
-        my $iUserId;
-        my $iGroupId;
-
-        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
-        # both user and group be set.
-        if (!(defined($strUser) && defined($strGroup)))
-        {
-            my $oStat = $self->info($strFile);
-
-            if (!defined($strUser))
-            {
-                $iUserId = $oStat->uid;
-            }
-
-            if (!defined($strGroup))
-            {
-                $iGroupId = $oStat->gid;
-            }
-        }
-
-        # Lookup user if specified
-        if (defined($strUser))
-        {
-            $iUserId = getpwnam($strUser);
-
-            if (!defined($iUserId))
-            {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because user '${strUser}' does not exist");
-            }
-        }
-
-        # Lookup group if specified
-        if (defined($strGroup))
-        {
-            $iGroupId = getgrnam($strGroup);
-
-            if (!defined($iGroupId))
-            {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because group '${strGroup}' does not exist");
-            }
-        }
-
-        # Set ownership on the file
-        if (!chown($iUserId, $iGroupId, $strFile))
-        {
-            if ($OS_ERROR{ENOENT})
-            {
-                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because it is missing");
-            }
-
-            logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# pathSync
-####################################################################################################################################
-sub pathSync
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPath,
-        $bRecurse,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathSync', \@_,
-            {name => 'strPath', trace => true},
-            {name => 'bRecurse', default => false, trace => true},
-        );
-
-    if ($bRecurse)
-    {
-        my $oManifest = $self->manifest($strPath);
-
-        # Iterate all files in the manifest
-        foreach my $strFile (sort(keys(%{$oManifest})))
-        {
-            # Only sync if this is a directory
-            if ($oManifest->{$strFile}{type} eq 'd')
-            {
-                # If current directory
-                if ($strFile eq '.')
-                {
-                    $self->pathSync($strPath);
-                }
-                # Else a subdirectory
-                else
-                {
-                    $self->pathSync("${strPath}/${strFile}");
-                }
-            }
-        }
-    }
-    else
-    {
-        open(my $hPath, "<", $strPath)
-            or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
-        open(my $hPathDup, ">&", $hPath)
-            or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
-
-        $hPathDup->sync()
-            or confess &log(ERROR, "unable to sync path '${strPath}'", ERROR_PATH_SYNC);
-
-        close($hPathDup);
-        close($hPath);
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
-# info - stat a pathfile
-####################################################################################################################################
-sub info
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strFile,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->info', \@_,
-            {name => 'strFile', trace => true},
-            {name => 'bIgnoreMissing', default => false, trace => true},
-        );
-
-    # Stat the file/path
-    my $oInfo = lstat($strFile);
+    # Get link destination
+    my $strLinkDestination = readlink($strLink);
 
     # Check for errors
-    if (!defined($oInfo))
+    if (!defined($strLinkDestination))
     {
-        if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
-        {
-            logErrorResult($OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to stat '${strFile}'", $OS_ERROR);
-        }
+        logErrorResult(
+            $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to get destination for link ${strLink}", $OS_ERROR);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oInfo', value => $oInfo, trace => true}
+        {name => 'strLinkDestination', value => $strLinkDestination, trace => true}
     );
 }
 
 ####################################################################################################################################
-# remove - remove a file
-####################################################################################################################################
-sub remove
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $rstryFile,
-        $bIgnoreMissing,
-        $bRecurse,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->remove', \@_,
-            {name => 'rstryFile', trace => true},
-            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
-            {name => 'bRecurse', optional => true, default => false, trace => true},
-        );
-
-    # Working variables
-    my $bRemoved = true;
-
-    # Remove a tree
-    if ($bRecurse)
-    {
-        my $oManifest = $self->manifest($rstryFile);
-
-        # Iterate all files in the manifest
-        foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
-        {
-            # remove directory
-            if ($oManifest->{$strFile}{type} eq 'd')
-            {
-                my $rstryFileRemove = $strFile eq '.' ? $rstryFile : "${rstryFile}/${strFile}";
-
-                if (!rmdir($rstryFileRemove))
-                {
-                    # If any error but missing then raise the error
-                    if (!$OS_ERROR{ENOENT})
-                    {
-                        logErrorResult(ERROR_PATH_REMOVE, "unable to remove path '${strFile}'", $OS_ERROR);
-                    }
-                }
-            }
-            # Remove file
-            else
-            {
-                $self->remove("${rstryFile}/${strFile}", {bIgnoreMissing => true});
-            }
-        }
-    }
-    # Only remove the specified file
-    else
-    {
-        foreach my $strFile (ref($rstryFile) ? @{$rstryFile} : ($rstryFile))
-        {
-            if (unlink($strFile) != 1)
-            {
-                $bRemoved = false;
-
-                # If path exists then throw the error
-                if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
-                {
-                    logErrorResult(
-                        $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to remove file '${strFile}'", $OS_ERROR);
-                }
-            }
-        }
-    }
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bRemoved', value => $bRemoved, trace => true}
-    );
-}
-
-####################################################################################################################################
-# list - list a directory
+# list - list all files/paths in path
 ####################################################################################################################################
 sub list
 {
@@ -747,7 +308,7 @@ sub list
 }
 
 ####################################################################################################################################
-# manifest - recursively generate a complete list of all path/links/files in a path
+# manifest - build path/file/link manifest starting with base path and including all subpaths
 ####################################################################################################################################
 sub manifest
 {
@@ -951,9 +512,9 @@ sub manifestStat
 }
 
 ####################################################################################################################################
-# linkDestination - get the destination of a symlink
+# move - move path/file
 ####################################################################################################################################
-sub linkDestination
+sub move
 {
     my $self = shift;
 
@@ -961,29 +522,470 @@ sub linkDestination
     my
     (
         $strOperation,
-        $strLink,
+        $strSourceFile,
+        $strDestinationFile,
+        $bPathCreate,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->linkDestination', \@_,
-            {name => 'strFile', trace => true},
+            __PACKAGE__ . '->move', \@_,
+            {name => 'strSourceFile', trace => true},
+            {name => 'strDestinationFile', trace => true},
+            {name => 'bPathCreate', default => false, trace => true},
         );
 
-    # Get link destination
-    my $strLinkDestination = readlink($strLink);
+    # Get source and destination paths
+    my $strSourcePathFile = dirname($strSourceFile);
+    my $strDestinationPathFile = dirname($strDestinationFile);
 
-    # Check for errors
-    if (!defined($strLinkDestination))
+    # Move the file
+    if (!rename($strSourceFile, $strDestinationFile))
     {
-        logErrorResult(
-            $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to get destination for link ${strLink}", $OS_ERROR);
+        my $strMessage = "unable to move '${strSourceFile}'";
+
+        # If something is missing determine if it is the source or destination
+        if ($OS_ERROR{ENOENT})
+        {
+            if (!$self->exists($strSourceFile))
+            {
+                logErrorResult(ERROR_FILE_MISSING, "${strMessage} because it is missing");
+            }
+
+            if ($bPathCreate)
+            {
+                # Attempt to create the path - ignore exists here in case another process creates it first
+                $self->pathCreate($strDestinationPathFile, {bCreateParent => true, bIgnoreExists => true});
+
+                # Try move again
+                $self->move($strSourceFile, $strDestinationFile);
+            }
+            else
+            {
+                logErrorResult(ERROR_PATH_MISSING, "${strMessage} to missing path '${strDestinationPathFile}'");
+            }
+        }
+        # Else raise the error
+        else
+        {
+            logErrorResult(ERROR_FILE_MOVE, "${strMessage} to '${strDestinationFile}'", $OS_ERROR);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# openRead - open file for reading
+####################################################################################################################################
+sub openRead
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFile,
+        $bIgnoreMissing,
+    ) =
+        logDebugParam
+    (
+        __PACKAGE__ . '->openRead', \@_,
+        {name => 'strFile', trace => true},
+        {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
+    );
+
+    my $oFileIO = new pgBackRest::Storage::Posix::FileRead($self, $strFile, {bIgnoreMissing => $bIgnoreMissing});
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oFileIO', value => $oFileIO, trace => true},
+    );
+}
+
+####################################################################################################################################
+# openWrite - open file for writing
+####################################################################################################################################
+sub openWrite
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFile,
+        $strMode,
+        $strUser,
+        $strGroup,
+        $lTimestamp,
+        $bPathCreate,
+        $bAtomic,
+    ) =
+        logDebugParam
+    (
+        __PACKAGE__ . '->openWrite', \@_,
+        {name => 'strFile', trace => true},
+        {name => 'strMode', optional => true, trace => true},
+        {name => 'strUser', optional => true, trace => true},
+        {name => 'strGroup', optional => true, trace => true},
+        {name => 'lTimestamp', optional => true, trace => true},
+        {name => 'bPathCreate', optional => true, trace => true},
+        {name => 'bAtomic', optional => true, trace => true},
+    );
+
+    my $oFileIO = new pgBackRest::Storage::Posix::FileWrite(
+        $self, $strFile,
+        {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
+            bAtomic => $bAtomic, bSync => $self->{bFileSync}});
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'oFileIO', value => $oFileIO, trace => true},
+    );
+}
+
+####################################################################################################################################
+# owner - change ownership of path/file
+####################################################################################################################################
+sub owner
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strFilePath,
+        $strUser,
+        $strGroup,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->owner', \@_,
+            {name => 'strFilePath', trace => true},
+            {name => 'strUser', optional => true, trace => true},
+            {name => 'strGroup', optional => true, trace => true},
+        );
+
+    # Only proceed if user or group was specified
+    if (defined($strUser) || defined($strGroup))
+    {
+        my $strMessage = "unable to set ownership for '${strFilePath}'";
+        my $iUserId;
+        my $iGroupId;
+
+        # If the user or group is not defined then get it by stat'ing the file.  This is because the chown function requires that
+        # both user and group be set.
+        if (!(defined($strUser) && defined($strGroup)))
+        {
+            my $oStat = $self->info($strFilePath);
+
+            if (!defined($strUser))
+            {
+                $iUserId = $oStat->uid;
+            }
+
+            if (!defined($strGroup))
+            {
+                $iGroupId = $oStat->gid;
+            }
+        }
+
+        # Lookup user if specified
+        if (defined($strUser))
+        {
+            $iUserId = getpwnam($strUser);
+
+            if (!defined($iUserId))
+            {
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because user '${strUser}' does not exist");
+            }
+        }
+
+        # Lookup group if specified
+        if (defined($strGroup))
+        {
+            $iGroupId = getgrnam($strGroup);
+
+            if (!defined($iGroupId))
+            {
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because group '${strGroup}' does not exist");
+            }
+        }
+
+        # Set ownership on the file
+        if (!chown($iUserId, $iGroupId, $strFilePath))
+        {
+            if ($OS_ERROR{ENOENT})
+            {
+                logErrorResult(ERROR_FILE_OWNER, "${strMessage} because it is missing");
+            }
+
+            logErrorResult(ERROR_FILE_OWNER, "${strMessage}", $OS_ERROR);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# pathCreate - create path
+####################################################################################################################################
+sub pathCreate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+        $strMode,
+        $bIgnoreExists,
+        $bCreateParent,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathCreate', \@_,
+            {name => 'strPath', trace => true},
+            {name => 'strMode', optional => true, default => '0750', trace => true},
+            {name => 'bIgnoreExists', optional => true, default => false, trace => true},
+            {name => 'bCreateParent', optional => true, default => false, trace => true},
+        );
+
+    # Attempt to create the directory
+    if (!mkdir($strPath, oct($strMode)))
+    {
+        my $strMessage = "unable to create path '${strPath}'";
+
+        # If parent path is missing
+        if ($OS_ERROR{ENOENT})
+        {
+            if (!$bCreateParent)
+            {
+                confess &log(ERROR, "${strMessage} because parent does not exist", ERROR_PATH_MISSING);
+            }
+
+            # Create parent path
+            $self->pathCreate(dirname($strPath), {strMode => $strMode, bIgnoreExists => true, bCreateParent => $bCreateParent});
+
+            # Create path
+            $self->pathCreate($strPath, {strMode => $strMode, bIgnoreExists => true});
+        }
+        # Else if path already exists
+        elsif ($OS_ERROR{EEXIST})
+        {
+            if (!$bIgnoreExists)
+            {
+                confess &log(ERROR, "${strMessage} because it already exists", ERROR_PATH_EXISTS);
+            }
+        }
+        else
+        {
+            logErrorResult(ERROR_PATH_CREATE, ${strMessage}, $OS_ERROR);
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# pathExists - check if path exists
+####################################################################################################################################
+sub pathExists
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathExists', \@_,
+            {name => 'strPath', trace => true},
+        );
+
+    # Does the path/file exist?
+    my $bExists = true;
+    my $oStat = lstat($strPath);
+
+    # Use stat to test if path exists
+    if (defined($oStat))
+    {
+        # Check that it is actually a path
+        $bExists = S_ISDIR($oStat->mode) ? true : false;
+    }
+    else
+    {
+        # If the error is not entry missing, then throw error
+        if (!$OS_ERROR{ENOENT})
+        {
+            logErrorResult(ERROR_FILE_EXISTS, "unable to test if path '${strPath}' exists", $OS_ERROR);
+        }
+
+        $bExists = false;
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strLinkDestination', value => $strLinkDestination, trace => true}
+        {name => 'bExists', value => $bExists, trace => true}
+    );
+}
+
+####################################################################################################################################
+# pathSync - perform fsync on path
+####################################################################################################################################
+sub pathSync
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPath,
+        $bRecurse,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->pathSync', \@_,
+            {name => 'strPath', trace => true},
+            {name => 'bRecurse', default => false, trace => true},
+        );
+
+    if ($bRecurse)
+    {
+        my $oManifest = $self->manifest($strPath);
+
+        # Iterate all files in the manifest
+        foreach my $strFile (sort(keys(%{$oManifest})))
+        {
+            # Only sync if this is a directory
+            if ($oManifest->{$strFile}{type} eq 'd')
+            {
+                # If current directory
+                if ($strFile eq '.')
+                {
+                    $self->pathSync($strPath);
+                }
+                # Else a subdirectory
+                else
+                {
+                    $self->pathSync("${strPath}/${strFile}");
+                }
+            }
+        }
+    }
+    else
+    {
+        open(my $hPath, "<", $strPath)
+            or confess &log(ERROR, "unable to open '${strPath}' for sync", ERROR_PATH_OPEN);
+        open(my $hPathDup, ">&", $hPath)
+            or confess &log(ERROR, "unable to duplicate '${strPath}' handle for sync", ERROR_PATH_OPEN);
+
+        $hPathDup->sync()
+            or confess &log(ERROR, "unable to sync path '${strPath}'", ERROR_PATH_SYNC);
+
+        close($hPathDup);
+        close($hPath);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# remove - remove path/file
+####################################################################################################################################
+sub remove
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $xstryPathFile,
+        $bIgnoreMissing,
+        $bRecurse,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->remove', \@_,
+            {name => 'xstryPathFile', trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
+            {name => 'bRecurse', optional => true, default => false, trace => true},
+        );
+
+    # Working variables
+    my $bRemoved = true;
+
+    # Remove a tree
+    if ($bRecurse)
+    {
+        my $oManifest = $self->manifest($xstryPathFile);
+
+        # Iterate all files in the manifest
+        foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
+        {
+            # remove directory
+            if ($oManifest->{$strFile}{type} eq 'd')
+            {
+                my $xstryPathFileRemove = $strFile eq '.' ? $xstryPathFile : "${xstryPathFile}/${strFile}";
+
+                if (!rmdir($xstryPathFileRemove))
+                {
+                    # If any error but missing then raise the error
+                    if (!$OS_ERROR{ENOENT})
+                    {
+                        logErrorResult(ERROR_PATH_REMOVE, "unable to remove path '${strFile}'", $OS_ERROR);
+                    }
+                }
+            }
+            # Remove file
+            else
+            {
+                $self->remove("${xstryPathFile}/${strFile}", {bIgnoreMissing => true});
+            }
+        }
+    }
+    # Only remove the specified file
+    else
+    {
+        foreach my $strFile (ref($xstryPathFile) ? @{$xstryPathFile} : ($xstryPathFile))
+        {
+            if (unlink($strFile) != 1)
+            {
+                $bRemoved = false;
+
+                # If path exists then throw the error
+                if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
+                {
+                    logErrorResult(
+                        $OS_ERROR{ENOENT} ? ERROR_FILE_MISSING : ERROR_FILE_OPEN, "unable to remove file '${strFile}'", $OS_ERROR);
+                }
+            }
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bRemoved', value => $bRemoved, trace => true}
     );
 }
 
@@ -992,7 +994,7 @@ sub linkDestination
 ####################################################################################################################################
 sub capability {true}
 sub className {STORAGE_POSIX_DRIVER}
-sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}
 sub tempExtension {shift->{strTempExtension}}
+sub tempExtensionSet {my $self = shift; $self->{strTempExtension} = shift}
 
 1;

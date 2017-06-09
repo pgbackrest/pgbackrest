@@ -1,5 +1,7 @@
 ####################################################################################################################################
-# CIFS storage driver.
+# CIFS Storage Driver
+#
+# Implements storage functions for Posix-compliant file systems.
 ####################################################################################################################################
 package pgBackRest::Storage::Cifs::Driver;
 use parent 'pgBackRest::Storage::Posix::Driver';
@@ -21,7 +23,7 @@ use constant STORAGE_CIFS_DRIVER                                    => __PACKAGE
     push @EXPORT, qw(STORAGE_CIFS_DRIVER);
 
 ####################################################################################################################################
-# pathSync - CIFS does not support path sync so this is a noop.
+# pathSync - CIFS does not support path sync so this is a noop
 ####################################################################################################################################
 sub pathSync
 {

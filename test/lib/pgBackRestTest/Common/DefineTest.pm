@@ -201,22 +201,14 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'posix-file',
-                    &TESTDEF_TOTAL => 3,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'Storage/Posix/FileRead' => TESTDEF_COVERAGE_PARTIAL,
-                        'Storage/Posix/FileWrite' => TESTDEF_COVERAGE_PARTIAL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'posix-driver',
-                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_NAME => 'posix',
+                    &TESTDEF_TOTAL => 9,
 
                     &TESTDEF_COVERAGE =>
                     {
                         'Storage/Posix/Driver' => TESTDEF_COVERAGE_PARTIAL,
+                        'Storage/Posix/FileRead' => TESTDEF_COVERAGE_PARTIAL,
+                        'Storage/Posix/FileWrite' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {

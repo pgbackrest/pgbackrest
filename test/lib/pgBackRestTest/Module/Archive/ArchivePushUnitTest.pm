@@ -169,7 +169,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(sub {archivePushCheck(
             $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID)},
-            ERROR_ASSERT, "xFile is required in Storage::Local->hashSize");
+            ERROR_ASSERT, "xFileExp is required in Storage::Local->hashSize");
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strHistoryFile = "00000001.history";

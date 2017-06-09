@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Common functions that are shared by all storage objects.
+# Base Storage Module
 ####################################################################################################################################
 package pgBackRest::Storage::Base;
 
@@ -61,9 +61,9 @@ sub new
 }
 
 ####################################################################################################################################
-# put - writes a buffer out to storage all at once
+# copy - copy a file
 ####################################################################################################################################
-sub put
+sub copy
 {
     my $self = shift;
 
@@ -71,41 +71,54 @@ sub put
     my
     (
         $strOperation,
-        $xFile,
-        $xContent,
+        $xSourceFile,
+        $xDestinationFile,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->put', \@_,
-            {name => 'xFile', trace => true},
-            {name => 'xContent', required => false, trace => true},
+            __PACKAGE__ . '->copy', \@_,
+            {name => 'xSourceFile', required => false},
+            {name => 'xDestinationFile', required => false},
         );
 
-    # Is this an IO object or a file expression?
-    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite($xFile);
+    # Was the file copied?
+    my $bResult = false;
 
-    # Determine size of content
-    my $lSize = defined($xContent) ? length(ref($xContent) ? $$xContent : $xContent) : 0;
+    # Is source an IO object or a file expression?
+    my $oSourceFileIo =
+        defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($self->pathGet($xSourceFile))) : undef;
 
-    # Write only if there is something to write
-    if ($lSize > 0)
+    # Proceed if source file exists
+    if (defined($oSourceFileIo))
     {
-        $oFileIo->write(ref($xContent) ? $xContent : \$xContent, $lSize);
-    }
-    # Else open the file so a zero length file is created (since file is not opened until first write)
-    else
-    {
-        $oFileIo->open();
+        # Is destination an IO object or a file expression?
+        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($self->pathGet($xDestinationFile));
+
+        # Copy the data
+        my $lSizeRead;
+
+        do
+        {
+            # Read data
+            my $tBuffer = '';
+
+            $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
+            $oDestinationFileIo->write(\$tBuffer);
+        }
+        while ($lSizeRead != 0);
+
+        # Close files
+        $oSourceFileIo->close();
+        $oDestinationFileIo->close();
+
+        # File was copied
+        $bResult = true;
     }
 
-    # Close the file
-    $oFileIo->close();
-
-    # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'lSize', value => $lSize, trace => true},
+        {name => 'bResult', value => $bResult, trace => true},
     );
 }
 
@@ -231,9 +244,9 @@ sub pathAbsolute
 }
 
 ####################################################################################################################################
-# copy - copy a file
+# put - writes a buffer out to storage all at once
 ####################################################################################################################################
-sub copy
+sub put
 {
     my $self = shift;
 
@@ -241,54 +254,41 @@ sub copy
     my
     (
         $strOperation,
-        $xSourceFile,
-        $xDestinationFile,
+        $xFile,
+        $xContent,
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->copy', \@_,
-            {name => 'xSourceFile', required => false},
-            {name => 'xDestinationFile', required => false},
+            __PACKAGE__ . '->put', \@_,
+            {name => 'xFile', trace => true},
+            {name => 'xContent', required => false, trace => true},
         );
 
-    # Was the file copied?
-    my $bResult = false;
+    # Is this an IO object or a file expression?
+    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite($xFile);
 
-    # Is source an IO object or a file expression?
-    my $oSourceFileIo =
-        defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($self->pathGet($xSourceFile))) : undef;
+    # Determine size of content
+    my $lSize = defined($xContent) ? length(ref($xContent) ? $$xContent : $xContent) : 0;
 
-    # Proceed if source file exists
-    if (defined($oSourceFileIo))
+    # Write only if there is something to write
+    if ($lSize > 0)
     {
-        # Is destination an IO object or a file expression?
-        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($self->pathGet($xDestinationFile));
-
-        # Copy the data
-        my $lSizeRead;
-
-        do
-        {
-            # Read data
-            my $tBuffer = '';
-
-            $lSizeRead = $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
-            $oDestinationFileIo->write(\$tBuffer);
-        }
-        while ($lSizeRead != 0);
-
-        # Close files
-        $oSourceFileIo->close();
-        $oDestinationFileIo->close();
-
-        # File was copied
-        $bResult = true;
+        $oFileIo->write(ref($xContent) ? $xContent : \$xContent, $lSize);
+    }
+    # Else open the file so a zero length file is created (since file is not opened until first write)
+    else
+    {
+        $oFileIo->open();
     }
 
+    # Close the file
+    $oFileIo->close();
+
+    # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bResult', value => $bResult, trace => true},
+        {name => 'lSize', value => $lSize, trace => true},
     );
 }
 

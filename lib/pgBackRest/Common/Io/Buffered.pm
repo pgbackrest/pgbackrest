@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Buffered handle IO.
+# Buffered Handle IO
 ####################################################################################################################################
 package pgBackRest::Common::Io::Buffered;
 
@@ -71,6 +71,76 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# read - buffered read from a handle with optional blocking
+####################################################################################################################################
+sub read
+{
+    my $self = shift;
+    my $tBufferRef = shift;
+    my $iRequestSize = shift;
+    my $bBlock = shift;
+
+    # Set working variables
+    my $iRemainingSize = $iRequestSize;
+
+    # If there is data left over in the buffer from lineRead then use it
+    my $lBufferRemaining = $self->{lBufferSize} - $self->{lBufferPos};
+
+    if ($lBufferRemaining > 0)
+    {
+        my $iReadSize = $iRequestSize < $lBufferRemaining ? $iRequestSize : $lBufferRemaining;
+
+        $$tBufferRef .= substr($self->{tBuffer}, $self->{lBufferPos}, $iReadSize);
+        $self->{lBufferPos} += $iReadSize;
+
+        $iRemainingSize -= $iReadSize;
+    }
+
+    # If this is a blocking read then loop until all bytes have been read, else error.  If not blocking read until the request size
+    # has been met or EOF.
+    my $fTimeStart = gettimeofday();
+    my $fRemaining = $self->timeout();
+
+    while ($iRemainingSize > 0 && $fRemaining > 0)
+    {
+        # Check if the sysread call will block
+        if ($self->{oReadSelect}->can_read($fRemaining))
+        {
+            # Read data into the buffer
+            my $iReadSize = $self->SUPER::read($tBufferRef, $iRemainingSize);
+
+            # Check for EOF
+            if ($iReadSize == 0)
+            {
+                if ($bBlock)
+                {
+                    $self->error(ERROR_FILE_READ, "unable to read ${iRequestSize} byte(s) due to EOF from " . $self->id());
+                }
+                else
+                {
+                    return $iRequestSize - $iRemainingSize;
+                }
+            }
+
+            # Update remaining size and return when it reaches 0
+            $iRemainingSize -= $iReadSize;
+        }
+
+        # Calculate time remaining before timeout
+        $fRemaining = $self->timeout() - (gettimeofday() - $fTimeStart);
+    };
+
+    # Throw an error if timeout happened before required bytes were read
+    if ($iRemainingSize != 0 && $bBlock)
+    {
+        $self->error(
+            ERROR_FILE_READ, "unable to read ${iRequestSize} byte(s) after " . $self->timeout() . ' second(s) from ' . $self->id());
+    }
+
+    return $iRequestSize - $iRemainingSize;
 }
 
 ####################################################################################################################################
@@ -174,74 +244,10 @@ sub writeLine
 }
 
 ####################################################################################################################################
-# read - buffered read from a handle with optional blocking
+# Getters/Setters
 ####################################################################################################################################
-sub read
-{
-    my $self = shift;
-    my $tBufferRef = shift;
-    my $iRequestSize = shift;
-    my $bBlock = shift;
-
-    # Set working variables
-    my $iRemainingSize = $iRequestSize;
-
-    # If there is data left over in the buffer from lineRead then use it
-    my $lBufferRemaining = $self->{lBufferSize} - $self->{lBufferPos};
-
-    if ($lBufferRemaining > 0)
-    {
-        my $iReadSize = $iRequestSize < $lBufferRemaining ? $iRequestSize : $lBufferRemaining;
-
-        $$tBufferRef .= substr($self->{tBuffer}, $self->{lBufferPos}, $iReadSize);
-        $self->{lBufferPos} += $iReadSize;
-
-        $iRemainingSize -= $iReadSize;
-    }
-
-    # If this is a blocking read then loop until all bytes have been read, else error.  If not blocking read until the request size
-    # has been met or EOF.
-    my $fTimeStart = gettimeofday();
-    my $fRemaining = $self->timeout();
-
-    while ($iRemainingSize > 0 && $fRemaining > 0)
-    {
-        # Check if the sysread call will block
-        if ($self->{oReadSelect}->can_read($fRemaining))
-        {
-            # Read data into the buffer
-            my $iReadSize = $self->SUPER::read($tBufferRef, $iRemainingSize);
-
-            # Check for EOF
-            if ($iReadSize == 0)
-            {
-                if ($bBlock)
-                {
-                    $self->error(ERROR_FILE_READ, "unable to read ${iRequestSize} byte(s) due to EOF from " . $self->id());
-                }
-                else
-                {
-                    return $iRequestSize - $iRemainingSize;
-                }
-            }
-
-            # Update remaining size and return when it reaches 0
-            $iRemainingSize -= $iReadSize;
-        }
-
-        # Calculate time remaining before timeout
-        $fRemaining = $self->timeout() - (gettimeofday() - $fTimeStart);
-    };
-
-    # Throw an error if timeout happened before required bytes were read
-    if ($iRemainingSize != 0 && $bBlock)
-    {
-        $self->error(
-            ERROR_FILE_READ, "unable to read ${iRequestSize} byte(s) after " . $self->timeout() . ' second(s) from ' . $self->id());
-    }
-
-    return $iRequestSize - $iRemainingSize;
-}
+sub timeout {shift->{iTimeout}};
+sub bufferMax {shift->{lBufferMax}};
 
 ####################################################################################################################################
 # handleReadSet - create a select object when read handle is set
@@ -256,11 +262,5 @@ sub handleReadSet
     $self->{oReadSelect} = IO::Select->new();
     $self->{oReadSelect}->add($self->handleRead());
 }
-
-####################################################################################################################################
-# Getters
-####################################################################################################################################
-sub timeout {shift->{iTimeout}};
-sub bufferMax {shift->{lBufferMax}};
 
 1;

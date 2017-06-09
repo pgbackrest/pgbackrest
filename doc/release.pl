@@ -36,6 +36,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Storage::Local;
+use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;

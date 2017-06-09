@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Compress/decompress using gzip.
+# GZIP Filter
 ####################################################################################################################################
 package pgBackRest::Storage::Filter::Gzip;
 
@@ -94,6 +94,25 @@ sub new
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# errorCheck - check status code for errors
+####################################################################################################################################
+sub errorCheck
+{
+    my $self = shift;
+    my $iZLibStatus = shift;
+
+    if (!($iZLibStatus == Z_OK || $iZLibStatus == Z_BUF_ERROR))
+    {
+        logErrorResult(
+            $self->{bWrite} ? ERROR_FILE_WRITE : ERROR_FILE_READ,
+            'unable to ' . ($self->{strCompressType} eq STORAGE_COMPRESS ? 'deflate' : 'inflate') . " '$self->{strName}'",
+            $self->{oZLib}->msg());
+    }
+
+    return Z_OK;
 }
 
 ####################################################################################################################################
@@ -210,25 +229,6 @@ sub write
 
     # Return bytes written
     return length($$rtBuffer);
-}
-
-####################################################################################################################################
-# errorCheck - check status code for errors
-####################################################################################################################################
-sub errorCheck
-{
-    my $self = shift;
-    my $iZLibStatus = shift;
-
-    if (!($iZLibStatus == Z_OK || $iZLibStatus == Z_BUF_ERROR))
-    {
-        logErrorResult(
-            $self->{bWrite} ? ERROR_FILE_WRITE : ERROR_FILE_READ,
-            'unable to ' . ($self->{strCompressType} eq STORAGE_COMPRESS ? 'deflate' : 'inflate') . " '$self->{strName}'",
-            $self->{oZLib}->msg());
-    }
-
-    return Z_OK;
 }
 
 ####################################################################################################################################
