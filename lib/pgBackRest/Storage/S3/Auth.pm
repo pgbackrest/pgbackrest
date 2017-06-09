@@ -222,7 +222,7 @@ sub s3AuthorizationHeader
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '::s3CanonicalRequest', \@_,
+            __PACKAGE__ . '::s3AuthorizationHeader', \@_,
             {name => 'strRegion', trace => true},
             {name => 'strHost', trace => true},
             {name => 'strVerb', trace => true},

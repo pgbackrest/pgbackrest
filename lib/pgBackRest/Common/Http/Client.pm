@@ -275,7 +275,6 @@ sub responseBody
 # Properties.
 ####################################################################################################################################
 sub contentLength {shift->{iContentLength}}                         # Content length if available (-1 means not known yet)
-sub requestHeader {shift->{hResponseHeader}}
 sub responseCode {shift->{iResponseCode}}
 sub responseHeader {shift->{hResponseHeader}}
 sub responseMessage {shift->{strResponseMessage}}

@@ -142,7 +142,7 @@ sub close
 {
     my $self = shift;
 
-    # Only close need to do close if something was written
+    # Only close if something was written
     if ($self->{bWritten})
     {
         # Make sure close does not run again
