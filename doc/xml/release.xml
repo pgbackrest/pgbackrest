@@ -158,7 +158,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.19dev" title="UNDER DEVELOPMENT">
+        <release date="2017-06-12" version="1.19" title="S3 Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>

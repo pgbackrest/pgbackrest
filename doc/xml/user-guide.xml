@@ -67,7 +67,7 @@
 
         <variable key="host-db-master">db-master</variable>
         <variable key="host-db-master-user">{[host-user]}</variable>
-        <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-db-{[pg-version]}-doc-pre</variable>
+        <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-db-{[pg-version]}-doc</variable>
         <variable key="host-db-master-mount">{[host-mount]}</variable>
 
         <variable key="host-db-standby">db-standby</variable>
@@ -192,8 +192,8 @@
             <title>Install the <id>DBD::Pg</id> module</title>
 
             <execute user="root">
-                <exe-cmd>apt-get install libdbd-pg-perl</exe-cmd>
-                <exe-cmd-extra>-y</exe-cmd-extra>
+                <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
         </execute-list>
 
@@ -204,7 +204,7 @@
 
             <execute user="root">
                 <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg</exe-cmd>
+                    perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
                 <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
         </execute-list>
