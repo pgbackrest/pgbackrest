@@ -63,7 +63,7 @@ local $EVAL_ERROR = undef; eval
         optionSet(OPTION_LOG_LEVEL_STDERR, PROTOCOL, true);
         logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
 
-        if (optionTest(OPTION_TYPE, BACKUP) && !-e optionGet(OPTION_REPO_PATH))
+        if (optionTest(OPTION_TYPE, BACKUP) && !optionTest(OPTION_REPO_TYPE, REPO_TYPE_S3) && !-e optionGet(OPTION_REPO_PATH))
         {
             confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }
@@ -169,7 +169,7 @@ local $EVAL_ERROR = undef; eval
     require pgBackRest::Protocol::Storage::Helper;
     pgBackRest::Protocol::Storage::Helper->import();
 
-    if (isRepoLocal() && !storageRepo()->pathExists(''))
+    if (isRepoLocal() && !optionTest(OPTION_REPO_TYPE, REPO_TYPE_S3) && !storageRepo()->pathExists(''))
     {
         confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }

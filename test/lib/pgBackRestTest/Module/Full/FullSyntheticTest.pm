@@ -29,11 +29,12 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
+use pgBackRestTest::Env::Host::HostS3Test;
+use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
 # Build PostgreSQL pages for testing
@@ -58,18 +59,20 @@ sub run
 {
     my $self = shift;
 
-    for (my $bRemote = false; $bRemote <= true; $bRemote++)
+    foreach my $bS3 (false, true)
     {
-    for (my $bCompress = false; $bCompress <= true; $bCompress++)
+    foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
-    for (my $bHardLink = false; $bHardLink <= true; $bHardLink++)
+    foreach my $bCompress ($bS3 ? (false) : (false, true))
+    {
+    foreach my $bHardLink ($bS3 ? (false) : (false, true))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardLink}", $self->processMax() == 1)) {next}
+        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardLink}, s3 ${bS3}", $self->processMax() == 1)) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bHardLink => $bHardLink});
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bHardLink => $bHardLink, bS3 => $bS3});
 
         # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
         # that options such as compression and hardlinks are disabled
@@ -316,7 +319,7 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . ' --' . OPTION_BUFFER_SIZE .
                     '=16384 --' . OPTION_CHECKSUM_PAGE,
-                strRepoType => REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
+                strRepoType => $bS3 ? undef : REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         # Error on backup option to check logging
         #-----------------------------------------------------------------------------------------------------------------------
@@ -435,9 +438,17 @@ sub run
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         # Create a temp file in backup temp root to be sure it's deleted correctly
-        executeTest("sudo touch ${strResumePath}/file.tmp" . ($bCompress ? '.gz' : ''),
-                    {bRemote => $bRemote});
-        executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp" . ($bCompress ? '.gz' : ''));
+        my $strTempFile = "${strResumePath}/file.tmp" . ($bCompress ? '.gz' : '');
+
+        if ($bS3)
+        {
+            $oHostS3->executeS3('cp /etc/hosts s3://' . HOST_S3_BUCKET . "${strTempFile}");
+        }
+        else
+        {
+            executeTest("sudo touch ${strTempFile}", {bRemote => $bRemote});
+            executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp" . ($bCompress ? '.gz' : ''));
+        }
 
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
@@ -454,7 +465,7 @@ sub run
             $oHostBackup->backup(
                 $strType, 'invalid repo',
                 {oExpectedManifest => \%oManifest, strOptionalParam => '--' . OPTION_REPO_PATH . '=/bogus_path' .
-                 '  --log-level-console=detail', iExpectedExitStatus => ERROR_PATH_MISSING});
+                 '  --log-level-console=detail', iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
         }
 
         # Restore - tests various mode, extra files/paths, missing files/paths
@@ -1182,6 +1193,7 @@ sub run
                 $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
                     strOptionalParam => '--log-level-console=detail --' . OPTION_BACKUP_STANDBY});
         }
+    }
     }
     }
     }

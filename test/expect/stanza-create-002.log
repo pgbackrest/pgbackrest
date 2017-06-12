@@ -1,5 +1,5 @@
-run 002 - remote 1
-==================
+run 002 - remote 1, s3 0
+========================
 
 stanza-create db - fail on missing control file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create

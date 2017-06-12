@@ -170,6 +170,10 @@
     <section id="installation">
         <title>Installation</title>
 
+        <!-- Create S3 server first to allow it time to boot before being used -->
+        <host-add name="demo-bucket.s3.amazonaws.com" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}">
+        </host-add>
+
         <host-add name="{[host-db-master]}" user="{[host-db-master-user]}" image="{[host-db-master-image]}" os="{[host-os]}" mount="{[host-db-master-mount]}">
             <execute user="root">
                 <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
@@ -1317,6 +1321,55 @@
             <execute output="y">
                 <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
                 <exe-highlight>recovery stopping before|last completed transaction|starting point-in-time recovery</exe-highlight>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- SECTION => S3-SUPPORT -->
+    <section id="s3-support" depend="/quickstart/configure-archiving">
+        <title>S3 Support</title>
+
+        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.</p>
+
+        <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
+            <title>Configure <proper>S3</proper></title>
+
+            <backrest-config-option section="global" key="repo-type">s3</backrest-config-option>
+            <backrest-config-option section="global" key="repo-path">/</backrest-config-option>
+            <backrest-config-option section="global" key="repo-s3-key">accessKey1</backrest-config-option>
+            <backrest-config-option section="global" key="repo-s3-key-secret">verySecretKey1</backrest-config-option>
+            <backrest-config-option section="global" key="repo-s3-bucket">demo-bucket</backrest-config-option>
+            <backrest-config-option section="global" key="repo-s3-endpoint">s3.amazonaws.com</backrest-config-option>
+            <backrest-config-option section="global" key="repo-s3-region">us-east-1</backrest-config-option>
+            <backrest-config-option section="global" key="repo-s3-verify-ssl">n</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Create the stanza</title>
+
+            <execute user="{[host-user]}">
+                <exe-cmd>aws s3 --no-verify-ssl mb s3://demo-bucket 2>&amp;1</exe-cmd>
+            </execute>
+
+            <execute output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>File creation time in <proper>S3</proper> is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+
+            <execute output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                    --log-level-console=info backup</exe-cmd>
+                <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
         </execute-list>
     </section>

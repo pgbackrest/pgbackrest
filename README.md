@@ -72,6 +72,10 @@ Tablespaces are fully supported and on restore tablespaces can be remapped to an
 
 File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
+### Amazon S3 Support
+
+pgBackRest repositories can be stored on Amazon S3 to allow for virtually unlimited capacity and retention.
+
 ### Compatibility with PostgreSQL >= 8.3
 
 pgBackRest includes support for versions down to 8.3, since older versions of PostgreSQL are still regularly utilized.

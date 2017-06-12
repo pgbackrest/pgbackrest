@@ -1,5 +1,5 @@
-run 004 - rmt 0, cmp 1, arc_async 1
-===================================
+run 004 - rmt 0, cmp 1, arc_async 1, s3 0
+=========================================
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 --archive-max-mb=24
 ------------------------------------------------------------------------------------------------------------------------------------

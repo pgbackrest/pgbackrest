@@ -40,14 +40,16 @@ sub run
 {
     my $self = shift;
 
-    foreach my $bRemote (false, true)
+    foreach my $bS3 (false, true)
+    {
+    foreach my $bRemote ($bS3 ? (false) : (false, true))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote ${bRemote}")) {next}
+        if (!$self->begin("remote $bRemote, s3 $bS3")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote});
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3});
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
@@ -83,21 +85,25 @@ sub run
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
-        # Change the permissions of the archive file so it cannot be read
-        forceStorageMode(
-            storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
-                COMPRESS_EXT,
-            '220');
+        # S3 doesn't support filesystem-style permissions so skip these tests
+        if (!$bS3)
+        {
+            # Change the permissions of the archive file so it cannot be read
+            forceStorageMode(
+                storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
+                    COMPRESS_EXT,
+                '220');
 
-        # Force creation of the info file but fail on gunzip
-        $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
-            {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            # Force creation of the info file but fail on gunzip
+            $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
+                {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
-        # Change permissions back
-        forceStorageMode(
-            storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
-                COMPRESS_EXT,
-            '640');
+            # Change permissions back
+            forceStorageMode(
+                storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/' . substr($strArchiveFile, 0, 16) . '/*.' .
+                    COMPRESS_EXT,
+                '640');
+        }
 
         # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
@@ -169,6 +175,7 @@ sub run
 
         $oHostBackup->stanzaCreate('force with missing WAL archive directory',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+    }
     }
 }
 

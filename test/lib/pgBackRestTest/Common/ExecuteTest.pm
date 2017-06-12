@@ -100,7 +100,7 @@ sub begin
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
     # Create select objects
-    $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 120, 65536);
+    $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 540, 65536);
 
     if (!defined($self->{hError}))
     {

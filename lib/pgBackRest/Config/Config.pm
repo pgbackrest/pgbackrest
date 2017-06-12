@@ -97,6 +97,8 @@ use constant REPO_TYPE_CIFS                                         => 'cifs';
     push @EXPORT, qw(REPO_TYPE_CIFS);
 use constant REPO_TYPE_POSIX                                        => 'posix';
     push @EXPORT, qw(REPO_TYPE_POSIX);
+use constant REPO_TYPE_S3                                           => 's3';
+    push @EXPORT, qw(REPO_TYPE_S3);
 
 ####################################################################################################################################
 # INFO Output Constants
@@ -298,6 +300,22 @@ use constant OPTION_REPO_PATH                                       => 'repo-pat
 use constant OPTION_REPO_TYPE                                       => 'repo-type';
     push @EXPORT, qw(OPTION_REPO_TYPE);
 
+# Repository S3
+use constant OPTION_REPO_S3_KEY                                     => 'repo-s3-key';
+    push @EXPORT, qw(OPTION_REPO_S3_KEY);
+use constant OPTION_REPO_S3_KEY_SECRET                              => 'repo-s3-key-secret';
+    push @EXPORT, qw(OPTION_REPO_S3_KEY_SECRET);
+use constant OPTION_REPO_S3_BUCKET                                  => 'repo-s3-bucket';
+    push @EXPORT, qw(OPTION_REPO_S3_BUCKET);
+use constant OPTION_REPO_S3_ENDPOINT                                => 'repo-s3-endpoint';
+    push @EXPORT, qw(OPTION_REPO_S3_ENDPOINT);
+use constant OPTION_REPO_S3_HOST                                    => 'repo-s3-host';
+    push @EXPORT, qw(OPTION_REPO_S3_HOST);
+use constant OPTION_REPO_S3_REGION                                  => 'repo-s3-region';
+    push @EXPORT, qw(OPTION_REPO_S3_REGION);
+use constant OPTION_REPO_S3_VERIFY_SSL                              => 'repo-s3-verify-ssl';
+    push @EXPORT, qw(OPTION_REPO_S3_VERIFY_SSL);
+
 # Log level
 use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
     push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
@@ -486,6 +504,8 @@ use constant OPTION_DEFAULT_REPO_LINK                               => true;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_LINK);
 use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib/' . BACKREST_EXE;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
+use constant OPTION_DEFAULT_REPO_S3_VERIFY_SSL                      => true;
+    push @EXPORT, qw(OPTION_DEFAULT_REPO_S3_VERIFY_SSL);
 use constant OPTION_DEFAULT_REPO_TYPE                               => REPO_TYPE_POSIX;
     push @EXPORT, qw(OPTION_DEFAULT_REPO_TYPE);
 use constant OPTION_DEFAULT_SPOOL_PATH                              => '/var/spool/' . BACKREST_EXE;
@@ -1271,6 +1291,53 @@ my %oOptionRule =
         },
     },
 
+    &OPTION_REPO_S3_BUCKET =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_REPO_TYPE,
+            &OPTION_RULE_DEPEND_VALUE   => REPO_TYPE_S3,
+        },
+        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
+    },
+
+    &OPTION_REPO_S3_KEY =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_SECURE => true,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION  => OPTION_REPO_TYPE,
+            &OPTION_RULE_DEPEND_VALUE   => REPO_TYPE_S3,
+        },
+        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
+    },
+
+    &OPTION_REPO_S3_KEY_SECRET => OPTION_REPO_S3_KEY,
+
+    &OPTION_REPO_S3_ENDPOINT => OPTION_REPO_S3_BUCKET,
+
+    &OPTION_REPO_S3_HOST =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_REQUIRED  => false,
+        &OPTION_RULE_DEPEND => OPTION_REPO_S3_BUCKET,
+        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
+    },
+
+    &OPTION_REPO_S3_REGION => OPTION_REPO_S3_BUCKET,
+
+    &OPTION_REPO_S3_VERIFY_SSL =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
+        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_S3_VERIFY_SSL,
+        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
+        &OPTION_RULE_DEPEND => OPTION_REPO_S3_BUCKET,
+    },
+
     &OPTION_REPO_TYPE =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -1280,6 +1347,7 @@ my %oOptionRule =
         {
             &REPO_TYPE_CIFS     => true,
             &REPO_TYPE_POSIX    => true,
+            &REPO_TYPE_S3       => true,
         },
         &OPTION_RULE_COMMAND =>
         {

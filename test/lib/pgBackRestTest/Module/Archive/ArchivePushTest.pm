@@ -80,18 +80,22 @@ sub run
     my $strArchiveChecksum = '72b9da071c13957fb4ca31f05dbd5c644297c2f7';
     my $iArchiveMax = 3;
 
-    for (my $bRemote = false; $bRemote <= true; $bRemote++)
+    foreach my $bS3 (false, true)
     {
-    for (my $bCompress = false; $bCompress <= true; $bCompress++)
+    foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
-    for (my $bArchiveAsync = false; $bArchiveAsync <= true; $bArchiveAsync++)
+    foreach my $bCompress ($bS3 ? (true) : (false, true))
+    {
+    foreach my $bArchiveAsync ($bS3 ? (true) : (false, true))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, arc_async ${bArchiveAsync}", $self->processMax() == 1)) {next}
+        if (!$self->begin(
+            "rmt ${bRemote}, cmp ${bCompress}, arc_async ${bArchiveAsync}, s3 ${bS3}", $self->processMax() == 1)) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+            true, $self->expect(),
+            {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => $bArchiveAsync, bS3 => $bS3});
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -151,10 +155,10 @@ sub run
                            ', archive ' .sprintf('%02x', $iArchive) .
                            " - ${strArchiveFile}");
 
-                # Create a temp file to make sure it is deleted later
+                # Create a temp file to make sure it is deleted later (skip when S3 since it doesn't use temp files)
                 my $strArchiveTmp;
 
-                if ($iBackup == 1 && $iArchive == 2)
+                if (!$bS3 && $iBackup == 1 && $iArchive == 2)
                 {
                     # Should succeed when temp file already exists
                     &log(INFO, '        test archive when tmp file exists');
@@ -341,6 +345,7 @@ sub run
                 storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), undef,
                 ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
         }
+    }
     }
     }
     }

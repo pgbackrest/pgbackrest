@@ -24,6 +24,9 @@ use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::Host::HostDbSyntheticTest;
+use pgBackRestTest::Env::Host::HostS3Test;
+use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
 
@@ -57,6 +60,15 @@ sub setup
     my $oLogTest = shift;
     my $oConfigParam = shift;
 
+    # Start S3 server first since it takes the longest
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $oHostS3;
+
+    if ($oConfigParam->{bS3})
+    {
+        $oHostS3 = new pgBackRestTest::Env::Host::HostS3Test();
+    }
+
     # Get host group
     my $oHostGroup = hostGroupGet();
 
@@ -70,7 +82,8 @@ sub setup
         $strBackupDestination = defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_BACKUP;
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
-            {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
+                bRepoLocal => !$oConfigParam->{bS3}});
         $oHostGroup->hostAdd($oHostBackup);
     }
     else
@@ -85,12 +98,12 @@ sub setup
     if ($bSynthetic)
     {
         $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3}});
     }
     else
     {
         $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3}});
     }
 
     $oHostGroup->hostAdd($oHostDbMaster);
@@ -101,24 +114,38 @@ sub setup
     if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
     {
         $oHostDbStandby = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest});
+            {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest,
+                bRepoLocal => !$oConfigParam->{bS3}});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
+    # Finalize S3 server
+    #-------------------------------------------------------------------------------------------------------------------------------
+    if (defined($oHostS3))
+    {
+        $oHostGroup->hostAdd($oHostS3, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
+
+        # Wait for server to start
+        executeTest('docker logs -f ' . $oHostS3->container() . " | grep -m 1 \"server started\"");
+
+        $oHostS3->executeS3('mb s3://' . HOST_S3_BUCKET);
+    }
     # Create db master config
     $oHostDbMaster->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
         bCompress => $$oConfigParam{bCompress},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
-        bArchiveAsync => $$oConfigParam{bArchiveAsync}});
+        bArchiveAsync => $$oConfigParam{bArchiveAsync},
+        bS3 => $$oConfigParam{bS3}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
     {
         $oHostBackup->configCreate({
             bCompress => $$oConfigParam{bCompress},
-            bHardlink => $$oConfigParam{bHardLink}});
+            bHardlink => $$oConfigParam{bHardLink},
+            bS3 => $$oConfigParam{bS3}});
     }
     # If backup host is not defined set it to db-master
     else
@@ -141,9 +168,23 @@ sub setup
     $self->optionSetTest($oOption, OPTION_DB_PATH, $oHostDbMaster->dbBasePath());
     $self->optionSetTest($oOption, OPTION_REPO_PATH, $oHostBackup->repoPath());
     $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+
+    # Set S3 options
+    if (defined($oHostS3))
+    {
+        $self->optionSetTest($oOption, OPTION_REPO_TYPE, REPO_TYPE_S3);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_BUCKET, HOST_S3_BUCKET);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_REGION, HOST_S3_REGION);
+        $self->optionSetTest($oOption, OPTION_REPO_S3_HOST, $oHostS3->ipGet());
+        $self->optionBoolSetTest($oOption, OPTION_REPO_S3_VERIFY_SSL, false);
+    }
+
     $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
 
-    return $oHostDbMaster, $oHostDbStandby, $oHostBackup;
+    return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
 }
 
 ####################################################################################################################################

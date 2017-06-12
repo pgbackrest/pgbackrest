@@ -60,6 +60,7 @@ sub new
             oLogTest => $$oParam{oLogTest},
             bSynthetic => true,
             bStandby => $$oParam{bStandby},
+            bRepoLocal => $oParam->{bRepoLocal},
         });
     bless $self, $class;
 

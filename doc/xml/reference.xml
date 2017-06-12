@@ -229,6 +229,71 @@
                         <example>/backup/db/backrest</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-KEY KEY -->
+                    <config-key id="repo-s3-key" name="S3 Repository Access Key">
+                        <summary>S3 repository access key.</summary>
+
+                        <text>AWS key used to access this bucket.</text>
+
+                        <example>AKIAIOSFODNN7EXAMPLE</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-KEY-SECRET KEY -->
+                    <config-key id="repo-s3-key-secret" name="S3 Repository Secret Access Key">
+                        <summary>S3 repository secret access key.</summary>
+
+                        <text>AWS secret key used to access this bucket.</text>
+
+                        <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-BUCKET KEY -->
+                    <config-key id="repo-s3-bucket" name="S3 Repository Bucket">
+                        <summary>S3 repository bucket.</summary>
+
+                        <text>S3 bucket used to store the repository.
+
+                        <backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other AWS generated content can also be stored in the bucket.</text>
+
+                        <example>db-backup</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-ENDPOINT KEY -->
+                    <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
+                        <summary>S3 repository endpoint.</summary>
+
+                        <text>The AWS end point should be valid for the selected region.</text>
+
+                        <example>s3.amazonaws.com</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-HOST KEY -->
+                    <config-key id="repo-s3-host" name="S3 Repository Host">
+                        <summary>S3 repository host.</summary>
+
+                        <text>Connect to a host other than the end point.  This is typically used for testing.</text>
+
+                        <example>127.0.0.1</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-REGION KEY -->
+                    <config-key id="repo-s3-region" name="S3 Repository Region">
+                        <summary>S3 repository region.</summary>
+
+                        <text>The AWS region where the bucket was created.</text>
+
+                        <example>us-east-1</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-VERIFY-SSL KEY -->
+                    <config-key id="repo-s3-verify-ssl" name="S3 Repository Verify SSL">
+                        <summary>Verify S3 server certificate.</summary>
+
+                        <text>Disables verification of the S3 server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - REPO-TYPE KEY -->
                     <config-key id="repo-type" name="Repository Type">
                         <summary>Type of storage used for the repository.</summary>
@@ -237,6 +302,7 @@
                         <ul>
                             <li><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
+                            <li><id>s3</id> - AWS Simple Storage Service</li>
                         </ul></text>
 
                         <example>cifs</example>

@@ -74,6 +74,7 @@ sub new
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
+            bRepoLocal => $oParam->{bRepoLocal},
         });
     bless $self, $class;
 

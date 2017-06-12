@@ -608,6 +608,87 @@ my $oConfigHelpData =
                     "need, though of course requirements will likely change over time as your database evolves."
         },
 
+        # REPO-S3-BUCKET Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-bucket' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 repository bucket.",
+            description =>
+                "S3 bucket used to store the repository.\n" .
+                "\n" .
+                "pgBackRest repositories can be stored in the bucket root by setting repo-path=/ but it is usually best to " .
+                    "specify a prefix, such as /repo, so logs and other AWS generated content can also be stored in the bucket."
+        },
+
+        # REPO-S3-ENDPOINT Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-endpoint' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 repository endpoint.",
+            description =>
+                "The AWS end point should be valid for the selected region."
+        },
+
+        # REPO-S3-HOST Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-host' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 repository host.",
+            description =>
+                "Connect to a host other than the end point. This is typically used for testing."
+        },
+
+        # REPO-S3-KEY Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-key' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 repository access key.",
+            description =>
+                "AWS key used to access this bucket."
+        },
+
+        # REPO-S3-KEY-SECRET Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-key-secret' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 repository secret access key.",
+            description =>
+                "AWS secret key used to access this bucket."
+        },
+
+        # REPO-S3-REGION Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-region' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 repository region.",
+            description =>
+                "The AWS region where the bucket was created."
+        },
+
+        # REPO-S3-VERIFY-SSL Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-verify-ssl' =>
+        {
+            section => 'general',
+            summary =>
+                "Verify S3 server certificate.",
+            description =>
+                "Disables verification of the S3 server certificate. This should only be used for testing or other scenarios " .
+                    "where a certificate has been self-signed."
+        },
+
         # REPO-TYPE Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-type' =>
@@ -619,7 +700,8 @@ my $oConfigHelpData =
                 "The following repository types are supported:\n" .
                 "\n" .
                 "* cifs - Like posix, but disables links and directory fsyncs\n" .
-                "* posix - Posix-compliant file systems"
+                "* posix - Posix-compliant file systems\n" .
+                "* s3 - AWS Simple Storage Service"
         },
 
         # RESUME Option Help
@@ -833,6 +915,13 @@ my $oConfigHelpData =
                 'neutral-umask' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }
@@ -875,6 +964,13 @@ my $oConfigHelpData =
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'spool-path' => 'section',
                 'stanza' => 'default'
@@ -946,6 +1042,13 @@ my $oConfigHelpData =
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'resume' => 'section',
                 'retention-archive' => 'section',
@@ -1023,6 +1126,13 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }
@@ -1054,6 +1164,13 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'retention-archive' => 'section',
                 'retention-archive-type' => 'section',
@@ -1124,6 +1241,13 @@ my $oConfigHelpData =
 
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }
@@ -1188,6 +1312,13 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'recovery-option' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
 
                 # SET Option Help
@@ -1330,6 +1461,13 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }
@@ -1373,6 +1511,13 @@ my $oConfigHelpData =
                 'online' => 'default',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }
@@ -1407,6 +1552,13 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }
@@ -1457,6 +1609,13 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
                 'repo-type' => 'section',
                 'stanza' => 'default'
             }

@@ -43,20 +43,23 @@ sub run
 {
     my $self = shift;
 
-    foreach my $bHostBackup (false, true)
+    foreach my $bS3 (false, true)
     {
-    foreach my $bHostStandby (false, true)
+    foreach my $bHostBackup ($bS3 ? (true) : (false, true))
+    {
+    foreach my $bHostStandby ($bS3 ? (false) : (false, true))
     {
     foreach my $strBackupDestination (
-        $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
+        $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
-    foreach my $bArchiveAsync ($bHostStandby ? (false) : (false, true))
+    foreach my $bArchiveAsync ($bS3 ? (true) : ($bHostStandby ? (false) : (false, true)))
     {
-    foreach my $bCompress ($bHostStandby ? (false) : (false, true))
+    foreach my $bCompress ($bS3 ? (true) : ($bHostStandby ? (false) : (false, true)))
     {
         # Increment the run, log, and decide whether this unit test should be run
         next if (!$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, asy ${bArchiveAsync}, cmp ${bCompress}",
+            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, asy ${bArchiveAsync}, cmp ${bCompress}," .
+                " s3 ${bS3}",
             $self->processMax() == 1 && $self->pgVersion() eq PG_VERSION_95));
 
         if ($bHostStandby && $self->pgVersion() < PG_VERSION_HOT_STANDBY)
@@ -66,13 +69,13 @@ sub run
         }
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
-             bCompress => $bCompress, bArchiveAsync => $bArchiveAsync});
+             bCompress => $bCompress, bArchiveAsync => $bArchiveAsync, bS3 => $bS3});
 
         # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
-        my $bTestExtra = ($self->runCurrent() == 1) || ($self->runCurrent() == 7);
+        my $bTestExtra = $self->runCurrent() == 1 || $self->runCurrent() == 7 || $self->runCurrent() == 12;
 
         $oHostDbMaster->clusterCreate();
 
@@ -251,8 +254,11 @@ sub run
             forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
             forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
-            $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
-                {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
+            if (!$bS3)
+            {
+                $oHostBackup->stanzaCreate('fail on backup info file missing from non-empty dir',
+                    {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
+            }
 
             # Force the backup.info file to be recreated
             $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . OPTION_FORCE});
@@ -894,6 +900,7 @@ sub run
                 $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
                 {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
         }
+    }
     }
     }
     }

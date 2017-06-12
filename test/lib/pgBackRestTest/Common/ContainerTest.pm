@@ -289,6 +289,109 @@ sub coverSetup
 }
 
 ####################################################################################################################################
+# S3 server setup
+####################################################################################################################################
+sub s3ServerSetup
+{
+    my $strOS = shift;
+
+    # Install node.js
+    my $strScript =
+        "\n\n# Install node.js\n";
+
+    if ($strOS eq VM_U16)
+    {
+        $strScript .=
+            "RUN wget -O /root/nodejs.sh https://deb.nodesource.com/setup_6.x && \\\n" .
+            "    bash /root/nodejs.sh && \\\n" .
+            "    apt-get install -y nodejs";
+    }
+    elsif ($strOS eq VM_CO7)
+    {
+        $strScript .=
+            "RUN wget -O /root/nodejs.sh https://rpm.nodesource.com/setup_6.x && \\\n" .
+            "    bash /root/nodejs.sh && \\\n" .
+            "    yum install -y nodejs";
+    }
+
+    # Install Scality S3
+    $strScript .=
+        "\n\n# Install Scality S3\n";
+
+    if ($strOS eq VM_U16)
+    {
+        $strScript .=
+            "RUN apt-get install -y python build-essential git && \\\n";
+    }
+    elsif ($strOS eq VM_CO7)
+    {
+        $strScript .=
+            "RUN yum install -y python git && \\\n";
+    }
+
+    $strScript .=
+        "    wget -O /root/scalitys3.tar.gz https://github.com/scality/S3/archive/GA6.4.2.1.tar.gz && \\\n" .
+        "    mkdir /root/scalitys3 && \\\n" .
+        "    tar -C /root/scalitys3 --strip-components 1 -xvf /root/scalitys3.tar.gz && \\\n" .
+        "    cd /root/scalitys3 && \\\n" .
+        "    npm install && \\\n" .
+        "    openssl genrsa -out ca.key 2048 && \\\n" .
+        "    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999" .
+            " -subj \"/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org\" && \\\n" .
+        "    openssl genrsa -out server.key 2048 && \\\n" .
+        "    openssl req -new -key server.key -out server.csr" .
+            " -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
+        "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999" .
+            " -sha256 && \\\n" .
+        '    sed -i "0,/,/s//,\n    \"certFilePaths\": { \"key\": \".\/server.key\", \"cert\":' .
+            ' \".\/server.crt\", \"ca\": \".\/ca.crt\" },/" ./config.json' . " && \\\n" .
+        '    sed -i "s/ort\"\: 8000/ort\"\: 443/" ./config.json';
+
+    return $strScript;
+}
+
+
+####################################################################################################################################
+# S3 CLI setup
+####################################################################################################################################
+sub s3CliSetup
+{
+    my $strOS = shift;
+
+    my $strScript = '';
+
+    if ($strOS eq VM_U14 || $strOS eq VM_U16 || $strOS eq VM_CO6 || $strOS eq VM_CO7)
+    {
+        # Install AWS CLI
+        my $strAwsPath = '/home/' . TEST_USER . '/.aws';
+
+        $strScript =
+            "\n\n# Install AWS CLI\n";
+
+        if ($strOS eq VM_U14 || $strOS eq VM_U16)
+        {
+            $strScript .=
+                "RUN apt-get install -y python-pip && \\\n";
+        }
+        elsif ($strOS eq VM_CO6 || $strOS eq VM_CO7)
+        {
+            $strScript .=
+                "RUN yum -y install epel-release && \\\n" .
+                "    yum -y update && \\\n" .
+                "    yum -y install python-pip && \\\n";
+        }
+
+        $strScript .=
+            "    pip install --upgrade awscli && \\\n" .
+            '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
+            '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
+            '    sudo -i -u ' . TEST_USER . " aws configure set aws_secret_access_key verySecretKey1";
+    }
+
+    return $strScript;
+}
+
+####################################################################################################################################
 # Install Perl packages
 ####################################################################################################################################
 sub perlInstall
@@ -312,7 +415,7 @@ sub perlInstall
             $strImage .= ' perl-JSON-PP';
         }
 
-        $strImage .= ' perl-Digest-SHA perl-DBD-Pg';
+        $strImage .= ' perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL';
     }
     elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
@@ -323,6 +426,8 @@ sub perlInstall
         {
             $strImage .= ' libnet-daemon-perl libplrpc-perl';
         }
+
+        $strImage .= ' libio-socket-ssl-perl libxml-libxml-perl libhtml-parser-perl';
     }
     else
     {
@@ -396,7 +501,7 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            $strScript .= "RUN yum -y install openssh-server openssh-clients\n";
+            $strScript .= "RUN yum -y install openssh-server openssh-clients wget\n";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
@@ -563,6 +668,32 @@ sub containerBuild
             executeTest('docker rm -f test-build');
         }
 
+        # S3 image
+        ###########################################################################################################################
+        $strImageParent = $oVm->{&VM_U16}{&VM_IMAGE};
+        $strImage = "${strOS}-s3-server";
+
+        # Required packages
+        $strScript =
+            "RUN apt-get update && \\\n" .
+            "    apt-get install -y wget";
+
+        # Setup S3 server
+        $strScript .= s3ServerSetup(VM_U16);
+
+        # Fix root tty
+        $strScript .=
+            "\n\n# Fix root tty\n" .
+            "RUN echo 'tty -s && mesg n || true' > /root/.profile";
+
+        # Set entrypoint
+        $strScript .=
+            "\n\nENTRYPOINT npm start --prefix /root/scalitys3";
+
+        # Write the image
+        containerWrite(
+            $oStorageDocker, $strTempPath, $strOS, 'S3 Server', $strImageParent, $strImage, $strScript, $bVmForce, false);
+
         # Db image
         ###########################################################################################################################
         my @stryDbBuild;
@@ -640,6 +771,9 @@ sub containerBuild
                 # Setup sudo
                 $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
+                # Setup s3 cli
+                $strScript .= s3CliSetup($strOS);
+
                 # Write the image
                 containerWrite(
                     $oStorageDocker, $strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce);
@@ -704,6 +838,15 @@ sub containerBuild
 
         # Setup Devel::Cover
         $strScript .= coverSetup($strOS);
+
+        # Setup S3 server
+        if ($strOS eq VM_U16 || $strOS eq VM_CO7)
+        {
+            $strScript .= s3ServerSetup($strOS);
+        }
+
+        # Setup S3 CLI
+        $strScript .= s3CliSetup($strOS);
 
         # Write the image
         containerWrite(

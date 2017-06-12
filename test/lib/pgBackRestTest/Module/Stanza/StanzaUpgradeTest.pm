@@ -43,14 +43,16 @@ sub run
 {
     my $self = shift;
 
-    for (my $bRemote = false; $bRemote <= true; $bRemote++)
+    foreach my $bS3 (false, true)
+    {
+    foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin($bRemote ? "remote" : "local")) {next}
+        if (!$self->begin("remote $bRemote, s3 $bS3")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote});
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3});
 
         # Create the test path for pg_control
         storageDb()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
@@ -168,6 +170,7 @@ sub run
 
         # Confirm info command displays the JSON correctly
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
+    }
     }
 }
 

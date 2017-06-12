@@ -38,6 +38,14 @@ env:
 before_install:
   - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl python-pip
   - |
+    # Install & Configure AWS CLI
+    pip install --upgrade --user awscli
+    aws configure set region us-east-1
+    aws configure set aws_access_key_id accessKey1
+    aws configure set aws_secret_access_key verySecretKey1
+    aws help --version
+    aws configure list
+  - |
     # Build Devel::Cover
     git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl
     cd ~/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b

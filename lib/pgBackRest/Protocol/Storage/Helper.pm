@@ -184,7 +184,17 @@ sub storageRepo
             # Create the driver
             my $oDriver;
 
-            if (optionTest(OPTION_REPO_TYPE, REPO_TYPE_CIFS))
+            if (optionTest(OPTION_REPO_TYPE, REPO_TYPE_S3))
+            {
+                require pgBackRest::Storage::S3::Driver;
+
+                $oDriver = new pgBackRest::Storage::S3::Driver(
+                    optionGet(OPTION_REPO_S3_BUCKET), optionGet(OPTION_REPO_S3_ENDPOINT), optionGet(OPTION_REPO_S3_REGION),
+                    optionGet(OPTION_REPO_S3_KEY), optionGet(OPTION_REPO_S3_KEY_SECRET),
+                    {strHost => optionGet(OPTION_REPO_S3_HOST, false), bVerifySsl => optionGet(OPTION_REPO_S3_VERIFY_SSL, false)},
+                        lBufferMax => optionGet(OPTION_BUFFER_SIZE));
+            }
+            elsif (optionTest(OPTION_REPO_TYPE, REPO_TYPE_CIFS))
             {
                 require pgBackRest::Storage::Cifs::Driver;
 

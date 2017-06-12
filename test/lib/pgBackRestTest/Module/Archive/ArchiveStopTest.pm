@@ -38,18 +38,20 @@ sub run
 
     my $strArchiveTestFile = $self->dataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
 
-    for (my $bRemote = false; $bRemote <= true; $bRemote++)
+    foreach my $bS3 (false, true)
     {
-    for (my $bCompress = false; $bCompress <= true; $bCompress++)
+    foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
-    for (my $iError = 0; $iError <= $bRemote; $iError++)
+    foreach my $bCompress ($bS3 ? (false) : (false, true))
+    {
+    foreach my $iError ($bS3 ? (1) : ($bRemote ? (0, 1) : (0)))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version'))) {next}
+        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version') . ", s3 ${bS3}")) {next}
 
         # Create hosts, file object, and config
-        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true});
+        my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true, bS3 => $bS3});
 
         my $oStorage = storageRepo();
 
@@ -114,6 +116,7 @@ sub run
             "(000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " .
                 "000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt})",
             'segment 5 is pushed', {iWaitSeconds => 5});
+    }
     }
     }
     }
