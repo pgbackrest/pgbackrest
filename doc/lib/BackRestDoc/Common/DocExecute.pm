@@ -572,6 +572,7 @@ sub backrestConfig
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
             delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR});
             delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_TIMESTAMP});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_VERIFY_SSL});
 
             if (keys(%{$$oConfigClean{&CONFIG_SECTION_GLOBAL}}) == 0)
             {

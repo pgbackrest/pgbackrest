@@ -291,7 +291,7 @@ sub coverSetup
 ####################################################################################################################################
 # S3 server setup
 ####################################################################################################################################
-sub s3Setup
+sub s3ServerSetup
 {
     my $strOS = shift;
 
@@ -346,6 +346,47 @@ sub s3Setup
         '    sed -i "0,/,/s//,\n    \"certFilePaths\": { \"key\": \".\/server.key\", \"cert\":' .
             ' \".\/server.crt\", \"ca\": \".\/ca.crt\" },/" ./config.json' . " && \\\n" .
         '    sed -i "s/ort\"\: 8000/ort\"\: 443/" ./config.json';
+
+    return $strScript;
+}
+
+
+####################################################################################################################################
+# S3 CLI setup
+####################################################################################################################################
+sub s3CliSetup
+{
+    my $strOS = shift;
+
+    my $strScript;
+
+    if ($strOS eq VM_U14 || $strOS eq VM_U16 || $strOS eq VM_CO6 || $strOS eq VM_CO7)
+    {
+        # Install AWS CLI
+        my $strAwsPath = '/home/' . TEST_USER . '/.aws';
+
+        $strScript =
+            "\n\n# Install AWS CLI\n";
+
+        if ($strOS eq VM_U14 || $strOS eq VM_U16)
+        {
+            $strScript .=
+                "RUN apt-get install -y python-pip && \\\n";
+        }
+        elsif ($strOS eq VM_CO6 || $strOS eq VM_CO7)
+        {
+            $strScript .=
+                "RUN yum -y install epel-release && \\\n" .
+                "    yum -y update && \\\n" .
+                "    yum -y install python-pip && \\\n";
+        }
+
+        $strScript .=
+            "    pip install --upgrade awscli && \\\n" .
+            '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
+            '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
+            '    sudo -i -u ' . TEST_USER . " aws configure set aws_secret_access_key verySecretKey1";
+    }
 
     return $strScript;
 }
@@ -638,7 +679,7 @@ sub containerBuild
             "    apt-get install -y wget";
 
         # Setup S3 server
-        $strScript .= s3Setup(VM_U16);
+        $strScript .= s3ServerSetup(VM_U16);
 
         # Fix root tty
         $strScript .=
@@ -730,6 +771,9 @@ sub containerBuild
                 # Setup sudo
                 $strScript .= "\n\n" . sudoSetup($strOS, TEST_GROUP);
 
+                # Setup s3 cli
+                $strScript .= s3CliSetup($strOS);
+
                 # Write the image
                 containerWrite(
                     $oStorageDocker, $strTempPath, $strOS, "${strTitle} Doc", $strImageParent, $strImage, $strScript, $bVmForce);
@@ -795,36 +839,14 @@ sub containerBuild
         # Setup Devel::Cover
         $strScript .= coverSetup($strOS);
 
+        # Setup S3 server
         if ($strOS eq VM_U16 || $strOS eq VM_CO7)
         {
-            # Setup S3 server
-            $strScript .= s3Setup($strOS);
-
-            # Install AWS CLI
-            my $strAwsPath = '/home/' . TEST_USER . '/.aws';
-
-            $strScript .=
-                "\n\n# Install AWS CLI\n";
-
-            if ($strOS eq VM_U16)
-            {
-                $strScript .=
-                    "RUN apt-get install -y python-pip && \\\n";
-            }
-            elsif ($strOS eq VM_CO7)
-            {
-                $strScript .=
-                    "RUN yum -y install epel-release && \\\n" .
-                    "    yum -y update && \\\n" .
-                    "    yum -y install python-pip && \\\n";
-            }
-
-            $strScript .=
-                "    pip install --upgrade awscli && \\\n" .
-                '    sudo -i -u ' . TEST_USER . " aws configure set region us-east-1 && \\\n" .
-                '    sudo -i -u ' . TEST_USER . " aws configure set aws_access_key_id accessKey1 && \\\n" .
-                '    sudo -i -u ' . TEST_USER . " aws configure set aws_secret_access_key verySecretKey1";
+            $strScript .= s3ServerSetup($strOS);
         }
+
+        # Setup S3 CLI
+        $strScript .= s3CliSetup($strOS);
 
         # Write the image
         containerWrite(
