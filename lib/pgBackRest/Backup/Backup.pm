@@ -290,7 +290,7 @@ sub processManifest
             # If hardlinking is turned on then create a hardlink for files that have not changed since the last backup
             if ($bHardLink)
             {
-                logDebugMisc($strOperation, "hardlink ${strRepoFile} to ${strReference}");
+                &log(DETAIL, "hardlink ${strRepoFile} to ${strReference}");
 
                 storageRepo()->linkCreate(
                     STORAGE_REPO_BACKUP . "/${strReference}/${strRepoFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),

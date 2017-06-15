@@ -164,6 +164,14 @@
                     <release-item>
                         <p>Harden protocol handshake to handle race conditions.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Change log level of hardlink logging to <id>detail</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Cast size in S3 manifest to integer.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
@@ -173,6 +181,12 @@
                         <p>Fix timeouts in <code>ExecuteTest</code> to speed multi-process testing.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Combine hardlink and non/compressed in synthetic tests to reduce test time and improve coverage.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-test-list>
         </release>
 

@@ -63,20 +63,18 @@ sub run
     {
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
-    foreach my $bCompress ($bS3 ? (false) : (false, true))
-    {
-    foreach my $bHardLink ($bS3 ? (false) : (false, true))
-    {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, hardlink ${bHardLink}, s3 ${bS3}", $self->processMax() == 1)) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}", $self->processMax() == 1)) {next}
+
+        if ($bS3 && $self->processMax() != 1)
+        {
+            &log(INFO, 'skipped - no need to run multi-process tests on s3');
+            next;
+        }
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bHardLink => $bHardLink, bS3 => $bS3});
-
-        # Determine if this is a neutral test, i.e. we only want to do it once for local and once for remote.  Neutral means
-        # that options such as compression and hardlinks are disabled
-        my $bNeutralTest = !$bCompress && !$bHardLink;
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bHardLink => false, bS3 => $bS3});
 
         # Get base time
         my $lTime = time() - 10000;
@@ -90,8 +88,8 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::true;
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = $bCompress ? JSON::PP::true : JSON::PP::false;
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = $bHardLink ? JSON::PP::true : JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
 
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
@@ -122,7 +120,7 @@ sub run
         $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/1/' . DB_FILE_PGVERSION,
                                               PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime, '660');
 
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             executeTest('sudo chown 7777 ' . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
@@ -139,7 +137,7 @@ sub run
         $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/' . DB_FILE_PGVERSION,
                                               PG_VERSION_94, '184473f470864e067ee3a22e64b47b0a1c356f29', $lTime);
 
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             executeTest('sudo chown :7777 ' . $oHostDbMaster->dbBasePath() . '/base/16384/' . DB_FILE_PGVERSION);
             $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
@@ -206,7 +204,7 @@ sub run
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_PATH_PGTBLSPC);
 
         # Create paths/files to ignore
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             # Create temp dir and file that will be ignored
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/' . DB_FILE_PREFIX_TMP);
@@ -259,7 +257,7 @@ sub run
         my $strOptionalParam = '--manifest-save-threshold=3';
         my $strTestPoint;
 
-        if ($bNeutralTest && $bRemote)
+        if ($bRemote)
         {
             $strOptionalParam .= ' --protocol-timeout=2 --db-timeout=1';
 
@@ -323,7 +321,7 @@ sub run
 
         # Error on backup option to check logging
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             $oHostBackup->backup(
                 $strType, 'invalid cmd line',
@@ -332,7 +330,7 @@ sub run
 
         # Test protocol timeout
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest && $bRemote)
+        if ($bRemote)
         {
             $oHostBackup->backup(
                 $strType, 'protocol timeout',
@@ -342,7 +340,7 @@ sub run
 
         # Stop operations and make sure the correct error occurs
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest)
+        if (!$bS3)
         {
             # Test a backup abort
             my $oExecuteBackup = $oHostBackup->backupBegin(
@@ -438,7 +436,7 @@ sub run
         forceStorageRemove(storageRepo(), "${strResumePath}/" . FILE_MANIFEST);
 
         # Create a temp file in backup temp root to be sure it's deleted correctly
-        my $strTempFile = "${strResumePath}/file.tmp" . ($bCompress ? '.gz' : '');
+        my $strTempFile = "${strResumePath}/file.tmp";
 
         if ($bS3)
         {
@@ -447,7 +445,7 @@ sub run
         else
         {
             executeTest("sudo touch ${strTempFile}", {bRemote => $bRemote});
-            executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp" . ($bCompress ? '.gz' : ''));
+            executeTest("sudo chown " . BACKREST_USER . " ${strResumePath}/file.tmp");
         }
 
         $strFullBackup = $oHostBackup->backup(
@@ -460,13 +458,10 @@ sub run
 
         # Misconfigure repo-path and check errors
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest)
-        {
-            $oHostBackup->backup(
-                $strType, 'invalid repo',
-                {oExpectedManifest => \%oManifest, strOptionalParam => '--' . OPTION_REPO_PATH . '=/bogus_path' .
-                 '  --log-level-console=detail', iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
-        }
+        $oHostBackup->backup(
+            $strType, 'invalid repo',
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . OPTION_REPO_PATH . '=/bogus_path' .
+             '  --log-level-console=detail', iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #-----------------------------------------------------------------------------------------------------------------------
@@ -474,7 +469,7 @@ sub run
         my $bForce = false;
 
         # Munge permissions/modes on files that will be fixed by the restore
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             executeTest("sudo chown :7777 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
             executeTest("sudo chmod 600 " . $oHostDbMaster->dbBasePath() . '/base/1/' . DB_FILE_PGVERSION);
@@ -494,7 +489,7 @@ sub run
         $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
         # Restore will reset invalid user and group so do the same in the manifest
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
                    {&MANIFEST_SUBKEY_USER});
@@ -505,10 +500,10 @@ sub run
         $oHostDbMaster->restore(
             $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
             'add and delete files', undef,  ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
-            undef, $bNeutralTest && !$bRemote ? 'root' : undef);
+            undef, !$bRemote ? 'root' : undef);
 
         # Fix permissions on the restore log & remove lock files
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             executeTest('sudo chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath());
             executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
@@ -523,7 +518,7 @@ sub run
             'fix broken symlink', undef, ' --link-all --log-level-console=detail');
 
         # Additional restore tests that don't need to be performed for every permutation
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             # This time manually restore all links
             $oHostDbMaster->restore(
@@ -664,7 +659,7 @@ sub run
 
         testPathRemove("${strTblSpcPath}/path");
 
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             # Create a relative link in PGDATA
             testLinkCreate("${strTblSpcPath}/99999", '../');
@@ -727,7 +722,7 @@ sub run
         testFileRemove("${strTblSpcPath}/99999");
 
         # Create tablespace with same initial dir name as $PGDATA
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbBasePath() . '_tbs');
 
@@ -764,7 +759,7 @@ sub run
                                               'f927212cd08d11a42a666b2f04235398e9ceeb51', $lTime, undef, true);
 
         # Create temp dir and file that will be ignored
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             $oHostDbMaster->dbPathCreate(\%oManifest, MANIFEST_TARGET_PGTBLSPC . '/1', DB_FILE_PREFIX_TMP);
             $oHostDbMaster->dbFileCreate(
@@ -808,10 +803,7 @@ sub run
             'bc46a4e0420d357db7bfbcb7b5fcbc613dc48c1b', $lTime);
 
         # Also create tablespace 11 to be sure it does not conflict with path of tablespace 1
-        if ($bNeutralTest)
-        {
-            $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
-        }
+        $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 11);
 
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2', {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME});
@@ -821,10 +813,7 @@ sub run
         $strType = BACKUP_TYPE_DIFF;
 
         # Drop tablespace 11
-        if ($bNeutralTest)
-        {
-            $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 11);
-        }
+        $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 11);
 
         # Create resumable backup from last backup
         $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}");
@@ -914,17 +903,14 @@ sub run
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
-        if ($bNeutralTest)
-        {
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
-        }
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
             $lTime, undef, undef, false);
 
-        if ($bNeutralTest)
+        if (!$bRemote)
         {
             $strBackup =$oHostBackup->backup(
             $strType, 'update files - fail on missing backup.info',
@@ -968,6 +954,9 @@ sub run
         $strType = BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
+        # Enable compression to ensure a warning is raised
+        $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_COMPRESS => 'y'}});
+
         my $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files - but won\'t affect manifest',
             {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
@@ -993,6 +982,12 @@ sub run
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPC2C',
             'ad7df329ab97a1e7d35f1ff0351c079319121836', $lTime, undef, undef, false);
 
+        # Enable hardlinks (except for s3) to ensure a warning is raised
+        if (!$bS3)
+        {
+            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_HARDLINK => 'y'}});
+        }
+
         $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files during backup',
             {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
@@ -1009,6 +1004,15 @@ sub run
         # Full Backup
         #-----------------------------------------------------------------------------------------------------------------------
         $strType = BACKUP_TYPE_FULL;
+
+        # Now the compression and hardlink changes will take effect
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
+
+        if (!$bS3)
+        {
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::true;
+            $oHostBackup->{bHardLink} = true;
+        }
 
         $oHostDbMaster->manifestReference(\%oManifest);
 
@@ -1029,15 +1033,7 @@ sub run
 
         # Call expire
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bRemote && !$bCompress)
-        {
-            $oHostBackup->expire({iRetentionFull => 1});
-        }
-        else
-        {
-            $oHostDbMaster->expire(
-                {iRetentionFull => 1, iExpectedExitStatus => $bRemote && $bCompress ? ERROR_HOST_INVALID : undef});
-        }
+        $oHostBackup->expire({iRetentionFull => 1});
 
         # Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
@@ -1146,7 +1142,7 @@ sub run
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the
         # directory is identical).
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest && !$bRemote)
+        if (!$bRemote)
         {
             executeTest('ls -1R ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/' . PATH_BACKUP_HISTORY),
                         {oLogTest => $self->expect(), bRemote => $bRemote});
@@ -1154,47 +1150,42 @@ sub run
 
         # Test config file validation
         #-----------------------------------------------------------------------------------------------------------------------
-        if ($bNeutralTest)
+        if ($bRemote)
         {
-            if ($bRemote)
-            {
-                # Save off config file and add an invalid option to the remote (DB master) and confirm no warning thrown
-                executeTest("cp " . $oHostDbMaster->backrestConfig() . " " . $oHostDbMaster->backrestConfig() . ".save");
-                $oHostDbMaster->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostDbMaster->backrestConfig(), undef,
-                    'root');
+            # Save off config file and add an invalid option to the remote (DB master) and confirm no warning thrown
+            executeTest("cp " . $oHostDbMaster->backrestConfig() . " " . $oHostDbMaster->backrestConfig() . ".save");
+            $oHostDbMaster->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostDbMaster->backrestConfig(), undef,
+                'root');
 
-                $strBackup = $oHostBackup->backup(
-                    $strType, 'config file not validated on remote', {oExpectedManifest => \%oManifest,
-                        strOptionalParam => '--log-level-console=detail'});
+            $strBackup = $oHostBackup->backup(
+                $strType, 'config file not validated on remote', {oExpectedManifest => \%oManifest,
+                    strOptionalParam => '--log-level-console=info'});
 
-                executeTest('sudo rm '. $oHostDbMaster->backrestConfig());
-                executeTest("mv " . $oHostDbMaster->backrestConfig() . ".save" . " " . $oHostDbMaster->backrestConfig());
-            }
-            else
-            {
-                # Save off config file and add an invalid option to the local backup host and confirm a warning is thrown
-                executeTest("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save");
-                $oHostBackup->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostBackup->backrestConfig(), undef, 'root');
+            executeTest('sudo rm '. $oHostDbMaster->backrestConfig());
+            executeTest("mv " . $oHostDbMaster->backrestConfig() . ".save" . " " . $oHostDbMaster->backrestConfig());
+        }
+        else
+        {
+            # Save off config file and add an invalid option to the local backup host and confirm a warning is thrown
+            executeTest("cp " . $oHostBackup->backrestConfig() . " " . $oHostBackup->backrestConfig() . ".save");
+            $oHostBackup->executeSimple("echo " . BOGUS . "=" . BOGUS . " >> " . $oHostBackup->backrestConfig(), undef, 'root');
 
-                $strBackup = $oHostBackup->backup(
-                    $strType, 'config file warning on local', {oExpectedManifest => \%oManifest,
-                        strOptionalParam => '--log-level-console=detail 2>&1'});
+            $strBackup = $oHostBackup->backup(
+                $strType, 'config file warning on local', {oExpectedManifest => \%oManifest,
+                    strOptionalParam => '--log-level-console=info 2>&1'});
 
-                executeTest('sudo rm '. $oHostBackup->backrestConfig());
-                executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
-            }
+            executeTest('sudo rm '. $oHostBackup->backrestConfig());
+            executeTest("mv " . $oHostBackup->backrestConfig() . ".save" . " " . $oHostBackup->backrestConfig());
         }
 
         # Test backup from standby warning that standby not configured so option reset
         #-----------------------------------------------------------------------------------------------------------------------
-        if (!defined($oHostDbStandby) && $bNeutralTest)
+        if (!defined($oHostDbStandby))
         {
             $strBackup = $oHostBackup->backup(
                 $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
-                    strOptionalParam => '--log-level-console=detail --' . OPTION_BACKUP_STANDBY});
+                    strOptionalParam => '--log-level-console=info --' . OPTION_BACKUP_STANDBY});
         }
-    }
-    }
     }
     }
 }

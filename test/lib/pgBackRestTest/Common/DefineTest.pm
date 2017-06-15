@@ -419,7 +419,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'synthetic',
-                    &TESTDEF_TOTAL => 9,
+                    &TESTDEF_TOTAL => 3,
                 },
                 {
                     &TESTDEF_NAME => 'real',

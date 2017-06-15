@@ -249,7 +249,7 @@ sub configRemap
     # Save db config file
     storageTest()->put($self->backrestConfig(), iniRender($oConfig, true));
 
-    # Save backup config file (but not is this is the standby which is not the source of backups)
+    # Save backup config file (but not if this is the standby which is not the source of backups)
     if (defined($oHostBackup))
     {
         # Modify the file permissions so it can be read/saved by all test users

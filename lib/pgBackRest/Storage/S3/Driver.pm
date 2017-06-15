@@ -171,7 +171,7 @@ sub manifest
             }
 
             $hManifest->{$strName}->{type} = 'f';
-            $hManifest->{$strName}->{size} = xmlTagText($oFile, "Size");
+            $hManifest->{$strName}->{size} = xmlTagText($oFile, 'Size') + 0;
 
             # Generate paths from the name if recursing
             if ($bRecurse)

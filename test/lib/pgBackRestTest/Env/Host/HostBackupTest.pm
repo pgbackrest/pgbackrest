@@ -462,7 +462,7 @@ sub backupCompare
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (storageTest->info(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}.gz")))->size;
+                    (storageRepo()->info(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}.gz"))->size;
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -1059,6 +1059,52 @@ sub configCreate
 
     # Modify the file permissions so it can be read/saved by all test users
     executeTest('sudo chmod 660 ' . $self->backrestConfig());
+}
+
+####################################################################################################################################
+# configUpdate - update configuration with new options
+####################################################################################################################################
+sub configUpdate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $hParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->configUpdate', \@_,
+            {name => 'hParam'},
+        );
+
+    # Load db config file
+    my $oConfig = iniParse(${storageTest()->get($self->backrestConfig())}, {bRelaxed => true});
+
+    # Load params
+    foreach my $strSection (keys(%{$hParam}))
+    {
+        foreach my $strKey (keys(%{$hParam->{$strSection}}))
+        {
+            $oConfig->{$strSection}{$strKey} = $hParam->{$strSection}{$strKey};
+        }
+    }
+
+    # Modify the file permissions so it can be saved by all test users
+    executeTest(
+        'sudo chmod 660 ' . $self->backrestConfig() . ' && sudo chmod 770 ' . dirname($self->backrestConfig()));
+
+    storageTest()->put($self->backrestConfig(), iniRender($oConfig, true));
+
+    # Fix permissions back to original
+    executeTest(
+        'sudo chmod 660 ' . $self->backrestConfig() . ' && sudo chmod 770 ' . dirname($self->backrestConfig()) .
+        ' && sudo chown ' . $self->userGet() . ' ' . $self->backrestConfig());
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
