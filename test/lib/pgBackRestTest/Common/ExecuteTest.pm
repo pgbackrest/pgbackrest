@@ -100,7 +100,11 @@ sub begin
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
     # Create select objects
-    $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 540, 65536);
+    $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 0, 65536);
+
+    # Record start time and set process timeout
+    $self->{iProcessTimeout} = 540;
+    $self->{lTimeStart} = time();
 
     if (!defined($self->{hError}))
     {
@@ -136,8 +140,15 @@ sub endRetry
     {
         my $bFound = false;
 
+        # Error if process has been running longer than timeout
+        if (time() - $self->{lTimeStart} > $self->{iProcessTimeout})
+        {
+            confess &log(ASSERT,
+                "timeout after $self->{iProcessTimeout} seconds waiting for process to complete: $self->{strCommand}");
+        }
+
         # Drain the stdout stream and look for test points
-        while (defined(my $strLine = $self->{oIo}->readLine(true)))
+        while (defined(my $strLine = $self->{oIo}->readLine(true, false)))
         {
             $self->{strOutLog} .= "${strLine}\n";
             $bFound = true;
@@ -169,7 +180,7 @@ sub endRetry
     my $iExitStatus = ${^CHILD_ERROR_NATIVE} >> 8;
 
     # Drain the stdout stream
-    while (defined(my $strLine = $self->{oIo}->readLine(true)))
+    while (defined(my $strLine = $self->{oIo}->readLine(true, false)))
     {
         $self->{strOutLog} .= "${strLine}\n";
 

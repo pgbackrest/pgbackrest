@@ -166,6 +166,14 @@
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix timeouts in <code>ExecuteTest</code> to speed multi-process testing.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-test-list>
         </release>
 
         <release date="2017-06-12" version="1.19" title="S3 Support">
