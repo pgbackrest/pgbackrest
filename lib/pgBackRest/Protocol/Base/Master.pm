@@ -95,12 +95,22 @@ sub greetingRead
     # Get the first line of output from the remote if possible
     my $strGreeting = $self->io()->readLine(true);
 
-    # Check for errors
-    $self->io()->error();
+    # Parse the greeting and make sure it is valid
+    my $hGreeting;
+
+    eval
+    {
+        $hGreeting = $self->{oJSON}->decode($strGreeting);
+
+        return true;
+    }
+    # Report any error that stopped parsing
+    or do
+    {
+        $self->io()->error(ERROR_PROTOCOL, 'invalid protocol greeting', $strGreeting);
+    };
 
     # Error if greeting parameters do not match
-    my $hGreeting = $self->{oJSON}->decode($strGreeting);
-
     for my $hParam ({strName => 'name', strExpected => BACKREST_NAME},
                     {strName => 'version', strExpected => BACKREST_VERSION},
                     {strName => 'service', strExpected => $self->{strName}})
