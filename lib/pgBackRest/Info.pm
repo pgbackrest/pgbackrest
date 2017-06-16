@@ -171,6 +171,24 @@ sub formatText
         # Output stanza name and status
         $strOutput .= (defined($strOutput) ? "\n" : '')  . $self->formatTextStanza($oStanzaInfo) . "\n";
 
+        # Output the archive information
+        foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
+        {
+            # Output archive start / stop values
+            $strOutput .=
+                "\n    db-id " . $hDbArchive->{&INFO_SECTION_DB}{&INFO_KEY_ID} . " wal archive min/max (" .
+                $hDbArchive->{&INFO_KEY_ID} . "): ";
+
+            if (defined($hDbArchive->{&INFO_KEY_MIN}))
+            {
+                $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
+            }
+            else
+            {
+                $strOutput .= 'none present';
+            }
+        }
+
         # Output information for each stanza backup, from oldest to newest
         foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
         {
@@ -212,21 +230,6 @@ sub formatTextStanza
         'stanza: ' . $oStanzaInfo->{&INFO_STANZA_NAME} . "\n" .
         "    status: " . ($oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
         INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')');
-
-    # Output archive start / stop values
-    $strOutput .=
-        "\n    wal archive min/max: ";
-
-    if (defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MIN}) &&
-        defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MAX}))
-    {
-        $strOutput .=
-            $oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MIN} . ' / ' . $oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MAX};
-    }
-    else
-    {
-        $strOutput .= 'none present';
-    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -373,6 +376,9 @@ sub stanzaList
             my $strArchiveStart;
             my $strArchiveStop;
 
+            # Array to store tne min/max archive for each database for which there are archives
+            my @oyDbArchiveList = ();
+
             # Loop through the DB history from oldest to newest
             foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
             {
@@ -421,15 +427,24 @@ sub stanzaList
                             last;
                         }
                     }
+
+                    my $hDbArchive =
+                    {
+                        &INFO_KEY_ID => $strArchiveId,
+                        &INFO_KEY_MIN => $strArchiveStart,
+                        &INFO_KEY_MAX => $strArchiveStop,
+                        &INFO_SECTION_DB =>
+                        {
+                            &INFO_KEY_ID => $hDbInfo->{&INFO_KEY_ID},
+                        },
+                    };
+
+                    push(@oyDbArchiveList, $hDbArchive);
                 }
             }
 
-            # Store only the last (current) database's archive min/max
-            $oStanzaInfo->{&INFO_SECTION_ARCHIVE} =
-            {
-                &INFO_KEY_MIN => $strArchiveStart,
-                &INFO_KEY_MAX => $strArchiveStop,
-            };
+            # Store the archive min/max for each database in the archive section
+            $oStanzaInfo->{&INFO_SECTION_ARCHIVE} = \@oyDbArchiveList;
 
             push @oyStanzaList, $oStanzaInfo;
         }

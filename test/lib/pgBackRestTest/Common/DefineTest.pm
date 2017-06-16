@@ -279,7 +279,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
 
                     &TESTDEF_COVERAGE =>
                     {

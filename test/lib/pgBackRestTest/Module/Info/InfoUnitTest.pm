@@ -112,20 +112,21 @@ sub run
         my $oInfo = new pgBackRest::Info();
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $hyStanza = $oInfo->stanzaList($self->stanza());
+        my $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[0])},
-            "stanza: db\n    status: error (no valid backups)\n    wal archive min/max: none present", "stanza text output");
+            "stanza: db\n    status: error (no valid backups)\n    db-id 1 wal archive min/max (9.4-1): none present",
+            "stanza text output");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
-        $hyStanza = $oInfo->stanzaList($self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
-            "stanza: db\n    status: ok\n    wal archive min/max: none present",
+            "stanza: db\n    status: ok\n    db-id 1 wal archive min/max (9.4-1): none present",
             "stanza text output");
 
         $self->testResult(sub {$oInfo->formatTextBackup(@{$hyStanza}[-1]->{&INFO_BACKUP_SECTION_BACKUP}[-1])},
-            "    full backup: 20161206-155728F\n" .
+            "    db-id 1 full backup: 20161206-155728F\n" .
             "        timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
             "        wal start/stop: n/a\n" .
             "        database size: 0B, backup size: 0B\n" .
@@ -134,14 +135,14 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $hyStanza = $oInfo->stanzaList($self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
-            "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000000000005",
-            "stanza text output");
+            "stanza: db\n    status: ok\n    db-id 1 wal archive min/max (9.4-1): 000000010000000000000000 / " .
+            "000000010000000000000005", "stanza text output");
 
         $self->testResult(sub {$oInfo->formatTextBackup(@{$hyStanza}[-1]->{&INFO_BACKUP_SECTION_BACKUP}[-1])},
-            "    diff backup: 20161206-155728F_20161207-155728D\n" .
+            "    db-id 1 diff backup: 20161206-155728F_20161207-155728D\n" .
             "        timestamp start/stop: 2016-12-07 15:57:28 / 2016-12-07 15:57:28\n" .
             "        wal start/stop: 000000010000000000000000 / 000000010000000000000002\n" .
             "        database size: 0B, backup size: 0B\n" .
@@ -150,19 +151,38 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 256);
-        $hyStanza = $oInfo->stanzaList($self->stanza());
+        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
 
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
-            "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000100000008",
-            "stanza text output");
+            "stanza: db\n    status: ok\n    db-id 1 wal archive min/max (9.4-1): 000000010000000000000000 / " .
+            "000000010000000100000008", "stanza text output");
 
         $self->testResult(sub {$oInfo->formatTextBackup(@{$hyStanza}[-1]->{&INFO_BACKUP_SECTION_BACKUP}[-1])},
-            "    incr backup: 20161206-155728F_20161208-155728I\n" .
+            "    db-id 1 incr backup: 20161206-155728F_20161208-155728I\n" .
             "        timestamp start/stop: 2016-12-08 15:57:28 / 2016-12-08 15:57:28\n" .
             "        wal start/stop: 000000010000000000000006 / 000000010000000100000005\n" .
             "        database size: 0B, backup size: 0B\n" .
             "        repository size: 0B, repository backup size: 0B",
             "incr backup text output");
+
+        # Miscellaneous test for undefined values and backup-reference
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oBackupInfo = @{$hyStanza}[-1]->{&INFO_BACKUP_SECTION_BACKUP}[-1];
+        $oBackupInfo->{archive}{stop} = undef;
+        $oBackupInfo->{info}{size} = undef;
+        $oBackupInfo->{info}{delta} = undef;
+        $oBackupInfo->{info}{repository}{size} = undef;
+        $oBackupInfo->{info}{repository}{delta} = undef;
+        @{$oBackupInfo->{reference}} = ('20161206-155728F');
+
+        $self->testResult(sub {$oInfo->formatTextBackup($oBackupInfo)},
+            "    db-id 1 incr backup: 20161206-155728F_20161208-155728I\n" .
+            "        timestamp start/stop: 2016-12-08 15:57:28 / 2016-12-08 15:57:28\n" .
+            "        wal start/stop: n/a\n" .
+            "        database size: , backup size: \n" .
+            "        repository size: , repository backup size: \n" .
+            "        backup reference list: 20161206-155728F",
+            "undefined values for backup and reference");
 
         # Upgrade the stanza, generate archive and confirm the min/max archive is for the new (current) DB version
         #---------------------------------------------------------------------------------------------------------------------------
@@ -174,6 +194,86 @@ sub run
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[-1])},
             "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000000000004",
             "stanza text output");
+    }
+    
+    ################################################################################################################################
+    if ($self->begin("Info->process() && Info->formatText()"))
+    {
+        $self->configLoadExpect(dclone($oOption), CMD_INFO);
+
+        my $oInfo = new pgBackRest::Info();
+
+        # Output default text option with no stanza defined
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oInfo->process()}, 0, 'default text option');
+
+        # Invalid option
+        #---------------------------------------------------------------------------------------------------------------------------
+        optionSet(OPTION_OUTPUT, BOGUS);
+
+        $self->testException(sub {$oInfo->process()}, ERROR_ASSERT, "invalid info output option '" . BOGUS . "'");
+
+        # Output json option with no stanza defined
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionSetTest($oOption, OPTION_OUTPUT, INFO_OUTPUT_JSON);
+        $self->configLoadExpect(dclone($oOption), CMD_INFO);
+
+        $self->testResult(sub {$oInfo->process()}, 0, 'json option');
+
+        # Add linefeed to JSON
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strJson = '[{"archive" : 1}]';
+        $self->testResult(sub {$oInfo->outputJSON($strJson)}, 1, 'add linefeed to json');
+
+        # No stanzas exist
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Remove stanza paths
+        executeTest('rmdir ' . $self->{strArchivePath});
+        executeTest('rmdir ' . $self->{strBackupPath});
+
+        $self->optionSetTest($oOption, OPTION_OUTPUT, INFO_OUTPUT_TEXT);
+        $self->configLoadExpect(dclone($oOption), CMD_INFO);
+
+        $self->testResult(sub {$oInfo->process()}, 0, 'No stanzas exist');
+
+        # Create more than one stanza
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Create archive info paths
+        filePathCreate($self->{strArchivePath}, undef, true, true);
+        filePathCreate("$self->{strRepoPath}/archive/" . BOGUS, undef, true, true);
+
+        # Create backup info paths
+        filePathCreate($self->{strBackupPath}, undef, true, true);
+        filePathCreate("$self->{strRepoPath}/backup/" . BOGUS, undef, true, true);
+
+        my $hyStanza = $oInfo->stanzaList($self->{oFile});
+        $self->testResult(sub {$oInfo->formatText($hyStanza)},
+            "stanza: bogus\n    status: error (no valid backups)\n\n" .
+            "stanza: db\n    status: error (no valid backups)\n", 'fomatText multiple stanzas');
+
+        # Define the stanza option
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+        $self->optionReset($oOption, OPTION_OUTPUT);
+        $self->configLoadExpect(dclone($oOption), CMD_INFO);
+
+        $self->testResult(sub {$oInfo->process()}, 0, 'stanza set');
+
+        # Output stanza name and status backup for more than one stanza
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->initStanzaCreate();
+        $self->configLoadExpect(dclone($oOption), CMD_INFO);
+
+        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
+        $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
+        $self->testResult(sub {$oInfo->formatText($hyStanza)},
+            "stanza: db\n    status: ok\n    db-id 1 wal archive min/max (9.4-1): none present\n\n" .
+            "    db-id 1 full backup: 20161209-155728F\n" .
+            "        timestamp start/stop: 2016-12-09 15:57:28 / 2016-12-09 15:57:28\n" .
+            "        wal start/stop: n/a\n" .
+            "        database size: 0B, backup size: 0B\n" .
+            "        repository size: 0B, repository backup size: 0B\n",
+            "formatText() output");
     }
 }
 
