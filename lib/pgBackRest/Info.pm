@@ -171,28 +171,57 @@ sub formatText
         # Output stanza name and status
         $strOutput .= (defined($strOutput) ? "\n" : '')  . $self->formatTextStanza($oStanzaInfo) . "\n";
 
-        # Output the archive information
-        foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
-        {
-            # Output archive start / stop values
-            $strOutput .=
-                "\n    db-id " . $hDbArchive->{&INFO_SECTION_DB}{&INFO_KEY_ID} . " wal archive min/max (" .
-                $hDbArchive->{&INFO_KEY_ID} . "): ";
+        my $bDbCurrent = true;
 
-            if (defined($hDbArchive->{&INFO_KEY_MIN}))
-            {
-                $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
-            }
-            else
-            {
-                $strOutput .= 'none present';
-            }
-        }
+        # Reorder the DB history for the stanza from newest to oldest
+        @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}} = sort {$b cmp $a} @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}};
 
-        # Output information for each stanza backup, from oldest to newest
-        foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
+        foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
         {
-            $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+            # If this is not the current database and no WAL is defined, skip this DB entirely
+            if (!$bDbCurrent && !defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}))
+            {
+                next;
+            }
+
+            $strOutput .= $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
+
+            $bDbCurrent = false;
+
+            if (!defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}))
+            {
+                $strOutput .= "\n        wal archive min/max: none present\n";
+            }
+
+            # Output the archive information for the DB
+            foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
+            {
+                if ($hDbArchive->{&INFO_SECTION_DB}{&INFO_HISTORY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
+                {
+                    # Output archive start / stop values
+                    $strOutput .= "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
+
+                    if (defined($hDbArchive->{&INFO_KEY_MIN}))
+                    {
+                        $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
+                    }
+                    else
+                    {
+                        $strOutput .= 'none present';
+                    }
+
+                    $strOutput .= "\n";
+                }
+            }
+
+            # Output information for each stanza backup for the DB, from oldest to newest
+            foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
+            {
+                if ($oBackupInfo->{&INFO_SECTION_DB}{&INFO_KEY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
+                {
+                    $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+                }
+            }
         }
     }
 
@@ -261,14 +290,14 @@ sub formatTextBackup
         );
 
     my $strOutput =
-        '    ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
+        '        ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
 
-        '        timestamp start/stop: ' .
+        '            timestamp start/stop: ' .
         timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
         ' / ' .
         timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP}) . "\n" .
 
-        "        wal start/stop: ";
+        "            wal start/stop: ";
 
     if (defined($oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_START}) &&
         defined($oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_STOP}))
@@ -282,14 +311,14 @@ sub formatTextBackup
     }
 
     $strOutput .=
-        "\n        database size: " .
+        "\n            database size: " .
         (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
             fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '') .
         ', backup size: ' .
         (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
             fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '') . "\n" .
 
-        '        repository size: ' .
+        '            repository size: ' .
         (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
             fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '') .
         ', repository backup size: ' .
@@ -299,7 +328,7 @@ sub formatTextBackup
     # List the backup reference chain, if any, for this backup
     if (defined($oBackupInfo->{&INFO_KEY_REFERENCE}) && @{$oBackupInfo->{&INFO_KEY_REFERENCE}} > 0)
     {
-        $strOutput .= "\n        backup reference list: " . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}}));
+        $strOutput .= "\n            backup reference list: " . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}}));
     }
 
     # Return from function and log return values if any
@@ -435,7 +464,7 @@ sub stanzaList
                         &INFO_KEY_MAX => $strArchiveStop,
                         &INFO_SECTION_DB =>
                         {
-                            &INFO_KEY_ID => $hDbInfo->{&INFO_KEY_ID},
+                            &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
                         },
                     };
 

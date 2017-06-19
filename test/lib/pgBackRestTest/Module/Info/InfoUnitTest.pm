@@ -114,7 +114,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $hyStanza = $oInfo->stanzaList($self->{oFile}, $self->stanza());
         $self->testResult(sub {$oInfo->formatTextStanza(@{$hyStanza}[0])},
-            "stanza: db\n    status: error (no valid backups)\n    db-id 1 wal archive min/max (9.4-1): none present",
+            "stanza: db\n    status: error (no valid backups)\n    db ( " . PG_VERSION_94 . WAL_VERSION_94_SYS_ID . ")\n"
+            "        wal archive not present\n",
             "stanza text output");
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -195,7 +196,7 @@ sub run
             "stanza: db\n    status: ok\n    wal archive min/max: 000000010000000000000000 / 000000010000000000000004",
             "stanza text output");
     }
-    
+
     ################################################################################################################################
     if ($self->begin("Info->process() && Info->formatText()"))
     {
