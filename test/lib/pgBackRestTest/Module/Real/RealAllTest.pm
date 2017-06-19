@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# FullRealTest.pm - Tests for all commands against a real database
+# Test All Commands On PostgreSQL Clusters
 ####################################################################################################################################
-package pgBackRestTest::Module::Full::FullRealTest;
+package pgBackRestTest::Module::Real::RealAllTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

@@ -95,18 +95,18 @@ sub process
     {
         my $hVm = vmGet();
         my @stryModule;
-        my $strFullModule = undef;
+        my $strRealModule = undef;
 
         # Get all modules but full to break up the tests
         foreach my $strModule (testDefModuleList())
         {
-            if ($strModule ne 'full')
+            if ($strModule ne 'real')
             {
                 push(@stryModule, $strModule);
             }
             else
             {
-                $strFullModule = $strModule;
+                $strRealModule = $strModule;
             }
         }
 
@@ -119,39 +119,21 @@ sub process
                 join(' --module=', @stryModule) . ($bFirst ? '' : " ${strConfigNotFirst}") . "\"\n";
         $bFirst = false;
 
-        # Now generate full tests
-        my $strRealTest = undef;
-
-        if (!defined($strFullModule))
+        # Now generate real tests
+        if (!defined($strRealModule))
         {
-            confess "${strFullModule} module not found, has the name changed?";
+            confess "${strRealModule} module not found, has the name changed?";
         }
 
-        foreach my $strTest (testDefModuleTestList($strFullModule))
+        foreach my $strTest (testDefModuleTestList($strRealModule))
         {
-            if ($strTest eq 'real')
-            {
-                $strRealTest = $strTest;
-
-                foreach my $strDbVersion (sort {$b cmp $a} @{$hVm->{$strVm}{&VM_DB_MINIMAL}})
-                {
-                    $strConfig .=
-                        "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=${strDbVersion}\"" .
-                            " PGB_TEST_PARAM=\"--module=full --test=real --db=${strDbVersion}" .
-                            " --process-max=2 ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
-                }
-            }
-            else
+            foreach my $strDbVersion (sort {$b cmp $a} @{$hVm->{$strVm}{&VM_DB_MINIMAL}})
             {
                 $strConfig .=
-                    "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\"" .
-                        " PGB_TEST_PARAM=\"--vm-max=2 --module=full --test=${strTest} ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
+                    "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=${strDbVersion}\"" .
+                        " PGB_TEST_PARAM=\"--module=${strRealModule} --db=${strDbVersion}" .
+                        " --process-max=2 ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
             }
-        }
-
-        if (!defined($strRealTest))
-        {
-            confess "${strRealTest} test not found in ${strFullModule} module, has the name changed?";
         }
     }
 

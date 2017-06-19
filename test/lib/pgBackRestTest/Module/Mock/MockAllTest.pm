@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# FullSyntheticTest.pm - Tests for all commands that can be run against synthetic data
+# Test All Commands on Mock Data
 ####################################################################################################################################
-package pgBackRestTest::Module::Full::FullSyntheticTest;
+package pgBackRestTest::Module::Mock::MockAllTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################

@@ -186,6 +186,10 @@
                     <release-item>
                         <p>Combine hardlink and non/compressed in synthetic tests to reduce test time and improve coverage.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Split <id>full</id> module into <id>mock</id> and <id>real</id> to allow better test combinations and save time in CI.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

@@ -408,9 +408,9 @@ my $oTestDef =
                 },
             ]
         },
-        # Full tests
+        # Mock tests
         {
-            &TESTDEF_NAME => 'full',
+            &TESTDEF_NAME => 'mock',
             &TESTDEF_EXPECT => true,
             &TESTDEF_INDIVIDUAL => true,
             &TESTDEF_PROCESS => true,
@@ -418,11 +418,22 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'synthetic',
+                    &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 3,
                 },
+            ]
+        },
+        # Real tests
+        {
+            &TESTDEF_NAME => 'real',
+            &TESTDEF_EXPECT => true,
+            &TESTDEF_INDIVIDUAL => true,
+            &TESTDEF_PROCESS => true,
+
+            &TESTDEF_TEST =>
+            [
                 {
-                    &TESTDEF_NAME => 'real',
+                    &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 12,
                     &TESTDEF_DB => true,
                 }
