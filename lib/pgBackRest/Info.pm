@@ -119,16 +119,7 @@ sub process
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
-        my $strJSON = $oJSON->encode($oyStanzaList);
-
-        syswrite(*STDOUT, $strJSON);
-
-        # On some systems a linefeed will be appended by encode() but others will not have it.  In our case there should always
-        # be a terminating linefeed.
-        if ($strJSON !~ /\n$/)
-        {
-            syswrite(*STDOUT, "\n");
-        }
+        $self->outputJSON($oJSON->encode($oyStanzaList));
     }
     else
     {
@@ -141,6 +132,35 @@ sub process
         $strOperation,
         {name => 'iResult', value => 0, trace => true}
     );
+}
+
+####################################################################################################################################
+# outputJSON
+###################################################################################################################################
+sub outputJSON
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strJSON,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->outputJSON', \@_,
+            {name => 'strJSON'},
+        );
+
+    syswrite(*STDOUT, $strJSON);
+
+    # On some systems a linefeed will be appended by encode() but others will not have it.  In our case there should always
+    # be a terminating linefeed.
+    if ($strJSON !~ /\n$/)
+    {
+        syswrite(*STDOUT, "\n");
+    }
 }
 
 ####################################################################################################################################
