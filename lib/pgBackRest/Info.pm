@@ -165,23 +165,22 @@ sub formatText
         );
 
     my $strOutput;
-    my $strArchiveNotPresent = "\n        wal archive min/max: none present\n";
 
     foreach my $oStanzaInfo (@{$oyStanzaList})
     {
         # Output stanza name and status
         $strOutput .= (defined($strOutput) ? "\n" : '')  . $self->formatTextStanza($oStanzaInfo) . "\n";
 
-        my $bDbCurrent = true;
-
         # Reorder the DB history for the stanza from newest to oldest
         @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}} = sort {$b cmp $a} @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}};
 
+        # Initialize the flag to indicate the first DB in the INFO_BACKUP_SECTION_DB is the current database
+        my $bDbCurrent = true;
+
         foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
         {
-            my $strArchiveOutput = undef;
-            my $strBackupOutput = undef;
-            my $strDbOutput = $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
+            $strOutput .= $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
+            $bDbCurrent = false;
 
             # Get the archive information for the DB
             foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
@@ -189,18 +188,18 @@ sub formatText
                 if ($hDbArchive->{&INFO_SECTION_DB}{&INFO_HISTORY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
                 {
                     # Output archive start / stop values
-                    $strArchiveOutput = "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
+                    $strOutput .= "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
 
                     if (defined($hDbArchive->{&INFO_KEY_MIN}))
                     {
-                        $strArchiveOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
+                        $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
                     }
                     else
                     {
-                        $strArchiveOutput .= 'none present';
+                        $strOutput .= 'none present';
                     }
 
-                    $strArchiveOutput .= "\n";
+                    $strOutput .= "\n";
                 }
             }
 
@@ -209,24 +208,9 @@ sub formatText
             {
                 if ($oBackupInfo->{&INFO_SECTION_DB}{&INFO_KEY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
                 {
-                    $strBackupOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+                    $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
                 }
             }
-
-            # If the archive info is not defined and this is the current database or if it is a prior database
-            # and there is backup info, then set the output for the archive info to not present.
-            if  (!defined($strArchiveOutput) && ($bDbCurrent || (!$bDbCurrent && defined($strBackupOutput))))
-            {
-                $strArchiveOutput = $strArchiveNotPresent;
-            }
-
-            # Add the sections to display to the output
-            if (defined($strArchiveOutput))
-            {
-                $strOutput .= $strDbOutput . $strArchiveOutput . (defined($strBackupOutput) ? $strBackupOutput : '');
-            }
-
-            $bDbCurrent = false;
         }
     }
 
@@ -413,6 +397,11 @@ sub stanzaList
             # Array to store tne min/max archive for each database for which there are archives
             my @oyDbArchiveList = ();
 
+            # Get the current DB info (always last element in the array)
+            my $hDbCurrent = @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}}[-1];
+            my $strDbCurrentVersion = $hDbCurrent->{&INFO_KEY_VERSION};
+            my $ullDbCurrentSystemId = $hDbCurrent->{&INFO_KEY_SYSTEM_ID};
+
             # Loop through the DB history from oldest to newest
             foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
             {
@@ -461,7 +450,12 @@ sub stanzaList
                             last;
                         }
                     }
+                }
 
+                # If there is an archive or the database is the current database then store it
+                if (defined($strArchiveStart) || ($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
+                    $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}))
+                {
                     my $hDbArchive =
                     {
                         &INFO_KEY_ID => $strArchiveId,
