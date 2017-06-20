@@ -165,6 +165,7 @@ sub formatText
         );
 
     my $strOutput;
+    my $strArchiveNotPresent = "\n        wal archive min/max: none present\n";
 
     foreach my $oStanzaInfo (@{$oyStanzaList})
     {
@@ -178,50 +179,54 @@ sub formatText
 
         foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
         {
-            # If this is not the current database and no WAL is defined, skip this DB entirely
-            if (!$bDbCurrent && !defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}))
-            {
-                next;
-            }
+            my $strArchiveOutput = undef;
+            my $strBackupOutput = undef;
+            my $strDbOutput = $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
 
-            $strOutput .= $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
-
-            $bDbCurrent = false;
-
-            if (!defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}))
-            {
-                $strOutput .= "\n        wal archive min/max: none present\n";
-            }
-
-            # Output the archive information for the DB
+            # Get the archive information for the DB
             foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
             {
                 if ($hDbArchive->{&INFO_SECTION_DB}{&INFO_HISTORY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
                 {
                     # Output archive start / stop values
-                    $strOutput .= "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
+                    $strArchiveOutput = "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
 
                     if (defined($hDbArchive->{&INFO_KEY_MIN}))
                     {
-                        $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
+                        $strArchiveOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
                     }
                     else
                     {
-                        $strOutput .= 'none present';
+                        $strArchiveOutput .= 'none present';
                     }
 
-                    $strOutput .= "\n";
+                    $strArchiveOutput .= "\n";
                 }
             }
 
-            # Output information for each stanza backup for the DB, from oldest to newest
+            # Get information for each stanza backup for the DB, from oldest to newest
             foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
             {
                 if ($oBackupInfo->{&INFO_SECTION_DB}{&INFO_KEY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
                 {
-                    $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+                    $strBackupOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
                 }
             }
+
+            # If the archive info is not defined and this is the current database or if it is a prior database
+            # and there is backup info, then set the output for the archive info to not present.
+            if  (!defined($strArchiveOutput) && ($bDbCurrent || (!$bDbCurrent && defined($strBackupOutput))))
+            {
+                $strArchiveOutput = $strArchiveNotPresent;
+            }
+
+            # Add the sections to display to the output
+            if (defined($strArchiveOutput))
+            {
+                $strOutput .= $strDbOutput . $strArchiveOutput . (defined($strBackupOutput) ? $strBackupOutput : '');
+            }
+
+            $bDbCurrent = false;
         }
     }
 
