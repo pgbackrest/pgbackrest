@@ -936,11 +936,6 @@ sub configCreate
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROTOCOL_TIMEOUT} = 60;
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_DB_TIMEOUT} = 45;
 
-    if ($self->processMax() > 1)
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = $self->processMax();
-    }
-
     if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
@@ -1330,7 +1325,6 @@ sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
 sub repoPath {return shift->{strRepoPath}}
 sub stanza {return testRunGet()->stanza()}
-sub processMax {return testRunGet()->processMax()}
 sub synthetic {return shift->{bSynthetic}}
 
 1;

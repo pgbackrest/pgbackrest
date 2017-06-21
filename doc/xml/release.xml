@@ -216,6 +216,10 @@
                     <release-item>
                         <p>Remove <proper>Ubuntu 12.04</proper> from CI now that it is EOL (it can still be run manually).</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove <setting>process-max</setting> option.  Parallelism is now tested in a more targeted manner and the high level option is no longer needed.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

@@ -131,7 +131,7 @@ sub process
         "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
+        "  - " . BACKREST_EXE . "/test/test.pl --vm-max=2 --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
 
     $self->{oStorage}->put('.travis.yml', $strConfig);
 

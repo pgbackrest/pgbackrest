@@ -60,7 +60,7 @@ sub run
         # Increment the run, log, and decide whether this unit test should be run
         next if (!$self->begin(
             "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}",
-            $self->processMax() == 1 && $self->pgVersion() eq PG_VERSION_96));
+            $self->pgVersion() eq PG_VERSION_96));
 
         # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
         my $hyVm = vmGet();

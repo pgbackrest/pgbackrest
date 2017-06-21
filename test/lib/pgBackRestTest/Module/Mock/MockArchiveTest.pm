@@ -84,8 +84,7 @@ sub run
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin(
-            "rmt ${bRemote}, s3 ${bS3}", $self->processMax() == 1)) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(

@@ -43,9 +43,6 @@ use constant TESTDEF_EXPECT                                         => 'expect';
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
-# Determines if the test will be run with multiple processes
-use constant TESTDEF_PROCESS                                        => 'process';
-    push @EXPORT, qw(TESTDEF_PROCESS);
 # Total runs in the test
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
@@ -453,7 +450,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_PROCESS, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

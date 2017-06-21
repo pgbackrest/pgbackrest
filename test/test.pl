@@ -66,7 +66,6 @@ test.pl [options]
    --module             test module to execute
    --test               execute the specified test in a module
    --run                execute only the specified test run
-   --process-max        max processes to run for compression/transfer (default 1)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --db-version         version of postgres to test (all, defaults to minimal)
@@ -106,7 +105,6 @@ my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
 my @iyModuleTestRun;
-my $iProcessMax = undef;
 my $iVmMax = 1;
 my $iVmId = undef;
 my $bDryRun = false;
@@ -146,7 +144,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'module=s@' => \@stryModule,
             'test=s@' => \@stryModuleTest,
             'run=s@' => \@iyModuleTestRun,
-            'process-max=s' => \$iProcessMax,
             'vm-id=s' => \$iVmId,
             'vm-max=s' => \$iVmMax,
             'dry-run' => \$bDryRun,
@@ -197,7 +194,6 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $iProcessMax = 1;
     }
 
     ################################################################################################################################
@@ -208,7 +204,6 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $iProcessMax = 1;
         $strVm = VM_CO7;
         $strDbVersion = '9.6';
         $bLogForce = true;
@@ -236,12 +231,6 @@ eval
     if (@iyModuleTestRun != 0 && @stryModuleTest != 1)
     {
         confess "Only one --test can be provided when --run is specified";
-    }
-
-    # Check process total
-    if (defined($iProcessMax) && ($iProcessMax < 1 || $iProcessMax > OPTION_DEFAULT_PROCESS_MAX_MAX))
-    {
-        confess 'process-max must be between 1 and ' . OPTION_DEFAULT_PROCESS_MAX_MAX;
     }
 
     # Set test path if not expicitly set
@@ -611,7 +600,7 @@ eval
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverageOnly);
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly);
 
         if (@{$oyTestRun} == 0)
         {
@@ -863,7 +852,7 @@ eval
         $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
-        $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
+        $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)

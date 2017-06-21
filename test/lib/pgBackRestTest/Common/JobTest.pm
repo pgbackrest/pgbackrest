@@ -121,7 +121,6 @@ sub run
                               ', module=' . $self->{oTest}->{&TEST_MODULE} .
                               ', test=' . $self->{oTest}->{&TEST_NAME} .
                               (defined($self->{oTest}->{&TEST_RUN}) ? ', run=' . join(',', @{$self->{oTest}->{&TEST_RUN}}) : '') .
-                              (defined($self->{oTest}->{&TEST_PROCESS}) ? ', process-max=' . $self->{oTest}->{&TEST_PROCESS} : '') .
                               (defined($self->{oTest}->{&TEST_DB}) ? ', db=' . $self->{oTest}->{&TEST_DB} : '') .
                               ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
@@ -177,7 +176,6 @@ sub run
             ' --test=' . $self->{oTest}->{&TEST_NAME} .
             $strCommandRunParam .
             (defined($self->{oTest}->{&TEST_DB}) ? ' --db-version=' . $self->{oTest}->{&TEST_DB} : '') .
-            (defined($self->{oTest}->{&TEST_PROCESS}) ? ' --process-max=' . $self->{oTest}->{&TEST_PROCESS} : '') .
             ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
             ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
             ($self->{bLogForce} ? ' --log-force' : '') .

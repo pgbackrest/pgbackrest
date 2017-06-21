@@ -33,8 +33,6 @@ use constant TEST_PGSQL_BIN                                         => 'pgsql-bi
     push @EXPORT, qw(TEST_PGSQL_BIN);
 use constant TEST_RUN                                               => 'run';
     push @EXPORT, qw(TEST_RUN);
-use constant TEST_PROCESS                                           => 'process';
-    push @EXPORT, qw(TEST_PROCESS);
 use constant TEST_VM                                                => 'os';
     push @EXPORT, qw(TEST_VM);
 use constant TEST_PERL_ARCH_PATH                                    => VMDEF_PERL_ARCH_PATH;
@@ -50,7 +48,6 @@ sub testListGet
     my $stryModuleTest = shift;
     my $iyModuleTestRun = shift;
     my $strDbVersion = shift;
-    my $iProcessMax = shift;
     my $bCoverageOnly = shift;
 
     my $oyVm = vmGet();
@@ -128,48 +125,36 @@ sub testListGet
                                     # Skip this run if only coverage tests are requested and this test does not provide coverage
                                     next if ($bCoverageOnly && !defined($hTest->{&TESTDEF_COVERAGE}));
 
-                                    my $iyProcessMax = [defined($iProcessMax) ? $iProcessMax : 1];
+                                    my $strDbVersion = $iDbVersionIdx == -1 ? undef :
+                                                           ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx];
 
-                                    if (defined($hTest->{&TESTDEF_PROCESS}) && $hTest->{&TESTDEF_PROCESS} &&
-                                        !defined($iProcessMax) && $bFirstDbVersion)
+                                    my $strPgSqlBin = $$oyVm{$strTestOS}{&VMDEF_PGSQL_BIN};
+
+                                    if (defined($strDbVersion))
                                     {
-                                        $iyProcessMax = [1, 4];
+                                        $strPgSqlBin =~ s/\{\[version\]\}/$strDbVersion/g;
+                                    }
+                                    else
+                                    {
+                                        $strPgSqlBin =~ s/\{\[version\]\}/9\.4/g;
                                     }
 
-                                    foreach my $iProcessTestMax (@{$iyProcessMax})
+                                    my $oTestRun =
                                     {
-                                        my $strDbVersion = $iDbVersionIdx == -1 ? undef :
-                                                               ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx];
+                                        &TEST_VM => $strTestOS,
+                                        &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
+                                            $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
+                                        &TEST_PGSQL_BIN => $strPgSqlBin,
+                                        &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
+                                        &TEST_MODULE => $strModule,
+                                        &TEST_NAME => $strModuleTest,
+                                        &TEST_RUN =>
+                                            $iTestRunIdx == -1 ? (@{$iyModuleTestRun} == 0 ? undef : $iyModuleTestRun) :
+                                                [$iTestRunIdx],
+                                        &TEST_DB => $strDbVersion
+                                    };
 
-                                        my $strPgSqlBin = $$oyVm{$strTestOS}{&VMDEF_PGSQL_BIN};
-
-                                        if (defined($strDbVersion))
-                                        {
-                                            $strPgSqlBin =~ s/\{\[version\]\}/$strDbVersion/g;
-                                        }
-                                        else
-                                        {
-                                            $strPgSqlBin =~ s/\{\[version\]\}/9\.4/g;
-                                        }
-
-                                        my $oTestRun =
-                                        {
-                                            &TEST_VM => $strTestOS,
-                                            &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
-                                                $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
-                                            &TEST_PGSQL_BIN => $strPgSqlBin,
-                                            &TEST_PERL_ARCH_PATH => $$oyVm{$strTestOS}{&VMDEF_PERL_ARCH_PATH},
-                                            &TEST_MODULE => $strModule,
-                                            &TEST_NAME => $strModuleTest,
-                                            &TEST_RUN =>
-                                                $iTestRunIdx == -1 ? (@{$iyModuleTestRun} == 0 ? undef : $iyModuleTestRun) :
-                                                    [$iTestRunIdx],
-                                            &TEST_PROCESS => $iProcessTestMax,
-                                            &TEST_DB => $strDbVersion
-                                        };
-
-                                        push(@{$oyTestRun}, $oTestRun);
-                                    }
+                                    push(@{$oyTestRun}, $oTestRun);
                                 }
 
                                 $bFirstDbVersion = false;
