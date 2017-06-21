@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ArchivePushUnitTest.pm - Unit tests for ArchivePush and ArchivePush Async
+# Archive Push Tests
 ####################################################################################################################################
-package pgBackRestTest::Module::Archive::ArchivePushUnitTest;
+package pgBackRestTest::Module::Archive::ArchivePushTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
