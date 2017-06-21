@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ARCHIVE PUSH FILE MODULE
 ####################################################################################################################################
-package pgBackRest::Archive::ArchivePushFile;
+package pgBackRest::Archive::Push::File;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -12,8 +12,8 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(basename dirname);
 
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -69,7 +69,7 @@ sub archivePushCheck
         if ($bWalSegment)
         {
             # If the info file exists check db version and system-id else error
-            $strArchiveId = (new pgBackRest::Archive::ArchiveInfo(
+            $strArchiveId = (new pgBackRest::Archive::Info(
                 $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
 
             # Check if the WAL segment already exists in the archive
@@ -83,7 +83,7 @@ sub archivePushCheck
         # Else just get the archive id
         else
         {
-            $strArchiveId = (new pgBackRest::Archive::ArchiveInfo($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->archiveId();
+            $strArchiveId = (new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->archiveId();
         }
     }
 

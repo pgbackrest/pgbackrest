@@ -5,7 +5,7 @@
 # regarding the stanza database version, database WAL segment system id and other information to ensure that archiving is being
 # performed on the proper database.
 ####################################################################################################################################
-package pgBackRest::Archive::ArchiveInfo;
+package pgBackRest::Archive::Info;
 use parent 'pgBackRest::Common::Ini';
 
 use strict;
@@ -17,7 +17,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
 
-use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Config::Config;
 use pgBackRest::Common::Ini;

@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # ARCHIVE GET MODULE
 ####################################################################################################################################
-package pgBackRest::Archive::ArchiveGet;
-use parent 'pgBackRest::Archive::Archive';
+package pgBackRest::Archive::Get::Get;
+use parent 'pgBackRest::Archive::Base';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -18,8 +18,8 @@ use Scalar::Util qw(blessed);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Info;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
@@ -160,7 +160,7 @@ sub getArchiveId
     }
     else
     {
-        $strArchiveId = (new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->archiveId();
+        $strArchiveId = (new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->archiveId();
     }
 
     # Return from function and log return values if any

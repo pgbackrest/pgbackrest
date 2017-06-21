@@ -13,7 +13,7 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
@@ -295,7 +295,7 @@ sub run
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
                 {strOptionalParam => ' --' . OPTION_DB_PATH . '=' . $oHostDbMaster->dbPath() . '/testbase/ --no-' . OPTION_ONLINE .
                 ' --' . OPTION_FORCE});
-            my $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet('archive/' . $self->stanza()));
+            my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
 
             # Read info files to confirm the files were created with a different database version
@@ -318,7 +318,7 @@ sub run
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
-            $oAchiveInfo = new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet('archive/' . $self->stanza()));
+            $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
             $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
                 $self->pgVersion())}, true, 'archive upgrade online corrects db');

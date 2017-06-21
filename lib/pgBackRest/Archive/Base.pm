@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ARCHIVE MODULE
 ####################################################################################################################################
-package pgBackRest::Archive::Archive;
+package pgBackRest::Archive::Base;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -11,8 +11,8 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::Info;
+use pgBackRest::Archive::Common;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
@@ -97,7 +97,7 @@ sub getCheck
     {
         # check that the archive info is compatible with the database
         $strArchiveId =
-            (new pgBackRest::Archive::ArchiveInfo(
+            (new pgBackRest::Archive::Info(
                 storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
 
         if (defined($strWalFile))

@@ -63,17 +63,6 @@ use constant TESTDEF_COVERAGE_PARTIAL                               => false;
 ################################################################################################################################
 # Code modules
 ################################################################################################################################
-use constant TESTDEF_MODULE_ARCHIVE                                 => 'Archive';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE);
-use constant TESTDEF_MODULE_ARCHIVE_COMMON                          => TESTDEF_MODULE_ARCHIVE . '/ArchiveCommon';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_COMMON);
-use constant TESTDEF_MODULE_ARCHIVE_PUSH                            => TESTDEF_MODULE_ARCHIVE . '/ArchivePush';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH);
-use constant TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC                      => TESTDEF_MODULE_ARCHIVE_PUSH . 'Async';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC);
-use constant TESTDEF_MODULE_ARCHIVE_PUSH_FILE                       => TESTDEF_MODULE_ARCHIVE_PUSH . 'File';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_FILE);
-
 use constant TESTDEF_MODULE_COMMON                                  => 'Common';
     push @EXPORT, qw(TESTDEF_MODULE_COMMON);
 use constant TESTDEF_MODULE_COMMON_INI                              => TESTDEF_MODULE_COMMON . '/Ini';
@@ -295,13 +284,13 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_NAME => 'common',
                     &TESTDEF_TOTAL => 4,
                     &TESTDEF_CONTAINER => true,
 
                     &TESTDEF_COVERAGE =>
                     {
-                        &TESTDEF_MODULE_ARCHIVE_COMMON => TESTDEF_COVERAGE_PARTIAL,
+                        'Archive/Common' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
@@ -311,9 +300,9 @@ my $oTestDef =
 
                     &TESTDEF_COVERAGE =>
                     {
-                        &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
-                        &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
-                        &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/Async' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/File' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {

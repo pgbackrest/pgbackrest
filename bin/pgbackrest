@@ -121,10 +121,10 @@ local $EVAL_ERROR = undef; eval
     if (commandTest(CMD_ARCHIVE_PUSH))
     {
         # Load module dynamically
-        require pgBackRest::Archive::ArchivePush;
-        pgBackRest::Archive::ArchivePush->import();
+        require pgBackRest::Archive::Push::Push;
+        pgBackRest::Archive::Push::Push->import();
 
-        exitSafe(new pgBackRest::Archive::ArchivePush()->process($ARGV[1]));
+        exitSafe(new pgBackRest::Archive::Push::Push()->process($ARGV[1]));
     }
 
     ################################################################################################################################
@@ -133,10 +133,10 @@ local $EVAL_ERROR = undef; eval
     if (commandTest(CMD_ARCHIVE_GET))
     {
         # Load module dynamically
-        require pgBackRest::Archive::ArchiveGet;
-        pgBackRest::Archive::ArchiveGet->import();
+        require pgBackRest::Archive::Get::Get;
+        pgBackRest::Archive::Get::Get->import();
 
-        exitSafe(new pgBackRest::Archive::ArchiveGet()->process());
+        exitSafe(new pgBackRest::Archive::Get::Get()->process());
     }
 
     ################################################################################################################################

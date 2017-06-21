@@ -16,7 +16,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;

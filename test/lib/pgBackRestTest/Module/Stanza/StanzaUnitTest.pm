@@ -15,8 +15,8 @@ use English '-no_match_vars';
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -166,7 +166,7 @@ sub run
         # archive sub-directories or files
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        (new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+        (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
             WAL_VERSION_94_SYS_ID, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "backup information missing" .
@@ -182,7 +182,7 @@ sub run
 
         # No force. Invalid archive.info exists. Invalid backup.info exists.
         #---------------------------------------------------------------------------------------------------------------------------
-        (new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false))->create(PG_VERSION_94, WAL_VERSION_93_SYS_ID, true);
+        (new pgBackRest::Archive::Info($self->{strArchivePath}, false))->create(PG_VERSION_94, WAL_VERSION_93_SYS_ID, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_INVALID,
             "archive info file invalid" .
             "\nHINT: use stanza-upgrade if the database has been upgraded or use --force");
@@ -215,7 +215,7 @@ sub run
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/12345");
         $oStanza = new pgBackRest::Stanza();
         $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza with force');
-        $self->testResult(sub {(new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}))->check(PG_VERSION_94,
+        $self->testResult(sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(PG_VERSION_94,
             WAL_VERSION_94_SYS_ID) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94, '942',
             '201409291', WAL_VERSION_94_SYS_ID)}, 1, '    new info files correct');
 
@@ -229,7 +229,7 @@ sub run
         my $oStanza = new pgBackRest::Stanza();
 
         my @stryFileList = ('anything');
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
+        my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
 
         # If infoFileCreate is ever called directly, confirm it errors if something other than the info file exists in archive dir
@@ -335,7 +335,7 @@ sub run
     {
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
 
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
+        my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
         $oArchiveInfo->create('9.3', '6999999999999999999', true);
 
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
@@ -358,7 +358,7 @@ sub run
         my $oStanza = new pgBackRest::Stanza();
 
         # Create the archive file with current data
-        my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
+        my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
         $oArchiveInfo->create('9.4', 6353949018581704918, true);
 
         # Create the backup file with outdated data
@@ -393,7 +393,7 @@ sub run
         # Perform an upgrade and then confirm upgrade is not necessary
         $oStanza->process();
 
-        $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath});
+        $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath});
         $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
 
         $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, false,

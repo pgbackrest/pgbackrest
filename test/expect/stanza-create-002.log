@@ -87,19 +87,19 @@ db-version="9.4"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --config=[TEST_PATH]/db-master/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --stanza=db
-P00  DEBUG:     Archive::ArchivePush->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --db-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote', strId = 'backup remote', strName = remote
 P00  DEBUG:     Protocol::Storage::Remote->new(): oProtocol = [object]
-P00  DEBUG:     Archive::ArchiveCommon::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::ArchiveCommon::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
-P00  DEBUG:     Archive::ArchivePushFile::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
+P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
@@ -107,7 +107,7 @@ P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 1e34fa1c
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({strClass => pgBackRest::Storage::Filter::Gzip}), xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
-P00  DEBUG:     Archive::ArchivePushFile::archivePushFile=>: strWarning = [undef]
+P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]

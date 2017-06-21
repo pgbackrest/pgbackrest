@@ -13,7 +13,7 @@ use Carp qw(confess);
 
 use File::Basename qw(basename dirname);
 
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::DbVersion;

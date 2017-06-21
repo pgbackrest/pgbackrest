@@ -15,10 +15,10 @@ use English '-no_match_vars';
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchivePush;
-use pgBackRest::Archive::ArchivePushAsync;
-use pgBackRest::Archive::ArchivePushFile;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Push::Push;
+use pgBackRest::Archive::Push::Async;
+use pgBackRest::Archive::Push::File;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -64,7 +64,7 @@ sub initTest
 
     my $oOption = $self->initOption();
     logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{strArchivePath}, false, {bIgnoreMissing => true});
+    my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
     $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
 
     $self->{strArchiveId} = $oArchiveInfo->archiveId();
@@ -219,7 +219,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("ArchivePush->readyList()"))
     {
-        my $oPushAsync = new pgBackRest::Archive::ArchivePushAsync($self->{strWalPath}, $self->{strSpoolPath});
+        my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
         $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC, true);
         $self->optionSetTest($oOption, OPTION_SPOOL_PATH, $self->{strRepoPath});
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
@@ -297,7 +297,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("ArchivePush->dropList()"))
     {
-        my $oPushAsync = new pgBackRest::Archive::ArchivePushAsync($self->{strWalPath}, $self->{strSpoolPath});
+        my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
         $self->optionSetTest($oOption, OPTION_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
 
@@ -330,9 +330,9 @@ sub run
     ################################################################################################################################
     if ($self->begin("ArchivePushAsync->walStatusWrite() & ArchivePush->walStatus()"))
     {
-        my $oPush = new pgBackRest::Archive::ArchivePush();
+        my $oPush = new pgBackRest::Archive::Push::Push();
 
-        my $oPushAsync = new pgBackRest::Archive::ArchivePushAsync($self->{strWalPath}, $self->{strSpoolPath});
+        my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
         $oPushAsync->initServer();
 
@@ -433,7 +433,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("ArchivePushAsync->process()"))
     {
-        my $oPushAsync = new pgBackRest::Archive::ArchivePushAsync(
+        my $oPushAsync = new pgBackRest::Archive::Push::Async(
             $self->{strWalPath}, $self->{strSpoolPath}, $self->backrestExe());
 
         $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC, true);
@@ -626,7 +626,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("ArchivePush->process()"))
     {
-        my $oPush = new pgBackRest::Archive::ArchivePush($self->backrestExe());
+        my $oPush = new pgBackRest::Archive::Push::Push($self->backrestExe());
 
         $self->optionReset($oOption, OPTION_ARCHIVE_ASYNC);
         $self->optionReset($oOption, OPTION_SPOOL_PATH);

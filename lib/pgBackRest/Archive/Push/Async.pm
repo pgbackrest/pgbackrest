@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # ARCHIVE PUSH ASYNC MODULE
 ####################################################################################################################################
-package pgBackRest::Archive::ArchivePushAsync;
-use parent 'pgBackRest::Archive::ArchivePush';
+package pgBackRest::Archive::Push::Async;
+use parent 'pgBackRest::Archive::Push::Push';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -20,9 +20,9 @@ use Scalar::Util qw(blessed);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveInfo;
-use pgBackRest::Archive::ArchivePush;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Info;
+use pgBackRest::Archive::Push::Push;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;

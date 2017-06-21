@@ -869,8 +869,8 @@ sub replayWait
         );
 
     # Load ArchiveCommon Module
-    require pgBackRest::Archive::ArchiveCommon;
-    pgBackRest::Archive::ArchiveCommon->import();
+    require pgBackRest::Archive::Common;
+    pgBackRest::Archive::Common->import();
 
     # Initialize working variables
     my $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));

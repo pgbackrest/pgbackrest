@@ -8,8 +8,8 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveGet;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Get::Get;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
@@ -96,7 +96,7 @@ sub process
         eval
         {
             # Check that the archive info file is written and is valid for the current database of the stanza
-            ($strArchiveId) = new pgBackRest::Archive::ArchiveGet()->getCheck();
+            ($strArchiveId) = new pgBackRest::Archive::Get::Get()->getCheck();
             return true;
         }
         or do

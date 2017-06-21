@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # ARCHIVE PUSH MODULE
 ####################################################################################################################################
-package pgBackRest::Archive::ArchivePush;
-use parent 'pgBackRest::Archive::Archive';
+package pgBackRest::Archive::Push::Push;
+use parent 'pgBackRest::Archive::Base';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -13,7 +13,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(basename dirname);
 
-use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::Common;
 use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
@@ -94,8 +94,8 @@ sub process
             if (!$bPushed)
             {
                 # Load module dynamically
-                require pgBackRest::Archive::ArchivePushAsync;
-                $bClient = (new pgBackRest::Archive::ArchivePushAsync(
+                require pgBackRest::Archive::Push::Async;
+                $bClient = (new pgBackRest::Archive::Push::Async(
                     $strWalPath, $self->{strSpoolPath}, $self->{strBackRestBin}))->process();
             }
 
@@ -114,8 +114,8 @@ sub process
     else
     {
         # Load module dynamically
-        require pgBackRest::Archive::ArchivePushFile;
-        pgBackRest::Archive::ArchivePushFile->import();
+        require pgBackRest::Archive::Push::File;
+        pgBackRest::Archive::Push::File->import();
 
         # Drop file if queue max has been exceeded
         $self->{strWalPath} = $strWalPath;

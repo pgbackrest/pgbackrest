@@ -172,6 +172,10 @@
                     <release-item>
                         <p>Cast size in S3 manifest to integer.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Rename <code>Archive</code> modules to remove redundancy.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

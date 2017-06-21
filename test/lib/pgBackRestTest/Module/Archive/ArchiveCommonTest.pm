@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ArchiveUnitTest.pm - Tests for ArchiveCommon module
+# Archive Common Tests
 ####################################################################################################################################
-package pgBackRestTest::Module::Archive::ArchiveUnitTest;
+package pgBackRestTest::Module::Archive::ArchiveCommonTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
@@ -13,7 +13,7 @@ use Carp qw(confess);
 
 use Storable qw(dclone);
 
-use pgBackRest::Archive::ArchiveCommon;
+use pgBackRest::Archive::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
