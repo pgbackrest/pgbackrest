@@ -206,6 +206,10 @@
                     <release-item>
                         <p>Install <id>sudo</id> in base containers rather than on demand.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove <proper>Ubuntu 12.04</proper> from CI now that it is EOL (it can still be run manually).</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

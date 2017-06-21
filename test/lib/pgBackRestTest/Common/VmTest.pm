@@ -82,7 +82,7 @@ use constant VM_HOST_DEFAULT                                        => VM_U16;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # Lists valid VMs
-use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12);
+use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -174,7 +174,7 @@ my $oyVm =
         ],
     },
 
-    # Ubuntu 12.04
+    # Ubuntu 12.04 (no longer included in normal testing, but here if needed)
     &VM_U12 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
