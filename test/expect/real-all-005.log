@@ -31,6 +31,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
 archive-copy=y
@@ -56,6 +57,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-standby/spool
 
 restore, type 'default', remap - restore backup on replica (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --recovery-option=standby_mode=on --recovery-option="primary_conninfo=host=db-master port=6543 user=replicator"  --link-map="pg_xlog=[TEST_PATH]/db-standby/db/pg_xlog" --link-all --stanza=db restore
@@ -93,6 +95,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
 archive-copy=y
@@ -120,6 +123,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-standby/spool
 
 check db - verify check command on standby (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --stanza=db check
@@ -151,6 +155,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
 archive-copy=y
@@ -178,6 +183,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-standby/spool
 
 restore, type 'default' (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --db-include=test1  --link-all --stanza=db restore

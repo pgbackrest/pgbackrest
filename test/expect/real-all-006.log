@@ -29,6 +29,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
 -----------------------------------------------------------
@@ -52,6 +53,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-standby/repo
+spool-path=[TEST_PATH]/db-standby/spool
 
 [global:backup]
 archive-copy=y
@@ -91,6 +93,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
 -----------------------------------------------------------
@@ -116,6 +119,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-standby/repo
+spool-path=[TEST_PATH]/db-standby/spool
 
 [global:backup]
 archive-copy=y
@@ -149,6 +153,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
 -----------------------------------------------------------
@@ -174,6 +179,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-standby/repo
+spool-path=[TEST_PATH]/db-standby/spool
 
 [global:backup]
 archive-copy=y

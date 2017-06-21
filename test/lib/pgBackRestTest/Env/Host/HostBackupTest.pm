@@ -1038,8 +1038,9 @@ sub configCreate
         if ($bArchiveAsync)
         {
             $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_ARCHIVE_ASYNC} = 'y';
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
         }
+
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
 
         # If the the backup host is remote
         if (!$self->isHostBackup())

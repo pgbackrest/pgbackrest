@@ -306,13 +306,6 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'push',
-                    &TESTDEF_TOTAL => 9,
-                    &TESTDEF_PROCESS => true,
-                    &TESTDEF_INDIVIDUAL => true,
-                    &TESTDEF_EXPECT => true,
-                },
-                {
                     &TESTDEF_NAME => 'stop',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_INDIVIDUAL => true,
@@ -402,13 +395,17 @@ my $oTestDef =
             &TESTDEF_NAME => 'mock',
             &TESTDEF_EXPECT => true,
             &TESTDEF_INDIVIDUAL => true,
-            &TESTDEF_PROCESS => true,
 
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'archive',
+                    &TESTDEF_TOTAL => 3,
+                },
+                {
                     &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 3,
+                    &TESTDEF_PROCESS => true,
                 },
             ]
         },

@@ -194,6 +194,10 @@
                     <release-item>
                         <p>Split <id>full</id> module into <id>mock</id> and <id>real</id> to allow better test combinations and save time in CI.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Consolidate <id>archive-push</id> tests into new <id>archive</id> test.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

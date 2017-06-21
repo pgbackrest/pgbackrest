@@ -315,6 +315,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -1106,6 +1107,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -1792,6 +1794,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -2137,6 +2140,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -2320,6 +2324,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -2499,6 +2504,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -2760,6 +2766,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -2976,6 +2983,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -3158,6 +3166,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -3333,6 +3342,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -3517,6 +3527,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -3705,6 +3716,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -4245,6 +4257,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
@@ -4691,6 +4704,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 bogus=bogus
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -4863,6 +4877,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------

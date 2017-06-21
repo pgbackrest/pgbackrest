@@ -303,6 +303,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
 archive-copy=y
@@ -384,6 +385,7 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
 repo-path=[TEST_PATH]/db-master/repo
+spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
 archive-copy=y
