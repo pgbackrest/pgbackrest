@@ -405,7 +405,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 3,
-                    &TESTDEF_PROCESS => true,
                 },
             ]
         },

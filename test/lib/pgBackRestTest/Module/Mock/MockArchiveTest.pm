@@ -89,12 +89,21 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(),
-            {bHostBackup => $bRemote, bCompress => false, bArchiveAsync => false, bS3 => $bS3});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_LOG_LEVEL_CONSOLE => lc(DETAIL)}});
-        my $strOptionLogDebug = '--' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(DEBUG);
+
+        # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
+        # without slowing down the other tests too much.
+        if ($bS3)
+        {
+            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
+            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
+
+            # Reduce console logging to warn
+            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_LOG_LEVEL_CONSOLE => lc(WARN)}});
+        }
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -132,7 +141,7 @@ sub run
         my $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommand . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strOptionLogDebug} ${strXlogPath}/${strSourceFile}",
+            $strCommand . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strXlogPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}");
 
