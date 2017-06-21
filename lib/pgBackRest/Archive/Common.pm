@@ -48,7 +48,6 @@ use constant PG_WAL_SEGMENT_SIZE                                    => 16777216;
 ####################################################################################################################################
 my $oWalMagicHash =
 {
-    hex('0xD062') => PG_VERSION_83,
     hex('0xD063') => PG_VERSION_84,
     hex('0xD064') => PG_VERSION_90,
     hex('0xD066') => PG_VERSION_91,

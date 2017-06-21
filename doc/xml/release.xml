@@ -160,6 +160,8 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.20dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: Support for <postgres/> 8.3 has been removed in this release as no currently supported systems include it.</p>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Harden protocol handshake to handle race conditions.</p>
@@ -175,6 +177,10 @@
 
                     <release-item>
                         <p>Rename <code>Archive</code> modules to remove redundancy.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove support for <postgres/> 8.3.</p>
                     </release-item>
                 </release-refactor-list>
             </release-core-list>

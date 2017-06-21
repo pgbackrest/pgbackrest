@@ -41,7 +41,6 @@ use constant DB_BACKUP_ADVISORY_LOCK                                => '12340078
 my $oPgControlVersionHash =
 {
     # iControlVersion => {iCatalogVersion => strDbVersion}
-    833 => {200711281 => PG_VERSION_83},
     843 => {200904091 => PG_VERSION_84},
     903 =>
     {

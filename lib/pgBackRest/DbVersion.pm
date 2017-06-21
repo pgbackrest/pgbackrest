@@ -27,8 +27,6 @@ use constant PG_WAL_SIZE                                            => 16777216;
 ####################################################################################################################################
 # PostgreSQL version numbers
 ####################################################################################################################################
-use constant PG_VERSION_83                                          => '8.3';
-    push @EXPORT, qw(PG_VERSION_83);
 use constant PG_VERSION_84                                          => '8.4';
     push @EXPORT, qw(PG_VERSION_84);
 use constant PG_VERSION_90                                          => '9.0';
@@ -63,8 +61,8 @@ sub versionSupport
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->versionSupport');
 
-    my @strySupportVersion = (PG_VERSION_83, PG_VERSION_84, PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93,
-                              PG_VERSION_94, PG_VERSION_95, PG_VERSION_96);
+    my @strySupportVersion = (
+        PG_VERSION_84, PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93, PG_VERSION_94, PG_VERSION_95, PG_VERSION_96);
 
     # Return from function and log return values if any
     return logDebugReturn
