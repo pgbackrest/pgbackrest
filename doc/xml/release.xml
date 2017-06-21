@@ -202,6 +202,10 @@
                     <release-item>
                         <p>Eliminate redundancy in <id>real</id> tests.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Install <id>sudo</id> in base containers rather than on demand.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

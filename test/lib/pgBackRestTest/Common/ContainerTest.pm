@@ -249,15 +249,13 @@ sub sudoSetup
     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
         $strScript .=
-            "\nRUN yum -y install sudo && \\" .
-            "\n    echo '%${strGroup}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/${strGroup} && \\" .
+            "\nRUN echo '%${strGroup}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/${strGroup} && \\" .
             "\n    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
-            "\nRUN apt-get -y install sudo && \\" .
-            "\n    echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
+            "\nRUN echo '%${strGroup} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
     }
     else
     {
@@ -501,13 +499,13 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            $strScript .= "RUN yum -y install openssh-server openssh-clients wget\n";
+            $strScript .= "RUN yum -y install openssh-server openssh-clients wget sudo\n";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
                 "RUN apt-get update && \\\n" .
-                "    apt-get -y install openssh-server wget vim net-tools iputils-ping\n";
+                "    apt-get -y install openssh-server wget vim net-tools iputils-ping sudo\n";
 
             $strScript .=
                 "\n# Fix root tty\n" .
