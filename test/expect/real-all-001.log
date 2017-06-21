@@ -1,5 +1,5 @@
-run 001 - bkp 0, sby 0, dst db-master, asy 0, cmp 0, s3 0
-=========================================================
+run 001 - bkp 0, sby 0, dst db-master, cmp 0, s3 0
+==================================================
 
 stanza-create db - main create stanza info files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail stanza-create
@@ -120,10 +120,6 @@ incr backup - fail on archive_mode=always (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
-incr backup - fail on backup already running (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db backup
-------------------------------------------------------------------------------------------------------------------------------------
-
 incr backup - update during backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stop-auto --no-archive-check --buffer-size=32768 --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -136,6 +132,7 @@ db-port=[PORT-1]
 db-socket-path=[TEST_PATH]/db-master/db
 
 [global]
+archive-async=y
 compress=n
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
@@ -251,6 +248,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 recovery-option=standby-mode=on
 
 [global]
+archive-async=y
 compress=n
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock

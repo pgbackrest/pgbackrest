@@ -198,6 +198,10 @@
                     <release-item>
                         <p>Consolidate <id>archive-push</id> tests into new <id>archive</id> test.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Eliminate redundancy in <id>real</id> tests.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

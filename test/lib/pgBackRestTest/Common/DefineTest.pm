@@ -414,13 +414,12 @@ my $oTestDef =
             &TESTDEF_NAME => 'real',
             &TESTDEF_EXPECT => true,
             &TESTDEF_INDIVIDUAL => true,
-            &TESTDEF_PROCESS => true,
 
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_NAME => 'all',
-                    &TESTDEF_TOTAL => 12,
+                    &TESTDEF_TOTAL => 6,
                     &TESTDEF_DB => true,
                 }
             ]

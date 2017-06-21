@@ -93,48 +93,9 @@ sub process
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
-        my $hVm = vmGet();
-        my @stryModule;
-        my $strRealModule = undef;
-
-        # Get all modules but full to break up the tests
-        foreach my $strModule (testDefModuleList())
-        {
-            if ($strModule ne 'real')
-            {
-                push(@stryModule, $strModule);
-            }
-            else
-            {
-                $strRealModule = $strModule;
-            }
-        }
-
-        # Add config options for tests that are not the very first one
-        my $strConfigNotFirst = '--no-lint';
-        my $strConfigNotFirstOS = '--no-package';
-
         $strConfig .=
-            "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\" PGB_TEST_PARAM=\"--vm-max=2 --module=" .
-                join(' --module=', @stryModule) . ($bFirst ? '' : " ${strConfigNotFirst}") . "\"\n";
+            "  - PGB_TEST_VM=\"${strVm}\" PGB_TEST_PARAM=\"" . ($bFirst ? '' : " --no-lint") . "\"\n";
         $bFirst = false;
-
-        # Now generate real tests
-        if (!defined($strRealModule))
-        {
-            confess "${strRealModule} module not found, has the name changed?";
-        }
-
-        foreach my $strTest (testDefModuleTestList($strRealModule))
-        {
-            foreach my $strDbVersion (sort {$b cmp $a} @{$hVm->{$strVm}{&VM_DB_MINIMAL}})
-            {
-                $strConfig .=
-                    "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=${strDbVersion}\"" .
-                        " PGB_TEST_PARAM=\"--module=${strRealModule} --db=${strDbVersion}" .
-                        " --process-max=2 ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
-            }
-        }
     }
 
     # Configure install and script
@@ -167,7 +128,7 @@ sub process
         "    cd ~ && pwd && whoami && umask && groups\n" .
         "    mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .
         "    rm -rf \${TRAVIS_BUILD_DIR?}\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?} \${PGB_BUILD_PARAM?}\n" .
+        "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?}\n" .
         "\n" .
         "script:\n" .
         "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";

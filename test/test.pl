@@ -78,7 +78,7 @@ test.pl [options]
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
    --dev                --no-lint --smart --no-package --process-max=1
-   --expect             --no-lint --smart --no-package --process-max=1 --vm=co7 --db=9.5 --log-force
+   --expect             --no-lint --smart --no-package --process-max=1 --vm=co7 --db=9.6 --log-force
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -210,7 +210,7 @@ eval
         $bNoPackage = true;
         $iProcessMax = 1;
         $strVm = VM_CO7;
-        $strDbVersion = '9.5';
+        $strDbVersion = '9.6';
         $bLogForce = true;
     }
 

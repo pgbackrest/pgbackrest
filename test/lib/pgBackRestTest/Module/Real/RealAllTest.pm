@@ -28,13 +28,14 @@ use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::Host::HostDbTest;
+use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
 # run
@@ -47,24 +48,42 @@ sub run
     {
     foreach my $bHostBackup ($bS3 ? (true) : (false, true))
     {
+    # Standby should only be tested for pg versions that support it
     foreach my $bHostStandby ($bS3 ? (false) : (false, true))
     {
+    # Master and standby backup destinations on need to be tested on one db version since it is not version specific
     foreach my $strBackupDestination (
         $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
-    foreach my $bArchiveAsync ($bS3 ? (true) : ($bHostStandby ? (false) : (false, true)))
-    {
-    foreach my $bCompress ($bS3 ? (true) : ($bHostStandby ? (false) : (false, true)))
-    {
+        my $bCompress = $bHostBackup && !$bHostStandby;
+
         # Increment the run, log, and decide whether this unit test should be run
         next if (!$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, asy ${bArchiveAsync}, cmp ${bCompress}," .
-                " s3 ${bS3}",
-            $self->processMax() == 1 && $self->pgVersion() eq PG_VERSION_95));
+            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}",
+            $self->processMax() == 1 && $self->pgVersion() eq PG_VERSION_96));
 
+        # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
+        my $hyVm = vmGet();
+
+        if (($bS3 || $bHostBackup) &&
+            (@{$hyVm->{$self->vm()}{&VM_DB_MINIMAL}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB_MINIMAL}}[-1] ne $self->pgVersion()))
+        {
+            &log(INFO,
+                'skipped - this test will be run for this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB_MINIMAL}}[-1]);
+            next;
+        }
+
+        # Skip hot standby tests if the system does not support hot standby
         if ($bHostStandby && $self->pgVersion() < PG_VERSION_HOT_STANDBY)
         {
             &log(INFO, 'skipped - this version of PostgreSQL does not support hot standby');
+            next;
+        }
+
+        # Skip backup destinations other than backup host when standby except for one arbitrary db version
+        if ($bHostStandby && $strBackupDestination ne HOST_BACKUP && $self->pgVersion() ne PG_VERSION_96)
+        {
+            &log(INFO, 'skipped - standby with backup destination other than backup host only tested on PG ' . PG_VERSION_96);
             next;
         }
 
@@ -72,10 +91,20 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
-             bCompress => $bCompress, bArchiveAsync => $bArchiveAsync, bS3 => $bS3});
+             bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3});
 
-        # Determine if extra tests are performed.  Extra tests should not be primary tests for compression or async archiving.
-        my $bTestExtra = $self->runCurrent() == 1 || $self->runCurrent() == 7 || $self->runCurrent() == 12;
+        # Only perform extra tests on certain runs to save time
+        my $bTestLocal = $self->runCurrent() == 1;
+        my $bTestExtra =
+            $bTestLocal || $self->runCurrent() == 4 || ($self->runCurrent() == 6 && $self->pgVersion() eq PG_VERSION_96);
+
+        # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
+        # without slowing down the other tests too much.
+        if ($bS3)
+        {
+            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
+            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
+        }
 
         $oHostDbMaster->clusterCreate();
 
@@ -108,8 +137,11 @@ sub run
         my $strTimelineMessage = 'timeline3';
 
         # Create two new databases
-        $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
-        $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
+        if ($bTestLocal)
+        {
+            $oHostDbMaster->sqlExecute('create database test1', {bAutoCommit => true});
+            $oHostDbMaster->sqlExecute('create database test2', {bAutoCommit => true});
+        }
 
         # Test check command and stanza create
         #---------------------------------------------------------------------------------------------------------------------------
@@ -335,7 +367,7 @@ sub run
         $oHostDbMaster->sqlXlogRotate();
         $oHostDbMaster->sqlExecute("insert into test values ('$strDefaultMessage')");
 
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             # Acquire the backup advisory lock so it looks like a backup is running
             if (!$oHostDbMaster->sqlSelectOne('select pg_try_advisory_lock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
@@ -364,9 +396,12 @@ sub run
 
         my $strFullBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
 
+        # Enabled async archiving
+        $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_ARCHIVE_ASYNC => 'y'}});
+
         # Kick out a bunch of archive logs to excercise async archiving.  Only do this when compressed and remote to slow it
         # down enough to make it evident that the async process is working.
-        if ($bArchiveAsync && $bCompress && $strBackupDestination eq HOST_BACKUP)
+        if ($bTestExtra && $bCompress && $strBackupDestination eq HOST_BACKUP)
         {
             &log(INFO, '    multiple pg_switch_xlog() to exercise async archiving');
             $oHostDbMaster->sqlExecute("create table xlog_activity (id int)");
@@ -444,7 +479,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and
         # the logs will to be deleted to avoid causing issues further down the line.
-        if ($bTestExtra)
+        if ($bTestExtra && !$bS3)
         {
             $strType = BACKUP_TYPE_INCR;
 
@@ -466,7 +501,7 @@ sub run
 
         # Incr backup - fail on archive_mode=always when version >= 9.5
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra && $oHostDbMaster->pgVersion() >= PG_VERSION_95)
+        if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_95)
         {
             $strType = BACKUP_TYPE_INCR;
 
@@ -504,7 +539,7 @@ sub run
 
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
         # are run in non-exlusive mode.
-        if ($bTestExtra && $oHostDbMaster->pgVersion() >= PG_VERSION_93 && $oHostDbMaster->pgVersion() < PG_VERSION_96)
+        if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_93 && $oHostDbMaster->pgVersion() < PG_VERSION_96)
         {
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
 
@@ -550,7 +585,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $strXidTarget = undef;
 
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute("update test set message = '$strXidMessage'", {bCommit => false});
             $oHostDbMaster->sqlXlogRotate();
@@ -563,7 +598,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $strNameTarget = 'backrest';
 
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
             $oHostDbMaster->sqlXlogRotate();
@@ -578,13 +613,16 @@ sub run
 
         # Create a table and data in database test2
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->sqlExecute(
-            'create table test (id int);' .
-            'insert into test values (1);' .
-            'create table test_ts1 (id int) tablespace ts1;' .
-            'insert into test_ts1 values (2);',
-            {strDb => 'test2', bAutoCommit => true});
-        $oHostDbMaster->sqlXlogRotate();
+        if ($bTestLocal)
+        {
+            $oHostDbMaster->sqlExecute(
+                'create table test (id int);' .
+                'insert into test values (1);' .
+                'create table test_ts1 (id int) tablespace ts1;' .
+                'insert into test_ts1 values (2);',
+                {strDb => 'test2', bAutoCommit => true});
+            $oHostDbMaster->sqlXlogRotate();
+        }
 
         # Restore (type = default)
         #---------------------------------------------------------------------------------------------------------------------------
@@ -599,9 +637,7 @@ sub run
         $strComment = undef;
         $iExpectedExitStatus = undef;
 
-            # &log(INFO, "    testing recovery type = ${strType}");
-
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             # Expect failure because postmaster.pid exists
             $strComment = 'postmaster running';
@@ -614,7 +650,7 @@ sub run
 
         $oHostDbMaster->clusterStop();
 
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             # Expect failure because db path is not empty
             $strComment = 'path not empty';
@@ -639,13 +675,17 @@ sub run
 
         $oHostDbMaster->restore(
             OPTION_DEFAULT_RESTORE_SET, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive,
-            $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus, ' --db-include=test1');
+            $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
+            $bTestLocal ? ' --db-include=test1' : undef);
 
         $oHostDbMaster->clusterStart();
-        $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestExtra ? $strNameMessage : $strIncrMessage);
+        $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
 
         # Now it should be OK to drop database test2
-        $oHostDbMaster->sqlExecute('drop database test2', {bAutoCommit => true});
+        if ($bTestLocal)
+        {
+            $oHostDbMaster->sqlExecute('drop database test2', {bAutoCommit => true});
+        }
 
         # The test table lives in ts1 so it needs to be moved or dropped
         if ($oHostDbMaster->pgVersion() >= PG_VERSION_90)
@@ -663,7 +703,7 @@ sub run
 
         # Restore (restore type = immediate, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if (($bTestExtra || $bHostStandby) && $oHostDbMaster->pgVersion() >= PG_VERSION_94)
+        if (($bTestLocal || $bHostStandby) && $oHostDbMaster->pgVersion() >= PG_VERSION_94)
         {
             $bDelta = false;
             $bForce = true;
@@ -691,7 +731,7 @@ sub run
 
         # Restore (restore type = xid, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             $bDelta = false;
             $bForce = true;
@@ -728,7 +768,7 @@ sub run
 
         # Restore (restore type = preserve, inclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             $bDelta = false;
             $bForce = false;
@@ -789,7 +829,7 @@ sub run
 
         # Restore (restore type = xid, exclusive)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
+        if ($bTestLocal)
         {
             $bDelta = true;
             $bForce = false;
@@ -816,7 +856,7 @@ sub run
 
         # Restore (restore type = name)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra && $oHostDbMaster->pgVersion() >= PG_VERSION_91)
+        if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_91)
         {
             $bDelta = true;
             $bForce = true;
@@ -843,7 +883,7 @@ sub run
 
         # Restore (restore type = default, timeline = 3)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
+        if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
         {
             $bDelta = true;
             $bForce = false;
@@ -879,7 +919,7 @@ sub run
 
         # Test no-online backups
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bTestExtra)
+        if ($bTestExtra & !$bS3)
         {
             # Create a postmaster.pid file so it appears that the server is running
             storageTest()->put($oHostDbMaster->dbBasePath() . '/postmaster.pid', '99999');
@@ -900,8 +940,8 @@ sub run
                 $strType, 'succeed on --no-' . OPTION_ONLINE . ' with --' . OPTION_FORCE,
                 {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
         }
-    }
-    }
+    # }
+    # }
     }
     }
     }

@@ -13,21 +13,12 @@ services:
   - docker
 
 env:
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --module=mock"
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=9.1" PGB_TEST_PARAM="--module=real --db=9.1 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=9.0" PGB_TEST_PARAM="--module=real --db=9.0 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --module=mock --no-lint"
-  - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=9.4" PGB_TEST_PARAM="--module=real --db=9.4 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --module=mock --no-lint"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=9.3" PGB_TEST_PARAM="--module=real --db=9.3 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=8.4" PGB_TEST_PARAM="--module=real --db=8.4 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --module=mock --no-lint"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=9.6" PGB_TEST_PARAM="--module=real --db=9.6 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=9.5" PGB_TEST_PARAM="--module=real --db=9.5 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --module=mock --no-lint"
-  - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=9.2" PGB_TEST_PARAM="--module=real --db=9.2 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --module=mock --no-lint"
-  - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=8.3" PGB_TEST_PARAM="--module=real --db=8.3 --process-max=2 --no-lint --no-package"
+  - PGB_TEST_VM="co6" PGB_TEST_PARAM=""
+  - PGB_TEST_VM="u16" PGB_TEST_PARAM=" --no-lint"
+  - PGB_TEST_VM="d8" PGB_TEST_PARAM=" --no-lint"
+  - PGB_TEST_VM="co7" PGB_TEST_PARAM=" --no-lint"
+  - PGB_TEST_VM="u14" PGB_TEST_PARAM=" --no-lint"
+  - PGB_TEST_VM="u12" PGB_TEST_PARAM=" --no-lint"
 
 before_install:
   - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl python-pip
@@ -54,7 +45,7 @@ install:
     cd ~ && pwd && whoami && umask && groups
     mv ${TRAVIS_BUILD_DIR?} pgbackrest
     rm -rf ${TRAVIS_BUILD_DIR?}
-  - pgbackrest/test/test.pl --vm-build --vm=${PGB_TEST_VM?} ${PGB_BUILD_PARAM?}
+  - pgbackrest/test/test.pl --vm-build --vm=${PGB_TEST_VM?}
 
 script:
   - pgbackrest/test/test.pl --vm-host=u14 --vm=${PGB_TEST_VM?} ${PGB_TEST_PARAM?}
