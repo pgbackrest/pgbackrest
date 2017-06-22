@@ -162,6 +162,16 @@
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: Support for <postgres/> 8.3 has been removed in this release as no currently supported systems include it.</p>
 
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed missing flag in C library build that resulted in a mismatched binary on 32-bit systems.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Harden protocol handshake to handle race conditions.</p>
