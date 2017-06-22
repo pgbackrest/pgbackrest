@@ -561,6 +561,9 @@ eval
                             $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
                         }
 
+                        # Remove patches that should be applied to core code
+                        $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true});
+
                         # Update changelog to add experimental version
                         $oStorageBackRest->put("${strBuildPath}/debian/changelog",
                             "pgbackrest (${strVersionBase}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
