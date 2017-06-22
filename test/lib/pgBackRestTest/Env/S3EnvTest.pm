@@ -18,6 +18,7 @@ use pgBackRest::Storage::S3::Driver;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # initS3
@@ -38,6 +39,9 @@ sub initS3
 
     $self->{strS3Command} = 'export PYTHONWARNINGS="ignore" && aws s3 --no-verify-ssl';
 
+    # Make sure the cert is visible
+    executeTest('sudo chmod o+r,o+x /root /root/scalitys3 && sudo chmod o+r /root/scalitys3/ca.crt');
+
     executeTest("echo '127.0.0.1 ${strBucket}.${strEndPoint} ${strEndPoint}' | sudo tee -a /etc/hosts");
     executeTest('sudo sed -i "s/logLevel\"\: \"info\"/logLevel\"\: \"trace\"/" /root/scalitys3/config.json');
     executeTest("sudo npm start --prefix /root/scalitys3 > ${strS3ServerLogFile} 2>&1 &");
@@ -50,7 +54,9 @@ sub initS3
 
     # Initialize the driver
     return new pgBackRest::Storage::S3::Driver(
-        $strBucket, $strEndPoint, $strRegion, $strAccessKeyId, $strSecretAccessKey, {bVerifySsl => false, lBufferMax => 1048576});
+        $strBucket, $strEndPoint, $strRegion, $strAccessKeyId, $strSecretAccessKey,
+        {strCaFile => $self->vm() eq VM_CO7 ? '/root/scalitys3/ca.crt' : undef,
+            bVerifySsl => $self->vm() eq VM_U16 ? false : undef, lBufferMax => 1048576});
 }
 
 1;

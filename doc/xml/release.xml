@@ -52,6 +52,11 @@
             <contributor-id type="github">the1forte</contributor-id>
         </contributor>
 
+        <contributor id="frazer.scott">
+            <contributor-name-display>Scott Frazer</contributor-name-display>
+            <contributor-id type="github">sfrazer</contributor-id>
+        </contributor>
+
         <contributor id="freund.andres">
             <contributor-name-display>Andres Freund</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
@@ -171,6 +176,16 @@
                         <p>Fixed missing flag in C library build that resulted in a mismatched binary on 32-bit systems.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frazer.scott"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>s3-repo-ca-path</br-option> and <br-option>s3-repo-ca-file</br-option> options to accommodate systems where CAs are not automatically found by <code>IO::Socket::SSL</code>, i.e. <proper>RHEL7</proper>, or to load custom CAs.</p>
+                    </release-item>
+                </release-feature-list>
 
                 <release-refactor-list>
                     <release-item>

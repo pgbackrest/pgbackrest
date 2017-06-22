@@ -207,6 +207,10 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 's3-cert',
+                    &TESTDEF_TOTAL => 1,
+                },
+                {
                     &TESTDEF_NAME => 's3',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_VM => [VM_CO7, VM_U16],
