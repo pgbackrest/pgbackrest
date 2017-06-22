@@ -312,12 +312,6 @@ my $oTestDef =
                     &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
-                {
-                    &TESTDEF_NAME => 'get',
-                    &TESTDEF_TOTAL => 9,
-                    &TESTDEF_INDIVIDUAL => true,
-                    &TESTDEF_EXPECT => true,
-                },
             ]
         },
         # Backup tests

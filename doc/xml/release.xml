@@ -235,7 +235,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Consolidate <id>archive-push</id> tests into new <id>archive</id> test.</p>
+                        <p>Consolidate <id>archive-push</id> and <id>archive-get</id> tests into new <id>archive</id> test.</p>
                     </release-item>
 
                     <release-item>
