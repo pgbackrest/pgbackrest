@@ -6,6 +6,7 @@ branches:
 
 dist: trusty
 sudo: required
+group: deprecated-2017Q2
 
 language: c
 
