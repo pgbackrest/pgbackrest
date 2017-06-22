@@ -238,6 +238,10 @@
                     <release-item>
                         <p>Remove <setting>process-max</setting> option.  Parallelism is now tested in a more targeted manner and the high level option is no longer needed.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Balance database versions between VMs to minimize test duration.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
