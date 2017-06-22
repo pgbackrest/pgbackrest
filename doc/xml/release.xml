@@ -4,7 +4,7 @@
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
-        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the interface, naming, or the repository format.
+        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.
 
         The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact the on the <backrest/> codebase.</text>
     </intro>
@@ -213,6 +213,14 @@
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Remove exhaustive version list from Stable Releases TOC.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
 
             <release-test-list>
                 <release-bug-list>

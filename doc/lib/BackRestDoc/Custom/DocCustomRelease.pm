@@ -311,6 +311,7 @@ sub docGet
             }
 
             $iStableReleaseTotal++;
+            $bTOC = false;
         }
         else
         {
