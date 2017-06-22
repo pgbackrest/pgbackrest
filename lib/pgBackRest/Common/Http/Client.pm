@@ -127,13 +127,13 @@ sub new
     # Read the response headers
     $self->{iContentLength} = undef;
 
-    my $strResponseHeader = '';
+    $self->{strResponseHeader} = '';
     my $strHeader = trim($self->readLine());
 
     while ($strHeader ne '')
     {
         # Validate header
-        $strResponseHeader .= "${strHeader}\n";
+        $self->{strResponseHeader} .= "${strHeader}\n";
 
         my $iColonPos = index($strHeader, ':');
 
@@ -275,8 +275,10 @@ sub responseBody
 # Properties.
 ####################################################################################################################################
 sub contentLength {shift->{iContentLength}}                         # Content length if available (-1 means not known yet)
+sub requestHeaderText {trim(shift->{strRequestHeader})}
 sub responseCode {shift->{iResponseCode}}
 sub responseHeader {shift->{hResponseHeader}}
+sub responseHeaderText {trim(shift->{strResponseHeader})}
 sub responseMessage {shift->{strResponseMessage}}
 sub responseProtocol {shift->{strResponseProtocol}}
 

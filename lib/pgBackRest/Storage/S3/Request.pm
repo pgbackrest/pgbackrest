@@ -186,7 +186,9 @@ sub request
 
             confess &log(ERROR,
                 "S3 request error [$iReponseCode] " . $oHttpClient->responseMessage() .
-                    (defined($$rstrResponseBody) ? ":\n${$rstrResponseBody}" : ''),
+                    "\n*** request header ***\n" . $oHttpClient->requestHeaderText() .
+                    "\n*** reponse header ***\n" . $oHttpClient->responseHeaderText() .
+                    (defined($$rstrResponseBody) ? "\n*** response body ***\n${$rstrResponseBody}" : ''),
                 ERROR_PROTOCOL);
         }
     }

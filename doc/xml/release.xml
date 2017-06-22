@@ -182,6 +182,10 @@
                     <release-item>
                         <p>Remove support for <postgres/> 8.3.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve <proper>S3</proper> error reporting.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
