@@ -11,8 +11,10 @@
         <variable key="user-guide-os" keyword="default">Debian/Ubuntu</variable>
         <variable key="user-guide-os" keyword="co6">RHEL/CentOS 6</variable>
 
-        <variable key="pg-version">9.4</variable>
-        <variable key="pg-version-upgrade">9.5</variable>
+        <variable key="pg-version" keyword="default">9.4</variable>
+        <variable key="pg-version" keyword="co6">9.5</variable>
+        <variable key="pg-version-upgrade" keyword="default">9.5</variable>
+        <variable key="pg-version-upgrade" keyword="co6">9.6</variable>
 
         <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
@@ -33,7 +35,7 @@
         <variable key="spool-path">/var/spool/pgbackrest</variable>
 
         <variable key="postgres-install-upgrade" keyword="default">apt-get install postgresql-{[pg-version-upgrade]}</variable>
-        <variable key="postgres-install-upgrade" keyword="co6">yum install postgresql95-server</variable>
+        <variable key="postgres-install-upgrade" keyword="co6">yum install postgresql96-server</variable>
 
         <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[db-path]}/postgresql.conf</variable>
