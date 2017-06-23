@@ -65,6 +65,8 @@
         <variable key="host-mount">/backrest:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
+        <variable key="host-s3-server">s3-server</variable>
+
         <variable key="host-db-master">db-master</variable>
         <variable key="host-db-master-user">{[host-user]}</variable>
         <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-db-{[pg-version]}-doc</variable>
@@ -171,7 +173,7 @@
         <title>Installation</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add name="demo-bucket.s3.amazonaws.com" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}">
+        <host-add name="{[host-s3-server]}" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}">
         </host-add>
 
         <host-add name="{[host-db-master]}" user="{[host-db-master-user]}" image="{[host-db-master-image]}" os="{[host-os]}" mount="{[host-db-master-mount]}">
@@ -1351,7 +1353,13 @@
         <execute-list host="{[host-db-master]}">
             <title>Create the stanza</title>
 
-            <execute user="{[host-user]}">
+            <!-- set host entries to redirect aws to local s3 server -->
+            <execute user="root" show='n'>
+                <exe-cmd>echo "{[host-s3-server-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" |
+                    sudo tee -a /etc/hosts</exe-cmd>
+            </execute>
+
+            <execute user="{[host-user]}" show='n'>
                 <exe-cmd>aws s3 --no-verify-ssl mb s3://demo-bucket 2>&amp;1</exe-cmd>
             </execute>
 

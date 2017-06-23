@@ -219,6 +219,10 @@
                     <release-item>
                         <p>Remove exhaustive version list from Stable Releases TOC.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve <proper>S3</proper> server implementation in documentation.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
 
