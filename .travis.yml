@@ -14,10 +14,11 @@ services:
   - docker
 
 env:
-  - PGB_TEST_VM="co6" PGB_TEST_PARAM=""
-  - PGB_TEST_VM="u16" PGB_TEST_PARAM=" --no-lint"
-  - PGB_TEST_VM="co7" PGB_TEST_PARAM=" --no-lint"
-  - PGB_TEST_VM="u14" PGB_TEST_PARAM=" --no-lint"
+  - PGB_CI="--vm=co6 test"
+  - PGB_CI="--vm=u16 test"
+  - PGB_CI="--vm=co7 test"
+  - PGB_CI="--vm=u14 test"
+  - PGB_CI="doc"
 
 before_install:
   - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl python-pip
@@ -42,7 +43,6 @@ install:
     cd ~ && pwd && whoami && umask && groups
     mv ${TRAVIS_BUILD_DIR?} pgbackrest
     rm -rf ${TRAVIS_BUILD_DIR?}
-  - pgbackrest/test/test.pl --vm-build --vm=${PGB_TEST_VM?}
 
 script:
-  - pgbackrest/test/test.pl --vm-max=2 --vm-host=u14 --vm=${PGB_TEST_VM?} ${PGB_TEST_PARAM?}
+  - pgbackrest/test/travis.pl ${PGB_CI?}

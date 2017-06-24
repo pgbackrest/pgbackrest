@@ -89,15 +89,13 @@ sub process
         "\n" .
         "env:\n";
 
-    my $bFirst = true;
-
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
-        $strConfig .=
-            "  - PGB_TEST_VM=\"${strVm}\" PGB_TEST_PARAM=\"" . ($bFirst ? '' : " --no-lint") . "\"\n";
-        $bFirst = false;
+        $strConfig .= "  - PGB_CI=\"--vm=${strVm} test\"\n";
     }
+
+    $strConfig .= "  - PGB_CI=\"doc\"\n";
 
     # Configure install and script
     $strConfig .=
@@ -127,10 +125,9 @@ sub process
         "    cd ~ && pwd && whoami && umask && groups\n" .
         "    mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .
         "    rm -rf \${TRAVIS_BUILD_DIR?}\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-max=2 --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
+        "  - " . BACKREST_EXE . "/test/travis.pl \${PGB_CI?}\n";
 
     $self->{oStorage}->put('.travis.yml', $strConfig);
 

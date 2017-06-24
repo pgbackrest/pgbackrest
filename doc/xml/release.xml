@@ -239,6 +239,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Add documentation builds to CI.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove patch directory before Debian package builds.</p>
                     </release-item>
 
