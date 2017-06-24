@@ -263,7 +263,23 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove <proper>Ubuntu 12.04</proper> from CI now that it is EOL (it can still be run manually).</p>
+                        <p>More optimized container suite that greatly improves build time.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added static Debian packages for <code>Devel::Cover</code> to reduce build time.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>deprecated</id> state for containers.  Deprecated containers may only be used to build packages.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Deprecate <proper>Ubuntu 12.04</proper> now that it is EOL.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove <proper>Debian 8</proper> from CI because it does not provide additional coverage over <proper>Ubuntu 14.04</proper> and <proper>Ubuntu 16.04</proper>.</p>
                     </release-item>
 
                     <release-item>

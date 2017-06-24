@@ -83,10 +83,10 @@ sub testListGet
                         my $iDbVersionMax = -1;
 
                         # By default test every db version that is supported for each OS
-                        my $strDbVersionKey = 'db';
+                        my $strDbVersionKey = &VM_DB;
 
                         # Run a reduced set of tests where each PG version is only tested on a single OS
-                        if ($strDbVersion eq 'minimal')
+                        if ($strDbVersion eq 'minimal' && defined($oyVm->{$strTestOS}{&VM_DB_MINIMAL}))
                         {
                             $strDbVersionKey = &VM_DB_MINIMAL;
                         }

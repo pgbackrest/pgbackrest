@@ -76,8 +76,8 @@ test.pl [options]
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --process-max=1
-   --expect             --no-lint --smart --no-package --process-max=1 --vm=co7 --db=9.6 --log-force
+   --dev                --no-lint --smart --no-package
+   --expect             --no-lint --smart --no-package --vm=co7 --db=9.6 --log-force
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -276,7 +276,7 @@ eval
     ################################################################################################################################
     if ($bVmBuild)
     {
-        containerBuild($oStorageBackRest, $strVm, $bVmForce, $strDbVersion);
+        containerBuild($oStorageBackRest, $strVm, $bVmForce);
         exit 0;
     }
 
@@ -550,7 +550,7 @@ eval
                             "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
                             " ${strBuildPath}");
 
-                        # If dev build then override then disable static release date used for reproducibility.
+                        # If dev build then disable static release date used for reproducibility
                         if ($bVersionDev)
                         {
                             my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};

@@ -56,7 +56,7 @@ sub initS3
     return new pgBackRest::Storage::S3::Driver(
         $strBucket, $strEndPoint, $strRegion, $strAccessKeyId, $strSecretAccessKey,
         {strCaFile => $self->vm() eq VM_CO7 ? '/root/scalitys3/ca.crt' : undef,
-            bVerifySsl => $self->vm() eq VM_U16 ? false : undef, lBufferMax => 1048576});
+            bVerifySsl => $self->vm() eq VM_CO7 ? undef : false, lBufferMax => 1048576});
 }
 
 1;

@@ -75,7 +75,7 @@ sub new
     if (!defined($$oParam{strName}) || $$oParam{strName} eq HOST_BACKUP)
     {
         $strName = HOST_BACKUP;
-        $strImage = containerRepo() . ':' . testRunGet()->vm() . '-backup-test-pre';
+        $strImage = containerRepo() . ':' . testRunGet()->vm() . '-test';
         $strUser = testRunGet()->backrestUser();
     }
     else

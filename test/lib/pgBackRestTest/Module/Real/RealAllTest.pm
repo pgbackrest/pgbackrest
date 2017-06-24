@@ -66,10 +66,10 @@ sub run
         my $hyVm = vmGet();
 
         if (($bS3 || $bHostBackup) &&
-            (@{$hyVm->{$self->vm()}{&VM_DB_MINIMAL}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB_MINIMAL}}[-1] ne $self->pgVersion()))
+            (@{$hyVm->{$self->vm()}{&VM_DB}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB}}[-1] ne $self->pgVersion()))
         {
             &log(INFO,
-                'skipped - this test will be run for this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB_MINIMAL}}[-1]);
+                'skipped - this test will be run for this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB}}[-1]);
             next;
         }
 

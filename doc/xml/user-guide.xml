@@ -71,7 +71,7 @@
 
         <variable key="host-db-master">db-master</variable>
         <variable key="host-db-master-user">{[host-user]}</variable>
-        <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-db-{[pg-version]}-doc</variable>
+        <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-doc-db</variable>
         <variable key="host-db-master-mount">{[host-mount]}</variable>
 
         <variable key="host-db-standby">db-standby</variable>
@@ -81,7 +81,7 @@
 
         <variable key="host-backup">backup</variable>
         <variable key="host-backup-user">{[host-user]}</variable>
-        <variable key="host-backup-image">{[image-repo]}:{[host-os]}-backup-doc-pre</variable>
+        <variable key="host-backup-image">{[image-repo]}:{[host-os]}-doc-backup</variable>
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->

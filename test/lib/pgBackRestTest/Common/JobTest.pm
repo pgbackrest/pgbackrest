@@ -149,7 +149,7 @@ sub run
                     " -v ${strHostTestPath}:${strVmTestPath}" .
                     " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
                     containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
-                    "-loop-test-pre",
+                    "-test",
                     {bSuppressStdErr => true});
             }
         }

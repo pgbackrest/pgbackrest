@@ -115,10 +115,8 @@ sub process
         "    aws help --version\n" .
         "    aws configure list\n" .
         "  - |\n" .
-        "    # Build Devel::Cover\n" .
-        "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
-        '    cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
-        '    sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
+        "    # Install Devel::Cover\n" .
+        "    sudo dpkg -i \${TRAVIS_BUILD_DIR?}/test/package/u14-" . LIB_COVER_PACKAGE . "\n" .
         '    ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .
