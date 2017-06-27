@@ -51,52 +51,59 @@ sub run
     ################################################################################################################################
     if ($self->begin('validation'))
     {
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($self->vm() eq VM_CO7)
+        if ($self->vm eq VM_U12)
         {
-            # Tests fails on co7 because by default certs cannot be located.  This logic may need to be changed in the future if
-            # this bug gets fixed by Red Hat.
-            $self->testResult(sub {$self->configLoadExpect(dclone($oOptionGlobal), CMD_ARCHIVE_PUSH)}, '', 'config load');
+            &log(INFO, 'cannot test - certificates are no longer maintained for ' . $self->vm());
+        }
+        else
+        {
+            #-----------------------------------------------------------------------------------------------------------------------
+            if ($self->vm() eq VM_CO7)
+            {
+                # Tests fails on co7 because by default certs cannot be located.  This logic may need to be changed in the future if
+                # this bug gets fixed by Red Hat.
+                $self->testResult(sub {$self->configLoadExpect(dclone($oOptionGlobal), CMD_ARCHIVE_PUSH)}, '', 'config load');
 
-            $self->testException(
-                sub {storageRepo({strStanza => 'test1'})->list('/')}, ERROR_HOST_CONNECT,
-                'IO::Socket::IP configuration failed SSL connect attempt failed.*certificate verify failed',
-                'cert verify fails on ' . VM_CO7);
+                $self->testException(
+                    sub {storageRepo({strStanza => 'test1'})->list('/')}, ERROR_HOST_CONNECT,
+                    'IO::Socket::IP configuration failed SSL connect attempt failed.*certificate verify failed',
+                    'cert verify fails on ' . VM_CO7);
 
-            # It should work when verification is disabled
+                # It should work when verification is disabled
+                my $oOptionLocal = dclone($oOptionGlobal);
+                $self->optionBoolSetTest($oOptionLocal, OPTION_REPO_S3_VERIFY_SSL, false);
+                $self->testResult(sub {$self->configLoadExpect($oOptionLocal, CMD_ARCHIVE_PUSH)}, '', 'config load');
+
+                $self->testException(
+                    sub {storageRepo({strStanza => 'test2'})->list('/')}, ERROR_PROTOCOL, 'S3 request error \[403\] Forbidden.*',
+                    'connection succeeds with verification disabled, (expected) error on invalid access key');
+            }
+
+            #-----------------------------------------------------------------------------------------------------------------------
             my $oOptionLocal = dclone($oOptionGlobal);
-            $self->optionBoolSetTest($oOptionLocal, OPTION_REPO_S3_VERIFY_SSL, false);
+
+            # CO7 doesn't locate certs automatically so specify the path
+            if ($self->vm() eq VM_CO7)
+            {
+                $self->optionSetTest($oOptionLocal, OPTION_REPO_S3_CA_FILE, '/etc/pki/tls/certs/ca-bundle.crt');
+            }
+
             $self->testResult(sub {$self->configLoadExpect($oOptionLocal, CMD_ARCHIVE_PUSH)}, '', 'config load');
 
             $self->testException(
-                sub {storageRepo({strStanza => 'test2'})->list('/')}, ERROR_PROTOCOL, 'S3 request error \[403\] Forbidden.*',
-                'connection succeeds with verification disabled, (expected) error on invalid access key');
+                sub {storageRepo({strStanza => 'test3'})->list('/')}, ERROR_PROTOCOL, 'S3 request error \[403\] Forbidden.*',
+                'connection succeeds, (expected) error on invalid access key');
+
+            #-----------------------------------------------------------------------------------------------------------------------
+            $oOptionLocal = dclone($oOptionGlobal);
+            $self->optionSetTest($oOptionLocal, OPTION_REPO_S3_CA_PATH, '/bogus');
+            $self->testResult(sub {$self->configLoadExpect($oOptionLocal, CMD_ARCHIVE_PUSH)}, '', 'config load');
+
+            $self->testException(
+                sub {storageRepo({strStanza => 'test4'})->list('/')}, ERROR_HOST_CONNECT,
+                $self->vm() eq VM_CO6 ? 'IO::Socket::INET configuration failed' : 'SSL_ca_path /bogus does not exist',
+                'invalid ca path');
         }
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $oOptionLocal = dclone($oOptionGlobal);
-
-        # CO7 doesn't locate certs automatically so specify the path
-        if ($self->vm() eq VM_CO7)
-        {
-            $self->optionSetTest($oOptionLocal, OPTION_REPO_S3_CA_FILE, '/etc/pki/tls/certs/ca-bundle.crt');
-        }
-
-        $self->testResult(sub {$self->configLoadExpect($oOptionLocal, CMD_ARCHIVE_PUSH)}, '', 'config load');
-
-        $self->testException(
-            sub {storageRepo({strStanza => 'test3'})->list('/')}, ERROR_PROTOCOL, 'S3 request error \[403\] Forbidden.*',
-            'connection succeeds, (expected) error on invalid access key');
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $oOptionLocal = dclone($oOptionGlobal);
-        $self->optionSetTest($oOptionLocal, OPTION_REPO_S3_CA_PATH, '/bogus');
-        $self->testResult(sub {$self->configLoadExpect($oOptionLocal, CMD_ARCHIVE_PUSH)}, '', 'config load');
-
-        $self->testException(
-            sub {storageRepo({strStanza => 'test4'})->list('/')}, ERROR_HOST_CONNECT,
-            $self->vm() eq VM_CO6 ? 'IO::Socket::INET configuration failed' : 'SSL_ca_path /bogus does not exist',
-            'invalid ca path');
     }
 }
 

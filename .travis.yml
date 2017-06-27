@@ -17,7 +17,7 @@ env:
   - PGB_CI="--vm=co6 test"
   - PGB_CI="--vm=u16 test"
   - PGB_CI="--vm=co7 test"
-  - PGB_CI="--vm=u14 test"
+  - PGB_CI="--vm=u12 test"
   - PGB_CI="doc"
 
 before_install:

@@ -481,7 +481,7 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bDeprecated && $strOS ne VM_CO6)
+        if (!$bDeprecated && $strOS ne VM_CO6 && $strOS ne VM_U12)
         {
             $strScript .= s3ServerSetup($strOS);
         }
@@ -566,7 +566,7 @@ sub containerBuild
             $strImage = "${strOS}-s3-server";
             $strCopy = undef;
 
-            if ($strOS ne VM_CO6)
+            if ($strOS ne VM_CO6 && $strOS ne VM_U12)
             {
                 $strImageParent = containerRepo() . ":${strOS}-base";
                 $strScript = '';

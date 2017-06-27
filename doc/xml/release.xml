@@ -165,8 +165,6 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.20dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: Support for <postgres/> 8.3 has been removed in this release as no currently supported systems include it.</p>
-
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -202,10 +200,6 @@
 
                     <release-item>
                         <p>Rename <code>Archive</code> modules to remove redundancy.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Remove support for <postgres/> 8.3.</p>
                     </release-item>
 
                     <release-item>
@@ -279,11 +273,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Deprecate <proper>Ubuntu 12.04</proper> now that it is EOL.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Remove <proper>Debian 8</proper> from CI because it does not provide additional coverage over <proper>Ubuntu 14.04</proper> and <proper>Ubuntu 16.04</proper>.</p>
+                        <p>Remove <proper>Debian 8</proper> from CI because it does not provide additional coverage over <proper>Ubuntu 12.04, 14.04, 16.04</proper>.</p>
                     </release-item>
 
                     <release-item>

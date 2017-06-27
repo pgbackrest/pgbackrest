@@ -82,7 +82,7 @@ use constant VM_HOST_DEFAULT                                        => VM_U16;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # Lists valid VMs
-use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_CO7, VM_U14);
+use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_CO7, VM_U12);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -138,16 +138,22 @@ my $oyVm =
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
     },
 
-    # Ubuntu 12.04 (DEPRECATED)
+    # Ubuntu 12.04
     &VM_U12 =>
     {
-        &VM_DEPRECATED => true,
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'precise',
         &VM_IMAGE => 'ubuntu:12.04',
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
+
+        &VM_DB =>
+        [
+            PG_VERSION_83,
+            PG_VERSION_84,
+            PG_VERSION_92,
+        ],
     },
 
     # Ubuntu 14.04
@@ -162,7 +168,6 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_84,
             PG_VERSION_94,
         ],
     },
@@ -179,8 +184,8 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_92,
             PG_VERSION_93,
+            PG_VERSION_94,
         ],
     },
 };
