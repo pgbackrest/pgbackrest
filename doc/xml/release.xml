@@ -197,6 +197,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Fixed misleading error message when a file was opened for write in a missing directory.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Change log level of hardlink logging to <id>detail</id>.</p>
                     </release-item>
 
