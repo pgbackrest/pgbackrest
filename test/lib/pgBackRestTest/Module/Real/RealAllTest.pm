@@ -529,7 +529,10 @@ sub run
 
         $oHostDbMaster->sqlExecute(
             "create tablespace ts1 location '" . $oHostDbMaster->tablespacePath(1) . "'", {bAutoCommit => true});
-        $oHostDbMaster->sqlExecute("alter table test set tablespace ts1", {bCheckPoint => true});
+        $oHostDbMaster->sqlExecute("alter table test set tablespace ts1");
+
+        # Create a table in the tablespace that will not be modified again to be sure it does get full page writes in the WAL later
+        $oHostDbMaster->sqlExecute("create table test_exists (id int) tablespace ts1", {bCommit => true, bCheckPoint => true});
 
         # Create a table in the tablespace
         $oHostDbMaster->sqlExecute("create table test_remove (id int)");
@@ -680,6 +683,47 @@ sub run
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
+
+        # The tablespace path should exist and have files in it
+        my $strTablespacePath = $oHostDbMaster->tablespacePath(1);
+
+        # Version <= 8.4 always places a PG_VERSION file in the tablespace
+        if ($oHostDbMaster->pgVersion() <= PG_VERSION_84)
+        {
+            if (!storageDb()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
+            {
+                confess &log(ASSERT, "unable to find '" . DB_FILE_PGVERSION . "' in tablespace path '${strTablespacePath}'");
+            }
+        }
+        # Version >= 9.0 creates a special path using the version and catalog number
+        else
+        {
+            # Backup info will have the catalog number
+            my $oBackupInfo = new pgBackRest::Common::Ini(
+                storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO),
+                {bLoad => false, strContent => ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)}});
+
+            # Construct the special path
+            $strTablespacePath .=
+                '/PG_' . $oHostDbMaster->pgVersion() . qw{_} . $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG);
+
+            # Check that path exists
+            if (!storageDb()->pathExists($strTablespacePath))
+            {
+                confess &log(ASSERT, "unable to find tablespace path '${strTablespacePath}'");
+            }
+        }
+
+        # Make sure there are some files in the tablespace path (exclude PG_VERSION if <= 8.4 since that was tested above)
+        if (grep(!/^PG\_VERSION$/i, storageDb()->list($strTablespacePath)) == 0)
+        {
+            confess &log(ASSERT, "no files found in tablespace path '${strTablespacePath}'");
+        }
+
+        # This table should exist to prove that the tablespace was restored.  It has not been updated since it was created so it
+        # should not be created by any full page writes.  Once it is verified to exist it can be dropped.
+        $oHostDbMaster->sqlSelectOneTest("select count(*) from test_exists", 0);
+        $oHostDbMaster->sqlExecute('drop table test_exists');
 
         # Now it should be OK to drop database test2
         if ($bTestLocal)

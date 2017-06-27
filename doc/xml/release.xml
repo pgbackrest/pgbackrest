@@ -165,6 +165,8 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.20dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <id>1.XX</id> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
+
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -172,6 +174,10 @@
                         </release-item-contributor-list>
 
                         <p>Fixed missing flag in C library build that resulted in a mismatched binary on 32-bit systems.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue that prevented tablespaces from being backed up on <postgres/> &amp;le; <proper>8.4</proper>.</p>
                     </release-item>
                 </release-bug-list>
 
