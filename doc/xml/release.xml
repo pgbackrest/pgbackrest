@@ -215,6 +215,10 @@
                     <release-item>
                         <p>Improve <proper>S3</proper> error reporting.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Minor optimizations to package loads and ordering for <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

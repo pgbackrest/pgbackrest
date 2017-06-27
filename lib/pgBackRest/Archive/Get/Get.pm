@@ -41,6 +41,12 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
+    # Make sure the command happens on the db side
+    if (!isDbLocal())
+    {
+        confess &log(ERROR, CMD_ARCHIVE_GET . ' operation must run on db host', ERROR_HOST_INVALID);
+    }
+
     # Make sure the archive file is defined
     if (!defined($ARGV[1]))
     {

@@ -53,7 +53,7 @@ sub process
             {name => 'strWalPathFile', required => false},
         );
 
-    # Make sure the archive push command happens on the db side
+    # Make sure the command happens on the db side
     if (!isDbLocal())
     {
         confess &log(ERROR, CMD_ARCHIVE_PUSH . ' operation must run on db host', ERROR_HOST_INVALID);
