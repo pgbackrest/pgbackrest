@@ -418,6 +418,18 @@ my $oTestDef =
                 }
             ]
         },
+        # Performance tests
+        {
+            &TESTDEF_NAME => 'performance',
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'archive',
+                    &TESTDEF_TOTAL => 1,
+                },
+            ]
+        },
     ]
 };
 
