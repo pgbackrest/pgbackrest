@@ -82,19 +82,11 @@ sub testListGet
                         my $iDbVersionMin = -1;
                         my $iDbVersionMax = -1;
 
-                        # By default test every db version that is supported for each OS
-                        my $strDbVersionKey = &VM_DB;
-
-                        # Run a reduced set of tests where each PG version is only tested on a single OS
-                        if ($strDbVersion eq 'minimal' && defined($oyVm->{$strTestOS}{&VM_DB_MINIMAL}))
-                        {
-                            $strDbVersionKey = &VM_DB_MINIMAL;
-                        }
-
+                        # Database versions to test
                         if (defined($hTest->{&TESTDEF_DB}) && $hTest->{&TESTDEF_DB})
                         {
                             $iDbVersionMin = 0;
-                            $iDbVersionMax = @{$$oyVm{$strTestOS}{$strDbVersionKey}} - 1;
+                            $iDbVersionMax = @{$$oyVm{$strTestOS}{&VM_DB_TEST}} - 1;
                         }
 
                         my $bFirstDbVersion = true;
@@ -106,7 +98,7 @@ sub testListGet
                         {
                             if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' || $strDbVersion eq 'minimal' ||
                                 ($strDbVersion ne 'all' &&
-                                    $strDbVersion eq ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx]))
+                                    $strDbVersion eq ${$$oyVm{$strTestOS}{&VM_DB_TEST}}[$iDbVersionIdx]))
                             {
                                 # Individual tests will be each be run in a separate container.  This is the default.
                                 my $bTestIndividual =
@@ -126,7 +118,7 @@ sub testListGet
                                     next if ($bCoverageOnly && !defined($hTest->{&TESTDEF_COVERAGE}));
 
                                     my $strDbVersion = $iDbVersionIdx == -1 ? undef :
-                                                           ${$$oyVm{$strTestOS}{$strDbVersionKey}}[$iDbVersionIdx];
+                                                           ${$$oyVm{$strTestOS}{&VM_DB_TEST}}[$iDbVersionIdx];
 
                                     my $strPgSqlBin = $$oyVm{$strTestOS}{&VMDEF_PGSQL_BIN};
 

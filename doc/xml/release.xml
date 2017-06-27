@@ -293,6 +293,10 @@
                     <release-item>
                         <p>Balance database versions between VMs to minimize test duration.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Automatically check that all supported <postgres/> versions are being tested on a single default VM.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

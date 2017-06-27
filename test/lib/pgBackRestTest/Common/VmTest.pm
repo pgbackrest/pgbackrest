@@ -21,8 +21,8 @@ use pgBackRest::DbVersion;
 ####################################################################################################################################
 use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
-use constant VM_DB_MINIMAL                                          => 'db-minimal';
-    push @EXPORT, qw(VM_DB_MINIMAL);
+use constant VM_DB_TEST                                             => 'db-test';
+    push @EXPORT, qw(VM_DB_TEST);
 use constant VM_CONTROL_MASTER                                      => 'control-master';
     push @EXPORT, qw(VM_CONTROL_MASTER);
 use constant VM_DEPRECATED                                          => 'deprecated';
@@ -104,7 +104,7 @@ my $oyVm =
             PG_VERSION_96,
         ],
 
-        &VM_DB_MINIMAL =>
+        &VM_DB_TEST =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
@@ -184,6 +184,46 @@ my $oyVm =
         ],
     },
 };
+
+####################################################################################################################################
+# Set VM_DB_TEST to VM_DB if it is not defined so it doesn't have to be checked everywere
+####################################################################################################################################
+foreach my $strVm (sort(keys(%{$oyVm})))
+{
+    if (!defined($oyVm->{$strVm}{&VM_DB_TEST}))
+    {
+        $oyVm->{$strVm}{&VM_DB_TEST} = $oyVm->{$strVm}{&VM_DB};
+    }
+}
+
+####################################################################################################################################
+# Verify that each version of PostgreSQL is represented in one and only one default VM
+####################################################################################################################################
+foreach my $strPgVersion (versionSupport())
+{
+    my $strVmPgVersionRun;
+
+    foreach my $strVm (VM_LIST)
+    {
+        foreach my $strVmPgVersion (@{$oyVm->{$strVm}{&VM_DB_TEST}})
+        {
+            if ($strPgVersion eq $strVmPgVersion)
+            {
+                if (defined($strVmPgVersionRun))
+                {
+                    confess &log(ASSERT, "PostgreSQL $strPgVersion is already configured to run on default vm $strVm");
+                }
+
+                $strVmPgVersionRun = $strVm;
+            }
+        }
+    }
+
+    if (!defined($strVmPgVersionRun))
+    {
+        confess &log(ASSERT, "PostgreSQL ${strPgVersion} is not configured to run on a default vm");
+    }
+}
 
 ####################################################################################################################################
 # vmGet

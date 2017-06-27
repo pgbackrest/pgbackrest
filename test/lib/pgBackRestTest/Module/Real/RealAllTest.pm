@@ -66,10 +66,10 @@ sub run
         my $hyVm = vmGet();
 
         if (($bS3 || $bHostBackup) &&
-            (@{$hyVm->{$self->vm()}{&VM_DB}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB}}[-1] ne $self->pgVersion()))
+            (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1] ne $self->pgVersion()))
         {
             &log(INFO,
-                'skipped - this test will be run for this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB}}[-1]);
+                'skipped - this test is run this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1]);
             next;
         }
 
@@ -83,7 +83,7 @@ sub run
         # Skip backup destinations other than backup host when standby except for one arbitrary db version
         if ($bHostStandby && $strBackupDestination ne HOST_BACKUP && $self->pgVersion() ne PG_VERSION_96)
         {
-            &log(INFO, 'skipped - standby with backup destination other than backup host only tested on PG ' . PG_VERSION_96);
+            &log(INFO, 'skipped - standby with backup destination other than backup host is tested on PG ' . PG_VERSION_96);
             next;
         }
 
