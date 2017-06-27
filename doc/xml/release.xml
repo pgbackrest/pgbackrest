@@ -291,6 +291,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add <proper>Debian 9</proper> to test suite.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove <setting>process-max</setting> option.  Parallelism is now tested in a more targeted manner and the high level option is no longer needed.</p>
                     </release-item>
 

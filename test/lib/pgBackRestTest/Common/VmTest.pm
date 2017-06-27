@@ -76,6 +76,8 @@ use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
+use constant VM_D9                                                  => 'd9';
+    push @EXPORT, qw(VM_D9);
 
 # Defines the host VM (the VM that the containers run in)
 use constant VM_HOST_DEFAULT                                        => VM_U16;
@@ -136,6 +138,17 @@ my $oyVm =
         &VM_IMAGE => 'debian:8',
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
+    },
+
+    # Debian 9
+    &VM_D9 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_DEBIAN,
+        &VM_OS_REPO => 'stretch',
+        &VM_IMAGE => 'debian:9',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.24.1',
     },
 
     # Ubuntu 12.04
