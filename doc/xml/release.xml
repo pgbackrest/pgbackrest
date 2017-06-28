@@ -163,21 +163,21 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.20dev" title="UNDER DEVELOPMENT">
+        <release date="2017-06-27" version="1.20" title="Critical 8.3/8.4 Bug Fix">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <id>1.XX</id> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
 
                 <release-bug-list>
+                    <release-item>
+                        <p>Fixed an issue that prevented tablespaces from being backed up on <postgres/> &amp;le; <proper>8.4</proper>.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="vondendriesch.adrian"/>
                         </release-item-contributor-list>
 
                         <p>Fixed missing flag in C library build that resulted in a mismatched binary on 32-bit systems.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Fixed an issue that prevented tablespaces from being backed up on <postgres/> &amp;le; <proper>8.4</proper>.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -237,7 +237,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Remove <id>mount</id> and <id>user</id> from host <code>cache-key</code> because it can vary by system.</p>
+                        <p>Remove <id>mount</id> from host <code>cache-key</code> because it can vary by system.</p>
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>
