@@ -235,6 +235,10 @@
                     <release-item>
                         <p>Update <proper>CentOS 6</proper> documentation to build on <postgres/> 9.5.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove <id>mount</id> and <id>user</id> from host <code>cache-key</code> because it can vary by system.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
 
