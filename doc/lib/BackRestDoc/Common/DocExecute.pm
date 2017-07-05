@@ -29,7 +29,7 @@ use BackRestDoc::Common::DocManifest;
 ####################################################################################################################################
 # User that's building the docs
 ####################################################################################################################################
-use constant DOC_USER                                              => 'ubuntu';
+use constant DOC_USER                                              => getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . '';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -769,7 +769,6 @@ sub hostKey
     my $hCacheKey =
     {
         name => $self->{oManifest}->variableReplace($oHost->paramGet('name')),
-        user => $self->{oManifest}->variableReplace($oHost->paramGet('user')),
         image => $self->{oManifest}->variableReplace($oHost->paramGet('image')),
     };
 
@@ -781,11 +780,6 @@ sub hostKey
     if (defined($oHost->paramGet('os', false)))
     {
         $$hCacheKey{os} = $self->{oManifest}->variableReplace($oHost->paramGet('os'));
-    }
-
-    if (defined($oHost->paramGet('mount', false)))
-    {
-        $$hCacheKey{mount} = $self->{oManifest}->variableReplace($oHost->paramGet('mount'));
     }
 
     # Return from function and log return values if any
@@ -971,8 +965,11 @@ sub sectionChildProcess
                 executeTest("mkdir -p ~/data/$$hCacheKey{name}/etc");
 
                 my $oHost = new pgBackRestTest::Common::HostTest(
-                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image}, $$hCacheKey{user}, $$hCacheKey{os},
-                    defined($$hCacheKey{mount}) ? [$$hCacheKey{mount}] : undef, $$hCacheKey{option});
+                    $$hCacheKey{name}, "doc-$$hCacheKey{name}", $$hCacheKey{image},
+                    $self->{oManifest}->variableReplace($oChild->paramGet('user')), $$hCacheKey{os},
+                    defined($oChild->paramGet('mount', false)) ?
+                        [$self->{oManifest}->variableReplace($oChild->paramGet('mount'))] : undef,
+                    $$hCacheKey{option});
 
                 $self->{host}{$$hCacheKey{name}} = $oHost;
                 $self->{oManifest}->variableSet("host-$$hCacheKey{name}-ip", $oHost->{strIP}, true);

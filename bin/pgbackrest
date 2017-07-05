@@ -23,7 +23,6 @@ use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Storage::Local;
 use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
@@ -52,6 +51,30 @@ local $EVAL_ERROR = undef; eval
     if (optionTest(OPTION_TEST) && optionGet(OPTION_TEST))
     {
         testSet(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY), optionGet(OPTION_TEST_POINT, false));
+    }
+
+    ################################################################################################################################
+    # Process archive-push command
+    ################################################################################################################################
+    if (commandTest(CMD_ARCHIVE_PUSH))
+    {
+        # Load module dynamically
+        require pgBackRest::Archive::Push::Push;
+        pgBackRest::Archive::Push::Push->import();
+
+        exitSafe(new pgBackRest::Archive::Push::Push()->process($ARGV[1]));
+    }
+
+    ################################################################################################################################
+    # Process archive-get command
+    ################################################################################################################################
+    if (commandTest(CMD_ARCHIVE_GET))
+    {
+        # Load module dynamically
+        require pgBackRest::Archive::Get::Get;
+        pgBackRest::Archive::Get::Get->import();
+
+        exitSafe(new pgBackRest::Archive::Get::Get()->process());
     }
 
     ################################################################################################################################
@@ -105,38 +128,6 @@ local $EVAL_ERROR = undef; eval
 
         # Process local requests
         exitSafe($oLocal->process());
-    }
-
-    ################################################################################################################################
-    # Archive commands must run on the db host
-    ################################################################################################################################
-    if ((commandTest(CMD_ARCHIVE_PUSH) || commandTest(CMD_ARCHIVE_GET)) && !isDbLocal())
-    {
-        confess &log(ERROR, commandGet() . ' command must be run on the db host', ERROR_HOST_INVALID);
-    }
-
-    ################################################################################################################################
-    # Process archive-push command
-    ################################################################################################################################
-    if (commandTest(CMD_ARCHIVE_PUSH))
-    {
-        # Load module dynamically
-        require pgBackRest::Archive::ArchivePush;
-        pgBackRest::Archive::ArchivePush->import();
-
-        exitSafe(new pgBackRest::Archive::ArchivePush()->process($ARGV[1]));
-    }
-
-    ################################################################################################################################
-    # Process archive commands
-    ################################################################################################################################
-    if (commandTest(CMD_ARCHIVE_GET))
-    {
-        # Load module dynamically
-        require pgBackRest::Archive::ArchiveGet;
-        pgBackRest::Archive::ArchiveGet->import();
-
-        exitSafe(new pgBackRest::Archive::ArchiveGet()->process());
     }
 
     ################################################################################################################################

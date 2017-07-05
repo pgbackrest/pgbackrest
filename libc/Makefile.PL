@@ -12,7 +12,7 @@ WriteMakefile
     NAME              => 'pgBackRest::LibC',
     VERSION_FROM      => 'lib/pgBackRest/LibC.pm', # finds $VERSION, requires EU::MM from perl >= 5.5
     AUTHOR            => 'David Steele <david@pgbackrest.org>',
-    CCFLAGS           => '-std=c99 -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=2 $(CFLAGS)',
+    CCFLAGS           => '-std=c99 -D_FILE_OFFSET_BITS=64 -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=2 $(CFLAGS)',
     LIBS              => [''], # e.g., '-lm'
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
     INC               => '-I.', # e.g., '-I. -I/usr/include/other'

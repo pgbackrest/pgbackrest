@@ -1,6 +1,5 @@
 test
 .vagrant
-package
 nytprof*
 scratch.txt
 coverage*

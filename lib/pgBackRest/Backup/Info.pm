@@ -14,7 +14,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname basename);
 use File::stat;
 
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -645,7 +645,7 @@ sub backupArchiveDbHistoryId
     my @stryArchiveBackup;
 
     # Build the db list from the history in the backup info and archive info file
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($strPathBackupArchive, true);
+    my $oArchiveInfo = new pgBackRest::Archive::Info($strPathBackupArchive, true);
     my $hDbListArchive = $oArchiveInfo->dbHistoryList();
     my $hDbListBackup = $self->dbHistoryList();
     my $iDbHistoryId = undef;

@@ -13,7 +13,7 @@ use Carp qw(confess);
 
 use File::Basename qw(basename);
 
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Ini;
@@ -110,7 +110,7 @@ sub stanzaSet
     $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
     $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
-    my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE));
+    my $oArchiveInfo = new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE));
     my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP));
 
     if ($bStanzaUpgrade)

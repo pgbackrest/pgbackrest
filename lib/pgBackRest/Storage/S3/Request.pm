@@ -67,6 +67,8 @@ sub new
         $self->{strSecretAccessKey},
         $self->{strHost},
         $self->{bVerifySsl},
+        $self->{strCaPath},
+        $self->{strCaFile},
         $self->{lBufferMax},
     ) =
         logDebugParam
@@ -79,6 +81,8 @@ sub new
             {name => 'strSecretAccessKey', trace => true},
             {name => 'strHost', optional => true, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
+            {name => 'strCaPath', optional => true, trace => true},
+            {name => 'strCaFile', optional => true, trace => true},
             {name => 'lBufferMax', optional => true, default => COMMON_IO_BUFFER_MAX, trace => true},
         );
 
@@ -140,7 +144,8 @@ sub request
     my $oHttpClient = new pgBackRest::Common::Http::Client(
         $self->{strHost}, $strVerb,
         {strUri => $strUri, hQuery => $hQuery, hRequestHeader => $hHeader, rstrRequestBody => $rstrBody,
-            bVerifySsl => $self->{bVerifySsl}, lBufferMax => $self->{lBufferMax}});
+            bVerifySsl => $self->{bVerifySsl}, strCaPath => $self->{strCaPath}, strCaFile => $self->{strCaFile},
+            lBufferMax => $self->{lBufferMax}});
 
     # Check response code
     my $iReponseCode = $oHttpClient->responseCode();
@@ -186,7 +191,9 @@ sub request
 
             confess &log(ERROR,
                 "S3 request error [$iReponseCode] " . $oHttpClient->responseMessage() .
-                    (defined($$rstrResponseBody) ? ":\n${$rstrResponseBody}" : ''),
+                    "\n*** request header ***\n" . $oHttpClient->requestHeaderText() .
+                    "\n*** reponse header ***\n" . $oHttpClient->responseHeaderText() .
+                    (defined($$rstrResponseBody) ? "\n*** response body ***\n${$rstrResponseBody}" : ''),
                 ERROR_PROTOCOL);
         }
     }

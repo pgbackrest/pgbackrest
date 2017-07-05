@@ -4,7 +4,7 @@
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
-        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the interface, naming, or the repository format.
+        <text><backrest/> release numbers consist of two parts, major and minor.  A major release may break compatibility with the prior major release, for instance the 1.XX releases are not compatible with the 0.XX releases.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.
 
         The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact the on the <backrest/> codebase.</text>
     </intro>
@@ -50,6 +50,11 @@
         <contributor id="fort.chris">
             <contributor-name-display>Chris Fort</contributor-name-display>
             <contributor-id type="github">the1forte</contributor-id>
+        </contributor>
+
+        <contributor id="frazer.scott">
+            <contributor-name-display>Scott Frazer</contributor-name-display>
+            <contributor-id type="github">sfrazer</contributor-id>
         </contributor>
 
         <contributor id="freund.andres">
@@ -158,11 +163,41 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.20dev" title="UNDER DEVELOPMENT">
+        <release date="2017-06-27" version="1.20" title="Critical 8.3/8.4 Bug Fix">
             <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <id>1.XX</id> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
+
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed an issue that prevented tablespaces from being backed up on <postgres/> &amp;le; <proper>8.4</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed missing flag in C library build that resulted in a mismatched binary on 32-bit systems.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frazer.scott"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>s3-repo-ca-path</br-option> and <br-option>s3-repo-ca-file</br-option> options to accommodate systems where CAs are not automatically found by <code>IO::Socket::SSL</code>, i.e. <proper>RHEL7</proper>, or to load custom CAs.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Harden protocol handshake to handle race conditions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fixed misleading error message when a file was opened for write in a missing directory.</p>
                     </release-item>
 
                     <release-item>
@@ -172,8 +207,40 @@
                     <release-item>
                         <p>Cast size in S3 manifest to integer.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Rename <code>Archive</code> modules to remove redundancy.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve <proper>S3</proper> error reporting.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Minor optimizations to package loads and ordering for <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Remove exhaustive version list from Stable Releases TOC.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve <proper>S3</proper> server implementation in documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update <proper>CentOS 6</proper> documentation to build on <postgres/> 9.5.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove <id>mount</id> from host <code>cache-key</code> because it can vary by system.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
 
             <release-test-list>
                 <release-bug-list>
@@ -184,7 +251,67 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Add documentation builds to CI.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove patch directory before Debian package builds.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Combine hardlink and non/compressed in synthetic tests to reduce test time and improve coverage.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Split <id>full</id> module into <id>mock</id> and <id>real</id> to allow better test combinations and save time in CI.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Consolidate <id>archive-push</id> and <id>archive-get</id> tests into new <id>archive</id> test.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Eliminate redundancy in <id>real</id> tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Install <id>sudo</id> in base containers rather than on demand.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>More optimized container suite that greatly improves build time.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added static Debian packages for <code>Devel::Cover</code> to reduce build time.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>deprecated</id> state for containers.  Deprecated containers may only be used to build packages.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove <proper>Debian 8</proper> from CI because it does not provide additional coverage over <proper>Ubuntu 12.04, 14.04, 16.04</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <proper>Debian 9</proper> to test suite.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove <setting>process-max</setting> option.  Parallelism is now tested in a more targeted manner and the high level option is no longer needed.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Balance database versions between VMs to minimize test duration.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Automatically check that all supported <postgres/> versions are being tested on a single default VM.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <id>performance</id> module and basic performance test for <cmd>archive-push</cmd>.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

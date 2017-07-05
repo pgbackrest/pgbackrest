@@ -11,8 +11,17 @@
         <variable key="user-guide-os" keyword="default">Debian/Ubuntu</variable>
         <variable key="user-guide-os" keyword="co6">RHEL/CentOS 6</variable>
 
-        <variable key="pg-version">9.4</variable>
-        <variable key="pg-version-upgrade">9.5</variable>
+        <variable key="pgbackrest-base-dir" eval="y">
+            use File::Basename qw(dirname);
+            use Cwd qw(abs_path);
+
+            dirname(dirname(abs_path($0)));
+        </variable>
+
+        <variable key="pg-version" keyword="default">9.4</variable>
+        <variable key="pg-version" keyword="co6">9.5</variable>
+        <variable key="pg-version-upgrade" keyword="default">9.5</variable>
+        <variable key="pg-version-upgrade" keyword="co6">9.6</variable>
 
         <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
@@ -33,7 +42,7 @@
         <variable key="spool-path">/var/spool/pgbackrest</variable>
 
         <variable key="postgres-install-upgrade" keyword="default">apt-get install postgresql-{[pg-version-upgrade]}</variable>
-        <variable key="postgres-install-upgrade" keyword="co6">yum install postgresql95-server</variable>
+        <variable key="postgres-install-upgrade" keyword="co6">yum install postgresql96-server</variable>
 
         <variable key="postgres-config-demo" keyword="default">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
         <variable key="postgres-config-demo" keyword="co6">{[db-path]}/postgresql.conf</variable>
@@ -61,13 +70,15 @@
         <variable key="host-os" keyword="default">u14</variable>
         <variable key="host-os" keyword="co6">co6</variable>
 
-        <variable key="host-user">ubuntu</variable>
-        <variable key="host-mount">/backrest:/backrest</variable>
+        <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . ''</variable>
+        <variable key="host-mount">{[pgbackrest-base-dir]}:/backrest</variable>
         <variable key="image-repo">pgbackrest/test</variable>
+
+        <variable key="host-s3-server">s3-server</variable>
 
         <variable key="host-db-master">db-master</variable>
         <variable key="host-db-master-user">{[host-user]}</variable>
-        <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-db-{[pg-version]}-doc</variable>
+        <variable key="host-db-master-image">{[image-repo]}:{[host-os]}-doc-db</variable>
         <variable key="host-db-master-mount">{[host-mount]}</variable>
 
         <variable key="host-db-standby">db-standby</variable>
@@ -77,7 +88,7 @@
 
         <variable key="host-backup">backup</variable>
         <variable key="host-backup-user">{[host-user]}</variable>
-        <variable key="host-backup-image">{[image-repo]}:{[host-os]}-backup-doc-pre</variable>
+        <variable key="host-backup-image">{[image-repo]}:{[host-os]}-doc-backup</variable>
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
@@ -171,7 +182,7 @@
         <title>Installation</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add name="demo-bucket.s3.amazonaws.com" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}">
+        <host-add name="{[host-s3-server]}" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}">
         </host-add>
 
         <host-add name="{[host-db-master]}" user="{[host-db-master-user]}" image="{[host-db-master-image]}" os="{[host-os]}" mount="{[host-db-master-mount]}">
@@ -1351,7 +1362,13 @@
         <execute-list host="{[host-db-master]}">
             <title>Create the stanza</title>
 
-            <execute user="{[host-user]}">
+            <!-- set host entries to redirect aws to local s3 server -->
+            <execute user="root" show='n'>
+                <exe-cmd>echo "{[host-s3-server-ip]} demo-bucket.s3.amazonaws.com s3.amazonaws.com" |
+                    sudo tee -a /etc/hosts</exe-cmd>
+            </execute>
+
+            <execute user="{[host-user]}" show='n'>
                 <exe-cmd>aws s3 --no-verify-ssl mb s3://demo-bucket 2>&amp;1</exe-cmd>
             </execute>
 

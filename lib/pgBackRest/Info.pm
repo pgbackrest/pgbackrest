@@ -434,7 +434,7 @@ sub stanzaList
 
                 # With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
                 # archive path must be built by retrieving the archive id given the db version and system id of the backup
-                my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo(storageRepo()->pathGet($strArchiveStanzaPath));
+                my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet($strArchiveStanzaPath));
                 my $strArchiveId = $oArchiveInfo->archiveId({strDbVersion => $hDbInfo->{&INFO_KEY_VERSION},
                     ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
                 my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";

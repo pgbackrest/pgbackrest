@@ -11,9 +11,9 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Scalar::Util qw(looks_like_number);
 
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveGet;
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Get::Get;
+use pgBackRest::Archive::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
@@ -238,7 +238,7 @@ sub process
 
         if ($iBackupTotal > 0)
         {
-            my $oArchiveInfo = new pgBackRest::Archive::ArchiveInfo($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
+            my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
             my @stryListArchiveDisk = $oStorageRepo->list(
                 STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
 

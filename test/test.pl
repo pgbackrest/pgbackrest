@@ -66,7 +66,6 @@ test.pl [options]
    --module             test module to execute
    --test               execute the specified test in a module
    --run                execute only the specified test run
-   --process-max        max processes to run for compression/transfer (default 1)
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
    --db-version         version of postgres to test (all, defaults to minimal)
@@ -77,8 +76,8 @@ test.pl [options]
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
-   --dev                --no-lint --smart --no-package --process-max=1
-   --expect             --no-lint --smart --no-package --process-max=1 --vm=co7 --db=9.5 --log-force
+   --dev                --no-lint --smart --no-package
+   --expect             --no-lint --smart --no-package --vm=co7 --db=9.6 --log-force
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -106,7 +105,6 @@ my $bVmOut = false;
 my @stryModule;
 my @stryModuleTest;
 my @iyModuleTestRun;
-my $iProcessMax = undef;
 my $iVmMax = 1;
 my $iVmId = undef;
 my $bDryRun = false;
@@ -146,7 +144,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'module=s@' => \@stryModule,
             'test=s@' => \@stryModuleTest,
             'run=s@' => \@iyModuleTestRun,
-            'process-max=s' => \$iProcessMax,
             'vm-id=s' => \$iVmId,
             'vm-max=s' => \$iVmMax,
             'dry-run' => \$bDryRun,
@@ -197,7 +194,6 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $iProcessMax = 1;
     }
 
     ################################################################################################################################
@@ -208,9 +204,8 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $iProcessMax = 1;
         $strVm = VM_CO7;
-        $strDbVersion = '9.5';
+        $strDbVersion = '9.6';
         $bLogForce = true;
     }
 
@@ -236,12 +231,6 @@ eval
     if (@iyModuleTestRun != 0 && @stryModuleTest != 1)
     {
         confess "Only one --test can be provided when --run is specified";
-    }
-
-    # Check process total
-    if (defined($iProcessMax) && ($iProcessMax < 1 || $iProcessMax > OPTION_DEFAULT_PROCESS_MAX_MAX))
-    {
-        confess 'process-max must be between 1 and ' . OPTION_DEFAULT_PROCESS_MAX_MAX;
     }
 
     # Set test path if not expicitly set
@@ -287,7 +276,7 @@ eval
     ################################################################################################################################
     if ($bVmBuild)
     {
-        containerBuild($oStorageBackRest, $strVm, $bVmForce, $strDbVersion);
+        containerBuild($oStorageBackRest, $strVm, $bVmForce);
         exit 0;
     }
 
@@ -561,7 +550,7 @@ eval
                             "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
                             " ${strBuildPath}");
 
-                        # If dev build then override then disable static release date used for reproducibility.
+                        # If dev build then disable static release date used for reproducibility
                         if ($bVersionDev)
                         {
                             my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
@@ -571,6 +560,9 @@ eval
 
                             $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
                         }
+
+                        # Remove patches that should be applied to core code
+                        $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true});
 
                         # Update changelog to add experimental version
                         $oStorageBackRest->put("${strBuildPath}/debian/changelog",
@@ -611,7 +603,7 @@ eval
         # Determine which tests to run
         #-----------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $iProcessMax, $bCoverageOnly);
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly);
 
         if (@{$oyTestRun} == 0)
         {
@@ -863,7 +855,7 @@ eval
         $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
-        $iProcessMax, $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,   # Test options
+        $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info
 
     if (!$bNoCleanup)

@@ -79,6 +79,8 @@ compress=n [default=3]
   --repo-path               repository path where WAL segments and backups
 stored [default=/var/lib/pgbackrest]
   --repo-s3-bucket          s3 repository bucket
+  --repo-s3-ca-file         s3 SSL CA File
+  --repo-s3-ca-path         s3 SSL CA Path
   --repo-s3-endpoint        s3 repository endpoint
   --repo-s3-host            s3 repository host
   --repo-s3-key             s3 repository access key

@@ -215,7 +215,7 @@ pageChecksumBufferTest(
     // If the buffer does not represent an even number of pages then error
     if (uiBufferSize % uiPageSize != 0 || uiBufferSize / uiPageSize == 0)
     {
-        croak("buffer size %u, page size %u are not divisible", uiBufferSize, uiPageSize);
+        croak("buffer size %lu, page size %lu are not divisible", uiBufferSize, uiPageSize);
     }
 
     // Loop through all pages in the buffer

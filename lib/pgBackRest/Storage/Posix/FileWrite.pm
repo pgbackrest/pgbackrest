@@ -107,6 +107,8 @@ sub open
             $self->{bPathCreate} = false;
             return $self->open();
         }
+
+        logErrorResult($OS_ERROR{ENOENT} ? ERROR_PATH_MISSING : ERROR_FILE_OPEN, "unable to open '${strFile}'", $OS_ERROR);
     }
 
     # Set file mode to binary

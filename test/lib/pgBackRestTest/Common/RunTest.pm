@@ -119,7 +119,6 @@ sub process
         $self->{strModule},
         $self->{strModuleTest},
         $self->{iyModuleTestRun},
-        $self->{iProcessMax},
         $self->{bOutput},
         $self->{bDryRun},
         $self->{bCleanup},
@@ -141,7 +140,6 @@ sub process
             {name => 'strModule'},
             {name => 'strModuleTest'},
             {name => 'iModuleTestRun', required => false},
-            {name => 'iProcessMax'},
             {name => 'bOutput'},
             {name => 'bDryRun'},
             {name => 'bCleanup'},
@@ -595,7 +593,6 @@ sub moduleTest {return shift->{strModuleTest}}
 sub pgBinPath {return shift->{strPgBinPath}}
 sub pgUser {return shift->{strPgUser}}
 sub pgVersion {return shift->{strPgVersion}}
-sub processMax {return shift->{iProcessMax}}
 sub runCurrent {return shift->{iRun}}
 sub stanza {return 'db'}
 sub testPath {return shift->{strTestPath}}

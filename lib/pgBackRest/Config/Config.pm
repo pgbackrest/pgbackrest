@@ -307,6 +307,10 @@ use constant OPTION_REPO_S3_KEY_SECRET                              => 'repo-s3-
     push @EXPORT, qw(OPTION_REPO_S3_KEY_SECRET);
 use constant OPTION_REPO_S3_BUCKET                                  => 'repo-s3-bucket';
     push @EXPORT, qw(OPTION_REPO_S3_BUCKET);
+use constant OPTION_REPO_S3_CA_FILE                                 => 'repo-s3-ca-file';
+    push @EXPORT, qw(OPTION_REPO_S3_CA_FILE);
+use constant OPTION_REPO_S3_CA_PATH                                 => 'repo-s3-ca-path';
+    push @EXPORT, qw(OPTION_REPO_S3_CA_PATH);
 use constant OPTION_REPO_S3_ENDPOINT                                => 'repo-s3-endpoint';
     push @EXPORT, qw(OPTION_REPO_S3_ENDPOINT);
 use constant OPTION_REPO_S3_HOST                                    => 'repo-s3-host';
@@ -1301,6 +1305,9 @@ my %oOptionRule =
         },
         &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
     },
+
+    &OPTION_REPO_S3_CA_FILE => &OPTION_REPO_S3_HOST,
+    &OPTION_REPO_S3_CA_PATH => &OPTION_REPO_S3_HOST,
 
     &OPTION_REPO_S3_KEY =>
     {

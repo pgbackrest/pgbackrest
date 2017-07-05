@@ -16,7 +16,7 @@ use Exporter qw(import);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
@@ -311,7 +311,7 @@ sub infoObject
         # attempt to be loaded
         $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
             new pgBackRest::Backup::Info($strParentPath, false, $bRequired, {bIgnoreMissing => $bIgnoreMissing}) :
-            new pgBackRest::Archive::ArchiveInfo($strParentPath, $bRequired, {bIgnoreMissing => $bIgnoreMissing}));
+            new pgBackRest::Archive::Info($strParentPath, $bRequired, {bIgnoreMissing => $bIgnoreMissing}));
 
         # Reset the console logging
         logEnable();
@@ -347,7 +347,7 @@ sub infoObject
         {
             $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
                 new pgBackRest::Backup::Info($strParentPath, false, false, {bLoad => false}) :
-                new pgBackRest::Archive::ArchiveInfo($strParentPath, false, {bLoad => false}));
+                new pgBackRest::Archive::Info($strParentPath, false, {bLoad => false}));
         }
     }
 
@@ -420,7 +420,7 @@ sub infoFileCreate
         {
             my $oInfoOnDisk =
                 ($strPathType eq STORAGE_REPO_BACKUP ?
-                    new pgBackRest::Backup::Info($strParentPath) : new pgBackRest::Archive::ArchiveInfo($strParentPath));
+                    new pgBackRest::Backup::Info($strParentPath) : new pgBackRest::Archive::Info($strParentPath));
 
             # If the hashes are not the same
             if ($oInfoOnDisk->hash() ne $oInfo->hash())

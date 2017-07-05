@@ -104,7 +104,7 @@ sub begin
 
     # Record start time and set process timeout
     $self->{iProcessTimeout} = 540;
-    $self->{lTimeStart} = time();
+    $self->{lTimeLast} = time();
 
     if (!defined($self->{hError}))
     {
@@ -141,7 +141,7 @@ sub endRetry
         my $bFound = false;
 
         # Error if process has been running longer than timeout
-        if (time() - $self->{lTimeStart} > $self->{iProcessTimeout})
+        if (time() - $self->{lTimeLast} > $self->{iProcessTimeout})
         {
             confess &log(ASSERT,
                 "timeout after $self->{iProcessTimeout} seconds waiting for process to complete: $self->{strCommand}");
@@ -150,6 +150,8 @@ sub endRetry
         # Drain the stdout stream and look for test points
         while (defined(my $strLine = $self->{oIo}->readLine(true, false)))
         {
+            $self->{lTimeLast} = time();
+
             $self->{strOutLog} .= "${strLine}\n";
             $bFound = true;
 

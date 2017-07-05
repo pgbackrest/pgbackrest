@@ -6,6 +6,7 @@ branches:
 
 dist: trusty
 sudo: required
+group: deprecated-2017Q2
 
 language: c
 
@@ -13,27 +14,11 @@ services:
   - docker
 
 env:
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza"
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=full --test=synthetic --no-lint --no-package"
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=9.1" PGB_TEST_PARAM="--module=full --test=real --db=9.1 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="co6" PGB_BUILD_PARAM="--db=9.0" PGB_TEST_PARAM="--module=full --test=real --db=9.0 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --no-lint"
-  - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=full --test=synthetic --no-lint --no-package"
-  - PGB_TEST_VM="u16" PGB_BUILD_PARAM="--db=9.4" PGB_TEST_PARAM="--module=full --test=real --db=9.4 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --no-lint"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=full --test=synthetic --no-lint --no-package"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=9.3" PGB_TEST_PARAM="--module=full --test=real --db=9.3 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="d8" PGB_BUILD_PARAM="--db=8.4" PGB_TEST_PARAM="--module=full --test=real --db=8.4 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --no-lint"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=full --test=synthetic --no-lint --no-package"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=9.6" PGB_TEST_PARAM="--module=full --test=real --db=9.6 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="co7" PGB_BUILD_PARAM="--db=9.5" PGB_TEST_PARAM="--module=full --test=real --db=9.5 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --no-lint"
-  - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=full --test=synthetic --no-lint --no-package"
-  - PGB_TEST_VM="u14" PGB_BUILD_PARAM="--db=9.2" PGB_TEST_PARAM="--module=full --test=real --db=9.2 --process-max=2 --no-lint --no-package"
-  - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=common --module=help --module=config --module=storage --module=protocol --module=info --module=archive --module=backup --module=expire --module=stanza --no-lint"
-  - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=none" PGB_TEST_PARAM="--vm-max=2 --module=full --test=synthetic --no-lint --no-package"
-  - PGB_TEST_VM="u12" PGB_BUILD_PARAM="--db=8.3" PGB_TEST_PARAM="--module=full --test=real --db=8.3 --process-max=2 --no-lint --no-package"
+  - PGB_CI="--vm=co6 test"
+  - PGB_CI="--vm=u16 test"
+  - PGB_CI="--vm=co7 test"
+  - PGB_CI="--vm=u12 test"
+  - PGB_CI="doc"
 
 before_install:
   - sudo apt-get -qq update && sudo apt-get install libxml-checker-perl libdbd-pg-perl libperl-critic-perl libtemplate-perl libpod-coverage-perl libtest-differences-perl libhtml-parser-perl lintian debhelper txt2man devscripts libjson-perl libio-socket-ssl-perl libxml-libxml-perl python-pip
@@ -46,10 +31,8 @@ before_install:
     aws help --version
     aws configure list
   - |
-    # Build Devel::Cover
-    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl
-    cd ~/libdevel-cover-perl && git checkout debian/1.23-2 && debuild -i -us -uc -b
-    sudo dpkg -i ~/libdevel-cover-perl_1.23-2_amd64.deb
+    # Install Devel::Cover
+    sudo dpkg -i ${TRAVIS_BUILD_DIR?}/test/package/u14-libdevel-cover-perl_1.23-2_amd64.deb
     /usr/bin/cover -v
 
 install:
@@ -60,7 +43,6 @@ install:
     cd ~ && pwd && whoami && umask && groups
     mv ${TRAVIS_BUILD_DIR?} pgbackrest
     rm -rf ${TRAVIS_BUILD_DIR?}
-  - pgbackrest/test/test.pl --vm-build --vm=${PGB_TEST_VM?} ${PGB_BUILD_PARAM?}
 
 script:
-  - pgbackrest/test/test.pl --vm-host=u14 --vm=${PGB_TEST_VM?} ${PGB_TEST_PARAM?}
+  - pgbackrest/test/travis.pl ${PGB_CI?}

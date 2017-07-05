@@ -9,7 +9,7 @@ use English '-no_match_vars';
 use Fcntl qw(O_RDONLY);
 
 # Set number of tests
-use Test::More tests => 10;
+use Test::More tests => 11;
 
 # Make sure the module loads without errors
 BEGIN {use_ok('pgBackRest::LibC')};
@@ -87,6 +87,14 @@ sub pageBuild
         substr($tBuffer, 0, 8) . pack('S', $iPageChecksum + 3) . substr($tBuffer, 10);
 
     ok (pageChecksumBufferTest($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'pass valid page buffer');
+
+    # Make sure that an invalid buffer size throws an exception
+    eval
+    {
+        pageChecksumBufferTest($tBufferMulti, length($tBufferMulti) - 1, 0, $iPageSize, 0xFFFF, 0xFFFF);
+    };
+
+    ok (defined($EVAL_ERROR) && $EVAL_ERROR =~ 'buffer size 65535, page size 8192 are not divisible.*', 'invalid page buffer size');
 
     # Allow page with an invalid checksum because LSN >= ignore LSN
     $tBufferMulti =

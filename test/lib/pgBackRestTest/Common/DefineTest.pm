@@ -43,9 +43,6 @@ use constant TESTDEF_EXPECT                                         => 'expect';
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
-# Determines if the test will be run with multiple processes
-use constant TESTDEF_PROCESS                                        => 'process';
-    push @EXPORT, qw(TESTDEF_PROCESS);
 # Total runs in the test
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
@@ -63,17 +60,6 @@ use constant TESTDEF_COVERAGE_PARTIAL                               => false;
 ################################################################################################################################
 # Code modules
 ################################################################################################################################
-use constant TESTDEF_MODULE_ARCHIVE                                 => 'Archive';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE);
-use constant TESTDEF_MODULE_ARCHIVE_COMMON                          => TESTDEF_MODULE_ARCHIVE . '/ArchiveCommon';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_COMMON);
-use constant TESTDEF_MODULE_ARCHIVE_PUSH                            => TESTDEF_MODULE_ARCHIVE . '/ArchivePush';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH);
-use constant TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC                      => TESTDEF_MODULE_ARCHIVE_PUSH . 'Async';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC);
-use constant TESTDEF_MODULE_ARCHIVE_PUSH_FILE                       => TESTDEF_MODULE_ARCHIVE_PUSH . 'File';
-    push @EXPORT, qw(TESTDEF_MODULE_ARCHIVE_PUSH_FILE);
-
 use constant TESTDEF_MODULE_COMMON                                  => 'Common';
     push @EXPORT, qw(TESTDEF_MODULE_COMMON);
 use constant TESTDEF_MODULE_COMMON_INI                              => TESTDEF_MODULE_COMMON . '/Ini';
@@ -221,9 +207,13 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 's3-cert',
+                    &TESTDEF_TOTAL => 1,
+                },
+                {
                     &TESTDEF_NAME => 's3',
                     &TESTDEF_TOTAL => 7,
-                    &TESTDEF_VM => [VM_CO7, VM_U16],
+                    &TESTDEF_VM => [VM_CO7, VM_U14, VM_U16, VM_D8],
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -295,43 +285,30 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_NAME => 'common',
                     &TESTDEF_TOTAL => 4,
                     &TESTDEF_CONTAINER => true,
 
                     &TESTDEF_COVERAGE =>
                     {
-                        &TESTDEF_MODULE_ARCHIVE_COMMON => TESTDEF_COVERAGE_PARTIAL,
+                        'Archive/Common' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'push-unit',
+                    &TESTDEF_NAME => 'push',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_CONTAINER => true,
 
                     &TESTDEF_COVERAGE =>
                     {
-                        &TESTDEF_MODULE_ARCHIVE_PUSH => TESTDEF_COVERAGE_FULL,
-                        &TESTDEF_MODULE_ARCHIVE_PUSH_ASYNC => TESTDEF_COVERAGE_FULL,
-                        &TESTDEF_MODULE_ARCHIVE_PUSH_FILE => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/Async' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/File' => TESTDEF_COVERAGE_FULL,
                     },
-                },
-                {
-                    &TESTDEF_NAME => 'push',
-                    &TESTDEF_TOTAL => 9,
-                    &TESTDEF_PROCESS => true,
-                    &TESTDEF_INDIVIDUAL => true,
-                    &TESTDEF_EXPECT => true,
                 },
                 {
                     &TESTDEF_NAME => 'stop',
                     &TESTDEF_TOTAL => 7,
-                    &TESTDEF_INDIVIDUAL => true,
-                    &TESTDEF_EXPECT => true,
-                },
-                {
-                    &TESTDEF_NAME => 'get',
-                    &TESTDEF_TOTAL => 9,
                     &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_EXPECT => true,
                 },
@@ -408,24 +385,49 @@ my $oTestDef =
                 },
             ]
         },
-        # Full tests
+        # Mock tests
         {
-            &TESTDEF_NAME => 'full',
+            &TESTDEF_NAME => 'mock',
             &TESTDEF_EXPECT => true,
             &TESTDEF_INDIVIDUAL => true,
-            &TESTDEF_PROCESS => true,
 
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'synthetic',
+                    &TESTDEF_NAME => 'archive',
                     &TESTDEF_TOTAL => 3,
                 },
                 {
-                    &TESTDEF_NAME => 'real',
-                    &TESTDEF_TOTAL => 12,
+                    &TESTDEF_NAME => 'all',
+                    &TESTDEF_TOTAL => 3,
+                },
+            ]
+        },
+        # Real tests
+        {
+            &TESTDEF_NAME => 'real',
+            &TESTDEF_EXPECT => true,
+            &TESTDEF_INDIVIDUAL => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'all',
+                    &TESTDEF_TOTAL => 6,
                     &TESTDEF_DB => true,
                 }
+            ]
+        },
+        # Performance tests
+        {
+            &TESTDEF_NAME => 'performance',
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'archive',
+                    &TESTDEF_TOTAL => 1,
+                },
             ]
         },
     ]
@@ -458,7 +460,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_PROCESS, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

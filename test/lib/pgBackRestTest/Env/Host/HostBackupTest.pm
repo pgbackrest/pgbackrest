@@ -16,7 +16,7 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRest::Archive::ArchiveInfo;
+use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
@@ -75,7 +75,7 @@ sub new
     if (!defined($$oParam{strName}) || $$oParam{strName} eq HOST_BACKUP)
     {
         $strName = HOST_BACKUP;
-        $strImage = containerRepo() . ':' . testRunGet()->vm() . '-backup-test-pre';
+        $strImage = containerRepo() . ':' . testRunGet()->vm() . '-test';
         $strUser = testRunGet()->backrestUser();
     }
     else
@@ -936,11 +936,6 @@ sub configCreate
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROTOCOL_TIMEOUT} = 60;
     $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_DB_TIMEOUT} = 45;
 
-    if ($self->processMax() > 1)
-    {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROCESS_MAX} = $self->processMax();
-    }
-
     if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
     {
         $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
@@ -1038,8 +1033,9 @@ sub configCreate
         if ($bArchiveAsync)
         {
             $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_ARCHIVE_ASYNC} = 'y';
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
         }
+
+        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
 
         # If the the backup host is remote
         if (!$self->isHostBackup())
@@ -1329,7 +1325,6 @@ sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
 sub repoPath {return shift->{strRepoPath}}
 sub stanza {return testRunGet()->stanza()}
-sub processMax {return testRunGet()->processMax()}
 sub synthetic {return shift->{bSynthetic}}
 
 1;

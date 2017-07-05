@@ -14,8 +14,8 @@ use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Io::Buffered;
 use pgBackRest::Common::Wait;
-use pgBackRest::Archive::ArchiveGet;
-use pgBackRest::Archive::ArchivePushFile;
+use pgBackRest::Archive::Get::Get;
+use pgBackRest::Archive::Push::File;
 use pgBackRest::Check::Check;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
@@ -70,7 +70,7 @@ sub init
     # Create objects
     my $oStorage = optionTest(OPTION_TYPE, DB) ? storageDb() : storageRepo();
 
-    my $oArchiveGet = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Archive::ArchiveGet() : undef;
+    my $oArchiveGet = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Archive::Get::Get() : undef;
     my $oCheck = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Check::Check() : undef;
     my $oInfo = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Info() : undef;
     my $oDb = optionTest(OPTION_TYPE, DB) ? new pgBackRest::Db() : undef;

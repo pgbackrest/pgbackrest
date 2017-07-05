@@ -56,6 +56,8 @@ sub new
         $iProtocolTimeout,
         $lBufferMax,
         $bVerifySsl,
+        $strCaPath,
+        $strCaFile,
     ) =
         logDebugParam
         (
@@ -69,15 +71,31 @@ sub new
             {name => 'iProtocolTimeout', optional => true, default => 30, trace => true},
             {name => 'lBufferMax', optional => true, default => 32768, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
+            {name => 'strCaPath', optional => true, trace => true},
+            {name => 'strCaFile', optional => true, trace => true},
         );
 
     # Connect to the server
-    my $oSocket = IO::Socket::SSL->new(
-        PeerHost => $strHost, PeerPort => 'https', SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE);
+    my $oSocket;
 
+    eval
+    {
+        $oSocket = IO::Socket::SSL->new(
+            PeerHost => $strHost, PeerPort => 'https', SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
+            SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile);
+
+        return 1;
+    }
+    or do
+    {
+        logErrorResult(ERROR_HOST_CONNECT, $EVAL_ERROR);
+    };
+
+    # Check for errors
     if (!defined($oSocket))
     {
-        logErrorResult(ERROR_PROTOCOL, "unable to connect $!", $SSL_ERROR);
+        logErrorResult(
+            ERROR_HOST_CONNECT, coalesce(length($!) == 0 ? undef : $!, $SSL_ERROR), length($!) > 0 ? $SSL_ERROR : undef);
     }
 
     # Create the buffered IO object
@@ -127,13 +145,13 @@ sub new
     # Read the response headers
     $self->{iContentLength} = undef;
 
-    my $strResponseHeader = '';
+    $self->{strResponseHeader} = '';
     my $strHeader = trim($self->readLine());
 
     while ($strHeader ne '')
     {
         # Validate header
-        $strResponseHeader .= "${strHeader}\n";
+        $self->{strResponseHeader} .= "${strHeader}\n";
 
         my $iColonPos = index($strHeader, ':');
 
@@ -275,8 +293,10 @@ sub responseBody
 # Properties.
 ####################################################################################################################################
 sub contentLength {shift->{iContentLength}}                         # Content length if available (-1 means not known yet)
+sub requestHeaderText {trim(shift->{strRequestHeader})}
 sub responseCode {shift->{iResponseCode}}
 sub responseHeader {shift->{hResponseHeader}}
+sub responseHeaderText {trim(shift->{strResponseHeader})}
 sub responseMessage {shift->{strResponseMessage}}
 sub responseProtocol {shift->{strResponseProtocol}}
 

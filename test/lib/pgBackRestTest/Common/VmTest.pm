@@ -21,12 +21,12 @@ use pgBackRest::DbVersion;
 ####################################################################################################################################
 use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
-use constant VM_DB_DOC                                              => 'db-doc';
-    push @EXPORT, qw(VM_DB_DOC);
-use constant VM_DB_MINIMAL                                          => 'db-minimal';
-    push @EXPORT, qw(VM_DB_MINIMAL);
+use constant VM_DB_TEST                                             => 'db-test';
+    push @EXPORT, qw(VM_DB_TEST);
 use constant VM_CONTROL_MASTER                                      => 'control-master';
     push @EXPORT, qw(VM_CONTROL_MASTER);
+use constant VM_DEPRECATED                                          => 'deprecated';
+    push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
 use constant VM_OS                                                  => 'os';
@@ -76,13 +76,15 @@ use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
+use constant VM_D9                                                  => 'd9';
+    push @EXPORT, qw(VM_D9);
 
 # Defines the host VM (the VM that the containers run in)
 use constant VM_HOST_DEFAULT                                        => VM_U16;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # Lists valid VMs
-use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_D8, VM_CO7, VM_U14, VM_U12);
+use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_CO7, VM_U12);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -93,7 +95,6 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:6',
-        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
@@ -101,22 +102,15 @@ my $oyVm =
         [
             PG_VERSION_90,
             PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
         ],
 
-        &VM_DB_MINIMAL =>
+        &VM_DB_TEST =>
         [
             PG_VERSION_90,
             PG_VERSION_91,
-        ],
-
-        &VM_DB_DOC =>
-        [
-            PG_VERSION_94,
+            PG_VERSION_95,
         ],
     },
 
@@ -126,21 +120,11 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
-        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
         &VM_DB =>
         [
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-        ],
-
-        &VM_DB_MINIMAL =>
-        [
-            PG_VERSION_95,
             PG_VERSION_96,
         ],
     },
@@ -152,27 +136,19 @@ my $oyVm =
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'jessie',
         &VM_IMAGE => 'debian:8',
-        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
+    },
 
-        &VM_DB =>
-        [
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-        ],
-
-        &VM_DB_MINIMAL =>
-        [
-            PG_VERSION_84,
-            PG_VERSION_93,
-        ],
+    # Debian 9
+    &VM_D9 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_DEBIAN,
+        &VM_OS_REPO => 'stretch',
+        &VM_IMAGE => 'debian:9',
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.24.1',
     },
 
     # Ubuntu 12.04
@@ -182,7 +158,6 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'precise',
         &VM_IMAGE => 'ubuntu:12.04',
-        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
 
@@ -190,18 +165,7 @@ my $oyVm =
         [
             PG_VERSION_83,
             PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
             PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-        ],
-
-        &VM_DB_MINIMAL =>
-        [
-            PG_VERSION_83,
         ],
     },
 
@@ -212,27 +176,10 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'trusty',
         &VM_IMAGE => 'ubuntu:14.04',
-        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
 
         &VM_DB =>
-        [
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-        ],
-
-        &VM_DB_MINIMAL =>
-        [
-            PG_VERSION_92,
-        ],
-
-        &VM_DB_DOC =>
         [
             PG_VERSION_94,
         ],
@@ -245,26 +192,56 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'xenial',
         &VM_IMAGE => 'ubuntu:16.04',
-        &VM_CONTROL_MASTER => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 
         &VM_DB =>
         [
-            PG_VERSION_91,
-            PG_VERSION_92,
             PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-        ],
-
-        &VM_DB_MINIMAL =>
-        [
             PG_VERSION_94,
         ],
     },
 };
+
+####################################################################################################################################
+# Set VM_DB_TEST to VM_DB if it is not defined so it doesn't have to be checked everywere
+####################################################################################################################################
+foreach my $strVm (sort(keys(%{$oyVm})))
+{
+    if (!defined($oyVm->{$strVm}{&VM_DB_TEST}))
+    {
+        $oyVm->{$strVm}{&VM_DB_TEST} = $oyVm->{$strVm}{&VM_DB};
+    }
+}
+
+####################################################################################################################################
+# Verify that each version of PostgreSQL is represented in one and only one default VM
+####################################################################################################################################
+foreach my $strPgVersion (versionSupport())
+{
+    my $strVmPgVersionRun;
+
+    foreach my $strVm (VM_LIST)
+    {
+        foreach my $strVmPgVersion (@{$oyVm->{$strVm}{&VM_DB_TEST}})
+        {
+            if ($strPgVersion eq $strVmPgVersion)
+            {
+                if (defined($strVmPgVersionRun))
+                {
+                    confess &log(ASSERT, "PostgreSQL $strPgVersion is already configured to run on default vm $strVm");
+                }
+
+                $strVmPgVersionRun = $strVm;
+            }
+        }
+    }
+
+    if (!defined($strVmPgVersionRun))
+    {
+        confess &log(ASSERT, "PostgreSQL ${strPgVersion} is not configured to run on a default vm");
+    }
+}
 
 ####################################################################################################################################
 # vmGet

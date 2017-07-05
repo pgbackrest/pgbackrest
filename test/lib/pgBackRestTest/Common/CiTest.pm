@@ -80,6 +80,7 @@ sub process
         "\n" .
         "dist: trusty\n" .
         "sudo: required\n" .
+        "group: deprecated-2017Q2\n" .
         "\n" .
         "language: c\n" .
         "\n" .
@@ -88,72 +89,13 @@ sub process
         "\n" .
         "env:\n";
 
-    my $bFirst = true;
-
     # Iterate each OS
     foreach my $strVm (VM_LIST)
     {
-        my $hVm = vmGet();
-        my @stryModule;
-        my $strFullModule = undef;
-
-        # Get all modules but full to break up the tests
-        foreach my $strModule (testDefModuleList())
-        {
-            if ($strModule ne 'full')
-            {
-                push(@stryModule, $strModule);
-            }
-            else
-            {
-                $strFullModule = $strModule;
-            }
-        }
-
-        # Add config options for tests that are not the very first one
-        my $strConfigNotFirst = '--no-lint';
-        my $strConfigNotFirstOS = '--no-package';
-
-        $strConfig .=
-            "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\" PGB_TEST_PARAM=\"--vm-max=2 --module=" .
-                join(' --module=', @stryModule) . ($bFirst ? '' : " ${strConfigNotFirst}") . "\"\n";
-        $bFirst = false;
-
-        # Now generate full tests
-        my $strRealTest = undef;
-
-        if (!defined($strFullModule))
-        {
-            confess "${strFullModule} module not found, has the name changed?";
-        }
-
-        foreach my $strTest (testDefModuleTestList($strFullModule))
-        {
-            if ($strTest eq 'real')
-            {
-                $strRealTest = $strTest;
-
-                foreach my $strDbVersion (sort {$b cmp $a} @{$hVm->{$strVm}{&VM_DB_MINIMAL}})
-                {
-                    $strConfig .=
-                        "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=${strDbVersion}\"" .
-                            " PGB_TEST_PARAM=\"--module=full --test=real --db=${strDbVersion}" .
-                            " --process-max=2 ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
-                }
-            }
-            else
-            {
-                $strConfig .=
-                    "  - PGB_TEST_VM=\"${strVm}\" PGB_BUILD_PARAM=\"--db=none\"" .
-                        " PGB_TEST_PARAM=\"--vm-max=2 --module=full --test=${strTest} ${strConfigNotFirst} ${strConfigNotFirstOS}\"\n";
-            }
-        }
-
-        if (!defined($strRealTest))
-        {
-            confess "${strRealTest} test not found in ${strFullModule} module, has the name changed?";
-        }
+        $strConfig .= "  - PGB_CI=\"--vm=${strVm} test\"\n";
     }
+
+    $strConfig .= "  - PGB_CI=\"doc\"\n";
 
     # Configure install and script
     $strConfig .=
@@ -171,10 +113,8 @@ sub process
         "    aws help --version\n" .
         "    aws configure list\n" .
         "  - |\n" .
-        "    # Build Devel::Cover\n" .
-        "    git clone https://anonscm.debian.org/git/pkg-perl/packages/libdevel-cover-perl.git ~/libdevel-cover-perl\n" .
-        '    cd ~/libdevel-cover-perl && git checkout debian/' . LIB_COVER_VERSION . " && debuild -i -us -uc -b\n" .
-        '    sudo dpkg -i ~/' . LIB_COVER_PACKAGE . "\n" .
+        "    # Install Devel::Cover\n" .
+        "    sudo dpkg -i \${TRAVIS_BUILD_DIR?}/test/package/u14-" . LIB_COVER_PACKAGE . "\n" .
         '    ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .
@@ -185,10 +125,9 @@ sub process
         "    cd ~ && pwd && whoami && umask && groups\n" .
         "    mv \${TRAVIS_BUILD_DIR?} " . BACKREST_EXE . "\n" .
         "    rm -rf \${TRAVIS_BUILD_DIR?}\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-build --vm=\${PGB_TEST_VM?} \${PGB_BUILD_PARAM?}\n" .
         "\n" .
         "script:\n" .
-        "  - " . BACKREST_EXE . "/test/test.pl --vm-host=u14 --vm=\${PGB_TEST_VM?} \${PGB_TEST_PARAM?}\n";
+        "  - " . BACKREST_EXE . "/test/travis.pl \${PGB_CI?}\n";
 
     $self->{oStorage}->put('.travis.yml', $strConfig);
 

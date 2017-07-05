@@ -622,6 +622,28 @@ my $oConfigHelpData =
                     "specify a prefix, such as /repo, so logs and other AWS generated content can also be stored in the bucket."
         },
 
+        # REPO-S3-CA-FILE Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-ca-file' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 SSL CA File.",
+            description =>
+                "Use a CA file other than the system default."
+        },
+
+        # REPO-S3-CA-PATH Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'repo-s3-ca-path' =>
+        {
+            section => 'general',
+            summary =>
+                "S3 SSL CA Path.",
+            description =>
+                "Use a CA path other than the system default."
+        },
+
         # REPO-S3-ENDPOINT Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-endpoint' =>
@@ -916,6 +938,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -965,6 +989,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1043,6 +1069,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1127,6 +1155,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1165,6 +1195,8 @@ my $oConfigHelpData =
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1242,6 +1274,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1313,6 +1347,8 @@ my $oConfigHelpData =
                 'recovery-option' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1462,6 +1498,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1512,6 +1550,8 @@ my $oConfigHelpData =
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1553,6 +1593,8 @@ my $oConfigHelpData =
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',
@@ -1610,6 +1652,8 @@ my $oConfigHelpData =
                 'log-timestamp' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
                 'repo-s3-endpoint' => 'section',
                 'repo-s3-host' => 'section',
                 'repo-s3-key' => 'section',

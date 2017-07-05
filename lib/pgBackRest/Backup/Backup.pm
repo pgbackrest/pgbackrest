@@ -11,8 +11,8 @@ use English '-no_match_vars';
 use Exporter qw(import);
 use File::Basename;
 
-use pgBackRest::Archive::ArchiveCommon;
-use pgBackRest::Archive::ArchiveGet;
+use pgBackRest::Archive::Common;
+use pgBackRest::Archive::Get::Get;
 use pgBackRest::Backup::Filter::PageChecksum; # ??? Temporary until isLibC is moved to a better place
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::File;
@@ -882,7 +882,7 @@ sub process
 
         # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
-        my $strArchiveId = new pgBackRest::Archive::ArchiveGet()->getArchiveId();
+        my $strArchiveId = new pgBackRest::Archive::Get::Get()->getArchiveId();
         my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion);
 
         foreach my $strArchive (@stryArchive)

@@ -800,7 +800,12 @@ sub build
 
             if ($bTablespace)
             {
-                $strFilter = $self->tablespacePathGet();
+                # Only versions >= 9.0  have the special top-level tablespace path.  Below 9.0 the database files are stored
+                # directly in the path referenced by the symlink.
+                if ($strDbVersion >= PG_VERSION_90)
+                {
+                    $strFilter = $self->tablespacePathGet();
+                }
 
                 $self->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGTBLSPC, undef,
                            $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA));

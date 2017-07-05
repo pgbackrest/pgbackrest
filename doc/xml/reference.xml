@@ -258,6 +258,24 @@
                         <example>db-backup</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-CA-FILE KEY -->
+                    <config-key id="repo-s3-ca-file" name="S3 SSL CA File">
+                        <summary>S3 SSL CA File.</summary>
+
+                        <text>Use a CA file other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- CONFIG - GENERAL SECTION - REPO-S3-CA-PATH KEY -->
+                    <config-key id="repo-s3-ca-path" name="S3 SSL CA Path">
+                        <summary>S3 SSL CA Path.</summary>
+
+                        <text>Use a CA path other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - REPO-S3-ENDPOINT KEY -->
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
