@@ -90,6 +90,33 @@ sub initStanzaCreate
 }
 
 ####################################################################################################################################
+# initStanzaUpgrade - initialize options and create the stanza object
+####################################################################################################################################
+sub initStanzaUpgrade
+{
+    my $self = shift;
+
+    # Set options for stanzaCreate
+    my $oOption = {};
+
+    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
+    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
+    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
+    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
+    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+
+    $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE);
+
+    # Create the test object
+    $self->{oExpireTest} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), storageRepo(), undef, $self);
+
+    $self->{oExpireTest}->stanzaUpgrade($self->stanza(), PG_VERSION_95);
+}
+
+
+####################################################################################################################################
 # run
 ####################################################################################################################################
 sub run
@@ -147,10 +174,11 @@ sub run
 
         # Get a list of all stanzas in the repo
         my $hyStanza = $oInfo->stanzaList();
+
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
             "stanza: bogus\n    status: error (no valid backups)\n\n" .
             "stanza: db\n    status: error (no valid backups)\n",
-            'fomatText multiple stanzas');
+            'fomatText() multiple stanzas');
 
         # Define the stanza option
         #---------------------------------------------------------------------------------------------------------------------------
@@ -166,6 +194,7 @@ sub run
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
 
         $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
+
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
             "stanza: db\n    status: ok\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
@@ -173,7 +202,33 @@ sub run
             "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
             "            wal start/stop: n/a\n            database size: 0B, backup size: 0B\n" .
             "            repository size: 0B, repository backup size: 0B\n",
-            "formatText() output");
+            "formatText() one stanza");
+
+        # Upgrade postgres version and backup with WAL
+        #---------------------------------------------------------------------------------------------------------------------------
+        undef($self->{oExpireTest});
+        $self->initStanzaUpgrade();
+        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
+
+        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 1, 1);
+
+        $hyStanza = $oInfo->stanzaList($self->stanza());
+        $self->testResult(sub {$oInfo->formatText($hyStanza)},
+            "stanza: db\n    status: ok" .
+            "\n\n    db (current)\n" .
+            "        wal archive min/max (9.5-2): 000000010000000000000000 / 000000010000000000000001\n\n" .
+            "        full backup: 20161207-155728F\n" .
+            "            timestamp start/stop: 2016-12-07 15:57:28 / 2016-12-07 15:57:28\n" .
+            "            wal start/stop: 000000010000000000000000 / 000000010000000000000000\n" .
+            "            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B" .
+            "\n\n    db (prior)\n" .
+            "        full backup: 20161206-155728F\n" .
+            "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
+            "            wal start/stop: n/a\n" .
+            "            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B\n",
+            "formatText() multiple DB versions");
     }
 }
 

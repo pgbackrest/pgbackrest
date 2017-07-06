@@ -191,13 +191,11 @@ sub formatText
         # Output stanza name and status
         $strOutput .= (defined($strOutput) ? "\n" : '')  . $self->formatTextStanza($oStanzaInfo) . "\n";
 
-        # Reorder the DB history for the stanza from newest to oldest
-        @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}} = sort {$b cmp $a} @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}};
-
         # Initialize the flag to indicate the first DB in the INFO_BACKUP_SECTION_DB is the current database
         my $bDbCurrent = true;
 
-        foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
+        # Loop through the DB history array for the stanza from newest to oldest
+        foreach my $hDbInfo (reverse @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
         {
             $strOutput .= $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
             $bDbCurrent = false;
