@@ -408,10 +408,6 @@ sub stanzaList
                 };
             }
 
-            # Get the first/last WAL
-            my $strArchiveStart;
-            my $strArchiveStop;
-
             # Array to store tne min/max archive for each database for which there are archives
             my @oyDbArchiveList = ();
 
@@ -423,8 +419,8 @@ sub stanzaList
             # Loop through the DB history from oldest to newest
             foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
             {
-                $strArchiveStart = undef;
-                $strArchiveStop = undef;
+                # my $strArchiveStart = undef;
+                # my $strArchiveStop = undef;
 
                 my $strArchiveStanzaPath = "archive/" . $strStanzaFound;
                 my $strDbVersion = $hDbInfo->{&INFO_KEY_VERSION};
@@ -437,54 +433,60 @@ sub stanzaList
                     ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
                 my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
 
-                if (storageRepo()->pathExists($strArchivePath))
+                # if (storageRepo()->pathExists($strArchivePath))
+                # {
+                #     my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
+                #
+                #     # Get first WAL segment
+                #     foreach my $strWalMajor (@stryWalMajor)
+                #     {
+                #         my @stryWalFile = storageRepo()->list(
+                #             "${strArchivePath}/${strWalMajor}",
+                #             {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
+                #
+                #         if (@stryWalFile > 0)
+                #         {
+                #             $strArchiveStart = substr($stryWalFile[0], 0, 24);
+                #             last;
+                #         }
+                #     }
+                #
+                #     # Get last WAL segment
+                #     foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
+                #     {
+                #         my @stryWalFile = storageRepo()->list(
+                #             "${strArchivePath}/${strWalMajor}",
+                #             {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
+                #
+                #         if (@stryWalFile > 0)
+                #         {
+                #             $strArchiveStop = substr($stryWalFile[0], 0, 24);
+                #             last;
+                #         }
+                #     }
+                # }
+                #
+                # # If there is an archive or the database is the current database then store it
+                # if (defined($strArchiveStart) || ($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
+                #     $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}))
+                # {
+                #     my $hDbArchive =
+                #     {
+                #         &INFO_KEY_ID => $strArchiveId,
+                #         &INFO_KEY_MIN => $strArchiveStart,
+                #         &INFO_KEY_MAX => $strArchiveStop,
+                #         &INFO_SECTION_DB =>
+                #         {
+                #             &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
+                #         },
+                #     };
+                #
+                #     push(@oyDbArchiveList, $hDbArchive);
+                # }
+
+                my $hDbArchive = $self->dBArchiveSection($hDbInfo,$strArchiveId,$strArchivePath,$strDbCurrentVersion,$ullDbCurrentSystemId);
+                if (defined($hDbArchive))
                 {
-                    my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
-
-                    # Get first WAL segment
-                    foreach my $strWalMajor (@stryWalMajor)
-                    {
-                        my @stryWalFile = storageRepo()->list(
-                            "${strArchivePath}/${strWalMajor}",
-                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
-
-                        if (@stryWalFile > 0)
-                        {
-                            $strArchiveStart = substr($stryWalFile[0], 0, 24);
-                            last;
-                        }
-                    }
-
-                    # Get last WAL segment
-                    foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
-                    {
-                        my @stryWalFile = storageRepo()->list(
-                            "${strArchivePath}/${strWalMajor}",
-                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
-
-                        if (@stryWalFile > 0)
-                        {
-                            $strArchiveStop = substr($stryWalFile[0], 0, 24);
-                            last;
-                        }
-                    }
-                }
-
-                # If there is an archive or the database is the current database then store it
-                if (defined($strArchiveStart) || ($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
-                    $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}))
-                {
-                    my $hDbArchive =
-                    {
-                        &INFO_KEY_ID => $strArchiveId,
-                        &INFO_KEY_MIN => $strArchiveStart,
-                        &INFO_KEY_MAX => $strArchiveStop,
-                        &INFO_SECTION_DB =>
-                        {
-                            &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
-                        },
-                    };
-
                     push(@oyDbArchiveList, $hDbArchive);
                 }
             }
@@ -630,6 +632,91 @@ sub backupList
         $strOperation,
         {name => 'oyBackupList', value => \@oyBackupList, log => false, ref => true},
         {name => 'oyDbList', value => \@oyDbList, log => false, ref => true}
+    );
+}
+
+sub dBArchiveSection
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $hDbInfo,
+        $strArchiveId,
+        $strArchivePath,
+        $strDbCurrentVersion,
+        $ullDbCurrentSystemId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->dBArchiveSection', \@_,
+            {name => 'hDbInfo'},
+            {name => 'strArchiveId'},
+            {name => 'strArchivePath'},
+            {name => 'strDbCurrentVersion'},
+            {name => 'ullDbCurrentSystemId'},
+        );
+
+    my $hDbArchive = undef;
+    my $strArchiveStart = undef;
+    my $strArchiveStop = undef;
+# use Data::Dumper;
+    if (storageRepo()->pathExists($strArchivePath))
+    {
+        my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
+# print "WALMAJ: ".Dumper(@stryWalMajor);
+        # Get first WAL segment
+        foreach my $strWalMajor (@stryWalMajor)
+        {
+            my @stryWalFile = storageRepo()->list(
+                "${strArchivePath}/${strWalMajor}",
+                {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
+# print "WALFILE: ".Dumper(@stryWalFile);
+            if (@stryWalFile > 0)
+            {
+                $strArchiveStart = substr($stryWalFile[0], 0, 24);
+                last;
+            }
+        }
+
+        # Get last WAL segment
+        foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
+        {
+            my @stryWalFile = storageRepo()->list(
+                "${strArchivePath}/${strWalMajor}",
+                {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
+
+            if (@stryWalFile > 0)
+            {
+                $strArchiveStop = substr($stryWalFile[0], 0, 24);
+                last;
+            }
+        }
+    }
+# print "ASTART: ".Dumper($strArchiveStart)."\nASTOP:".Dumper($strArchiveStop)."\nhDbInfo:".Dumper($hDbInfo)."CURRDV: $strDbCurrentVersion, CURRDSYS: $ullDbCurrentSystemId\n";
+    # If there is an archive or the database is the current database then store it
+    if (defined($strArchiveStart) ||
+        ($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
+        $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}))
+    {
+        $hDbArchive =
+        {
+            &INFO_KEY_ID => $strArchiveId,
+            &INFO_KEY_MIN => $strArchiveStart,
+            &INFO_KEY_MAX => $strArchiveStop,
+            &INFO_SECTION_DB =>
+            {
+                &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
+            },
+        };
+    }
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hDbArchive', value => $hDbArchive, trace => true},
     );
 }
 

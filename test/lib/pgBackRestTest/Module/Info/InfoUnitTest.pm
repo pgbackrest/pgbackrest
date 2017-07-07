@@ -22,6 +22,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Info;
+use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -30,7 +31,7 @@ use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Env::ExpireEnvTest;
 use pgBackRestTest::Common::FileTest;
-# use pgBackRestTest::Env::Host::HostBackupTest;
+use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::HostEnvTest;
 
 ####################################################################################################################################
@@ -115,7 +116,6 @@ sub initStanzaUpgrade
     $self->{oExpireTest}->stanzaUpgrade($self->stanza(), PG_VERSION_95);
 }
 
-
 ####################################################################################################################################
 # run
 ####################################################################################################################################
@@ -165,6 +165,64 @@ sub run
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
             "stanza: bogus\n    status: error (missing stanza path)\n",
             'missing stanza path');
+
+        # formatBackupText - coverage for certain conditions
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oBackupHash =
+        {
+            'archive' =>
+            {
+                'start' => 1,
+                'stop' => undef
+            },
+            'timestamp' =>
+            {
+                'start' => 1481039848,
+                'stop' => 1481039848,
+            },
+            'label' => 'BACKUPLABEL',
+            'reference' => ['BACKUPREFERENCE'],
+            'type' => 'BACKUPTYPE',
+        };
+
+        $self->testResult(sub {$oInfo->formatTextBackup($oBackupHash)},
+            "        BACKUPTYPE backup: BACKUPLABEL\n" .
+            "            timestamp start/stop: 2016-12-06 15:57:28 / 2016-12-06 15:57:28\n" .
+            "            wal start/stop: n/a\n" .
+            "            database size: , backup size: \n" .
+            "            repository size: , repository backup size: \n" .
+            "            backup reference list: BACKUPREFERENCE",
+            'formatTextBackup');
+
+        # Test !isRepoLocal branch
+        #---------------------------------------------------------------------------------------------------------------------------
+        optionSet(OPTION_BACKUP_HOST, false);
+        $self->testException(sub {$oInfo->stanzaList(BOGUS)}, ERROR_ASSERT, "option backup-cmd is required");
+
+        # dBArchiveSection() -- no archive
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $hDbInfo =
+        {
+            &INFO_HISTORY_ID => 1,
+            &INFO_DB_VERSION => PG_VERSION_94,
+            &INFO_SYSTEM_ID => WAL_VERSION_94_SYS_ID,
+        };
+
+
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+            WAL_VERSION_94_SYS_ID)}, "{database => {id => 1}, id => 9.4-1, max => [undef], min => [undef]}",
+            'no archive, db-ver match, db-sys match');
+
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+            WAL_VERSION_95_SYS_ID)}, undef, 'no archive, db-ver match, db-sys mismatch');
+
+        $hDbInfo->{&INFO_DB_VERSION} = PG_VERSION_95;
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+            WAL_VERSION_94_SYS_ID)}, undef, 'no archive, db-ver mismatch, db-sys match');
+
+        $hDbInfo->{&INFO_SYSTEM_ID} = WAL_VERSION_95_SYS_ID;
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+            WAL_VERSION_94_SYS_ID)}, undef, 'no archive, db-ver mismatch, db-sys mismatch');
 
         # Create more than one stanza but no data
         #---------------------------------------------------------------------------------------------------------------------------
@@ -267,6 +325,33 @@ sub run
             "            database size: 0B, backup size: 0B\n" .
             "            repository size: 0B, repository backup size: 0B\n",
             "formatText() multiple DB versions");
+
+        # dBArchiveSection() -- with archive
+        #---------------------------------------------------------------------------------------------------------------------------
+        $hDbInfo->{&INFO_HISTORY_ID} = 2;
+        $hDbInfo->{&INFO_DB_VERSION} = PG_VERSION_95;
+        $hDbInfo->{&INFO_SYSTEM_ID} = WAL_VERSION_95_SYS_ID;
+
+        my $strArchiveId = PG_VERSION_95 . '-2';
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+            PG_VERSION_95, WAL_VERSION_95_SYS_ID)},
+            "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
+            'archive, db-ver match, db-sys-id match');
+
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+            PG_VERSION_95, WAL_VERSION_94_SYS_ID)},
+            "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
+            'archive, db-ver match, db-sys-id mismatch');
+
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+            PG_VERSION_94, WAL_VERSION_95_SYS_ID)},
+            "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
+            'archive, db-ver mismatch, db-sys-id match');
+
+        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+            PG_VERSION_94, WAL_VERSION_94_SYS_ID)},
+            "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
+            'archive, db-ver mismatch, db-sys-id mismatch');
     }
 }
 
