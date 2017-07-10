@@ -562,7 +562,10 @@ eval
                         }
 
                         # Remove patches that should be applied to core code
-                        $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true});
+                        if ($oStorageBackRest->pathExists("${strBuildPath}/debian/patches"))
+                        {
+                            $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true});
+                        }
 
                         # Update changelog to add experimental version
                         $oStorageBackRest->put("${strBuildPath}/debian/changelog",

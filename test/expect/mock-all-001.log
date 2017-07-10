@@ -3614,71 +3614,79 @@ info db stanza - normal output (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: db
     status: ok
-    wal archive min/max: none present
 
-    full backup: [BACKUP-FULL-2]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 160KB, backup size: 160KB
-        repository size: 160KB, repository backup size: 160KB
+    db (current)
+        wal archive min/max (9.4-1): none present
 
-    diff backup: [BACKUP-DIFF-2]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 160KB, backup size: 29B
-        repository size: 160KB, repository backup size: 29B
-        backup reference list: [BACKUP-FULL-2]
+        full backup: [BACKUP-FULL-2]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 160KB, backup size: 160KB
+            repository size: 160KB, repository backup size: 160KB
 
-    incr backup: [BACKUP-INCR-3]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 160KB, backup size: 13B
-        repository size: 160KB, repository backup size: 13B
-        backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2]
+        diff backup: [BACKUP-DIFF-2]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 160KB, backup size: 29B
+            repository size: 160KB, repository backup size: 29B
+            backup reference list: [BACKUP-FULL-2]
 
-    incr backup: [BACKUP-INCR-4]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 8B
-        repository size: 144KB, repository backup size: 8B
-        backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3]
+        incr backup: [BACKUP-INCR-3]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 160KB, backup size: 13B
+            repository size: 160KB, repository backup size: 13B
+            backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2]
 
-    diff backup: [BACKUP-DIFF-3]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 43B
-        repository size: 144KB, repository backup size: 43B
-        backup reference list: [BACKUP-FULL-2]
+        incr backup: [BACKUP-INCR-4]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 8B
+            repository size: 144KB, repository backup size: 8B
+            backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3]
 
-    incr backup: [BACKUP-INCR-5]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 0B
-        repository size: 144KB, repository backup size: 0B
-        backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-3]
+        diff backup: [BACKUP-DIFF-3]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 43B
+            repository size: 144KB, repository backup size: 43B
+            backup reference list: [BACKUP-FULL-2]
 
-    diff backup: [BACKUP-DIFF-4]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 34B
-        repository size: 144KB, repository backup size: 34B
-        backup reference list: [BACKUP-FULL-2]
+        incr backup: [BACKUP-INCR-5]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 0B
+            repository size: 144KB, repository backup size: 0B
+            backup reference list: [BACKUP-FULL-2], [BACKUP-DIFF-3]
 
-    full backup: [BACKUP-FULL-3]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 144KB
-        repository size: 1.4KB, repository backup size: 1.4KB
+        diff backup: [BACKUP-DIFF-4]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 34B
+            repository size: 144KB, repository backup size: 34B
+            backup reference list: [BACKUP-FULL-2]
+
+        full backup: [BACKUP-FULL-3]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 144KB
+            repository size: 1.4KB, repository backup size: 1.4KB
 
 info db stanza - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db --output=json info
 ------------------------------------------------------------------------------------------------------------------------------------
 [
     {
-        "archive" : {
-            "max" : null,
-            "min" : null
-        },
+        "archive" : [
+            {
+                "database" : {
+                    "id" : "1"
+                },
+                "id" : "9.4-1",
+                "max" : null,
+                "min" : null
+            }
+        ],
         "backup" : [
             {
                 "archive" : {
@@ -4267,34 +4275,41 @@ info all stanzas - normal output (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: db
     status: ok
-    wal archive min/max: none present
 
-    full backup: [BACKUP-FULL-3]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 144KB
-        repository size: 1.4KB, repository backup size: 1.4KB
+    db (current)
+        wal archive min/max (9.4-1): none present
 
-    diff backup: [BACKUP-DIFF-5]
-        timestamp start/stop: [TIMESTAMP-STR]
-        wal start/stop: n/a
-        database size: 144KB, backup size: 9B
-        repository size: 1.5KB, repository backup size: 29B
-        backup reference list: [BACKUP-FULL-3]
+        full backup: [BACKUP-FULL-3]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 144KB
+            repository size: 1.4KB, repository backup size: 1.4KB
+
+        diff backup: [BACKUP-DIFF-5]
+            timestamp start/stop: [TIMESTAMP-STR]
+            wal start/stop: n/a
+            database size: 144KB, backup size: 9B
+            repository size: 1.5KB, repository backup size: 29B
+            backup reference list: [BACKUP-FULL-3]
 
 stanza: db_empty
     status: error (no valid backups)
-    wal archive min/max: none present
 
 info all stanzas - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --output=json info
 ------------------------------------------------------------------------------------------------------------------------------------
 [
     {
-        "archive" : {
-            "max" : null,
-            "min" : null
-        },
+        "archive" : [
+            {
+                "database" : {
+                    "id" : "1"
+                },
+                "id" : "9.4-1",
+                "max" : null,
+                "min" : null
+            }
+        ],
         "backup" : [
             {
                 "archive" : {
@@ -4371,10 +4386,7 @@ info all stanzas - normal output (db-master host)
         }
     },
     {
-        "archive" : {
-            "max" : null,
-            "min" : null
-        },
+        "archive" : [],
         "backup" : [],
         "db" : [],
         "name" : "db_empty",
@@ -4390,7 +4402,6 @@ info bogus stanza - bogus stanza (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 stanza: bogus
     status: error (missing stanza path)
-    wal archive min/max: none present
 
 info bogus stanza - bogus stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=bogus --output=json info
