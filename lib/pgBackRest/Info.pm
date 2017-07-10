@@ -433,58 +433,9 @@ sub stanzaList
                     ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
                 my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
 
-                # if (storageRepo()->pathExists($strArchivePath))
-                # {
-                #     my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
-                #
-                #     # Get first WAL segment
-                #     foreach my $strWalMajor (@stryWalMajor)
-                #     {
-                #         my @stryWalFile = storageRepo()->list(
-                #             "${strArchivePath}/${strWalMajor}",
-                #             {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
-                #
-                #         if (@stryWalFile > 0)
-                #         {
-                #             $strArchiveStart = substr($stryWalFile[0], 0, 24);
-                #             last;
-                #         }
-                #     }
-                #
-                #     # Get last WAL segment
-                #     foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
-                #     {
-                #         my @stryWalFile = storageRepo()->list(
-                #             "${strArchivePath}/${strWalMajor}",
-                #             {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
-                #
-                #         if (@stryWalFile > 0)
-                #         {
-                #             $strArchiveStop = substr($stryWalFile[0], 0, 24);
-                #             last;
-                #         }
-                #     }
-                # }
-                #
-                # # If there is an archive or the database is the current database then store it
-                # if (defined($strArchiveStart) || ($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
-                #     $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}))
-                # {
-                #     my $hDbArchive =
-                #     {
-                #         &INFO_KEY_ID => $strArchiveId,
-                #         &INFO_KEY_MIN => $strArchiveStart,
-                #         &INFO_KEY_MAX => $strArchiveStop,
-                #         &INFO_SECTION_DB =>
-                #         {
-                #             &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
-                #         },
-                #     };
-                #
-                #     push(@oyDbArchiveList, $hDbArchive);
-                # }
-
-                my $hDbArchive = $self->dBArchiveSection($hDbInfo,$strArchiveId,$strArchivePath,$strDbCurrentVersion,$ullDbCurrentSystemId);
+                # Fill in the archive info if available
+                my $hDbArchive = $self->dbArchiveSection($hDbInfo, $strArchiveId, $strArchivePath, $strDbCurrentVersion,
+                    $ullDbCurrentSystemId);
                 if (defined($hDbArchive))
                 {
                     push(@oyDbArchiveList, $hDbArchive);
@@ -635,7 +586,10 @@ sub backupList
     );
 }
 
-sub dBArchiveSection
+####################################################################################################################################
+# dbArchiveSection - fills the archive section for a db. Note this is a function in order to aid Unit Test coverage.
+####################################################################################################################################
+sub dbArchiveSection
 {
     my $self = shift;
 
@@ -651,7 +605,7 @@ sub dBArchiveSection
     ) =
         logDebugParam
         (
-            __PACKAGE__ . '->dBArchiveSection', \@_,
+            __PACKAGE__ . '->dbArchiveSection', \@_,
             {name => 'hDbInfo'},
             {name => 'strArchiveId'},
             {name => 'strArchivePath'},
@@ -662,18 +616,18 @@ sub dBArchiveSection
     my $hDbArchive = undef;
     my $strArchiveStart = undef;
     my $strArchiveStop = undef;
-# use Data::Dumper;
+
     if (storageRepo()->pathExists($strArchivePath))
     {
         my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
-# print "WALMAJ: ".Dumper(@stryWalMajor);
+
         # Get first WAL segment
         foreach my $strWalMajor (@stryWalMajor)
         {
             my @stryWalFile = storageRepo()->list(
                 "${strArchivePath}/${strWalMajor}",
                 {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
-# print "WALFILE: ".Dumper(@stryWalFile);
+
             if (@stryWalFile > 0)
             {
                 $strArchiveStart = substr($stryWalFile[0], 0, 24);
@@ -695,11 +649,11 @@ sub dBArchiveSection
             }
         }
     }
-# print "ASTART: ".Dumper($strArchiveStart)."\nASTOP:".Dumper($strArchiveStop)."\nhDbInfo:".Dumper($hDbInfo)."CURRDV: $strDbCurrentVersion, CURRDSYS: $ullDbCurrentSystemId\n";
+
     # If there is an archive or the database is the current database then store it
-    if (defined($strArchiveStart) ||
-        ($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
-        $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}))
+    if (($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
+        $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}) ||
+        defined($strArchiveStart) )
     {
         $hDbArchive =
         {

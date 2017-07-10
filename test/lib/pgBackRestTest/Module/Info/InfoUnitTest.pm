@@ -199,7 +199,7 @@ sub run
         optionSet(OPTION_BACKUP_HOST, false);
         $self->testException(sub {$oInfo->stanzaList(BOGUS)}, ERROR_ASSERT, "option backup-cmd is required");
 
-        # dBArchiveSection() -- no archive
+        # dbArchiveSection() -- no archive
         #---------------------------------------------------------------------------------------------------------------------------
         my $hDbInfo =
         {
@@ -208,20 +208,19 @@ sub run
             &INFO_SYSTEM_ID => WAL_VERSION_94_SYS_ID,
         };
 
-
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
             WAL_VERSION_94_SYS_ID)}, "{database => {id => 1}, id => 9.4-1, max => [undef], min => [undef]}",
             'no archive, db-ver match, db-sys match');
 
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
             WAL_VERSION_95_SYS_ID)}, undef, 'no archive, db-ver match, db-sys mismatch');
 
         $hDbInfo->{&INFO_DB_VERSION} = PG_VERSION_95;
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
             WAL_VERSION_94_SYS_ID)}, undef, 'no archive, db-ver mismatch, db-sys match');
 
         $hDbInfo->{&INFO_SYSTEM_ID} = WAL_VERSION_95_SYS_ID;
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, PG_VERSION_94 . '-1', $self->{strArchivePath}, PG_VERSION_94,
             WAL_VERSION_94_SYS_ID)}, undef, 'no archive, db-ver mismatch, db-sys mismatch');
 
         # Create more than one stanza but no data
@@ -326,29 +325,29 @@ sub run
             "            repository size: 0B, repository backup size: 0B\n",
             "formatText() multiple DB versions");
 
-        # dBArchiveSection() -- with archive
+        # dbArchiveSection() -- with archive
         #---------------------------------------------------------------------------------------------------------------------------
         $hDbInfo->{&INFO_HISTORY_ID} = 2;
         $hDbInfo->{&INFO_DB_VERSION} = PG_VERSION_95;
         $hDbInfo->{&INFO_SYSTEM_ID} = WAL_VERSION_95_SYS_ID;
 
         my $strArchiveId = PG_VERSION_95 . '-2';
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
             PG_VERSION_95, WAL_VERSION_95_SYS_ID)},
             "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
             'archive, db-ver match, db-sys-id match');
 
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
             PG_VERSION_95, WAL_VERSION_94_SYS_ID)},
             "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
             'archive, db-ver match, db-sys-id mismatch');
 
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
             PG_VERSION_94, WAL_VERSION_95_SYS_ID)},
             "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
             'archive, db-ver mismatch, db-sys-id match');
 
-        $self->testResult(sub {$oInfo->dBArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
+        $self->testResult(sub {$oInfo->dbArchiveSection($hDbInfo, $strArchiveId, "$self->{strArchivePath}/$strArchiveId",
             PG_VERSION_94, WAL_VERSION_94_SYS_ID)},
             "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
             'archive, db-ver mismatch, db-sys-id mismatch');
