@@ -163,6 +163,20 @@
     </contributor-list>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.20dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Modified the <cmd>info</cmd> command (both text and json output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+        </release>
+
         <release date="2017-06-27" version="1.20" title="Critical 8.3/8.4 Bug Fix">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <id>1.XX</id> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
