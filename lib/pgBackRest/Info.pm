@@ -119,16 +119,7 @@ sub process
     elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
-        my $strJSON = $oJSON->encode($oyStanzaList);
-
-        syswrite(*STDOUT, $strJSON);
-
-        # On some systems a linefeed will be appended by encode() but others will not have it.  In our case there should always
-        # be a terminating linefeed.
-        if ($strJSON !~ /\n$/)
-        {
-            syswrite(*STDOUT, "\n");
-        }
+        $self->outputJSON($oJSON->encode($oyStanzaList));
     }
     else
     {
@@ -141,6 +132,35 @@ sub process
         $strOperation,
         {name => 'iResult', value => 0, trace => true}
     );
+}
+
+####################################################################################################################################
+# outputJSON
+###################################################################################################################################
+sub outputJSON
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strJSON,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->outputJSON', \@_,
+            {name => 'strJSON'},
+        );
+
+    syswrite(*STDOUT, $strJSON);
+
+    # On some systems a linefeed will be appended by encode() but others will not have it.  In our case there should always
+    # be a terminating linefeed.
+    if ($strJSON !~ /\n$/)
+    {
+        syswrite(*STDOUT, "\n");
+    }
 }
 
 ####################################################################################################################################
@@ -171,10 +191,44 @@ sub formatText
         # Output stanza name and status
         $strOutput .= (defined($strOutput) ? "\n" : '')  . $self->formatTextStanza($oStanzaInfo) . "\n";
 
-        # Output information for each stanza backup, from oldest to newest
-        foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
+        # Initialize the flag to indicate the first DB in the INFO_BACKUP_SECTION_DB is the current database
+        my $bDbCurrent = true;
+
+        # Loop through the DB history array for the stanza from newest to oldest
+        foreach my $hDbInfo (reverse @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
         {
-            $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+            $strOutput .= $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
+            $bDbCurrent = false;
+
+            # Get the archive information for the DB
+            foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
+            {
+                if ($hDbArchive->{&INFO_SECTION_DB}{&INFO_HISTORY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
+                {
+                    # Output archive start / stop values
+                    $strOutput .= "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
+
+                    if (defined($hDbArchive->{&INFO_KEY_MIN}))
+                    {
+                        $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
+                    }
+                    else
+                    {
+                        $strOutput .= 'none present';
+                    }
+
+                    $strOutput .= "\n";
+                }
+            }
+
+            # Get information for each stanza backup for the DB, from oldest to newest
+            foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
+            {
+                if ($oBackupInfo->{&INFO_SECTION_DB}{&INFO_KEY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
+                {
+                    $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+                }
+            }
         }
     }
 
@@ -213,21 +267,6 @@ sub formatTextStanza
         "    status: " . ($oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_CODE} == 0 ? INFO_STANZA_STATUS_OK :
         INFO_STANZA_STATUS_ERROR . ' (' . $oStanzaInfo->{&INFO_SECTION_STATUS}{&INFO_KEY_MESSAGE} . ')');
 
-    # Output archive start / stop values
-    $strOutput .=
-        "\n    wal archive min/max: ";
-
-    if (defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MIN}) &&
-        defined($oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MAX}))
-    {
-        $strOutput .=
-            $oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MIN} . ' / ' . $oStanzaInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_MAX};
-    }
-    else
-    {
-        $strOutput .= 'none present';
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -258,14 +297,14 @@ sub formatTextBackup
         );
 
     my $strOutput =
-        '    ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
+        '        ' . $$oBackupInfo{&INFO_KEY_TYPE} . ' backup: ' . $$oBackupInfo{&INFO_KEY_LABEL} . "\n" .
 
-        '        timestamp start/stop: ' .
+        '            timestamp start/stop: ' .
         timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_START}) .
         ' / ' .
         timestampFormat(undef, $$oBackupInfo{&INFO_SECTION_TIMESTAMP}{&INFO_KEY_STOP}) . "\n" .
 
-        "        wal start/stop: ";
+        "            wal start/stop: ";
 
     if (defined($oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_START}) &&
         defined($oBackupInfo->{&INFO_SECTION_ARCHIVE}{&INFO_KEY_STOP}))
@@ -279,14 +318,14 @@ sub formatTextBackup
     }
 
     $strOutput .=
-        "\n        database size: " .
+        "\n            database size: " .
         (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) ?
             fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_SIZE}) : '') .
         ', backup size: ' .
         (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) ?
             fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_KEY_DELTA}) : '') . "\n" .
 
-        '        repository size: ' .
+        '            repository size: ' .
         (defined($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) ?
             fileSizeFormat($$oBackupInfo{&INFO_SECTION_INFO}{&INFO_SECTION_REPO}{&INFO_KEY_SIZE}) : '') .
         ', repository backup size: ' .
@@ -296,7 +335,7 @@ sub formatTextBackup
     # List the backup reference chain, if any, for this backup
     if (defined($oBackupInfo->{&INFO_KEY_REFERENCE}) && @{$oBackupInfo->{&INFO_KEY_REFERENCE}} > 0)
     {
-        $strOutput .= "\n        backup reference list: " . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}}));
+        $strOutput .= "\n            backup reference list: " . (join(', ', @{$$oBackupInfo{&INFO_KEY_REFERENCE}}));
     }
 
     # Return from function and log return values if any
@@ -369,16 +408,17 @@ sub stanzaList
                 };
             }
 
-            # Get the first/last WAL
-            my $strArchiveStart;
-            my $strArchiveStop;
+            # Array to store tne min/max archive for each database for which there are archives
+            my @oyDbArchiveList = ();
+
+            # Get the current DB info (always last element in the array)
+            my $hDbCurrent = @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}}[-1];
+            my $strDbCurrentVersion = $hDbCurrent->{&INFO_KEY_VERSION};
+            my $ullDbCurrentSystemId = $hDbCurrent->{&INFO_KEY_SYSTEM_ID};
 
             # Loop through the DB history from oldest to newest
             foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
             {
-                $strArchiveStart = undef;
-                $strArchiveStop = undef;
-
                 my $strArchiveStanzaPath = "archive/" . $strStanzaFound;
                 my $strDbVersion = $hDbInfo->{&INFO_KEY_VERSION};
                 my $ullDbSysId = $hDbInfo->{&INFO_KEY_SYSTEM_ID};
@@ -390,46 +430,17 @@ sub stanzaList
                     ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
                 my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
 
-                if (storageRepo()->pathExists($strArchivePath))
+                # Fill in the archive info if available
+                my $hDbArchive = $self->dbArchiveSection($hDbInfo, $strArchiveId, $strArchivePath, $strDbCurrentVersion,
+                    $ullDbCurrentSystemId);
+                if (defined($hDbArchive))
                 {
-                    my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
-
-                    # Get first WAL segment
-                    foreach my $strWalMajor (@stryWalMajor)
-                    {
-                        my @stryWalFile = storageRepo()->list(
-                            "${strArchivePath}/${strWalMajor}",
-                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
-
-                        if (@stryWalFile > 0)
-                        {
-                            $strArchiveStart = substr($stryWalFile[0], 0, 24);
-                            last;
-                        }
-                    }
-
-                    # Get last WAL segment
-                    foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
-                    {
-                        my @stryWalFile = storageRepo()->list(
-                            "${strArchivePath}/${strWalMajor}",
-                            {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
-
-                        if (@stryWalFile > 0)
-                        {
-                            $strArchiveStop = substr($stryWalFile[0], 0, 24);
-                            last;
-                        }
-                    }
+                    push(@oyDbArchiveList, $hDbArchive);
                 }
             }
 
-            # Store only the last (current) database's archive min/max
-            $oStanzaInfo->{&INFO_SECTION_ARCHIVE} =
-            {
-                &INFO_KEY_MIN => $strArchiveStart,
-                &INFO_KEY_MAX => $strArchiveStop,
-            };
+            # Store the archive min/max for each database in the archive section
+            $oStanzaInfo->{&INFO_SECTION_ARCHIVE} = \@oyDbArchiveList;
 
             push @oyStanzaList, $oStanzaInfo;
         }
@@ -569,6 +580,94 @@ sub backupList
         $strOperation,
         {name => 'oyBackupList', value => \@oyBackupList, log => false, ref => true},
         {name => 'oyDbList', value => \@oyDbList, log => false, ref => true}
+    );
+}
+
+####################################################################################################################################
+# dbArchiveSection - fills the archive section for a db. Note this is a function in order to aid unit test coverage.
+####################################################################################################################################
+sub dbArchiveSection
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $hDbInfo,
+        $strArchiveId,
+        $strArchivePath,
+        $strDbCurrentVersion,
+        $ullDbCurrentSystemId,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->dbArchiveSection', \@_,
+            {name => 'hDbInfo'},
+            {name => 'strArchiveId'},
+            {name => 'strArchivePath'},
+            {name => 'strDbCurrentVersion'},
+            {name => 'ullDbCurrentSystemId'},
+        );
+
+    my $hDbArchive = undef;
+    my $strArchiveStart = undef;
+    my $strArchiveStop = undef;
+
+    if (storageRepo()->pathExists($strArchivePath))
+    {
+        my @stryWalMajor = storageRepo()->list($strArchivePath, {strExpression => '^[0-F]{16}$'});
+
+        # Get first WAL segment
+        foreach my $strWalMajor (@stryWalMajor)
+        {
+            my @stryWalFile = storageRepo()->list(
+                "${strArchivePath}/${strWalMajor}",
+                {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$"});
+
+            if (@stryWalFile > 0)
+            {
+                $strArchiveStart = substr($stryWalFile[0], 0, 24);
+                last;
+            }
+        }
+
+        # Get last WAL segment
+        foreach my $strWalMajor (sort({$b cmp $a} @stryWalMajor))
+        {
+            my @stryWalFile = storageRepo()->list(
+                "${strArchivePath}/${strWalMajor}",
+                {strExpression => "^[0-F]{24}-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$", strSortOrder => 'reverse'});
+
+            if (@stryWalFile > 0)
+            {
+                $strArchiveStop = substr($stryWalFile[0], 0, 24);
+                last;
+            }
+        }
+    }
+
+    # If there is an archive or the database is the current database then store it
+    if (($strDbCurrentVersion eq $hDbInfo->{&INFO_KEY_VERSION} &&
+        $ullDbCurrentSystemId == $hDbInfo->{&INFO_KEY_SYSTEM_ID}) ||
+        defined($strArchiveStart) )
+    {
+        $hDbArchive =
+        {
+            &INFO_KEY_ID => $strArchiveId,
+            &INFO_KEY_MIN => $strArchiveStart,
+            &INFO_KEY_MAX => $strArchiveStop,
+            &INFO_SECTION_DB =>
+            {
+                &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
+            },
+        };
+    }
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'hDbArchive', value => $hDbArchive, trace => true},
     );
 }
 

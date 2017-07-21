@@ -273,7 +273,7 @@ my $oTestDef =
 
                     &TESTDEF_COVERAGE =>
                     {
-                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_PARTIAL,
+                        &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_FULL,
                     },
                 },
             ]
