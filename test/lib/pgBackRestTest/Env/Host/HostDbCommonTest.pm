@@ -698,11 +698,11 @@ sub restoreCompare
         }
     }
 
-    # Error when archive status exists in the manifest for an online backup
-    if (${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} &&
-        defined(${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_PATH}{MANIFEST_PATH_PGXLOG . '/archive_status'}))
+    # Check that archive status exists in the manifest for an online backup
+    if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} &&
+        !defined($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_PATH_PGXLOG_ARCHIVESTATUS}))
     {
-        confess 'archive_status was backed up in pg_xlog - the filter did not work';
+        confess &log(ERROR, DB_PATH_PGXLOG_ARCHIVESTATUS . ' expected for online backup', ERROR_ASSERT);
     }
 
     # Delete the list of DBs

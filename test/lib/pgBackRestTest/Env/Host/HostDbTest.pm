@@ -462,7 +462,6 @@ sub clusterStop
     my $hParam = shift;
 
     # Set defaults
-    my $bImmediate = defined($$hParam{bImmediate}) ? $$hParam{bImmediate} : false;
     my $bIgnoreLogError = defined($$hParam{bIgnoreLogError}) ? $$hParam{bIgnoreLogError} : false;
 
     # Disconnect user session
@@ -471,15 +470,15 @@ sub clusterStop
     # If postmaster process is running then stop the cluster
     if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMASTERPID)
     {
-        $self->executeSimple(
-            $self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m ' .
-            ($bImmediate ? 'immediate' : 'fast'));
+        $self->executeSimple($self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m fast');
     }
 
     # Grep for errors in postgresql.log
     if (!$bIgnoreLogError && storageTest()->exists($self->pgLogFile()))
     {
-        $self->executeSimple('grep ERROR ' . $self->pgLogFile(), {iExpectedExitStatus => 1});
+        $self->executeSimple(
+            'grep -v "FATAL\:  57P03\: the database system is starting up" ' . $self->pgLogFile() . ' | grep "ERROR\|FATAL"',
+            {iExpectedExitStatus => 1});
     }
 
     # Remove the log file

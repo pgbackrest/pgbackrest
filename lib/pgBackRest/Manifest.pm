@@ -166,6 +166,8 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 # Database locations for important files/paths
 ####################################################################################################################################
+use constant DB_PATH_PGXLOG_ARCHIVESTATUS                           => 'pg_xlog/archive_status';
+    push @EXPORT, qw(DB_PATH_PGXLOG_ARCHIVESTATUS);
 use constant DB_PATH_BASE                                           => 'base';
     push @EXPORT, qw(DB_PATH_BASE);
 use constant DB_PATH_PGCLOG                                         => 'pg_clog';
@@ -224,6 +226,8 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
+use constant MANIFEST_PATH_PGXLOG_ARCHIVESTATUS                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG_ARCHIVESTATUS;
+    push @EXPORT, qw(MANIFEST_PATH_PGXLOG_ARCHIVESTATUS);
 use constant MANIFEST_PATH_BASE                                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE;
     push @EXPORT, qw(MANIFEST_PATH_BASE);
 use constant MANIFEST_PATH_PGCLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGCLOG;
@@ -684,7 +688,8 @@ sub build
 
         # Skip pg_xlog/* when doing an online backup.  WAL will be restored from the archive or stored in pg_xlog at the end of the
         # backup if the archive-copy option is set.
-        next if ($strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '\/') && $bOnline);
+        next if ($bOnline && $strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '\/') &&
+                 $strFile !~ ('^' . MANIFEST_PATH_PGXLOG_ARCHIVESTATUS . '$'));
 
         # Skip all directories and files that start with pgsql_tmp.  The files are removed when the server is restarted and the
         # directories are recreated.  Since temp files cannnot be created on the replica it makes sense to delete the directories

@@ -473,6 +473,9 @@ sub run
 
             # Confirm the check command runs without error on a standby
             $oHostDbStandby->check('verify check command on standby');
+
+            # Shutdown the stanby before creating tablespaces (this will error since paths are different)
+            $oHostDbStandby->clusterStop({bIgnoreLogError => true});
         }
 
         # Execute stop and make sure the backup fails
@@ -954,12 +957,7 @@ sub run
 
         # Stop clusters to catch any errors in the postgres log
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->clusterStop({bImmediate => true});
-
-        if (defined($oHostDbStandby))
-        {
-            $oHostDbStandby->clusterStop({bImmediate => true});
-        }
+        $oHostDbMaster->clusterStop();
 
         # Test no-online backups
         #---------------------------------------------------------------------------------------------------------------------------
