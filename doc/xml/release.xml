@@ -184,6 +184,12 @@
                         <p>Modified the <cmd>info</cmd> command (both text and JSON output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>

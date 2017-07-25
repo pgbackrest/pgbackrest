@@ -178,11 +178,11 @@ sub info
         (
             __PACKAGE__ . '::fileStat', \@_,
             {name => 'strPathFileExp'},
-            {name => 'bIgnoreMissing', default => false},
+            {name => 'bIgnoreMissing', optional => true, default => false},
         );
 
     # Stat the path/file
-    my $oInfo = $self->driver()->info($self->pathGet($strPathFileExp), $bIgnoreMissing);
+    my $oInfo = $self->driver()->info($self->pathGet($strPathFileExp), {bIgnoreMissing => $bIgnoreMissing});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -735,7 +735,7 @@ sub remove
         logDebugParam
         (
             __PACKAGE__ . '->remove', \@_,
-            {name => 'strPathFileExp'},
+            {name => 'xstryPathFileExp'},
             {name => 'bIgnoreMissing', optional => true, default => true},
             {name => 'bRecurse', optional => true, default => false, trace => true},
         );
