@@ -122,8 +122,8 @@ eval
         executeTest("${strTestExe} --vm-build --vm=" . VM_CO6, {bShowOutputAsync => true});
         processEnd();
 
-        processBegin(VM_U14 . ' build');
-        executeTest("${strTestExe} --vm-build --vm=" . VM_U14, {bShowOutputAsync => true});
+        processBegin(VM_U16 . ' build');
+        executeTest("${strTestExe} --vm-build --vm=" . VM_U16, {bShowOutputAsync => true});
         processEnd();
 
         processBegin('release documentation doc');
@@ -156,7 +156,7 @@ eval
 
         processBegin("${strVm} test" . (defined($strParam) ? ": ${strParam}" : ''));
         executeTest(
-            "${strTestExe} --vm-host=u14 --vm-max=2 --vm=${strVm}" . (defined($strParam) ? " ${strParam}" : ''),
+            "${strTestExe} --vm-host=" . VM_U14 . " --vm-max=2 --vm=${strVm}" . (defined($strParam) ? " ${strParam}" : ''),
             {bShowOutputAsync => true});
         processEnd();
     }

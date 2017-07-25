@@ -67,7 +67,7 @@
         <variable key="postgres-recovery-demo" keyword="co6">{[db-path]}/recovery.conf</variable>
 
         <!-- Hosts -->
-        <variable key="host-os" keyword="default">u14</variable>
+        <variable key="host-os" keyword="default">u16</variable>
         <variable key="host-os" keyword="co6">co6</variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . ''</variable>

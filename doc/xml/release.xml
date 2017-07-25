@@ -186,6 +186,14 @@
                 </release-feature-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Debian/Ubuntu documentation now builds on Ubuntu 16.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-bug-list>
                     <release-item>
