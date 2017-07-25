@@ -286,6 +286,15 @@
             <execute user="root">
                 <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
             </execute>
+            <execute user="root">
+                <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chmod 640 {[backrest-config-demo]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown postgres:postgres {[backrest-config-demo]}</exe-cmd>
+            </execute>
         </execute-list>
 
         <p><backrest/> should now be properly installed but it is best to check.  If any dependencies were missed then you will get an error when running <backrest/> from the command line.</p>

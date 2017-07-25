@@ -187,6 +187,12 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Add creation of <file>/etc/pgbackrest.conf</file> to manual installation instructions.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Debian/Ubuntu documentation now builds on Ubuntu 16.</p>
