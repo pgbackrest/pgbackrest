@@ -239,6 +239,10 @@
                     <release-item>
                         <p>Use Google DNS in test environment for consistency.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Use new Travis Trusty image.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
