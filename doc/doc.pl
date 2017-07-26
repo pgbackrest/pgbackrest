@@ -270,7 +270,7 @@ eval
         elsif (($strOutput eq 'help' || $strOutput eq 'man') && $oManifest->isBackRest())
         {
             # Generate the command-line help
-            my $oRender = new BackRestDoc::Common::DocRender('text', $oManifest);
+            my $oRender = new BackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
             my $oDocConfig =
                 new BackRestDoc::Common::DocConfig(
                     new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);

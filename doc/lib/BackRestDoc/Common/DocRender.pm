@@ -156,6 +156,7 @@ sub new
         my $strOperation,
         $self->{strType},
         $self->{oManifest},
+        $self->{bExe},
         $self->{strRenderOutKey},
     ) =
         logDebugParam
@@ -163,6 +164,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'strType'},
             {name => 'oManifest'},
+            {name => 'bExe'},
             {name => 'strRenderOutKey', required => false}
         );
 
@@ -432,6 +434,10 @@ sub build
             $oNode->paramSet('depend-default', $strDependPrev);
         }
 
+        # Set log to true if this section has an execute list.  This helps reduce the info logging by only showing sections that are
+        # likely to take a log time.
+        $oNode->paramSet('log', $self->{bExe} && $oNode->nodeList('execute-list', false) > 0 ? true : false);
+
         # If section content is being pulled from elsewhere go get the content
         if ($oNode->paramTest('source'))
         {
@@ -527,6 +533,12 @@ sub build
         if (ref(\$oChild) ne "SCALAR")
         {
             $self->build($oChild, $oNode, $strPath, $strPathPrefix);
+
+            # If the child should be logged then log the parent as well so the hierarchy is complete
+            if ($oChild->nameGet() eq 'section' && $oChild->paramGet('log'))
+            {
+                $oNode->paramSet('log', true);
+            }
         }
     }
 }

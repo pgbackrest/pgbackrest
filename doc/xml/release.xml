@@ -207,6 +207,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Reduce log verbosity when building documentation by only logging sections that contain an execute list directly or in a child section.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Debian/Ubuntu documentation now builds on Ubuntu 16.</p>
                     </release-item>
 

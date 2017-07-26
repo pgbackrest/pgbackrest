@@ -57,7 +57,7 @@ sub new
         );
 
     # Create the class hash
-    my $self = $class->SUPER::new($strType, $oManifest, $strRenderOutKey);
+    my $self = $class->SUPER::new($strType, $oManifest, $bExe, $strRenderOutKey);
     bless $self, $class;
 
     if (defined($self->{oSource}{hyCache}))

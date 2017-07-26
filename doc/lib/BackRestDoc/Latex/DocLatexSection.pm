@@ -110,7 +110,10 @@ sub sectionProcess
             {name => 'iDepth'}
         );
 
-    &log(INFO, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('path'));
+    if ($oSection->paramGet('log'))
+    {
+        &log(INFO, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('path'));
+    }
 
     # Create the section
     my $strSectionTitle = $self->processText($oSection->nodeGet('title')->textGet());
