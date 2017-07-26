@@ -234,6 +234,12 @@
                         <p>Fix log checking after <postgres/> shuts down to include <id>FATAL</id> messages and disallow immediate shutdowns which can throw <id>FATAL</id> errors in the log.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Use Google DNS in test environment for consistency.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-test-list>
         </release>
 
