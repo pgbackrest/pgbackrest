@@ -1673,18 +1673,7 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
+        &OPTION_RULE_COMMAND => OPTION_BACKUP_HOST,
         &OPTION_RULE_DEPEND =>
         {
             &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
@@ -2074,14 +2063,7 @@ my %oOptionRule =
         &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
         &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
         &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_LOCAL => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        },
+        &OPTION_RULE_COMMAND => OPTION_DB_HOST,
         &OPTION_RULE_DEPEND =>
         {
             &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
