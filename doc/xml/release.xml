@@ -193,6 +193,12 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix description of <br-option>--online</br-option> based on the command context.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>Add creation of <file>/etc/pgbackrest.conf</file> to manual installation instructions.</p>
@@ -202,6 +208,18 @@
                 <release-refactor-list>
                     <release-item>
                         <p>Debian/Ubuntu documentation now builds on Ubuntu 16.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Move repository options into a separate section in command/command-line help.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove vestigial repository options from <cmd>backup</cmd> command.</p>
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>

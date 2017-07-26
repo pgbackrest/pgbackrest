@@ -69,6 +69,15 @@
                         <example>error</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - LOG-PATH KEY -->
+                    <config-key id="log-path" name="Log Path">
+                        <summary>Path where log files are stored.</summary>
+
+                        <text>The log path provides a location for <backrest/> to store log files.  Note that if <setting>log-level-file=none</setting> then no log path is required.</text>
+
+                        <example>/backup/db/log</example>
+                    </config-key>
+
                     <!-- CONFIG - LOG SECTION - LOG-TIMESTAMP KEY -->
                     <config-key id="log-timestamp" name="Log Timestamp">
                         <summary>Enable timestamp in logging.</summary>
@@ -82,18 +91,9 @@
 
             <!-- CONFIG - GENERAL -->
             <config-section id="general" name="General">
-                <text>The <setting>general</setting> section defines settings that are shared between multiple operations.</text>
+                <text>The <setting>general</setting> section defines options that are common for many commands.</text>
 
-                <!-- CONFIG - GENERAL SECTION - ARCHIVE-TIMEOUT -->
                 <config-key-list>
-                    <config-key id="archive-timeout" name="Archive Timeout">
-                        <summary>Archive timeout.</summary>
-
-                        <text>Set maximum time, in seconds, to wait for WAL segments to reach the archive.  The timeout applies to the <cmd>check</cmd> command and to the <cmd>backup</cmd> command when waiting for WAL segments required to make the backup consistent to be archived.</text>
-
-                        <example>30</example>
-                    </config-key>
-
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size for file operations.</summary>
 
@@ -141,17 +141,6 @@
                         <example>1</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - CHECKSUM-PAGE KEY -->
-                    <config-key id="checksum-page" name="Page Checksums">
-                        <summary>Validate data page checksums.</summary>
-
-                        <text>Directs <backrest/> to validate all data page checksums while backing up a cluster.  This option will be automatically enabled when the required C library is present and checksums are enabled on the cluster.
-
-                        Failures in checksum validation will not abort a backup.  Rather, warnings will be emitted in the log (and to the console with default settings) and the list of invalid pages will be stored in the backup manifest.</text>
-
-                        <example>n</example>
-                    </config-key>
-
                     <!-- CONFIG - GENERAL SECTION - DB-TIMEOUT KEY -->
                     <config-key id="db-timeout" name="Database Timeout">
                         <summary>Database query timeout.</summary>
@@ -168,15 +157,6 @@
                         <text>The lock path provides a location for <backrest/> to create lock files to prevent conflicting operations from being run concurrently.</text>
 
                         <example>/backup/db/lock</example>
-                    </config-key>
-
-                    <!-- CONFIG - GENERAL SECTION - LOG-PATH KEY -->
-                    <config-key id="log-path" name="Log Path">
-                        <summary>Path where log files are stored.</summary>
-
-                        <text>The log path provides a location for <backrest/> to store log files.  Note that if <setting>log-level-file=none</setting> then no log path is required.</text>
-
-                        <example>/backup/db/log</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - NEUTRAL-UMASK -->
@@ -217,8 +197,54 @@
 
                         <example>630</example>
                     </config-key>
+                </config-key-list>
+            </config-section>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-PATH KEY -->
+            <!-- CONFIG - REPO -->
+            <config-section id="repository" name="Repository">
+                <text>The <setting>repository</setting> section defines options used to configure the repository.</text>
+
+                <config-key-list>
+                    <!-- CONFIG - REPO SECTION - BACKUP-CMD KEY -->
+                    <config-key id="backup-cmd" name="Backup Host Command">
+                        <summary><backrest/> exe path on the backup host.</summary>
+
+                        <text>Required only if the path to <exe/> is different on the local and backup hosts.  If not defined, the backup host exe path will be set the same as the local exe path.</text>
+
+                        <default>same as local</default>
+                        <example>/usr/lib/backrest/bin/pgbackrest</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - BACKUP-CONFIG KEY -->
+                    <config-key id="backup-config" name="Backup Host Configuration">
+                        <summary><backrest/> backup host configuration file.</summary>
+
+                        <text>Sets the location of the configuration file on the backup host.  This is only required if the backup host configuration file is in a different location than the local configuration file.</text>
+
+                        <example>/etc/pgbackrest_backup.conf</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - BACKUP-HOST KEY -->
+                    <config-key id="backup-host" name="Backup Host">
+                        <summary>Backup host when operating remotely via SSH.</summary>
+
+                        <text>Make sure that trusted SSH authentication is configured between the db host and the backup host.
+
+                        When backing up to a locally mounted network filesystem this setting is not required.</text>
+
+                        <example>backup.domain.com</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - BACKUP-USER KEY -->
+                    <config-key id="backup-user" name="Backup User">
+                        <summary>Backup host user when <setting>backup-host</setting> is set.</summary>
+
+                        <text>Defines the user that will be used for operations on the backup server.  Preferably this is not the <id>postgres</id> user but rather some other user like <id>backrest</id>.  If <postgres/> runs on the backup server the <id>postgres</id> user can be placed in the <id>backrest</id> group so it has read permissions on the repository without being able to damage the contents accidentally.</text>
+
+                        <example>backrest</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Repository path where WAL segments and backups stored.</summary>
 
@@ -229,7 +255,7 @@
                         <example>/backup/db/backrest</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-KEY KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-KEY KEY -->
                     <config-key id="repo-s3-key" name="S3 Repository Access Key">
                         <summary>S3 repository access key.</summary>
 
@@ -238,7 +264,7 @@
                         <example>AKIAIOSFODNN7EXAMPLE</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-KEY-SECRET KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-KEY-SECRET KEY -->
                     <config-key id="repo-s3-key-secret" name="S3 Repository Secret Access Key">
                         <summary>S3 repository secret access key.</summary>
 
@@ -247,7 +273,7 @@
                         <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-BUCKET KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-BUCKET KEY -->
                     <config-key id="repo-s3-bucket" name="S3 Repository Bucket">
                         <summary>S3 repository bucket.</summary>
 
@@ -258,7 +284,7 @@
                         <example>db-backup</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-CA-FILE KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-CA-FILE KEY -->
                     <config-key id="repo-s3-ca-file" name="S3 SSL CA File">
                         <summary>S3 SSL CA File.</summary>
 
@@ -267,7 +293,7 @@
                         <example>/etc/pki/tls/certs/ca-bundle.crt</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-CA-PATH KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-CA-PATH KEY -->
                     <config-key id="repo-s3-ca-path" name="S3 SSL CA Path">
                         <summary>S3 SSL CA Path.</summary>
 
@@ -276,7 +302,7 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-ENDPOINT KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-ENDPOINT KEY -->
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
 
@@ -285,7 +311,7 @@
                         <example>s3.amazonaws.com</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-HOST KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-HOST KEY -->
                     <config-key id="repo-s3-host" name="S3 Repository Host">
                         <summary>S3 repository host.</summary>
 
@@ -294,7 +320,7 @@
                         <example>127.0.0.1</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-REGION KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->
                     <config-key id="repo-s3-region" name="S3 Repository Region">
                         <summary>S3 repository region.</summary>
 
@@ -303,7 +329,7 @@
                         <example>us-east-1</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-S3-VERIFY-SSL KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-SSL KEY -->
                     <config-key id="repo-s3-verify-ssl" name="S3 Repository Verify SSL">
                         <summary>Verify S3 server certificate.</summary>
 
@@ -312,7 +338,7 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - REPO-TYPE KEY -->
+                    <!-- CONFIG - REPO SECTION - REPO-TYPE KEY -->
                     <config-key id="repo-type" name="Repository Type">
                         <summary>Type of storage used for the repository.</summary>
 
@@ -353,45 +379,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - BACKUP-CMD KEY -->
-                    <config-key id="backup-cmd" name="Backup Host Command">
-                        <summary><backrest/> exe path on the backup host.</summary>
-
-                        <text>Required only if the path to <exe/> is different on the local and backup hosts.  If not defined, the backup host exe path will be set the same as the local exe path.</text>
-
-                        <default>same as local</default>
-                        <example>/usr/lib/backrest/bin/pgbackrest</example>
-                    </config-key>
-
-                    <!-- CONFIG - BACKUP SECTION - BACKUP-CONFIG KEY -->
-                    <config-key id="backup-config" name="Backup Host Configuration">
-                        <summary><backrest/> backup host configuration file.</summary>
-
-                        <text>Sets the location of the configuration file on the backup host.  This is only required if the backup host configuration file is in a different location than the local configuration file.</text>
-
-                        <example>/etc/pgbackrest_backup.conf</example>
-                    </config-key>
-
-                    <!-- CONFIG - BACKUP SECTION - BACKUP-HOST KEY -->
-                    <config-key id="backup-host" name="Backup Host">
-                        <summary>Backup host when operating remotely via SSH.</summary>
-
-                        <text>Make sure that trusted SSH authentication is configured between the db host and the backup host.
-
-                        When backing up to a locally mounted network filesystem this setting is not required.</text>
-
-                        <example>backup.domain.com</example>
-                    </config-key>
-
-                    <!-- CONFIG - BACKUP SECTION - BACKUP-USER KEY -->
-                    <config-key id="backup-user" name="Backup User">
-                        <summary>Backup host user when <setting>backup-host</setting> is set.</summary>
-
-                        <text>Defines the user that will be used for operations on the backup server.  Preferably this is not the <id>postgres</id> user but rather some other user like <id>backrest</id>.  If <postgres/> runs on the backup server the <id>postgres</id> user can be placed in the <id>backrest</id> group so it has read permissions on the repository without being able to damage the contents accidentally.</text>
-
-                        <example>backrest</example>
-                    </config-key>
-
                     <!-- CONFIG - BACKUP SECTION - BACKUP-STANDBY KEY -->
                     <config-key id="backup-standby" name="Backup from Standby">
                         <summary>Backup from the standby cluster.</summary>
@@ -399,6 +386,17 @@
                         <text>Enable backup from standby to reduce load on the master cluster.  This option requires that both the <host>master</host> and <host>standby</host> hosts be configured.</text>
 
                         <example>y</example>
+                    </config-key>
+
+                    <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
+                    <config-key id="checksum-page" name="Page Checksums">
+                        <summary>Validate data page checksums.</summary>
+
+                        <text>Directs <backrest/> to validate all data page checksums while backing up a cluster.  This option will be automatically enabled when the required C library is present and checksums are enabled on the cluster.
+
+                        Failures in checksum validation will not abort a backup.  Rather, warnings will be emitted in the log (and to the console with default settings) and the list of invalid pages will be stored in the backup manifest.</text>
+
+                        <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - HARDLINK -->
@@ -484,6 +482,15 @@
                         The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely.  Better to lose the backup than have <postgres/> go down.</text>
 
                         <example>1073741824</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-timeout" name="Archive Timeout">
+                        <summary>Archive timeout.</summary>
+
+                        <text>Set maximum time, in seconds, to wait for WAL segments to reach the archive.  The timeout applies to the <cmd>check</cmd> command and to the <cmd>backup</cmd> command when waiting for WAL segments required to make the backup consistent to be archived.</text>
+
+                        <example>30</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -702,25 +709,13 @@
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
                 <option id="stanza" name="Stanza">
-                    <summary>Defines a stanza.</summary>
+                    <summary>Defines the stanza.</summary>
 
                     <text>A stanza is the configuration for a <postgres/> database cluster that defines where it is located, how it will be backed up, archiving options, etc.  Most db servers will only have one Postgres database cluster and therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to be backed up.
 
                     It is tempting to name the stanza after the primary cluster but a better name describes the databases contained in the cluster.  Because the stanza name will be used for the primary and all replicas it is more appropriate to choose a name that describes the actual function of the cluster, such as app or dw, rather than the local cluster name, such as main or prod.</text>
 
                     <example>main</example>
-                </option>
-
-
-                <!-- OPERATION - GENERAL - ONLINE OPTION -->
-                <option id="online" name="Online">
-                    <summary>Perform an online backup.</summary>
-
-                    <text>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
-
-                    The purpose of this option is to allow offline backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
-
-                    <example>n</example>
                 </option>
             </option-list>
         </operation-general>
@@ -756,6 +751,17 @@
                         There are some scenarios where a backup might still be desirable under these conditions.  For example, if a server crashes and the database cluster volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present.  In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.</text>
 
                         <example>y</example>
+                    </option>
+
+                    <!-- ======================================================================================================= -->
+                    <option id="online" name="Online">
+                        <summary>Perform an online backup.</summary>
+
+                        <text>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
+
+                        The purpose of this option is to allow offline backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
+
+                        <example>n</example>
                     </option>
                 </option-list>
 
@@ -808,6 +814,17 @@
                 <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the database or the backup host.  The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code> cannot be performed on the standby, the command will only test the repository configuration.
 
                 Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code> are called to force <postgres/> to archive a WAL segment.  Restore points are only supported in <postgres/> &gt;= 9.1 so for older versions the <cmd>check</cmd> command may fail if there has been no write activity since the last log rotation, therefore it is recommended that activity be generated by the user if there have been no writes since the last xlog switch before running the <cmd>check</cmd> command.</text>
+
+                <option-list>
+                    <!-- ======================================================================================================= -->
+                    <option id="online" name="Online">
+                        <summary>Check an online cluster.</summary>
+
+                        <text>Specifying --no-online prevents <backrest/> from connecting to <postgres/> and will disable some checks.</text>
+
+                        <example>n</example>
+                    </option>
+                </option-list>
 
                 <command-example-list>
                     <command-example>
@@ -1082,6 +1099,15 @@
 
                         <example>n</example>
                     </option>
+
+                    <!-- ======================================================================================================= -->
+                    <option id="online" name="Online">
+                        <summary>Create on an online cluster.</summary>
+
+                        <text>Specifying --no-online prevents <backrest/> from connecting to <postgres/> when creating the stanza.</text>
+
+                        <example>n</example>
+                    </option>
                 </option-list>
 
                 <command-example-list>
@@ -1100,6 +1126,17 @@
                 <summary>Upgrade a stanza.</summary>
 
                 <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>db-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the backup host. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+
+                <option-list>
+                    <!-- ======================================================================================================= -->
+                    <option id="online" name="Online">
+                        <summary>Update an online cluster.</summary>
+
+                        <text>Specifying --no-online prevents <backrest/> from connecting to <postgres/> when upgrading the stanza.</text>
+
+                        <example>n</example>
+                    </option>
+                </option-list>
 
                 <command-example-list>
                     <command-example title="Upgrade a stanza">

@@ -858,23 +858,15 @@ sub helpCommandDocGetOptionFind
     {
         $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
 
-        if (defined($$oOption{&CONFIG_HELP_SECTION}))
+        if (defined($$oOption{&CONFIG_HELP_SECTION}) && $strSection ne $strCommand)
         {
             $strSection = $$oOption{&CONFIG_HELP_SECTION};
-
-            if ($strSection eq CONFIG_SECTION_COMMAND)
-            {
-                $strSection = CONFIG_SECTION_GENERAL;
-            }
-        }
-        else
-        {
-            $strSection = CONFIG_SECTION_GENERAL;
         }
 
         if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-             $strSection ne CONFIG_SECTION_STANZA && $strSection ne CONFIG_SECTION_EXPIRE) ||
-             $strSection eq $strCommand)
+             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CONFIG_SECTION_STANZA &&
+             $strSection ne CONFIG_SECTION_EXPIRE) ||
+            $strSection eq $strCommand)
         {
             $strSection = CONFIG_HELP_COMMAND;
         }
