@@ -91,7 +91,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'archive-timeout' =>
         {
-            section => 'general',
+            section => 'archive',
             summary =>
                 "Archive timeout.",
             description =>
@@ -104,7 +104,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-cmd' =>
         {
-            section => 'backup',
+            section => 'repository',
             summary =>
                 "pgBackRest exe path on the backup host.",
             description =>
@@ -116,7 +116,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-config' =>
         {
-            section => 'backup',
+            section => 'repository',
             summary =>
                 "pgBackRest backup host configuration file.",
             description =>
@@ -128,7 +128,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-host' =>
         {
-            section => 'backup',
+            section => 'repository',
             summary =>
                 "Backup host when operating remotely via SSH.",
             description =>
@@ -153,7 +153,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-user' =>
         {
-            section => 'backup',
+            section => 'repository',
             summary =>
                 "Backup host user when backup-host is set.",
             description =>
@@ -179,7 +179,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'checksum-page' =>
         {
-            section => 'general',
+            section => 'backup',
             summary =>
                 "Validate data page checksums.",
             description =>
@@ -483,7 +483,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'log-path' =>
         {
-            section => 'general',
+            section => 'log',
             summary =>
                 "Path where log files are stored.",
             description =>
@@ -530,21 +530,6 @@ my $oConfigHelpData =
                 "\n" .
                 "To use the executing user's umask instead specify neutral-umask=n in the config file or --no-neutral-umask on " .
                     "the command line."
-        },
-
-        # ONLINE Option Help
-        #---------------------------------------------------------------------------------------------------------------------------
-        'online' =>
-        {
-            summary =>
-                "Perform an online backup.",
-            description =>
-                "Specifying --no-online prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the database " .
-                    "cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will generate an error if " .
-                    "it is not.\n" .
-                "\n" .
-                "The purpose of this option is to allow offline backups. The pg_xlog directory is copied as-is and " .
-                    "archive-check is automatically disabled for the backup."
         },
 
         # PROCESS-MAX Option Help
@@ -596,7 +581,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-path' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "Repository path where WAL segments and backups stored.",
             description =>
@@ -612,7 +597,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-bucket' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 repository bucket.",
             description =>
@@ -626,7 +611,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-ca-file' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 SSL CA File.",
             description =>
@@ -637,7 +622,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-ca-path' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 SSL CA Path.",
             description =>
@@ -648,7 +633,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-endpoint' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 repository endpoint.",
             description =>
@@ -659,7 +644,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-host' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 repository host.",
             description =>
@@ -670,7 +655,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-key' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 repository access key.",
             description =>
@@ -681,7 +666,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-key-secret' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 repository secret access key.",
             description =>
@@ -692,7 +677,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-region' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "S3 repository region.",
             description =>
@@ -703,7 +688,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-s3-verify-ssl' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "Verify S3 server certificate.",
             description =>
@@ -715,7 +700,7 @@ my $oConfigHelpData =
         #---------------------------------------------------------------------------------------------------------------------------
         'repo-type' =>
         {
-            section => 'general',
+            section => 'repository',
             summary =>
                 "Type of storage used for the repository.",
             description =>
@@ -822,7 +807,7 @@ my $oConfigHelpData =
         'stanza' =>
         {
             summary =>
-                "Defines a stanza.",
+                "Defines the stanza.",
             description =>
                 "A stanza is the configuration for a PostgreSQL database cluster that defines where it is located, how it will " .
                     "be backed up, archiving options, etc. Most db servers will only have one Postgres database cluster and " .
@@ -1018,9 +1003,6 @@ my $oConfigHelpData =
                 'archive-check' => 'section',
                 'archive-copy' => 'section',
                 'archive-timeout' => 'section',
-                'backup-cmd' => 'section',
-                'backup-config' => 'section',
-                'backup-host' => 'section',
                 'backup-standby' => 'section',
                 'buffer-size' => 'section',
                 'checksum-page' => 'section',
@@ -1064,7 +1046,22 @@ my $oConfigHelpData =
                 'log-timestamp' => 'section',
                 'manifest-save-threshold' => 'section',
                 'neutral-umask' => 'section',
-                'online' => 'default',
+
+                # ONLINE Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'online' =>
+                {
+                    summary =>
+                        "Perform an online backup.",
+                    description =>
+                        "Specifying --no-online prevents pgBackRest from running pg_start_backup() and pg_stop_backup() on the " .
+                            "database cluster. In order for this to work PostgreSQL should be shut down and pgBackRest will " .
+                            "generate an error if it is not.\n" .
+                        "\n" .
+                        "The purpose of this option is to allow offline backups. The pg_xlog directory is copied as-is and " .
+                            "archive-check is automatically disabled for the backup."
+                },
+
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
@@ -1151,7 +1148,17 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
-                'online' => 'default',
+
+                # ONLINE Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'online' =>
+                {
+                    summary =>
+                        "Check an online cluster.",
+                    description =>
+                        "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL and will disable some checks."
+                },
+
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
@@ -1181,7 +1188,6 @@ my $oConfigHelpData =
 
             option =>
             {
-                'backup-host' => 'section',
                 'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
@@ -1494,7 +1500,17 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
-                'online' => 'default',
+
+                # ONLINE Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'online' =>
+                {
+                    summary =>
+                        "Create on an online cluster.",
+                    description =>
+                        "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL when creating the stanza."
+                },
+
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
@@ -1546,7 +1562,17 @@ my $oConfigHelpData =
                 'log-level-file' => 'section',
                 'log-path' => 'section',
                 'neutral-umask' => 'section',
-                'online' => 'default',
+
+                # ONLINE Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'online' =>
+                {
+                    summary =>
+                        "Update an online cluster.",
+                    description =>
+                        "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL when upgrading the stanza."
+                },
+
                 'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',

@@ -184,9 +184,21 @@
                         <p>Modified the <cmd>info</cmd> command (both text and JSON output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix description of <br-option>--online</br-option> based on the command context.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>Add creation of <file>/etc/pgbackrest.conf</file> to manual installation instructions.</p>
@@ -195,7 +207,23 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Reduce log verbosity when building documentation by only logging sections that contain an execute list directly or in a child section.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Debian/Ubuntu documentation now builds on Ubuntu 16.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Move repository options into a separate section in command/command-line help.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove vestigial repository options from <cmd>backup</cmd> command.</p>
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>
@@ -206,6 +234,16 @@
                         <p>Fix log checking after <postgres/> shuts down to include <id>FATAL</id> messages and disallow immediate shutdowns which can throw <id>FATAL</id> errors in the log.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Use Google DNS in test environment for consistency.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Use new Travis Trusty image.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-test-list>
         </release>
 

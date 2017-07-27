@@ -56,6 +56,8 @@ use constant CONFIG_SECTION_LOG                                     => 'log';
     push @EXPORT, qw(CONFIG_SECTION_LOG);
 use constant CONFIG_SECTION_EXPIRE                                  => 'expire';
     push @EXPORT, qw(CONFIG_SECTION_EXPIRE);
+use constant CONFIG_SECTION_REPOSITORY                              => 'repository';
+    push @EXPORT, qw(CONFIG_SECTION_REPOSITORY);
 
 ####################################################################################################################################
 # configHelp
@@ -368,8 +370,9 @@ sub configHelpOptionFind
         }
 
         if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-             $strSection ne CONFIG_SECTION_STANZA && $strSection ne CONFIG_SECTION_EXPIRE) ||
-             $strSection eq $strCommand)
+             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CONFIG_SECTION_STANZA &&
+             $strSection ne CONFIG_SECTION_EXPIRE) ||
+            $strSection eq $strCommand)
         {
             $strSection = CONFIG_HELP_COMMAND;
         }

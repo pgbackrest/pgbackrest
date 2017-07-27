@@ -129,7 +129,7 @@ sub info
         (
             __PACKAGE__ . '->info', \@_,
             {name => 'strFile', trace => true},
-            {name => 'bIgnoreMissing', default => false, trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
     # Stat the path/file
@@ -319,16 +319,18 @@ sub manifest
     (
         $strOperation,
         $strPath,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifest', \@_,
             {name => 'strPath', trace => true},
+            {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
     # Generate the manifest
     my $hManifest = {};
-    $self->manifestRecurse($strPath, undef, 0, $hManifest);
+    $self->manifestRecurse($strPath, undef, 0, $hManifest, $bIgnoreMissing);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -350,6 +352,7 @@ sub manifestRecurse
         $strSubPath,
         $iDepth,
         $hManifest,
+        $bIgnoreMissing,
     ) =
         logDebugParam
         (
@@ -358,6 +361,7 @@ sub manifestRecurse
             {name => 'strSubPath', required => false, trace => true},
             {name => 'iDepth', default => 0, trace => true},
             {name => 'hManifest', required => false, trace => true},
+            {name => 'bIgnoreMissing', required => false, default => false, trace => true},
         );
 
     # Set operation and debug strings
@@ -366,33 +370,38 @@ sub manifestRecurse
     my $strFilter;
 
     # If this is the top level stat the path to discover if it is actually a file
-    if ($iDepth == 0 && !S_ISDIR(($self->info($strPathRead))->mode))
-    {
-        $strFilter = basename($strPathRead);
-        $strPathRead = dirname($strPathRead);
-    }
+    my $oPathInfo = $self->info($strPathRead, {bIgnoreMissing => $bIgnoreMissing});
 
-    # Get a list of all files in the path (including .)
-    my @stryFileList = @{$self->list($strPathRead, {bIgnoreMissing => $iDepth != 0})};
-    unshift(@stryFileList, '.');
-    my $hFileStat = $self->manifestList($strPathRead, \@stryFileList);
-
-    # Loop through all subpaths/files in the path
-    foreach my $strFile (keys(%{$hFileStat}))
+    if (defined($oPathInfo))
     {
-        # Skip this file if it does not match the filter
-        if (defined($strFilter) && $strFile ne $strFilter)
+        if ($iDepth == 0 && !S_ISDIR($oPathInfo->mode()))
         {
-            next;
+            $strFilter = basename($strPathRead);
+            $strPathRead = dirname($strPathRead);
         }
 
-        my $strManifestFile = $iDepth == 0 ? $strFile : ($strSubPath . ($strFile eq qw(.) ? '' : "/${strFile}"));
-        $hManifest->{$strManifestFile} = $hFileStat->{$strFile};
+        # Get a list of all files in the path (including .)
+        my @stryFileList = @{$self->list($strPathRead, {bIgnoreMissing => $iDepth != 0})};
+        unshift(@stryFileList, '.');
+        my $hFileStat = $self->manifestList($strPathRead, \@stryFileList);
 
-        # Recurse into directories
-        if ($hManifest->{$strManifestFile}{type} eq 'd' && $strFile ne qw(.))
+        # Loop through all subpaths/files in the path
+        foreach my $strFile (keys(%{$hFileStat}))
         {
-            $self->manifestRecurse($strPath, $strManifestFile, $iDepth + 1, $hManifest);
+            # Skip this file if it does not match the filter
+            if (defined($strFilter) && $strFile ne $strFilter)
+            {
+                next;
+            }
+
+            my $strManifestFile = $iDepth == 0 ? $strFile : ($strSubPath . ($strFile eq qw(.) ? '' : "/${strFile}"));
+            $hManifest->{$strManifestFile} = $hFileStat->{$strFile};
+
+            # Recurse into directories
+            if ($hManifest->{$strManifestFile}{type} eq 'd' && $strFile ne qw(.))
+            {
+                $self->manifestRecurse($strPath, $strManifestFile, $iDepth + 1, $hManifest);
+            }
         }
     }
 
@@ -936,7 +945,7 @@ sub remove
     # Remove a tree
     if ($bRecurse)
     {
-        my $oManifest = $self->manifest($xstryPathFile);
+        my $oManifest = $self->manifest($xstryPathFile, {bIgnoreMissing => true});
 
         # Iterate all files in the manifest
         foreach my $strFile (sort({$b cmp $a} keys(%{$oManifest})))
@@ -948,8 +957,8 @@ sub remove
 
                 if (!rmdir($xstryPathFileRemove))
                 {
-                    # If any error but missing then raise the error
-                    if (!$OS_ERROR{ENOENT})
+                    # Throw error if this is not an ignored missing path
+                    if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
                     {
                         logErrorResult(ERROR_PATH_REMOVE, "unable to remove path '${strFile}'", $OS_ERROR);
                     }
@@ -971,7 +980,7 @@ sub remove
             {
                 $bRemoved = false;
 
-                # If path exists then throw the error
+                # Throw error if this is not an ignored missing file
                 if (!($OS_ERROR{ENOENT} && $bIgnoreMissing))
                 {
                     logErrorResult(

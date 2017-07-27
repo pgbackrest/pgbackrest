@@ -36,6 +36,11 @@ Vagrant.configure(2) do |config|
         ntpdate pool.ntp.org
 
         #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Use Google DNS' && date
+        echo 'supersede domain-name-servers 8.8.8.8;' >> /etc/dhcp/dhclient.conf
+        /etc/init.d/networking restart
+
+        #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date
         apt-get install -y libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl libxml-checker-perl libperl-critic-perl \
             libdevel-nytprof-perl

@@ -123,14 +123,16 @@ sub manifest
     (
         $strOperation,
         $strPathExp,
+        $rhParam,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->manifest', \@_,
             {name => 'strPathExp'},
+            {name => 'rhParam', required => false},
         );
 
-    my $hManifest = $self->{oProtocol}->cmdExecute(OP_STORAGE_MANIFEST, [$strPathExp]);
+    my $hManifest = $self->{oProtocol}->cmdExecute(OP_STORAGE_MANIFEST, [$strPathExp, $rhParam]);
 
     # Return from function and log return values if any
     return logDebugReturn

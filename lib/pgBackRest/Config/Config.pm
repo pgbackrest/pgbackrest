@@ -1605,7 +1605,6 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_LOCAL => true,
@@ -1630,7 +1629,6 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
             &CMD_CHECK => true,
             &CMD_INFO => true,
             &CMD_LOCAL => true,
@@ -1655,9 +1653,7 @@ my %oOptionRule =
         {
             &CMD_ARCHIVE_GET => true,
             &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
             &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
             &CMD_INFO => true,
             &CMD_LOCAL => true,
             &CMD_RESTORE => true,
