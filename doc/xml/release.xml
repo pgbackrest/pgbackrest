@@ -185,6 +185,16 @@
                     </release-item>
                 </release-feature-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added <br-option>--backup-ssh-port</br-option> and <br-option>--db-ssh-port</br-option> options when specifying backup or db hosts in the event an SSH port other than the default is used.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>

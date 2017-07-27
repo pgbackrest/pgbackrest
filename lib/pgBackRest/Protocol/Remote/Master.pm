@@ -53,7 +53,8 @@ sub new
 
     # Create SSH command
     $strCommand =
-        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no $strCommandSshPort " . "${strUser}\@${strHost} '${strCommand}'";
+        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no $strCommandSshPort " .
+        "${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
     my $self = $class->SUPER::new(

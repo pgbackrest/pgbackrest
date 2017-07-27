@@ -110,7 +110,8 @@ sub run
         $self->optionSetTest($oOption, OPTION_BACKUP_USER, $self->pgUser());
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
 
-        $self->testResult(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, "[object]", 'ssh default port');
+        $self->testResult(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, "[object]",
+        'ssh default port');
 
         # Destroy protocol object
         protocolDestroy();
@@ -124,6 +125,10 @@ sub run
 
         # Destroy protocol object
         protocolDestroy();
+
+        $self->optionReset($oOption, OPTION_BACKUP_HOST);
+        $self->optionReset($oOption, OPTION_BACKUP_USER);
+        $self->optionReset($oOption, OPTION_BACKUP_SSH_PORT);
     }
 }
 
