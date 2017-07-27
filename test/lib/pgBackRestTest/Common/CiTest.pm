@@ -80,7 +80,6 @@ sub process
         "\n" .
         "dist: trusty\n" .
         "sudo: required\n" .
-        "group: deprecated-2017Q2\n" .
         "\n" .
         "language: c\n" .
         "\n" .
