@@ -214,7 +214,7 @@ sub protocolGet
                 $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $iRemoteIdx);
                 $strOptionHost = optionIndex(OPTION_DB_HOST, $iRemoteIdx);
                 $strOptionUser = optionIndex(OPTION_DB_USER, $iRemoteIdx);
-                $strOptionSshPort = OPTION_DB_SSH_PORT;
+                $strOptionSshPort = optionIndex(OPTION_DB_SSH_PORT, $iRemoteIdx);
             }
 
             # Db socket is not valid in all contexts (restore, for instance)

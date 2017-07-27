@@ -106,10 +106,6 @@ sub run
     ################################################################################################################################
     if ($self->begin("Protocol::Helper"))
     {
-        my $iWalTimeline = 1;
-        my $iWalMajor = 1;
-        my $iWalMinor = 1;
-
         $self->optionSetTest($oOption, OPTION_BACKUP_HOST, 'localhost');
         $self->optionSetTest($oOption, OPTION_BACKUP_USER, $self->pgUser());
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
@@ -128,10 +124,6 @@ sub run
 
         # Destroy protocol object
         protocolDestroy();
-        
-        $self->optionReset($oOption, OPTION_BACKUP_HOST);
-        $self->optionReset($oOption, OPTION_BACKUP_USER);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
     }
 }
 
