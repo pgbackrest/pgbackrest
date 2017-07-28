@@ -246,7 +246,7 @@
 
                     <!-- CONFIG - REPO SECTION - BACKUP-SSH-PORT KEY -->
                     <config-key id="backup-ssh-port" name="Backup SSH Port">
-                        <summary>Backup ssh port number when <setting>backup-host</setting> is set.</summary>
+                        <summary>Backup server ssh port number when <setting>backup-host</setting> is set.</summary>
 
                         <text>If the ssh port for the server is not the detault, than this option can be used to specify the port number.</text>
 
