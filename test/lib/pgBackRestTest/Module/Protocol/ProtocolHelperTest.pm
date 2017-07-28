@@ -120,8 +120,7 @@ sub run
         logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
 
         $self->testException(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, ERROR_FILE_READ,
-        "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25: Cannot assign requested " .
-        "address");
+        "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25:");
 
         # Destroy protocol object
         protocolDestroy();

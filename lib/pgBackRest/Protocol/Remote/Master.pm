@@ -49,11 +49,11 @@ sub new
             {name => 'iProtocolTimeout'},
         );
 
-    my $strCommandSshPort = defined($iSshPort) ? '-p ' . $iSshPort : '';
+    my $strCommandSshPort = defined($iSshPort) ? '-p ' . $iSshPort . ' ' : '';
 
     # Create SSH command
     $strCommand =
-        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no $strCommandSshPort " .
+        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no $strCommandSshPort" .
         "${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
