@@ -244,6 +244,15 @@
                         <example>backrest</example>
                     </config-key>
 
+                    <!-- CONFIG - REPO SECTION - BACKUP-SSH-PORT KEY -->
+                    <config-key id="backup-ssh-port" name="Backup SSH Port">
+                        <summary>Backup server ssh port number when <setting>backup-host</setting> is set.</summary>
+
+                        <text>If the ssh port for the server is not the detault, than this option can be used to specify the port number.</text>
+
+                        <example>25</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Repository path where WAL segments and backups stored.</summary>
@@ -684,6 +693,15 @@
                         <text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgressql.conf</file>.</text>
 
                         <example>/var/run/postgresql</example>
+                    </config-key>
+
+                    <!-- CONFIG - STANZA SECTION - DB-SSH-PORT KEY -->
+                    <config-key id="db-ssh-port" name="Database SSH Port">
+                        <summary>Database server ssh port number when <setting>db-host</setting> is set.</summary>
+
+                        <text>If the ssh port for the server is not the detault, than this option can be used to specify the port number.</text>
+
+                        <example>25</example>
                     </config-key>
                 </config-key-list>
             </config-section>

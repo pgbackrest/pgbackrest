@@ -352,6 +352,8 @@ use constant OPTION_BACKUP_CONFIG                                   => 'backup-c
     push @EXPORT, qw(OPTION_BACKUP_CONFIG);
 use constant OPTION_BACKUP_HOST                                     => 'backup-host';
     push @EXPORT, qw(OPTION_BACKUP_HOST);
+use constant OPTION_BACKUP_SSH_PORT                                 => 'backup-ssh-port';
+    push @EXPORT, qw(OPTION_BACKUP_SSH_PORT);
 use constant OPTION_BACKUP_STANDBY                                  => 'backup-standby';
     push @EXPORT, qw(OPTION_BACKUP_STANDBY);
 use constant OPTION_BACKUP_USER                                     => 'backup-user';
@@ -410,10 +412,13 @@ use constant OPTION_DB_PATH                                         => OPTION_PR
     push @EXPORT, qw(OPTION_DB_PATH);
 use constant OPTION_DB_PORT                                         => OPTION_PREFIX_DB . '-port';
     push @EXPORT, qw(OPTION_DB_PORT);
+use constant OPTION_DB_SSH_PORT                                     => OPTION_PREFIX_DB . '-ssh-port';
+    push @EXPORT, qw(OPTION_DB_SSH_PORT);
 use constant OPTION_DB_SOCKET_PATH                                  => OPTION_PREFIX_DB . '-socket-path';
     push @EXPORT, qw(OPTION_DB_SOCKET_PATH);
 use constant OPTION_DB_USER                                         => OPTION_PREFIX_DB . '-user';
     push @EXPORT, qw(OPTION_DB_USER);
+
 
 ####################################################################################################################################
 # Option Defaults
@@ -1659,6 +1664,18 @@ my %oOptionRule =
         },
     },
 
+    &OPTION_BACKUP_SSH_PORT =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND => OPTION_BACKUP_HOST,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
+        }
+    },
+
     &OPTION_BACKUP_STANDBY =>
     {
         &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
@@ -2034,6 +2051,19 @@ my %oOptionRule =
             &CMD_STANZA_CREATE => true,
             &CMD_STANZA_UPGRADE => true,
         }
+    },
+
+    &OPTION_DB_SSH_PORT =>
+    {
+        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
+        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
+        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
+        &OPTION_RULE_REQUIRED => false,
+        &OPTION_RULE_COMMAND => OPTION_DB_HOST,
+        &OPTION_RULE_DEPEND =>
+        {
+            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
+        },
     },
 
     &OPTION_DB_USER =>
