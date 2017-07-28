@@ -2,9 +2,7 @@
 # Protocol Helper Tests
 ####################################################################################################################################
 package pgBackRestTest::Module::Protocol::ProtocolHelperTest;
-use parent 'pgBackRestTest::Env::HostEnvTest';
-
-#CSHANG Instead of pgBackRestTest::Env::HostEnvTest can use pgBackRestTest::Env::ConfigEnvTest instead since unit tests are in docker and don't creater servers (e.g. would blow up if initServer
+use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
 # Perl includes
