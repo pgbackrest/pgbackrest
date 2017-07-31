@@ -391,7 +391,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'stanza',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 3,
                 },
             ]
         },

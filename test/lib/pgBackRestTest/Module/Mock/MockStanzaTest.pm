@@ -63,7 +63,7 @@ sub run
             $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
-        # Attempt an upgrade before stanza-create has been performed
+        # Fail stanza upgrade before stanza-create has been performed
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since archive.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
@@ -81,6 +81,8 @@ sub run
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
         storageDb()->pathCreate($strXlogPath, {bCreateParent => true});
 
+        # Stanza Create fails - missing archive.info from non-empty archive dir
+        #--------------------------------------------------------------------------------------------------------------------------
         # Generate WAL then push to get valid archive data in the archive directory
         my ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strXlogPath, 1, 1, WAL_VERSION_93);
         my $strCommand = $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
@@ -94,6 +96,8 @@ sub run
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
 
+        # Stanza Create fails using force - failure to unzip compressed file
+        #--------------------------------------------------------------------------------------------------------------------------
         # S3 doesn't support filesystem-style permissions so skip these tests
         if (!$bS3)
         {
@@ -114,6 +118,8 @@ sub run
                 '640');
         }
 
+        # Stanza Create succeeds when using force - recreates archive.info from compressed archive file
+        #--------------------------------------------------------------------------------------------------------------------------
         # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
@@ -122,6 +128,8 @@ sub run
         # stanza already exists
         $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . OPTION_ONLINE});
 
+        # Stanza Create fails when not using force - hash check failure
+        #--------------------------------------------------------------------------------------------------------------------------
         # Munge and save the archive info file
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
@@ -136,6 +144,8 @@ sub run
         # Cleanup the global hash but don't save the file (permission issues may prevent it anyway)
         $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), false);
 
+        # Stanza Create fails when not using force - database mismatch with pg_control file
+        #--------------------------------------------------------------------------------------------------------------------------
         # Change the database version by copying a new pg_control file
         storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
         storageDb()->copy(
@@ -151,6 +161,8 @@ sub run
             $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
+        # Stanza Create succeeds when using force - recreates archive.info from uncompressed archive file
+        #--------------------------------------------------------------------------------------------------------------------------
         # Unzip the archive file and recreate the archive.info file from it
         my $strArchiveTest = PG_VERSION_93 . "-1/${strArchiveFile}-f5035e2c3b83a9c32660f959b23451e78f7438f7";
 
@@ -167,6 +179,8 @@ sub run
         $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
+        # Stanza Create succeeds when using force - missing archive file
+        #--------------------------------------------------------------------------------------------------------------------------
         # Remove the uncompressed WAL archive file and archive.info
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
@@ -175,6 +189,8 @@ sub run
         $oHostBackup->stanzaCreate('force with missing WAL archive file',
             {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
 
+        # Stanza Create succeeds when using force - missing archive directory
+        #--------------------------------------------------------------------------------------------------------------------------
         # Remove the WAL archive directory
         forceStorageRemove(
             storageRepo(),
@@ -200,7 +216,8 @@ sub run
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaUpgrade('successful upgrade creates mismatched files', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-' .
+            OPTION_ONLINE});
 
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------
@@ -232,38 +249,51 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
-        # $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
-        #     OPTION_ONLINE . ' --log-level-console=detail'}, false);
-        #
-        # # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # # Create the 10.0-3 directory and copy a WAL file to it (something that has a different system id)
-        # forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
-        # storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001', {bCreateParent => true});
-        # storageRepo()->copy(
-        #     storageDb()->openRead($self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin'),
-        #     STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001/000000010000000100000001');
-        # forceStorageOwner(storageRepo(), STORAGE_REPO_ARCHIVE . '/10.0-3', $oHostBackup->userGet(), {bRecurse => true});
-        #
-        # # Copy pg_control for 9.5
-        # storageDb()->copy(
-        #     $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
-        #     $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        # forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
-        #
-        # $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
-        #
-        # # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
-        # #--------------------------------------------------------------------------------------------------------------------------
-        # $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
-        #
-        # # Test backup is changed from type=DIFF to FULL (WARN message displayed)
-        # my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
-        #     {strOptionalParam => '--retention-full=2 --no-' . OPTION_ONLINE . ' --log-level-console=detail'});
-        # $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
-        #
-        # # Confirm info command displays the JSON correctly
-        # $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
+        $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
+            OPTION_ONLINE . ' --log-level-console=detail'}, false);
+
+        # Stanza Create fails when not using force - no backup.info but backup exists
+        #--------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+
+        $oHostBackup->stanzaCreate('fail no force to recreate the stanza from backups',
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
+
+        # Stanza Create succeeds using force - reconstruct backup.info from backup
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->stanzaCreate('use force to recreate the stanza from backups',
+            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+
+        # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
+        #--------------------------------------------------------------------------------------------------------------------------
+        # Create the 10.0-3 directory and copy a WAL file to it (something that has a different system id)
+        forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001', {bCreateParent => true});
+        storageRepo()->copy(
+            storageDb()->openRead($self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin'),
+            STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001/000000010000000100000001');
+        forceStorageOwner(storageRepo(), STORAGE_REPO_ARCHIVE . '/10.0-3', $oHostBackup->userGet(), {bRecurse => true});
+
+        # Copy pg_control for 9.5
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
+
+        $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
+
+        # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
+
+        # Test backup is changed from type=DIFF to FULL (WARN message displayed)
+        my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
+            {strOptionalParam => '--retention-full=2 --no-' . OPTION_ONLINE . ' --log-level-console=detail'});
+        $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
+
+        # Confirm info command displays the JSON correctly
+        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
     }
     }
 }

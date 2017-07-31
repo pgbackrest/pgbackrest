@@ -653,17 +653,20 @@ sub backupArchiveDbHistoryId
     # Get the db-version and db-id (history id) from the archiveId
     my ($strDbVersionArchive, $iDbIdArchive) = split("-", $strArchiveId);
 
-    # Get the DB system ID to map back to the backup info
-    my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
-
-    # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
-    foreach my $iDbIdBackup (keys %{$hDbListBackup})
+    # Get the DB system ID to map back to the backup info if it exists in the archive info file
+    if (exists($$hDbListArchive{$iDbIdArchive}))
     {
-        if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
-            $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
+        my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
+
+        # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
+        foreach my $iDbIdBackup (keys %{$hDbListBackup})
         {
-            $iDbHistoryId = $iDbIdBackup;
-            last;
+            if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
+                $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
+            {
+                $iDbHistoryId = $iDbIdBackup;
+                last;
+            }
         }
     }
 
