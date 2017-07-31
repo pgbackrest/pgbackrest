@@ -362,7 +362,7 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
-                    &TESTDEF_NAME => 'unit',
+                    &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_CONTAINER => true,
 
@@ -370,18 +370,6 @@ my $oTestDef =
                     {
                         &TESTDEF_MODULE_STANZA => TESTDEF_COVERAGE_FULL,
                     },
-                },
-                {
-                    &TESTDEF_NAME => 'create',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_EXPECT => true,
-                    &TESTDEF_INDIVIDUAL => true,
-                },
-                {
-                    &TESTDEF_NAME => 'upgrade',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_EXPECT => true,
-                    &TESTDEF_INDIVIDUAL => true,
                 },
             ]
         },
@@ -400,6 +388,10 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 3,
+                },
+                {
+                    &TESTDEF_NAME => 'stanza',
+                    &TESTDEF_TOTAL => 1,
                 },
             ]
         },
