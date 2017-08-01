@@ -332,7 +332,11 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'info-unit',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Backup/Info' => TESTDEF_COVERAGE_PARTIAL,
+                    },
                 },
             ]
         },
