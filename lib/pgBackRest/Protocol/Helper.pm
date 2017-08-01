@@ -206,6 +206,7 @@ sub protocolGet
             my $strOptionUser = OPTION_BACKUP_USER;
             my $strOptionDbPort = undef;
             my $strOptionDbSocketPath = undef;
+            my $strOptionSshPort = OPTION_BACKUP_SSH_PORT;
 
             if ($strRemoteType eq DB)
             {
@@ -213,6 +214,7 @@ sub protocolGet
                 $strOptionConfig = optionIndex(OPTION_DB_CONFIG, $iRemoteIdx);
                 $strOptionHost = optionIndex(OPTION_DB_HOST, $iRemoteIdx);
                 $strOptionUser = optionIndex(OPTION_DB_USER, $iRemoteIdx);
+                $strOptionSshPort = optionIndex(OPTION_DB_SSH_PORT, $iRemoteIdx);
             }
 
             # Db socket is not valid in all contexts (restore, for instance)
@@ -264,6 +266,7 @@ sub protocolGet
                 optionGet(OPTION_COMPRESS_LEVEL_NETWORK),
                 optionGet($strOptionHost),
                 optionGet($strOptionUser),
+                optionGet($strOptionSshPort, false),
                 optionGet(OPTION_PROTOCOL_TIMEOUT)
             );
 
