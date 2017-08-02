@@ -258,6 +258,15 @@ my $oTestDef =
                         'Protocol/Base/Minion' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
+                {
+                    &TESTDEF_NAME => 'helper',
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Protocol/Helper' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
             ]
         },
         # Info tests
@@ -332,7 +341,11 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'info-unit',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Backup/Info' => TESTDEF_COVERAGE_PARTIAL,
+                    },
                 },
             ]
         },

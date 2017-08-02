@@ -183,6 +183,14 @@
 
                         <p>Modified the <cmd>info</cmd> command (both text and JSON output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added <br-option>--backup-ssh-port</br-option> and <br-option>--db-ssh-port</br-option> options to support non-default SSH ports.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>
@@ -242,6 +250,14 @@
 
                     <release-item>
                         <p>Use new Travis Trusty image.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Move and rename Stanza test files.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

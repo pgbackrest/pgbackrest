@@ -869,7 +869,7 @@ sub dbHistoryIdGet
         $bFileRequired,
     ) = logDebugParam
         (
-            __PACKAGE__ . '->dbHistoryIdGet',
+            __PACKAGE__ . '->dbHistoryIdGet', \@_,
             {name => 'bFileRequired', default => true},
         );
 
