@@ -251,6 +251,14 @@
                     <release-item>
                         <p>Use new Travis Trusty image.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Move and rename Stanza test files.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
