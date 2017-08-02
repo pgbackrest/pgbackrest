@@ -32,7 +32,8 @@ sub new
         $iCompressLevelNetwork,                     # Set compression level for network only compression
         $strHost,                                   # Host to connect to for remote (optional as this can also be used for local)
         $strUser,                                   # User to connect to for remote (must be set if strHost is set)
-        $iProtocolTimeout                           # Protocol timeout
+        $iSshPort,                                  # Specified if other than default port is needed for ssh
+        $iProtocolTimeout,                          # Protocol timeout
     ) =
         logDebugParam
         (
@@ -44,12 +45,16 @@ sub new
             {name => 'iCompressLevelNetwork'},
             {name => 'strHost'},
             {name => 'strUser'},
-            {name => 'iProtocolTimeout'}
+            {name => 'iSshPort', required => false},
+            {name => 'iProtocolTimeout'},
         );
+
+    my $strCommandSshPort = defined($iSshPort) ? '-p ' . $iSshPort . ' ' : '';
 
     # Create SSH command
     $strCommand =
-        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no ${strUser}\@${strHost} '${strCommand}'";
+        "${strCommandSSH} -o LogLevel=error -o Compression=no -o PasswordAuthentication=no $strCommandSshPort" .
+        "${strUser}\@${strHost} '${strCommand}'";
 
     # Init object and store variables
     my $self = $class->SUPER::new(
