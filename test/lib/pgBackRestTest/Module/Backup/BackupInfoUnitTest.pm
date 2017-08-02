@@ -185,10 +185,8 @@ sub run
         $oArchiveInfo->save();
 
         $strArchiveId = &PG_VERSION_93 . "-" . $iHistoryId;
-        print "ARCHIVEID=$strArchiveId\n";
         $self->testResult(sub {$oBackupInfo->backupArchiveDbHistoryId($strArchiveId,
-            $self->{oStorage}->pathGet(STORAGE_REPO_ARCHIVE))}, $iHistoryId, 'same db system-id but different version');
-
+            $self->{oStorage}->pathGet(STORAGE_REPO_ARCHIVE))}, "[undef]", 'same db system-id but different version');
     }
 }
 
