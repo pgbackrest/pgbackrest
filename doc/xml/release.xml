@@ -173,6 +173,14 @@
 
                         <p>The <path>archive_status</path> directory is now recreated on restore to support <postgres/> 8.3 which does not recreate it automatically like more recent versions do.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that could cause the empty archive directory for an old <postgres/> version to be left behind after a <cmd>stanza-upgrade</cmd>.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
