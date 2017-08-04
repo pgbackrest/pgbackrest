@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# StanzaUnitTest.pm - Unit tests for Stanza.pm
+# StanzaAllTest.pm - Unit tests for Stanza.pm
 ####################################################################################################################################
-package pgBackRestTest::Module::Stanza::StanzaUnitTest;
+package pgBackRestTest::Module::Stanza::StanzaAllTest;
 use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
