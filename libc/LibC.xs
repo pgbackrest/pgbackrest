@@ -13,7 +13,8 @@
  * 'unsigned short', 'void *', 'wchar_t', 'wchar_t *'
  */
 
-MODULE = pgBackRest::LibC    PACKAGE = pgBackRest::LibC
+MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC
+PROTOTYPES: DISABLE
 
 INCLUDE: const-xs.inc
 

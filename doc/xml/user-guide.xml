@@ -193,7 +193,16 @@
                 <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root">
+                <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root">
                 <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
         </host-add>
 
@@ -294,6 +303,23 @@
             </execute>
             <execute user="root">
                 <exe-cmd>chown postgres:postgres {[backrest-config-demo]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p><backrest/> requires a companion C library.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
+
+        <execute-list host="{[host-db-master]}">
+            <title>Build and Install C Library</title>
+
+            <execute user="root">
+                <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
+                    perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
+            </execute>
+            <execute user="root" err-suppress="y">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc test</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1432,6 +1458,32 @@
                 <execute user="root">
                     <exe-cmd>chown backrest:postgres /var/log/pgbackrest</exe-cmd>
                 </execute>
+
+                <execute user="root">
+                    <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
+                        perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
+                </execute>
+                <execute user="root" err-suppress="y">
+                    <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
+                </execute>
             </host-add>
 
             <backrest-config host="{[host-backup]}" show="n" owner="backrest:postgres" file="{[backrest-config-demo]}">
@@ -1814,6 +1866,32 @@
                 </execute>
                 <execute user="root">
                     <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
+                </execute>
+
+                <execute user="root">
+                    <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
+                        perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
+                </execute>
+                <execute user="root" err-suppress="y">
+                    <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
                 </execute>
 
                 <!-- Start the cluster -->

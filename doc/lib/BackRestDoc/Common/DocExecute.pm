@@ -571,9 +571,9 @@ sub backrestConfig
             # Remove the log-console-stderr option before pushing into the cache
             # ??? This is not very pretty and should be replaced with a general way to hide config options
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
-            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR});
-            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_TIMESTAMP});
-            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_VERIFY_SSL});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_TIMESTAMP});
+            delete($$oConfigClean{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_REPO_S3_VERIFY_SSL});
 
             if (keys(%{$$oConfigClean{&CONFIG_SECTION_GLOBAL}}) == 0)
             {
