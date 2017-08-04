@@ -1,7 +1,7 @@
 branches:
   only:
-    - ^master
-    - ^integration
+    - /^master/
+    - /^integration/
     - /-ci$/
 
 dist: trusty
