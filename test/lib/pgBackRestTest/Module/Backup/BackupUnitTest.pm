@@ -20,6 +20,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -116,10 +117,9 @@ sub run
     ################################################################################################################################
     if ($self->begin('backupLabel()'))
     {
-        my $oOption = {};
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->testPath() . '/repo');
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $lTime = time();

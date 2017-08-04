@@ -2,7 +2,7 @@
 # BackupInfoUnitTest.pm - Unit tests for BackupInfo
 ####################################################################################################################################
 package pgBackRestTest::Module::Backup::BackupInfoUnitTest;
-use parent 'pgBackRestTest::Env::HostEnvTest';
+use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -22,12 +22,12 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
@@ -48,10 +48,10 @@ sub initTest
     my $self = shift;
 
     # Load options
-    my $oOption = {};
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->testPath() . '/repo');
-    logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+    $self->configTestClear();
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
+    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
     # Create the local file object
     $self->{oStorage} = storageRepo();
@@ -71,8 +71,10 @@ sub run
     ################################################################################################################################
     if ($self->begin("BackupInfo::confirmDb()"))
     {
-        my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorage}->pathGet(STORAGE_REPO_BACKUP), false, false,
-            {bIgnoreMissing => true});
+        my $oBackupInfo = $self->testResult(
+            sub {new pgBackRest::Backup::Info($self->{oStorage}->pathGet(
+                STORAGE_REPO_BACKUP), false, false, {bIgnoreMissing => true})},
+            '[object]', 'info file create');
         $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, '937', '201306121', true);
 
         my $strBackupLabel = "20170403-175647F";

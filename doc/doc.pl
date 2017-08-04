@@ -21,6 +21,7 @@ use Storable;
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/test/lib';
 
 use BackRestDoc::Common::Doc;
@@ -34,7 +35,6 @@ use BackRestDoc::Markdown::DocMarkdown;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::Config;
 use pgBackRest::Storage::Local;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Version;

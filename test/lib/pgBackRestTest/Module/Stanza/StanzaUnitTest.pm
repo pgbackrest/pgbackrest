@@ -24,6 +24,7 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Stanza;
@@ -78,44 +79,41 @@ sub run
 {
     my $self = shift;
 
-    my $oOption = {};
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
 
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
-    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
+    $self->optionTestSetBool(CFGOPT_ONLINE, false);
 
-    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
-
-    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
 
     ################################################################################################################################
     if ($self->begin("Stanza::new"))
     {
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionBoolSetTest($oOption, OPTION_ONLINE, true);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
-        # my $oStanza = new pgBackRest::Stanza();
+        $self->optionTestSetBool(CFGOPT_ONLINE, true);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         $self->testException(sub {(new pgBackRest::Stanza())}, ERROR_DB_CONNECT,
             "could not connect to server: No such file or directory\n");
 
-        $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+        $self->optionTestSetBool(CFGOPT_ONLINE, false);
     }
 
     ################################################################################################################################
     if ($self->begin("Stanza::process()"))
     {
         #---------------------------------------------------------------------------------------------------------------------------
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_CHECK); logEnable();
+        $self->configTestLoad(CFGCMD_CHECK);
         my $oStanza = new pgBackRest::Stanza();
 
         $self->testException(sub {$oStanza->process()}, ERROR_ASSERT,
-            "stanza->process() called with invalid command: " . CMD_CHECK);
+            "stanza->process() called with invalid command: " . cfgCommandName(CFGCMD_CHECK));
 
         #---------------------------------------------------------------------------------------------------------------------------
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
         rmdir($self->{strArchivePath});
         rmdir($self->{strBackupPath});
         $self->testResult(sub {$oStanza->process()}, 0, 'parent paths recreated successfully');
@@ -124,7 +122,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaCreate()"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
         my $oStanza = new pgBackRest::Stanza();
 
         my $strBackupInfoFile = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
@@ -207,8 +205,8 @@ sub run
 
         # Force on, Repo-Sync off. Archive dir empty. No archive.info file. Backup directory not empty. No backup.info file.
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->optionTestSetBool(CFGOPT_FORCE, true);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         forceStorageRemove(storageRepo(), $strBackupInfoFile . "*");
         forceStorageRemove(storageRepo(), $strArchiveInfoFile . "*");
@@ -219,13 +217,13 @@ sub run
             WAL_VERSION_94_SYS_ID) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94, '942',
             '201409291', WAL_VERSION_94_SYS_ID)}, 1, '    new info files correct');
 
-        $self->optionReset($oOption, OPTION_FORCE);
+        $self->optionTestClear(CFGOPT_FORCE);
     }
 
     ################################################################################################################################
     if ($self->begin("Stanza::infoFileCreate"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
         my $oStanza = new pgBackRest::Stanza();
 
         my @stryFileList = ('anything');
@@ -249,12 +247,12 @@ sub run
             "\nHINT: use stanza-create --force to force the stanza data to be created.");
 
         # Set force option --------
-        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
+        $self->optionTestSetBool(CFGOPT_FORCE, true);
 
         # Force. Invalid archive.info exists.
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->optionTestSetBool(CFGOPT_FORCE, true);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         $oArchiveInfo->create(PG_VERSION_94, 12345, true);
         $oStanza = new pgBackRest::Stanza();
@@ -278,13 +276,13 @@ sub run
             {strLogExpect => "WARN: found empty directory " . $self->{strArchivePath} . "/9.3-0"});
 
         # Reset force option --------
-        $self->optionReset($oOption, OPTION_FORCE);
+        $self->optionTestClear(CFGOPT_FORCE);
     }
 
     ################################################################################################################################
     if ($self->begin("Stanza::infoObject()"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
         my $oStanza = new pgBackRest::Stanza();
 
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_MISSING,
@@ -294,7 +292,7 @@ sub run
 
         # Force valid but not set.
         #---------------------------------------------------------------------------------------------------------------------------
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
         $oStanza = new pgBackRest::Stanza();
 
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_MISSING,
@@ -305,8 +303,8 @@ sub run
 
         # Force.
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionBoolSetTest($oOption, OPTION_FORCE, true);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->optionTestSetBool(CFGOPT_FORCE, true);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         $self->testResult(sub {$oStanza->infoObject(STORAGE_REPO_ARCHIVE, $self->{strArchivePath})}, "[object]",
             'archive force successful');
@@ -314,11 +312,11 @@ sub run
             'backup force successful');
 
         # Reset force option --------
-        $self->optionReset($oOption, OPTION_FORCE);
+        $self->optionTestClear(CFGOPT_FORCE);
 
         # Cause an error to be thrown by changing the permissions of the archive file so it cannot be read
         #---------------------------------------------------------------------------------------------------------------------------
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
              WAL_VERSION_94_SYS_ID, '942', '201409291', true);
@@ -333,7 +331,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::stanzaUpgrade()"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
 
         my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
         $oArchiveInfo->create('9.3', '6999999999999999999', true);
@@ -341,7 +339,7 @@ sub run
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
         $oBackupInfo->create('9.3', '6999999999999999999', '937', '201306121', true);
 
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
         my $oStanza = new pgBackRest::Stanza();
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -354,7 +352,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("Stanza::upgradeCheck()"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE); logEnable();
+        $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
         my $oStanza = new pgBackRest::Stanza();
 
         # Create the archive file with current data

@@ -32,18 +32,20 @@ sub new
     (
         my $strOperation,
         $self->{strFileName},
+        my $strSgmlSearchPath,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strFileName', required => false},
+            {name => 'strSgmlSearchPath', required => false},
         );
 
     # Load the doc from a file if one has been defined
     if (defined($self->{strFileName}))
     {
         my $oParser = XML::Checker::Parser->new(ErrorContext => 2, Style => 'Tree');
-        $oParser->set_sgml_search_path(dirname(dirname($0)) . '/doc/xml/dtd');
+        $oParser->set_sgml_search_path(defined($strSgmlSearchPath) ? $strSgmlSearchPath : dirname(dirname($0)) . '/doc/xml/dtd');
 
         my $oTree;
 

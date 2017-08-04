@@ -37,7 +37,7 @@ Get version.
 
 Displays installed pgBackRest version.
 
-> [BACKREST-BIN] help --output=json --stanza=main info
+> [BACKREST-BIN] help --output=json --stanza=main --backup-host=backup info
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION] - 'info' command help
 
@@ -85,6 +85,7 @@ Repository Options:
   --backup-config           pgBackRest backup host configuration file
 [default=/etc/pgbackrest.conf]
   --backup-host             backup host when operating remotely via SSH
+[current=backup]
   --backup-user             backup host user when backup-host is set
 [default=backrest]
   --repo-path               repository path where WAL segments and backups

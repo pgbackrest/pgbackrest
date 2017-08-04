@@ -17,8 +17,9 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::Config;
 use pgBackRest::Version;
+
+use pgBackRestBuild::Config::Data;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostTest;
@@ -528,7 +529,7 @@ sub backrestConfig
 
                     # If this option is a hash and the value is already set then append to the array
                     if (defined($$oOption{$strKey}) &&
-                        $$oOption{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH &&
+                        $$oOption{$strKey}{&CFGBLDOPT_RULE_TYPE} eq CFGBLDOPT_TYPE_HASH &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();

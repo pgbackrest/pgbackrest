@@ -20,6 +20,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -85,7 +86,7 @@ sub new
 
     if (defined($self->{iRemoteIdx}))
     {
-        $self->{strDbPath} = optionGet(optionIndex(OPTION_DB_PATH, $self->{iRemoteIdx}));
+        $self->{strDbPath} = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $self->{iRemoteIdx}));
 
         if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
@@ -157,17 +158,17 @@ sub connect
             # Connect to the db
             my $strDbName = 'postgres';
             my $strDbUser = getpwuid($<);
-            my $strDbSocketPath = optionGet(optionIndex(OPTION_DB_SOCKET_PATH, $self->{iRemoteIdx}), false);
+            my $strDbSocketPath = cfgOption(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $self->{iRemoteIdx}), false);
 
             # Make sure the socket path is absolute
             if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
             {
-                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . OPTION_DB_SOCKET_PATH . "' option:" .
+                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . cfgOptionName(CFGOPT_DB_SOCKET_PATH) . "' option:" .
                                     " path must be absolute", ERROR_OPTION_INVALID_VALUE);
             }
 
             # Construct the URI
-            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . optionGet(optionIndex(OPTION_DB_PORT, $self->{iRemoteIdx})) .
+            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . cfgOption(cfgOptionIndex(CFGOPT_DB_PORT, $self->{iRemoteIdx})) .
                            (defined($strDbSocketPath) ? ";host=${strDbSocketPath}" : '');
 
             logDebugMisc
@@ -203,7 +204,7 @@ sub connect
                 {
                     $self->{hDb}->do(
                         "set application_name = '" . BACKREST_NAME . ' [' .
-                        (optionValid(OPTION_COMMAND) ? optionGet(OPTION_COMMAND) : commandGet()) . "]'")
+                        (cfgOptionValid(CFGOPT_COMMAND) ? cfgOption(CFGOPT_COMMAND) : cfgCommandName(cfgCommandGet())) . "]'")
                         or confess &log(ERROR, $self->{hDb}->errstr, ERROR_DB_QUERY);
                 }
             }
@@ -264,7 +265,7 @@ sub executeSql
             or confess &log(ERROR, $DBI::errstr. ":\n${strSql}", ERROR_DB_QUERY);
 
         # Wait for the query to return
-        my $oWait = waitInit(optionGet(OPTION_DB_TIMEOUT));
+        my $oWait = waitInit(cfgOption(CFGOPT_DB_TIMEOUT));
         my $bTimeout = true;
 
         do
@@ -599,7 +600,7 @@ sub backupStart
     # Only allow start-fast option for version >= 8.4
     if ($self->{strDbVersion} < PG_VERSION_84 && $bStartFast)
     {
-        &log(WARN, OPTION_START_FAST . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
+        &log(WARN, cfgOptionName(CFGOPT_START_FAST) . ' option is only available in PostgreSQL >= ' . PG_VERSION_84);
         $bStartFast = false;
     }
 
@@ -608,15 +609,15 @@ sub backupStart
         $self->executeSqlOne("select count(*) = 1 from pg_settings where name = 'data_checksums' and setting = 'on'");
 
     # If checksum page option is not explictly set then set it to whatever the database says
-    if (!optionTest(OPTION_CHECKSUM_PAGE))
+    if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
     {
-        optionSet(OPTION_CHECKSUM_PAGE, $bChecksumPage);
+        cfgOptionSet(CFGOPT_CHECKSUM_PAGE, $bChecksumPage);
     }
     # Else if enabled make sure they are in the database as well, else throw a warning
-    elsif (optionGet(OPTION_CHECKSUM_PAGE) && !$bChecksumPage)
+    elsif (cfgOption(CFGOPT_CHECKSUM_PAGE) && !$bChecksumPage)
     {
         &log(WARN, 'unable to enable page checksums since they are not enabled in the database');
-        optionSet(OPTION_CHECKSUM_PAGE, false);
+        cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
     }
 
     # Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
@@ -629,7 +630,7 @@ sub backupStart
 
     # If stop-auto is enabled check for a running backup.  This feature is not supported for PostgreSQL >= 9.6 since backups are
     # run in non-exclusive mode.
-    if (optionGet(OPTION_STOP_AUTO) && $self->{strDbVersion} < PG_VERSION_96)
+    if (cfgOption(CFGOPT_STOP_AUTO) && $self->{strDbVersion} < PG_VERSION_96)
     {
         # Running backups can only be detected in PostgreSQL >= 9.3
         if ($self->{strDbVersion} >= PG_VERSION_93)
@@ -646,7 +647,7 @@ sub backupStart
         # generated later on.
         else
         {
-            &log(WARN, OPTION_STOP_AUTO . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
+            &log(WARN, cfgOptionName(CFGOPT_STOP_AUTO) . ' option is only available in PostgreSQL >= ' . PG_VERSION_93);
         }
     }
 
@@ -749,7 +750,7 @@ sub configValidate
     }
 
     # If cluster is not a standby and archive checking is enabled, then perform various validations
-    if (!$self->isStandby() && optionValid(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
+    if (!$self->isStandby() && cfgOptionValid(CFGOPT_ARCHIVE_CHECK) && cfgOption(CFGOPT_ARCHIVE_CHECK))
     {
         my $strArchiveMode = $self->executeSqlOne('show archive_mode');
 
@@ -873,7 +874,7 @@ sub replayWait
     pgBackRest::Archive::Common->import();
 
     # Initialize working variables
-    my $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+    my $oWait = waitInit(cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
     my $bTimeout = true;
     my $strReplayedLSN = undef;
 
@@ -906,7 +907,7 @@ sub replayWait
                 lsnNormalize($strLastReplayedLSN) gt lsnNormalize($strReplayedLSN) &&
                 !waitMore($oWait))
             {
-                $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+                $oWait = waitInit(cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
             }
         }
 
@@ -971,12 +972,13 @@ sub dbObjectGet
 
     # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
     # this is simple and works.
-    if (optionTest(OPTION_ONLINE) && optionGet(OPTION_ONLINE) && optionTest(optionIndex(OPTION_DB_PATH, 2)))
+    if (cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, 2)))
     {
-        for (my $iRemoteIdx = 1; $iRemoteIdx <= 2; $iRemoteIdx++)
+        for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
             # Make sure a db is defined for this index
-            if (optionTest(optionIndex(OPTION_DB_PATH, $iRemoteIdx)) || optionTest(optionIndex(OPTION_DB_HOST, $iRemoteIdx)))
+            if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
+                cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
                 # Create the db object
                 my $oDb = new pgBackRest::Db($iRemoteIdx);
@@ -990,7 +992,7 @@ sub dbObjectGet
                     if ($oDb->isStandby())
                     {
                         # If standby backup is requested then use the first standby found
-                        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+                        if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
                         {
                             $oDbStandby = $oDb;
                             $iStandbyIdx = $iRemoteIdx;
@@ -1021,7 +1023,7 @@ sub dbObjectGet
         }
 
         # Make sure the standby database is defined when backup from standby requested
-        if (optionGet(OPTION_BACKUP_STANDBY) && !defined($oDbStandby))
+        if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
         {
             confess &log(ERROR, 'unable to find standby database - cannot proceed');
         }

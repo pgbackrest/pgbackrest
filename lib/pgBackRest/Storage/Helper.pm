@@ -13,6 +13,7 @@ use File::Basename qw(basename);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
 use pgBackRest::Version;
@@ -72,7 +73,7 @@ sub storageLocal
         $hStorage->{&STORAGE_LOCAL}{$strPath} = new pgBackRest::Storage::Local(
             $strPath, new pgBackRest::Storage::Posix::Driver(),
             {strTempExtension => STORAGE_TEMP_EXT,
-                lBufferMax => optionValid(OPTION_BUFFER_SIZE, false) ? optionGet(OPTION_BUFFER_SIZE, false) : undef});
+                lBufferMax => cfgOptionValid(CFGOPT_BUFFER_SIZE, false) ? cfgOption(CFGOPT_BUFFER_SIZE, false) : undef});
     }
 
     # Return from function and log return values if any
@@ -99,7 +100,7 @@ sub storageSpool
         logDebugParam
         (
             __PACKAGE__ . '::storageSpool', \@_,
-            {name => 'strStanza', default => optionGet(OPTION_STANZA), trace => true},
+            {name => 'strStanza', default => cfgOption(CFGOPT_STANZA), trace => true},
         );
 
     # Create storage if not defined
@@ -113,8 +114,8 @@ sub storageSpool
 
         # Create local storage
         $hStorage->{&STORAGE_SPOOL}{$strStanza} = new pgBackRest::Storage::Local(
-            optionGet(OPTION_SPOOL_PATH), new pgBackRest::Storage::Posix::Driver(),
-            {hRule => $hRule, strTempExtension => STORAGE_TEMP_EXT, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
+            cfgOption(CFGOPT_SPOOL_PATH), new pgBackRest::Storage::Posix::Driver(),
+            {hRule => $hRule, strTempExtension => STORAGE_TEMP_EXT, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
     }
 
     # Return from function and log return values if any

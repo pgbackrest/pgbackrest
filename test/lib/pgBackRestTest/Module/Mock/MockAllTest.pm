@@ -23,7 +23,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:checksum);
+use pgBackRest::LibC qw(:checksum :config :configRule);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
@@ -71,19 +71,19 @@ sub run
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3});
 
         # Reduce log level for many tests
-        my $strLogReduced = '--' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(DETAIL);
+        my $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
         if ($bS3)
         {
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
-            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
+            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
+            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
 
             # Reduce log level to detail because parallel tests do not create deterministic logs
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_LOG_LEVEL_CONSOLE => lc(WARN)}});
-            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_LOG_LEVEL_CONSOLE => lc(WARN)}});
-            $strLogReduced = '--' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(WARN);
+            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
+            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
+            $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(WARN);
         }
 
         # Get base time
@@ -279,7 +279,7 @@ sub run
         }
 
         # Create the archive info file
-        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Create a file link
         storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_config', {strMode => '0700', bCreateParent => true});
@@ -325,8 +325,9 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'create pg_stat link, pg_clog dir',
             {oExpectedManifest => \%oManifest,
-                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . ' --' . OPTION_BUFFER_SIZE .
-                    '=16384 --' . OPTION_CHECKSUM_PAGE . ' --' . OPTION_PROCESS_MAX . '=1',
+                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
+                ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
+                ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
                 strRepoType => $bS3 ? undef : REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         # Error on backup option to check logging
@@ -461,7 +462,7 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'resume',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
-                strOptionalParam => '--force --' . OPTION_CHECKSUM_PAGE});
+                strOptionalParam => '--force --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE)});
 
         # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
         storageDb->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
@@ -470,7 +471,7 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $oHostBackup->backup(
             $strType, 'invalid repo',
-            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . OPTION_REPO_PATH . '=/bogus_path' .
+            {oExpectedManifest => \%oManifest, strOptionalParam => '--' . cfgOptionName(CFGOPT_REPO_PATH) . '=/bogus_path' .
              "  ${strLogReduced}", iExpectedExitStatus => $bS3 ? ERROR_FILE_MISSING : ERROR_PATH_MISSING});
 
         # Restore - tests various mode, extra files/paths, missing files/paths
@@ -813,7 +814,7 @@ sub run
         $strBackup = $oHostBackup->backup(
             $strType, 'resume and add tablespace 2',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_RESUME,
-                strOptionalParam => '--' . OPTION_PROCESS_MAX . '=1'});
+                strOptionalParam => '--' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         # Resume Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
@@ -831,7 +832,7 @@ sub run
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - new diff',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
-                strOptionalParam => "$strLogReduced --" . OPTION_PROCESS_MAX . '=1'});
+                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         # Resume Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
@@ -846,7 +847,7 @@ sub run
         $strBackup = $oHostBackup->backup(
             $strType, 'cannot resume - disabled / no repo link',
             {oExpectedManifest => \%oManifest, strTest => TEST_BACKUP_NORESUME,
-                strOptionalParam => "--no-resume ${strLogReduced} --" . OPTION_PROCESS_MAX . '=1'});
+                strOptionalParam => "--no-resume ${strLogReduced} --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         # Restore
         #-----------------------------------------------------------------------------------------------------------------------
@@ -902,7 +903,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'add files and remove tablespace 2',
-            {oExpectedManifest => \%oManifest, strOptionalParam => "$strLogReduced --" . OPTION_PROCESS_MAX . '=1'});
+            {oExpectedManifest => \%oManifest, strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         # Incr Backup
         #-----------------------------------------------------------------------------------------------------------------------
@@ -926,16 +927,16 @@ sub run
 
             # Fail on attempt to create the stanza data since force was not used
             $oHostBackup->stanzaCreate('fail on backup directory missing backup.info',
-                {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
+                {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
             # Use force to create the stanza
             $oHostBackup->stanzaCreate('create required data for stanza',
-                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
         else
         {
             $oHostBackup->stanzaCreate('create required data for stanza',
-                {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
 
         # Perform the backup
@@ -949,7 +950,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'updates since last full', {oExpectedManifest => \%oManifest,
-                strOptionalParam => "$strLogReduced --" . OPTION_PROCESS_MAX . '=1'});
+                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         # Incr Backup
         #
@@ -961,7 +962,7 @@ sub run
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         # Enable compression to ensure a warning is raised
-        $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_COMPRESS => 'y'}});
+        $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
 
         my $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files - but won\'t affect manifest',
@@ -991,13 +992,13 @@ sub run
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
         {
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_HARDLINK => 'y'}});
+            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_HARDLINK) => 'y'}});
         }
 
         $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files during backup',
             {oExpectedManifest => \%oManifest, strTest => TEST_MANIFEST_BUILD, fTestDelay => 1,
-                strOptionalParam => "$strLogReduced --" . OPTION_PROCESS_MAX . '=1'});
+                strOptionalParam => "$strLogReduced --" . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1'});
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGTBLSPC . '/2', '32768/tablespace2c.txt', 'TBLSPCBIGGER',
@@ -1057,7 +1058,7 @@ sub run
 
         $strBackup = $oHostBackup->backup(
             $strType, 'add file', {oExpectedManifest => \%oManifest,
-                strOptionalParam => "${strLogReduced} --" . OPTION_CHECKSUM_PAGE});
+                strOptionalParam => "${strLogReduced} --" . cfgOptionName(CFGOPT_CHECKSUM_PAGE)});
 
         # Selective Restore
         #-----------------------------------------------------------------------------------------------------------------------
@@ -1075,8 +1076,8 @@ sub run
                          {&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            OPTION_DEFAULT_RESTORE_SET, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'selective restore 16384', undef, "${strLogReduced} --db-include=16384");
+            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            undef, undef, undef, 'selective restore 16384', undef, "${strLogReduced} --db-include=16384");
 
         # Restore checksum values for next test
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
@@ -1092,20 +1093,19 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            OPTION_DEFAULT_RESTORE_SET, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'selective restore 32768', undef, "${strLogReduced} --db-include=32768");
+            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            undef, undef, undef, 'selective restore 32768', undef, "${strLogReduced} --db-include=32768");
 
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
 
         $oHostDbMaster->restore(
-            OPTION_DEFAULT_RESTORE_SET, \%oManifest, \%oRemapHash,
-            $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'error on invalid id', ERROR_DB_MISSING, '--log-level-console=warn --db-include=7777');
+            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            undef, undef, undef, 'error on invalid id', ERROR_DB_MISSING, '--log-level-console=warn --db-include=7777');
 
         $oHostDbMaster->restore(
-            OPTION_DEFAULT_RESTORE_SET, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'error on system id', ERROR_DB_INVALID, '--log-level-console=warn --db-include=1');
+            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            undef, undef, undef, 'error on system id', ERROR_DB_INVALID, '--log-level-console=warn --db-include=1');
 
         # Compact Restore
         #-----------------------------------------------------------------------------------------------------------------------
@@ -1120,15 +1120,15 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            OPTION_DEFAULT_RESTORE_SET, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'no tablespace remap - error when tablespace dir does not exist', ERROR_PATH_MISSING,
+            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            undef, undef, undef, 'no tablespace remap - error when tablespace dir does not exist', ERROR_PATH_MISSING,
             "${strLogReduced} --tablespace-map-all=../../tablespace", false);
 
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
 
         $oHostDbMaster->restore(
-            OPTION_DEFAULT_RESTORE_SET, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'no tablespace remap', undef, "--tablespace-map-all=../../tablespace ${strLogReduced}", false);
+            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef,
+            undef, undef, 'no tablespace remap', undef, "--tablespace-map-all=../../tablespace ${strLogReduced}", false);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
         $oManifest{&MANIFEST_SECTION_TARGET_LINK}{'pg_data/pg_tblspc/2'}{&MANIFEST_SUBKEY_DESTINATION} = '../../tablespace/ts2';
@@ -1189,7 +1189,7 @@ sub run
         {
             $strBackup = $oHostBackup->backup(
                 $strType, 'option backup-standby reset - backup performed from master', {oExpectedManifest => \%oManifest,
-                    strOptionalParam => '--log-level-console=info --' . OPTION_BACKUP_STANDBY});
+                    strOptionalParam => '--log-level-console=info --' . cfgOptionName(CFGOPT_BACKUP_STANDBY)});
         }
     }
     }

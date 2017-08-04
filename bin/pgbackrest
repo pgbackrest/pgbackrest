@@ -23,6 +23,7 @@ use pgBackRest::Common::Exit;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 
 ####################################################################################################################################
@@ -36,27 +37,27 @@ local $EVAL_ERROR = undef; eval
     my $bConfigResult = configLoad();
 
     # Display help and version
-    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
+    if (cfgCommandTest(CFGCMD_HELP) || cfgCommandTest(CFGCMD_VERSION))
     {
         # Load module dynamically
         require pgBackRest::Config::ConfigHelp;
         pgBackRest::Config::ConfigHelp->import();
 
         # Generate help and exit
-        configHelp($ARGV[1], $ARGV[2], commandTest(CMD_VERSION), $bConfigResult);
+        configHelp($ARGV[1], $ARGV[2], cfgCommandTest(CFGCMD_VERSION), $bConfigResult);
         exitSafe(0);
     }
 
     # Set test options
-    if (optionTest(OPTION_TEST) && optionGet(OPTION_TEST))
+    if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))
     {
-        testSet(optionGet(OPTION_TEST), optionGet(OPTION_TEST_DELAY), optionGet(OPTION_TEST_POINT, false));
+        testSet(cfgOption(CFGOPT_TEST), cfgOption(CFGOPT_TEST_DELAY), cfgOption(CFGOPT_TEST_POINT, false));
     }
 
     ################################################################################################################################
     # Process archive-push command
     ################################################################################################################################
-    if (commandTest(CMD_ARCHIVE_PUSH))
+    if (cfgCommandTest(CFGCMD_ARCHIVE_PUSH))
     {
         # Load module dynamically
         require pgBackRest::Archive::Push::Push;
@@ -68,7 +69,7 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # Process archive-get command
     ################################################################################################################################
-    if (commandTest(CMD_ARCHIVE_GET))
+    if (cfgCommandTest(CFGCMD_ARCHIVE_GET))
     {
         # Load module dynamically
         require pgBackRest::Archive::Get::Get;
@@ -80,15 +81,15 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # Process remote commands
     ################################################################################################################################
-    if (commandTest(CMD_REMOTE))
+    if (cfgCommandTest(CFGCMD_REMOTE))
     {
         # Set log levels
-        optionSet(OPTION_LOG_LEVEL_STDERR, PROTOCOL, true);
-        logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
+        cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
+        logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
 
-        if (optionTest(OPTION_TYPE, BACKUP) && !optionTest(OPTION_REPO_TYPE, REPO_TYPE_S3) && !-e optionGet(OPTION_REPO_PATH))
+        if (cfgOptionTest(CFGOPT_TYPE, BACKUP) && !cfgOptionTest(CFGOPT_REPO_TYPE, REPO_TYPE_S3) && !-e cfgOption(CFGOPT_REPO_PATH))
         {
-            confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
+            confess &log(ERROR, 'repo-path \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }
 
         # Load module dynamically
@@ -96,14 +97,16 @@ local $EVAL_ERROR = undef; eval
         pgBackRest::Protocol::Remote::Minion->import();
 
         # Create the remote object
-        my $oRemote = new pgBackRest::Protocol::Remote::Minion(optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_PROTOCOL_TIMEOUT));
+        my $oRemote = new pgBackRest::Protocol::Remote::Minion(cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
 
         # Acquire a remote lock (except for commands that are read-only or local processes)
-        if (!(optionTest(OPTION_COMMAND, CMD_ARCHIVE_GET) || optionTest(OPTION_COMMAND, CMD_INFO) ||
-              optionTest(OPTION_COMMAND, CMD_RESTORE) || optionTest(OPTION_COMMAND, CMD_CHECK) ||
-              optionTest(OPTION_COMMAND, CMD_LOCAL)))
+        if (!(cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_ARCHIVE_GET)) ||
+              cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_INFO)) ||
+              cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_RESTORE)) ||
+              cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_CHECK)) ||
+              cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_LOCAL))))
         {
-            lockAcquire(optionGet(OPTION_COMMAND), undef, true);
+            lockAcquire(cfgOption(CFGOPT_COMMAND), undef, true);
         }
 
         # Process remote requests
@@ -113,11 +116,11 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # Process local commands
     ################################################################################################################################
-    if (commandTest(CMD_LOCAL))
+    if (cfgCommandTest(CFGCMD_LOCAL))
     {
         # Set log levels
-        optionSet(OPTION_LOG_LEVEL_STDERR, PROTOCOL, true);
-        logLevelSet(OFF, OFF, optionGet(OPTION_LOG_LEVEL_STDERR));
+        cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
+        logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
 
         # Load module dynamically
         require pgBackRest::Protocol::Local::Minion;
@@ -133,7 +136,7 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # Process check command
     ################################################################################################################################
-    if (commandTest(CMD_CHECK))
+    if (cfgCommandTest(CFGCMD_CHECK))
     {
         # Load module dynamically
         require pgBackRest::Check::Check;
@@ -145,12 +148,12 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # Process start/stop commands
     ################################################################################################################################
-    if (commandTest(CMD_START))
+    if (cfgCommandTest(CFGCMD_START))
     {
         lockStart();
         exitSafe(0);
     }
-    elsif (commandTest(CMD_STOP))
+    elsif (cfgCommandTest(CFGCMD_STOP))
     {
         lockStop();
         exitSafe(0);
@@ -160,15 +163,15 @@ local $EVAL_ERROR = undef; eval
     require pgBackRest::Protocol::Storage::Helper;
     pgBackRest::Protocol::Storage::Helper->import();
 
-    if (isRepoLocal() && !optionTest(OPTION_REPO_TYPE, REPO_TYPE_S3) && !storageRepo()->pathExists(''))
+    if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, REPO_TYPE_S3) && !storageRepo()->pathExists(''))
     {
-        confess &log(ERROR, 'repo-path \'' . optionGet(OPTION_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
+        confess &log(ERROR, 'repo-path \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }
 
     ################################################################################################################################
     # Process info command
     ################################################################################################################################
-    if (commandTest(CMD_INFO))
+    if (cfgCommandTest(CFGCMD_INFO))
     {
         # Load module dynamically
         require pgBackRest::Info;
@@ -180,21 +183,25 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # Acquire the command lock
     ################################################################################################################################
-    lockAcquire(commandGet());
+    lockAcquire(cfgCommandName(cfgCommandGet()));
 
     ################################################################################################################################
     # Open the log file
     ################################################################################################################################
-    logFileSet(optionGet(OPTION_LOG_PATH) . '/' . optionGet(OPTION_STANZA) . '-' . lc(commandGet()));
+    require pgBackRest::Storage::Helper;
+    pgBackRest::Storage::Helper->import();
+
+    logFileSet(
+        storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-' . lc(cfgCommandName(cfgCommandGet())));
 
     ################################################################################################################################
     # Process stanza-create command
     ################################################################################################################################
-    if (commandTest(CMD_STANZA_CREATE) || commandTest(CMD_STANZA_UPGRADE))
+    if (cfgCommandTest(CFGCMD_STANZA_CREATE) || cfgCommandTest(CFGCMD_STANZA_UPGRADE))
     {
         if (!isRepoLocal())
         {
-            confess &log(ERROR, commandGet() . ' command must be run on the backup host', ERROR_HOST_INVALID);
+            confess &log(ERROR, cfgCommandName(cfgCommandGet()) . ' command must be run on the backup host', ERROR_HOST_INVALID);
         }
 
         # Load module dynamically
@@ -207,7 +214,7 @@ local $EVAL_ERROR = undef; eval
     ################################################################################################################################
     # RESTORE
     ################################################################################################################################
-    if (commandTest(CMD_RESTORE))
+    if (cfgCommandTest(CFGCMD_RESTORE))
     {
         if (!isDbLocal())
         {
@@ -236,7 +243,7 @@ local $EVAL_ERROR = undef; eval
         ############################################################################################################################
         # BACKUP
         ############################################################################################################################
-        if (commandTest(CMD_BACKUP))
+        if (cfgCommandTest(CFGCMD_BACKUP))
         {
             # Load module dynamically
             require pgBackRest::Backup::Backup;
@@ -244,13 +251,13 @@ local $EVAL_ERROR = undef; eval
 
             new pgBackRest::Backup::Backup()->process();
 
-            commandSet(CMD_EXPIRE);
+            cfgCommandSet(CFGCMD_EXPIRE);
         }
 
         ############################################################################################################################
         # EXPIRE
         ############################################################################################################################
-        if (commandTest(CMD_EXPIRE))
+        if (cfgCommandTest(CFGCMD_EXPIRE))
         {
             # Load module dynamically
             require pgBackRest::Expire;

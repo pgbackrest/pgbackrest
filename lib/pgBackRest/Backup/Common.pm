@@ -15,6 +15,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Manifest;
@@ -22,7 +23,7 @@ use pgBackRest::Manifest;
 ####################################################################################################################################
 # Latest backup link constant
 ####################################################################################################################################
-use constant LINK_LATEST                                            => OPTION_DEFAULT_RESTORE_SET;
+use constant LINK_LATEST                                            => 'latest';
     push @EXPORT, qw(LINK_LATEST);
 
 ####################################################################################################################################

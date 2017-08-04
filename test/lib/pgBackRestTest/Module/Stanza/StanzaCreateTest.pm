@@ -23,6 +23,7 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
@@ -53,7 +54,7 @@ sub run
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
-            strOptionalParam => '--no-' . OPTION_ONLINE});
+            strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Create the test path for pg_control
         storageDb()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
@@ -63,10 +64,11 @@ sub run
             $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
-        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Rerun stanza-create and confirm success without the need to use force on empty directories
-        $oHostBackup->stanzaCreate('successful rerun of stanza-create', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate(
+            'successful rerun of stanza-create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -83,7 +85,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # S3 doesn't support filesystem-style permissions so skip these tests
         if (!$bS3)
@@ -95,8 +97,10 @@ sub run
                 '220');
 
             # Force creation of the info file but fail on gunzip
-            $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
-                {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            $oHostBackup->stanzaCreate(
+                'gunzip fail on forced stanza-create',
+                {iExpectedExitStatus => ERROR_FILE_OPEN,
+                    strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
             # Change permissions back
             forceStorageMode(
@@ -107,11 +111,11 @@ sub run
 
         # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Rerun without the force to ensure the format is still valid - this will hash check the info files and indicate the
         # stanza already exists
-        $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Munge and save the archive info file
         $oHostBackup->infoMunge(
@@ -119,10 +123,10 @@ sub run
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
         $oHostBackup->stanzaCreate('hash check fails requiring force',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         $oHostBackup->stanzaCreate('use force to overwrite the invalid file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Cleanup the global hash but don't save the file (permission issues may prevent it anyway)
         $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), false);
@@ -134,7 +138,7 @@ sub run
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaCreate('fail on database mismatch without force option',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Restore pg_control
         storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
@@ -156,7 +160,7 @@ sub run
             STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
 
         $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Remove the uncompressed WAL archive file and archive.info
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
@@ -164,7 +168,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('force with missing WAL archive file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Remove the WAL archive directory
         forceStorageRemove(
@@ -174,7 +178,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('force with missing WAL archive directory',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
     }
     }
 }

@@ -20,6 +20,7 @@ use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
@@ -56,7 +57,7 @@ sub process
     # Make sure the command happens on the db side
     if (!isDbLocal())
     {
-        confess &log(ERROR, CMD_ARCHIVE_PUSH . ' operation must run on db host', ERROR_HOST_INVALID);
+        confess &log(ERROR, cfgCommandName(CFGCMD_ARCHIVE_PUSH) . ' operation must run on db host', ERROR_HOST_INVALID);
     }
 
     if (!defined($strWalPathFile))
@@ -68,21 +69,21 @@ sub process
     lockStopTest();
 
     # Extract WAL path and file
-    my $strWalPath = dirname(walPath($strWalPathFile, optionGet(OPTION_DB_PATH, false), commandGet()));
+    my $strWalPath = dirname(walPath($strWalPathFile, cfgOption(CFGOPT_DB_PATH, false), cfgCommandName(cfgCommandGet())));
     my $strWalFile = basename($strWalPathFile);
 
     # Is the async client or server?
     my $bClient = true;
 
     # Start the async process and wait for WAL to complete
-    if (optionGet(OPTION_ARCHIVE_ASYNC))
+    if (cfgOption(CFGOPT_ARCHIVE_ASYNC))
     {
         # Get the spool path
         $self->{strSpoolPath} = storageSpool()->pathGet(STORAGE_SPOOL_ARCHIVE_OUT);
 
         # Loop to check for status files and launch async process
         my $bPushed = false;
-        my $oWait = waitInit(optionGet(OPTION_ARCHIVE_TIMEOUT));
+        my $oWait = waitInit(cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
         $self->{bConfessOnError} = false;
 
         do
@@ -106,7 +107,7 @@ sub process
         if (!$bPushed && $bClient)
         {
             confess &log(ERROR,
-                "unable to push WAL ${strWalFile} asynchronously after " . optionGet(OPTION_ARCHIVE_TIMEOUT) . " second(s)",
+                "unable to push WAL ${strWalFile} asynchronously after " . cfgOption(CFGOPT_ARCHIVE_TIMEOUT) . " second(s)",
                 ERROR_ARCHIVE_TIMEOUT);
         }
     }
@@ -120,22 +121,22 @@ sub process
         # Drop file if queue max has been exceeded
         $self->{strWalPath} = $strWalPath;
 
-        if (optionTest(OPTION_ARCHIVE_QUEUE_MAX) && @{$self->dropList($self->readyList())} > 0)
+        if (cfgOptionTest(CFGOPT_ARCHIVE_QUEUE_MAX) && @{$self->dropList($self->readyList())} > 0)
         {
             &log(WARN,
-                "dropped WAL file ${strWalFile} because archive queue exceeded " . optionGet(OPTION_ARCHIVE_QUEUE_MAX) . ' bytes');
+                "dropped WAL file ${strWalFile} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) . ' bytes');
         }
         # Else push the WAL file
         else
         {
-            archivePushFile($strWalPath, $strWalFile, optionGet(OPTION_COMPRESS));
+            archivePushFile($strWalPath, $strWalFile, cfgOption(CFGOPT_COMPRESS));
         }
     }
 
     # Only print the message if this is the async client or the WAL file was pushed synchronously
     if ($bClient)
     {
-        &log(INFO, "pushed WAL segment ${strWalFile}" . (optionGet(OPTION_ARCHIVE_ASYNC) ? ' asynchronously' : ''));
+        &log(INFO, "pushed WAL segment ${strWalFile}" . (cfgOption(CFGOPT_ARCHIVE_ASYNC) ? ' asynchronously' : ''));
     }
 
     # Return from function and log return values if any
@@ -337,7 +338,7 @@ sub dropList
     my $stryDropFile = [];
 
     # Determine if there are any to be dropped
-    if (@{$stryReadyFile} > int(optionGet(OPTION_ARCHIVE_QUEUE_MAX) / PG_WAL_SIZE))
+    if (@{$stryReadyFile} > int(cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) / PG_WAL_SIZE))
     {
         $stryDropFile = $stryReadyFile;
     }

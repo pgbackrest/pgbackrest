@@ -23,6 +23,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Expire;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 
@@ -38,31 +39,30 @@ use pgBackRestTest::Env::HostEnvTest;
 sub initStanzaOption
 {
     my $self = shift;
-    my $oOption = shift;
     my $strDbBasePath = shift;
     my $strRepoPath = shift;
     my $oHostS3 = shift;
 
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $strDbBasePath);
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $strRepoPath);
-    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $strDbBasePath);
+    $self->optionTestSet(CFGOPT_REPO_PATH, $strRepoPath);
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
 
-    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
+    $self->optionTestSetBool(CFGOPT_ONLINE, false);
 
-    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
 
     if (defined($oHostS3))
     {
-        $self->optionSetTest($oOption, OPTION_REPO_TYPE, REPO_TYPE_S3);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_BUCKET, HOST_S3_BUCKET);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_REGION, HOST_S3_REGION);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionBoolSetTest($oOption, OPTION_REPO_S3_VERIFY_SSL, false);
+        $self->optionTestSet(CFGOPT_REPO_TYPE, REPO_TYPE_S3);
+        $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
+        $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
+        $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);
+        $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
+        $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
+        $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
+        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_SSL, false);
     }
 }
 
@@ -76,7 +76,6 @@ sub run
     use constant SECONDS_PER_DAY => 86400;
     my $lBaseTime = time() - (SECONDS_PER_DAY * 56);
     my $strDescription;
-    my $oOption = {};
 
     my $bS3 = false;
 
@@ -85,8 +84,8 @@ sub run
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(true, $self->expect(), {bS3 => $bS3});
 
-        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
-        $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+        $self->initStanzaOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         # Create the test object
         my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
@@ -182,8 +181,8 @@ sub run
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(true, $self->expect(), {bS3 => $bS3});
 
-        $self->initStanzaOption($oOption, $oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
-        $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+        $self->initStanzaOption($oHostDbMaster->dbBasePath(), $oHostBackup->{strRepoPath}, $oHostS3);
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         # Create the test object
         my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
@@ -229,13 +228,13 @@ sub run
         $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
-        $self->optionReset($oOption, OPTION_DB_PATH);
-        $self->optionReset($oOption, OPTION_ONLINE);
-        $self->optionSetTest($oOption, OPTION_RETENTION_FULL, 1);
-        $self->optionSetTest($oOption, OPTION_RETENTION_DIFF, 1);
-        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
-        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE, 1);
-        $self->configLoadExpect(dclone($oOption), CMD_EXPIRE);
+        $self->optionTestClear(CFGOPT_DB_PATH);
+        $self->optionTestClear(CFGOPT_ONLINE);
+        $self->optionTestSet(CFGOPT_RETENTION_FULL, 1);
+        $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE, 1);
+        $self->configTestLoad(CFGCMD_EXPIRE);
 
         $strDescription = 'Expiration cannot occur due to info file db mismatch';
         my $oExpire = new pgBackRest::Expire();

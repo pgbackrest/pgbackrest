@@ -21,6 +21,7 @@ use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -104,10 +105,10 @@ sub process
 
     my $oStorageRepo = storageRepo();
     my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
-    my $iFullRetention = optionGet(OPTION_RETENTION_FULL, false);
-    my $iDifferentialRetention = optionGet(OPTION_RETENTION_DIFF, false);
-    my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
-    my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
+    my $iFullRetention = cfgOption(CFGOPT_RETENTION_FULL, false);
+    my $iDifferentialRetention = cfgOption(CFGOPT_RETENTION_DIFF, false);
+    my $strArchiveRetentionType = cfgOption(CFGOPT_RETENTION_ARCHIVE_TYPE, false);
+    my $iArchiveRetention = cfgOption(CFGOPT_RETENTION_ARCHIVE, false);
 
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
@@ -212,7 +213,7 @@ sub process
     # If archive retention is still undefined, then ignore archiving
     if  (!defined($iArchiveRetention))
     {
-         &log(INFO, "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set - archive logs will not be expired");
+         &log(INFO, "option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE) . "' is not set - archive logs will not be expired");
     }
     else
     {
