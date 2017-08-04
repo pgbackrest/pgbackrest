@@ -526,14 +526,11 @@ use constant CFGBLDOPTDEF_DEFAULT_DB_USER                                 => 'po
 # settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
 # section meaning the rules defined there apply to all commands listed for the option.
 #
-# CFGBLDOPT_RULE_COMMAND: List of commands the option can or cannot be specified.
-#   true - the option is valid and can be specified
-#         &CFGBLDOPT_RULE_COMMAND =>
-#         {
-# 	        &CFGBLDCMD_CHECK => true,
-#   false - used in conjuntion with CFGBLDOPT_RULE_DEFAULT so the user cannot override this option. If the option is provided for
-#           the command by the user, it will be ignored and the default will be used.
-#   NOTE: If the option (A) has a dependency on another option (B) then the CFGBLDCMD_ must also be specified in the other option
+# CFGBLDOPT_RULE_COMMAND:
+#     List of commands the option can be used with this option.  An empty hash signifies that the command does no deviate from the
+#     option defaults.  Otherwise, overrides can be specified.
+#
+# NOTE: If the option (A) has a dependency on another option (B) then the CFGBLDCMD_ must also be specified in the other option
 #         (B), else it will still error on the option (A).
 #
 # CFGBLDOPT_RULE_REQUIRED:
@@ -1124,6 +1121,7 @@ my %hOptionRule =
             &CFGBLDCMD_ARCHIVE_PUSH => {},
             &CFGBLDCMD_BACKUP => {},
             &CFGBLDCMD_CHECK => {},
+            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_INFO => {},
             &CFGBLDCMD_LOCAL => {},
             &CFGBLDCMD_RESTORE => {},
@@ -1131,7 +1129,6 @@ my %hOptionRule =
             &CFGBLDCMD_STANZA_UPGRADE => {},
             &CFGBLDCMD_START => {},
             &CFGBLDCMD_STOP => {},
-            &CFGBLDCMD_EXPIRE => {},
         },
     },
 
