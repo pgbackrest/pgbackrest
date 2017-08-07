@@ -136,7 +136,7 @@ sub configTestLoadExpect
     my $strErrorParam2 = shift;
     my $strErrorParam3 = shift;
 
-    my $oOptionRuleExpected = optionRuleGet();
+    my $oOptionRuleExpected = cfgbldOptionRuleGet();
 
     @ARGV = $self->commandTestWrite($strCommand, $self->{&CONFIGENVTEST});
     $self->configTestClear();

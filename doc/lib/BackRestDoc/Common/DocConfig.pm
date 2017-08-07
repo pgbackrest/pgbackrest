@@ -41,11 +41,11 @@ use constant CONFIG_HELP_SOURCE_COMMAND                             => CONFIG_HE
 ####################################################################################################################################
 # Config Section Types
 ####################################################################################################################################
-use constant CONFIG_SECTION_COMMAND                                 => 'command';
-use constant CONFIG_SECTION_GENERAL                                 => 'general';
-use constant CONFIG_SECTION_LOG                                     => 'log';
-use constant CONFIG_SECTION_EXPIRE                                  => 'expire';
-use constant CONFIG_SECTION_REPOSITORY                              => 'repository';
+use constant CFGDEF_COMMAND                                 => 'command';
+use constant CFGDEF_GENERAL                                 => 'general';
+use constant CFGDEF_LOG                                     => 'log';
+use constant CFGDEF_EXPIRE                                  => 'expire';
+use constant CFGDEF_REPOSITORY                              => 'repository';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -97,7 +97,7 @@ sub process
     my $oDoc = $self->{oDoc};
     my $oConfigHash = {};
 
-    foreach my $strCommand (sort(keys(%{commandHashGet()})))
+    foreach my $strCommand (sort(keys(%{cfgbldCommandGet()})))
     {
         if ($strCommand eq CFGBLDCMD_REMOTE || $strCommand eq CFGBLDCMD_LOCAL)
         {
@@ -114,7 +114,7 @@ sub process
     }
 
     # Iterate through all options
-    my $oOptionRule = optionRuleHelpGet();
+    my $oOptionRule = cfgbldOptionRuleHelpGet();
 
     foreach my $strOption (sort(keys(%{$oOptionRule})))
     {
@@ -124,8 +124,8 @@ sub process
         }
 
         # Iterate through all commands
-        my @stryCommandList = sort(keys(%{defined($$oOptionRule{$strOption}{&CFGBLDOPT_RULE_COMMAND}) ?
-                              $$oOptionRule{$strOption}{&CFGBLDOPT_RULE_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
+        my @stryCommandList = sort(keys(%{defined($$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND}) ?
+                              $$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
 
         foreach my $strCommand (@stryCommandList)
         {
@@ -134,8 +134,8 @@ sub process
                 next;
             }
 
-            if (ref(\$$oOptionRule{$strOption}{&CFGBLDOPT_RULE_COMMAND}{$strCommand}) eq 'SCALAR' &&
-                $$oOptionRule{$strOption}{&CFGBLDOPT_RULE_COMMAND}{$strCommand} == false)
+            if (ref(\$$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand}) eq 'SCALAR' &&
+                $$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand} == false)
             {
                 next;
             }
@@ -160,7 +160,7 @@ sub process
             if (!defined($oOptionDoc))
             {
                 # Next see if it's documented in the section
-                if (defined($$oOptionRule{$strOption}{&CFGBLDOPT_RULE_SECTION}))
+                if (defined($$oOptionRule{$strOption}{&CFGBLDDEF_RULE_SECTION}))
                 {
                     # &log(INFO, "        trying section ${strSection}");
                     foreach my $oSectionNode ($oDoc->nodeGet('config')->nodeGet('config-section-list')->nodeList())
@@ -200,10 +200,10 @@ sub process
             # if the option is documented in the command then it should be accessible from the command line only.
             if (!defined($strSection))
             {
-                if (defined($$oOptionRule{$strOption}{&CFGBLDOPT_RULE_SECTION}))
+                if (defined($$oOptionRule{$strOption}{&CFGBLDDEF_RULE_SECTION}))
                 {
                     &log(ERROR,
-                        "option ${strOption} defined in command ${strCommand} must not have " . CFGBLDOPT_RULE_SECTION .
+                        "option ${strOption} defined in command ${strCommand} must not have " . CFGBLDDEF_RULE_SECTION .
                         " defined");
                 }
             }
@@ -554,7 +554,7 @@ sub manGet
     }
 
     # Build command and config hashes
-    my $hOptionRule = optionRuleHelpGet();
+    my $hOptionRule = cfgbldOptionRuleHelpGet();
     my $hConfig = $self->{oConfigHash};
     my $hCommandList = {};
     my $iCommandMaxLen = 0;
@@ -588,7 +588,7 @@ sub manGet
     {
         my $hOption = $$hConfig{&CONFIG_HELP_OPTION}{$strOption};
         $iOptionMaxLen = length($strOption) > $iOptionMaxLen ? length($strOption) : $iOptionMaxLen;
-        my $strSection = defined($$hOption{&CONFIG_HELP_SECTION}) ? $$hOption{&CONFIG_HELP_SECTION} : CONFIG_SECTION_GENERAL;
+        my $strSection = defined($$hOption{&CONFIG_HELP_SECTION}) ? $$hOption{&CONFIG_HELP_SECTION} : CFGDEF_GENERAL;
 
         $$hOptionList{$strSection}{$strOption}{&CONFIG_HELP_SUMMARY} = $$hOption{&CONFIG_HELP_SUMMARY};
     }
@@ -623,8 +623,8 @@ sub manGet
             my $hOption = $$hOptionList{$strSection}{$strOption};
 
             # Contruct the default
-            my $strCommand = defined(${commandHashGet()}{$strSection}) ? $strSection : undef;
-            my $strDefault = optionDefault($strOption, $strCommand);
+            my $strCommand = defined(${cfgbldCommandGet()}{$strSection}) ? $strSection : undef;
+            my $strDefault = cfgbldOptionDefault($strOption, $strCommand);
 
             if (defined($strDefault))
             {
@@ -632,7 +632,7 @@ sub manGet
                 {
                     $strDefault = BACKREST_EXE;
                 }
-                elsif ($$hOptionRule{$strOption}{&CFGBLDOPT_RULE_TYPE} eq &CFGBLDOPT_TYPE_BOOLEAN)
+                elsif ($$hOptionRule{$strOption}{&CFGBLDDEF_RULE_TYPE} eq &CFGBLDDEF_TYPE_BOOLEAN)
                 {
                     $strDefault = $strDefault ? 'y' : 'n';
                 }
@@ -658,11 +658,11 @@ sub manGet
     $strManPage .= "\n\n" .
         "FILES\n" .
         "\n" .
-        '  ' . CFGBLDOPTDEF_DEFAULT_CONFIG . "\n" .
-        '  ' . CFGBLDOPTDEF_DEFAULT_REPO_PATH . "\n" .
-        '  ' . CFGBLDOPTDEF_DEFAULT_LOG_PATH . "\n" .
-        '  ' . CFGBLDOPTDEF_DEFAULT_SPOOL_PATH . "\n" .
-        '  ' . CFGBLDOPTDEF_DEFAULT_LOCK_PATH . "\n" .
+        '  ' . cfgbldOptionDefault(CFGBLDOPT_CONFIG) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGBLDOPT_REPO_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGBLDOPT_LOG_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGBLDOPT_SPOOL_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGBLDOPT_LOCK_PATH) . "\n" .
         "\n" .
         "EXAMPLES\n" .
         "\n" .
@@ -670,7 +670,7 @@ sub manGet
         "\n" .
         '    $ ' . BACKREST_EXE . ' --' . CFGBLDOPT_STANZA . "=main backup\n" .
         "\n" .
-        '    The `main` cluster should be configured in `' . CFGBLDOPTDEF_DEFAULT_CONFIG . "`\n" .
+        '    The `main` cluster should be configured in `' . cfgbldOptionDefault(CFGBLDOPT_CONFIG) . "`\n" .
         "\n" .
         "  * Show all available backups:\n" .
         "\n" .
@@ -796,7 +796,7 @@ sub helpCommandDocGet
     # Working variables
     my $oConfigHash = $self->{oConfigHash};
     my $oOperationDoc = $self->{oDoc}->nodeGet('operation');
-    my $oOptionRule = optionRuleHelpGet();
+    my $oOptionRule = cfgbldOptionRuleHelpGet();
 
     my $oDoc = new BackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $oOperationDoc->paramGet('title'));
@@ -877,7 +877,7 @@ sub helpCommandDocGetOptionFind
 
     if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_DEFAULT)
     {
-        $strSection = CONFIG_SECTION_GENERAL;
+        $strSection = CFGDEF_GENERAL;
     }
     elsif ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
     {
@@ -888,9 +888,9 @@ sub helpCommandDocGetOptionFind
             $strSection = $$oOption{&CONFIG_HELP_SECTION};
         }
 
-        if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CONFIG_SECTION_STANZA &&
-             $strSection ne CONFIG_SECTION_EXPIRE) ||
+        if (($strSection ne CFGDEF_GENERAL && $strSection ne CFGDEF_LOG &&
+             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGBLDDEF_SECTION_STANZA &&
+             $strSection ne CFGDEF_EXPIRE) ||
             $strSection eq $strCommand)
         {
             $strSection = CONFIG_HELP_COMMAND;
@@ -932,7 +932,7 @@ sub helpOptionGet
     # Get the default value (or required=n if there is no default)
     my $strCodeBlock;
 
-    if (defined(optionDefault($strOption, $strCommand)))
+    if (defined(cfgbldOptionDefault($strOption, $strCommand)))
     {
         my $strDefault;
 
@@ -942,13 +942,13 @@ sub helpOptionGet
         }
         else
         {
-            if (optionTypeTest($strOption, CFGBLDOPT_TYPE_BOOLEAN))
+            if (cfgbldOptionTypeTest($strOption, CFGBLDDEF_TYPE_BOOLEAN))
             {
-                $strDefault = optionDefault($strOption, $strCommand) ? 'y' : 'n';
+                $strDefault = cfgbldOptionDefault($strOption, $strCommand) ? 'y' : 'n';
             }
             else
             {
-                $strDefault = optionDefault($strOption, $strCommand);
+                $strDefault = cfgbldOptionDefault($strOption, $strCommand);
             }
         }
 
@@ -961,7 +961,7 @@ sub helpOptionGet
     # }
 
     # Get the allowed range if it exists
-    my ($strRangeMin, $strRangeMax) = optionRange($strOption, $strCommand);
+    my ($strRangeMin, $strRangeMax) = cfgbldOptionRange($strOption, $strCommand);
 
     if (defined($strRangeMin))
     {
@@ -973,7 +973,7 @@ sub helpOptionGet
 
     if (defined($strCommand))
     {
-        if (optionTypeTest($strOption, CFGBLDOPT_TYPE_BOOLEAN))
+        if (cfgbldOptionTypeTest($strOption, CFGBLDDEF_TYPE_BOOLEAN))
         {
             if ($$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'n' && $$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'y')
             {

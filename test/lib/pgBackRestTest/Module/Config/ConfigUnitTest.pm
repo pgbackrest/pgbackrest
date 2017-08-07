@@ -83,7 +83,8 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} = CFGBLDOPTDEF_DEFAULT_LOG_LEVEL_STDERR;
+        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} =
+            cfgOptionRuleDefault(CFGCMD_ARCHIVE_PUSH, CFGOPT_LOG_LEVEL_STDERR);
         $$oConfig{$self->stanza()}{&CFGBLDOPT_DB_PATH} = '/db';
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CFGBLDCMD_ARCHIVE_PUSH}{&CFGBLDOPT_PROCESS_MAX} = 2;
 
@@ -91,7 +92,8 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} = CFGBLDOPTDEF_DEFAULT_LOG_LEVEL_STDERR;
+        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} =
+            cfgOptionRuleDefault(CFGCMD_ARCHIVE_PUSH, CFGOPT_LOG_LEVEL_STDERR);
         $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CFGBLDCMD_ARCHIVE_PUSH}{&CFGBLDOPT_PROCESS_MAX} = 2;
         $$oConfig{'unusual-section^name!:' . &CFGBLDCMD_CHECK}{&CFGBLDOPT_DB_PATH} = '/db';
 
