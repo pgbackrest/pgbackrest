@@ -203,6 +203,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Retry when S3 returns an internal error (500).</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>
                     </release-item>
                 </release-refactor-list>

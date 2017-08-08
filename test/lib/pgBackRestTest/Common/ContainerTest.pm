@@ -61,6 +61,10 @@ use constant LIB_COVER_EXE                                          => '/usr/bin
 use constant CERT_FAKE_PATH                                         => '/etc/fake-cert';
 use constant CERT_FAKE_CA                                           => CERT_FAKE_PATH . '/ca.crt';
     push @EXPORT, qw(CERT_FAKE_CA);
+use constant CERT_FAKE_SERVER                                       => CERT_FAKE_PATH . '/server.crt';
+    push @EXPORT, qw(CERT_FAKE_SERVER);
+use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE_PATH . '/server.key';
+    push @EXPORT, qw(CERT_FAKE_SERVER_KEY);
 
 ####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
