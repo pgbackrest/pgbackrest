@@ -56,6 +56,13 @@ use constant LIB_COVER_EXE                                          => '/usr/bin
     push @EXPORT, qw(LIB_COVER_EXE);
 
 ####################################################################################################################################
+# Cert file constants
+####################################################################################################################################
+use constant CERT_FAKE_PATH                                         => '/etc/fake-cert';
+use constant CERT_FAKE_CA                                           => CERT_FAKE_PATH . '/ca.crt';
+    push @EXPORT, qw(CERT_FAKE_CA);
+
+####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_DEBUG                                        => false;
@@ -177,6 +184,26 @@ sub sshSetup
 }
 
 ####################################################################################################################################
+# Cert Setup
+####################################################################################################################################
+sub certSetup
+{
+    return
+        sectionHeader() .
+        "# Generate fake certs\n" .
+        "    mkdir -p -m 755 /etc/fake-cert && \\\n" .
+        "    cd /etc/fake-cert && \\\n" .
+        "    openssl genrsa -out ca.key 2048 && \\\n" .
+        "    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999 \\\n" .
+        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org\" && \\\n" .
+        "    openssl genrsa -out server.key 2048 && \\\n" .
+        "    openssl req -new -key server.key -out server.csr \\\n" .
+        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
+        "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
+        "        -sha256";
+}
+
+####################################################################################################################################
 # S3 server setup
 ####################################################################################################################################
 sub s3ServerSetup
@@ -212,16 +239,8 @@ sub s3ServerSetup
         "    tar -C /root/scalitys3 --strip-components 1 -xvf /root/scalitys3.tar.gz && \\\n" .
         "    cd /root/scalitys3 && \\\n" .
         "    npm install && \\\n" .
-        "    openssl genrsa -out ca.key 2048 && \\\n" .
-        "    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999 \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org\" && \\\n" .
-        "    openssl genrsa -out server.key 2048 && \\\n" .
-        "    openssl req -new -key server.key -out server.csr \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
-        "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
-        "        -sha256 && \\\n" .
-        '    sed -i "0,/,/s//,\n    \"certFilePaths\":{\"key\":\".\/server.key\",\"cert\":' .
-            '\".\/server.crt\",\"ca\":\".\/ca.crt\"},/"' . " \\\n" .
+        '    sed -i "0,/,/s//,\n    \"certFilePaths\":{\"key\":\"\/etc\/fake\-cert\/server.key\",\"cert\":' .
+            '\"\/etc\/fake\-cert\/server.crt\",\"ca\":\"\/etc\/fake\-cert\/ca.crt\"},/"' . " \\\n" .
         '        ./config.json' . " && \\\n" .
         '    sed -i "s/ort\"\: 8000/ort\"\: 443/" ./config.json';
 
@@ -366,6 +385,9 @@ sub containerBuild
                     "    mkdir -p /var/run/sshd";
             }
         }
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strScript .= certSetup();
 
         #---------------------------------------------------------------------------------------------------------------------------
         $strScript .= sectionHeader() .
@@ -580,6 +602,7 @@ sub containerBuild
                     "    apt-get update && \\\n" .
                     "    apt-get install -y wget git";
 
+                $strScript .= certSetup();
                 $strScript .= s3ServerSetup(VM_U16);
 
                 $strScript .= sectionHeader() .

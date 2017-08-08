@@ -261,6 +261,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Generate global fake cert in containers for testing.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
