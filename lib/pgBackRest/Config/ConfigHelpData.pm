@@ -137,6 +137,17 @@ my $oConfigHelpData =
                 "When backing up to a locally mounted network filesystem this setting is not required."
         },
 
+        # BACKUP-SSH-PORT Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'backup-ssh-port' =>
+        {
+            section => 'repository',
+            summary =>
+                "Backup server SSH port when backup-host is set.",
+            description =>
+                "Use this option to specify a non-default SSH port for the backup server."
+        },
+
         # BACKUP-STANDBY Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'backup-standby' =>
@@ -339,6 +350,17 @@ my $oConfigHelpData =
                 "The unix socket directory that was specified when PostgreSQL was started. pgBackRest will automatically look " .
                     "in the standard location for your OS so there usually no need to specify this setting unless the socket " .
                     "directory was explicitly modified with the unix_socket_directory setting in postgressql.conf."
+        },
+
+        # DB-SSH-PORT Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'db-ssh-port' =>
+        {
+            section => 'stanza',
+            summary =>
+                "Database server SSH port when db-host is set.",
+            description =>
+                "Use this option to specify a non-default SSH port for a database server."
         },
 
         # DB-TIMEOUT Option Help
@@ -905,6 +927,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
@@ -954,6 +977,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
@@ -963,6 +987,7 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'db-host' => 'section',
                 'db-path' => 'section',
+                'db-ssh-port' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -1017,6 +1042,7 @@ my $oConfigHelpData =
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
+                'db-ssh-port' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
 
@@ -1127,6 +1153,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-standby' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
@@ -1140,6 +1167,7 @@ my $oConfigHelpData =
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
+                'db-ssh-port' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
                 'log-level-console' => 'section',
@@ -1193,6 +1221,7 @@ my $oConfigHelpData =
                 'db-cmd' => 'section',
                 'db-config' => 'section',
                 'db-host' => 'section',
+                'db-ssh-port' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -1251,6 +1280,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
@@ -1307,6 +1337,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
@@ -1465,6 +1496,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-standby' => 'section',
                 'backup-user' => 'section',
                 'buffer-size' => 'section',
@@ -1478,6 +1510,7 @@ my $oConfigHelpData =
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
+                'db-ssh-port' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
 
@@ -1543,6 +1576,7 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-standby' => 'section',
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
@@ -1555,6 +1589,7 @@ my $oConfigHelpData =
                 'db-path' => 'section',
                 'db-port' => 'section',
                 'db-socket-path' => 'section',
+                'db-ssh-port' => 'section',
                 'db-timeout' => 'section',
                 'db-user' => 'section',
                 'lock-path' => 'section',
@@ -1605,12 +1640,14 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-user' => 'section',
                 'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
                 'db-host' => 'section',
+                'db-ssh-port' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -1649,12 +1686,14 @@ my $oConfigHelpData =
                 'backup-cmd' => 'section',
                 'backup-config' => 'section',
                 'backup-host' => 'section',
+                'backup-ssh-port' => 'section',
                 'backup-user' => 'section',
                 'cmd-ssh' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
                 'db-host' => 'section',
+                'db-ssh-port' => 'section',
 
                 # FORCE Option Help
                 #-------------------------------------------------------------------------------------------------------------------

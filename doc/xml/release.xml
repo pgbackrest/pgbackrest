@@ -163,7 +163,7 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.21dev" title="UNDER DEVELOPMENT">
+        <release date="2017-08-08" version="1.21" title="Improved Info Output and SSH Port Option">
             <release-core-list>
                 <release-bug-list>
                     <release-item>

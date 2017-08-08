@@ -85,6 +85,7 @@ Repository Options:
   --backup-config           pgBackRest backup host configuration file
 [default=/etc/pgbackrest.conf]
   --backup-host             backup host when operating remotely via SSH
+  --backup-ssh-port         backup server SSH port when backup-host is set
   --backup-user             backup host user when backup-host is set
 [default=backrest]
   --repo-path               repository path where WAL segments and backups
