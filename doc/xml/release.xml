@@ -173,6 +173,14 @@
 
                         <p>The <path>archive_status</path> directory is now recreated on restore to support <postgres/> 8.3 which does not recreate it automatically like more recent versions do.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that could cause the empty archive directory for an old <postgres/> version to be left behind after a <cmd>stanza-upgrade</cmd>.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -182,6 +190,14 @@
                         </release-item-contributor-list>
 
                         <p>Modified the <cmd>info</cmd> command (both text and JSON output) to display the archive ID and minimum/maximum WAL currently present in the archive for the current and prior, if any, database cluster version.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added <br-option>--backup-ssh-port</br-option> and <br-option>--db-ssh-port</br-option> options to support non-default SSH ports.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -242,6 +258,14 @@
 
                     <release-item>
                         <p>Use new Travis Trusty image.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Consolidate <id>stanza-create</id> and <id>stanza-upgrade</id> tests into new <id>stanza</id> test.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>

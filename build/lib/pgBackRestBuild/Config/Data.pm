@@ -195,6 +195,8 @@ use constant CFGBLDOPT_BACKUP_CONFIG                                => 'backup-c
     push @EXPORT, qw(CFGBLDOPT_BACKUP_CONFIG);
 use constant CFGBLDOPT_BACKUP_HOST                                  => 'backup-host';
     push @EXPORT, qw(CFGBLDOPT_BACKUP_HOST);
+use constant CFGBLDOPT_BACKUP_SSH_PORT                              => 'backup-ssh-port';
+    push @EXPORT, qw(CFGBLDOPT_BACKUP_SSH_PORT);
 use constant CFGBLDOPT_BACKUP_STANDBY                               => 'backup-standby';
     push @EXPORT, qw(CFGBLDOPT_BACKUP_STANDBY);
 use constant CFGBLDOPT_BACKUP_USER                                  => 'backup-user';
@@ -256,6 +258,8 @@ use constant CFGBLDOPT_DB_PATH                                      => CFGBLDOPT
     push @EXPORT, qw(CFGBLDOPT_DB_PATH);
 use constant CFGBLDOPT_DB_PORT                                      => CFGBLDOPT_PREFIX_DB . '-port';
     push @EXPORT, qw(CFGBLDOPT_DB_PORT);
+use constant CFGBLDOPT_DB_SSH_PORT                                  => CFGBLDOPT_PREFIX_DB . '-ssh-port';
+    push @EXPORT, qw(CFGBLDOPT_DB_SSH_PORT);
 use constant CFGBLDOPT_DB_SOCKET_PATH                               => CFGBLDOPT_PREFIX_DB . '-socket-path';
     push @EXPORT, qw(CFGBLDOPT_DB_SOCKET_PATH);
 use constant CFGBLDOPT_DB_USER                                      => CFGBLDOPT_PREFIX_DB . '-user';
@@ -1463,6 +1467,18 @@ my %hOptionRule =
         },
     },
 
+    &CFGBLDOPT_BACKUP_SSH_PORT =>
+    {
+        &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
+        &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_INTEGER,
+        &CFGBLDDEF_RULE_REQUIRED => false,
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_BACKUP_HOST,
+        &CFGBLDDEF_RULE_DEPEND =>
+        {
+            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_BACKUP_HOST
+        }
+    },
+
     &CFGBLDOPT_BACKUP_STANDBY =>
     {
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
@@ -1821,6 +1837,19 @@ my %hOptionRule =
             &CFGBLDCMD_STANZA_CREATE => {},
             &CFGBLDCMD_STANZA_UPGRADE => {},
         }
+    },
+
+    &CFGBLDOPT_DB_SSH_PORT =>
+    {
+        &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_STANZA,
+        &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_INTEGER,
+        &CFGBLDDEF_RULE_PREFIX => CFGBLDOPT_PREFIX_DB,
+        &CFGBLDDEF_RULE_REQUIRED => false,
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_DB_HOST,
+        &CFGBLDDEF_RULE_DEPEND =>
+        {
+            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_DB_HOST
+        },
     },
 
     &CFGBLDOPT_DB_SOCKET_PATH =>
