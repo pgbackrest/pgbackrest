@@ -48,6 +48,9 @@ sub cgenLookupString
         "const char *\n" .
         "cfg${strName}Name(uint32 ui${strName}Id)\n" .
         "{\n" .
+        "    if (ui${strName}Id >= ${strTotal})\n" .
+        "        return NULL;\n" .
+        "\n" .
         "    return szy${strName}Name[ui${strName}Id];\n" .
         "}\n";
 

@@ -47,6 +47,7 @@ sub run
         $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' version');
         $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' --output=json --stanza=main --backup-host=backup info');
         $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' --output=json --stanza=main info output');
+        $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' check');
     }
 }
 

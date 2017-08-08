@@ -451,7 +451,8 @@ eval
                         {
                             $oStorageBackRest->copy(
                                 "${strLibCPath}/${strBuildVM}/${strFile}",
-                                $oStorageBackRest->openWrite("${strBackRestBase}/${strFile}", {bPathCreate => true}));
+                                $oStorageBackRest->openWrite(
+                                    "${strBackRestBase}/${strFile}", {bPathCreate => true, lTimestamp => $lTimestampLast}));
                         }
 
                         executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
@@ -479,6 +480,11 @@ eval
                 }
             }
 
+            # Write files to indicate the last time a build was successful
+            $oStorageBackRest->put($strLibCSmart);
+            utime($lTimestampLast, $lTimestampLast, $strLibCSmart) or
+                confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
+
             # Find the lastest modified time for additional dirs that affect the package build
             foreach my $strTimestampPath ('bin', 'lib')
             {
@@ -505,11 +511,6 @@ eval
 
                 executeTest("sudo rm -rf ${strPackagePath}");
             }
-
-            # Write files to indicate the last time a build was successful
-            $oStorageBackRest->put($strLibCSmart);
-            utime($lTimestampLast, $lTimestampLast, $strLibCSmart) or
-                confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
 
             # Loop through VMs to do the package builds
             if (!$bNoPackage)

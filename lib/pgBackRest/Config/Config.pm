@@ -202,7 +202,7 @@ sub configLoad
         # Parse command line options
         if (!GetOptions(\%oOptionTest, @stryOptionAllow))
         {
-            cfgCommandName(CFGCMD_HELP);
+            $strCommand = cfgCommandName(CFGCMD_HELP);
             return false;
         }
 

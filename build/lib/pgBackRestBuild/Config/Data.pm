@@ -1096,6 +1096,7 @@ my %hOptionRule =
 
     &CFGBLDOPT_REPO_S3_BUCKET =>
     {
+        &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_DEPEND =>
         {
@@ -1111,6 +1112,7 @@ my %hOptionRule =
     &CFGBLDOPT_REPO_S3_KEY =>
     {
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
+        &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_SECURE => true,
         &CFGBLDDEF_RULE_REQUIRED => false,
         &CFGBLDDEF_RULE_DEPEND =>
@@ -1128,6 +1130,7 @@ my %hOptionRule =
     &CFGBLDOPT_REPO_S3_HOST =>
     {
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
+        &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_REQUIRED  => false,
         &CFGBLDDEF_RULE_DEPEND => CFGBLDOPT_REPO_S3_BUCKET,
         &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_REPO_TYPE,
@@ -1870,19 +1873,6 @@ foreach my $strKey (sort(keys(%hOptionRule)))
         $hOptionRule{$strKey} = dclone($hOptionRule{$hOptionRule{$strKey}});
     }
 
-    # Default type is string
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE}))
-    {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE} = CFGBLDDEF_TYPE_STRING;
-    }
-
-    # Hash types by default have hash values (rather than just a boolean list)
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_HASH_VALUE}))
-    {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_HASH_VALUE} =
-            $hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGBLDDEF_TYPE_HASH ? true : false;
-    }
-
     # If the command section is a scalar then copy the section from the referenced option
     if (defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_COMMAND}) && !ref($hOptionRule{$strKey}{&CFGBLDDEF_RULE_COMMAND}))
     {
@@ -1895,6 +1885,19 @@ foreach my $strKey (sort(keys(%hOptionRule)))
     {
         $hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND} =
             dclone($hOptionRule{$hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND}}{&CFGBLDDEF_RULE_DEPEND});
+    }
+
+    # Default type is string
+    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE}))
+    {
+        &log(ASSERT, "type is required for option '${strKey}'");
+    }
+
+    # Hash types by default have hash values (rather than just a boolean list)
+    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_HASH_VALUE}))
+    {
+        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_HASH_VALUE} =
+            $hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGBLDDEF_TYPE_HASH ? true : false;
     }
 
     # All config options can be negated.  Command-line options must be marked for negation individually.

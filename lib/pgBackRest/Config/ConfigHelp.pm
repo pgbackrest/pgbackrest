@@ -351,6 +351,19 @@ sub configHelpOptionFind
     my $iCommandId = cfgCommandId($strCommand);
     my $iOptionId = cfgOptionId($strOption);
 
+    # If not found then this is an indexed value
+    if ($iOptionId == -1)
+    {
+        my $strPrefix = substr($strOption, 0, index($strOption, '-'));
+        $iOptionId = cfgOptionId("${strPrefix}1" . substr($strOption, index($strOption, '-')));
+
+        # If still not found then error
+        if ($iOptionId == -1)
+        {
+            confess &log(ASSERT, "option '${strOption}' not found in help");
+        }
+    }
+
     if (ref(\$oOption) eq 'SCALAR')
     {
         $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
