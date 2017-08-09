@@ -46,6 +46,13 @@ use constant S3_RESPONSE_TYPE_NONE                                  => 'none';
 use constant S3_RESPONSE_TYPE_XML                                   => 'xml';
     push @EXPORT, qw(S3_RESPONSE_TYPE_XML);
 
+use constant S3_RESPONSE_CODE_SUCCESS                               => 200;
+use constant S3_RESPONSE_CODE_ERROR_AUTH                            => 403;
+use constant S3_RESPONSE_CODE_ERROR_NOT_FOUND                       => 404;
+use constant S3_RESPONSE_CODE_ERROR_INTERNAL                        => 500;
+
+use constant S3_RETRY_MAX                                           => 2;
+
 ####################################################################################################################################
 # new
 ####################################################################################################################################
@@ -66,6 +73,7 @@ sub new
         $self->{strAccessKeyId},
         $self->{strSecretAccessKey},
         $self->{strHost},
+        $self->{iPort},
         $self->{bVerifySsl},
         $self->{strCaPath},
         $self->{strCaFile},
@@ -80,6 +88,7 @@ sub new
             {name => 'strAccessKeyId', trace => true},
             {name => 'strSecretAccessKey', trace => true},
             {name => 'strHost', optional => true, trace => true},
+            {name => 'iPort', optional => true, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
             {name => 'strCaPath', optional => true, trace => true},
             {name => 'strCaFile', optional => true, trace => true},
@@ -128,75 +137,113 @@ sub request
             {name => 'bIgnoreMissing', optional => true, default => false, trace => true},
         );
 
-    # Get datetime to be used for auth requests
-    my $strDateTime = s3DateTime();
-
-    # Set content length and hash
-    $hHeader->{&S3_HEADER_CONTENT_SHA256} = defined($rstrBody) ? sha256_hex($$rstrBody) : PAYLOAD_DEFAULT_HASH;
-    $hHeader->{&S3_HEADER_CONTENT_LENGTH} = defined($rstrBody) ? length($$rstrBody) : 0;
-
-    # Generate authorization header
-    $hHeader = s3AuthorizationHeader(
-        $self->{strRegion}, "$self->{strBucket}.$self->{strEndPoint}", $strVerb, $strUri, httpQuery($hQuery), $strDateTime,
-        $hHeader, $self->{strAccessKeyId}, $self->{strSecretAccessKey}, $hHeader->{&S3_HEADER_CONTENT_SHA256});
-
-    # Send the request
-    my $oHttpClient = new pgBackRest::Common::Http::Client(
-        $self->{strHost}, $strVerb,
-        {strUri => $strUri, hQuery => $hQuery, hRequestHeader => $hHeader, rstrRequestBody => $rstrBody,
-            bVerifySsl => $self->{bVerifySsl}, strCaPath => $self->{strCaPath}, strCaFile => $self->{strCaFile},
-            lBufferMax => $self->{lBufferMax}});
-
-    # Check response code
-    my $iReponseCode = $oHttpClient->responseCode();
+    # Server response
     my $oResponse;
 
-    if ($iReponseCode == 200)
+    # Allow retries on S3 internal failures
+    my $bRetry;
+    my $iRetryTotal = 0;
+
+    do
     {
-        # Save the response headers locally
-        $self->{hResponseHeader} = $oHttpClient->responseHeader();
+        # Assume that a retry will not be attempted which is true in most cases
+        $bRetry = false;
 
-        # XML response is expected
-        if ($strResponseType eq S3_RESPONSE_TYPE_XML)
+        # Set content length and hash
+        $hHeader->{&S3_HEADER_CONTENT_SHA256} = defined($rstrBody) ? sha256_hex($$rstrBody) : PAYLOAD_DEFAULT_HASH;
+        $hHeader->{&S3_HEADER_CONTENT_LENGTH} = defined($rstrBody) ? length($$rstrBody) : 0;
+
+        # Generate authorization header
+        ($hHeader, my $strCanonicalRequest, my $strSignedHeaders, my $strStringToSign) = s3AuthorizationHeader(
+            $self->{strRegion}, "$self->{strBucket}.$self->{strEndPoint}", $strVerb, $strUri, httpQuery($hQuery), s3DateTime(),
+            $hHeader, $self->{strAccessKeyId}, $self->{strSecretAccessKey}, $hHeader->{&S3_HEADER_CONTENT_SHA256});
+
+        # Send the request
+        my $oHttpClient = new pgBackRest::Common::Http::Client(
+            $self->{strHost}, $strVerb,
+            {iPort => $self->{iPort}, strUri => $strUri, hQuery => $hQuery, hRequestHeader => $hHeader,
+                rstrRequestBody => $rstrBody, bVerifySsl => $self->{bVerifySsl}, strCaPath => $self->{strCaPath},
+                strCaFile => $self->{strCaFile}, lBufferMax => $self->{lBufferMax}});
+
+        # Check response code
+        my $iResponseCode = $oHttpClient->responseCode();
+
+        if ($iResponseCode == S3_RESPONSE_CODE_SUCCESS)
         {
-            my $rtResponseBody = $oHttpClient->responseBody();
+            # Save the response headers locally
+            $self->{hResponseHeader} = $oHttpClient->responseHeader();
 
-            if ($oHttpClient->contentLength() == 0 || !defined($$rtResponseBody))
+            # XML response is expected
+            if ($strResponseType eq S3_RESPONSE_TYPE_XML)
             {
-                confess &log(ERROR,
-                    "response type '${strResponseType}' was requested but content length is zero or content is missing",
-                    ERROR_PROTOCOL);
+                my $rtResponseBody = $oHttpClient->responseBody();
+
+                if ($oHttpClient->contentLength() == 0 || !defined($$rtResponseBody))
+                {
+                    confess &log(ERROR,
+                        "response type '${strResponseType}' was requested but content length is zero or content is missing",
+                        ERROR_PROTOCOL);
+                }
+
+                $oResponse = xmlParse($$rtResponseBody);
             }
-
-            $oResponse = xmlParse($$rtResponseBody);
-        }
-        # An IO object is expected for file responses
-        elsif ($strResponseType eq S3_RESPONSE_TYPE_IO)
-        {
-            $oResponse = $oHttpClient;
-        }
-    }
-    else
-    {
-        if ($iReponseCode == 404)
-        {
-            if (!$bIgnoreMissing)
+            # An IO object is expected for file responses
+            elsif ($strResponseType eq S3_RESPONSE_TYPE_IO)
             {
-                confess &log(ERROR, "unable to open '${strUri}': No such file or directory", ERROR_FILE_MISSING);
+                $oResponse = $oHttpClient;
             }
         }
         else
         {
-            my $rstrResponseBody = $oHttpClient->responseBody();
+            # If file was not found
+            if ($iResponseCode == S3_RESPONSE_CODE_ERROR_NOT_FOUND)
+            {
+                # If missing files should not be ignored then error
+                if (!$bIgnoreMissing)
+                {
+                    confess &log(ERROR, "unable to open '${strUri}': No such file or directory", ERROR_FILE_MISSING);
+                }
 
-            confess &log(ERROR,
-                "S3 request error [$iReponseCode] " . $oHttpClient->responseMessage() .
-                    "\n*** request header ***\n" . $oHttpClient->requestHeaderText() .
-                    "\n*** reponse header ***\n" . $oHttpClient->responseHeaderText() .
-                    (defined($$rstrResponseBody) ? "\n*** response body ***\n${$rstrResponseBody}" : ''),
-                ERROR_PROTOCOL);
+                $bRetry = false;
+            }
+            # Else a more serious error
+            else
+            {
+                # Retry for S3 internal errors
+                if ($iResponseCode == S3_RESPONSE_CODE_ERROR_INTERNAL)
+                {
+                    # Increment retry total and check if retry should be attempted
+                    $iRetryTotal++;
+                    $bRetry = $iRetryTotal <= S3_RETRY_MAX;
+
+                    # Sleep after first retry just in case data needs to stabilize
+                    if ($iRetryTotal > 1)
+                    {
+                        sleep(5);
+                    }
+                }
+
+                # If no retry then throw the error
+                if (!$bRetry)
+                {
+                    my $rstrResponseBody = $oHttpClient->responseBody();
+
+                    confess &log(ERROR,
+                        'S3 request error' . ($iRetryTotal > 0 ? " after retries" : '') .
+                            " [$iResponseCode] " . $oHttpClient->responseMessage() .
+                            "\n*** request header ***\n" . $oHttpClient->requestHeaderText() .
+                            ($iResponseCode == S3_RESPONSE_CODE_ERROR_AUTH ?
+                                "\n*** canonical request ***\n" . $strCanonicalRequest .
+                                "\n*** signed headers ***\n" . $strSignedHeaders .
+                                "\n*** string to sign ***\n" . $strStringToSign : '') .
+                            "\n*** response header ***\n" . $oHttpClient->responseHeaderText() .
+                            (defined($$rstrResponseBody) ? "\n*** response body ***\n${$rstrResponseBody}" : ''),
+                        ERROR_PROTOCOL);
+                }
+            }
         }
     }
+    while ($bRetry);
 
     # Return from function and log return values if any
     return logDebugReturn

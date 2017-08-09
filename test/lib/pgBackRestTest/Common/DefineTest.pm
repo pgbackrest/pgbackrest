@@ -211,6 +211,15 @@ my $oTestDef =
                     &TESTDEF_TOTAL => 1,
                 },
                 {
+                    &TESTDEF_NAME => 's3-request',
+                    &TESTDEF_TOTAL => 2,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/S3/Request' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 's3',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_VM => [VM_CO7, VM_U14, VM_U16, VM_D8],

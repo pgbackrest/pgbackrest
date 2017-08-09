@@ -237,6 +237,9 @@ sub s3AuthorizationHeader
             {name => 'strPayloadHash', trace => true},
         );
 
+    # Delete the authorization header if it already exists. This could happen on a retry.
+    delete($hHeader->{&S3_HEADER_AUTHORIZATION});
+
     # Add s3 required headers
     $hHeader->{&S3_HEADER_HOST} = $strHost;
     $hHeader->{&S3_HEADER_CONTENT_SHA256} = $strPayloadHash;
@@ -244,18 +247,21 @@ sub s3AuthorizationHeader
 
     # Create authorization string
     my ($strCanonicalRequest, $strSignedHeaders) = s3CanonicalRequest($strVerb, $strUri, $strQuery, $hHeader, $strPayloadHash);
+    my $strStringToSign = s3StringToSign($strDateTime, $strRegion, sha256_hex($strCanonicalRequest));
 
     $hHeader->{&S3_HEADER_AUTHORIZATION} =
         AWS4_HMAC_SHA256 . " Credential=${strAccessKeyId}/" . substr($strDateTime, 0, 8) . "/${strRegion}/" . S3 . qw(/) .
-            AWS4_REQUEST . ",SignedHeaders=${strSignedHeaders},Signature=" . hmac_sha256_hex(s3StringToSign(
-                $strDateTime, $strRegion, sha256_hex($strCanonicalRequest)),
+            AWS4_REQUEST . ",SignedHeaders=${strSignedHeaders},Signature=" . hmac_sha256_hex($strStringToSign,
                 s3SigningKey(substr($strDateTime, 0, 8), $strRegion, $strSecretAccessKey));
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'hHeader', value => $hHeader, trace => true}
+        {name => 'hHeader', value => $hHeader, trace => true},
+        {name => 'strCanonicalRequest', value => $strCanonicalRequest, trace => true},
+        {name => 'strSignedHeaders', value => $strSignedHeaders, trace => true},
+        {name => 'strStringToSign', value => $strStringToSign, trace => true},
     );
 }
 

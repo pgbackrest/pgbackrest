@@ -163,7 +163,17 @@
     </contributor-list>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.21dev" title="UNDER DEVELOPMENT">
+        <release date="2017-08-09" version="1.22" title="Fixed S3 Retry">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed authentication issue in S3 retry.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+        </release>
+
+        <release date="2017-08-08" version="1.21" title="Improved Info Output and SSH Port Option">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -202,6 +212,10 @@
                 </release-feature-list>
 
                 <release-refactor-list>
+                    <release-item>
+                        <p>Retry when S3 returns an internal error (500).</p>
+                    </release-item>
+
                     <release-item>
                         <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>
                     </release-item>
@@ -258,6 +272,10 @@
 
                     <release-item>
                         <p>Use new Travis Trusty image.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Generate global fake cert in containers for testing.</p>
                     </release-item>
 
                     <release-item>

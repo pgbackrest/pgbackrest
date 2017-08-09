@@ -19,6 +19,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Storage::S3::Auth;
 
+use pgBackRestTest::Common::RunTest;
+
 ####################################################################################################################################
 # run
 ####################################################################################################################################
@@ -95,15 +97,29 @@ sub run
         $self->testResult(
             sub {s3AuthorizationHeader(
                 'us-east-1', 'bucket.s3.amazonaws.com', 'GET', qw(/), 'list-type=2', '20170606T121212Z',
-                {'host' => 'bucket.s3.amazonaws.com', 'x-amz-date' => '20170606T121212Z'},
+                {'authorization' => BOGUS, 'host' => 'bucket.s3.amazonaws.com', 'x-amz-date' => '20170606T121212Z'},
                 'AKIAIOSFODNN7EXAMPLE', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')},
-            '{authorization => AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,' .
+            '({authorization => AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,' .
                 'SignedHeaders=host;x-amz-content-sha256;x-amz-date,' .
                 'Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3,' .
                 ' host => bucket.s3.amazonaws.com,' .
                 ' x-amz-content-sha256 => e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855,' .
-                ' x-amz-date => 20170606T121212Z}',
+                ' x-amz-date => 20170606T121212Z}, ' .
+            "GET\n" .
+            "/\n" .
+            "list-type=2\n" .
+            "host:bucket.s3.amazonaws.com\n" .
+            "x-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n" .
+            "x-amz-date:20170606T121212Z\n" .
+            "\n" .
+            "host;x-amz-content-sha256;x-amz-date\n" .
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, " .
+            "host;x-amz-content-sha256;x-amz-date, " .
+            "AWS4-HMAC-SHA256\n" .
+            "20170606T121212Z\n" .
+            "20170606/us-east-1/s3/aws4_request\n" .
+            "4f2d4ee971f579e60ba6b3895e87434e17b1260f04392f02b512c1e8bada72dd)",
             'authorization header request');
     }
 }

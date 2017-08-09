@@ -49,6 +49,7 @@ sub new
         $strOperation,
         $strHost,
         $strVerb,
+        $iPort,
         $strUri,
         $hQuery,
         $hRequestHeader,
@@ -64,6 +65,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'strHost', trace => true},
             {name => 'strVerb', trace => true},
+            {name => 'iPort', optional => true, default => 443, trace => true},
             {name => 'strUri', optional => true, default => qw(/), trace => true},
             {name => 'hQuery', optional => true, trace => true},
             {name => 'hRequestHeader', optional => true, trace => true},
@@ -81,7 +83,7 @@ sub new
     eval
     {
         $oSocket = IO::Socket::SSL->new(
-            PeerHost => $strHost, PeerPort => 'https', SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
+            PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
             SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile);
 
         return 1;
