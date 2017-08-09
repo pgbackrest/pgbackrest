@@ -205,6 +205,7 @@ sub protocolGet
             my $iOptionIdUser = CFGOPT_BACKUP_USER;
             my $strOptionDbPort = undef;
             my $strOptionDbSocketPath = undef;
+            my $strOptionSshPort = CFGOPT_BACKUP_SSH_PORT;
 
             if ($strRemoteType eq DB)
             {
@@ -212,6 +213,7 @@ sub protocolGet
                 $iOptionIdConfig = cfgOptionIndex(CFGOPT_DB_CONFIG, $iRemoteIdx);
                 $iOptionIdHost = cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx);
                 $iOptionIdUser = cfgOptionIndex(CFGOPT_DB_USER, $iRemoteIdx);
+                $strOptionSshPort = cfgOptionIndex(CFGOPT_DB_SSH_PORT, $iRemoteIdx);
             }
 
             # Db socket is not valid in all contexts (restore, for instance)
@@ -275,6 +277,7 @@ sub protocolGet
                 cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK),
                 cfgOption($iOptionIdHost),
                 cfgOption($iOptionIdUser),
+                cfgOption($strOptionSshPort, false),
                 cfgOption(CFGOPT_PROTOCOL_TIMEOUT)
             );
 
