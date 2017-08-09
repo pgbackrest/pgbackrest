@@ -17,13 +17,9 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Push::Push;
-use pgBackRest::Archive::Push::Async;
-use pgBackRest::Archive::Push::File;
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::DbVersion;
 use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -42,12 +38,8 @@ sub initModule
     my $self = shift;
 
     $self->{strDbPath} = $self->testPath() . '/db';
-    $self->{strWalPath} = "$self->{strDbPath}/pg_xlog";
-    $self->{strWalStatusPath} = "$self->{strWalPath}/archive_status";
-    $self->{strWalHash} = "1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
-    $self->{strSpoolPath} = "$self->{strArchivePath}/out";
 }
 
 ####################################################################################################################################
@@ -57,19 +49,10 @@ sub initTest
 {
     my $self = shift;
 
-    # Create WAL path
-    storageTest()->pathCreate($self->{strWalStatusPath}, {bIgnoreExists => true, bCreateParent => true});
-
     # Create archive info
     storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
 
     $self->initOption();
-    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
-    my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
-    $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
-
-    $self->{strArchiveId} = $oArchiveInfo->archiveId();
 }
 
 ####################################################################################################################################
