@@ -1166,7 +1166,8 @@ sub cfgCommandWrite
         # else look for non-default options in the current configuration
         elsif (cfgOptionRuleValid($iNewCommandId, $iOptionId) &&
                defined($oOption{$strOption}{value}) &&
-               ($bIncludeConfig ? $oOption{$strOption}{source} ne CFGDEF_SOURCE_DEFAULT : $oOption{$strOption}{source} eq CFGDEF_SOURCE_PARAM))
+               ($bIncludeConfig ?
+                    $oOption{$strOption}{source} ne CFGDEF_SOURCE_DEFAULT : $oOption{$strOption}{source} eq CFGDEF_SOURCE_PARAM))
         {
             my $oValue;
             my $bMulti = false;

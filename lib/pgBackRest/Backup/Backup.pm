@@ -480,7 +480,8 @@ sub process
 
     if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
-        $strBackupLastPath = $oBackupInfo->last($strType eq CFGOPTVAL_BACKUP_TYPE_DIFF ? CFGOPTVAL_BACKUP_TYPE_FULL : CFGOPTVAL_BACKUP_TYPE_INCR);
+        $strBackupLastPath = $oBackupInfo->last(
+            $strType eq CFGOPTVAL_BACKUP_TYPE_DIFF ? CFGOPTVAL_BACKUP_TYPE_FULL : CFGOPTVAL_BACKUP_TYPE_INCR);
 
         # If there is a prior backup and it is for the current database, then use it as base
         if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))

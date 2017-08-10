@@ -74,7 +74,8 @@ sub run
         $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Rerun stanza-create and confirm success without the need to use force on empty directories
-        $oHostBackup->stanzaCreate('successful rerun of stanza-create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        $oHostBackup->stanzaCreate(
+            'successful rerun of stanza-create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Perform a stanza upgrade which will indicate already up to date
         #--------------------------------------------------------------------------------------------------------------------------

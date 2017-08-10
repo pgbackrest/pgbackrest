@@ -90,7 +90,8 @@ sub run
     if ($self->begin('backupLabelFormat()'))
     {
         my $strBackupLabelFull = timestampFileFormat(undef, 1482000000) . 'F';
-        $self->testResult(sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, 1482000000)}, $strBackupLabelFull, 'full backup label');
+        $self->testResult(sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, 1482000000)}, $strBackupLabelFull,
+        'full backup label');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
@@ -100,7 +101,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $strBackupLabelDiff = "${strBackupLabelFull}_" . timestampFileFormat(undef, 1482000400) . 'D';
         $self->testResult(
-            sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_DIFF, $strBackupLabelFull, 1482000400)}, $strBackupLabelDiff, 'diff backup label');
+            sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_DIFF, $strBackupLabelFull, 1482000400)}, $strBackupLabelDiff,
+            'diff backup label');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
