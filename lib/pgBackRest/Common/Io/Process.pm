@@ -89,10 +89,12 @@ sub error
     my $strMessage = shift;
     my $strDetail = shift;
     my $bClose = shift;
+    my $bWarnOnError = shift;
 
     if (defined($self->{iProcessId}))
     {
         my $oWait = waitInit(defined($iCode) ? IO_ERROR_TIMEOUT : 0);
+        my $bWarnInstead = defined($bWarnOnError) ? $bWarnOnError : false;
 
         do
         {
@@ -122,10 +124,20 @@ sub error
                     my $iErrorCode =
                         $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_FILE_READ;
 
-                    logErrorResult(
-                        $iErrorCode, 'process ' . $self->id() . ' terminated unexpectedly' .
-                            ($iExitStatus != 255 ?  sprintf(' [%03d]', $iExitStatus) : ''),
-                        $strError);
+                    if (!$bWarnInstead)
+                    {
+                        logErrorResult(
+                            $iErrorCode, 'process ' . $self->id() . ' terminated unexpectedly' .
+                                ($iExitStatus != 255 ?  sprintf(' [%03d]', $iExitStatus) : ''),
+                            $strError);
+                    }
+                    # Confess a warning instead of an error - useful for looping through servers where it is not important if they
+                    # are unavailable
+                    else
+                    {
+                        confess &log(WARN, "[$iErrorCode] " . 'process ' . $self->id() . ' terminated unexpectedly' .
+                            ($iExitStatus != 255 ?  sprintf(' [%03d]', $iExitStatus) : '') . " : $strError");
+                    }
                 }
             }
         }

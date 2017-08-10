@@ -43,6 +43,7 @@ sub new
         $self->{strName},
         $self->{strId},
         $self->{oIo},
+        my $bWarnOnError,
     ) =
         logDebugParam
         (
@@ -50,13 +51,14 @@ sub new
             {name => 'strName', trace => true},
             {name => 'strId', trace => true},
             {name => 'oIo', trace => true},
+            {name => 'bWarnOnError', optional => true, default => false, trace => true},
         );
 
     # Create JSON object
     $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
     # Check greeting to be sure the protocol matches
-    $self->greetingRead();
+    $self->greetingRead($bWarnOnError);
 
     # Setup the keepalive timer
     $self->{fKeepAliveTimeout} = $self->io()->timeout() / 2 > 120 ? 120 : $self->io()->timeout() / 2;
@@ -91,6 +93,7 @@ sub DESTROY
 sub greetingRead
 {
     my $self = shift;
+    my $bWarnOnError = shift;
 
     # Get the first line of output from the remote if possible
     my $strGreeting = $self->io()->readLine(true);
@@ -107,7 +110,7 @@ sub greetingRead
     # Report any error that stopped parsing
     or do
     {
-        $self->io()->error(ERROR_PROTOCOL, 'invalid protocol greeting', $strGreeting);
+        $self->io()->error(ERROR_PROTOCOL, 'invalid protocol greeting', $strGreeting, undef, $bWarnOnError);
     };
 
     # Error if greeting parameters do not match

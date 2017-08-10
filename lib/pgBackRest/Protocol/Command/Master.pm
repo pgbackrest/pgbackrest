@@ -37,6 +37,7 @@ sub new
         $iCompressLevel,                            # Set compression level
         $iCompressLevelNetwork,                     # Set compression level for network only compression
         $iProtocolTimeout,                          # Protocol timeout
+        $bWarnOnError,                              # Throw Errors as Warnings
     ) =
         logDebugParam
         (
@@ -48,6 +49,7 @@ sub new
             {name => 'iCompressLevel'},
             {name => 'iCompressLevelNetwork'},
             {name => 'iProtocolTimeout'},
+            {name => 'bWarnOnError', optional => true, default => false},
         );
 
     # Set command
@@ -62,7 +64,8 @@ sub new
             new pgBackRest::Common::Io::Handle($strId), $iProtocolTimeout, $iBufferMax), $strCommand);
 
     # Create the class hash
-    my $self = $class->SUPER::new($strName, $strId, $oIo);
+    my $self = $class->SUPER::new($strName, $strId, $oIo, {bWarnOnError => $bWarnOnError}); 
+        # my $self = $class->SUPER::new($strName, $strId, $oIo); CSHANG
     bless $self, $class;
 
     # Return from function and log return values if any

@@ -77,11 +77,13 @@ sub new
     (
         my $strOperation,
         $self->{iRemoteIdx},
+        my $bWarnOnError,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'iRemoteIdx', required => false},
+            {name => 'bWarnOnError', optional => true, default => false},
         );
 
     if (defined($self->{iRemoteIdx}))
@@ -90,7 +92,12 @@ sub new
 
         if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
-            $self->{oProtocol} = protocolGet(DB, $self->{iRemoteIdx});
+            eval
+            {
+                $self->{oProtocol} = protocolGet(DB, $self->{iRemoteIdx}, {bWarnOnError => $bWarnOnError});
+                return true;
+            }
+            or do {};
         }
     }
 
@@ -981,7 +988,7 @@ sub dbObjectGet
                 cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
                 # Create the db object
-                my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $oDb = new pgBackRest::Db($iRemoteIdx, {bWarnOnError => true});
                 my $bAssigned = false;
 
                 # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
