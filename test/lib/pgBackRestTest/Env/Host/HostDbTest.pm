@@ -467,18 +467,18 @@ sub clusterStop
     # Disconnect user session
     $self->sqlDisconnect();
 
-    # If postmaster process is running then stop the cluster
-    if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMASTERPID)
-    {
-        $self->executeSimple($self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m fast');
-    }
-
-    # Grep for errors in postgresql.log
+    # Grep for errors in postgresql.log - this is done first because we want to ignore any errors that happen during shutdown
     if (!$bIgnoreLogError && storageTest()->exists($self->pgLogFile()))
     {
         $self->executeSimple(
             'grep -v "FATAL\:  57P03\: the database system is starting up" ' . $self->pgLogFile() . ' | grep "ERROR\|FATAL"',
             {iExpectedExitStatus => 1});
+    }
+
+    # If postmaster process is running then stop the cluster
+    if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMASTERPID)
+    {
+        $self->executeSimple($self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m fast');
     }
 
     # Remove the log file
