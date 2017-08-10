@@ -154,7 +154,7 @@ sub initServer
 
     # Initialize the archive process
     $self->{oArchiveProcess} = new pgBackRest::Protocol::Local::Process(
-        BACKUP, cfgOption(CFGOPT_PROTOCOL_TIMEOUT) < 60 ? cfgOption(CFGOPT_PROTOCOL_TIMEOUT) / 2 : 30,
+        CFGOPTVAL_LOCAL_TYPE_BACKUP, cfgOption(CFGOPT_PROTOCOL_TIMEOUT) < 60 ? cfgOption(CFGOPT_PROTOCOL_TIMEOUT) / 2 : 30,
         $self->{strBackRestBin}, false);
     $self->{oArchiveProcess}->hostAdd(1, cfgOption(CFGOPT_PROCESS_MAX));
 
@@ -219,7 +219,7 @@ sub processQueue
         eval
         {
             # Hold a lock when the repo is remote to be sure no other process is pushing WAL
-            !isRepoLocal() && protocolGet(BACKUP);
+            !isRepoLocal() && protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP);
 
             while (my $hyJob = $self->{oArchiveProcess}->process())
             {

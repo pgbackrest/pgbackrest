@@ -253,7 +253,7 @@ sub backupCreate
     }
 
     # Create the manifest
-    my $oLastManifest = $strType ne BACKUP_TYPE_FULL ? $$oStanza{oManifest} : undef;
+    my $oLastManifest = $strType ne CFGOPTVAL_BACKUP_TYPE_FULL ? $$oStanza{oManifest} : undef;
 
     my $strBackupLabel =
         backupLabelFormat($strType,
@@ -285,7 +285,7 @@ sub backupCreate
     $oManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
     $oManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
 
-    if ($strType ne BACKUP_TYPE_FULL)
+    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
         if (!defined($oLastManifest))
         {

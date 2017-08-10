@@ -228,11 +228,12 @@ sub processManifest
 
     # Get the master protocol for keep-alive
     my $oProtocolMaster =
-        !isDbLocal({iRemoteIdx => $self->{iMasterRemoteIdx}}) ? protocolGet(DB, $self->{iMasterRemoteIdx}) : undef;
+        !isDbLocal({iRemoteIdx => $self->{iMasterRemoteIdx}}) ?
+            protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iMasterRemoteIdx}) : undef;
     defined($oProtocolMaster) && $oProtocolMaster->noOp();
 
     # Initialize the backup process
-    my $oBackupProcess = new pgBackRest::Protocol::Local::Process(DB);
+    my $oBackupProcess = new pgBackRest::Protocol::Local::Process(CFGOPTVAL_LOCAL_TYPE_DB);
 
     if ($self->{iCopyRemoteIdx} != $self->{iMasterRemoteIdx})
     {
@@ -246,7 +247,7 @@ sub processManifest
     my $lSizeTotal = 0;
 
     # If this is a full backup or hard-linked then create all paths and tablespace links
-    if ($bHardLink || $strType eq BACKUP_TYPE_FULL)
+    if ($bHardLink || $strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
     {
         # Create paths
         foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
@@ -376,7 +377,7 @@ sub processManifest
     my $lManifestSaveCurrent = 0;
     my $lManifestSaveSize = int($lSizeTotal / 100);
 
-    if (cfgOptionSource(CFGOPT_MANIFEST_SAVE_THRESHOLD) ne SOURCE_DEFAULT ||
+    if (cfgOptionSource(CFGOPT_MANIFEST_SAVE_THRESHOLD) ne CFGDEF_SOURCE_DEFAULT ||
         $lManifestSaveSize < cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD))
     {
         $lManifestSaveSize = cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD);
@@ -477,9 +478,9 @@ sub process
     my $oLastManifest;
     my $strBackupLastPath;
 
-    if ($strType ne BACKUP_TYPE_FULL)
+    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
-        $strBackupLastPath = $oBackupInfo->last($strType eq BACKUP_TYPE_DIFF ? BACKUP_TYPE_FULL : BACKUP_TYPE_INCR);
+        $strBackupLastPath = $oBackupInfo->last($strType eq CFGOPTVAL_BACKUP_TYPE_DIFF ? CFGOPTVAL_BACKUP_TYPE_FULL : CFGOPTVAL_BACKUP_TYPE_INCR);
 
         # If there is a prior backup and it is for the current database, then use it as base
         if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))
@@ -512,7 +513,7 @@ sub process
         else
         {
             &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
-            $strType = BACKUP_TYPE_FULL;
+            $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
             $strBackupLastPath = undef;
         }
     }
@@ -755,13 +756,13 @@ sub process
 
             # The standby db object won't be used anymore so undef it to catch any subsequent references
             undef($oDbStandby);
-            protocolDestroy(DB, $self->{iCopyRemoteIdx}, true);
+            protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
         }
     }
 
     # Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain files would
     # be checksummed and the list could be incomplete during reporting.
-    if ($strType ne BACKUP_TYPE_FULL && defined($strBackupLastPath))
+    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL && defined($strBackupLastPath))
     {
         # If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
         # false and move on without a warning.  Page checksums will start on the next full backup.

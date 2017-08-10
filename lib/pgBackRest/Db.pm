@@ -90,7 +90,7 @@ sub new
 
         if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
-            $self->{oProtocol} = protocolGet(DB, $self->{iRemoteIdx});
+            $self->{oProtocol} = protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iRemoteIdx});
         }
     }
 
@@ -1017,7 +1017,7 @@ sub dbObjectGet
                 # If the db was not used then destroy the protocol object underneath it
                 if (!$bAssigned)
                 {
-                    protocolDestroy(DB, $iRemoteIdx, true);
+                    protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $iRemoteIdx, true);
                 }
             }
         }

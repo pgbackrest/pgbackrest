@@ -39,7 +39,7 @@ sub run
     my $strRegion = 'us-west-2';
 
     # Options
-    $self->optionTestSet(CFGOPT_REPO_TYPE, REPO_TYPE_S3);
+    $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
     $self->optionTestSet(CFGOPT_REPO_S3_KEY, BOGUS);
     $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, BOGUS);
     $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, $strBucket);

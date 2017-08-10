@@ -77,12 +77,12 @@ sub run
         # without slowing down the other tests too much.
         if ($bS3)
         {
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
-            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
 
             # Reduce log level to detail because parallel tests do not create deterministic logs
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
-            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
             $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(WARN);
         }
 
@@ -259,11 +259,11 @@ sub run
         # Backup Info (with no stanzas)
         #-----------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->info('no stanzas exist');
-        $oHostDbMaster->info('no stanzas exist', {strOutput => INFO_OUTPUT_JSON});
+        $oHostDbMaster->info('no stanzas exist', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
 
         # Full backup
         #-----------------------------------------------------------------------------------------------------------------------
-        my $strType = BACKUP_TYPE_FULL;
+        my $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
         my $strOptionalParam = '--manifest-save-threshold=3';
         my $strTestPoint;
 
@@ -328,7 +328,7 @@ sub run
                 strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
                 ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
                 ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
-                strRepoType => $bS3 ? undef : REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
+                strRepoType => $bS3 ? undef : CFGOPTVAL_REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         # Error on backup option to check logging
         #-----------------------------------------------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ sub run
 
         # Resume Full Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_FULL;
+        $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
 
         # These files should never be backed up (this requires the next backup to do --force)
         testFileCreate($oHostDbMaster->dbBasePath() . '/' . DB_FILE_POSTMASTERPID, 'JUNK');
@@ -609,7 +609,7 @@ sub run
 
         # Various broken info tests
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
 
         # Break the database version
@@ -653,7 +653,7 @@ sub run
 
         # Test broken tablespace configuration
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         my $strTblSpcPath = $oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC;
 
         # Create a directory in pg_tablespace
@@ -752,7 +752,7 @@ sub run
 
         # Incr backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
 
         # Add tablespace 1
         $oHostDbMaster->manifestTablespaceCreate(\%oManifest, 1);
@@ -777,7 +777,7 @@ sub run
 
         # Resume Incr Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
 
         # Create resumable backup from last backup
         $strResumePath =
@@ -818,7 +818,7 @@ sub run
 
         # Resume Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_DIFF;
+        $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
         # Drop tablespace 11
         $oHostDbMaster->manifestTablespaceDrop(\%oManifest, 11);
@@ -836,7 +836,7 @@ sub run
 
         # Resume Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_DIFF;
+        $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
         # Create resumable backup from last backup
         $strResumePath = storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}");
@@ -885,7 +885,7 @@ sub run
 
         # Incr Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         $oHostDbMaster->manifestFileCreate(
@@ -907,7 +907,7 @@ sub run
 
         # Incr Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
@@ -945,7 +945,7 @@ sub run
 
         # Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_DIFF;
+        $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
 
         $strBackup = $oHostBackup->backup(
@@ -958,11 +958,11 @@ sub run
         # as removed in the log because it had not changed since the last backup so it will only be referenced.  This test also
         # checks that everything works when there are no jobs to run.
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_INCR;
+        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
         # Enable compression to ensure a warning is raised
-        $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
+        $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_COMPRESS) => 'y'}});
 
         my $oBackupExecute = $oHostBackup->backupBegin(
             $strType, 'remove files - but won\'t affect manifest',
@@ -980,7 +980,7 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup, true);
 
-        $strType = BACKUP_TYPE_DIFF;
+        $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
         $oHostDbMaster->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
@@ -992,7 +992,7 @@ sub run
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
         {
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {cfgOptionName(CFGOPT_HARDLINK) => 'y'}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_HARDLINK) => 'y'}});
         }
 
         $oBackupExecute = $oHostBackup->backupBegin(
@@ -1010,7 +1010,7 @@ sub run
 
         # Full Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_FULL;
+        $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
 
         # Now the compression and hardlink changes will take effect
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
@@ -1035,7 +1035,7 @@ sub run
         # Backup Info
         #-----------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->info('normal output', {strStanza => $oHostDbMaster->stanza()});
-        $oHostBackup->info('normal output', {strStanza => $oHostBackup->stanza(), strOutput => INFO_OUTPUT_JSON});
+        $oHostBackup->info('normal output', {strStanza => $oHostBackup->stanza(), strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
 
         # Call expire
         #-----------------------------------------------------------------------------------------------------------------------
@@ -1043,7 +1043,7 @@ sub run
 
         # Diff Backup
         #-----------------------------------------------------------------------------------------------------------------------
-        $strType = BACKUP_TYPE_DIFF;
+        $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
 
         $oHostDbMaster->manifestReference(\%oManifest, $strFullBackup);
 
@@ -1139,9 +1139,9 @@ sub run
         storageRepo()->pathCreate(storageRepo()->pathGet('backup/db_empty'), {strMode => '0770'});
 
         $oHostBackup->info('normal output');
-        $oHostDbMaster->info('normal output', {strOutput => INFO_OUTPUT_JSON});
+        $oHostDbMaster->info('normal output', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
         $oHostBackup->info('bogus stanza', {strStanza => BOGUS});
-        $oHostDbMaster->info('bogus stanza', {strStanza => BOGUS, strOutput => INFO_OUTPUT_JSON});
+        $oHostDbMaster->info('bogus stanza', {strStanza => BOGUS, strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
 
         # Dump out history path at the end to verify all history files are being recorded.  This test is only performed locally
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the

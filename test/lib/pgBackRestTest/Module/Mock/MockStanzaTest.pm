@@ -299,7 +299,7 @@ sub run
         $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
 
         # Confirm info command displays the JSON correctly
-        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
+        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
     }
     }
 }

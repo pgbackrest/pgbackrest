@@ -11,6 +11,7 @@ use English '-no_match_vars';
 use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
+use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
@@ -34,13 +35,14 @@ use constant PARAM_ORDER                                            => 'param-or
 use constant SWITCH_ORDER                                           => 'switch-order';
 use constant VALUE_MAP                                              => 'value-map';
 
-use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE                           => CFGBLDDEF_RULE_ALLOW_LIST . '-value';
-use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL                     => CFGBLDDEF_RULE_ALLOW_LIST_VALUE . '-total';
-use constant CFGBLDDEF_RULE_ALLOW_RANGE_MIN                            => CFGBLDDEF_RULE_ALLOW_RANGE . '-min';
-use constant CFGBLDDEF_RULE_ALLOW_RANGE_MAX                            => CFGBLDDEF_RULE_ALLOW_RANGE . '-max';
-use constant CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL                         => CFGBLDDEF_RULE_DEPEND_VALUE . '-total';
-use constant CFGBLDDEF_RULE_NAME                                       => 'name';
-use constant CFGBLDDEF_RULE_VALID                                      => 'valid';
+use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE                        => CFGBLDDEF_RULE_ALLOW_LIST . '-value';
+use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL                  => CFGBLDDEF_RULE_ALLOW_LIST_VALUE . '-total';
+use constant CFGBLDDEF_RULE_ALLOW_RANGE_MIN                         => CFGBLDDEF_RULE_ALLOW_RANGE . '-min';
+use constant CFGBLDDEF_RULE_ALLOW_RANGE_MAX                         => CFGBLDDEF_RULE_ALLOW_RANGE . '-max';
+use constant CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL                      => CFGBLDDEF_RULE_DEPEND_VALUE . '-total';
+use constant CFGBLDDEF_RULE_NAME                                    => 'name';
+use constant CFGBLDDEF_RULE_VALID                                   => 'valid';
+use constant PARAM_SUMMARY                                          => 'summary';
 
 use constant PARAM_FILE                                             => 'file';
 
@@ -138,6 +140,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'AllowListValue',
+        &PARAM_SUMMARY => 'get value from allowed list',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_VALUE_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID, PARAM_VALUE_ID],
@@ -147,6 +150,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'AllowListValueTotal',
+        &PARAM_SUMMARY => 'total number of values allowed',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -156,6 +160,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'AllowRange',
+        &PARAM_SUMMARY => 'is the option constrained to a range?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -165,6 +170,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'AllowRangeMin',
+        &PARAM_SUMMARY => 'minimum value allowed (if the option is constrained to a range)',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_DOUBLE,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -174,6 +180,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'AllowRangeMax',
+        &PARAM_SUMMARY => 'maximum value allowed (if the option is constrained to a range)',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_DOUBLE,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -184,6 +191,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Default',
+        &PARAM_SUMMARY => 'default value',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -193,6 +201,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG,
         &CFGBLDDEF_RULE_NAME => 'IndexTotal',
+        &PARAM_SUMMARY => 'total index values allowed',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -202,6 +211,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'DependOption',
+        &PARAM_SUMMARY => 'name of the option that this option depends in order to be set',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -212,6 +222,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'DependValue',
+        &PARAM_SUMMARY => 'the depend option must have one of these values before this option is set',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_VALUE_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID, PARAM_VALUE_ID],
@@ -221,6 +232,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'DependValueTotal',
+        &PARAM_SUMMARY => 'total depend values for this option',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -230,6 +242,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Hint',
+        &PARAM_SUMMARY => 'some clue as to what value the user should provide when the option is missing but required',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -239,6 +252,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'NameAlt',
+        &PARAM_SUMMARY => 'alternate name for the option primarily used for deprecated names',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -248,6 +262,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Negate',
+        &PARAM_SUMMARY => 'can the boolean option be negated?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -257,6 +272,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Prefix',
+        &PARAM_SUMMARY => 'prefix when the option has an index > 1 (e.g. "db")',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -266,6 +282,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Required',
+        &PARAM_SUMMARY => 'is the option required?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -275,6 +292,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Section',
+        &PARAM_SUMMARY => 'section that the option belongs in, NULL means command-line only',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -284,6 +302,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Secure',
+        &PARAM_SUMMARY => 'secure options can never be passed on the commmand-line',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -293,6 +312,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Type',
+        &PARAM_SUMMARY => 'secure options can never be passed on the commmand-line',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -303,6 +323,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'Valid',
+        &PARAM_SUMMARY => 'is the option valid for this command?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
@@ -312,6 +333,7 @@ my $rhOptionRuleParam =
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
         &CFGBLDDEF_RULE_NAME => 'ValueHash',
+        &PARAM_SUMMARY => 'is the option a true hash or just a list of keys?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &SWITCH_ORDER => [PARAM_CFGBLDOPT_ID],
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
@@ -559,7 +581,7 @@ sub buildConfig
         my $strPrefix = 'cfgOptionRule';
 
         $strConfigFunction .= "\n" .
-            cgenFunction($strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, undef, undef,
+            cgenFunction($strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&PARAM_SUMMARY}, undef,
                 cgenSwitchBuild(
                     $strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
                     $rhOptionRule->{matrix}, $rhOptionRule->{&PARAM_ORDER}, $rhOptionRule->{&SWITCH_ORDER}, $rhLabelMap,
@@ -588,7 +610,7 @@ sub buildConfig
         my $strPrefix = 'cfgOption';
 
         $strConfigFunction .= "\n" .
-            cgenFunction($strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, undef, undef,
+            cgenFunction($strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&PARAM_SUMMARY}, undef,
                 cgenSwitchBuild(
                     $strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
                     $rhOptionRule->{matrix}, $rhOptionRule->{&PARAM_ORDER}, $rhOptionRule->{&SWITCH_ORDER}, $rhLabelMap,
@@ -596,76 +618,6 @@ sub buildConfig
     }
 
     $rhBuild->{&FILE_CONFIG}{&BLD_C}{&BLD_SOURCE} = $strConfigFunction;
-
-    ####################################################################################################################################
-    # Create Help Functions
-    ####################################################################################################################################
-    # !!! THIS IS NOT WORKING BECAUSE DOCCONFIG BLOWS UP ON INDEXED OPTIONS.  NEED TO ADD INDEX_TOTAL AND CHANGE WHAT IS NOW INDEX TO
-    # BE THE INDEX FOR THE CURRENT OPTION (RIGHT NOW IT IS TOTAL)
-    # OR MAYBE JUST CREATE A DIFFERENT FUNCTION TO RETURN INDEXED OPTION HASH
-
-    # use lib dirname($0) . '/../doc/lib';
-    #
-    # use BackRestDoc::Common::Doc;
-    # use BackRestDoc::Common::DocConfig;
-    #
-    # my $oDocConfig = new BackRestDoc::Common::DocConfig(
-    #     new BackRestDoc::Common::Doc(dirname($0) . '/../doc/xml/reference.xml', dirname($0) . '/../doc/xml/dtd'));
-
-    # !!! IMPLEMENT THIS OR REMOVE IT !!!
-    # use constant HELP_COMMAND                                           => 'helpCommand';
-    # use constant HELP_COMMAND_DESCRIPTION                               => HELP_COMMAND . 'Description';
-    # use constant HELP_COMMAND_SUMMARY                                   => HELP_COMMAND . 'Summary';
-    #
-    # use constant HELP_COMMAND_OPTION                                    => HELP_COMMAND . 'Option';
-    # use constant HELP_COMMAND_CFGBLDOPT_DESCRIPTION                        => HELP_COMMAND_OPTION . 'Description';
-    # use constant HELP_COMMAND_CFGBLDOPT_SUMMARY                            => HELP_COMMAND_OPTION . 'Summary';
-    # use constant HELP_COMMAND_CFGBLDOPT_TOTAL                              => HELP_COMMAND_OPTION . 'Total';
-    #
-    # my $rhConfigHelpParam =
-    # {
-    #     &HELP_COMMAND_DESCRIPTION =>
-    #     {
-    #         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-    #         &SWITCH_ORDER => [PARAM_COMMAND_ID],
-    #         &PARAM_ORDER => [PARAM_COMMAND_ID],
-    #     },
-    #
-    #     &HELP_COMMAND_SUMMARY =>
-    #     {
-    #         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-    #         &SWITCH_ORDER => [PARAM_COMMAND_ID],
-    #         &PARAM_ORDER => [PARAM_COMMAND_ID],
-    #     },
-    #
-    #     &HELP_COMMAND_OPTION =>
-    #     {
-    #         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-    #         &SWITCH_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    #         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
-    #     },
-    #
-    #     &HELP_COMMAND_CFGBLDOPT_DESCRIPTION =>
-    #     {
-    #         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-    #         &SWITCH_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    #         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
-    #     },
-    #
-    #     &HELP_COMMAND_CFGBLDOPT_SUMMARY =>
-    #     {
-    #         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-    #         &SWITCH_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    #         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID, PARAM_COMMAND_ID],
-    #     },
-    #
-    #     &HELP_COMMAND_CFGBLDOPT_TOTAL =>
-    #     {
-    #         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
-    #         &SWITCH_ORDER => [PARAM_COMMAND_ID],
-    #         &PARAM_ORDER => [PARAM_COMMAND_ID],
-    #     },
-    # };
 
     return $rhBuild;
 }

@@ -55,7 +55,7 @@ sub initStanzaOption
 
     if (defined($oHostS3))
     {
-        $self->optionTestSet(CFGOPT_REPO_TYPE, REPO_TYPE_S3);
+        $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
         $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
         $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
         $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);
@@ -96,84 +96,84 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Nothing to expire';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
 
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_FULL, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire oldest full backup, archive expire falls on segment major boundary';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_FULL, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire oldest full backup';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 256);
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_FULL, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 256);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_FULL, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire oldest diff backup, archive expire does not fall on major segment boundary';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, undef, 0);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, undef, 0);
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, undef, 0);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, undef, 0);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire oldest diff backup (cascade to incr)';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire archive based on newest incr backup';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_INCR, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_INCR, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire diff treating full as diff';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 2, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 2, 1, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire diff with retention-archive with warning retention-diff not set';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_DIFF, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire full with retention-archive with warning retention-full not set';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_FULL, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_FULL, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire no archive with warning since retention-archive not set for INCR';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 1, 1, BACKUP_TYPE_INCR, undef, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_INCR, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire no archive with warning since neither retention-archive nor retention-diff is set';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_DIFF, undef, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_DIFF, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Use oldest full backup for archive retention';
-        $oExpireTest->process($self->stanza(), 10, 10, BACKUP_TYPE_FULL, 10, $strDescription);
+        $oExpireTest->process($self->stanza(), 10, 10, CFGOPTVAL_BACKUP_TYPE_FULL, 10, $strDescription);
     }
 
     if ($self->begin("Expire::stanzaUpgrade"))
@@ -193,46 +193,46 @@ sub run
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Create backups in current db version';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), undef, undef, BACKUP_TYPE_DIFF, undef, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_DIFF, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Upgrade stanza and expire only earliest db backup and archive';
 
         $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_93);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 3, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY, 246);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 3, undef, CFGOPTVAL_BACKUP_TYPE_FULL, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Upgrade the stanza, create full back - earliest db orphaned archive removed and earliest full backup ' .
             'and archive in previous db version removed';
 
         $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_95);
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 2, undef, CFGOPTVAL_BACKUP_TYPE_FULL, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire all archive last full backup through pitr';
 
-        $oExpireTest->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
-        $oExpireTest->process($self->stanza(), 3, 1, BACKUP_TYPE_DIFF, 1, $strDescription);
+        $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
+        $oExpireTest->process($self->stanza(), 3, 1, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $strDescription = 'Expire all archive except for the current database';
 
-        $oExpireTest->process($self->stanza(), 2, undef, BACKUP_TYPE_FULL, undef, $strDescription);
+        $oExpireTest->process($self->stanza(), 2, undef, CFGOPTVAL_BACKUP_TYPE_FULL, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
         $self->optionTestClear(CFGOPT_DB_PATH);
         $self->optionTestClear(CFGOPT_ONLINE);
         $self->optionTestSet(CFGOPT_RETENTION_FULL, 1);
         $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
-        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
         $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE, 1);
         $self->configTestLoad(CFGCMD_EXPIRE);
 

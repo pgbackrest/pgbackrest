@@ -36,24 +36,24 @@ sub run
     if ($self->begin('Config::configFileValidate()'))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_DB_PORT} = 1234;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_DB_PORT} = 1234;
 
         $self->testResult(sub {pgBackRest::Config::Config::configFileValidate($oConfig)}, false,
             'valid option ' . &CFGBLDOPT_DB_PORT . ' under invalid section',
             {strLogExpect =>
                 "WARN: $strConfigFile valid option '" . &CFGBLDOPT_DB_PORT . "' is a stanza section option and is not" .
-                    " valid in section " . CONFIG_SECTION_GLOBAL . "\n" .
+                    " valid in section " . CFGDEF_SECTION_GLOBAL . "\n" .
                     "HINT: global options can be specified in global or stanza sections but not visa-versa"});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CFGBLDCMD_BACKUP}{&CFGBLDOPT_DB_PORT} = 1234;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . &CFGBLDCMD_BACKUP}{&CFGBLDOPT_DB_PORT} = 1234;
 
         $self->testResult(sub {pgBackRest::Config::Config::configFileValidate($oConfig)}, false,
             'valid option ' . &CFGBLDOPT_DB_PORT . ' for command ' . &CFGBLDCMD_BACKUP . ' under invalid global section',
             {strLogExpect =>
                 "WARN: $strConfigFile valid option '" . &CFGBLDOPT_DB_PORT . "' is a stanza section option and is not" .
-                " valid in section " . CONFIG_SECTION_GLOBAL . "\n" .
+                " valid in section " . CFGDEF_SECTION_GLOBAL . "\n" .
                 "HINT: global options can be specified in global or stanza sections but not visa-versa"});
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -68,40 +68,40 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS} = BOGUS;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&BOGUS} = BOGUS;
 
         $self->testResult(
             sub {pgBackRest::Config::Config::configFileValidate($oConfig)}, false,
-            'invalid option ' . $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS},
+            'invalid option ' . $$oConfig{&CFGDEF_SECTION_GLOBAL}{&BOGUS},
             {strLogExpect => "WARN: $strConfigFile file contains invalid option '" . BOGUS . "'"});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{'thread-max'} = 3;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{'thread-max'} = 3;
 
         $self->testResult(sub {pgBackRest::Config::Config::configFileValidate($oConfig)}, true, 'valid alt name found');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} =
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} =
             cfgOptionRuleDefault(CFGCMD_ARCHIVE_PUSH, CFGOPT_LOG_LEVEL_STDERR);
         $$oConfig{$self->stanza()}{&CFGBLDOPT_DB_PATH} = '/db';
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CFGBLDCMD_ARCHIVE_PUSH}{&CFGBLDOPT_PROCESS_MAX} = 2;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . &CFGBLDCMD_ARCHIVE_PUSH}{&CFGBLDOPT_PROCESS_MAX} = 2;
 
         $self->testResult(sub {pgBackRest::Config::Config::configFileValidate($oConfig)}, true, 'valid config file');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} =
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR} =
             cfgOptionRuleDefault(CFGCMD_ARCHIVE_PUSH, CFGOPT_LOG_LEVEL_STDERR);
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . &CFGBLDCMD_ARCHIVE_PUSH}{&CFGBLDOPT_PROCESS_MAX} = 2;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . &CFGBLDCMD_ARCHIVE_PUSH}{&CFGBLDOPT_PROCESS_MAX} = 2;
         $$oConfig{'unusual-section^name!:' . &CFGBLDCMD_CHECK}{&CFGBLDOPT_DB_PATH} = '/db';
 
         $self->testResult(sub {pgBackRest::Config::Config::configFileValidate($oConfig)}, true, 'valid unusual section name');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&BOGUS} = BOGUS;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&BOGUS} = BOGUS;
 
         # Change command to indicate remote
         cfgCommandSet(CFGCMD_REMOTE);

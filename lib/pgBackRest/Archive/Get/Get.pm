@@ -163,7 +163,7 @@ sub getArchiveId
 
     if (!isRepoLocal())
     {
-        $strArchiveId = protocolGet(BACKUP)->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
+        $strArchiveId = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
     }
     else
     {

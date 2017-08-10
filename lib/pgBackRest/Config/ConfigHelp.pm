@@ -383,7 +383,7 @@ sub configHelpOptionFind
         }
 
         if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CONFIG_SECTION_STANZA &&
+             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA &&
              $strSection ne CONFIG_SECTION_EXPIRE) ||
             $strSection eq $strCommand)
         {

@@ -420,7 +420,7 @@ sub restore
         (defined($bForce) && $bForce ? ' --force' : '') .
         ($strBackup ne cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
-        (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
+        (defined($strType) && $strType ne CFGOPTVAL_RESTORE_TYPE_DEFAULT ? " --type=${strType}" : '') .
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
         (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
         (defined($bTargetExclusive) && $bTargetExclusive ? ' --target-exclusive' : '') .

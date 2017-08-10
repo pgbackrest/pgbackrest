@@ -87,7 +87,8 @@ local $EVAL_ERROR = undef; eval
         cfgOptionSet(CFGOPT_LOG_LEVEL_STDERR, PROTOCOL, true);
         logLevelSet(OFF, OFF, cfgOption(CFGOPT_LOG_LEVEL_STDERR));
 
-        if (cfgOptionTest(CFGOPT_TYPE, BACKUP) && !cfgOptionTest(CFGOPT_REPO_TYPE, REPO_TYPE_S3) && !-e cfgOption(CFGOPT_REPO_PATH))
+        if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) &&
+            !-e cfgOption(CFGOPT_REPO_PATH))
         {
             confess &log(ERROR, 'repo-path \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }
@@ -163,7 +164,7 @@ local $EVAL_ERROR = undef; eval
     require pgBackRest::Protocol::Storage::Helper;
     pgBackRest::Protocol::Storage::Helper->import();
 
-    if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, REPO_TYPE_S3) && !storageRepo()->pathExists(''))
+    if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) && !storageRepo()->pathExists(''))
     {
         confess &log(ERROR, 'repo-path \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
     }

@@ -66,7 +66,8 @@ sub storageDb
         }
         else
         {
-            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Protocol::Storage::Remote(protocolGet(DB, $iRemoteIdx));
+            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Protocol::Storage::Remote(
+                protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $iRemoteIdx));
         }
     }
 
@@ -185,7 +186,7 @@ sub storageRepo
             # Create the driver
             my $oDriver;
 
-            if (cfgOptionTest(CFGOPT_REPO_TYPE, REPO_TYPE_S3))
+            if (cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3))
             {
                 require pgBackRest::Storage::S3::Driver;
 
@@ -196,7 +197,7 @@ sub storageRepo
                         strCaPath => cfgOption(CFGOPT_REPO_S3_CA_PATH, false),
                         strCaFile => cfgOption(CFGOPT_REPO_S3_CA_FILE, false), lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
             }
-            elsif (cfgOptionTest(CFGOPT_REPO_TYPE, REPO_TYPE_CIFS))
+            elsif (cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_CIFS))
             {
                 require pgBackRest::Storage::Cifs::Driver;
 
@@ -215,7 +216,8 @@ sub storageRepo
         else
         {
             # Create remote storage
-            $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Protocol::Storage::Remote(protocolGet(BACKUP));
+            $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Protocol::Storage::Remote(
+                protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP));
         }
     }
 
