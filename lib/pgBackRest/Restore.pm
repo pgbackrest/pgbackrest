@@ -41,7 +41,7 @@ sub new
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize protocol
-    $self->{oProtocol} = !isRepoLocal() ? protocolGet(BACKUP) : undef;
+    $self->{oProtocol} = !isRepoLocal() ? protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP) : undef;
 
     # Initialize variables
     $self->{strDbClusterPath} = cfgOption(CFGOPT_DB_PATH);
@@ -900,8 +900,8 @@ sub recovery
     # See if recovery.conf already exists
     my $bRecoveryConfExists = storageDb()->exists($strRecoveryConf);
 
-    # If RECOVERY_TYPE_PRESERVE then warn if recovery.conf does not exist and return
-    if (cfgOptionTest(CFGOPT_TYPE, RECOVERY_TYPE_PRESERVE))
+    # If CFGOPTVAL_RESTORE_TYPE_PRESERVE then warn if recovery.conf does not exist and return
+    if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_PRESERVE))
     {
         if (!$bRecoveryConfExists)
         {
@@ -916,8 +916,8 @@ sub recovery
             storageDb()->remove($strRecoveryConf);
         }
 
-        # If RECOVERY_TYPE_NONE then return
-        if (!cfgOptionTest(CFGOPT_TYPE, RECOVERY_TYPE_NONE))
+        # If CFGOPTVAL_RESTORE_TYPE_NONE then return
+        if (!cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_NONE))
         {
             # Write recovery options read from the configuration file
             my $strRecovery = '';
@@ -947,13 +947,13 @@ sub recovery
                 $strRecovery .=  "restore_command = '" . cfgCommandWrite(CFGCMD_ARCHIVE_GET) . " %f \"%p\"'\n";
             }
 
-            # If type is RECOVERY_TYPE_IMMEDIATE
-            if (cfgOptionTest(CFGOPT_TYPE, RECOVERY_TYPE_IMMEDIATE))
+            # If type is CFGOPTVAL_RESTORE_TYPE_IMMEDIATE
+            if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_IMMEDIATE))
             {
-                $strRecovery .= "recovery_target = '" . RECOVERY_TYPE_IMMEDIATE . "'\n";
+                $strRecovery .= "recovery_target = '" . CFGOPTVAL_RESTORE_TYPE_IMMEDIATE . "'\n";
             }
-            # If type is not RECOVERY_TYPE_DEFAULT write target options
-            elsif (!cfgOptionTest(CFGOPT_TYPE, RECOVERY_TYPE_DEFAULT))
+            # If type is not CFGOPTVAL_RESTORE_TYPE_DEFAULT write target options
+            elsif (!cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_DEFAULT))
             {
                 # Write the recovery target
                 $strRecovery .= "recovery_target_" . cfgOption(CFGOPT_TYPE) . " = '" . cfgOption(CFGOPT_TARGET) . "'\n";
@@ -1070,7 +1070,7 @@ sub process
     # If set to restore is latest then get the actual set
     if ($self->{strBackupSet} eq cfgOptionDefault(CFGOPT_SET))
     {
-        $self->{strBackupSet} = $oBackupInfo->last(BACKUP_TYPE_INCR);
+        $self->{strBackupSet} = $oBackupInfo->last(CFGOPTVAL_BACKUP_TYPE_INCR);
 
         if (!defined($self->{strBackupSet}))
         {
@@ -1193,7 +1193,7 @@ sub process
     }
 
     # Initialize the restore process
-    my $oRestoreProcess = new pgBackRest::Protocol::Local::Process(BACKUP);
+    my $oRestoreProcess = new pgBackRest::Protocol::Local::Process(CFGOPTVAL_LOCAL_TYPE_BACKUP);
     $oRestoreProcess->hostAdd(1, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Variables used for parallel copy

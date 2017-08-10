@@ -69,12 +69,12 @@ sub init
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->init');
 
     # Create objects
-    my $oStorage = cfgOptionTest(CFGOPT_TYPE, DB) ? storageDb() : storageRepo();
+    my $oStorage = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? storageDb() : storageRepo();
 
-    my $oArchiveGet = cfgOptionTest(CFGOPT_TYPE, BACKUP) ? new pgBackRest::Archive::Get::Get() : undef;
-    my $oCheck = cfgOptionTest(CFGOPT_TYPE, BACKUP) ? new pgBackRest::Check::Check() : undef;
-    my $oInfo = cfgOptionTest(CFGOPT_TYPE, BACKUP) ? new pgBackRest::Info() : undef;
-    my $oDb = cfgOptionTest(CFGOPT_TYPE, DB) ? new pgBackRest::Db() : undef;
+    my $oArchiveGet = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Archive::Get::Get() : undef;
+    my $oCheck = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Check::Check() : undef;
+    my $oInfo = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Info() : undef;
+    my $oDb = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? new pgBackRest::Db() : undef;
 
     # Create anonymous subs for each command
     my $hCommandMap =

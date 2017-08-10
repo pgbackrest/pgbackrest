@@ -205,7 +205,7 @@ sub backupInfoCheck
 
     if (!isRepoLocal())
     {
-        $iDbHistoryId = protocolGet(BACKUP)->cmdExecute(
+        $iDbHistoryId = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
             OP_CHECK_BACKUP_INFO_CHECK, [$strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId]);
     }
     else

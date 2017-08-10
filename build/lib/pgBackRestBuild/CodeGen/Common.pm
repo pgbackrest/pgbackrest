@@ -40,15 +40,18 @@ sub cgenFunction
     my $strDescription = shift;
     my $strSource = shift;
 
-    # !!! Summary should be defined for all functions
-    if (defined($strSummary))
+    # Summary should always be defined
+    if (!defined($strSummary))
     {
-        my $iLenMax = 132 - 3 - length($strName);
+        confess &log(ASSERT, "${strName} must have a summary");
+    }
 
-        if (length($strSummary) > $iLenMax)
-        {
-            &log(ASSERT, "summary for ${strName} must be <= ${iLenMax} characters");
-        }
+    # Make sure summary will fit on a single line
+    my $iLenMax = 132 - 3 - length($strName);
+
+    if (length($strSummary) > $iLenMax)
+    {
+        &log(ASSERT, "summary for ${strName} must be <= ${iLenMax} characters");
     }
 
     my $strFunction =

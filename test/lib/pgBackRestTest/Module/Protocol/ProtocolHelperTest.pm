@@ -89,8 +89,9 @@ sub run
         $self->optionTestSet(CFGOPT_BACKUP_USER, $self->pgUser());
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testResult(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, "[object]",
-        'ssh default port');
+        $self->testResult(
+            sub {protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, "[object]",
+            'ssh default port');
 
         # Destroy protocol object
         protocolDestroy();
@@ -98,8 +99,9 @@ sub run
         $self->optionTestSet(CFGOPT_BACKUP_SSH_PORT, 25);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testException(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, ERROR_FILE_READ,
-        "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25:");
+        $self->testException(
+            sub {protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, ERROR_FILE_READ,
+            "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25:");
 
         # Destroy protocol object
         protocolDestroy();

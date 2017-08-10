@@ -148,7 +148,7 @@ sub run
 
         # Output json option with no stanza defined
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionTestSet(CFGOPT_OUTPUT, INFO_OUTPUT_JSON);
+        $self->optionTestSet(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_JSON);
         $self->configTestLoad(CFGCMD_INFO);
 
         $self->testResult(sub {$oInfo->process()}, 0, 'json option');
@@ -267,7 +267,7 @@ sub run
 
         # Create a backup and list backup for just one stanza
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
@@ -298,8 +298,8 @@ sub run
 
         $self->configTestLoad(CFGCMD_INFO);
 
-        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 1, 1);
-        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 1, 1);
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 1, 1);
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 1, 1);
 
         # Remove the 9.4-1 path for condition test coverage
         storageTest()->remove($self->{strArchivePath} . "/9.4-1/", {bRecurse => true});

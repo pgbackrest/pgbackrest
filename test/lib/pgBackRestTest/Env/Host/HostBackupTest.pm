@@ -251,7 +251,7 @@ sub backupEnd
     }
 
     # Make sure tablespace links are correct
-    if (($strType eq BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
+    if (($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
     {
         my $hTablespaceManifest = storageRepo()->manifest(
             STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
@@ -315,7 +315,7 @@ sub backupEnd
     my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
     my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq REPO_TYPE_POSIX) && $self->hasLink())
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq CFGOPTVAL_REPO_TYPE_POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
@@ -958,45 +958,45 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DEBUG);
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = lc(TRACE);
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_STDERR)} = lc(OFF);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DEBUG);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = lc(TRACE);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_STDERR)} = lc(OFF);
 
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
 
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
 
     if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';
     }
 
     if ($self->isHostBackup())
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_PATH)} = $self->repoPath();
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_PATH)} = $self->repoPath();
 
         # S3 settings
         if ($oParam->{bS3})
         {
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_TYPE)} = REPO_TYPE_S3;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY)} = HOST_S3_ACCESS_KEY;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY_SECRET)} = HOST_S3_ACCESS_SECRET_KEY;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_BUCKET)} = HOST_S3_BUCKET;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_ENDPOINT)} = HOST_S3_ENDPOINT;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_REGION)} = HOST_S3_REGION;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_VERIFY_SSL)} = 'n';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_TYPE)} = CFGOPTVAL_REPO_TYPE_S3;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY)} = HOST_S3_ACCESS_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY_SECRET)} = HOST_S3_ACCESS_SECRET_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_BUCKET)} = HOST_S3_BUCKET;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_ENDPOINT)} = HOST_S3_ENDPOINT;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_REGION)} = HOST_S3_REGION;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_VERIFY_SSL)} = 'n';
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
             $self->{bHardLink} = true;
-            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_HARDLINK)} = 'y';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_HARDLINK)} = 'y';
         }
 
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_ARCHIVE_COPY)} = 'y';
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_START_FAST)} = 'y';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_ARCHIVE_COPY)} = 'y';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_START_FAST)} = 'y';
     }
 
     # Host specific options
@@ -1064,22 +1064,22 @@ sub configCreate
 
         if ($bArchiveAsync)
         {
-            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' .
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' .
                 cfgCommandName(CFGCMD_ARCHIVE_PUSH)}{cfgOptionName(CFGOPT_ARCHIVE_ASYNC)} = 'y';
         }
 
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_SPOOL_PATH)} = $self->spoolPath();
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_SPOOL_PATH)} = $self->spoolPath();
 
         # If the the backup host is remote
         if (!$self->isHostBackup())
         {
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_HOST)} = $oHostBackup->nameGet();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_USER)} = $oHostBackup->userGet();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CMD)} = $oHostBackup->backrestExe();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CONFIG)} = $oHostBackup->backrestConfig();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_HOST)} = $oHostBackup->nameGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_USER)} = $oHostBackup->userGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CMD)} = $oHostBackup->backrestExe();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CONFIG)} = $oHostBackup->backrestConfig();
 
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
         }
     }
 

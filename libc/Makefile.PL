@@ -26,7 +26,7 @@ my $oStorage = new pgBackRest::Storage::Local(
     $strBuildPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
 
 ####################################################################################################################################
-# Build C and Perl files required for build
+# Build C files required for the library
 ####################################################################################################################################
 use pgBackRestBuild::Build;
 
@@ -109,6 +109,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build::Common;
+use pgBackRestBuild::Config::Data;
 
 use constant LIB_NAME                                               => 'LibC';
 
@@ -164,15 +165,71 @@ sub formatText
         '# Library version' . ($bDev ? " (.999 indicates development version)" : '') . "\n" .
         "our \$VERSION = '${strVersion}';\n" .
         "\n" .
-        "sub libCVersion {return \$VERSION};\n" .
-        "\n" .
-        "# Export function and constants\n" .
+        "sub libCVersion {return \$VERSION};\n";
+
+    # Generate constants for options that have a list of strings as allowed values
+    my $bFirst = true;
+    my $rhOptionRule = cfgbldOptionRuleHelpGet();
+
+    $strLibC .=
+        "\n# Configuration option value constants\n" .
+        "use constant\n" .
+        "{\n";
+
+    foreach my $strOption (sort(keys(%{$rhOptionRule})))
+    {
+        my $rhOption = $rhOptionRule->{$strOption};
+
+        next if $rhOption->{&CFGBLDDEF_RULE_TYPE} ne CFGBLDDEF_TYPE_STRING;
+        next if $strOption =~ /^log-level-/;
+
+        if (defined($rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}))
+        {
+            $strLibC .= $bFirst ? '' : "\n";
+            $bFirst = false;
+
+            foreach my $strValue (sort(keys(%{$rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}})))
+            {
+                my $strConstant = 'CFGOPTVAL_' . uc("${strOption}_${strValue}");
+                $strConstant =~ s/\-/\_/g;
+
+                $strLibC .= "    ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> '${strValue}',\n";
+                push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+            }
+        }
+
+        foreach my $strCommand (sort(keys(%{$rhOption->{&CFGBLDDEF_RULE_COMMAND}})))
+        {
+            my $rhCommand = $rhOption->{&CFGBLDDEF_RULE_COMMAND}{$strCommand};
+
+            if (defined($rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}))
+            {
+                $strLibC .= $bFirst ? '' : "\n";
+                $bFirst = false;
+
+                foreach my $strValue (sort(keys(%{$rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}})))
+                {
+                    my $strConstant = 'CFGOPTVAL_' . uc("${strCommand}_${strOption}_${strValue}");
+                    $strConstant =~ s/\-/\_/g;
+
+                    $strLibC .= "    ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> '${strValue}',\n";
+                    push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+                }
+            }
+        }
+    }
+
+    $strLibC .=
+        "};\n";
+
+    # Generate export sections
+    $bFirst = true;
+
+    $strLibC .=
+        "\n# Export function and constants\n" .
         "our \%EXPORT_TAGS =\n" .
         "(\n";
 
-    my $bFirst = true;
-
-    # Generate export sections
     foreach my $strPath (sort(keys(%{$rhBuild})))
     {
         foreach my $strFile (sort(keys(%{$rhBuild->{$strPath}})))

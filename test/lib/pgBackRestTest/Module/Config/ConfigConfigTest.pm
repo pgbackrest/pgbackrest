@@ -100,7 +100,7 @@ sub run
     if ($self->begin('load from config global command section - option thread-max'))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{'thread-max'} = 2;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{'thread-max'} = 2;
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -114,7 +114,7 @@ sub run
     if ($self->begin('load from config global section - option ' . CFGBLDOPT_PROCESS_MAX))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_PROCESS_MAX} = 5;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_PROCESS_MAX} = 5;
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -141,7 +141,7 @@ sub run
     if ($self->begin('command-line override - option ' . CFGBLDOPT_PROCESS_MAX))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_PROCESS_MAX} = 9;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_PROCESS_MAX} = 9;
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -156,7 +156,7 @@ sub run
     if ($self->begin('invalid boolean - option ' . CFGBLDOPT_HARDLINK))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{&CFGBLDOPT_HARDLINK} = 'Y';
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{&CFGBLDOPT_HARDLINK} = 'Y';
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -169,7 +169,7 @@ sub run
     if ($self->begin('invalid value - option ' . CFGBLDOPT_LOG_LEVEL_CONSOLE))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_CONSOLE} = BOGUS;
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_CONSOLE} = BOGUS;
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -182,7 +182,7 @@ sub run
     if ($self->begin('valid value - option ' . CFGBLDOPT_LOG_LEVEL_CONSOLE))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_CONSOLE} = lc(INFO);
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_CONSOLE} = lc(INFO);
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -216,7 +216,7 @@ sub run
     if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' option ' . CFGBLDOPT_COMPRESS))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{&CFGBLDOPT_COMPRESS} = 'n';
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{&CFGBLDOPT_COMPRESS} = 'n';
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -230,7 +230,7 @@ sub run
     if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' global option ' . CFGBLDOPT_RECOVERY_OPTION . ' error'))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_RESTORE)}{&CFGBLDOPT_RECOVERY_OPTION} = 'bogus=';
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_RESTORE)}{&CFGBLDOPT_RECOVERY_OPTION} = 'bogus=';
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -243,7 +243,7 @@ sub run
     if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' global option ' . CFGBLDOPT_RECOVERY_OPTION . ' error'))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_RESTORE)}{&CFGBLDOPT_RECOVERY_OPTION} = '=bogus';
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_RESTORE)}{&CFGBLDOPT_RECOVERY_OPTION} = '=bogus';
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -256,7 +256,7 @@ sub run
     if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' global option ' . CFGBLDOPT_RECOVERY_OPTION))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_RESTORE)}{&CFGBLDOPT_RECOVERY_OPTION} =
+        $$oConfig{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_RESTORE)}{&CFGBLDOPT_RECOVERY_OPTION} =
             'archive-command=/path/to/pgbackrest';
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
@@ -327,7 +327,7 @@ sub run
     if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' option ' . CFGBLDOPT_REPO_PATH))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_REPO_PATH} = '/repo';
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_REPO_PATH} = '/repo';
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -341,7 +341,7 @@ sub run
     if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' option ' . CFGBLDOPT_REPO_PATH . ' multiple times'))
     {
         $oConfig = {};
-        $$oConfig{&CONFIG_SECTION_GLOBAL}{&CFGBLDOPT_REPO_PATH} = ['/repo', '/repo2'];
+        $$oConfig{&CFGDEF_SECTION_GLOBAL}{&CFGBLDOPT_REPO_PATH} = ['/repo', '/repo2'];
         storageTest()->put($strConfigFile, iniRender($oConfig, true));
 
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());

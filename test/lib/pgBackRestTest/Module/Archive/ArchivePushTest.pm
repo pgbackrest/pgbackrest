@@ -188,7 +188,7 @@ sub run
         $self->optionTestSet(CFGOPT_BACKUP_USER, $self->pgUser());
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()});
+        protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()});
 
         # Generate a normal segment
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);

@@ -92,7 +92,7 @@ my $hProtocol = {};         # Global remote hash that is created on first reques
 sub isRepoLocal
 {
     # Not valid for remote
-    if (cfgCommandTest(CFGCMD_REMOTE) && !cfgOptionTest(CFGOPT_TYPE, BACKUP))
+    if (cfgCommandTest(CFGCMD_REMOTE) && !cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP))
     {
         confess &log(ASSERT, 'isRepoLocal() not valid on ' . cfgOption(CFGOPT_TYPE) . ' remote');
     }
@@ -121,7 +121,7 @@ sub isDbLocal
         );
 
     # Not valid for remote
-    if (cfgCommandTest(CFGCMD_REMOTE) && !cfgOptionTest(CFGOPT_TYPE, DB))
+    if (cfgCommandTest(CFGCMD_REMOTE) && !cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB))
     {
         confess &log(ASSERT, 'isDbLocal() not valid on ' . cfgOption(CFGOPT_TYPE) . ' remote');
     }
@@ -174,7 +174,8 @@ sub protocolGet
     my $oProtocol;
 
     # If no remote requested or if the requested remote type is local then return a local protocol object
-    if (!cfgOptionTest(cfgOptionIndex($strRemoteType eq DB ? CFGOPT_DB_HOST : CFGOPT_BACKUP_HOST, $iRemoteIdx)))
+    if (!cfgOptionTest(
+            cfgOptionIndex($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB ? CFGOPT_DB_HOST : CFGOPT_BACKUP_HOST, $iRemoteIdx)))
     {
         confess &log(ASSERT, 'protocol cannot be created when remote host is not specified');
     }
@@ -209,7 +210,7 @@ sub protocolGet
             my $strOptionDbSocketPath = undef;
             my $strOptionSshPort = CFGOPT_BACKUP_SSH_PORT;
 
-            if ($strRemoteType eq DB)
+            if ($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB)
             {
                 $iOptionIdCmd = cfgOptionIndex(CFGOPT_DB_CMD, $iRemoteIdx);
                 $iOptionIdConfig = cfgOptionIndex(CFGOPT_DB_CONFIG, $iRemoteIdx);
@@ -222,7 +223,7 @@ sub protocolGet
             if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx)))
             {
                 $strOptionDbPort =
-                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx)) eq SOURCE_DEFAULT ?
+                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
                         undef : cfgOption(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx));
             }
 
@@ -230,7 +231,7 @@ sub protocolGet
             if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)))
             {
                 $strOptionDbSocketPath =
-                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)) eq SOURCE_DEFAULT ?
+                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
                         undef : cfgOption(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx));
             }
 
@@ -240,7 +241,7 @@ sub protocolGet
                 &CFGOPT_COMMAND => {value => $strCommand},
                 &CFGOPT_PROCESS => {value => $iProcessIdx},
                 &CFGOPT_CONFIG =>
-                    {value => cfgOptionValid($iOptionIdConfig) && cfgOptionSource($iOptionIdConfig) eq SOURCE_DEFAULT ?
+                    {value => cfgOptionValid($iOptionIdConfig) && cfgOptionSource($iOptionIdConfig) eq CFGDEF_SOURCE_DEFAULT ?
                         undef : cfgOption($iOptionIdConfig)},
                 &CFGOPT_TYPE => {value => $strRemoteType},
                 &CFGOPT_LOG_PATH => {},

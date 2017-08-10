@@ -172,7 +172,7 @@ sub setup
     # Set S3 options
     if (defined($oHostS3))
     {
-        $self->optionTestSet(CFGOPT_REPO_TYPE, REPO_TYPE_S3);
+        $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
         $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
         $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
         $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);

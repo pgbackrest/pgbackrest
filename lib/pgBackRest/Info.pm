@@ -104,7 +104,7 @@ sub process
     # Get the stanza list with all info
     my $oyStanzaList = $self->stanzaList($strStanza);
 
-    if (cfgOptionTest(CFGOPT_OUTPUT, INFO_OUTPUT_TEXT))
+    if (cfgOptionTest(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_TEXT))
     {
         my $strOutput = $self->formatText($oyStanzaList);
 
@@ -117,7 +117,7 @@ sub process
             syswrite(*STDOUT, 'No stanzas exist in ' . storageRepo()->pathGet() . ".\n");
         }
     }
-    elsif (cfgOptionTest(CFGOPT_OUTPUT, INFO_OUTPUT_JSON))
+    elsif (cfgOptionTest(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
         $self->outputJSON($oJSON->encode($oyStanzaList));
@@ -371,7 +371,7 @@ sub stanzaList
     # Run remotely
     if (!isRepoLocal())
     {
-        @oyStanzaList = @{protocolGet(BACKUP)->cmdExecute(OP_INFO_STANZA_LIST, [$strStanza], true)};
+        @oyStanzaList = @{protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(OP_INFO_STANZA_LIST, [$strStanza], true)};
     }
     # Run locally
     else

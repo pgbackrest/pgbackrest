@@ -24,86 +24,22 @@ use pgBackRest::LibC qw(:config :configRule);
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# DB/BACKUP Constants
-####################################################################################################################################
-use constant DB                                                     => 'db';
-    push @EXPORT, qw(DB);
-use constant BACKUP                                                 => 'backup';
-    push @EXPORT, qw(BACKUP);
-
-####################################################################################################################################
-# BACKUP Type Constants
-####################################################################################################################################
-use constant BACKUP_TYPE_FULL                                       => 'full';
-    push @EXPORT, qw(BACKUP_TYPE_FULL);
-use constant BACKUP_TYPE_DIFF                                       => 'diff';
-    push @EXPORT, qw(BACKUP_TYPE_DIFF);
-use constant BACKUP_TYPE_INCR                                       => 'incr';
-    push @EXPORT, qw(BACKUP_TYPE_INCR);
-
-####################################################################################################################################
-# REPO Type Constants
-####################################################################################################################################
-use constant REPO_TYPE_CIFS                                         => 'cifs';
-    push @EXPORT, qw(REPO_TYPE_CIFS);
-use constant REPO_TYPE_POSIX                                        => 'posix';
-    push @EXPORT, qw(REPO_TYPE_POSIX);
-use constant REPO_TYPE_S3                                           => 's3';
-    push @EXPORT, qw(REPO_TYPE_S3);
-
-####################################################################################################################################
-# INFO Output Constants
-####################################################################################################################################
-use constant INFO_OUTPUT_TEXT                                       => 'text';
-    push @EXPORT, qw(INFO_OUTPUT_TEXT);
-use constant INFO_OUTPUT_JSON                                       => 'json';
-    push @EXPORT, qw(INFO_OUTPUT_JSON);
-
-####################################################################################################################################
 # SOURCE Constants
 ####################################################################################################################################
-use constant SOURCE_CONFIG                                          => 'config';
-    push @EXPORT, qw(SOURCE_CONFIG);
-use constant SOURCE_PARAM                                           => 'param';
-    push @EXPORT, qw(SOURCE_PARAM);
-use constant SOURCE_DEFAULT                                         => 'default';
-    push @EXPORT, qw(SOURCE_DEFAULT);
-
-####################################################################################################################################
-# RECOVERY Type Constants
-####################################################################################################################################
-use constant RECOVERY_TYPE_NAME                                     => 'name';
-    push @EXPORT, qw(RECOVERY_TYPE_NAME);
-use constant RECOVERY_TYPE_TIME                                     => 'time';
-    push @EXPORT, qw(RECOVERY_TYPE_TIME);
-use constant RECOVERY_TYPE_XID                                      => 'xid';
-    push @EXPORT, qw(RECOVERY_TYPE_XID);
-use constant RECOVERY_TYPE_PRESERVE                                 => 'preserve';
-    push @EXPORT, qw(RECOVERY_TYPE_PRESERVE);
-use constant RECOVERY_TYPE_NONE                                     => 'none';
-    push @EXPORT, qw(RECOVERY_TYPE_NONE);
-use constant RECOVERY_TYPE_IMMEDIATE                                => 'immediate';
-    push @EXPORT, qw(RECOVERY_TYPE_IMMEDIATE);
-use constant RECOVERY_TYPE_DEFAULT                                  => 'default';
-    push @EXPORT, qw(RECOVERY_TYPE_DEFAULT);
-
-####################################################################################################################################
-# RECOVERY Action Constants
-####################################################################################################################################
-use constant RECOVERY_ACTION_PAUSE                                  => 'pause';
-    push @EXPORT, qw(RECOVERY_ACTION_PAUSE);
-use constant RECOVERY_ACTION_PROMOTE                                => 'promote';
-    push @EXPORT, qw(RECOVERY_ACTION_PROMOTE);
-use constant RECOVERY_ACTION_SHUTDOWN                               => 'shutdown';
-    push @EXPORT, qw(RECOVERY_ACTION_SHUTDOWN);
+use constant CFGDEF_SOURCE_CONFIG                                   => 'config';
+    push @EXPORT, qw(CFGDEF_SOURCE_CONFIG);
+use constant CFGDEF_SOURCE_PARAM                                    => 'param';
+    push @EXPORT, qw(CFGDEF_SOURCE_PARAM);
+use constant CFGDEF_SOURCE_DEFAULT                                  => 'default';
+    push @EXPORT, qw(CFGDEF_SOURCE_DEFAULT);
 
 ####################################################################################################################################
 # Configuration section constants
 ####################################################################################################################################
-use constant CONFIG_SECTION_GLOBAL                                  => 'global';
-    push @EXPORT, qw(CONFIG_SECTION_GLOBAL);
-use constant CONFIG_SECTION_STANZA                                  => 'stanza';
-    push @EXPORT, qw(CONFIG_SECTION_STANZA);
+use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
+    push @EXPORT, qw(CFGDEF_SECTION_GLOBAL);
+use constant CFGDEF_SECTION_STANZA                                  => 'stanza';
+    push @EXPORT, qw(CFGDEF_SECTION_STANZA);
 
 ####################################################################################################################################
 # Module variables
@@ -246,7 +182,7 @@ sub configLoad
     if (cfgOptionValid(CFGOPT_BACKUP_CMD) && cfgOptionTest(CFGOPT_BACKUP_HOST) && !cfgOptionTest(CFGOPT_BACKUP_CMD))
     {
         cfgOptionSet(CFGOPT_BACKUP_CMD, BACKREST_BIN);
-        $oOption{cfgOptionName(CFGOPT_BACKUP_CMD)}{source} = SOURCE_DEFAULT;
+        $oOption{cfgOptionName(CFGOPT_BACKUP_CMD)}{source} = CFGDEF_SOURCE_DEFAULT;
     }
 
     if (cfgOptionValid(CFGOPT_DB_CMD))
@@ -257,7 +193,7 @@ sub configLoad
                 !cfgOptionTest(cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)))
             {
                 cfgOptionSet(cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx), BACKREST_BIN);
-                $oOption{cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)}{source} = SOURCE_DEFAULT;
+                $oOption{cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)}{source} = CFGDEF_SOURCE_DEFAULT;
             }
         }
     }
@@ -267,7 +203,7 @@ sub configLoad
         cfgOption(CFGOPT_PROTOCOL_TIMEOUT) <= cfgOption(CFGOPT_DB_TIMEOUT))
     {
         # If protocol-timeout is default then increase it to be greater than db-timeout
-        if (cfgOptionSource(CFGOPT_PROTOCOL_TIMEOUT) eq SOURCE_DEFAULT)
+        if (cfgOptionSource(CFGOPT_PROTOCOL_TIMEOUT) eq CFGDEF_SOURCE_DEFAULT)
         {
             cfgOptionSet(CFGOPT_PROTOCOL_TIMEOUT, cfgOption(CFGOPT_DB_TIMEOUT) + 30);
         }
@@ -311,14 +247,14 @@ sub configLoad
         {
             # If retention-archive-type is default, then if retention-full is set, set the retention-archive to this value,
             # else ignore archiving
-            if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
+            if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
             {
                 if (defined($iFullRetention))
                 {
                     cfgOptionSet(CFGOPT_RETENTION_ARCHIVE, $iFullRetention);
                 }
             }
-            elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
+            elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
             {
                 # if retention-diff is set then user must have set it
                 if (defined($iDifferentialRetention))
@@ -332,7 +268,7 @@ sub configLoad
                             "' nor option '" .  cfgOptionName(CFGOPT_RETENTION_DIFF) . "' is set");
                 }
             }
-            elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
+            elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_INCR)
             {
                 &log(WARN, $strMsgArchiveOff . "option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE) . "' is not set");
             }
@@ -342,11 +278,11 @@ sub configLoad
             # If retention-archive is set then check retention-archive-type and issue a warning if the corresponding setting is
             # UNDEF since UNDEF means backups will not be expired but they should be in the practice of setting this
             # value even though expiring the archive itself is OK and will be performed.
-            if ($strArchiveRetentionType eq BACKUP_TYPE_DIFF && !defined($iDifferentialRetention))
+            if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF && !defined($iDifferentialRetention))
             {
                 &log(WARN,
                     "option '" . cfgOptionName(CFGOPT_RETENTION_DIFF) . "' is not set for '" .
-                        cfgOptionName(CFGOPT_RETENTION_ARCHIVE_TYPE) . "=" . &BACKUP_TYPE_DIFF . "' \n" .
+                        cfgOptionName(CFGOPT_RETENTION_ARCHIVE_TYPE) . "=" . &CFGOPTVAL_BACKUP_TYPE_DIFF . "' \n" .
                         "HINT: to retain differential backups indefinitely (without warning), set option '" .
                         cfgOptionName(CFGOPT_RETENTION_DIFF) . "' to the maximum.");
             }
@@ -573,9 +509,9 @@ sub optionValidate
                         $strValue = optionValueGet($strOption, $$oConfig{cfgOption(CFGOPT_STANZA)});
                     }
 
-                    # Only continue searching when strSection != CONFIG_SECTION_STANZA.  Some options (e.g. db-path) can only be
+                    # Only continue searching when strSection != CFGDEF_SECTION_STANZA.  Some options (e.g. db-path) can only be
                     # configured in the stanza section.
-                    if (!defined($strValue) && $strSection ne CONFIG_SECTION_STANZA)
+                    if (!defined($strValue) && $strSection ne CFGDEF_SECTION_STANZA)
                     {
                         # Check the stanza command section
                         if (cfgOptionTest(CFGOPT_STANZA))
@@ -586,13 +522,13 @@ sub optionValidate
                         # Check the global command section
                         if (!defined($strValue))
                         {
-                            $strValue = optionValueGet($strOption, $$oConfig{&CONFIG_SECTION_GLOBAL . ":${strCommand}"});
+                            $strValue = optionValueGet($strOption, $$oConfig{&CFGDEF_SECTION_GLOBAL . ":${strCommand}"});
                         }
 
                         # Finally check the global section
                         if (!defined($strValue))
                         {
-                            $strValue = optionValueGet($strOption, $$oConfig{&CONFIG_SECTION_GLOBAL});
+                            $strValue = optionValueGet($strOption, $$oConfig{&CFGDEF_SECTION_GLOBAL});
                         }
                     }
 
@@ -664,7 +600,7 @@ sub optionValidate
                                 ERROR, "option '${strOption}' cannot be specified multiple times", ERROR_OPTION_MULTIPLE_VALUE);
                         }
 
-                        $oOption{$strOption}{source} = SOURCE_CONFIG;
+                        $oOption{$strOption}{source} = CFGDEF_SOURCE_CONFIG;
                     }
                 }
             }
@@ -809,14 +745,14 @@ sub optionValidate
                 # If not config sourced then it must be a param
                 if (!defined($oOption{$strOption}{source}))
                 {
-                    $oOption{$strOption}{source} = SOURCE_PARAM;
+                    $oOption{$strOption}{source} = CFGDEF_SOURCE_PARAM;
                 }
             }
             # Else try to set a default
             elsif ($bDependResolved)
             {
                 # Source is default for this option
-                $oOption{$strOption}{source} = SOURCE_DEFAULT;
+                $oOption{$strOption}{source} = CFGDEF_SOURCE_DEFAULT;
 
                 # Check for default in command then option
                 my $strDefault = cfgOptionRuleDefault($iCommandId, $iOptionId);
@@ -911,8 +847,8 @@ sub configFileValidate
                     }
 
                     # Is the valid option a stanza-only option and not located in a global section?
-                    if (cfgOptionRuleSection(cfgOptionId($strOption)) eq CONFIG_SECTION_STANZA &&
-                        $strSection eq CONFIG_SECTION_GLOBAL)
+                    if (cfgOptionRuleSection(cfgOptionId($strOption)) eq CFGDEF_SECTION_STANZA &&
+                        $strSection eq CFGDEF_SECTION_GLOBAL)
                     {
                         &log(WARN,
                             cfgOption(CFGOPT_CONFIG) .  " valid option '${strOptionDisplay}' is a stanza section option and is" .
@@ -1090,7 +1026,7 @@ sub cfgOptionSet
         $oOption{$strOption}{valid} = true;
     }
 
-    $oOption{$strOption}{source} = SOURCE_PARAM;
+    $oOption{$strOption}{source} = CFGDEF_SOURCE_PARAM;
     $oOption{$strOption}{value} = $oValue;
 }
 
@@ -1230,7 +1166,8 @@ sub cfgCommandWrite
         # else look for non-default options in the current configuration
         elsif (cfgOptionRuleValid($iNewCommandId, $iOptionId) &&
                defined($oOption{$strOption}{value}) &&
-               ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
+               ($bIncludeConfig ?
+                    $oOption{$strOption}{source} ne CFGDEF_SOURCE_DEFAULT : $oOption{$strOption}{source} eq CFGDEF_SOURCE_PARAM))
         {
             my $oValue;
             my $bMulti = false;

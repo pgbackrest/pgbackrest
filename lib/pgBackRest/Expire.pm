@@ -221,15 +221,15 @@ sub process
 
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
-        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
+        if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
         }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
+        elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true, true), 'reverse');
         }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
+        elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_INCR)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
         }
@@ -310,7 +310,7 @@ sub process
                 # This is incase there are old archives left around so that they don't stay around forever
                 else
                 {
-                    if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
+                    if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
                     {
                         &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for ${strArchiveId} " .
                             "archive retention");

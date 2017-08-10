@@ -45,13 +45,13 @@ sub run
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_COMMAND_REQUIRED);
     }
 
-    if ($self->begin('backup type defaults to ' . BACKUP_TYPE_INCR))
+    if ($self->begin('backup type defaults to ' . CFGOPTVAL_BACKUP_TYPE_INCR))
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
-        $self->optionTestExpect(CFGOPT_TYPE, BACKUP_TYPE_INCR);
+        $self->optionTestExpect(CFGOPT_TYPE, CFGOPTVAL_BACKUP_TYPE_INCR);
     }
 
     if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' invalid option ' . CFGBLDOPT_ARCHIVE_ASYNC))
@@ -63,14 +63,14 @@ sub run
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_COMMAND, CFGBLDOPT_ARCHIVE_ASYNC, cfgCommandName(CFGCMD_BACKUP));
     }
 
-    if ($self->begin('backup type set to ' . BACKUP_TYPE_FULL))
+    if ($self->begin('backup type set to ' . CFGOPTVAL_BACKUP_TYPE_FULL))
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
-        $self->optionTestSet(CFGOPT_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestSet(CFGOPT_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
 
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
-        $self->optionTestExpect(CFGOPT_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestExpect(CFGOPT_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
     }
 
     if ($self->begin('backup type invalid'))
@@ -138,7 +138,7 @@ sub run
         $self->optionTestSet(CFGOPT_TYPE, cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_TYPE));
         $self->optionTestSet(CFGOPT_TARGET, BOGUS);
 
-        @oyArray = (RECOVERY_TYPE_NAME, RECOVERY_TYPE_TIME, RECOVERY_TYPE_XID);
+        @oyArray = (CFGOPTVAL_RESTORE_TYPE_NAME, CFGOPTVAL_RESTORE_TYPE_TIME, CFGOPTVAL_RESTORE_TYPE_XID);
         $self->configTestLoadExpect(CFGBLDCMD_RESTORE, ERROR_OPTION_INVALID, CFGBLDOPT_TARGET, CFGBLDOPT_TYPE, \@oyArray);
     }
 
@@ -146,11 +146,11 @@ sub run
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
-        $self->optionTestSet(CFGOPT_TYPE, RECOVERY_TYPE_NAME);
+        $self->optionTestSet(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_NAME);
         $self->optionTestSet(CFGOPT_TARGET, BOGUS);
 
         $self->configTestLoadExpect(CFGBLDCMD_RESTORE);
-        $self->optionTestExpect(CFGOPT_TYPE, RECOVERY_TYPE_NAME);
+        $self->optionTestExpect(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_NAME);
         $self->optionTestExpect(CFGOPT_TARGET, BOGUS);
         $self->optionTestExpect(CFGOPT_TARGET_TIMELINE);
     }
@@ -251,38 +251,38 @@ sub run
         $self->optionTestExpect(CFGOPT_RETENTION_FULL, 1);
         $self->optionTestExpect(CFGOPT_RETENTION_DIFF, undef);
         # Default is FULL so this test will fail if the default is changed, alerting to the need to update configLoad.
-        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
     }
 
     if ($self->begin(
         cfgCommandName(CFGCMD_BACKUP) . ' valid value ' . CFGBLDOPT_RETENTION_ARCHIVE . ' for ' . CFGBLDOPT_RETENTION_ARCHIVE_TYPE .
-            ' ' . BACKUP_TYPE_DIFF))
+            ' ' . CFGOPTVAL_BACKUP_TYPE_DIFF))
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
         $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
-        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_DIFF);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_DIFF);
 
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
         $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE, 1);
         $self->optionTestExpect(CFGOPT_RETENTION_DIFF, 1);
         $self->optionTestExpect(CFGOPT_RETENTION_FULL, undef);
-        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_DIFF);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_DIFF);
     }
 
     if ($self->begin(
         cfgCommandName(CFGCMD_BACKUP) . ' warn no valid value ' . CFGBLDOPT_RETENTION_ARCHIVE . ' for ' .
-        CFGBLDOPT_RETENTION_ARCHIVE_TYPE . ' ' . BACKUP_TYPE_INCR))
+        CFGBLDOPT_RETENTION_ARCHIVE_TYPE . ' ' . CFGOPTVAL_BACKUP_TYPE_INCR))
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
         $self->optionTestSet(CFGOPT_RETENTION_FULL, 2);
         $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
-        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_INCR);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_INCR);
 
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
         $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE, undef);
-        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_INCR);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_INCR);
     }
 
     if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' invalid value ' . CFGBLDOPT_PROTOCOL_TIMEOUT))
