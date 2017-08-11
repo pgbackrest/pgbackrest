@@ -179,6 +179,10 @@
                     <release-item>
                         <p>Updated Docker build in <file>Vagrantfile</file>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Ignore auto-generated C code created by release 2.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
