@@ -1,5 +1,46 @@
 ####################################################################################################################################
-# CONFIG MODULE
+# Configuration Rule Data
+#
+# Contains the rules for options: which commands the option can/cannot be specified, for which commands it is required, default
+# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
+# section meaning the rules defined there apply to all commands listed for the option.
+#
+# CFGBLDDEF_RULE_COMMAND:
+#     List of commands the option can be used with this option.  An empty hash signifies that the command does no deviate from the
+#     option defaults.  Otherwise, overrides can be specified.
+#
+# NOTE: If the option (A) has a dependency on another option (B) then the CFGBLDCMD_ must also be specified in the other option
+#         (B), else it will still error on the option (A).
+#
+# CFGBLDDEF_RULE_REQUIRED:
+#   In global section:
+#       true - if the option does not have a default, then setting CFGBLDDEF_RULE_REQUIRED in the global section means all commands
+#              listed in CFGBLDDEF_RULE_COMMAND require the user to set it.
+#       false - no commands listed require it as an option but it can be set. This can be overridden for individual commands by
+#               setting CFGBLDDEF_RULE_REQUIRED in the CFGBLDDEF_RULE_COMMAND section.
+#   In CFGBLDDEF_RULE_COMMAND section:
+#       true - the option must be set somehow for the command, either by default (CFGBLDDEF_RULE_DEFAULT) or by the user.
+# 	        &CFGBLDCMD_CHECK =>
+#             {
+#                 &CFGBLDDEF_RULE_REQUIRED => true
+#             },
+#       false - mainly used for overriding the CFGBLDDEF_RULE_REQUIRED in the global section.
+#
+# CFGBLDDEF_RULE_DEFAULT:
+#   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
+#   CFGBLDDEF_RULE_COMMAND section.
+#
+# CFGBLDDEF_RULE_NEGATE:
+#   The option can be negated with "no" e.g. --no-compress.  This applies tp options that are only valid on the command line (i.e.
+#   no config section defined).  All config options are automatically negatable.
+#
+# CFGBLDDEF_RULE_DEPEND:
+#   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
+#   dependent option(s).
+#   CFGBLDDEF_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
+#
+# CFGBLDDEF_RULE_ALLOW_LIST:
+#   Lists the allowable settings for the option.
 ####################################################################################################################################
 package pgBackRestBuild::Config::Data;
 
@@ -388,48 +429,7 @@ use constant CFGBLDDEF_SECTION_STANZA                               => 'stanza';
     push @EXPORT, qw(CFGBLDDEF_SECTION_STANZA);
 
 ####################################################################################################################################
-# Option Rule Hash
-#
-# Contains the rules for options: which commands the option can/cannot be specified, for which commands it is required, default
-# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
-# section meaning the rules defined there apply to all commands listed for the option.
-#
-# CFGBLDDEF_RULE_COMMAND:
-#     List of commands the option can be used with this option.  An empty hash signifies that the command does no deviate from the
-#     option defaults.  Otherwise, overrides can be specified.
-#
-# NOTE: If the option (A) has a dependency on another option (B) then the CFGBLDCMD_ must also be specified in the other option
-#         (B), else it will still error on the option (A).
-#
-# CFGBLDDEF_RULE_REQUIRED:
-#   In global section:
-#       true - if the option does not have a default, then setting CFGBLDDEF_RULE_REQUIRED in the global section means all commands
-#              listed in CFGBLDDEF_RULE_COMMAND require the user to set it.
-#       false - no commands listed require it as an option but it can be set. This can be overridden for individual commands by
-#               setting CFGBLDDEF_RULE_REQUIRED in the CFGBLDDEF_RULE_COMMAND section.
-#   In CFGBLDDEF_RULE_COMMAND section:
-#       true - the option must be set somehow for the command, either by default (CFGBLDDEF_RULE_DEFAULT) or by the user.
-# 	        &CFGBLDCMD_CHECK =>
-#             {
-#                 &CFGBLDDEF_RULE_REQUIRED => true
-#             },
-#       false - mainly used for overriding the CFGBLDDEF_RULE_REQUIRED in the global section.
-#
-# CFGBLDDEF_RULE_DEFAULT:
-#   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
-#   CFGBLDDEF_RULE_COMMAND section.
-#
-# CFGBLDDEF_RULE_NEGATE:
-#   The option can be negated with "no" e.g. --no-compress.  This applies tp options that are only valid on the command line (i.e.
-#   no config section defined).  All config options are automatically negatable.
-#
-# CFGBLDDEF_RULE_DEPEND:
-#   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
-#   dependent option(s).
-#   CFGBLDDEF_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
-#
-# CFGBLDDEF_RULE_ALLOW_LIST:
-#   Lists the allowable settings for the option.
+# Option rules
 ####################################################################################################################################
 my %hOptionRule =
 (
@@ -896,10 +896,8 @@ my %hOptionRule =
             &CFGBLDCMD_ARCHIVE_PUSH => {},
             &CFGBLDCMD_BACKUP => {},
             &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_LOCAL => {},
             &CFGBLDCMD_REMOTE => {},
-            &CFGBLDCMD_RESTORE => {},
             &CFGBLDCMD_STANZA_CREATE => {},
             &CFGBLDCMD_STANZA_UPGRADE => {},
         }
@@ -915,7 +913,6 @@ my %hOptionRule =
             &CFGBLDCMD_ARCHIVE_GET => {},
             &CFGBLDCMD_ARCHIVE_PUSH => {},
             &CFGBLDCMD_BACKUP => {},
-            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_RESTORE => {},
         }
     },
@@ -932,7 +929,6 @@ my %hOptionRule =
             &CFGBLDCMD_ARCHIVE_PUSH => {},
             &CFGBLDCMD_BACKUP => {},
             &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_INFO => {},
             &CFGBLDCMD_LOCAL => {},
             &CFGBLDCMD_REMOTE => {},
@@ -954,7 +950,6 @@ my %hOptionRule =
             &CFGBLDCMD_ARCHIVE_PUSH => {},
             &CFGBLDCMD_BACKUP => {},
             &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_INFO => {},
             &CFGBLDCMD_LOCAL => {},
             &CFGBLDCMD_REMOTE => {},
@@ -1065,7 +1060,6 @@ my %hOptionRule =
             &CFGBLDCMD_ARCHIVE_PUSH => {},
             &CFGBLDCMD_BACKUP => {},
             &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_INFO => {},
             &CFGBLDCMD_LOCAL => {},
             &CFGBLDCMD_REMOTE => {},
@@ -1950,9 +1944,7 @@ foreach my $strKey (sort(keys(%hOptionRule)))
 }
 
 ####################################################################################################################################
-# cfgbldCommandRule
-#
-# Returns the option rules based on the command.
+# cfgbldCommandRule - returns the option rules based on the command.
 ####################################################################################################################################
 sub cfgbldCommandRule
 {
@@ -1971,9 +1963,7 @@ sub cfgbldCommandRule
 }
 
 ####################################################################################################################################
-# cfgbldOptionDefault
-#
-# Does the option have a default for this command?
+# cfgbldOptionDefault - does the option have a default for this command?
 ####################################################################################################################################
 sub cfgbldOptionDefault
 {
@@ -1993,9 +1983,7 @@ sub cfgbldOptionDefault
 push @EXPORT, qw(cfgbldOptionDefault);
 
 ####################################################################################################################################
-# cfgbldOptionRange
-#
-# Gets the allowed setting range for the option if it exists.
+# cfgbldOptionRange - get the allowed setting range for the option if it exists
 ####################################################################################################################################
 sub cfgbldOptionRange
 {
@@ -2018,9 +2006,7 @@ sub cfgbldOptionRange
 push @EXPORT, qw(cfgbldOptionRange);
 
 ####################################################################################################################################
-# cfgbldOptionType
-#
-# Get the option type.
+# cfgbldOptionType - get the option type
 ####################################################################################################################################
 sub cfgbldOptionType
 {
@@ -2032,9 +2018,7 @@ sub cfgbldOptionType
 push @EXPORT, qw(cfgbldOptionType);
 
 ####################################################################################################################################
-# cfgbldOptionTypeTest
-#
-# Test the option type.
+# cfgbldOptionTypeTest - test the option type
 ####################################################################################################################################
 sub cfgbldOptionTypeTest
 {

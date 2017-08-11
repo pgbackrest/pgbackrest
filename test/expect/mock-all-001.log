@@ -265,7 +265,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=16384 --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=16384 --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Backup::Info->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
@@ -773,7 +773,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Backup::Info->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
@@ -941,7 +941,7 @@ P00   INFO: backup command end: aborted with exception [073]
 restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
@@ -1103,8 +1103,8 @@ P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/1/PG_VERSION, [undef], 0660, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 0), strKey = pg_data/base/1/PG_VERSION, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/PG_VERSION, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 0), strKey = pg_data/PG_VERSION, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = backup
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = 'local-1', strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = 'local-1', strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -1185,7 +1185,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=detail --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
@@ -1220,7 +1220,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-FULL-2]' - restore all links by mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=detail --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --delta --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
@@ -1284,7 +1284,7 @@ P00  ERROR: [038]: unable to restore while PostgreSQL is running
 restore delta, backup '[BACKUP-FULL-2]' - restore all links --link-all and mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=detail --link-map=pg_stat=../pg_stat  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --link-map=pg_stat=../pg_stat --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --link-map=pg_stat=../pg_stat --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
@@ -1316,7 +1316,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db-master/db/base' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
@@ -1330,7 +1330,7 @@ P00   INFO: restore command end: aborted with exception [040]
 restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.manifest file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
@@ -1629,7 +1629,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Backup::Info->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
@@ -1949,7 +1949,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/db-master/repo/backup/db
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/repo/backup/db/backup.info
 P00  DEBUG:     Backup::Info->reconstruct(): bRequired = <true>, bSave = <true>, iCatalogVersion = [undef], iControlVersion = [undef], strDbVersion = [undef], ullDbSysId = [undef]
@@ -2150,7 +2150,7 @@ P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/
 P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2314,7 +2314,7 @@ P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base/pg_tblspc/1/
 P00   INFO: diff backup size = 29B
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2461,7 +2461,7 @@ db-version="9.4"
 restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
@@ -2470,7 +2470,7 @@ P00   INFO: restore command end: aborted with exception [040]
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2
 P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
@@ -2505,7 +2505,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root remains after --delta (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2
 P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
@@ -2556,7 +2556,7 @@ P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/base/base2
 P00   INFO: incr backup size = 13B
 P00   INFO: new backup label = [BACKUP-INCR-3]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2791,7 +2791,7 @@ P00   WARN: page misalignment in file [TEST_PATH]/db-master/db/base-2/base/16384
 P00   INFO: incr backup size = 8B
 P00   INFO: new backup label = [BACKUP-INCR-4]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2958,7 +2958,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   INFO: diff backup size = 43B
 P00   INFO: new backup label = [BACKUP-DIFF-3]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3118,7 +3118,7 @@ P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
 P00   INFO: incr backup size = 0B
 P00   INFO: new backup label = [BACKUP-INCR-5]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3287,7 +3287,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   INFO: diff backup size = 35B
 P00   INFO: new backup label = [BACKUP-DIFF-4]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3460,7 +3460,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[TS_PATH-1]/
 P00   INFO: full backup size = 144KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3955,7 +3955,7 @@ info db stanza - normal output (db-master host)
 expire full=1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --retention-full=1 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-INCR-5]
@@ -3993,7 +3993,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base2.txt (9B, 100%
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -4141,7 +4141,7 @@ db-version="9.4"
 restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384=1 --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384=1 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
@@ -4179,7 +4179,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, remap - selective restore 32768 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768=1 --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768=1 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
@@ -4227,7 +4227,7 @@ P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by 
 restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir does not exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
@@ -4239,7 +4239,7 @@ P00   INFO: restore command end: aborted with exception [073]
 restore - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
@@ -4450,7 +4450,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B,
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -4607,7 +4607,7 @@ P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/base/base2.txt (9B,
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 

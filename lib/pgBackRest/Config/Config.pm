@@ -172,7 +172,7 @@ sub configLoad
     commandBegin();
 
     # Neutralize the umask to make the repository file/path modes more consistent
-    if (cfgOptionTest(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
+    if (cfgOptionValid(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
     {
         umask(0000);
     }
@@ -199,7 +199,7 @@ sub configLoad
     }
 
     # Protocol timeout should be greater than db timeout
-    if (cfgOptionValid(CFGOPT_DB_TIMEOUT) && cfgOptionValid(CFGOPT_PROTOCOL_TIMEOUT) &&
+    if (cfgOptionTest(CFGOPT_DB_TIMEOUT) && cfgOptionTest(CFGOPT_PROTOCOL_TIMEOUT) &&
         cfgOption(CFGOPT_PROTOCOL_TIMEOUT) <= cfgOption(CFGOPT_DB_TIMEOUT))
     {
         # If protocol-timeout is default then increase it to be greater than db-timeout
