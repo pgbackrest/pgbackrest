@@ -199,7 +199,7 @@ sub configLoad
     }
 
     # Protocol timeout should be greater than db timeout
-    if (cfgOptionTest(CFGOPT_DB_TIMEOUT) && cfgOptionTest(CFGOPT_PROTOCOL_TIMEOUT) &&
+    if (cfgOptionValid(CFGOPT_DB_TIMEOUT) && cfgOptionValid(CFGOPT_PROTOCOL_TIMEOUT) &&
         cfgOption(CFGOPT_PROTOCOL_TIMEOUT) <= cfgOption(CFGOPT_DB_TIMEOUT))
     {
         # If protocol-timeout is default then increase it to be greater than db-timeout
