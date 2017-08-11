@@ -970,7 +970,15 @@ sub replayWait
 sub dbObjectGet
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbObjectGet');
+    my (
+            $strOperation,
+            $bMasterOnly,
+        ) =
+            logDebugParam
+            (
+                __PACKAGE__ . '::dbObjectGet', \@_,
+                {name => 'bMasterOnly', optional => true, default => false},
+            );
 
     my $iStandbyIdx = undef;
     my $iMasterRemoteIdx = 1;
@@ -979,7 +987,7 @@ sub dbObjectGet
 
     # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
     # this is simple and works.
-    if (cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, 2)))
+    if (!$bMasterOnly && cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && multipleDb())
     {
         for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
@@ -1029,7 +1037,7 @@ sub dbObjectGet
             }
         }
 
-        # Make sure the standby database is defined when backup from standby requested
+        # Make sure a standby database is defined when backup from standby option is set
         if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
         {
             confess &log(ERROR, 'unable to find standby database - cannot proceed');
@@ -1072,7 +1080,7 @@ sub dbMasterGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbMasterGet');
 
-    my ($oDbMaster) = dbObjectGet();
+    my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1083,5 +1091,24 @@ sub dbMasterGet
 }
 
 push @EXPORT, qw(dbMasterGet);
+
+####################################################################################################################################
+# multipleDb
+#
+# Helper function to determine if there is more than one database defined.
+####################################################################################################################################
+sub multipleDb
+{
+    for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_DB_PATH); $iDbPathIdx++)
+    {
+        # If an index exists above 1 then return true
+        if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 1;

@@ -243,7 +243,7 @@ use constant CFGBLDOPT_RECOVERY_OPTION                              => 'recovery
 # Stanza options
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many databases can be configured
-use constant CFGBLDOPTDEF_INDEX_DB                                  => 2;
+use constant CFGBLDOPTDEF_INDEX_DB                                  => 8;
 
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGBLDOPT_PREFIX_DB                                    => 'db';
