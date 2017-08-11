@@ -170,6 +170,12 @@
                         <p>Changed log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Updated Docker build in <file>Vagrantfile</file>.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-test-list>
         </release>
 
