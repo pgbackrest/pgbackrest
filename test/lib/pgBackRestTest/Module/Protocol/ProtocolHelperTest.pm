@@ -105,10 +105,6 @@ sub run
 
         # Destroy protocol object
         protocolDestroy();
-
-        $self->optionTestClear(CFGOPT_BACKUP_HOST);
-        $self->optionTestClear(CFGOPT_BACKUP_USER);
-        $self->optionTestClear(CFGOPT_BACKUP_SSH_PORT);
     }
 }
 

@@ -164,13 +164,19 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
-            <release-core-list>
+            <release-test-list>
                 <release-bug-list>
                     <release-item>
-                        <p>C Library.</p>
+                        <p>Changed log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
                     </release-item>
                 </release-bug-list>
-            </release-core-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Updated Docker build in <file>Vagrantfile</file>.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2017-08-09" version="1.22" title="Fixed S3 Retry">

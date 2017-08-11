@@ -63,7 +63,7 @@ db-version="9.2"
 Create backups in current db version
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-archive-type=diff expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=diff --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=diff --stanza=db
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: WAL segments will not be expired: option 'retention-archive-type=diff' but neither option 'retention-archive' nor option 'retention-diff' is set
@@ -469,7 +469,7 @@ db-version="9.3"
 Upgrade stanza and expire only earliest db backup and archive
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=3 --retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=3 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-FULL-1]
@@ -1137,7 +1137,7 @@ db-version="9.5"
 Upgrade the stanza, create full back - earliest db orphaned archive removed and earliest full backup and archive in previous db version removed
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=2 --retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=2 --stanza=db
 P00   INFO: expire full backup [BACKUP-FULL-2]
 P00   INFO: expire full backup set: [BACKUP-FULL-3], [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-INCR-2]
@@ -1287,7 +1287,7 @@ db-version="9.5"
 Expire all archive last full backup through pitr
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=3 --retention-diff=1 --retention-archive-type=diff --retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive=1 --retention-archive-type=diff --retention-diff=1 --retention-full=3 --stanza=db
 P00   INFO: expire diff backup [BACKUP-DIFF-1]
 P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
@@ -1430,7 +1430,7 @@ db-version="9.5"
 Expire all archive except for the current database
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config="[TEST_PATH]/db-master/pgbackrest.conf" --stanza=db --log-level-console=detail --retention-full=2 --retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --retention-archive-type=full --retention-full=2 --stanza=db
 P00   INFO: expire full backup [BACKUP-FULL-4]
 P00   INFO: remove expired backup [BACKUP-FULL-4]
 P00   INFO: remove archive path: [TEST_PATH]/db-master/repo/archive/db/9.3-2

@@ -2658,7 +2658,7 @@ info db stanza - normal output (backup host)
 expire full=1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-full=1 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-3]
@@ -3024,7 +3024,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3205,7 +3205,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 

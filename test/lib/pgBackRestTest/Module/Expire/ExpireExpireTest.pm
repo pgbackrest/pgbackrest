@@ -228,8 +228,10 @@ sub run
         $oExpireTest->process($self->stanza(), 2, undef, CFGOPTVAL_BACKUP_TYPE_FULL, undef, $strDescription);
 
         #-----------------------------------------------------------------------------------------------------------------------
+        $self->optionTestClear(CFGOPT_DB_TIMEOUT);
         $self->optionTestClear(CFGOPT_DB_PATH);
         $self->optionTestClear(CFGOPT_ONLINE);
+        $self->optionTestClear(CFGOPT_PROTOCOL_TIMEOUT);
         $self->optionTestSet(CFGOPT_RETENTION_FULL, 1);
         $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
         $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);

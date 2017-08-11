@@ -1220,15 +1220,11 @@ my $oConfigHelpData =
             {
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
-                'compress' => 'section',
-                'compress-level' => 'section',
-                'compress-level-network' => 'section',
                 'config' => 'default',
                 'db-cmd' => 'section',
                 'db-config' => 'section',
                 'db-host' => 'section',
                 'db-ssh-port' => 'section',
-                'db-timeout' => 'section',
                 'lock-path' => 'section',
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
@@ -1236,7 +1232,6 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
-                'protocol-timeout' => 'section',
                 'repo-path' => 'section',
                 'repo-s3-bucket' => 'section',
                 'repo-s3-ca-file' => 'section',
@@ -1356,7 +1351,6 @@ my $oConfigHelpData =
                 'config' => 'default',
                 'db-include' => 'section',
                 'db-path' => 'section',
-                'db-timeout' => 'section',
 
                 # DELTA Option Help
                 #-------------------------------------------------------------------------------------------------------------------

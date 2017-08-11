@@ -172,7 +172,7 @@ sub configLoad
     commandBegin();
 
     # Neutralize the umask to make the repository file/path modes more consistent
-    if (cfgOptionTest(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
+    if (cfgOptionValid(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
     {
         umask(0000);
     }

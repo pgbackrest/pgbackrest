@@ -17,7 +17,7 @@ use pgBackRest::Common::Log;
 use pgBackRestBuild::CodeGen::Common;
 
 ####################################################################################################################################
-# cgenSwitchBuild - build C function that looks up strings by id
+# cgenLookupString - build C function that looks up strings by id
 ####################################################################################################################################
 sub cgenLookupString
 {
