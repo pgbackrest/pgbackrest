@@ -1070,6 +1070,7 @@ sub dbObjectGet
 push @EXPORT, qw(dbObjectGet);
 
 ####################################################################################################################################
+# CSHANG The name of this function is misleading. If the pgbackrest command is run on the standby then the object returned is the standby DB object, right? Not the Master database server. 
 # dbMasterGet
 #
 # Usually only the master database is required so this function makes getting it simple.  If in offline mode (which is true for a
@@ -1080,7 +1081,8 @@ sub dbMasterGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbMasterGet');
 
-    my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
+    # my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
+    my ($oDbMaster) = dbObjectGet();
 
     # Return from function and log return values if any
     return logDebugReturn
