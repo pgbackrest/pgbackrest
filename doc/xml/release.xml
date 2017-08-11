@@ -169,6 +169,10 @@
                     <release-item>
                         <p>Changed log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Drain <id>stderr</id> during test process execution as well as termination to prevent lockups if there is a lot of output.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-refactor-list>
