@@ -425,10 +425,25 @@ eval
                         "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                         ($bContainerExists ? "'" : ''),
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+
+                    if ($strBuildVM eq $strVmHost)
+                    {
+                        foreach my $strFile (
+                            'src/config/config.auto.c', 'src/config/config.auto.h', 'src/config/configRule.auto.c',
+                            'libc/lib/pgBackRest/LibC.pm')
+                        {
+                            $oStorageBackRest->copy(
+                                "${strLibCPath}/${strBuildVM}/${strFile}",
+                                $oStorageBackRest->openWrite(
+                                    "${strBackRestBase}/${strFile}", {bPathCreate => true, lTimestamp => $lTimestampLast}));
+                        }
+                    }
+
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath}",
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath} test",
@@ -445,16 +460,6 @@ eval
 
                     if ($strBuildVM eq $strVmHost)
                     {
-                        foreach my $strFile (
-                            'src/config/config.auto.c', 'src/config/config.auto.h', 'src/config/configRule.auto.c',
-                            'libc/lib/pgBackRest/LibC.pm')
-                        {
-                            $oStorageBackRest->copy(
-                                "${strLibCPath}/${strBuildVM}/${strFile}",
-                                $oStorageBackRest->openWrite(
-                                    "${strBackRestBase}/${strFile}", {bPathCreate => true, lTimestamp => $lTimestampLast}));
-                        }
-
                         executeTest("sudo make -C ${strBuildPath} install", {bSuppressStdErr => true});
 
                         # Load the module dynamically

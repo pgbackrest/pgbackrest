@@ -18,6 +18,16 @@ use pgBackRest::Common::String;
 use pgBackRestBuild::CodeGen::Common;
 
 ####################################################################################################################################
+# Cost constants used by optimizer
+####################################################################################################################################
+# Cost for setting up a new switch statement
+use constant COST_SWITCH                                            => 5;
+# Cost for each case
+use constant COST_SWITCH_CASE                                       => 1;
+# Cost for a clause (which might be shared with multipe cases)
+use constant COST_SWITCH_CLAUSE                                     => 2;
+
+####################################################################################################################################
 # cgenSwitchBuild - build switch statements to perform lookups
 ####################################################################################################################################
 sub cgenSwitchBuild
@@ -26,82 +36,68 @@ sub cgenSwitchBuild
     my $strType = shift;
     my $ryMatrix = dclone(shift);
     my $rstryParam = dclone(shift);
-    my $rstryParamSwitch = dclone(shift);
     my $rhLabelMap = shift;
     my $rhValueLabelMap = shift;
 
-    my $rhValueMatrix;
-    my $lMostCommonTotal = 0;
-    my $strMostCommonValue;
+    # Build a hash with positions for the data in parameter order
+    my $rhParamOrder = {};
 
-    foreach my $ryEntry (@{$ryMatrix})
+    for (my $iIndex = 0; $iIndex < @{$rstryParam}; $iIndex++)
     {
-        my @ySubMatrix = @{$ryEntry};
-        my $strValue = coalesce(shift(@ySubMatrix), CGEN_DATAVAL_NULL);
-
-        if (!defined($rhValueMatrix))
-        {
-            $rhValueMatrix->{$strValue}{total} = 0;
-            $rhValueMatrix->{$strValue}{matrix} = [];
-        }
-
-        $rhValueMatrix->{$strValue}{total}++;
-        push(@{$rhValueMatrix->{$strValue}{matrix}}, \@ySubMatrix);
-
-        if ($rhValueMatrix->{$strValue}{total} > $lMostCommonTotal)
-        {
-            $lMostCommonTotal = $rhValueMatrix->{$strValue}{total};
-            $strMostCommonValue = $strValue;
-        }
+        $rhParamOrder->{$rstryParam->[$iIndex]} = $iIndex;
     }
 
-    # print STDERR "MOST COMMON ${strMostCommonValue} (${lMostCommonTotal})\n";
+    # Try each permutation of param order to find the most efficient switch statement
+    my $iBestCost;
+    my $strBestSwitch;
 
-    # Remove the most common value from switch statement -- it will be returned by default at the end of the function
-    delete($rhValueMatrix->{$strMostCommonValue});
-
-    my @stryInterimMatrix;
-
-    foreach my $strValue (sort(keys(%{$rhValueMatrix})))
+    foreach my $rstryParamPermute (cgenPermute($rstryParam))
     {
-        foreach my $ryEntry (@{$rhValueMatrix->{$strValue}{matrix}})
+        # Build a hash with positions for the data in permutation order
+        my $rhPermuteOrder = {};
+
+        for (my $iIndex = 0; $iIndex < @{$rstryParamPermute}; $iIndex++)
         {
-            my $strEntry;
+            $rhPermuteOrder->{$rstryParamPermute->[$iIndex]} = $iIndex;
+        }
 
-            foreach my $strEntrySub (@{$ryEntry})
+        # Arrange data in permutation order so later functions don't have to remap for every operation
+        my @yMatrixPermute;
+
+        foreach my $rxyEntry (@{$ryMatrix})
+        {
+            my @xyEntryPermute;
+
+            for (my $iSwapIdx = 0; $iSwapIdx < @{$rstryParam}; $iSwapIdx++)
             {
-                $strEntry .= defined($strEntry) ? ',' : '';
-
-                if (!defined($strEntrySub))
-                {
-                    $strEntry .= 'XXXXXX';
-                }
-                else
-                {
-                    $strEntry .= sprintf('%06d', $strEntrySub);
-                }
+                $xyEntryPermute[$rhPermuteOrder->{$rstryParam->[$iSwapIdx]}] =
+                    $rxyEntry->[$rhParamOrder->{$rstryParam->[$iSwapIdx]}];
             }
 
-            $strEntry .= ",$strValue";
+            # Convert the value to a special string if it is null to ease later prcessing
+            $xyEntryPermute[@{$rstryParam}] = defined($rxyEntry->[-1]) ? $rxyEntry->[-1] : CGEN_DATAVAL_NULL;
 
-            push(@stryInterimMatrix, $strEntry);
+            push(@yMatrixPermute, \@xyEntryPermute);
+        }
+
+        # Build switch based on current param permutation
+        my ($strSwitch, $iCost) = cgenSwitchBuildSub(
+            $strType, \@yMatrixPermute, 0, $rstryParamPermute, $rhLabelMap, $rhValueLabelMap);
+
+        # If the switch has a lower cost than the existing one then use it instead
+        if (!defined($iBestCost) || $iCost < $iBestCost)
+        {
+            $iBestCost = $iCost;
+            $strBestSwitch = $strSwitch;
         }
     }
 
-    @stryInterimMatrix = sort(@stryInterimMatrix);
-
+    # Construct the function based on the best switch statement
     return
         cgenTypeName($strType) . "\n" .
         "${strName}(uint32 " . join(', uint32 ', @{$rstryParam}) . ")\n" .
         "{\n" .
-        cgenSwitchBuildSub($strType, \@stryInterimMatrix, 0, $rstryParamSwitch, $rhLabelMap, $rhValueLabelMap) .
-        "\n" .
-        "    return " .
-            cgenTypeFormat(
-                $strType,
-                defined($rhValueLabelMap) && defined($rhValueLabelMap->{$strMostCommonValue}) ?
-                    $rhValueLabelMap->{$strMostCommonValue} : $strMostCommonValue) .
-            ";\n" .
+        "${strBestSwitch}\n" .
         "}\n";
 }
 
@@ -113,113 +109,180 @@ push @EXPORT, qw(cgenSwitchBuild);
 sub cgenSwitchBuildSub
 {
     my $strType = shift;
-    my $rstryMatrix = shift;
+    my $rstryMatrix = dclone(shift);
     my $iDepth = shift;
     my $rstryParam = dclone(shift);
     my $rhLabelMap = shift;
     my $rhValueLabelMap = shift;
+    my $xMostCommonParentValue = shift;
 
+    # How much to indent the code is based on the current depth
     my $strIndent = ('    ' x (($iDepth * 2) + 1));
 
+    # Set initial cost for setting up the switch statement
+    my $iCost = COST_SWITCH;
+
+    # Get the param to be used for the switch statement
     my $strParam = shift(@{$rstryParam});
 
-    my $strFunction =
-        "${strIndent}switch (${strParam})\n" .
-        "${strIndent}{\n";
+    # Determine the most common value
+    my $iMostCommonTotal = 0;
+    my $xMostCommonValue;
+    my $rhMostCommon = {};
 
-    # print STDERR "DEPTH ${iDepth}\n";
+    foreach my $rxyEntry (@{$rstryMatrix})
+    {
+        my $xValue = $rxyEntry->[-1];
 
+        $rhMostCommon->{$xValue} = (defined($rhMostCommon->{$xValue}) ? $rhMostCommon->{$xValue} : 0) + 1;
+
+        if ($rhMostCommon->{$xValue} > $iMostCommonTotal)
+        {
+            $iMostCommonTotal = $rhMostCommon->{$xValue};
+            $xMostCommonValue = $xValue;
+        }
+    }
+
+    # Keep going until all keys are exhausted
     my $rhClauseHash;
 
     while (@{$rstryMatrix} > 0)
     {
-        my @stryEntry = split(',', $rstryMatrix->[0]);
-        my $strKeyTop = $stryEntry[0];
-        my $strRetVal;
+        # Start processing the first key in the list
+        my $strKeyTop = $rstryMatrix->[0][0];
+
+        # A list of keys values to be passed to the next switch statement
         my @stryEntrySub;
 
-        # print STDERR "KEY $strKeyTop\n";
+        # Find all instances of the key and build a hash representing the distinct list of values
+        my $rhKeyValue = {};
+        my $iEntryIdx = 0;
 
-        while (@{$rstryMatrix} > 0 && $stryEntry[0] eq $strKeyTop)
+        while ($iEntryIdx < @{$rstryMatrix})
         {
-            my $strEntry = shift(@{$rstryMatrix});
-            # print STDERR "ENTRY $strEntry\n";
-            @stryEntry = split(',', $strEntry);
-
-            if (@stryEntry <= 2 || $stryEntry[1] eq 'XXXXXX')
+            # If this key matches the top key then process
+            if ($rstryMatrix->[$iEntryIdx][0] eq $strKeyTop)
             {
-                $strRetVal = $stryEntry[-1];
-                # print STDERR "RETVAL ${strRetVal}\n";
+                # Add value to unique list
+                $rhKeyValue->{$rstryMatrix->[$iEntryIdx][-1]} = true;
+
+                # Get the key/value entry, remove the top key, and store for the next switch statement
+                my @stryEntry = @{$rstryMatrix->[$iEntryIdx]};
+                shift(@stryEntry);
+                push(@stryEntrySub, \@stryEntry);
+
+                # Remove the key from the list
+                splice(@{$rstryMatrix}, $iEntryIdx, 1);
             }
+            # else move on to the next key
             else
             {
-                shift(@stryEntry);
-                # print STDERR "SUB " . join(',', @stryEntry) . "\n";
-                push(@stryEntrySub, join(',', @stryEntry));
-            }
-
-            if (@{$rstryMatrix} > 0)
-            {
-                @stryEntry = split(',', $rstryMatrix->[0]);
+                $iEntryIdx++;
             }
         };
 
-        my $strClause = '';
+        # Only need a switch if there is more than one value or the one value is not the most common value
+        if (keys(%{$rhKeyValue}) > 1 || $stryEntrySub[0][-1] ne $xMostCommonValue)
+        {
+            my $strClause = '';
 
-        if (@stryEntrySub > 0)
-        {
-            $strClause .= cgenSwitchBuildSub(
-                $strType, \@stryEntrySub, $iDepth + 1, $rstryParam, $rhLabelMap, $rhValueLabelMap) . "\n";
-        }
+            $iCost += COST_SWITCH_CASE;
 
-        if (defined($strRetVal))
-        {
-            $strClause .=
-                "${strIndent}        return " .
-                cgenTypeFormat(
-                    $strType,
-                    defined($rhValueLabelMap) && defined($rhValueLabelMap->{$strRetVal}) ?
-                        $rhValueLabelMap->{$strRetVal} : $strRetVal) .
-                ";\n";
-        }
-        else
-        {
-            $strClause .= "${strIndent}        break;\n";
-        }
+            # Process next switch
+            if (keys(%{$rhKeyValue}) > 1 && @{$stryEntrySub[0]} > 1)
+            {
+                my ($strClauseSub, $iCostSub) = cgenSwitchBuildSub(
+                    $strType, \@stryEntrySub, $iDepth + 1, $rstryParam, $rhLabelMap, $rhValueLabelMap, $xMostCommonValue);
 
-        if (defined($rhClauseHash->{$strClause}))
-        {
+                $strClause .= $strClauseSub . "\n";
+                $iCost += $iCostSub;
+            }
+            # Return the value
+            else
+            {
+                my $strRetVal = $stryEntrySub[0][-1];
+
+                $strClause .=
+                    "${strIndent}        return " .
+                    cgenTypeFormat(
+                        $strType,
+                        defined($rhValueLabelMap) && defined($rhValueLabelMap->{$strRetVal}) ?
+                            $rhValueLabelMap->{$strRetVal} : $strRetVal) .
+                    ";\n";
+            }
+
+            # Store the key and the clause in a hash to deduplicate
             push(@{$rhClauseHash->{$strClause}{key}}, int($strKeyTop));
-        }
-        else
-        {
-            $rhClauseHash->{$strClause}{key} = [int($strKeyTop)];
         }
     }
 
-    my $bFirst = true;
+    # Reorder clause based on an numerical/alpha representation of the case statements. This is done for primarily for readability
+    # but may have some optimization benefits since integer keys are ordered numerically.
+    my $rhClauseOrderedHash;
 
     foreach my $strClause (sort(keys(%{$rhClauseHash})))
+    {
+        my $strKey;
+
+        foreach my $iKey (@{$rhClauseHash->{$strClause}{key}})
+        {
+            $strKey .= (defined($strKey) ? '' : ',') . sprintf('%07d', $iKey);
+        }
+
+        $rhClauseOrderedHash->{$strKey}{clause} = $strClause;
+        $rhClauseOrderedHash->{$strKey}{key} = $rhClauseHash->{$strClause}{key};
+    }
+
+    # Build the switch statement
+    my $bFirst = true;
+    my $strFunction =
+        "${strIndent}switch (${strParam})\n" .
+        "${strIndent}{\n";
+
+    # Retrieve each unique clause and create a case for each key assocated with it
+    foreach my $strKey (sort(keys(%{$rhClauseOrderedHash})))
     {
         if (!$bFirst)
         {
             $strFunction .= "\n";
         }
 
-        foreach my $strKey (@{$rhClauseHash->{$strClause}{key}})
+        foreach my $strKey (@{$rhClauseOrderedHash->{$strKey}{key}})
         {
+            $iCost += COST_SWITCH_CLAUSE;
+
             $strFunction .=
                 "${strIndent}    case " .
                 (defined($rhLabelMap->{$strParam}) ? $rhLabelMap->{$strParam}{int($strKey)} : int($strKey)) . ":\n";
         }
 
-        $strFunction .= $strClause;
+        $strFunction .= $rhClauseOrderedHash->{$strKey}{clause};
         $bFirst = false;
     }
 
-    $strFunction .= "${strIndent}}\n";
+    $strFunction .=
+        "${strIndent}}\n\n";
 
-    return $strFunction;
+    # If the most common value is the same as the parent then break instead of returning the same value.  Returning the same value
+    # again might be slightly more efficient but the break makes it easier to debug where values are coming from.
+    if (defined($xMostCommonParentValue) && $xMostCommonValue eq $xMostCommonParentValue)
+    {
+        $strFunction .=
+            "${strIndent}break;";
+    }
+    # Else return the most common value
+    else
+    {
+        $strFunction .=
+            "${strIndent}return " .
+                cgenTypeFormat(
+                    $strType,
+                    defined($rhValueLabelMap) && defined($rhValueLabelMap->{$xMostCommonValue}) ?
+                        $rhValueLabelMap->{$xMostCommonValue} : $xMostCommonValue) .
+                ";";
+    }
+
+    return $strFunction, $iCost;
 }
 
 1;

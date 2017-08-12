@@ -9,7 +9,7 @@ use English '-no_match_vars';
 use Fcntl qw(O_RDONLY);
 
 # Set number of tests
-use Test::More tests => 61;
+use Test::More tests => 59;
 
 # Load the module dynamically so it does not interfere with the test above
 use pgBackRest::LibC qw(:config :configRule);
@@ -30,7 +30,6 @@ ok (cfgOptionRuleAllowListValueTotal(CFGCMD_BACKUP, CFGOPT_DB1_HOST) == 0);
 ok (cfgOptionRuleAllowListValue(CFGCMD_BACKUP, CFGOPT_TYPE, 0) eq 'diff');
 ok (cfgOptionRuleAllowListValue(CFGCMD_BACKUP, CFGOPT_TYPE, 1) eq 'full');
 ok (cfgOptionRuleAllowListValue(CFGCMD_BACKUP, CFGOPT_TYPE, 2) eq 'incr');
-ok (!defined(cfgOptionRuleAllowListValue(CFGCMD_BACKUP, CFGOPT_TYPE, 3)));
 
 ok (cfgOptionRuleAllowListValueValid(CFGCMD_BACKUP, CFGOPT_TYPE, 'diff'));
 ok (!cfgOptionRuleAllowListValueValid(CFGCMD_BACKUP, CFGOPT_TYPE, 'bogus'));
@@ -48,7 +47,7 @@ ok (!defined(cfgOptionRuleDefault(CFGCMD_BACKUP, CFGOPT_BACKUP_HOST)));
 ok (cfgOptionRuleDepend(CFGCMD_RESTORE, CFGOPT_REPO_S3_KEY));
 ok (!cfgOptionRuleDepend(CFGCMD_RESTORE, CFGOPT_TYPE));
 
-ok (cfgOptionRuleDependOption(CFGCMD_BACKUP, CFGOPT_BACKUP_USER) == CFGOPT_BACKUP_HOST);
+ok (cfgOptionRuleDependOption(CFGCMD_BACKUP, CFGOPT_DB_USER) == CFGOPT_DB_HOST);
 ok (cfgOptionRuleDependOption(CFGCMD_RESTORE, CFGOPT_DB2_HOST) == -1);
 
 ok (cfgOptionRuleDependValueTotal(CFGCMD_ARCHIVE_GET, CFGOPT_BACKUP_HOST) == 0);
@@ -57,7 +56,6 @@ ok (cfgOptionRuleDependValueTotal(CFGCMD_RESTORE, CFGOPT_TARGET) == 3);
 ok (cfgOptionRuleDependValue(CFGCMD_RESTORE, CFGOPT_TARGET, 0) eq 'name');
 ok (cfgOptionRuleDependValue(CFGCMD_RESTORE, CFGOPT_TARGET, 1) eq 'time');
 ok (cfgOptionRuleDependValue(CFGCMD_RESTORE, CFGOPT_TARGET, 2) eq 'xid');
-ok (!defined(cfgOptionRuleDependValue(CFGCMD_RESTORE, CFGOPT_TARGET, 3)));
 
 ok (cfgOptionRuleDependValueValid(CFGCMD_RESTORE, CFGOPT_TARGET, 'time'));
 ok (!cfgOptionRuleDependValueValid(CFGCMD_RESTORE, CFGOPT_TARGET, 'bogus'));
