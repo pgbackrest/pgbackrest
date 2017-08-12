@@ -1,4 +1,4 @@
-<!ELEMENT doc ((description, intro, contributor-list, release-list)|(config, operation)|
+<!ELEMENT doc ((description, intro, release-list, contributor-list)|(config, operation)|
                (description?, variable-list?, block-define*, cleanup?, section+))>
     <!ATTLIST doc title CDATA #REQUIRED>
     <!ATTLIST doc subtitle CDATA "">

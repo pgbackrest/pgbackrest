@@ -9,171 +9,34 @@
         The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact the on the <backrest/> codebase.</text>
     </intro>
 
-    <contributor-list>
-        <!-- The first contributor is the default for all release items to simplify the xml -->
-        <contributor id="steele.david">
-            <contributor-name-display>David Steele</contributor-name-display>
-            <contributor-id type="github">dwsteele</contributor-id>
-        </contributor>
-
-        <!-- The order of other contributors is alpha by name -->
-        <contributor id="avellar.leonardo">
-            <contributor-name-display>Leonardo Avellar</contributor-name-display>
-            <contributor-id type="github">L30Bola</contributor-id>
-        </contributor>
-
-        <contributor id="barber.chris">
-            <contributor-name-display>Chris Barber</contributor-name-display>
-            <contributor-id type="github">gamerscomplete</contributor-id>
-        </contributor>
-
-        <contributor id="benoit.evan">
-            <contributor-name-display>Evan Benoit</contributor-name-display>
-            <contributor-id type="github">evanbenoit</contributor-id>
-        </contributor>
-
-        <contributor id="berg.christoph">
-            <contributor-name-display>Christoph Berg</contributor-name-display>
-            <contributor-id type="github">ChristophBerg</contributor-id>
-        </contributor>
-
-        <contributor id="biberhofer.sascha">
-            <contributor-name-display>Sascha Biberhofer</contributor-name-display>
-            <contributor-id type="github">sbiberhofer</contributor-id>
-        </contributor>
-
-        <contributor id="didovicher.dmitry">
-            <contributor-name-display>Dmitry Didovicher</contributor-name-display>
-            <contributor-id type="github">anarazel</contributor-id>
-        </contributor>
-
-        <contributor id="fort.chris">
-            <contributor-name-display>Chris Fort</contributor-name-display>
-            <contributor-id type="github">the1forte</contributor-id>
-        </contributor>
-
-        <contributor id="frazer.scott">
-            <contributor-name-display>Scott Frazer</contributor-name-display>
-            <contributor-id type="github">sfrazer</contributor-id>
-        </contributor>
-
-        <contributor id="freund.andres">
-            <contributor-name-display>Andres Freund</contributor-name-display>
-            <contributor-id type="github">anarazel</contributor-id>
-        </contributor>
-
-        <contributor id="frost.stephen">
-            <contributor-name-display>Stephen Frost</contributor-name-display>
-            <contributor-id type="github">sfrost</contributor-id>
-        </contributor>
-
-        <contributor id="golpayegani.navid">
-            <contributor-name-display>Navid Golpayegani</contributor-name-display>
-            <contributor-id type="github">golpa</contributor-id>
-        </contributor>
-
-        <contributor id="gunduz.devrim">
-            <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
-            <contributor-id type="github">devrimgunduz</contributor-id>
-        </contributor>
-
-        <contributor id="harvey.john">
-            <contributor-name-display>John Harvey</contributor-name-display>
-            <contributor-id type="github">crunchyjohn</contributor-id>
-        </contributor>
-
-        <contributor id="kulkarni.nikhilchandra">
-            <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
-            <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
-        </contributor>
-
-        <contributor id="lardiere.sebastien">
-            <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
-            <contributor-id type="github">slardiere</contributor-id>
-        </contributor>
-
-        <contributor id="lobréau.benoit">
-            <contributor-name-display>blogh</contributor-name-display>
-            <contributor-id type="github">blogh</contributor-id>
-        </contributor>
-
-        <contributor id="loxo.lætitia">
-            <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
-            <contributor-id type="github">LaetitiaLoxo</contributor-id>
-        </contributor>
-
-        <contributor id="odonnell.jason">
-            <contributor-name-display>Jason O'Donnell</contributor-name-display>
-            <contributor-id type="github">Dwaligon</contributor-id>
-        </contributor>
-
-        <contributor id="parkinson.janice">
-            <contributor-name-display>Janice Parkinson</contributor-name-display>
-            <contributor-id type="github">jpabt</contributor-id>
-        </contributor>
-
-        <contributor id="renner.michael">
-            <contributor-name-display>Michael Renner</contributor-name-display>
-            <contributor-id type="github">terrorobe</contributor-id>
-        </contributor>
-
-        <contributor id="radman.eric">
-            <contributor-name-display>Eric Radman</contributor-name-display>
-            <contributor-id type="github">eradman</contributor-id>
-        </contributor>
-
-        <contributor id="shang.cynthia">
-            <contributor-name-display>Cynthia Shang</contributor-name-display>
-            <contributor-id type="github">cmwshang</contributor-id>
-        </contributor>
-
-        <contributor id="sharma.yogesh">
-            <contributor-name-display>Yogesh Sharma</contributor-name-display>
-            <contributor-id type="github">sharmay</contributor-id>
-        </contributor>
-
-        <contributor id="smith.greg">
-            <contributor-name-display>Greg Smith</contributor-name-display>
-            <contributor-id type="github">gregscds</contributor-id>
-        </contributor>
-
-        <contributor id="vernick.todd">
-            <contributor-name-display>Todd Vernick</contributor-name-display>
-            <contributor-id type="github">gintoddic</contributor-id>
-        </contributor>
-
-        <contributor id="vitale.michael">
-            <contributor-name-display>Michael Vitale</contributor-name-display>
-            <contributor-id type="github">MichaelDBA</contributor-id>
-        </contributor>
-
-        <contributor id="vondendriesch.adrian">
-            <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
-            <contributor-id type="github">disco-stu</contributor-id>
-        </contributor>
-
-        <contributor id="wieck.jan">
-            <contributor-name-display>Jan Wieck</contributor-name-display>
-            <contributor-id type="github">wieck</contributor-id>
-        </contributor>
-
-        <contributor id="wilke.jens">
-            <contributor-name-display>Jens Wilke</contributor-name-display>
-        </contributor>
-    </contributor-list>
-
     <release-list>
         <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-bug-list>
                     <release-item>
                         <p>Changed log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Drain <id>stderr</id> during test process execution as well as termination to prevent lockups if there is a lot of output.</p>
                     </release-item>
                 </release-bug-list>
 
                 <release-refactor-list>
                     <release-item>
                         <p>Updated Docker build in <file>Vagrantfile</file>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Ignore auto-generated C code created by release 2.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>
@@ -3270,4 +3133,157 @@
             </release-doc-list>
         </release>
     </release-list>
+
+    <contributor-list>
+        <!-- The first contributor is the default for all release items to simplify the xml -->
+        <contributor id="steele.david">
+            <contributor-name-display>David Steele</contributor-name-display>
+            <contributor-id type="github">dwsteele</contributor-id>
+        </contributor>
+
+        <!-- The order of other contributors is alpha by name -->
+        <contributor id="avellar.leonardo">
+            <contributor-name-display>Leonardo Avellar</contributor-name-display>
+            <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
+        <contributor id="barber.chris">
+            <contributor-name-display>Chris Barber</contributor-name-display>
+            <contributor-id type="github">gamerscomplete</contributor-id>
+        </contributor>
+
+        <contributor id="benoit.evan">
+            <contributor-name-display>Evan Benoit</contributor-name-display>
+            <contributor-id type="github">evanbenoit</contributor-id>
+        </contributor>
+
+        <contributor id="berg.christoph">
+            <contributor-name-display>Christoph Berg</contributor-name-display>
+            <contributor-id type="github">ChristophBerg</contributor-id>
+        </contributor>
+
+        <contributor id="biberhofer.sascha">
+            <contributor-name-display>Sascha Biberhofer</contributor-name-display>
+            <contributor-id type="github">sbiberhofer</contributor-id>
+        </contributor>
+
+        <contributor id="didovicher.dmitry">
+            <contributor-name-display>Dmitry Didovicher</contributor-name-display>
+            <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="fort.chris">
+            <contributor-name-display>Chris Fort</contributor-name-display>
+            <contributor-id type="github">the1forte</contributor-id>
+        </contributor>
+
+        <contributor id="frazer.scott">
+            <contributor-name-display>Scott Frazer</contributor-name-display>
+            <contributor-id type="github">sfrazer</contributor-id>
+        </contributor>
+
+        <contributor id="freund.andres">
+            <contributor-name-display>Andres Freund</contributor-name-display>
+            <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="frost.stephen">
+            <contributor-name-display>Stephen Frost</contributor-name-display>
+            <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="golpayegani.navid">
+            <contributor-name-display>Navid Golpayegani</contributor-name-display>
+            <contributor-id type="github">golpa</contributor-id>
+        </contributor>
+
+        <contributor id="gunduz.devrim">
+            <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
+            <contributor-id type="github">devrimgunduz</contributor-id>
+        </contributor>
+
+        <contributor id="harvey.john">
+            <contributor-name-display>John Harvey</contributor-name-display>
+            <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="kulkarni.nikhilchandra">
+            <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
+            <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
+        </contributor>
+
+        <contributor id="lardiere.sebastien">
+            <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
+            <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
+        <contributor id="lobréau.benoit">
+            <contributor-name-display>blogh</contributor-name-display>
+            <contributor-id type="github">blogh</contributor-id>
+        </contributor>
+
+        <contributor id="loxo.lætitia">
+            <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
+            <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
+        <contributor id="odonnell.jason">
+            <contributor-name-display>Jason O'Donnell</contributor-name-display>
+            <contributor-id type="github">Dwaligon</contributor-id>
+        </contributor>
+
+        <contributor id="parkinson.janice">
+            <contributor-name-display>Janice Parkinson</contributor-name-display>
+            <contributor-id type="github">jpabt</contributor-id>
+        </contributor>
+
+        <contributor id="renner.michael">
+            <contributor-name-display>Michael Renner</contributor-name-display>
+            <contributor-id type="github">terrorobe</contributor-id>
+        </contributor>
+
+        <contributor id="radman.eric">
+            <contributor-name-display>Eric Radman</contributor-name-display>
+            <contributor-id type="github">eradman</contributor-id>
+        </contributor>
+
+        <contributor id="shang.cynthia">
+            <contributor-name-display>Cynthia Shang</contributor-name-display>
+            <contributor-id type="github">cmwshang</contributor-id>
+        </contributor>
+
+        <contributor id="sharma.yogesh">
+            <contributor-name-display>Yogesh Sharma</contributor-name-display>
+            <contributor-id type="github">sharmay</contributor-id>
+        </contributor>
+
+        <contributor id="smith.greg">
+            <contributor-name-display>Greg Smith</contributor-name-display>
+            <contributor-id type="github">gregscds</contributor-id>
+        </contributor>
+
+        <contributor id="vernick.todd">
+            <contributor-name-display>Todd Vernick</contributor-name-display>
+            <contributor-id type="github">gintoddic</contributor-id>
+        </contributor>
+
+        <contributor id="vitale.michael">
+            <contributor-name-display>Michael Vitale</contributor-name-display>
+            <contributor-id type="github">MichaelDBA</contributor-id>
+        </contributor>
+
+        <contributor id="vondendriesch.adrian">
+            <contributor-name-display>Adrian Vondendriesch</contributor-name-display>
+            <contributor-id type="github">disco-stu</contributor-id>
+        </contributor>
+
+        <contributor id="wieck.jan">
+            <contributor-name-display>Jan Wieck</contributor-name-display>
+            <contributor-id type="github">wieck</contributor-id>
+        </contributor>
+
+        <contributor id="wilke.jens">
+            <contributor-name-display>Jens Wilke</contributor-name-display>
+        </contributor>
+    </contributor-list>
 </doc>
