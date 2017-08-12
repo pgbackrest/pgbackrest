@@ -34,10 +34,13 @@ use constant PARAM_VALUE_ID                                         => 'uiValueI
 use constant PARAM_ORDER                                            => 'param-order';
 use constant VALUE_MAP                                              => 'value-map';
 
+use constant CFGBLDDEF_RULE_ALLOW_LIST                              => CFGBLDDEF_RULE_ALLOW_LIST;
 use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE                        => CFGBLDDEF_RULE_ALLOW_LIST . '-value';
 use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL                  => CFGBLDDEF_RULE_ALLOW_LIST_VALUE . '-total';
 use constant CFGBLDDEF_RULE_ALLOW_RANGE_MIN                         => CFGBLDDEF_RULE_ALLOW_RANGE . '-min';
 use constant CFGBLDDEF_RULE_ALLOW_RANGE_MAX                         => CFGBLDDEF_RULE_ALLOW_RANGE . '-max';
+use constant CFGBLDDEF_RULE_DEPEND                                  => CFGBLDDEF_RULE_DEPEND;
+use constant CFGBLDDEF_RULE_DEPEND_VALUE                            => CFGBLDDEF_RULE_DEPEND . '-value';
 use constant CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL                      => CFGBLDDEF_RULE_DEPEND_VALUE . '-total';
 use constant CFGBLDDEF_RULE_NAME                                    => 'name';
 use constant CFGBLDDEF_RULE_VALID                                   => 'valid';
@@ -135,6 +138,16 @@ foreach my $strOption (sort(keys(%{$rhOptionRule})))
 ####################################################################################################################################
 my $rhOptionRuleParam =
 {
+    &CFGBLDDEF_RULE_ALLOW_LIST =>
+    {
+        &PARAM_FILE => FILE_CONFIG_RULE,
+        &CFGBLDDEF_RULE_NAME => 'AllowList',
+        &PARAM_SUMMARY => 'is there an allow list for this option?',
+        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
+        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
+    },
+
     &CFGBLDDEF_RULE_ALLOW_LIST_VALUE =>
     {
         &PARAM_FILE => FILE_CONFIG_RULE,
@@ -160,6 +173,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'is the option constrained to a range?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 
     &CFGBLDDEF_RULE_ALLOW_RANGE_MIN =>
@@ -187,6 +201,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'default value',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => undef,
     },
 
     &CFGBLDDEF_RULE_INDEX =>
@@ -196,6 +211,17 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'total index values allowed',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => 1,
+    },
+
+    &CFGBLDDEF_RULE_DEPEND =>
+    {
+        &PARAM_FILE => FILE_CONFIG_RULE,
+        &CFGBLDDEF_RULE_NAME => 'Depend',
+        &PARAM_SUMMARY => 'does the option have a dependency on another option?',
+        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
+        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 
     &CFGBLDDEF_RULE_DEPEND_OPTION =>
@@ -233,6 +259,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'some clue as to what value the user should provide when the option is missing but required',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => undef,
     },
 
     &CFGBLDDEF_RULE_ALT_NAME =>
@@ -242,6 +269,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'alternate name for the option primarily used for deprecated names',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => undef,
     },
 
     &CFGBLDDEF_RULE_NEGATE =>
@@ -251,6 +279,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'can the boolean option be negated?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 
     &CFGBLDDEF_RULE_PREFIX =>
@@ -260,6 +289,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'prefix when the option has an index > 1 (e.g. "db")',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => undef,
     },
 
     &CFGBLDDEF_RULE_REQUIRED =>
@@ -269,6 +299,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'is the option required?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 
     &CFGBLDDEF_RULE_SECTION =>
@@ -278,6 +309,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'section that the option belongs in, NULL means command-line only',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => undef,
     },
 
     &CFGBLDDEF_RULE_SECURE =>
@@ -287,6 +319,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'secure options can never be passed on the commmand-line',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 
     &CFGBLDDEF_RULE_TYPE =>
@@ -306,6 +339,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'is the option valid for this command?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 
     &CFGBLDDEF_RULE_HASH_VALUE =>
@@ -315,6 +349,7 @@ my $rhOptionRuleParam =
         &PARAM_SUMMARY => 'is the option a true hash or just a list of keys?',
         &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
         &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
+        &BLD_TRUTH_DEFAULT => false,
     },
 };
 
@@ -343,33 +378,28 @@ sub optionRuleDepend
 
     my $strDependOption = $rhDepend->{&CFGBLDDEF_RULE_DEPEND_OPTION};
 
-    optionRule(
-        CFGBLDDEF_RULE_DEPEND_OPTION, defined($strDependOption) ? $rhOptionNameIdMap->{$strDependOption} : -1, $iCommandId,
-        $iOptionId);
+    optionRule(CFGBLDDEF_RULE_DEPEND, defined($strDependOption) ? true : false, $iCommandId, $iOptionId);
 
-    my $iValueTotal = 0;
-
-    if (defined($rhDepend->{&CFGBLDDEF_RULE_DEPEND_VALUE}))
+    if (defined($strDependOption))
     {
-        push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_DEPEND_VALUE}{matrix}},
-            [$iCommandId, $iOptionId, $iValueTotal, $rhDepend->{&CFGBLDDEF_RULE_DEPEND_VALUE}]);
+        optionRule(CFGBLDDEF_RULE_DEPEND_OPTION, $rhOptionNameIdMap->{$strDependOption}, $iCommandId, $iOptionId);
 
-        $iValueTotal++;
-    }
-    elsif (defined($rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}))
-    {
-        foreach my $strValue (sort(keys(%{$rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}})))
+        my $iValueTotal = 0;
+
+        if (defined($rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}))
         {
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_DEPEND_VALUE}{matrix}},
-                [$iCommandId, $iOptionId, $iValueTotal, $strValue]);
+            foreach my $strValue (@{$rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}})
+            {
+                push(
+                    @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_DEPEND_VALUE}{matrix}},
+                    [$iCommandId, $iOptionId, $iValueTotal, $strValue]);
 
-            $iValueTotal++;
+                $iValueTotal++;
+            }
         }
-    }
 
-    optionRule(CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
+        optionRule(CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
+    }
 }
 
 sub optionRuleRange
@@ -394,11 +424,14 @@ sub optionRuleAllowList
     my $iCommandId = shift;
     my $iOptionId = shift;
 
-    my $iValueTotal = 0;
+    optionRule(
+        CFGBLDDEF_RULE_ALLOW_LIST, defined($rhAllowList) ? true : false, $iCommandId, $iOptionId);
 
     if (defined($rhAllowList))
     {
-        foreach my $strValue (sort(keys(%{$rhAllowList})))
+        my $iValueTotal = 0;
+
+        foreach my $strValue (@{$rhAllowList})
         {
             push(
                 @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_ALLOW_LIST_VALUE}{matrix}},
@@ -406,9 +439,9 @@ sub optionRuleAllowList
 
             $iValueTotal++;
         }
-    }
 
-    optionRule(CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
+        optionRule(CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
+    }
 }
 
 ####################################################################################################################################
@@ -511,45 +544,213 @@ sub buildConfig
                         $rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST} : $rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST},
                     $iCommandId, $iOptionId);
             }
+        }
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_INDEX}{matrix}},
-                [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_INDEX}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_INDEX}{matrix}},
+            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_INDEX}]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_NEGATE}{matrix}},
-                [$iOptionId, coalesce($rhOption->{&CFGBLDDEF_RULE_NEGATE}, false)]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_NEGATE}{matrix}},
+            [$iOptionId, coalesce($rhOption->{&CFGBLDDEF_RULE_NEGATE}, false)]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_ALT_NAME}{matrix}},
-                [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_ALT_NAME}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_ALT_NAME}{matrix}},
+            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_ALT_NAME}]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_PREFIX}{matrix}},
-                [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_PREFIX}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_PREFIX}{matrix}},
+            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_PREFIX}]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_SECTION}{matrix}},
-                [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECTION}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_SECTION}{matrix}},
+            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECTION}]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_SECURE}{matrix}},
-                [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECURE}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_SECURE}{matrix}},
+            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECURE}]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_TYPE}{matrix}},
-                [$iOptionId, $rhOptionTypeNameIdMap->{$rhOption->{&CFGBLDDEF_RULE_TYPE}}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_TYPE}{matrix}},
+            [$iOptionId, $rhOptionTypeNameIdMap->{$rhOption->{&CFGBLDDEF_RULE_TYPE}}]);
 
-            push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_HASH_VALUE}{matrix}},
-                [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_HASH_VALUE}]);
+        push(
+            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_HASH_VALUE}{matrix}},
+            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_HASH_VALUE}]);
+    }
+
+    my $rhLabelMap = {&PARAM_CFGBLDOPT_ID => $rhOptionIdConstantMap, &PARAM_COMMAND_ID => $rhCommandIdConstantMap};
+
+    # Build truth table
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $strTruthTable;
+
+    foreach my $strOptionRule (sort(keys(%{$rhOptionRuleParam})))
+    {
+        my $rhOptionRule = $rhOptionRuleParam->{$strOptionRule};
+        my $strPrefix = 'cfgOption' . ($rhOptionRule->{&PARAM_FILE} eq FILE_CONFIG_RULE ? 'Rule' : '');
+        my $strFunctionName = $strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME};
+
+        my $strSummary = ucfirst($rhOptionRule->{&PARAM_SUMMARY});
+        $strSummary .= $strSummary =~ /\?$/ ? '' : '.';
+
+        $strTruthTable .=
+            (defined($strTruthTable) ? "\n" : '') .
+            "## ${strFunctionName}\n\n" .
+            "${strSummary}\n\n" .
+            "### Truth Table:\n\n";
+
+        my $strTruthDefault;
+
+        if (exists($rhOptionRule->{&BLD_TRUTH_DEFAULT}))
+        {
+            $strTruthDefault =
+                defined($rhOptionRule->{&BLD_TRUTH_DEFAULT}) ? $rhOptionRule->{&BLD_TRUTH_DEFAULT} : CGEN_DATAVAL_NULL;
+
+            $strTruthTable .=
+                'Functions that return `' .
+                cgenTypeFormat(
+                    $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
+                    defined($rhOptionRule->{&VALUE_MAP}) && defined($rhOptionRule->{&VALUE_MAP}->{$strTruthDefault}) ?
+                        $rhOptionRule->{&VALUE_MAP}->{$strTruthDefault} : $strTruthDefault) .
+                    "` are not listed here for brevity.\n\n";
+        }
+
+        # Write table header
+        $strTruthTable .= '| Suffix';
+
+        for (my $iParamIdx = 0; $iParamIdx < @{$rhOptionRule->{&PARAM_ORDER}}; $iParamIdx++)
+        {
+            $strTruthTable .= ' | ' . $rhOptionRule->{&PARAM_ORDER}->[$iParamIdx];
+        }
+
+        $strTruthTable .=
+            " | Result |\n" .
+            '| ------';
+
+        for (my $iParamIdx = 0; $iParamIdx < @{$rhOptionRule->{&PARAM_ORDER}}; $iParamIdx++)
+        {
+            $strTruthTable .= ' | ' . ('-' x length($rhOptionRule->{&PARAM_ORDER}->[$iParamIdx]));
+        }
+
+        $strTruthTable .=
+            " | ------ |\n";
+
+        # Format matrix data so that can be ordered (even by integer)
+        my @stryOrderedMatrix;
+
+        foreach my $rxyEntry (@{$rhOptionRule->{matrix}})
+        {
+            my $strEntry;
+
+            for (my $iEntryIdx = 0; $iEntryIdx < @{$rxyEntry}; $iEntryIdx++)
+            {
+                my $strValue = defined($rxyEntry->[$iEntryIdx]) ? $rxyEntry->[$iEntryIdx] : CGEN_DATAVAL_NULL;
+
+                if ($iEntryIdx != @{$rxyEntry} - 1)
+                {
+                    $strEntry .= (defined($strEntry) ? '~' : '') . sprintf('%016d', $strValue);
+                }
+                else
+                {
+                    $strEntry .= '~' . $strValue;
+                }
+            }
+
+            push(@stryOrderedMatrix, $strEntry);
+        }
+
+        # Commands are frequently redundant, so if command is present (as first param) then remove it when redundant
+        my $rhMatrixFilter;
+        my @stryFilteredMatrix;
+
+        if ($rhOptionRule->{&PARAM_ORDER}->[0] eq PARAM_COMMAND_ID)
+        {
+            foreach my $strEntry (sort(@stryOrderedMatrix))
+            {
+                my @xyEntry = split('\~', $strEntry);
+
+                shift(@xyEntry);
+                my $strValue = pop(@xyEntry);
+                my $strKey = join('~', @xyEntry);
+
+                push(@{$rhMatrixFilter->{$strKey}{entry}}, $strEntry);
+                $rhMatrixFilter->{$strKey}{value}{$strValue} = true;
+            }
+
+            foreach my $strKey (sort(keys(%{$rhMatrixFilter})))
+            {
+                if (keys(%{$rhMatrixFilter->{$strKey}{value}}) == 1)
+                {
+                    my $strEntry =
+
+                    push(@stryFilteredMatrix, CGEN_DATAVAL_NULL . "~${strKey}~" . (keys(%{$rhMatrixFilter->{$strKey}{value}}))[0]);
+                }
+                else
+                {
+                    push(@stryFilteredMatrix, @{$rhMatrixFilter->{$strKey}{entry}});
+                }
+            }
+        }
+        else
+        {
+            @stryFilteredMatrix = @stryOrderedMatrix;
+        }
+
+        # Output function entry
+        foreach my $strEntry (sort(@stryFilteredMatrix))
+        {
+            my @xyEntry = split('\~', $strEntry);
+            my $strRow = '| ' . $rhOptionRule->{&CFGBLDDEF_RULE_NAME};
+            my $strValue;
+
+            for (my $iEntryIdx = 0; $iEntryIdx < @xyEntry; $iEntryIdx++)
+            {
+                $strValue = $xyEntry[$iEntryIdx];
+                $strRow .= ' | ';
+
+                if ($iEntryIdx != @xyEntry - 1)
+                {
+                    my $strParam = $rhOptionRule->{&PARAM_ORDER}->[$iEntryIdx];
+
+                    if ($strValue eq CGEN_DATAVAL_NULL)
+                    {
+                        $strRow .= '_\<ANY\>_';
+                    }
+                    else
+                    {
+                        $strRow .=
+                            '`' .
+                            (defined($rhLabelMap->{$strParam}) ? $rhLabelMap->{$strParam}{int($strValue)} : int($strValue)) .
+                            '`';
+                    }
+                }
+                else
+                {
+                    $strRow .=
+                        '`' .
+                        cgenTypeFormat(
+                            $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
+                            defined($rhOptionRule->{&VALUE_MAP}) && defined($rhOptionRule->{&VALUE_MAP}->{$strValue}) ?
+                                $rhOptionRule->{&VALUE_MAP}->{$strValue} : $strValue) .
+                        '`';
+
+                }
+            }
+
+            if (defined($strTruthDefault) && $strTruthDefault eq $strValue)
+            {
+                next;
+            }
+
+            $strTruthTable .= "${strRow} |\n";
         }
     }
 
+    $rhBuild->{&FILE_CONFIG}{&BLD_MD}{&BLD_SOURCE} = $strTruthTable;
+
     # Output config rule functions
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $rhLabelMap = {&PARAM_CFGBLDOPT_ID => $rhOptionIdConstantMap, &PARAM_COMMAND_ID => $rhCommandIdConstantMap};
-
     my $strConfigFunction =
         "// AUTOGENERATED CODE - DO NOT MODIFY THIS FILE";
 

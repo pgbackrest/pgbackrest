@@ -8,21 +8,21 @@ Functions
 ***********************************************************************************************************************************/
 int32 cfgCommandId(const char *szCommandName);
 int32 cfgOptionId(const char *szOptionName);
-bool cfgOptionRuleAllowList(uint32 uiCommandId, uint32 uiOptionId);
 bool cfgOptionRuleAllowListValueValid(uint32 uiCommandId, uint32 uiOptionId, const char *szValue);
-bool cfgOptionRuleDepend(uint32 uiCommandId, uint32 uiOptionId);
 bool cfgOptionRuleDependValueValid(uint32 uiCommandId, uint32 uiOptionId, const char *szValue);
 uint32 cfgOptionTotal();
 
 /***********************************************************************************************************************************
 Auto-Generated Functions
 ***********************************************************************************************************************************/
+bool cfgOptionRuleAllowList(uint32 uiCommandId, uint32 uiOptionId);
 const char * cfgOptionRuleAllowListValue(uint32 uiCommandId, uint32 uiOptionId, uint32 uiValueId);
 int32 cfgOptionRuleAllowListValueTotal(uint32 uiCommandId, uint32 uiOptionId);
 bool cfgOptionRuleAllowRange(uint32 uiCommandId, uint32 uiOptionId);
 double cfgOptionRuleAllowRangeMax(uint32 uiCommandId, uint32 uiOptionId);
 double cfgOptionRuleAllowRangeMin(uint32 uiCommandId, uint32 uiOptionId);
 const char * cfgOptionRuleDefault(uint32 uiCommandId, uint32 uiOptionId);
+bool cfgOptionRuleDepend(uint32 uiCommandId, uint32 uiOptionId);
 int32 cfgOptionRuleDependOption(uint32 uiCommandId, uint32 uiOptionId);
 const char *cfgOptionRuleDependValue(uint32 uiCommandId, uint32 uiOptionId, uint32 uiValueId);
 int32 cfgOptionRuleDependValueTotal(uint32 uiCommandId, uint32 uiOptionId);

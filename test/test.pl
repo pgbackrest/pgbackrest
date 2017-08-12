@@ -429,8 +429,8 @@ eval
                     if ($strBuildVM eq $strVmHost)
                     {
                         foreach my $strFile (
-                            'src/config/config.auto.c', 'src/config/config.auto.h', 'src/config/configRule.auto.c',
-                            'libc/lib/pgBackRest/LibC.pm')
+                            'src/config/config.auto.c', 'src/config/config.auto.h', 'src/config/config.auto.md',
+                            'src/config/configRule.auto.c', 'libc/lib/pgBackRest/LibC.pm')
                         {
                             $oStorageBackRest->copy(
                                 "${strLibCPath}/${strBuildVM}/${strFile}",

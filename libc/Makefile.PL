@@ -188,7 +188,7 @@ sub formatText
             $strLibC .= $bFirst ? '' : "\n";
             $bFirst = false;
 
-            foreach my $strValue (sort(keys(%{$rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}})))
+            foreach my $strValue (@{$rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}})
             {
                 my $strConstant = 'CFGOPTVAL_' . uc("${strOption}_${strValue}");
                 $strConstant =~ s/\-/\_/g;
@@ -207,7 +207,7 @@ sub formatText
                 $strLibC .= $bFirst ? '' : "\n";
                 $bFirst = false;
 
-                foreach my $strValue (sort(keys(%{$rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}})))
+                foreach my $strValue (@{$rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}})
                 {
                     my $strConstant = 'CFGOPTVAL_' . uc("${strCommand}_${strOption}_${strValue}");
                     $strConstant =~ s/\-/\_/g;

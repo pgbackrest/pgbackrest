@@ -27,7 +27,7 @@ use constant CGEN_DATATYPE_INT64                                    => 'int64';
 use constant CGEN_DATATYPE_CONSTCHAR                                => 'const char *';
     push @EXPORT, qw(CGEN_DATATYPE_CONSTCHAR);
 
-use constant CGEN_DATAVAL_NULL                                      => '^^{{[(([@@!!--==NULL==--!!@@))]]}}^^';
+use constant CGEN_DATAVAL_NULL                                      => '^^{{[[NULL]]}}^^';
     push @EXPORT, qw(CGEN_DATAVAL_NULL);
 
 ####################################################################################################################################
