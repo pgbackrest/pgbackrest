@@ -48,7 +48,7 @@ sub new
             {name => 'strUser'},
             {name => 'iSshPort', required => false},
             {name => 'iProtocolTimeout'},
-            {name => 'bWarnOnError'}, # CSHANG maybe this should be required false and default => false? Which I think undef would then be reset to false?
+            {name => 'bWarnOnError'}, 
         );
 
     my $strCommandSshPort = defined($iSshPort) ? '-p ' . $iSshPort . ' ' : '';

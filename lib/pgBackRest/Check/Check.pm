@@ -56,9 +56,9 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
-    # Initialize the database object
-    my $oDb = dbMasterGet();
-# CSHANG May need to change the above. The exisiting behavior was it will error on a standby not being found. When we allow for more than one replica, dbMasterGet will not check that so the behavior of this function would change, so we should be calling dbObjectGet
+    # Initialize the database object. This will also check the configured replicas and throw an error if at least one is not
+    # able to be connected to and warnings for any that cannot be properly connected to.
+    my ($oDb) = dbObjectGet();
 
     # Validate the database configuration
     $oDb->configValidate();
@@ -99,7 +99,6 @@ sub process
         {
             # Check that the archive info file is written and is valid for the current database of the stanza
             ($strArchiveId) = new pgBackRest::Archive::Get::Get()->getCheck();
-# CSHANG May need to change the above. getCheck calls dBMasterGet. The exisiting behavior was it will error on a standby not being found. When we allow for more than one replica, dbMasterGet will not check that so the behavior of this function would change. Need to determine if that is correct.
             return true;
         }
         or do

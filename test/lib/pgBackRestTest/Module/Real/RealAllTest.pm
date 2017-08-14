@@ -462,6 +462,15 @@ sub run
             # Update message for standby
             $oHostDbMaster->sqlExecute("update test set message = '$strStandbyMessage'");
 
+            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
+            {
+                my $strStandbyBackup = $oHostBackup->backup(
+                    CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access all standbys',
+                    {bStandby => true,
+                     iExpectedExitStatus => ERROR_HOST_CONNECT,
+                     strOptionalParam => '--' . $oHostBackup->optionIndex(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+            }
+
             my $strStandbyBackup = $oHostBackup->backup(
                 CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
                 {bStandby => true,

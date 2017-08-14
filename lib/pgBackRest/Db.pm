@@ -1040,13 +1040,15 @@ sub dbObjectGet
         # Make sure a standby database is defined when backup from standby option is set
         if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
         {
-            confess &log(ERROR, 'unable to find standby database - cannot proceed');
+            # Throw an error that is distinct from connecting to the master for testing purposes
+            confess &log(ERROR, 'unable to find standby database - cannot proceed', ERROR_HOST_CONNECT);
         }
 
         # A master database is always required
         if (!defined($oDbMaster))
         {
-            confess &log(ERROR, 'unable to find master database - cannot proceed');
+            # Throw an error that is distinct from connecting to a standy for testing purposes
+            confess &log(ERROR, 'unable to find master database - cannot proceed', ERROR_DB_CONNECT);
         }
     }
 
@@ -1070,7 +1072,6 @@ sub dbObjectGet
 push @EXPORT, qw(dbObjectGet);
 
 ####################################################################################################################################
-# CSHANG The name of this function is misleading. If the pgbackrest command is run on the standby then the object returned is the standby DB object, right? Not the Master database server. 
 # dbMasterGet
 #
 # Usually only the master database is required so this function makes getting it simple.  If in offline mode (which is true for a
@@ -1081,8 +1082,7 @@ sub dbMasterGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbMasterGet');
 
-    # my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
-    my ($oDbMaster) = dbObjectGet();
+    my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
 
     # Return from function and log return values if any
     return logDebugReturn

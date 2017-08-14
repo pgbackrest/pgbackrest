@@ -65,7 +65,6 @@ sub new
 
     # Create the class hash
     my $self = $class->SUPER::new($strName, $strId, $oIo, {bWarnOnError => $bWarnOnError}); 
-        # my $self = $class->SUPER::new($strName, $strId, $oIo); CSHANG
     bless $self, $class;
 
     # Return from function and log return values if any

@@ -47,7 +47,7 @@ sub new
     my $strOperation = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize the database object
-    $self->{oDb} = dbMasterGet();
+    ($self->{oDb}) = dbObjectGet();
     $self->dbInfoGet();
 
     # Return from function and log return values if any

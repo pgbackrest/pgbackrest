@@ -213,6 +213,24 @@ Functions that return `NULL` are not listed here for brevity.
 | Default | _\<ANY\>_ | `CFGOPT_DB2_CONFIG` | `"/etc/pgbackrest.conf"` |
 | Default | _\<ANY\>_ | `CFGOPT_DB2_PORT` | `"5432"` |
 | Default | _\<ANY\>_ | `CFGOPT_DB2_USER` | `"postgres"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB3_CONFIG` | `"/etc/pgbackrest.conf"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB3_PORT` | `"5432"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB3_USER` | `"postgres"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB4_CONFIG` | `"/etc/pgbackrest.conf"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB4_PORT` | `"5432"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB4_USER` | `"postgres"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB5_CONFIG` | `"/etc/pgbackrest.conf"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB5_PORT` | `"5432"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB5_USER` | `"postgres"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB6_CONFIG` | `"/etc/pgbackrest.conf"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB6_PORT` | `"5432"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB6_USER` | `"postgres"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB7_CONFIG` | `"/etc/pgbackrest.conf"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB7_PORT` | `"5432"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB7_USER` | `"postgres"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB8_CONFIG` | `"/etc/pgbackrest.conf"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB8_PORT` | `"5432"` |
+| Default | _\<ANY\>_ | `CFGOPT_DB8_USER` | `"postgres"` |
 | Default | _\<ANY\>_ | `CFGOPT_DELTA` | `"0"` |
 | Default | _\<ANY\>_ | `CFGOPT_FORCE` | `"0"` |
 | Default | _\<ANY\>_ | `CFGOPT_HARDLINK` | `"0"` |
@@ -268,6 +286,30 @@ Functions that return `false` are not listed here for brevity.
 | Depend | _\<ANY\>_ | `CFGOPT_DB2_CONFIG` | `true` |
 | Depend | _\<ANY\>_ | `CFGOPT_DB2_SSH_PORT` | `true` |
 | Depend | _\<ANY\>_ | `CFGOPT_DB2_USER` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB3_CMD` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB3_CONFIG` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB3_USER` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB4_CMD` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB4_CONFIG` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB4_USER` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB5_CMD` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB5_CONFIG` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB5_USER` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB6_CMD` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB6_CONFIG` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB6_USER` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB7_CMD` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB7_CONFIG` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB7_USER` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB8_CMD` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB8_CONFIG` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB8_SSH_PORT` | `true` |
+| Depend | _\<ANY\>_ | `CFGOPT_DB8_USER` | `true` |
 | Depend | _\<ANY\>_ | `CFGOPT_RECOVERY_OPTION` | `true` |
 | Depend | _\<ANY\>_ | `CFGOPT_REPO_S3_BUCKET` | `true` |
 | Depend | _\<ANY\>_ | `CFGOPT_REPO_S3_CA_FILE` | `true` |
@@ -308,6 +350,30 @@ Name of the option that this option depends in order to be set.
 | DependOption | _\<ANY\>_ | `CFGOPT_DB2_CONFIG` | `CFGOPT_DB2_HOST` |
 | DependOption | _\<ANY\>_ | `CFGOPT_DB2_SSH_PORT` | `CFGOPT_DB2_HOST` |
 | DependOption | _\<ANY\>_ | `CFGOPT_DB2_USER` | `CFGOPT_DB2_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB3_CMD` | `CFGOPT_DB3_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB3_CONFIG` | `CFGOPT_DB3_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB3_SSH_PORT` | `CFGOPT_DB3_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB3_USER` | `CFGOPT_DB3_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB4_CMD` | `CFGOPT_DB4_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB4_CONFIG` | `CFGOPT_DB4_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB4_SSH_PORT` | `CFGOPT_DB4_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB4_USER` | `CFGOPT_DB4_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB5_CMD` | `CFGOPT_DB5_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB5_CONFIG` | `CFGOPT_DB5_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB5_SSH_PORT` | `CFGOPT_DB5_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB5_USER` | `CFGOPT_DB5_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB6_CMD` | `CFGOPT_DB6_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB6_CONFIG` | `CFGOPT_DB6_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB6_SSH_PORT` | `CFGOPT_DB6_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB6_USER` | `CFGOPT_DB6_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB7_CMD` | `CFGOPT_DB7_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB7_CONFIG` | `CFGOPT_DB7_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB7_SSH_PORT` | `CFGOPT_DB7_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB7_USER` | `CFGOPT_DB7_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB8_CMD` | `CFGOPT_DB8_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB8_CONFIG` | `CFGOPT_DB8_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB8_SSH_PORT` | `CFGOPT_DB8_HOST` |
+| DependOption | _\<ANY\>_ | `CFGOPT_DB8_USER` | `CFGOPT_DB8_HOST` |
 | DependOption | _\<ANY\>_ | `CFGOPT_FORCE` | `CFGOPT_ONLINE` |
 | DependOption | _\<ANY\>_ | `CFGOPT_RECOVERY_OPTION` | `CFGOPT_TYPE` |
 | DependOption | _\<ANY\>_ | `CFGOPT_REPO_S3_BUCKET` | `CFGOPT_REPO_TYPE` |
@@ -389,6 +455,30 @@ Total depend values for this option.
 | DependValueTotal | _\<ANY\>_ | `CFGOPT_DB2_CONFIG` | `0` |
 | DependValueTotal | _\<ANY\>_ | `CFGOPT_DB2_SSH_PORT` | `0` |
 | DependValueTotal | _\<ANY\>_ | `CFGOPT_DB2_USER` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB3_CMD` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB3_CONFIG` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB3_SSH_PORT` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB3_USER` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB4_CMD` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB4_CONFIG` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB4_SSH_PORT` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB4_USER` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB5_CMD` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB5_CONFIG` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB5_SSH_PORT` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB5_USER` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB6_CMD` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB6_CONFIG` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB6_SSH_PORT` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB6_USER` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB7_CMD` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB7_CONFIG` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB7_SSH_PORT` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB7_USER` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB8_CMD` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB8_CONFIG` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB8_SSH_PORT` | `0` |
+| DependValueTotal | _\<ANY\>_ | `CFGOPT_DB8_USER` | `0` |
 | DependValueTotal | _\<ANY\>_ | `CFGOPT_FORCE` | `1` |
 | DependValueTotal | _\<ANY\>_ | `CFGOPT_RECOVERY_OPTION` | `4` |
 | DependValueTotal | _\<ANY\>_ | `CFGOPT_REPO_S3_BUCKET` | `1` |
@@ -435,6 +525,12 @@ Functions that return `NULL` are not listed here for brevity.
 | ------ | ----------- | ---------- | ------ |
 | Hint | _\<ANY\>_ | `CFGOPT_DB1_PATH` | `"does this stanza exist?"` |
 | Hint | _\<ANY\>_ | `CFGOPT_DB2_PATH` | `"does this stanza exist?"` |
+| Hint | _\<ANY\>_ | `CFGOPT_DB3_PATH` | `"does this stanza exist?"` |
+| Hint | _\<ANY\>_ | `CFGOPT_DB4_PATH` | `"does this stanza exist?"` |
+| Hint | _\<ANY\>_ | `CFGOPT_DB5_PATH` | `"does this stanza exist?"` |
+| Hint | _\<ANY\>_ | `CFGOPT_DB6_PATH` | `"does this stanza exist?"` |
+| Hint | _\<ANY\>_ | `CFGOPT_DB7_PATH` | `"does this stanza exist?"` |
+| Hint | _\<ANY\>_ | `CFGOPT_DB8_PATH` | `"does this stanza exist?"` |
 
 ## cfgOptionIndexTotal
 
@@ -446,22 +542,70 @@ Functions that return `1` are not listed here for brevity.
 
 | Suffix | uiOptionId | Result |
 | ------ | ---------- | ------ |
-| IndexTotal | `CFGOPT_DB1_CMD` | `2` |
-| IndexTotal | `CFGOPT_DB1_CONFIG` | `2` |
-| IndexTotal | `CFGOPT_DB1_HOST` | `2` |
-| IndexTotal | `CFGOPT_DB1_PATH` | `2` |
-| IndexTotal | `CFGOPT_DB1_PORT` | `2` |
-| IndexTotal | `CFGOPT_DB1_SOCKET_PATH` | `2` |
-| IndexTotal | `CFGOPT_DB1_SSH_PORT` | `2` |
-| IndexTotal | `CFGOPT_DB1_USER` | `2` |
-| IndexTotal | `CFGOPT_DB2_CMD` | `2` |
-| IndexTotal | `CFGOPT_DB2_CONFIG` | `2` |
-| IndexTotal | `CFGOPT_DB2_HOST` | `2` |
-| IndexTotal | `CFGOPT_DB2_PATH` | `2` |
-| IndexTotal | `CFGOPT_DB2_PORT` | `2` |
-| IndexTotal | `CFGOPT_DB2_SOCKET_PATH` | `2` |
-| IndexTotal | `CFGOPT_DB2_SSH_PORT` | `2` |
-| IndexTotal | `CFGOPT_DB2_USER` | `2` |
+| IndexTotal | `CFGOPT_DB1_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB1_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB1_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB1_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB1_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB1_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB1_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB1_USER` | `8` |
+| IndexTotal | `CFGOPT_DB2_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB2_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB2_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB2_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB2_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB2_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB2_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB2_USER` | `8` |
+| IndexTotal | `CFGOPT_DB3_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB3_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB3_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB3_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB3_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB3_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB3_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB3_USER` | `8` |
+| IndexTotal | `CFGOPT_DB4_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB4_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB4_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB4_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB4_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB4_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB4_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB4_USER` | `8` |
+| IndexTotal | `CFGOPT_DB5_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB5_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB5_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB5_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB5_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB5_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB5_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB5_USER` | `8` |
+| IndexTotal | `CFGOPT_DB6_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB6_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB6_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB6_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB6_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB6_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB6_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB6_USER` | `8` |
+| IndexTotal | `CFGOPT_DB7_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB7_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB7_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB7_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB7_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB7_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB7_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB7_USER` | `8` |
+| IndexTotal | `CFGOPT_DB8_CMD` | `8` |
+| IndexTotal | `CFGOPT_DB8_CONFIG` | `8` |
+| IndexTotal | `CFGOPT_DB8_HOST` | `8` |
+| IndexTotal | `CFGOPT_DB8_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB8_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB8_SOCKET_PATH` | `8` |
+| IndexTotal | `CFGOPT_DB8_SSH_PORT` | `8` |
+| IndexTotal | `CFGOPT_DB8_USER` | `8` |
 
 ## cfgOptionRuleNegate
 
@@ -516,6 +660,54 @@ Functions that return `NULL` are not listed here for brevity.
 | Prefix | `CFGOPT_DB2_SOCKET_PATH` | `"db"` |
 | Prefix | `CFGOPT_DB2_SSH_PORT` | `"db"` |
 | Prefix | `CFGOPT_DB2_USER` | `"db"` |
+| Prefix | `CFGOPT_DB3_CMD` | `"db"` |
+| Prefix | `CFGOPT_DB3_CONFIG` | `"db"` |
+| Prefix | `CFGOPT_DB3_HOST` | `"db"` |
+| Prefix | `CFGOPT_DB3_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB3_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB3_SOCKET_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB3_SSH_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB3_USER` | `"db"` |
+| Prefix | `CFGOPT_DB4_CMD` | `"db"` |
+| Prefix | `CFGOPT_DB4_CONFIG` | `"db"` |
+| Prefix | `CFGOPT_DB4_HOST` | `"db"` |
+| Prefix | `CFGOPT_DB4_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB4_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB4_SOCKET_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB4_SSH_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB4_USER` | `"db"` |
+| Prefix | `CFGOPT_DB5_CMD` | `"db"` |
+| Prefix | `CFGOPT_DB5_CONFIG` | `"db"` |
+| Prefix | `CFGOPT_DB5_HOST` | `"db"` |
+| Prefix | `CFGOPT_DB5_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB5_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB5_SOCKET_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB5_SSH_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB5_USER` | `"db"` |
+| Prefix | `CFGOPT_DB6_CMD` | `"db"` |
+| Prefix | `CFGOPT_DB6_CONFIG` | `"db"` |
+| Prefix | `CFGOPT_DB6_HOST` | `"db"` |
+| Prefix | `CFGOPT_DB6_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB6_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB6_SOCKET_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB6_SSH_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB6_USER` | `"db"` |
+| Prefix | `CFGOPT_DB7_CMD` | `"db"` |
+| Prefix | `CFGOPT_DB7_CONFIG` | `"db"` |
+| Prefix | `CFGOPT_DB7_HOST` | `"db"` |
+| Prefix | `CFGOPT_DB7_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB7_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB7_SOCKET_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB7_SSH_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB7_USER` | `"db"` |
+| Prefix | `CFGOPT_DB8_CMD` | `"db"` |
+| Prefix | `CFGOPT_DB8_CONFIG` | `"db"` |
+| Prefix | `CFGOPT_DB8_HOST` | `"db"` |
+| Prefix | `CFGOPT_DB8_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB8_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB8_SOCKET_PATH` | `"db"` |
+| Prefix | `CFGOPT_DB8_SSH_PORT` | `"db"` |
+| Prefix | `CFGOPT_DB8_USER` | `"db"` |
 
 ## cfgOptionRuleRequired
 
@@ -640,6 +832,54 @@ Functions that return `NULL` are not listed here for brevity.
 | Section | `CFGOPT_DB2_SOCKET_PATH` | `"stanza"` |
 | Section | `CFGOPT_DB2_SSH_PORT` | `"stanza"` |
 | Section | `CFGOPT_DB2_USER` | `"stanza"` |
+| Section | `CFGOPT_DB3_CMD` | `"global"` |
+| Section | `CFGOPT_DB3_CONFIG` | `"global"` |
+| Section | `CFGOPT_DB3_HOST` | `"stanza"` |
+| Section | `CFGOPT_DB3_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB3_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB3_SOCKET_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB3_SSH_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB3_USER` | `"stanza"` |
+| Section | `CFGOPT_DB4_CMD` | `"global"` |
+| Section | `CFGOPT_DB4_CONFIG` | `"global"` |
+| Section | `CFGOPT_DB4_HOST` | `"stanza"` |
+| Section | `CFGOPT_DB4_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB4_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB4_SOCKET_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB4_SSH_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB4_USER` | `"stanza"` |
+| Section | `CFGOPT_DB5_CMD` | `"global"` |
+| Section | `CFGOPT_DB5_CONFIG` | `"global"` |
+| Section | `CFGOPT_DB5_HOST` | `"stanza"` |
+| Section | `CFGOPT_DB5_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB5_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB5_SOCKET_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB5_SSH_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB5_USER` | `"stanza"` |
+| Section | `CFGOPT_DB6_CMD` | `"global"` |
+| Section | `CFGOPT_DB6_CONFIG` | `"global"` |
+| Section | `CFGOPT_DB6_HOST` | `"stanza"` |
+| Section | `CFGOPT_DB6_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB6_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB6_SOCKET_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB6_SSH_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB6_USER` | `"stanza"` |
+| Section | `CFGOPT_DB7_CMD` | `"global"` |
+| Section | `CFGOPT_DB7_CONFIG` | `"global"` |
+| Section | `CFGOPT_DB7_HOST` | `"stanza"` |
+| Section | `CFGOPT_DB7_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB7_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB7_SOCKET_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB7_SSH_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB7_USER` | `"stanza"` |
+| Section | `CFGOPT_DB8_CMD` | `"global"` |
+| Section | `CFGOPT_DB8_CONFIG` | `"global"` |
+| Section | `CFGOPT_DB8_HOST` | `"stanza"` |
+| Section | `CFGOPT_DB8_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB8_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB8_SOCKET_PATH` | `"stanza"` |
+| Section | `CFGOPT_DB8_SSH_PORT` | `"stanza"` |
+| Section | `CFGOPT_DB8_USER` | `"stanza"` |
 | Section | `CFGOPT_HARDLINK` | `"global"` |
 | Section | `CFGOPT_LINK_ALL` | `"global"` |
 | Section | `CFGOPT_LINK_MAP` | `"global"` |
@@ -735,6 +975,54 @@ Secure options can never be passed on the commmand-line.
 | Type | `CFGOPT_DB2_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
 | Type | `CFGOPT_DB2_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
 | Type | `CFGOPT_DB2_USER` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB3_CMD` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB3_CONFIG` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB3_HOST` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB3_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB3_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB3_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB3_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB3_USER` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB4_CMD` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB4_CONFIG` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB4_HOST` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB4_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB4_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB4_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB4_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB4_USER` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB5_CMD` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB5_CONFIG` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB5_HOST` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB5_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB5_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB5_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB5_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB5_USER` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB6_CMD` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB6_CONFIG` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB6_HOST` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB6_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB6_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB6_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB6_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB6_USER` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB7_CMD` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB7_CONFIG` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB7_HOST` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB7_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB7_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB7_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB7_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB7_USER` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB8_CMD` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB8_CONFIG` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB8_HOST` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB8_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB8_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB8_SOCKET_PATH` | `CFGOPTRULE_TYPE_STRING` |
+| Type | `CFGOPT_DB8_SSH_PORT` | `CFGOPTRULE_TYPE_INTEGER` |
+| Type | `CFGOPT_DB8_USER` | `CFGOPTRULE_TYPE_STRING` |
 | Type | `CFGOPT_DELTA` | `CFGOPTRULE_TYPE_BOOLEAN` |
 | Type | `CFGOPT_FORCE` | `CFGOPTRULE_TYPE_BOOLEAN` |
 | Type | `CFGOPT_HARDLINK` | `CFGOPTRULE_TYPE_BOOLEAN` |
@@ -811,6 +1099,12 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB_TIMEOUT` | `true` |
 | Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB1_PATH` | `true` |
 | Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB2_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_DB8_PATH` | `true` |
 | Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
 | Valid | `CFGCMD_ARCHIVE_GET` | `CFGOPT_LOG_LEVEL_FILE` | `true` |
@@ -853,6 +1147,24 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB2_HOST` | `true` |
 | Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB2_PATH` | `true` |
 | Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB2_SSH_PORT` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_DB8_SSH_PORT` | `true` |
 | Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
 | Valid | `CFGCMD_ARCHIVE_PUSH` | `CFGOPT_LOG_LEVEL_FILE` | `true` |
@@ -906,6 +1218,54 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_BACKUP` | `CFGOPT_DB2_SOCKET_PATH` | `true` |
 | Valid | `CFGCMD_BACKUP` | `CFGOPT_DB2_SSH_PORT` | `true` |
 | Valid | `CFGCMD_BACKUP` | `CFGOPT_DB2_USER` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB3_USER` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB4_USER` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB5_USER` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB6_USER` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB7_USER` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_SSH_PORT` | `true` |
+| Valid | `CFGCMD_BACKUP` | `CFGOPT_DB8_USER` | `true` |
 | Valid | `CFGCMD_BACKUP` | `CFGOPT_FORCE` | `true` |
 | Valid | `CFGCMD_BACKUP` | `CFGOPT_HARDLINK` | `true` |
 | Valid | `CFGCMD_BACKUP` | `CFGOPT_LOCK_PATH` | `true` |
@@ -972,6 +1332,54 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_CHECK` | `CFGOPT_DB2_SOCKET_PATH` | `true` |
 | Valid | `CFGCMD_CHECK` | `CFGOPT_DB2_SSH_PORT` | `true` |
 | Valid | `CFGCMD_CHECK` | `CFGOPT_DB2_USER` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB3_USER` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB4_USER` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB5_USER` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB6_USER` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB7_USER` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_SSH_PORT` | `true` |
+| Valid | `CFGCMD_CHECK` | `CFGOPT_DB8_USER` | `true` |
 | Valid | `CFGCMD_CHECK` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
 | Valid | `CFGCMD_CHECK` | `CFGOPT_LOG_LEVEL_FILE` | `true` |
 | Valid | `CFGCMD_CHECK` | `CFGOPT_LOG_LEVEL_STDERR` | `true` |
@@ -1003,6 +1411,30 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB2_CONFIG` | `true` |
 | Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB2_HOST` | `true` |
 | Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB2_SSH_PORT` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_EXPIRE` | `CFGOPT_DB8_SSH_PORT` | `true` |
 | Valid | `CFGCMD_EXPIRE` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_EXPIRE` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
 | Valid | `CFGCMD_EXPIRE` | `CFGOPT_LOG_LEVEL_FILE` | `true` |
@@ -1082,6 +1514,48 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_LOCAL` | `CFGOPT_DB2_SOCKET_PATH` | `true` |
 | Valid | `CFGCMD_LOCAL` | `CFGOPT_DB2_SSH_PORT` | `true` |
 | Valid | `CFGCMD_LOCAL` | `CFGOPT_DB2_USER` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB3_USER` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB4_USER` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB5_USER` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB6_USER` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB7_USER` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_SSH_PORT` | `true` |
+| Valid | `CFGCMD_LOCAL` | `CFGOPT_DB8_USER` | `true` |
 | Valid | `CFGCMD_LOCAL` | `CFGOPT_HOST_ID` | `true` |
 | Valid | `CFGCMD_LOCAL` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_LOCAL` | `CFGOPT_LOG_LEVEL_STDERR` | `true` |
@@ -1114,6 +1588,24 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_REMOTE` | `CFGOPT_DB2_PATH` | `true` |
 | Valid | `CFGCMD_REMOTE` | `CFGOPT_DB2_PORT` | `true` |
 | Valid | `CFGCMD_REMOTE` | `CFGOPT_DB2_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB3_PORT` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB3_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB4_PORT` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB4_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB5_PORT` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB5_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB6_PORT` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB6_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB7_PORT` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB7_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB8_PORT` | `true` |
+| Valid | `CFGCMD_REMOTE` | `CFGOPT_DB8_SOCKET_PATH` | `true` |
 | Valid | `CFGCMD_REMOTE` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_REMOTE` | `CFGOPT_LOG_LEVEL_STDERR` | `true` |
 | Valid | `CFGCMD_REMOTE` | `CFGOPT_LOG_PATH` | `true` |
@@ -1147,6 +1639,12 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_RESTORE` | `CFGOPT_DB_INCLUDE` | `true` |
 | Valid | `CFGCMD_RESTORE` | `CFGOPT_DB1_PATH` | `true` |
 | Valid | `CFGCMD_RESTORE` | `CFGOPT_DB2_PATH` | `true` |
+| Valid | `CFGCMD_RESTORE` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_RESTORE` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_RESTORE` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_RESTORE` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_RESTORE` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_RESTORE` | `CFGOPT_DB8_PATH` | `true` |
 | Valid | `CFGCMD_RESTORE` | `CFGOPT_DELTA` | `true` |
 | Valid | `CFGCMD_RESTORE` | `CFGOPT_FORCE` | `true` |
 | Valid | `CFGCMD_RESTORE` | `CFGOPT_LINK_ALL` | `true` |
@@ -1209,6 +1707,54 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB2_SOCKET_PATH` | `true` |
 | Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB2_SSH_PORT` | `true` |
 | Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB2_USER` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB3_USER` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB4_USER` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB5_USER` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB6_USER` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB7_USER` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_DB8_USER` | `true` |
 | Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_FORCE` | `true` |
 | Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_STANZA_CREATE` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
@@ -1258,6 +1804,54 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB2_SOCKET_PATH` | `true` |
 | Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB2_SSH_PORT` | `true` |
 | Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB2_USER` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB3_USER` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB4_USER` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB5_USER` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB6_USER` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB7_USER` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_SOCKET_PATH` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_DB8_USER` | `true` |
 | Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
 | Valid | `CFGCMD_STANZA_UPGRADE` | `CFGOPT_LOG_LEVEL_FILE` | `true` |
@@ -1293,6 +1887,30 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_START` | `CFGOPT_DB2_CONFIG` | `true` |
 | Valid | `CFGCMD_START` | `CFGOPT_DB2_HOST` | `true` |
 | Valid | `CFGCMD_START` | `CFGOPT_DB2_SSH_PORT` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_START` | `CFGOPT_DB8_SSH_PORT` | `true` |
 | Valid | `CFGCMD_START` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_START` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |
 | Valid | `CFGCMD_START` | `CFGOPT_LOG_LEVEL_FILE` | `true` |
@@ -1327,6 +1945,30 @@ Functions that return `false` are not listed here for brevity.
 | Valid | `CFGCMD_STOP` | `CFGOPT_DB2_CONFIG` | `true` |
 | Valid | `CFGCMD_STOP` | `CFGOPT_DB2_HOST` | `true` |
 | Valid | `CFGCMD_STOP` | `CFGOPT_DB2_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB3_CMD` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB3_CONFIG` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB3_HOST` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB3_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB4_CMD` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB4_CONFIG` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB4_HOST` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB4_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB5_CMD` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB5_CONFIG` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB5_HOST` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB5_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB6_CMD` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB6_CONFIG` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB6_HOST` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB6_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB7_CMD` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB7_CONFIG` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB7_HOST` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB7_SSH_PORT` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB8_CMD` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB8_CONFIG` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB8_HOST` | `true` |
+| Valid | `CFGCMD_STOP` | `CFGOPT_DB8_SSH_PORT` | `true` |
 | Valid | `CFGCMD_STOP` | `CFGOPT_FORCE` | `true` |
 | Valid | `CFGCMD_STOP` | `CFGOPT_LOCK_PATH` | `true` |
 | Valid | `CFGCMD_STOP` | `CFGOPT_LOG_LEVEL_CONSOLE` | `true` |

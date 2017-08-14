@@ -6,7 +6,7 @@
 # section meaning the rules defined there apply to all commands listed for the option.
 #
 # CFGBLDDEF_RULE_COMMAND:
-#     List of commands the option can be used with this option.  An empty hash signifies that the command does no deviate from the
+#     List of commands the option can be used with this option.  An empty hash signifies that the command does not deviate from the
 #     option defaults.  Otherwise, overrides can be specified.
 #
 # NOTE: If the option (A) has a dependency on another option (B) then the CFGBLDCMD_ must also be specified in the other option

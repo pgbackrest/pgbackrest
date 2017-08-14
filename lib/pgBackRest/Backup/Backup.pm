@@ -452,9 +452,9 @@ sub process
     {
         $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
     }
-# CSHANG May have to change this - if we could not find any standby among many and CFGOPT_BACKUP_STANDBY is set, then we may need another config option to say it's OK to backup only from the master (some masters may be way to overloaded so we should not assume it's OK.
-    # If backup from standby option is set but we could not get the standby object then, turn off CFGOPT_BACKUP_STANDBY & warn that
-    # backups will be performed from the master.
+
+    # If backup from standby option is set but a standby was not configured in the config file or on the command line, then turn off
+    # CFGOPT_BACKUP_STANDBY & warn that backups will be performed from the master.
     if (!defined($oDbStandby) && cfgOption(CFGOPT_BACKUP_STANDBY))
     {
         cfgOptionSet(CFGOPT_BACKUP_STANDBY, false);
