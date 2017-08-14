@@ -99,8 +99,12 @@ sub begin
 
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
-    # Create select objects
+    # Create buffered read object
     $self->{oIo} = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hOut}), 0, 65536);
+
+    # Create buffered error object
+    $self->{oIoError} = new pgBackRest::Common::Io::Buffered(
+        new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
 
     # Record start time and set process timeout
     $self->{iProcessTimeout} = 540;
@@ -167,6 +171,12 @@ sub endRetry
             }
         }
 
+        # Drain the stderr stream
+        while (defined(my $strLine = $self->{oIoError}->readLine(true, false)))
+        {
+            $self->{strErrorLog} .= "${strLine}\n";
+        }
+
         if (!$bWait)
         {
             return;
@@ -193,9 +203,7 @@ sub endRetry
     }
 
     # Drain the stderr stream
-    my $oIoError = new pgBackRest::Common::Io::Buffered(new pgBackRest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
-
-    while (defined(my $strLine = $oIoError->readLine(true, false)))
+    while (defined(my $strLine = $self->{oIoError}->readLine(true, false)))
     {
         $self->{strErrorLog} .= "${strLine}\n";
     }

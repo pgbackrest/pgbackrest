@@ -46,9 +46,7 @@ sub buildAll
             {
                 my $rhFile = $rhBuild->{$strPath}{$strFile}{$strFileType};
 
-                $oStorage->put(
-                    "${strPath}/${strFile}.auto." . ($strFileType eq BLD_HEADER ? 'h' : 'c'),
-                    trim($rhFile->{&BLD_SOURCE}) . "\n");
+                $oStorage->put("${strPath}/${strFile}.auto.${strFileType}", trim($rhFile->{&BLD_SOURCE}) . "\n");
             }
         }
     }

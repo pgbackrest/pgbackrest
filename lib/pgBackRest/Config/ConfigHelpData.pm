@@ -1582,6 +1582,7 @@ my $oConfigHelpData =
                 'backup-host' => 'section',
                 'backup-ssh-port' => 'section',
                 'backup-standby' => 'section',
+                'backup-user' => 'section',
                 'buffer-size' => 'section',
                 'cmd-ssh' => 'section',
                 'compress-level' => 'section',
@@ -1600,6 +1601,7 @@ my $oConfigHelpData =
                 'log-level-console' => 'section',
                 'log-level-file' => 'section',
                 'log-path' => 'section',
+                'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
 
                 # ONLINE Option Help

@@ -1,2 +1,3 @@
-*.auto.h
-*.auto.c
+config.auto.h
+config.auto.c
+configRule.auto.c

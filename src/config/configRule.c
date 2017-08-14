@@ -25,15 +25,6 @@ cfgOptionTotal()
 }
 
 /***********************************************************************************************************************************
-cfgOptionRuleAllowList - is there an allow list for this option?
-***********************************************************************************************************************************/
-bool
-cfgOptionRuleAllowList(uint32 uiCommandId, uint32 uiOptionId)
-{
-    return cfgOptionRuleAllowListValueTotal(uiCommandId, uiOptionId) > 0;
-}
-
-/***********************************************************************************************************************************
 cfgOptionRuleAllowListValueValid - check if the value matches a value in the allow list
 ***********************************************************************************************************************************/
 bool
@@ -47,15 +38,6 @@ cfgOptionRuleAllowListValueValid(uint32 uiCommandId, uint32 uiOptionId, const ch
     }
 
     return false;
-}
-
-/***********************************************************************************************************************************
-cfgOptionRuleDepend - does the option have a dependency on another option?
-***********************************************************************************************************************************/
-bool
-cfgOptionRuleDepend(uint32 uiCommandId, uint32 uiOptionId)
-{
-    return cfgOptionRuleDependOption(uiCommandId, uiOptionId) != -1;
 }
 
 /***********************************************************************************************************************************

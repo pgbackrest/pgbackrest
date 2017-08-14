@@ -27,7 +27,7 @@ use constant CGEN_DATATYPE_INT64                                    => 'int64';
 use constant CGEN_DATATYPE_CONSTCHAR                                => 'const char *';
     push @EXPORT, qw(CGEN_DATATYPE_CONSTCHAR);
 
-use constant CGEN_DATAVAL_NULL                                      => '^^{{[(([@@!!--==NULL==--!!@@))]]}}^^';
+use constant CGEN_DATAVAL_NULL                                      => '^^{{[[NULL]]}}^^';
     push @EXPORT, qw(CGEN_DATAVAL_NULL);
 
 ####################################################################################################################################
@@ -123,5 +123,31 @@ sub cgenTypeName
 }
 
 push @EXPORT, qw(cgenTypeName);
+
+####################################################################################################################################
+# cgenPermute - return all permutations of an array
+####################################################################################################################################
+sub cgenPermute
+{
+    my $rxyList = shift;
+
+    # If there are one or less elements then the existing array represents the only permutation
+    return map [$_], @$rxyList if @{$rxyList} <= 1;
+
+    # Calculate permutations
+    my @xyPermutation;
+
+    for my $iIndex (0 .. $#{$rxyList})
+    {
+        my @xyRemaining = @{$rxyList};
+        my $xValue  = splice(@xyRemaining, $iIndex, 1);
+
+        push @xyPermutation, [$xValue, @$_] for cgenPermute(\@xyRemaining, @{$rxyList} - 1);
+    }
+
+  return @xyPermutation;
+}
+
+push @EXPORT, qw(cgenPermute);
 
 1;

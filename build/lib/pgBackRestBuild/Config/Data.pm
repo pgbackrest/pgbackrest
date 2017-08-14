@@ -385,8 +385,6 @@ use constant CFGBLDDEF_RULE_DEPEND_OPTION                           => 'depend-o
     push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_OPTION);
 use constant CFGBLDDEF_RULE_DEPEND_LIST                             => 'depend-list';
     push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_LIST);
-use constant CFGBLDDEF_RULE_DEPEND_VALUE                            => 'depend-value';
-    push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_VALUE);
 use constant CFGBLDDEF_RULE_HASH_VALUE                              => 'hash-value';
     push @EXPORT, qw(CFGBLDDEF_RULE_HASH_VALUE);
 use constant CFGBLDDEF_RULE_HINT                                    => 'hint';
@@ -480,9 +478,9 @@ my %hOptionRule =
                 &CFGBLDDEF_RULE_DEFAULT => false,
                 &CFGBLDDEF_RULE_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION  => CFGBLDOPT_ONLINE,
-                    &CFGBLDDEF_RULE_DEPEND_VALUE   => false
-                }
+                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_ONLINE,
+                    &CFGBLDDEF_RULE_DEPEND_LIST => [false],
+                },
             },
 
             &CFGBLDCMD_RESTORE =>
@@ -533,50 +531,23 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_COMMAND =>
         {
-            &CFGBLDCMD_ARCHIVE_GET =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
-            &CFGBLDCMD_ARCHIVE_PUSH =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
-            &CFGBLDCMD_BACKUP =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
-            &CFGBLDCMD_CHECK =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
-            &CFGBLDCMD_EXPIRE =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
+            &CFGBLDCMD_ARCHIVE_GET => {},
+            &CFGBLDCMD_ARCHIVE_PUSH => {},
+            &CFGBLDCMD_BACKUP => {},
+            &CFGBLDCMD_CHECK => {},
+            &CFGBLDCMD_EXPIRE => {},
             &CFGBLDCMD_INFO =>
             {
                 &CFGBLDDEF_RULE_REQUIRED => false
             },
-            &CFGBLDCMD_LOCAL =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
+            &CFGBLDCMD_LOCAL => {},
             &CFGBLDCMD_REMOTE =>
             {
                 &CFGBLDDEF_RULE_REQUIRED => false
             },
-            &CFGBLDCMD_RESTORE =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
-            &CFGBLDCMD_STANZA_CREATE =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
-            &CFGBLDCMD_STANZA_UPGRADE =>
-            {
-                &CFGBLDDEF_RULE_REQUIRED => true
-            },
+            &CFGBLDCMD_RESTORE => {},
+            &CFGBLDCMD_STANZA_CREATE => {},
+            &CFGBLDCMD_STANZA_UPGRADE => {},
             &CFGBLDCMD_START =>
             {
                 &CFGBLDDEF_RULE_REQUIRED => false
@@ -599,14 +570,14 @@ my %hOptionRule =
                 {
                     &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TYPE,
                     &CFGBLDDEF_RULE_DEPEND_LIST =>
-                    {
-                        &CFGBLDOPTVAL_RESTORE_TYPE_NAME => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_XID  => true
-                    }
-                }
-            }
-        }
+                    [
+                        &CFGBLDOPTVAL_RESTORE_TYPE_NAME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_XID,
+                    ],
+                },
+            },
+        },
     },
 
     &CFGBLDOPT_TARGET_EXCLUSIVE =>
@@ -621,13 +592,13 @@ my %hOptionRule =
                 {
                     &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TYPE,
                     &CFGBLDDEF_RULE_DEPEND_LIST =>
-                    {
-                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_XID  => true
-                    }
-                }
-            }
-        }
+                    [
+                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_XID,
+                    ],
+                },
+            },
+        },
     },
 
     &CFGBLDOPT_TARGET_ACTION =>
@@ -640,24 +611,24 @@ my %hOptionRule =
                 &CFGBLDDEF_RULE_DEFAULT => CFGBLDOPTVAL_RESTORE_TARGET_ACTION_PAUSE,
 
                 &CFGBLDDEF_RULE_ALLOW_LIST =>
-                {
-                    &CFGBLDOPTVAL_RESTORE_TARGET_ACTION_PAUSE => true,
-                    &CFGBLDOPTVAL_RESTORE_TARGET_ACTION_PROMOTE => true,
-                    &CFGBLDOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN => true,
-                },
+                [
+                    &CFGBLDOPTVAL_RESTORE_TARGET_ACTION_PAUSE,
+                    &CFGBLDOPTVAL_RESTORE_TARGET_ACTION_PROMOTE,
+                    &CFGBLDOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN,
+                ],
 
                 &CFGBLDDEF_RULE_DEPEND =>
                 {
                     &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TYPE,
                     &CFGBLDDEF_RULE_DEPEND_LIST =>
-                    {
-                        &CFGBLDOPTVAL_RESTORE_TYPE_NAME => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_XID  => true
-                    }
-                }
-            }
-        }
+                    [
+                        &CFGBLDOPTVAL_RESTORE_TYPE_NAME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_XID,
+                    ],
+                },
+            },
+        },
     },
 
     &CFGBLDOPT_TARGET_TIMELINE =>
@@ -672,15 +643,15 @@ my %hOptionRule =
                 {
                     &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TYPE,
                     &CFGBLDDEF_RULE_DEPEND_LIST =>
-                    {
-                        &CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT  => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_NAME     => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME     => true,
-                        &CFGBLDOPTVAL_RESTORE_TYPE_XID      => true
-                    }
-                }
-            }
-        }
+                    [
+                        &CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_NAME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_TIME,
+                        &CFGBLDOPTVAL_RESTORE_TYPE_XID,
+                    ],
+                },
+            },
+        },
     },
 
     &CFGBLDOPT_TYPE =>
@@ -692,44 +663,44 @@ my %hOptionRule =
             {
                 &CFGBLDDEF_RULE_DEFAULT => CFGBLDOPTVAL_BACKUP_TYPE_INCR,
                 &CFGBLDDEF_RULE_ALLOW_LIST =>
-                {
-                    &CFGBLDOPTVAL_BACKUP_TYPE_FULL => true,
-                    &CFGBLDOPTVAL_BACKUP_TYPE_DIFF => true,
-                    &CFGBLDOPTVAL_BACKUP_TYPE_INCR => true,
-                }
+                [
+                    &CFGBLDOPTVAL_BACKUP_TYPE_FULL,
+                    &CFGBLDOPTVAL_BACKUP_TYPE_DIFF,
+                    &CFGBLDOPTVAL_BACKUP_TYPE_INCR,
+                ]
             },
 
             &CFGBLDCMD_LOCAL =>
             {
                 &CFGBLDDEF_RULE_ALLOW_LIST =>
-                {
-                    &CFGBLDOPTVAL_TYPE_DB     => true,
-                    &CFGBLDOPTVAL_TYPE_BACKUP => true,
-                },
+                [
+                    &CFGBLDOPTVAL_TYPE_DB,
+                    &CFGBLDOPTVAL_TYPE_BACKUP,
+                ],
             },
 
             &CFGBLDCMD_REMOTE =>
             {
                 &CFGBLDDEF_RULE_ALLOW_LIST =>
-                {
-                    &CFGBLDOPTVAL_TYPE_DB     => true,
-                    &CFGBLDOPTVAL_TYPE_BACKUP => true,
-                },
+                [
+                    &CFGBLDOPTVAL_TYPE_DB,
+                    &CFGBLDOPTVAL_TYPE_BACKUP,
+                ],
             },
 
             &CFGBLDCMD_RESTORE =>
             {
                 &CFGBLDDEF_RULE_DEFAULT => CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT,
                 &CFGBLDDEF_RULE_ALLOW_LIST =>
-                {
-                    &CFGBLDOPTVAL_RESTORE_TYPE_NAME      => true,
-                    &CFGBLDOPTVAL_RESTORE_TYPE_TIME      => true,
-                    &CFGBLDOPTVAL_RESTORE_TYPE_XID       => true,
-                    &CFGBLDOPTVAL_RESTORE_TYPE_PRESERVE  => true,
-                    &CFGBLDOPTVAL_RESTORE_TYPE_NONE      => true,
-                    &CFGBLDOPTVAL_RESTORE_TYPE_IMMEDIATE => true,
-                    &CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT   => true
-                }
+                [
+                    &CFGBLDOPTVAL_RESTORE_TYPE_NAME,
+                    &CFGBLDOPTVAL_RESTORE_TYPE_TIME,
+                    &CFGBLDOPTVAL_RESTORE_TYPE_XID,
+                    &CFGBLDOPTVAL_RESTORE_TYPE_PRESERVE,
+                    &CFGBLDOPTVAL_RESTORE_TYPE_NONE,
+                    &CFGBLDOPTVAL_RESTORE_TYPE_IMMEDIATE,
+                    &CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT,
+                ]
             }
         }
     },
@@ -743,10 +714,10 @@ my %hOptionRule =
             {
                 &CFGBLDDEF_RULE_DEFAULT => CFGBLDOPTVAL_INFO_OUTPUT_TEXT,
                 &CFGBLDDEF_RULE_ALLOW_LIST =>
-                {
-                    &CFGBLDOPTVAL_INFO_OUTPUT_TEXT => true,
-                    &CFGBLDOPTVAL_INFO_OUTPUT_JSON => true
-                }
+                [
+                    &CFGBLDOPTVAL_INFO_OUTPUT_TEXT,
+                    &CFGBLDOPTVAL_INFO_OUTPUT_JSON,
+                ]
             }
         }
     },
@@ -808,29 +779,17 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_DEPEND =>
         {
             &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TEST,
-            &CFGBLDDEF_RULE_DEPEND_VALUE => true
+            &CFGBLDDEF_RULE_DEPEND_LIST => [true],
         },
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_BACKUP => {},
-        }
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_TEST,
     },
 
     &CFGBLDOPT_TEST_POINT =>
     {
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_HASH,
         &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_DEPEND =>
-        {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TEST,
-            &CFGBLDDEF_RULE_DEPEND_VALUE => true
-        },
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_BACKUP => {},
-        }
+        &CFGBLDDEF_RULE_DEPEND => CFGBLDOPT_TEST_DELAY,
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_TEST,
     },
 
     # General options
@@ -855,19 +814,19 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_INTEGER,
         &CFGBLDDEF_RULE_DEFAULT => COMMON_IO_BUFFER_MAX,
         &CFGBLDDEF_RULE_ALLOW_LIST =>
-        {
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN         => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 2     => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 4     => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 8     => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 16    => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 32    => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 64    => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 128   => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 256   => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 512   => true,
-            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 1024  => true,
-        },
+        [
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 2,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 4,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 8,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 16,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 32,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 64,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 128,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 256,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 512,
+            &CFGBLDDEF_DEFAULT_BUFFER_SIZE_MIN * 1024,
+        ],
         &CFGBLDDEF_RULE_COMMAND =>
         {
             &CFGBLDCMD_ARCHIVE_GET => {},
@@ -1098,8 +1057,8 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION  => CFGBLDOPT_REPO_TYPE,
-            &CFGBLDDEF_RULE_DEPEND_VALUE   => CFGBLDOPTVAL_REPO_TYPE_S3,
+            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_REPO_TYPE,
+            &CFGBLDDEF_RULE_DEPEND_LIST => [CFGBLDOPTVAL_REPO_TYPE_S3],
         },
         &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_REPO_TYPE,
     },
@@ -1115,8 +1074,8 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_REQUIRED => false,
         &CFGBLDDEF_RULE_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION  => CFGBLDOPT_REPO_TYPE,
-            &CFGBLDDEF_RULE_DEPEND_VALUE   => CFGBLDOPTVAL_REPO_TYPE_S3,
+            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_REPO_TYPE,
+            &CFGBLDDEF_RULE_DEPEND_LIST => [CFGBLDOPTVAL_REPO_TYPE_S3],
         },
         &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_REPO_TYPE,
     },
@@ -1151,11 +1110,11 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_DEFAULT => CFGBLDOPTVAL_REPO_TYPE_POSIX,
         &CFGBLDDEF_RULE_ALLOW_LIST =>
-        {
-            &CFGBLDOPTVAL_REPO_TYPE_CIFS     => true,
-            &CFGBLDOPTVAL_REPO_TYPE_POSIX    => true,
-            &CFGBLDOPTVAL_REPO_TYPE_S3       => true,
-        },
+        [
+            &CFGBLDOPTVAL_REPO_TYPE_CIFS,
+            &CFGBLDOPTVAL_REPO_TYPE_POSIX,
+            &CFGBLDOPTVAL_REPO_TYPE_S3,
+        ],
         &CFGBLDDEF_RULE_COMMAND =>
         {
             &CFGBLDCMD_ARCHIVE_GET => {},
@@ -1185,8 +1144,8 @@ my %hOptionRule =
         },
         &CFGBLDDEF_RULE_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION  => CFGBLDOPT_ARCHIVE_ASYNC,
-            &CFGBLDDEF_RULE_DEPEND_VALUE   => true
+            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_ARCHIVE_ASYNC,
+            &CFGBLDDEF_RULE_DEPEND_LIST => [true],
         },
     },
 
@@ -1213,15 +1172,15 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_DEFAULT => lc(WARN),
         &CFGBLDDEF_RULE_ALLOW_LIST =>
-        {
-            lc(OFF)    => true,
-            lc(ERROR)  => true,
-            lc(WARN)   => true,
-            lc(INFO)   => true,
-            lc(DETAIL) => true,
-            lc(DEBUG)  => true,
-            lc(TRACE)  => true
-        },
+        [
+            lc(OFF),
+            lc(ERROR),
+            lc(WARN),
+            lc(INFO),
+            lc(DETAIL),
+            lc(DEBUG),
+            lc(TRACE),
+        ],
         &CFGBLDDEF_RULE_COMMAND =>
         {
             &CFGBLDCMD_ARCHIVE_GET => {},
@@ -1243,30 +1202,8 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_DEFAULT => lc(INFO),
-        &CFGBLDDEF_RULE_ALLOW_LIST =>
-        {
-            lc(OFF)    => true,
-            lc(ERROR)  => true,
-            lc(WARN)   => true,
-            lc(INFO)   => true,
-            lc(DEBUG)  => true,
-            lc(DETAIL) => true,
-            lc(TRACE)  => true
-        },
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_GET => {},
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_BACKUP => {},
-            &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_EXPIRE => {},
-            &CFGBLDCMD_INFO => {},
-            &CFGBLDCMD_RESTORE => {},
-            &CFGBLDCMD_STANZA_CREATE => {},
-            &CFGBLDCMD_STANZA_UPGRADE => {},
-            &CFGBLDCMD_START => {},
-            &CFGBLDCMD_STOP => {},
-        }
+        &CFGBLDDEF_RULE_ALLOW_LIST => CFGBLDOPT_LOG_LEVEL_CONSOLE,
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_LOG_LEVEL_CONSOLE,
     },
 
     &CFGBLDOPT_LOG_LEVEL_STDERR =>
@@ -1274,16 +1211,7 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_DEFAULT => lc(WARN),
-        &CFGBLDDEF_RULE_ALLOW_LIST =>
-        {
-            lc(OFF)    => true,
-            lc(ERROR)  => true,
-            lc(WARN)   => true,
-            lc(INFO)   => true,
-            lc(DETAIL) => true,
-            lc(DEBUG)  => true,
-            lc(TRACE)  => true
-        },
+        &CFGBLDDEF_RULE_ALLOW_LIST => CFGBLDOPT_LOG_LEVEL_CONSOLE,
         &CFGBLDDEF_RULE_COMMAND =>
         {
             &CFGBLDCMD_ARCHIVE_GET => {},
@@ -1305,19 +1233,7 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_BOOLEAN,
         &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_GET => {},
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_BACKUP => {},
-            &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_EXPIRE => {},
-            &CFGBLDCMD_INFO => {},
-            &CFGBLDCMD_RESTORE => {},
-            &CFGBLDCMD_STANZA_CREATE => {},
-            &CFGBLDCMD_START => {},
-            &CFGBLDCMD_STOP => {},
-        }
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_LOG_LEVEL_CONSOLE,
     },
 
     # Archive options
@@ -1365,8 +1281,8 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_DEFAULT => true,
         &CFGBLDDEF_RULE_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION  => CFGBLDOPT_ONLINE,
-            &CFGBLDDEF_RULE_DEPEND_VALUE   => true,
+            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_ONLINE,
+            &CFGBLDDEF_RULE_DEPEND_LIST => [true],
         },
         &CFGBLDDEF_RULE_COMMAND =>
         {
@@ -1386,8 +1302,8 @@ my %hOptionRule =
             {
                 &CFGBLDDEF_RULE_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION  => CFGBLDOPT_ARCHIVE_CHECK,
-                    &CFGBLDDEF_RULE_DEPEND_VALUE   => true
+                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_ARCHIVE_CHECK,
+                    &CFGBLDDEF_RULE_DEPEND_LIST => [true],
                 }
             }
         }
@@ -1398,19 +1314,7 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_GET => {},
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_INFO => {},
-            &CFGBLDCMD_LOCAL => {},
-            &CFGBLDCMD_RESTORE => {},
-            &CFGBLDCMD_STANZA_CREATE => {},
-            &CFGBLDCMD_STANZA_UPGRADE => {},
-            &CFGBLDCMD_START => {},
-            &CFGBLDCMD_STOP => {},
-        },
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_BACKUP_HOST,
         &CFGBLDDEF_RULE_DEPEND =>
         {
             &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_BACKUP_HOST
@@ -1422,19 +1326,7 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_DEFAULT => CFGBLDDEF_DEFAULT_CONFIG,
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_GET => {},
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_INFO => {},
-            &CFGBLDCMD_LOCAL => {},
-            &CFGBLDCMD_RESTORE => {},
-            &CFGBLDCMD_STANZA_CREATE => {},
-            &CFGBLDCMD_STANZA_UPGRADE => {},
-            &CFGBLDCMD_START => {},
-            &CFGBLDCMD_STOP => {},
-        },
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_BACKUP_HOST,
         &CFGBLDDEF_RULE_DEPEND =>
         {
             &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_BACKUP_HOST
@@ -1492,18 +1384,7 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_SECTION => CFGBLDDEF_SECTION_GLOBAL,
         &CFGBLDDEF_RULE_TYPE => CFGBLDDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_DEFAULT => 'backrest',
-        &CFGBLDDEF_RULE_COMMAND =>
-        {
-            &CFGBLDCMD_ARCHIVE_GET => {},
-            &CFGBLDCMD_ARCHIVE_PUSH => {},
-            &CFGBLDCMD_CHECK => {},
-            &CFGBLDCMD_INFO => {},
-            &CFGBLDCMD_LOCAL => {},
-            &CFGBLDCMD_RESTORE => {},
-            &CFGBLDCMD_STANZA_CREATE => {},
-            &CFGBLDCMD_START => {},
-            &CFGBLDCMD_STOP => {},
-        },
+        &CFGBLDDEF_RULE_COMMAND => CFGBLDOPT_BACKUP_HOST,
         &CFGBLDDEF_RULE_REQUIRED => false,
         &CFGBLDDEF_RULE_DEPEND =>
         {
@@ -1603,11 +1484,11 @@ my %hOptionRule =
             &CFGBLDCMD_EXPIRE => {},
         },
         &CFGBLDDEF_RULE_ALLOW_LIST =>
-        {
-            &CFGBLDOPTVAL_BACKUP_TYPE_FULL => 1,
-            &CFGBLDOPTVAL_BACKUP_TYPE_DIFF => 1,
-            &CFGBLDOPTVAL_BACKUP_TYPE_INCR => 1
-        }
+        [
+            &CFGBLDOPTVAL_BACKUP_TYPE_FULL,
+            &CFGBLDOPTVAL_BACKUP_TYPE_DIFF,
+            &CFGBLDOPTVAL_BACKUP_TYPE_INCR,
+        ]
     },
 
     &CFGBLDOPT_RETENTION_DIFF =>
@@ -1707,13 +1588,13 @@ my %hOptionRule =
         {
             &CFGBLDDEF_RULE_DEPEND_OPTION => CFGBLDOPT_TYPE,
             &CFGBLDDEF_RULE_DEPEND_LIST =>
-            {
-                &CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT  => true,
-                &CFGBLDOPTVAL_RESTORE_TYPE_NAME     => true,
-                &CFGBLDOPTVAL_RESTORE_TYPE_TIME     => true,
-                &CFGBLDOPTVAL_RESTORE_TYPE_XID      => true
-            }
-        }
+            [
+                &CFGBLDOPTVAL_RESTORE_TYPE_DEFAULT,
+                &CFGBLDOPTVAL_RESTORE_TYPE_NAME,
+                &CFGBLDOPTVAL_RESTORE_TYPE_TIME,
+                &CFGBLDOPTVAL_RESTORE_TYPE_XID,
+            ],
+        },
     },
 
     # Stanza options
@@ -1908,6 +1789,13 @@ foreach my $strKey (sort(keys(%hOptionRule)))
     {
         $hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND} =
             dclone($hOptionRule{$hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND}}{&CFGBLDDEF_RULE_DEPEND});
+    }
+
+    # If the allow list is a scalar then copy the list from the referenced option
+    if (defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST}) && !ref($hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST}))
+    {
+        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST} =
+            dclone($hOptionRule{$hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST}}{&CFGBLDDEF_RULE_ALLOW_LIST});
     }
 
     # Default type is string
