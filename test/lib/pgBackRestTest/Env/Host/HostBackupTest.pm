@@ -899,11 +899,11 @@ sub stop
 
 
 ####################################################################################################################################
-# optionIndex - return name for options that can be indexed (e.g. db1-host, db2-host)
+# optionIndexName - return name for options that can be indexed (e.g. db1-host, db2-host)
 #
 # This differs from cfgOptionIndex because it allows the index number for index 1 to be ommitted for testing.
 ####################################################################################################################################
-sub optionIndex
+sub optionIndexName
 {
     my $self = shift;
     my $iOptionId = shift;
@@ -1021,32 +1021,32 @@ sub configCreate
 
         if ($self->nameTest(HOST_BACKUP))
         {
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
 
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
             {
-                $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_PORT, 1, $bForce)} = $oHostDb1->pgPort();
+                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 1, $bForce)} = $oHostDb1->pgPort();
             }
         }
 
-        $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
+        $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
 
         if (defined($oHostDb2))
         {
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_HOST, 2)} = $oHostDb2->nameGet();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_USER, 2)} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_CMD, 2)} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_PATH, 2)} = $oHostDb2->dbBasePath();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 2)} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 2)} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 2)} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 2)} = $oHostDb2->dbBasePath();
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_PORT, 2)} = $oHostDb2->pgPort();
+                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 2)} = $oHostDb2->pgPort();
             }
         }
     }
@@ -1054,12 +1054,12 @@ sub configCreate
     # If this is a database host
     if ($self->isHostDb())
     {
-        $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_PATH)} = $self->dbBasePath();
+        $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH)} = $self->dbBasePath();
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_SOCKET_PATH)} = $self->pgSocketPath();
-            $oParamHash{$strStanza}{$self->optionIndex(CFGOPT_DB_PORT)} = $self->pgPort();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_SOCKET_PATH)} = $self->pgSocketPath();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT)} = $self->pgPort();
         }
 
         if ($bArchiveAsync)

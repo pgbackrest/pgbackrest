@@ -223,14 +223,14 @@ sub configRemap
 
         if ($strRemap eq MANIFEST_TARGET_PGDATA)
         {
-            $oConfig->{$strStanza}{$self->optionIndex(CFGOPT_DB_PATH, 1)} = $strRemapPath;
+            $oConfig->{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1)} = $strRemapPath;
 
             ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
             if (defined($oHostBackup))
             {
                 my $bForce = $oHostBackup->nameTest(HOST_BACKUP) && defined(hostGroupGet()->hostGet(HOST_DB_STANDBY, true));
-                $oRemoteConfig->{$strStanza}{$self->optionIndex(CFGOPT_DB_PATH, 1, $bForce)} = $strRemapPath;
+                $oRemoteConfig->{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1, $bForce)} = $strRemapPath;
             }
         }
         else
