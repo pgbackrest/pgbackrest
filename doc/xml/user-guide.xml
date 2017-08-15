@@ -398,6 +398,8 @@
 
             <p>When creating the <file>{[backrest-config-demo]}</file> file, the database owner (usually <id>postgres</id>) must be granted read privileges.</p>
 
+            <p>Note that all options prefixed with <id>db-</id> are aliased to the prefix <id>db1-</id>, for example <br-option>db-path</br-option> will be logged and passed as <br-option>db1-path</br-option>.
+
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the <postgres/> cluster data directory</title>
 
@@ -1492,7 +1494,7 @@
                 <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/>, <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository and <link section="/quickstart/create-stanza">Create the Stanza</link> to create the stanza. The <host>backup</host> host must also be configured with the <host>db-master</host> host/user and database path.  The master database will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/>, <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository and <link section="/quickstart/create-stanza">Create the Stanza</link> to create the stanza. The <host>backup</host> host must also be configured with the <host>db-master</host> host/user and database path.  The master database will be configured as <id>db1</id> to allow a standby to be added later. (Note <id>db</id> options without an index are aliased to <id>db1</id> for backward compatibility.)</p>
 
             <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>db1-host</br-option>/<br-option>db1-user</br-option> and <br-option>db1-path</br-option></title>
