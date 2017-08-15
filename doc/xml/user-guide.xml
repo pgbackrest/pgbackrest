@@ -398,7 +398,7 @@
 
             <p>When creating the <file>{[backrest-config-demo]}</file> file, the database owner (usually <id>postgres</id>) must be granted read privileges.</p>
 
-            <p>Note that all options prefixed with <id>db-</id> are aliased to the prefix <id>db1-</id>, for example <br-option>db-path</br-option> will be logged and passed as <br-option>db1-path</br-option>.
+            <p>Note that all options prefixed with <id>db-</id> are aliased to the prefix <id>db1-</id>, for example <br-option>db-path</br-option> will be logged and passed as <br-option>db1-path</br-option>.</p>
 
             <backrest-config host="{[host-db-master]}" file="{[backrest-config-demo]}">
                 <title>Configure the <postgres/> cluster data directory</title>
