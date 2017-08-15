@@ -48,7 +48,7 @@ sub new
             {name => 'strUser'},
             {name => 'iSshPort', required => false},
             {name => 'iProtocolTimeout'},
-            {name => 'bWarnOnError'}, 
+            {name => 'bWarnOnError'},
         );
 
     my $strCommandSshPort = defined($iSshPort) ? '-p ' . $iSshPort . ' ' : '';

@@ -64,10 +64,15 @@ db1-port=[PORT-1]
 db1-user=[USER-2]
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=db-standby
+db2-host=bogus
 db2-path=[TEST_PATH]/db-standby/db/base
-db2-port=[PORT-2]
 db2-user=[USER-2]
+db3-cmd=[BACKREST-BIN]
+db3-config=[TEST_PATH]/db-standby/pgbackrest.conf
+db3-host=db-standby
+db3-path=[TEST_PATH]/db-standby/db/base
+db3-port=[PORT-2]
+db3-user=[USER-2]
 
 [global]
 compress=n
@@ -93,6 +98,10 @@ restore, type 'default', remap - restore backup on replica (db-standby host)
 primary_conninfo = 'host=db-master port=6543 user=replicator'
 standby_mode = 'on'
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db archive-get %f "%p"'
+
+full backup - backup from standby, failure to access all standbys (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --db3-host=bogus --backup-standby --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - backup from standby (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --retention-full=1 --backup-standby --type=full --stanza=db backup
@@ -155,10 +164,15 @@ db1-port=[PORT-1]
 db1-user=[USER-2]
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=db-standby
+db2-host=bogus
 db2-path=[TEST_PATH]/db-standby/db/base
-db2-port=[PORT-2]
 db2-user=[USER-2]
+db3-cmd=[BACKREST-BIN]
+db3-config=[TEST_PATH]/db-standby/pgbackrest.conf
+db3-host=db-standby
+db3-path=[TEST_PATH]/db-standby/db/base
+db3-port=[PORT-2]
+db3-user=[USER-2]
 
 [global]
 archive-async=y
@@ -241,10 +255,15 @@ db1-port=[PORT-1]
 db1-user=[USER-2]
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=db-standby
+db2-host=bogus
 db2-path=[TEST_PATH]/db-standby/db/base
-db2-port=[PORT-2]
 db2-user=[USER-2]
+db3-cmd=[BACKREST-BIN]
+db3-config=[TEST_PATH]/db-standby/pgbackrest.conf
+db3-host=db-standby
+db3-path=[TEST_PATH]/db-standby/db/base
+db3-port=[PORT-2]
+db3-user=[USER-2]
 
 [global]
 archive-async=y

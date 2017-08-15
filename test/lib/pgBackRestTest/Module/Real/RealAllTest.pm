@@ -319,7 +319,7 @@ sub run
 
             # Run stanza-create online to confirm proper handling of configValidation error against new db-path
             $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                {strOptionalParam => ' --' . $oHostBackup->optionIndex(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
+                {strOptionalParam => ' --' . $oHostBackup->optionIndexName(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
                 '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
 
             # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
@@ -327,7 +327,7 @@ sub run
             # Run stanza-create offline with --force to create files needing to be upgraded (using new db-path)
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
                 {strOptionalParam =>
-                    ' --' . $oHostBackup->optionIndex(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
+                    ' --' . $oHostBackup->optionIndexName(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
                     '/testbase/ --no-' .  cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
             my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
@@ -464,11 +464,24 @@ sub run
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
             {
-                my $strStandbyBackup = $oHostBackup->backup(
-                    CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access all standbys',
-                    {bStandby => true,
-                     iExpectedExitStatus => ERROR_HOST_CONNECT,
-                     strOptionalParam => '--' . $oHostBackup->optionIndex(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                # If there is only a master and a replica and the replica is the backup destination, then if db2-host and db3-host
+                # are BOGUS, confirm failure to reach the master
+                if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
+                {
+                    my $strStandbyBackup = $oHostBackup->backup(
+                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach master',
+                        {bStandby => true,
+                         iExpectedExitStatus => ERROR_DB_CONNECT,
+                         strOptionalParam => '--' . $oHostBackup->optionIndexName(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                }
+                else
+                {
+                    my $strStandbyBackup = $oHostBackup->backup(
+                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access all standbys',
+                        {bStandby => true,
+                         iExpectedExitStatus => ERROR_HOST_CONNECT,
+                         strOptionalParam => '--' . $oHostBackup->optionIndexName(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                }
             }
 
             my $strStandbyBackup = $oHostBackup->backup(

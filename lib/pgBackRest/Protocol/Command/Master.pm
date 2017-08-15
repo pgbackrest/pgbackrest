@@ -64,7 +64,7 @@ sub new
             new pgBackRest::Common::Io::Handle($strId), $iProtocolTimeout, $iBufferMax), $strCommand);
 
     # Create the class hash
-    my $self = $class->SUPER::new($strName, $strId, $oIo, {bWarnOnError => $bWarnOnError}); 
+    my $self = $class->SUPER::new($strName, $strId, $oIo, {bWarnOnError => $bWarnOnError});
     bless $self, $class;
 
     # Return from function and log return values if any
