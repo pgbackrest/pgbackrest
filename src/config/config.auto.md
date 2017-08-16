@@ -1,10 +1,12 @@
+# Query Configuration Settings
+
 ## cfgOptionIndexTotal
 
 Total index values allowed.
 
 ### Truth Table:
 
-Functions that return `1` are not listed here for brevity.
+This function is valid when `cfgRuleOptionValid()` = `true`. Permutations that return `1` are excluded for brevity.
 
 | Function | uiOptionId | Result |
 | -------- | ---------- | ------ |

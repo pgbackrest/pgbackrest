@@ -29,109 +29,109 @@ cfgOptionId(szOptionName)
     const char *szOptionName
 
 bool
-cfgOptionRuleAllowList(uiCommandId, uiOptionId)
+cfgRuleOptionAllowList(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 const char *
-cfgOptionRuleAllowListValue(uiCommandId, uiOptionId, uiValueId)
+cfgRuleOptionAllowListValue(uiCommandId, uiOptionId, uiValueId)
     U32 uiCommandId
     U32 uiOptionId
     U32 uiValueId
 
 I32
-cfgOptionRuleAllowListValueTotal(uiCommandId, uiOptionId)
+cfgRuleOptionAllowListValueTotal(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 bool
-cfgOptionRuleAllowListValueValid(uiCommandId, uiOptionId, szValue);
+cfgRuleOptionAllowListValueValid(uiCommandId, uiOptionId, szValue);
     U32 uiCommandId
     U32 uiOptionId
     const char *szValue
 
 bool
-cfgOptionRuleAllowRange(uiCommandId, uiOptionId)
+cfgRuleOptionAllowRange(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 double
-cfgOptionRuleAllowRangeMax(uiCommandId, uiOptionId)
+cfgRuleOptionAllowRangeMax(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 double
-cfgOptionRuleAllowRangeMin(uiCommandId, uiOptionId)
+cfgRuleOptionAllowRangeMin(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 const char *
-cfgOptionRuleDefault(uiCommandId, uiOptionId)
+cfgRuleOptionDefault(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 bool
-cfgOptionRuleDepend(uiCommandId, uiOptionId);
+cfgRuleOptionDepend(uiCommandId, uiOptionId);
     U32 uiCommandId
     U32 uiOptionId
 
 I32
-cfgOptionRuleDependOption(uiCommandId, uiOptionId)
+cfgRuleOptionDependOption(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 const char *
-cfgOptionRuleDependValue(uiCommandId, uiOptionId, uiValueId)
+cfgRuleOptionDependValue(uiCommandId, uiOptionId, uiValueId)
     U32 uiCommandId
     U32 uiOptionId
     U32 uiValueId
 
 I32
-cfgOptionRuleDependValueTotal(uiCommandId, uiOptionId)
+cfgRuleOptionDependValueTotal(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 bool
-cfgOptionRuleDependValueValid(uiCommandId, uiOptionId, szValue)
+cfgRuleOptionDependValueValid(uiCommandId, uiOptionId, szValue)
     U32 uiCommandId
     U32 uiOptionId
     const char *szValue
 
 const char *
-cfgOptionRuleHint(uiCommandId, uiOptionId)
+cfgRuleOptionHint(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 const char *
-cfgOptionRuleNameAlt(uiOptionId)
+cfgRuleOptionNameAlt(uiOptionId)
     U32 uiOptionId
 
-bool cfgOptionRuleNegate(uiOptionId)
+bool cfgRuleOptionNegate(uiOptionId)
     U32 uiOptionId
 
 const char *
-cfgOptionRulePrefix(uiOptionId)
+cfgRuleOptionPrefix(uiOptionId)
     U32 uiOptionId
 
 bool
-cfgOptionRuleRequired(uiCommandId, uiOptionId)
+cfgRuleOptionRequired(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
 const char *
-cfgOptionRuleSection(uiOptionId)
+cfgRuleOptionSection(uiOptionId)
     U32 uiOptionId
 
 bool
-cfgOptionRuleSecure(uiOptionId)
+cfgRuleOptionSecure(uiOptionId)
     U32 uiOptionId
 
 I32
-cfgOptionRuleType(uiOptionId);
+cfgRuleOptionType(uiOptionId);
     U32 uiOptionId
 
 bool
-cfgOptionRuleValid(uiCommandId, uiOptionId)
+cfgRuleOptionValid(uiCommandId, uiOptionId)
     U32 uiCommandId
     U32 uiOptionId
 
@@ -139,7 +139,7 @@ U32
 cfgOptionTotal()
 
 bool
-cfgOptionRuleValueHash(uiOptionId)
+cfgRuleOptionValueHash(uiOptionId)
     U32 uiOptionId
 
 # Config

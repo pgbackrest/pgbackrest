@@ -57,7 +57,7 @@ sub run
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
         $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
-        $self->optionTestExpect(CFGOPT_CONFIG, cfgOptionRuleDefault(CFGCMD_BACKUP, CFGOPT_CONFIG));
+        $self->optionTestExpect(CFGOPT_CONFIG, cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_CONFIG));
     }
 
     if ($self->begin('config file is a path'))

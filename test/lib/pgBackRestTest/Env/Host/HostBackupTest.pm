@@ -912,7 +912,7 @@ sub optionIndexName
 
     # If the option doesn't have a prefix it can't be indexed
     $iIndex = defined($iIndex) ? $iIndex : 1;
-    my $strPrefix = cfgOptionRulePrefix($iOptionId);
+    my $strPrefix = cfgRuleOptionPrefix($iOptionId);
 
     if (!defined($strPrefix) && $iIndex > 1)
     {

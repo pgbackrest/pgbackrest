@@ -398,13 +398,13 @@ sub configHelpOptionFind
     }
 
     # If no default is set see if there is a default in the rules
-    if (!defined($oOption->{&CONFIG_HELP_DEFAULT}) && defined(cfgOptionRuleDefault($iCommandId, $iOptionId)))
+    if (!defined($oOption->{&CONFIG_HELP_DEFAULT}) && defined(cfgRuleOptionDefault($iCommandId, $iOptionId)))
     {
-        $oOption->{&CONFIG_HELP_DEFAULT} = cfgOptionRuleDefault($iCommandId, $iOptionId);
+        $oOption->{&CONFIG_HELP_DEFAULT} = cfgRuleOptionDefault($iCommandId, $iOptionId);
     }
 
     # Format the default properly if it is a boolean
-    if (defined($oOption->{&CONFIG_HELP_DEFAULT}) && cfgOptionRuleType($iOptionId) eq CFGOPTRULE_TYPE_BOOLEAN)
+    if (defined($oOption->{&CONFIG_HELP_DEFAULT}) && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
     {
         $oOption->{&CONFIG_HELP_DEFAULT} = $oOption->{&CONFIG_HELP_DEFAULT} ? 'y' : 'n';
     }
@@ -413,7 +413,7 @@ sub configHelpOptionFind
     {
         $oOption->{&CONFIG_HELP_CURRENT} = cfgOption($iOptionId, true, false);
 
-        if (cfgOptionRuleType($iOptionId) eq CFGOPTRULE_TYPE_BOOLEAN)
+        if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
         {
             $$oOption{&CONFIG_HELP_CURRENT} = $oOption->{&CONFIG_HELP_CURRENT} ? 'y' : 'n';
         }

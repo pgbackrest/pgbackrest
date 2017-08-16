@@ -25,7 +25,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::LibC qw(:config cfgOptionRuleDefault);
+use pgBackRest::LibC qw(:config cfgRuleOptionDefault);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
@@ -332,12 +332,12 @@ sub restore
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
-                  ($strBackup ne cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET) ? ", backup '${strBackup}'" : '') .
+                  ($strBackup ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? ", backup '${strBackup}'" : '') .
                   ($strType ? ", type '${strType}'" : '') .
                   ($strTarget ? ", target '${strTarget}'" : '') .
                   ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
                   (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
-                  (defined($strTargetAction) && $strTargetAction ne cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
+                  (defined($strTargetAction) && $strTargetAction ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
                       ? ', ' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
                   (defined($oRemapHashRef) ? ', remap' : '') .
                   (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
@@ -418,7 +418,7 @@ sub restore
         ' --config=' . $self->backrestConfig() .
         (defined($bDelta) && $bDelta ? ' --delta' : '') .
         (defined($bForce) && $bForce ? ' --force' : '') .
-        ($strBackup ne cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
+        ($strBackup ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
         (defined($strType) && $strType ne CFGOPTVAL_RESTORE_TYPE_DEFAULT ? " --type=${strType}" : '') .
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
@@ -426,7 +426,7 @@ sub restore
         (defined($bTargetExclusive) && $bTargetExclusive ? ' --target-exclusive' : '') .
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
-        (defined($strTargetAction) && $strTargetAction ne cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
+        (defined($strTargetAction) && $strTargetAction ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
             ? ' --' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},

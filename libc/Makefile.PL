@@ -63,30 +63,30 @@ my $rhExport =
         &BLD_EXPORTTYPE_SUB => [qw(
             cfgCommandId
             cfgOptionId
-            cfgOptionRuleAllowList
-            cfgOptionRuleAllowListValue
-            cfgOptionRuleAllowListValueTotal
-            cfgOptionRuleAllowListValueValid
-            cfgOptionRuleAllowRange
-            cfgOptionRuleAllowRangeMax
-            cfgOptionRuleAllowRangeMin
-            cfgOptionRuleDefault
-            cfgOptionRuleDepend
-            cfgOptionRuleDependOption
-            cfgOptionRuleDependValue
-            cfgOptionRuleDependValueTotal
-            cfgOptionRuleDependValueValid
-            cfgOptionRuleHint
-            cfgOptionRuleNameAlt
-            cfgOptionRuleNegate
-            cfgOptionRulePrefix
-            cfgOptionRuleRequired
-            cfgOptionRuleSection
-            cfgOptionRuleSecure
-            cfgOptionRuleType
-            cfgOptionRuleValid
+            cfgRuleOptionAllowList
+            cfgRuleOptionAllowListValue
+            cfgRuleOptionAllowListValueTotal
+            cfgRuleOptionAllowListValueValid
+            cfgRuleOptionAllowRange
+            cfgRuleOptionAllowRangeMax
+            cfgRuleOptionAllowRangeMin
+            cfgRuleOptionDefault
+            cfgRuleOptionDepend
+            cfgRuleOptionDependOption
+            cfgRuleOptionDependValue
+            cfgRuleOptionDependValueTotal
+            cfgRuleOptionDependValueValid
+            cfgRuleOptionHint
+            cfgRuleOptionNameAlt
+            cfgRuleOptionNegate
+            cfgRuleOptionPrefix
+            cfgRuleOptionRequired
+            cfgRuleOptionSection
+            cfgRuleOptionSecure
+            cfgRuleOptionType
+            cfgRuleOptionValid
             cfgOptionTotal
-            cfgOptionRuleValueHash
+            cfgRuleOptionValueHash
         )],
     },
 
@@ -232,15 +232,22 @@ sub formatText
 
     foreach my $strPath (sort(keys(%{$rhBuild})))
     {
-        foreach my $strFile (sort(keys(%{$rhBuild->{$strPath}})))
+        foreach my $strFile (sort(keys(%{$rhBuild->{$strPath}{&BLD_FILE}})))
         {
-            my $rhFile = $rhBuild->{$strPath}{$strFile}{&BLD_HEADER};
+            my $rhFileConstant = $rhBuild->{$strPath}{&BLD_FILE}{$strFile}{&BLD_CONSTANT_GROUP};
 
-            if (defined($rhFile))
+            foreach my $strConstantGroup (sort(keys(%{$rhFileConstant})))
             {
-                foreach my $strConstant (sort(keys(%{$rhFile->{&BLD_CONSTANT}})))
+                my $rhConstantGroup = $rhFileConstant->{$strConstantGroup};
+
+                foreach my $strConstant (sort(keys(%{$rhConstantGroup->{&BLD_CONSTANT}})))
                 {
-                    push(@{$rhExport->{$strFile}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+                    my $rhConstant = $rhConstantGroup->{&BLD_CONSTANT}{$strConstant};
+
+                    if ($rhConstant->{&BLD_CONSTANT_EXPORT})
+                    {
+                        push(@{$rhExport->{$strFile}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
+                    }
                 }
             }
         }
@@ -363,6 +370,8 @@ WriteMakefile
         -o $@
         -std=c99
         -D_FILE_OFFSET_BITS=64
+        -funroll-loops
+        -ftree-vectorize
         $(CFLAGS)
     )),
 
