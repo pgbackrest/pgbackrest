@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed document generation to include section summaries on the Configuration page.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
