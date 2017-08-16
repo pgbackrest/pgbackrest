@@ -737,6 +737,9 @@ sub helpConfigDocGet
 
         my $oSectionDoc = $oConfigDoc->nodeGet('config-section-list')->nodeGetById('config-section', $strSection);
 
+        # Set the summary text for the section
+        $oSectionElement->textSet($oSectionDoc->textGet());
+
         $oSectionElement->
             nodeAdd('title')->textSet(
                 {name => 'text',
