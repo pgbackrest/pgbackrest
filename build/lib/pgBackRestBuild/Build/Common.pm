@@ -28,8 +28,20 @@ use constant BLD_HEADER                                             => 'h';
 use constant BLD_MD                                                 => 'md';
     push @EXPORT, qw(BLD_MD);
 
+use constant BLD_SUMMARY                                            => 'summary';
+    push @EXPORT, qw(BLD_SUMMARY);
+
 use constant BLD_CONSTANT                                           => 'constant';
     push @EXPORT, qw(BLD_CONSTANT);
+use constant BLD_FUNCTION                                           => 'function';
+    push @EXPORT, qw(BLD_FUNCTION);
+
+use constant BLD_PARAM                                              => 'param';
+    push @EXPORT, qw(BLD_PARAM);
+use constant BLD_RETURN_TYPE                                        => 'return-type';
+    push @EXPORT, qw(BLD_RETURN_TYPE);
+use constant BLD_RETURN_VALUE_MAP                                   => 'return-value-map';
+    push @EXPORT, qw(BLD_RETURN_VALUE_MAP);
 
 use constant BLD_TRUTH_DEFAULT                                      => 'truthDefault';
     push @EXPORT, qw(BLD_TRUTH_DEFAULT);
