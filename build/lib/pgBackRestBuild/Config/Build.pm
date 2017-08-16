@@ -27,29 +27,44 @@ use pgBackRestBuild::Config::Data;
 ####################################################################################################################################
 # Constants
 ####################################################################################################################################
-use constant PARAM_CFGBLDOPT_ID                                     => 'uiOptionId';
-use constant PARAM_COMMAND_ID                                       => 'uiCommandId';
-use constant PARAM_VALUE_ID                                         => 'uiValueId';
+use constant BLDLCL_FILE_CONFIG                                     => 'config';
+use constant BLDLCL_FILE_CONFIG_RULE                                => BLDLCL_FILE_CONFIG . 'Rule';
 
-use constant PARAM_ORDER                                            => 'param-order';
-use constant VALUE_MAP                                              => 'value-map';
+use constant BLDLCL_PARAM_OPTIONID                                  => 'uiOptionId';
+use constant BLDLCL_PARAM_COMMANDID                                 => 'uiCommandId';
+use constant BLDLCL_PARAM_VALUEID                                   => 'uiValueId';
 
-use constant CFGBLDDEF_RULE_ALLOW_LIST                              => CFGBLDDEF_RULE_ALLOW_LIST;
-use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE                        => CFGBLDDEF_RULE_ALLOW_LIST . '-value';
-use constant CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL                  => CFGBLDDEF_RULE_ALLOW_LIST_VALUE . '-total';
-use constant CFGBLDDEF_RULE_ALLOW_RANGE_MIN                         => CFGBLDDEF_RULE_ALLOW_RANGE . '-min';
-use constant CFGBLDDEF_RULE_ALLOW_RANGE_MAX                         => CFGBLDDEF_RULE_ALLOW_RANGE . '-max';
-use constant CFGBLDDEF_RULE_DEPEND                                  => CFGBLDDEF_RULE_DEPEND;
-use constant CFGBLDDEF_RULE_DEPEND_VALUE                            => CFGBLDDEF_RULE_DEPEND . '-value';
-use constant CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL                      => CFGBLDDEF_RULE_DEPEND_VALUE . '-total';
-use constant CFGBLDDEF_RULE_NAME                                    => 'name';
-use constant CFGBLDDEF_RULE_VALID                                   => 'valid';
-use constant PARAM_SUMMARY                                          => 'summary';
+use constant BLDLCL_PREFIX_OPTION                                   => 'cfgOption';
 
-use constant PARAM_FILE                                             => 'file';
+use constant BLDLCL_FUNCTION_INDEX_TOTAL                            => BLDLCL_PREFIX_OPTION . 'IndexTotal';
 
-use constant FILE_CONFIG                                            => 'config';
-use constant FILE_CONFIG_RULE                                       => FILE_CONFIG . 'Rule';
+use constant BLDLCL_PREFIX_OPTION_RULE                              => 'cfgOptionRule';
+
+use constant BLDLCL_FUNCTION_ALLOW_LIST                             => BLDLCL_PREFIX_OPTION_RULE . 'AllowList';
+use constant BLDLCL_FUNCTION_ALLOW_LIST_VALUE                       => BLDLCL_FUNCTION_ALLOW_LIST . 'Value';
+use constant BLDLCL_FUNCTION_ALLOW_LIST_VALUE_TOTAL                 => BLDLCL_FUNCTION_ALLOW_LIST_VALUE . 'Total';
+
+use constant BLDLCL_FUNCTION_ALLOW_RANGE                            => BLDLCL_PREFIX_OPTION_RULE . 'AllowRange';
+use constant BLDLCL_FUNCTION_ALLOW_RANGE_MAX                        => BLDLCL_FUNCTION_ALLOW_RANGE . 'Max';
+use constant BLDLCL_FUNCTION_ALLOW_RANGE_MIN                        => BLDLCL_FUNCTION_ALLOW_RANGE . 'Min';
+
+use constant BLDLCL_FUNCTION_DEFAULT                                => BLDLCL_PREFIX_OPTION_RULE . "Default";
+
+use constant BLDLCL_FUNCTION_DEPEND                                 => BLDLCL_PREFIX_OPTION_RULE . 'Depend';
+use constant BLDLCL_FUNCTION_DEPEND_OPTION                          => BLDLCL_FUNCTION_DEPEND . 'Option';
+use constant BLDLCL_FUNCTION_DEPEND_VALUE                           => BLDLCL_FUNCTION_DEPEND . 'Value';
+use constant BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL                     => BLDLCL_FUNCTION_DEPEND_VALUE . 'Total';
+
+use constant BLDLCL_FUNCTION_HINT                                   => BLDLCL_PREFIX_OPTION_RULE . 'Hint';
+use constant BLDLCL_FUNCTION_NAME_ALT                               => BLDLCL_PREFIX_OPTION_RULE . 'NameAlt';
+use constant BLDLCL_FUNCTION_NEGATE                                 => BLDLCL_PREFIX_OPTION_RULE . 'Negate';
+use constant BLDLCL_FUNCTION_PREFIX                                 => BLDLCL_PREFIX_OPTION_RULE . 'Prefix';
+use constant BLDLCL_FUNCTION_REQUIRED                               => BLDLCL_PREFIX_OPTION_RULE . 'Required';
+use constant BLDLCL_FUNCTION_SECTION                                => BLDLCL_PREFIX_OPTION_RULE . 'Section';
+use constant BLDLCL_FUNCTION_SECURE                                 => BLDLCL_PREFIX_OPTION_RULE . 'Secure';
+use constant BLDLCL_FUNCTION_TYPE                                   => BLDLCL_PREFIX_OPTION_RULE . 'Type';
+use constant BLDLCL_FUNCTION_VALID                                  => BLDLCL_PREFIX_OPTION_RULE . 'Valid';
+use constant BLDLCL_FUNCTION_VALUE_HASH                             => BLDLCL_PREFIX_OPTION_RULE . 'ValueHash';
 
 ####################################################################################################################################
 # Build command constant maps
@@ -136,220 +151,188 @@ foreach my $strOption (sort(keys(%{$rhOptionRule})))
 ####################################################################################################################################
 # Definitions for functions to build
 ####################################################################################################################################
-my $rhOptionRuleParam =
+my $rhCodeGen =
 {
-    &CFGBLDDEF_RULE_ALLOW_LIST =>
+    &BLDLCL_FILE_CONFIG =>
     {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'AllowList',
-        &PARAM_SUMMARY => 'is there an allow list for this option?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
+        &BLD_FUNCTION =>
+        {
+            &BLDLCL_FUNCTION_INDEX_TOTAL =>
+            {
+                &BLD_SUMMARY => 'total index values allowed',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => 1,
+            },
+        },
     },
 
-    &CFGBLDDEF_RULE_ALLOW_LIST_VALUE =>
+    &BLDLCL_FILE_CONFIG_RULE =>
     {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'AllowListValue',
-        &PARAM_SUMMARY => 'get value from allowed list',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID, PARAM_VALUE_ID],
-    },
+        &BLD_FUNCTION =>
+        {
+            &BLDLCL_FUNCTION_ALLOW_LIST =>
+            {
+                &BLD_SUMMARY => 'is there an allow list for this option?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'AllowListValueTotal',
-        &PARAM_SUMMARY => 'total number of values allowed',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    },
+            &BLDLCL_FUNCTION_ALLOW_LIST_VALUE =>
+            {
+                &BLD_SUMMARY => 'get value from allowed list',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID, BLDLCL_PARAM_VALUEID],
+            },
 
-    &CFGBLDDEF_RULE_ALLOW_RANGE =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'AllowRange',
-        &PARAM_SUMMARY => 'is the option constrained to a range?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
-    },
+            &BLDLCL_FUNCTION_ALLOW_LIST_VALUE_TOTAL =>
+            {
+                &BLD_SUMMARY => 'total number of values allowed',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+            },
 
-    &CFGBLDDEF_RULE_ALLOW_RANGE_MIN =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'AllowRangeMin',
-        &PARAM_SUMMARY => 'minimum value allowed (if the option is constrained to a range)',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_DOUBLE,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    },
+            &BLDLCL_FUNCTION_ALLOW_RANGE =>
+            {
+                &BLD_SUMMARY => 'is the option constrained to a range?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_ALLOW_RANGE_MAX =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'AllowRangeMax',
-        &PARAM_SUMMARY => 'maximum value allowed (if the option is constrained to a range)',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_DOUBLE,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    },
+            &BLDLCL_FUNCTION_ALLOW_RANGE_MIN =>
+            {
+                &BLD_SUMMARY => 'minimum value allowed (if the option is constrained to a range)',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_DOUBLE,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+            },
 
-    &CFGBLDDEF_RULE_DEFAULT =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Default',
-        &PARAM_SUMMARY => 'default value',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => undef,
-    },
+            &BLDLCL_FUNCTION_ALLOW_RANGE_MAX =>
+            {
+                &BLD_SUMMARY => 'maximum value allowed (if the option is constrained to a range)',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_DOUBLE,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+            },
 
-    &CFGBLDDEF_RULE_INDEX =>
-    {
-        &PARAM_FILE => FILE_CONFIG,
-        &CFGBLDDEF_RULE_NAME => 'IndexTotal',
-        &PARAM_SUMMARY => 'total index values allowed',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => 1,
-    },
+            &BLDLCL_FUNCTION_DEFAULT =>
+            {
+                &BLD_SUMMARY => 'default value',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => undef,
+            },
 
-    &CFGBLDDEF_RULE_DEPEND =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Depend',
-        &PARAM_SUMMARY => 'does the option have a dependency on another option?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
-    },
+            &BLDLCL_FUNCTION_DEPEND =>
+            {
+                &BLD_SUMMARY => 'does the option have a dependency on another option?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_DEPEND_OPTION =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'DependOption',
-        &PARAM_SUMMARY => 'name of the option that this option depends in order to be set',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &VALUE_MAP => $rhOptionIdConstantMap,
-    },
+            &BLDLCL_FUNCTION_DEPEND_OPTION =>
+            {
+                &BLD_SUMMARY => 'name of the option that this option depends in order to be set',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_RETURN_VALUE_MAP => $rhOptionIdConstantMap,
+            },
 
-    &CFGBLDDEF_RULE_DEPEND_VALUE =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'DependValue',
-        &PARAM_SUMMARY => 'the depend option must have one of these values before this option is set',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID, PARAM_VALUE_ID],
-    },
+            &BLDLCL_FUNCTION_DEPEND_VALUE =>
+            {
+                &BLD_SUMMARY => 'the depend option must have one of these values before this option is set',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID, BLDLCL_PARAM_VALUEID],
+            },
 
-    &CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'DependValueTotal',
-        &PARAM_SUMMARY => 'total depend values for this option',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-    },
+            &BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL =>
+            {
+                &BLD_SUMMARY => 'total depend values for this option',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+            },
 
-    &CFGBLDDEF_RULE_HINT =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Hint',
-        &PARAM_SUMMARY => 'some clue as to what value the user should provide when the option is missing but required',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => undef,
-    },
+            &BLDLCL_FUNCTION_HINT =>
+            {
+                &BLD_SUMMARY => 'some clue as to what value the user should provide when the option is missing but required',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => undef,
+            },
 
-    &CFGBLDDEF_RULE_ALT_NAME =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'NameAlt',
-        &PARAM_SUMMARY => 'alternate name for the option primarily used for deprecated names',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => undef,
-    },
+            &BLDLCL_FUNCTION_NAME_ALT =>
+            {
+                &BLD_SUMMARY => 'alternate name for the option primarily used for deprecated names',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => undef,
+            },
 
-    &CFGBLDDEF_RULE_NEGATE =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Negate',
-        &PARAM_SUMMARY => 'can the boolean option be negated?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
-    },
+            &BLDLCL_FUNCTION_NEGATE =>
+            {
+                &BLD_SUMMARY => 'can the boolean option be negated?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_PREFIX =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Prefix',
-        &PARAM_SUMMARY => 'prefix when the option has an index > 1 (e.g. "db")',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => undef,
-    },
+            &BLDLCL_FUNCTION_PREFIX =>
+            {
+                &BLD_SUMMARY => 'prefix when the option has an index > 1 (e.g. "db")',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => undef,
+            },
 
-    &CFGBLDDEF_RULE_REQUIRED =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Required',
-        &PARAM_SUMMARY => 'is the option required?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
-    },
+            &BLDLCL_FUNCTION_REQUIRED =>
+            {
+                &BLD_SUMMARY => 'is the option required?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_SECTION =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Section',
-        &PARAM_SUMMARY => 'section that the option belongs in, NULL means command-line only',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_CONSTCHAR,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => undef,
-    },
+            &BLDLCL_FUNCTION_SECTION =>
+            {
+                &BLD_SUMMARY => 'section that the option belongs in, NULL means command-line only',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => undef,
+            },
 
-    &CFGBLDDEF_RULE_SECURE =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Secure',
-        &PARAM_SUMMARY => 'secure options can never be passed on the commmand-line',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
-    },
+            &BLDLCL_FUNCTION_SECURE =>
+            {
+                &BLD_SUMMARY => 'secure options can never be passed on the commmand-line',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_TYPE =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Type',
-        &PARAM_SUMMARY => 'secure options can never be passed on the commmand-line',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_INT32,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &VALUE_MAP => $rhOptionTypeIdConstantMap,
-    },
+            &BLDLCL_FUNCTION_TYPE =>
+            {
+                &BLD_SUMMARY => 'secure options can never be passed on the commmand-line',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_RETURN_VALUE_MAP => $rhOptionTypeIdConstantMap,
+            },
 
-    &CFGBLDDEF_RULE_VALID =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'Valid',
-        &PARAM_SUMMARY => 'is the option valid for this command?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_COMMAND_ID, PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
-    },
+            &BLDLCL_FUNCTION_VALID =>
+            {
+                &BLD_SUMMARY => 'is the option valid for this command?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
 
-    &CFGBLDDEF_RULE_HASH_VALUE =>
-    {
-        &PARAM_FILE => FILE_CONFIG_RULE,
-        &CFGBLDDEF_RULE_NAME => 'ValueHash',
-        &PARAM_SUMMARY => 'is the option a true hash or just a list of keys?',
-        &CFGBLDDEF_RULE_TYPE => CGEN_DATATYPE_BOOL,
-        &PARAM_ORDER => [PARAM_CFGBLDOPT_ID],
-        &BLD_TRUTH_DEFAULT => false,
+            &BLDLCL_FUNCTION_VALUE_HASH =>
+            {
+                &BLD_SUMMARY => 'is the option a true hash or just a list of keys?',
+                &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
+                &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
+                &BLD_TRUTH_DEFAULT => false,
+            },
+        },
     },
 };
 
@@ -366,7 +349,7 @@ sub optionRule
     # return if defined($iCommandId) && !defined($strValue);
 
     push(
-        @{$rhOptionRuleParam->{$strRule}{matrix}},
+        @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{$strRule}{matrix}},
         [$iCommandId, $iOptionId, $strValue]);
 }
 
@@ -378,11 +361,11 @@ sub optionRuleDepend
 
     my $strDependOption = $rhDepend->{&CFGBLDDEF_RULE_DEPEND_OPTION};
 
-    optionRule(CFGBLDDEF_RULE_DEPEND, defined($strDependOption) ? true : false, $iCommandId, $iOptionId);
+    optionRule(BLDLCL_FUNCTION_DEPEND, defined($strDependOption) ? true : false, $iCommandId, $iOptionId);
 
     if (defined($strDependOption))
     {
-        optionRule(CFGBLDDEF_RULE_DEPEND_OPTION, $rhOptionNameIdMap->{$strDependOption}, $iCommandId, $iOptionId);
+        optionRule(BLDLCL_FUNCTION_DEPEND_OPTION, $rhOptionNameIdMap->{$strDependOption}, $iCommandId, $iOptionId);
 
         my $iValueTotal = 0;
 
@@ -391,14 +374,14 @@ sub optionRuleDepend
             foreach my $strValue (@{$rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}})
             {
                 push(
-                    @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_DEPEND_VALUE}{matrix}},
+                    @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_DEPEND_VALUE}{matrix}},
                     [$iCommandId, $iOptionId, $iValueTotal, $strValue]);
 
                 $iValueTotal++;
             }
         }
 
-        optionRule(CFGBLDDEF_RULE_DEPEND_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
+        optionRule(BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
     }
 }
 
@@ -409,12 +392,12 @@ sub optionRuleRange
     my $iOptionId = shift;
 
     optionRule(
-        CFGBLDDEF_RULE_ALLOW_RANGE, defined($riyRange) ? true : false, $iCommandId, $iOptionId);
+        BLDLCL_FUNCTION_ALLOW_RANGE, defined($riyRange) ? true : false, $iCommandId, $iOptionId);
 
     if (defined($riyRange))
     {
-        optionRule(CFGBLDDEF_RULE_ALLOW_RANGE_MIN, $riyRange->[0], $iCommandId, $iOptionId);
-        optionRule(CFGBLDDEF_RULE_ALLOW_RANGE_MAX, $riyRange->[1], $iCommandId, $iOptionId);
+        optionRule(BLDLCL_FUNCTION_ALLOW_RANGE_MIN, $riyRange->[0], $iCommandId, $iOptionId);
+        optionRule(BLDLCL_FUNCTION_ALLOW_RANGE_MAX, $riyRange->[1], $iCommandId, $iOptionId);
     }
 }
 
@@ -425,7 +408,7 @@ sub optionRuleAllowList
     my $iOptionId = shift;
 
     optionRule(
-        CFGBLDDEF_RULE_ALLOW_LIST, defined($rhAllowList) ? true : false, $iCommandId, $iOptionId);
+        BLDLCL_FUNCTION_ALLOW_LIST, defined($rhAllowList) ? true : false, $iCommandId, $iOptionId);
 
     if (defined($rhAllowList))
     {
@@ -434,13 +417,13 @@ sub optionRuleAllowList
         foreach my $strValue (@{$rhAllowList})
         {
             push(
-                @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_ALLOW_LIST_VALUE}{matrix}},
+                @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_ALLOW_LIST_VALUE}{matrix}},
                 [$iCommandId, $iOptionId, $iValueTotal, $strValue]);
 
             $iValueTotal++;
         }
 
-        optionRule(CFGBLDDEF_RULE_ALLOW_LIST_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
+        optionRule(BLDLCL_FUNCTION_ALLOW_LIST_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
     }
 }
 
@@ -465,7 +448,7 @@ sub buildConfig
             my $strConstantValue = $rhCommandNameIdMap->{$strCommand};
 
             $strConstantHeader .= "#define ${strConstant} ${strConstantValue}\n";
-            $rhBuild->{&FILE_CONFIG}{&BLD_HEADER}{&BLD_CONSTANT}{$strConstant} = $strConstantValue;
+            $rhBuild->{&BLDLCL_FILE_CONFIG}{&BLD_HEADER}{&BLD_CONSTANT}{$strConstant} = $strConstantValue;
         }
 
         $strConstantHeader .=  "\n#define CFGOPTRULE_TYPE_TOTAL ${iOptionTypeTotal}\n\n";
@@ -477,7 +460,7 @@ sub buildConfig
             my $strConstantValue = $rhOptionTypeNameIdMap->{$strOptionType};
 
             $strConstantHeader .= "#define ${strConstant} ${strConstantValue}\n";
-            $rhBuild->{&FILE_CONFIG}{&BLD_HEADER}{&BLD_CONSTANT}{$strConstant} = $strConstantValue;
+            $rhBuild->{&BLDLCL_FILE_CONFIG}{&BLD_HEADER}{&BLD_CONSTANT}{$strConstant} = $strConstantValue;
         }
 
         $strConstantHeader .=  "\n#define CONFIG_OPTION_TOTAL ${iOptionTotal}\n\n";
@@ -489,10 +472,10 @@ sub buildConfig
             my $strConstantValue = $rhOptionNameIdMap->{$strOption};
 
             $strConstantHeader .= "#define ${strConstant} ${strConstantValue}\n";
-            $rhBuild->{&FILE_CONFIG}{&BLD_HEADER}{&BLD_CONSTANT}{$strConstant} = $strConstantValue;
+            $rhBuild->{&BLDLCL_FILE_CONFIG}{&BLD_HEADER}{&BLD_CONSTANT}{$strConstant} = $strConstantValue;
         }
 
-        $rhBuild->{&FILE_CONFIG}{&BLD_HEADER}{&BLD_SOURCE} =
+        $rhBuild->{&BLDLCL_FILE_CONFIG}{&BLD_HEADER}{&BLD_SOURCE} =
             "/* AUTOGENERATED CONFIG CONSTANTS - DO NOT MODIFY THIS FILE */\n" .
             "#ifndef CONFIG_AUTO_H\n" .
             "#define CONFIG_AUTO_H\n\n" .
@@ -512,22 +495,22 @@ sub buildConfig
             my $rhCommand = $rhOption->{&CFGBLDDEF_RULE_COMMAND}{$strCommand};
             my $iCommandId = $rhCommandNameIdMap->{$strCommand};
 
-            optionRule(CFGBLDDEF_RULE_VALID, defined($rhCommand) ? true : false, $iCommandId, $iOptionId);
+            optionRule(BLDLCL_FUNCTION_VALID, defined($rhCommand) ? true : false, $iCommandId, $iOptionId);
 
             if (defined($rhCommand))
             {
                 optionRule(
-                    CFGBLDDEF_RULE_REQUIRED,
+                    BLDLCL_FUNCTION_REQUIRED,
                     coalesce($rhCommand->{&CFGBLDDEF_RULE_REQUIRED}, $rhOption->{&CFGBLDDEF_RULE_REQUIRED}, true), $iCommandId,
                     $iOptionId);
 
                 optionRule(
-                    CFGBLDDEF_RULE_DEFAULT,
+                    BLDLCL_FUNCTION_DEFAULT,
                     defined($rhCommand->{&CFGBLDDEF_RULE_DEFAULT}) ?
                         $rhCommand->{&CFGBLDDEF_RULE_DEFAULT} : $rhOption->{&CFGBLDDEF_RULE_DEFAULT},
                     $iCommandId, $iOptionId);
                 optionRule(
-                    CFGBLDDEF_RULE_HINT,
+                    BLDLCL_FUNCTION_HINT,
                         defined($rhCommand->{&CFGBLDDEF_RULE_HINT}) ?
                             $rhCommand->{&CFGBLDDEF_RULE_HINT} : $rhOption->{&CFGBLDDEF_RULE_HINT},
                     $iCommandId, $iOptionId);
@@ -547,264 +530,248 @@ sub buildConfig
         }
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_INDEX}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_INDEX_TOTAL}{matrix}},
             [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_INDEX}]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_NEGATE}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_NEGATE}{matrix}},
             [$iOptionId, coalesce($rhOption->{&CFGBLDDEF_RULE_NEGATE}, false)]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_ALT_NAME}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_NAME_ALT}{matrix}},
             [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_ALT_NAME}]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_PREFIX}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_PREFIX}{matrix}},
             [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_PREFIX}]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_SECTION}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_SECTION}{matrix}},
             [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECTION}]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_SECURE}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_SECURE}{matrix}},
             [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECURE}]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_TYPE}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_TYPE}{matrix}},
             [$iOptionId, $rhOptionTypeNameIdMap->{$rhOption->{&CFGBLDDEF_RULE_TYPE}}]);
 
         push(
-            @{$rhOptionRuleParam->{&CFGBLDDEF_RULE_HASH_VALUE}{matrix}},
+            @{$rhCodeGen->{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_VALUE_HASH}{matrix}},
             [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_HASH_VALUE}]);
     }
 
-    my $rhLabelMap = {&PARAM_CFGBLDOPT_ID => $rhOptionIdConstantMap, &PARAM_COMMAND_ID => $rhCommandIdConstantMap};
+    my $rhLabelMap = {&BLDLCL_PARAM_OPTIONID => $rhOptionIdConstantMap, &BLDLCL_PARAM_COMMANDID => $rhCommandIdConstantMap};
 
-    # Build truth table
+    # Iterate all files
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $strTruthTable;
-
-    foreach my $strOptionRule (sort(keys(%{$rhOptionRuleParam})))
+    foreach my $strFile (sort(keys(%{$rhCodeGen})))
     {
-        my $rhOptionRule = $rhOptionRuleParam->{$strOptionRule};
-        my $strPrefix = 'cfgOption' . ($rhOptionRule->{&PARAM_FILE} eq FILE_CONFIG_RULE ? 'Rule' : '');
-        my $strFunctionName = $strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME};
+        # Build truth table
+        #-------------------------------------------------------------------------------------------------------------------------------
+        my $strTruthTable;
 
-        my $strSummary = ucfirst($rhOptionRule->{&PARAM_SUMMARY});
-        $strSummary .= $strSummary =~ /\?$/ ? '' : '.';
-
-        $strTruthTable .=
-            (defined($strTruthTable) ? "\n" : '') .
-            "## ${strFunctionName}\n\n" .
-            "${strSummary}\n\n" .
-            "### Truth Table:\n\n";
-
-        my $strTruthDefault;
-
-        if (exists($rhOptionRule->{&BLD_TRUTH_DEFAULT}))
+        foreach my $strFunction (sort(keys(%{$rhCodeGen->{$strFile}{&BLD_FUNCTION}})))
         {
-            $strTruthDefault =
-                defined($rhOptionRule->{&BLD_TRUTH_DEFAULT}) ? $rhOptionRule->{&BLD_TRUTH_DEFAULT} : CGEN_DATAVAL_NULL;
+            my $rhOptionRule = $rhCodeGen->{$strFile}{&BLD_FUNCTION}{$strFunction};
+
+            my $strSummary = ucfirst($rhOptionRule->{&BLD_SUMMARY});
+            $strSummary .= $strSummary =~ /\?$/ ? '' : '.';
 
             $strTruthTable .=
-                'Functions that return `' .
-                cgenTypeFormat(
-                    $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
-                    defined($rhOptionRule->{&VALUE_MAP}) && defined($rhOptionRule->{&VALUE_MAP}->{$strTruthDefault}) ?
-                        $rhOptionRule->{&VALUE_MAP}->{$strTruthDefault} : $strTruthDefault) .
-                    "` are not listed here for brevity.\n\n";
-        }
+                (defined($strTruthTable) ? "\n" : '') .
+                "## ${strFunction}\n\n" .
+                "${strSummary}\n\n" .
+                "### Truth Table:\n\n";
 
-        # Write table header
-        $strTruthTable .= '| Suffix';
+            my $strTruthDefault;
 
-        for (my $iParamIdx = 0; $iParamIdx < @{$rhOptionRule->{&PARAM_ORDER}}; $iParamIdx++)
-        {
-            $strTruthTable .= ' | ' . $rhOptionRule->{&PARAM_ORDER}->[$iParamIdx];
-        }
-
-        $strTruthTable .=
-            " | Result |\n" .
-            '| ------';
-
-        for (my $iParamIdx = 0; $iParamIdx < @{$rhOptionRule->{&PARAM_ORDER}}; $iParamIdx++)
-        {
-            $strTruthTable .= ' | ' . ('-' x length($rhOptionRule->{&PARAM_ORDER}->[$iParamIdx]));
-        }
-
-        $strTruthTable .=
-            " | ------ |\n";
-
-        # Format matrix data so that can be ordered (even by integer)
-        my @stryOrderedMatrix;
-
-        foreach my $rxyEntry (@{$rhOptionRule->{matrix}})
-        {
-            my $strEntry;
-
-            for (my $iEntryIdx = 0; $iEntryIdx < @{$rxyEntry}; $iEntryIdx++)
+            if (exists($rhOptionRule->{&BLD_TRUTH_DEFAULT}))
             {
-                my $strValue = defined($rxyEntry->[$iEntryIdx]) ? $rxyEntry->[$iEntryIdx] : CGEN_DATAVAL_NULL;
+                $strTruthDefault =
+                    defined($rhOptionRule->{&BLD_TRUTH_DEFAULT}) ? $rhOptionRule->{&BLD_TRUTH_DEFAULT} : CGEN_DATAVAL_NULL;
 
-                if ($iEntryIdx != @{$rxyEntry} - 1)
-                {
-                    $strEntry .= (defined($strEntry) ? '~' : '') . sprintf('%016d', $strValue);
-                }
-                else
-                {
-                    $strEntry .= '~' . $strValue;
-                }
+                $strTruthTable .=
+                    'Functions that return `' .
+                    cgenTypeFormat(
+                        $rhOptionRule->{&BLD_RETURN_TYPE},
+                        defined($rhOptionRule->{&BLD_RETURN_VALUE_MAP}) && defined($rhOptionRule->{&BLD_RETURN_VALUE_MAP}->{$strTruthDefault}) ?
+                            $rhOptionRule->{&BLD_RETURN_VALUE_MAP}->{$strTruthDefault} : $strTruthDefault) .
+                        "` are not listed here for brevity.\n\n";
             }
 
-            push(@stryOrderedMatrix, $strEntry);
-        }
+            # Write table header
+            $strTruthTable .= '| Function';
 
-        # Commands are frequently redundant, so if command is present (as first param) then remove it when redundant
-        my $rhMatrixFilter;
-        my @stryFilteredMatrix;
+            for (my $iParamIdx = 0; $iParamIdx < @{$rhOptionRule->{&BLD_PARAM}}; $iParamIdx++)
+            {
+                $strTruthTable .= ' | ' . $rhOptionRule->{&BLD_PARAM}->[$iParamIdx];
+            }
 
-        if ($rhOptionRule->{&PARAM_ORDER}->[0] eq PARAM_COMMAND_ID)
-        {
-            foreach my $strEntry (sort(@stryOrderedMatrix))
+            $strTruthTable .=
+                " | Result |\n" .
+                '| --------';
+
+            for (my $iParamIdx = 0; $iParamIdx < @{$rhOptionRule->{&BLD_PARAM}}; $iParamIdx++)
+            {
+                $strTruthTable .= ' | ' . ('-' x length($rhOptionRule->{&BLD_PARAM}->[$iParamIdx]));
+            }
+
+            $strTruthTable .=
+                " | ------ |\n";
+
+            # Format matrix data so that can be ordered (even by integer)
+            my @stryOrderedMatrix;
+
+            foreach my $rxyEntry (@{$rhOptionRule->{matrix}})
+            {
+                my $strEntry;
+
+                for (my $iEntryIdx = 0; $iEntryIdx < @{$rxyEntry}; $iEntryIdx++)
+                {
+                    my $strValue = defined($rxyEntry->[$iEntryIdx]) ? $rxyEntry->[$iEntryIdx] : CGEN_DATAVAL_NULL;
+
+                    if ($iEntryIdx != @{$rxyEntry} - 1)
+                    {
+                        $strEntry .= (defined($strEntry) ? '~' : '') . sprintf('%016d', $strValue);
+                    }
+                    else
+                    {
+                        $strEntry .= '~' . $strValue;
+                    }
+                }
+
+                push(@stryOrderedMatrix, $strEntry);
+            }
+
+            # Commands are frequently redundant, so if command is present (as first param) then remove it when redundant
+            my $rhMatrixFilter;
+            my @stryFilteredMatrix;
+
+            if ($rhOptionRule->{&BLD_PARAM}->[0] eq BLDLCL_PARAM_COMMANDID)
+            {
+                foreach my $strEntry (sort(@stryOrderedMatrix))
+                {
+                    my @xyEntry = split('\~', $strEntry);
+
+                    shift(@xyEntry);
+                    my $strValue = pop(@xyEntry);
+                    my $strKey = join('~', @xyEntry);
+
+                    push(@{$rhMatrixFilter->{$strKey}{entry}}, $strEntry);
+                    $rhMatrixFilter->{$strKey}{value}{$strValue} = true;
+                }
+
+                foreach my $strKey (sort(keys(%{$rhMatrixFilter})))
+                {
+                    if (keys(%{$rhMatrixFilter->{$strKey}{value}}) == 1)
+                    {
+                        my $strEntry =
+
+                        push(
+                            @stryFilteredMatrix,
+                            CGEN_DATAVAL_NULL . "~${strKey}~" . (keys(%{$rhMatrixFilter->{$strKey}{value}}))[0]);
+                    }
+                    else
+                    {
+                        push(@stryFilteredMatrix, @{$rhMatrixFilter->{$strKey}{entry}});
+                    }
+                }
+            }
+            else
+            {
+                @stryFilteredMatrix = @stryOrderedMatrix;
+            }
+
+            # Output function entry
+            foreach my $strEntry (sort(@stryFilteredMatrix))
             {
                 my @xyEntry = split('\~', $strEntry);
+                my $strRow = '| ' . $strFunction;
+                my $strValue;
 
-                shift(@xyEntry);
-                my $strValue = pop(@xyEntry);
-                my $strKey = join('~', @xyEntry);
-
-                push(@{$rhMatrixFilter->{$strKey}{entry}}, $strEntry);
-                $rhMatrixFilter->{$strKey}{value}{$strValue} = true;
-            }
-
-            foreach my $strKey (sort(keys(%{$rhMatrixFilter})))
-            {
-                if (keys(%{$rhMatrixFilter->{$strKey}{value}}) == 1)
+                for (my $iEntryIdx = 0; $iEntryIdx < @xyEntry; $iEntryIdx++)
                 {
-                    my $strEntry =
+                    $strValue = $xyEntry[$iEntryIdx];
+                    $strRow .= ' | ';
 
-                    push(@stryFilteredMatrix, CGEN_DATAVAL_NULL . "~${strKey}~" . (keys(%{$rhMatrixFilter->{$strKey}{value}}))[0]);
-                }
-                else
-                {
-                    push(@stryFilteredMatrix, @{$rhMatrixFilter->{$strKey}{entry}});
-                }
-            }
-        }
-        else
-        {
-            @stryFilteredMatrix = @stryOrderedMatrix;
-        }
-
-        # Output function entry
-        foreach my $strEntry (sort(@stryFilteredMatrix))
-        {
-            my @xyEntry = split('\~', $strEntry);
-            my $strRow = '| ' . $rhOptionRule->{&CFGBLDDEF_RULE_NAME};
-            my $strValue;
-
-            for (my $iEntryIdx = 0; $iEntryIdx < @xyEntry; $iEntryIdx++)
-            {
-                $strValue = $xyEntry[$iEntryIdx];
-                $strRow .= ' | ';
-
-                if ($iEntryIdx != @xyEntry - 1)
-                {
-                    my $strParam = $rhOptionRule->{&PARAM_ORDER}->[$iEntryIdx];
-
-                    if ($strValue eq CGEN_DATAVAL_NULL)
+                    if ($iEntryIdx != @xyEntry - 1)
                     {
-                        $strRow .= '_\<ANY\>_';
+                        my $strParam = $rhOptionRule->{&BLD_PARAM}->[$iEntryIdx];
+
+                        if ($strValue eq CGEN_DATAVAL_NULL)
+                        {
+                            $strRow .= '_\<ANY\>_';
+                        }
+                        else
+                        {
+                            $strRow .=
+                                '`' .
+                                (defined($rhLabelMap->{$strParam}) ? $rhLabelMap->{$strParam}{int($strValue)} : int($strValue)) .
+                                '`';
+                        }
                     }
                     else
                     {
                         $strRow .=
                             '`' .
-                            (defined($rhLabelMap->{$strParam}) ? $rhLabelMap->{$strParam}{int($strValue)} : int($strValue)) .
+                            cgenTypeFormat(
+                                $rhOptionRule->{&BLD_RETURN_TYPE},
+                                defined($rhOptionRule->{&BLD_RETURN_VALUE_MAP}) && defined($rhOptionRule->{&BLD_RETURN_VALUE_MAP}->{$strValue}) ?
+                                    $rhOptionRule->{&BLD_RETURN_VALUE_MAP}->{$strValue} : $strValue) .
                             '`';
+
                     }
                 }
-                else
+
+                if (defined($strTruthDefault) && $strTruthDefault eq $strValue)
                 {
-                    $strRow .=
-                        '`' .
-                        cgenTypeFormat(
-                            $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
-                            defined($rhOptionRule->{&VALUE_MAP}) && defined($rhOptionRule->{&VALUE_MAP}->{$strValue}) ?
-                                $rhOptionRule->{&VALUE_MAP}->{$strValue} : $strValue) .
-                        '`';
-
+                    next;
                 }
-            }
 
-            if (defined($strTruthDefault) && $strTruthDefault eq $strValue)
-            {
-                next;
+                $strTruthTable .= "${strRow} |\n";
             }
-
-            $strTruthTable .= "${strRow} |\n";
         }
+
+        $rhBuild->{$strFile}{&BLD_MD}{&BLD_SOURCE} = $strTruthTable;
+
+        # Output config rule functions
+        #-------------------------------------------------------------------------------------------------------------------------------
+        my $strConfigFunction =
+            "// AUTOGENERATED CODE - DO NOT MODIFY THIS FILE";
+
+        if ($strFile eq BLDLCL_FILE_CONFIG)
+        {
+            $strConfigFunction .= "\n" . cgenFunction(
+                'cfgCommandName', 'lookup command name using command id', undef,
+                cgenLookupString('Command', 'CONFIG_COMMAND_TOTAL', $rhCommandNameConstantMap));
+            $strConfigFunction .= "\n" . cgenFunction(
+                'cfgOptionName', 'lookup option name using option id', undef,
+                cgenLookupString(
+                    'Option', 'CONFIG_OPTION_TOTAL', $rhOptionNameConstantMap, '^(' . join('|', @stryOptionAlt) . ')$'));
+        }
+        else
+        {
+            $strConfigFunction .= "\n" . cgenFunction(
+                'cfgCommandId', 'lookup command id using command name', undef, cgenLookupId('Command', 'CONFIG_COMMAND_TOTAL'));
+            $strConfigFunction .= "\n" . cgenFunction(
+                'cfgOptionId', 'lookup option id using option name', undef, cgenLookupId('Option', 'CONFIG_OPTION_TOTAL'));
+        }
+
+        foreach my $strFunction (sort(keys(%{$rhCodeGen->{$strFile}{&BLD_FUNCTION}})))
+        {
+            my $rhOptionRule = $rhCodeGen->{$strFile}{&BLD_FUNCTION}{$strFunction};
+
+            $strConfigFunction .= "\n" .
+                cgenFunction($strFunction, $rhOptionRule->{&BLD_SUMMARY}, undef,
+                    cgenSwitchBuild(
+                        $strFunction, $rhOptionRule->{&BLD_RETURN_TYPE}, $rhOptionRule->{matrix},
+                        $rhOptionRule->{&BLD_PARAM}, $rhLabelMap, $rhOptionRule->{&BLD_RETURN_VALUE_MAP}));
+        }
+
+        $rhBuild->{$strFile}{&BLD_C}{&BLD_SOURCE} = $strConfigFunction;
     }
-
-    $rhBuild->{&FILE_CONFIG}{&BLD_MD}{&BLD_SOURCE} = $strTruthTable;
-
-    # Output config rule functions
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $strConfigFunction =
-        "// AUTOGENERATED CODE - DO NOT MODIFY THIS FILE";
-
-    $strConfigFunction .= "\n" . cgenFunction(
-        'cfgCommandId', 'lookup command id using command name', undef, cgenLookupId('Command', 'CONFIG_COMMAND_TOTAL'));
-    $strConfigFunction .= "\n" . cgenFunction(
-        'cfgOptionId', 'lookup option id using option name', undef, cgenLookupId('Option', 'CONFIG_OPTION_TOTAL'));
-
-    foreach my $strOptionRule (sort(keys(%{$rhOptionRuleParam})))
-    {
-        my $rhOptionRule = $rhOptionRuleParam->{$strOptionRule};
-
-        next if $rhOptionRule->{&PARAM_FILE} ne FILE_CONFIG_RULE;
-
-        my $strPrefix = 'cfgOptionRule';
-
-        $strConfigFunction .= "\n" .
-            cgenFunction($strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&PARAM_SUMMARY}, undef,
-                cgenSwitchBuild(
-                    $strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
-                    $rhOptionRule->{matrix}, $rhOptionRule->{&PARAM_ORDER}, $rhLabelMap, $rhOptionRule->{&VALUE_MAP}));
-    }
-
-    $rhBuild->{&FILE_CONFIG_RULE}{&BLD_C}{&BLD_SOURCE} = $strConfigFunction;
-
-    # Output config functions
-    #-------------------------------------------------------------------------------------------------------------------------------
-    $strConfigFunction =
-        "// AUTOGENERATED CODE - DO NOT MODIFY THIS FILE";
-
-    $strConfigFunction .= "\n" . cgenFunction(
-        'cfgCommandName', 'lookup command name using command id', undef,
-        cgenLookupString('Command', 'CONFIG_COMMAND_TOTAL', $rhCommandNameConstantMap));
-    $strConfigFunction .= "\n" . cgenFunction(
-        'cfgOptionName', 'lookup option name using option id', undef,
-        cgenLookupString(
-            'Option', 'CONFIG_OPTION_TOTAL', $rhOptionNameConstantMap, '^(' . join('|', @stryOptionAlt) . ')$'));
-
-    foreach my $strOptionRule (sort(keys(%{$rhOptionRuleParam})))
-    {
-        my $rhOptionRule = $rhOptionRuleParam->{$strOptionRule};
-
-        next if $rhOptionRule->{&PARAM_FILE} ne FILE_CONFIG;
-
-        my $strPrefix = 'cfgOption';
-
-        $strConfigFunction .= "\n" .
-            cgenFunction($strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&PARAM_SUMMARY}, undef,
-                cgenSwitchBuild(
-                    $strPrefix . $rhOptionRule->{&CFGBLDDEF_RULE_NAME}, $rhOptionRule->{&CFGBLDDEF_RULE_TYPE},
-                    $rhOptionRule->{matrix}, $rhOptionRule->{&PARAM_ORDER}, $rhLabelMap, $rhOptionRule->{&VALUE_MAP}));
-    }
-
-    $rhBuild->{&FILE_CONFIG}{&BLD_C}{&BLD_SOURCE} = $strConfigFunction;
 
     return $rhBuild;
 }
