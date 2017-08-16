@@ -23,6 +23,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Filter::Gzip;
@@ -53,7 +54,7 @@ sub run
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
-            strOptionalParam => '--no-' . OPTION_ONLINE});
+            strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Create the test path for pg_control
         storageDb()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
@@ -66,16 +67,19 @@ sub run
         # Fail stanza upgrade before stanza-create has been performed
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since archive.info is missing',
-            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
-        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        # Create the stanza successfully without force
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Rerun stanza-create and confirm success without the need to use force on empty directories
-        $oHostBackup->stanzaCreate('successful rerun of stanza-create', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate(
+            'successful rerun of stanza-create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Perform a stanza upgrade which will indicate already up to date
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaUpgrade('already up to date', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaUpgrade('already up to date', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Create the xlog path
         my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
@@ -94,7 +98,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Stanza Create fails using force - failure to unzip compressed file
         #--------------------------------------------------------------------------------------------------------------------------
@@ -109,7 +113,8 @@ sub run
 
             # Force creation of the info file but fail on gunzip
             $oHostBackup->stanzaCreate('gunzip fail on forced stanza-create',
-                {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+                {iExpectedExitStatus => ERROR_FILE_OPEN, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' .
+                cfgOptionName(CFGOPT_FORCE)});
 
             # Change permissions back
             forceStorageMode(
@@ -122,11 +127,11 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Rerun without the force to ensure the format is still valid - this will hash check the info files and indicate the
         # stanza already exists
-        $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Stanza Create fails when not using force - hash check failure
         #--------------------------------------------------------------------------------------------------------------------------
@@ -136,10 +141,10 @@ sub run
             {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
 
         $oHostBackup->stanzaCreate('hash check fails requiring force',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         $oHostBackup->stanzaCreate('use force to overwrite the invalid file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Cleanup the global hash but don't save the file (permission issues may prevent it anyway)
         $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), false);
@@ -153,7 +158,7 @@ sub run
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         $oHostBackup->stanzaCreate('fail on database mismatch without force option',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Restore pg_control
         storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
@@ -177,7 +182,7 @@ sub run
             STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
 
         $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Stanza Create succeeds when using force - missing archive file
         #--------------------------------------------------------------------------------------------------------------------------
@@ -187,7 +192,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('force with missing WAL archive file',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Stanza Create succeeds when using force - missing archive directory
         #--------------------------------------------------------------------------------------------------------------------------
@@ -199,7 +204,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('force with missing WAL archive directory',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Fail on archive push due to mismatch of DB since stanza not upgraded
         #--------------------------------------------------------------------------------------------------------------------------
@@ -217,7 +222,7 @@ sub run
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-' .
-            OPTION_ONLINE});
+            cfgOptionName(CFGOPT_ONLINE)});
 
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------
@@ -235,7 +240,7 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Create a DB-ID mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
@@ -243,14 +248,15 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Confirm successful backup at db-1 although archive at db-2
         #--------------------------------------------------------------------------------------------------------------------------
         # Create the tablespace directory and perform a backup
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
-        $oHostBackup->backup('full', 'create first full backup ', {strOptionalParam => '--retention-full=2 --no-' .
-            OPTION_ONLINE . ' --log-level-console=detail'}, false);
+        $oHostBackup->backup(
+            'full', 'create first full backup ',
+            {strOptionalParam => '--retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'}, false);
 
         # Stanza Create fails when not using force - no backup.info but backup exists
         #--------------------------------------------------------------------------------------------------------------------------
@@ -258,12 +264,12 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
 
         $oHostBackup->stanzaCreate('fail no force to recreate the stanza from backups',
-            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . OPTION_ONLINE});
+            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Stanza Create succeeds using force - reconstruct backup.info from backup
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('use force to recreate the stanza from backups',
-            {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
         #--------------------------------------------------------------------------------------------------------------------------
@@ -281,7 +287,8 @@ sub run
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
-        $oHostBackup->stanzaUpgrade('successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaUpgrade(
+            'successfully upgrade with XX.Y-Z', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
         #--------------------------------------------------------------------------------------------------------------------------
@@ -289,11 +296,11 @@ sub run
 
         # Test backup is changed from type=DIFF to FULL (WARN message displayed)
         my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
-            {strOptionalParam => '--retention-full=2 --no-' . OPTION_ONLINE . ' --log-level-console=detail'});
+            {strOptionalParam => '--retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'});
         $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
 
         # Confirm info command displays the JSON correctly
-        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => INFO_OUTPUT_JSON});
+        $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
     }
     }
 }

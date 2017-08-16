@@ -21,6 +21,7 @@ use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -104,10 +105,10 @@ sub process
 
     my $oStorageRepo = storageRepo();
     my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
-    my $iFullRetention = optionGet(OPTION_RETENTION_FULL, false);
-    my $iDifferentialRetention = optionGet(OPTION_RETENTION_DIFF, false);
-    my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
-    my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
+    my $iFullRetention = cfgOption(CFGOPT_RETENTION_FULL, false);
+    my $iDifferentialRetention = cfgOption(CFGOPT_RETENTION_DIFF, false);
+    my $strArchiveRetentionType = cfgOption(CFGOPT_RETENTION_ARCHIVE_TYPE, false);
+    my $iArchiveRetention = cfgOption(CFGOPT_RETENTION_ARCHIVE, false);
 
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
@@ -212,7 +213,7 @@ sub process
     # If archive retention is still undefined, then ignore archiving
     if  (!defined($iArchiveRetention))
     {
-         &log(INFO, "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set - archive logs will not be expired");
+         &log(INFO, "option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE) . "' is not set - archive logs will not be expired");
     }
     else
     {
@@ -220,15 +221,15 @@ sub process
 
         # Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
         # remaining non-expired backups based on the type.
-        if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
+        if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true), 'reverse');
         }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
+        elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true, true), 'reverse');
         }
-        elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
+        elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_INCR)
         {
             @stryGlobalBackupRetention = $oBackupInfo->list(backupRegExpGet(true, true, true), 'reverse');
         }
@@ -309,7 +310,7 @@ sub process
                 # This is incase there are old archives left around so that they don't stay around forever
                 else
                 {
-                    if ($strArchiveRetentionType eq BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
+                    if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL && scalar @stryLocalBackupRetention > 0)
                     {
                         &log(INFO, "full backup total < ${iArchiveRetention} - using oldest full backup for ${strArchiveId} " .
                             "archive retention");

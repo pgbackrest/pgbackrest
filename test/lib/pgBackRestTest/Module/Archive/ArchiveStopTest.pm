@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
@@ -69,7 +70,7 @@ sub run
             $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         # Create the archive info file
-        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . OPTION_ONLINE});
+        $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Push a WAL segment
         $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);

@@ -14,8 +14,8 @@ use Exporter qw(import);
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::ConfigHelp;
 
+use BackRestDoc::Common::DocConfig;
 use BackRestDoc::Common::DocManifest;
 
 ####################################################################################################################################

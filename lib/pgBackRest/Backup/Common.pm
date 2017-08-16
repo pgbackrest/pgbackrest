@@ -15,6 +15,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Manifest;
@@ -22,7 +23,7 @@ use pgBackRest::Manifest;
 ####################################################################################################################################
 # Latest backup link constant
 ####################################################################################################################################
-use constant LINK_LATEST                                            => OPTION_DEFAULT_RESTORE_SET;
+use constant LINK_LATEST                                            => 'latest';
     push @EXPORT, qw(LINK_LATEST);
 
 ####################################################################################################################################
@@ -140,7 +141,7 @@ sub backupLabelFormat
     # Full backup label
     my $strBackupLabel;
 
-    if ($strType eq BACKUP_TYPE_FULL)
+    if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
     {
         # Last backup label must not be defined
         if (defined($strBackupLabelLast))
@@ -167,7 +168,7 @@ sub backupLabelFormat
         $strBackupLabel .= '_' . timestampFileFormat(undef, $lTimestampStart);
 
         # Add the diff indicator
-        if ($strType eq BACKUP_TYPE_DIFF)
+        if ($strType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
         {
             $strBackupLabel .= 'D';
         }
@@ -223,13 +224,13 @@ sub backupLabel
     if ($oStorageRepo->list(
         STORAGE_REPO_BACKUP,
              {strExpression =>
-                ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
-                ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)$')}) ||
         $oStorageRepo->list(
             STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTimestampStart),
              {strExpression =>
-                ($strType eq BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
-                ($strType eq BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . COMPRESS_EXT . qw{$}),
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? '^' : '_') . timestampFileFormat(undef, $lTimestampStart) .
+                ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL ? 'F' : '(D|I)\.manifest\.' . COMPRESS_EXT . qw{$}),
                 bIgnoreMissing => true}))
     {
         waitRemainder();

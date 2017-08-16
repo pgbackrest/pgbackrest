@@ -20,6 +20,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
@@ -96,19 +97,19 @@ use constant MANIFEST_KEY_TYPE                                      => 'backup-t
     push @EXPORT, qw(MANIFEST_KEY_TYPE);
 
 # Options that were set when the backup was made
-use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-' . OPTION_BACKUP_STANDBY;
+use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-' . cfgOptionName(CFGOPT_BACKUP_STANDBY);
     push @EXPORT, qw(MANIFEST_KEY_BACKUP_STANDBY);
-use constant MANIFEST_KEY_HARDLINK                                  => 'option-hardlink';
+use constant MANIFEST_KEY_HARDLINK                                  => 'option-' . cfgOptionName(CFGOPT_HARDLINK);
     push @EXPORT, qw(MANIFEST_KEY_HARDLINK);
-use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-archive-check';
+use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-' . cfgOptionName(CFGOPT_ARCHIVE_CHECK);
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_CHECK);
-use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-archive-copy';
+use constant MANIFEST_KEY_ARCHIVE_COPY                              => 'option-' .cfgOptionName(CFGOPT_ARCHIVE_COPY);
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_COPY);
-use constant MANIFEST_KEY_CHECKSUM_PAGE                             => 'option-' . OPTION_CHECKSUM_PAGE;
+use constant MANIFEST_KEY_CHECKSUM_PAGE                             => 'option-' . cfgOptionName(CFGOPT_CHECKSUM_PAGE);
     push @EXPORT, qw(MANIFEST_KEY_CHECKSUM_PAGE);
-use constant MANIFEST_KEY_COMPRESS                                  => 'option-compress';
+use constant MANIFEST_KEY_COMPRESS                                  => 'option-' . cfgOptionName(CFGOPT_COMPRESS);
     push @EXPORT, qw(MANIFEST_KEY_COMPRESS);
-use constant MANIFEST_KEY_ONLINE                                    => 'option-online';
+use constant MANIFEST_KEY_ONLINE                                    => 'option-' . cfgOptionName(CFGOPT_ONLINE);
     push @EXPORT, qw(MANIFEST_KEY_ONLINE);
 
 # Information about the database that was backed up

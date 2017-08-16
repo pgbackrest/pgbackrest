@@ -15,6 +15,7 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw (:config);
 use pgBackRest::Db;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -62,7 +63,7 @@ sub process
     $oDb->configValidate();
 
     # Get the timeout and error message to display - if it is 0 we are testing
-    my $iArchiveTimeout = optionGet(OPTION_ARCHIVE_TIMEOUT);
+    my $iArchiveTimeout = cfgOption(CFGOPT_ARCHIVE_TIMEOUT);
 
     # Initialize the result variables
     my $iResult = 0;
@@ -127,7 +128,7 @@ sub process
     }
 
     # Reset the console logging
-    logLevelSet(undef, optionGet(OPTION_LOG_LEVEL_CONSOLE));
+    logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
 
     # If the archiving was successful and backup.info check did not error in an unexpected way, then indicate success
     # Else, log the error.
@@ -204,7 +205,7 @@ sub backupInfoCheck
 
     if (!isRepoLocal())
     {
-        $iDbHistoryId = protocolGet(BACKUP)->cmdExecute(
+        $iDbHistoryId = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
             OP_CHECK_BACKUP_INFO_CHECK, [$strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId]);
     }
     else

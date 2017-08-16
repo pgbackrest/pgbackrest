@@ -1,10 +1,1 @@
-Makefile.old
-Makefile
-MYMETA.*
-LibC.bs
-LibC.c
-*.o
-pm_to_blib
-blib
-const-c.inc
-const-xs.inc
+lib/pgBackRest/LibC.pm

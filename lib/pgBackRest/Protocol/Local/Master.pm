@@ -11,6 +11,7 @@ use Carp qw(confess);
 use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Command::Master;
 
 ####################################################################################################################################
@@ -36,8 +37,8 @@ sub new
 
     # Init object and store variables
     my $self = $class->SUPER::new(
-        'local', "'local-${iProcessIdx}'", $strCommand, optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_COMPRESS_LEVEL),
-        optionGet(OPTION_COMPRESS_LEVEL_NETWORK), optionGet(OPTION_PROTOCOL_TIMEOUT));
+        'local', "'local-${iProcessIdx}'", $strCommand, cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_COMPRESS_LEVEL),
+        cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
 
     bless $self, $class;
 

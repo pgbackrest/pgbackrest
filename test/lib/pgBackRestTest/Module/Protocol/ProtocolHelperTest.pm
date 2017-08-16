@@ -17,13 +17,10 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Push::Push;
-use pgBackRest::Archive::Push::Async;
-use pgBackRest::Archive::Push::File;
 use pgBackRest::Common::Exception;
-use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::DbVersion;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
@@ -41,12 +38,8 @@ sub initModule
     my $self = shift;
 
     $self->{strDbPath} = $self->testPath() . '/db';
-    $self->{strWalPath} = "$self->{strDbPath}/pg_xlog";
-    $self->{strWalStatusPath} = "$self->{strWalPath}/archive_status";
-    $self->{strWalHash} = "1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
-    $self->{strSpoolPath} = "$self->{strArchivePath}/out";
 }
 
 ####################################################################################################################################
@@ -56,18 +49,10 @@ sub initTest
 {
     my $self = shift;
 
-    # Create WAL path
-    storageTest()->pathCreate($self->{strWalStatusPath}, {bIgnoreExists => true, bCreateParent => true});
-
     # Create archive info
     storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
 
-    my $oOption = $self->initOption();
-    logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
-    my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
-    $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
-
-    $self->{strArchiveId} = $oArchiveInfo->archiveId();
+    $self->initOption();
 }
 
 ####################################################################################################################################
@@ -77,19 +62,15 @@ sub initOption
 {
     my $self = shift;
 
-    my $oOption = {};
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
+    $self->optionTestSetBool(CFGOPT_COMPRESS, false);
 
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
-    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
-    $self->optionBoolSetTest($oOption, OPTION_COMPRESS, false);
-
-    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
-    $self->optionSetTest($oOption, OPTION_ARCHIVE_TIMEOUT, 3);
-
-    return $oOption;
+    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
+    $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 3);
 }
 
 ####################################################################################################################################
@@ -104,28 +85,26 @@ sub run
     ################################################################################################################################
     if ($self->begin("Protocol::Helper"))
     {
-        $self->optionSetTest($oOption, OPTION_BACKUP_HOST, 'localhost');
-        $self->optionSetTest($oOption, OPTION_BACKUP_USER, $self->pgUser());
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_BACKUP_HOST, 'localhost');
+        $self->optionTestSet(CFGOPT_BACKUP_USER, $self->pgUser());
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testResult(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, "[object]",
-        'ssh default port');
-
-        # Destroy protocol object
-        protocolDestroy();
-
-        $self->optionSetTest($oOption, OPTION_BACKUP_SSH_PORT, 25);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
-
-        $self->testException(sub {protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, ERROR_FILE_READ,
-        "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25:");
+        $self->testResult(
+            sub {protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, "[object]",
+            'ssh default port');
 
         # Destroy protocol object
         protocolDestroy();
 
-        $self->optionReset($oOption, OPTION_BACKUP_HOST);
-        $self->optionReset($oOption, OPTION_BACKUP_USER);
-        $self->optionReset($oOption, OPTION_BACKUP_SSH_PORT);
+        $self->optionTestSet(CFGOPT_BACKUP_SSH_PORT, 25);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+
+        $self->testException(
+            sub {protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, ERROR_FILE_READ,
+            "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25:");
+
+        # Destroy protocol object
+        protocolDestroy();
     }
 }
 

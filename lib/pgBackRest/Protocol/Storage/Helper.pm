@@ -13,6 +13,7 @@ use File::Basename qw(basename);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Remote;
 use pgBackRest::Storage::Helper;
@@ -50,7 +51,7 @@ sub storageDb
         logDebugParam
         (
             __PACKAGE__ . '::storageDb', \@_,
-            {name => 'iRemoteIdx', optional => true, default => optionValid(OPTION_HOST_ID) ? optionGet(OPTION_HOST_ID) : 1,
+            {name => 'iRemoteIdx', optional => true, default => cfgOptionValid(CFGOPT_HOST_ID) ? cfgOption(CFGOPT_HOST_ID) : 1,
                 trace => true},
         );
 
@@ -60,12 +61,13 @@ sub storageDb
         if (isDbLocal({iRemoteIdx => $iRemoteIdx}))
         {
             $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Storage::Local(
-                optionGet(optionIndex(OPTION_DB_PATH, $iRemoteIdx)), new pgBackRest::Storage::Posix::Driver(),
-                {strTempExtension => STORAGE_TEMP_EXT, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
+                cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)), new pgBackRest::Storage::Posix::Driver(),
+                {strTempExtension => STORAGE_TEMP_EXT, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
         }
         else
         {
-            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Protocol::Storage::Remote(protocolGet(DB, $iRemoteIdx));
+            $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Protocol::Storage::Remote(
+                protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $iRemoteIdx));
         }
     }
 
@@ -146,9 +148,9 @@ sub storageRepo
 
     if (!defined($strStanza))
     {
-        if (optionValid(OPTION_STANZA) && optionTest(OPTION_STANZA))
+        if (cfgOptionValid(CFGOPT_STANZA) && cfgOptionTest(CFGOPT_STANZA))
         {
-            $strStanza = optionGet(OPTION_STANZA);
+            $strStanza = cfgOption(CFGOPT_STANZA);
         }
         else
         {
@@ -184,18 +186,18 @@ sub storageRepo
             # Create the driver
             my $oDriver;
 
-            if (optionTest(OPTION_REPO_TYPE, REPO_TYPE_S3))
+            if (cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3))
             {
                 require pgBackRest::Storage::S3::Driver;
 
                 $oDriver = new pgBackRest::Storage::S3::Driver(
-                    optionGet(OPTION_REPO_S3_BUCKET), optionGet(OPTION_REPO_S3_ENDPOINT), optionGet(OPTION_REPO_S3_REGION),
-                    optionGet(OPTION_REPO_S3_KEY), optionGet(OPTION_REPO_S3_KEY_SECRET),
-                    {strHost => optionGet(OPTION_REPO_S3_HOST, false), bVerifySsl => optionGet(OPTION_REPO_S3_VERIFY_SSL, false),
-                        strCaPath => optionGet(OPTION_REPO_S3_CA_PATH, false),
-                        strCaFile => optionGet(OPTION_REPO_S3_CA_FILE, false), lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
+                    cfgOption(CFGOPT_REPO_S3_BUCKET), cfgOption(CFGOPT_REPO_S3_ENDPOINT), cfgOption(CFGOPT_REPO_S3_REGION),
+                    cfgOption(CFGOPT_REPO_S3_KEY), cfgOption(CFGOPT_REPO_S3_KEY_SECRET),
+                    {strHost => cfgOption(CFGOPT_REPO_S3_HOST, false), bVerifySsl => cfgOption(CFGOPT_REPO_S3_VERIFY_SSL, false),
+                        strCaPath => cfgOption(CFGOPT_REPO_S3_CA_PATH, false),
+                        strCaFile => cfgOption(CFGOPT_REPO_S3_CA_FILE, false), lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
             }
-            elsif (optionTest(OPTION_REPO_TYPE, REPO_TYPE_CIFS))
+            elsif (cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_CIFS))
             {
                 require pgBackRest::Storage::Cifs::Driver;
 
@@ -208,13 +210,14 @@ sub storageRepo
 
             # Create local storage
             $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Storage::Local(
-                optionGet(OPTION_REPO_PATH), $oDriver,
-                {strTempExtension => STORAGE_TEMP_EXT, hRule => $hRule, lBufferMax => optionGet(OPTION_BUFFER_SIZE)});
+                cfgOption(CFGOPT_REPO_PATH), $oDriver,
+                {strTempExtension => STORAGE_TEMP_EXT, hRule => $hRule, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
         }
         else
         {
             # Create remote storage
-            $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Protocol::Storage::Remote(protocolGet(BACKUP));
+            $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Protocol::Storage::Remote(
+                protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP));
         }
     }
 

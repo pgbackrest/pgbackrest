@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -520,7 +521,7 @@ sub add
             $oBackupManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID));
     }
 
-    if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, BACKUP_TYPE_FULL))
+    if (!$oBackupManifest->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, CFGOPTVAL_BACKUP_TYPE_FULL))
     {
         my @stryReference = sort(keys(%$oReferenceHash));
 
@@ -774,7 +775,7 @@ sub last
             {name => 'strType'}
         );
 
-    my $strFilter = backupRegExpGet(true, $strType ne BACKUP_TYPE_FULL, $strType eq BACKUP_TYPE_INCR);
+    my $strFilter = backupRegExpGet(true, $strType ne CFGOPTVAL_BACKUP_TYPE_FULL, $strType eq CFGOPTVAL_BACKUP_TYPE_INCR);
     my $strBackup = ($self->list($strFilter, 'reverse'))[0];
 
     # Return from function and log return values if any

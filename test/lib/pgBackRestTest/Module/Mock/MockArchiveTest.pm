@@ -21,6 +21,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
@@ -91,19 +92,19 @@ sub run
             true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3});
 
         # Reduce console logging to detail
-        $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_LOG_LEVEL_CONSOLE => lc(DETAIL)}});
-        my $strLogDebug = '--' . OPTION_LOG_LEVEL_CONSOLE . qw{=} . lc(DEBUG);
+        $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
+        my $strLogDebug = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(DEBUG);
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
         if ($bS3)
         {
-            $oHostBackup->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
-            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_PROCESS_MAX => 2}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_PROCESS_MAX) => 2}});
 
             # Reduce console logging to warn (even for debug exceptions)
-            $oHostDbMaster->configUpdate({&CONFIG_SECTION_GLOBAL => {&OPTION_LOG_LEVEL_CONSOLE => lc(WARN)}});
-            $strLogDebug = '--' . OPTION_LOG_LEVEL_CONSOLE . qw{=} . lc(WARN);
+            $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(WARN)}});
+            $strLogDebug = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(WARN);
         }
 
         # Create the xlog path
@@ -121,11 +122,11 @@ sub run
         # Create archive-push command
         my $strCommandPush =
             $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() . ' --stanza=' . $self->stanza() .
-            ' ' . CMD_ARCHIVE_PUSH;
+            ' ' . cfgCommandName(CFGCMD_ARCHIVE_PUSH);
 
         my $strCommandGet =
             $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() . ' --stanza=' . $self->stanza() .
-            ' ' . CMD_ARCHIVE_GET;
+            ' ' . cfgCommandName(CFGCMD_ARCHIVE_GET);
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    archive.info missing');
@@ -142,7 +143,9 @@ sub run
             {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaCreate('stanza create', {strOptionalParam => '--no-' . OPTION_ONLINE . ' --' . OPTION_FORCE});
+        $oHostBackup->stanzaCreate(
+            'stanza create',
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    push first WAL');

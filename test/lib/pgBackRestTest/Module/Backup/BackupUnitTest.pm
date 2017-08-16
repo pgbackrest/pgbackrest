@@ -20,6 +20,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -89,26 +90,28 @@ sub run
     if ($self->begin('backupLabelFormat()'))
     {
         my $strBackupLabelFull = timestampFileFormat(undef, 1482000000) . 'F';
-        $self->testResult(sub {backupLabelFormat(BACKUP_TYPE_FULL, undef, 1482000000)}, $strBackupLabelFull, 'full backup label');
+        $self->testResult(sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, 1482000000)}, $strBackupLabelFull,
+        'full backup label');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
-            sub {backupLabelFormat(BACKUP_TYPE_FULL, $strBackupLabelFull, 1482000000)},
+            sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, $strBackupLabelFull, 1482000000)},
             ERROR_ASSERT, "strBackupLabelLast must not be defined when strType = 'full'");
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strBackupLabelDiff = "${strBackupLabelFull}_" . timestampFileFormat(undef, 1482000400) . 'D';
         $self->testResult(
-            sub {backupLabelFormat(BACKUP_TYPE_DIFF, $strBackupLabelFull, 1482000400)}, $strBackupLabelDiff, 'diff backup label');
+            sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_DIFF, $strBackupLabelFull, 1482000400)}, $strBackupLabelDiff,
+            'diff backup label');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
-            sub {backupLabelFormat(BACKUP_TYPE_DIFF, undef, 1482000400)},
+            sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_DIFF, undef, 1482000400)},
             ERROR_ASSERT, "strBackupLabelLast must be defined when strType = 'diff'");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {backupLabelFormat(BACKUP_TYPE_INCR, $strBackupLabelDiff, 1482000800)},
+            sub {backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_INCR, $strBackupLabelDiff, 1482000800)},
             "${strBackupLabelFull}_" . timestampFileFormat(undef, 1482000800) . 'I',
             'incremental backup label');
     }
@@ -116,18 +119,17 @@ sub run
     ################################################################################################################################
     if ($self->begin('backupLabel()'))
     {
-        my $oOption = {};
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->testPath() . '/repo');
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $lTime = time();
 
-        my $strFullLabel = backupLabelFormat(BACKUP_TYPE_FULL, undef, $lTime);
+        my $strFullLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, $lTime);
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strFullLabel}", {bCreateParent => true});
 
-        my $strNewFullLabel = backupLabel(storageRepo(), BACKUP_TYPE_FULL, undef, $lTime);
+        my $strNewFullLabel = backupLabel(storageRepo(), CFGOPTVAL_BACKUP_TYPE_FULL, undef, $lTime);
 
         $self->testResult(sub {$strFullLabel ne $strNewFullLabel}, true, 'new full label <> existing full backup dir');
 
@@ -140,26 +142,26 @@ sub run
             STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTime) .
                 "/${strFullLabel}.manifest." . COMPRESS_EXT);
 
-        $strNewFullLabel = backupLabel(storageRepo(), BACKUP_TYPE_FULL, undef, $lTime);
+        $strNewFullLabel = backupLabel(storageRepo(), CFGOPTVAL_BACKUP_TYPE_FULL, undef, $lTime);
 
         $self->testResult(sub {$strFullLabel ne $strNewFullLabel}, true, 'new full label <> existing full history file');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $lTime = time() + 1000;
-        $strFullLabel = backupLabelFormat(BACKUP_TYPE_FULL, undef, $lTime);
+        $strFullLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, $lTime);
 
-        $strNewFullLabel = backupLabel(storageRepo(), BACKUP_TYPE_FULL, undef, $lTime);
+        $strNewFullLabel = backupLabel(storageRepo(), CFGOPTVAL_BACKUP_TYPE_FULL, undef, $lTime);
 
         $self->testResult(sub {$strFullLabel eq $strNewFullLabel}, true, 'new full label in future');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $lTime = time();
 
-        $strFullLabel = backupLabelFormat(BACKUP_TYPE_FULL, undef, $lTime);
-        my $strDiffLabel = backupLabelFormat(BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
+        $strFullLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, $lTime);
+        my $strDiffLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strDiffLabel}", {bCreateParent => true});
 
-        my $strNewDiffLabel = backupLabel(storageRepo(), BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
+        my $strNewDiffLabel = backupLabel(storageRepo(), CFGOPTVAL_BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
 
         $self->testResult(sub {$strDiffLabel ne $strNewDiffLabel}, true, 'new diff label <> existing diff backup dir');
 
@@ -173,15 +175,15 @@ sub run
             STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . '/' . timestampFormat('%4d', $lTime) .
                 "/${strDiffLabel}.manifest." . COMPRESS_EXT);
 
-        $strNewDiffLabel = backupLabel(storageRepo(), BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
+        $strNewDiffLabel = backupLabel(storageRepo(), CFGOPTVAL_BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
 
         $self->testResult(sub {$strDiffLabel ne $strNewDiffLabel}, true, 'new full label <> existing diff history file');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $lTime = time() + 1000;
-        $strDiffLabel = backupLabelFormat(BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
+        $strDiffLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
 
-        $strNewDiffLabel = backupLabel(storageRepo(), BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
+        $strNewDiffLabel = backupLabel(storageRepo(), CFGOPTVAL_BACKUP_TYPE_DIFF, $strFullLabel, $lTime);
 
         $self->testResult(sub {$strDiffLabel eq $strNewDiffLabel}, true, 'new diff label in future');
     }

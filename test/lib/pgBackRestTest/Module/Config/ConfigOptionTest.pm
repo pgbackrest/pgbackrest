@@ -16,6 +16,9 @@ use Cwd qw(abs_path);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config :configRule);
+
+use pgBackRestBuild::Config::Data;
 
 use pgBackRestTest::Common::RunTest;
 
@@ -26,325 +29,322 @@ sub run
 {
     my $self = shift;
 
-    my $oOption = {};
     my @oyArray;
 
     if ($self->begin('backup with no stanza'))
     {
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_REQUIRED, OPTION_STANZA);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_REQUIRED, CFGBLDOPT_STANZA);
     }
 
     if ($self->begin('backup with boolean stanza'))
     {
-        $self->optionBoolSetTest($oOption, OPTION_STANZA);
+        $self->optionTestSetBool(CFGOPT_STANZA);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_COMMAND_REQUIRED);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_COMMAND_REQUIRED);
     }
 
-    if ($self->begin('backup type defaults to ' . BACKUP_TYPE_INCR))
+    if ($self->begin('backup type defaults to ' . CFGOPTVAL_BACKUP_TYPE_INCR))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_TYPE, BACKUP_TYPE_INCR);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_TYPE, CFGOPTVAL_BACKUP_TYPE_INCR);
     }
 
-    if ($self->begin(CMD_BACKUP . ' invalid option ' . OPTION_ARCHIVE_ASYNC))
+    if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' invalid option ' . CFGBLDOPT_ARCHIVE_ASYNC))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_COMMAND, OPTION_ARCHIVE_ASYNC, CMD_BACKUP);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_COMMAND, CFGBLDOPT_ARCHIVE_ASYNC, cfgCommandName(CFGCMD_BACKUP));
     }
 
-    if ($self->begin('backup type set to ' . BACKUP_TYPE_FULL))
+    if ($self->begin('backup type set to ' . CFGOPTVAL_BACKUP_TYPE_FULL))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_TYPE, BACKUP_TYPE_FULL);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
     }
 
     if ($self->begin('backup type invalid'))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_TYPE, BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_TYPE, BOGUS);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_TYPE);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, CFGBLDOPT_TYPE);
     }
 
     if ($self->begin('backup invalid force'))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionBoolSetTest($oOption, OPTION_FORCE);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_FORCE);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_FORCE, 'no-' . OPTION_ONLINE);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID, CFGBLDOPT_FORCE, 'no-' . CFGBLDOPT_ONLINE);
     }
 
     if ($self->begin('backup valid force'))
     {
-        # $oOption = {};
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
-        $self->optionBoolSetTest($oOption, OPTION_FORCE);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_ONLINE, false);
+        $self->optionTestSetBool(CFGOPT_FORCE);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_ONLINE, false);
-        $self->optionTestExpect(OPTION_FORCE, true);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_ONLINE, false);
+        $self->optionTestExpect(CFGOPT_FORCE, true);
     }
 
-    if ($self->begin('backup invalid value for ' . OPTION_TEST_DELAY))
+    if ($self->begin('backup invalid value for ' . CFGBLDOPT_TEST_DELAY))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionBoolSetTest($oOption, OPTION_TEST);
-        $self->optionSetTest($oOption, OPTION_TEST_DELAY, BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_TEST);
+        $self->optionTestSet(CFGOPT_TEST_DELAY, BOGUS);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_TEST_DELAY);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, CFGBLDOPT_TEST_DELAY);
     }
 
-    if ($self->begin('backup invalid ' . OPTION_TEST_DELAY))
+    if ($self->begin('backup invalid ' . CFGBLDOPT_TEST_DELAY))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_TEST_DELAY, 5);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_TEST_DELAY, 5);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID, OPTION_TEST_DELAY, OPTION_TEST);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID, CFGBLDOPT_TEST_DELAY, CFGBLDOPT_TEST);
     }
 
-    if ($self->begin('backup check ' . OPTION_TEST_DELAY . ' undef'))
+    if ($self->begin('backup check ' . CFGBLDOPT_TEST_DELAY . ' undef'))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_TEST_DELAY);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_TEST_DELAY);
     }
 
-    if ($self->begin('restore invalid ' . OPTION_TARGET))
+    if ($self->begin('restore invalid ' . CFGBLDOPT_TARGET))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_TYPE, RECOVERY_TYPE_DEFAULT);
-        $self->optionSetTest($oOption, OPTION_TARGET, BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_TYPE, cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TYPE));
+        $self->optionTestSet(CFGOPT_TARGET, BOGUS);
 
-        @oyArray = (RECOVERY_TYPE_NAME, RECOVERY_TYPE_TIME, RECOVERY_TYPE_XID);
-        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID, OPTION_TARGET, OPTION_TYPE, \@oyArray);
+        @oyArray = (CFGOPTVAL_RESTORE_TYPE_NAME, CFGOPTVAL_RESTORE_TYPE_TIME, CFGOPTVAL_RESTORE_TYPE_XID);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE, ERROR_OPTION_INVALID, CFGBLDOPT_TARGET, CFGBLDOPT_TYPE, \@oyArray);
     }
 
-    if ($self->begin('restore ' . OPTION_TARGET))
+    if ($self->begin('restore ' . CFGBLDOPT_TARGET))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_TYPE, RECOVERY_TYPE_NAME);
-        $self->optionSetTest($oOption, OPTION_TARGET, BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_NAME);
+        $self->optionTestSet(CFGOPT_TARGET, BOGUS);
 
-        $self->configLoadExpect($oOption, CMD_RESTORE);
-        $self->optionTestExpect(OPTION_TYPE, RECOVERY_TYPE_NAME);
-        $self->optionTestExpect(OPTION_TARGET, BOGUS);
-        $self->optionTestExpect(OPTION_TARGET_TIMELINE);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE);
+        $self->optionTestExpect(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_NAME);
+        $self->optionTestExpect(CFGOPT_TARGET, BOGUS);
+        $self->optionTestExpect(CFGOPT_TARGET_TIMELINE);
     }
 
-    if ($self->begin('invalid string ' . OPTION_PROCESS_MAX))
+    if ($self->begin('invalid string ' . CFGBLDOPT_PROCESS_MAX))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_PROCESS_MAX, BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_PROCESS_MAX, BOGUS);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_PROCESS_MAX);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, CFGBLDOPT_PROCESS_MAX);
     }
 
-    if ($self->begin('invalid float ' . OPTION_PROCESS_MAX))
+    if ($self->begin('invalid float ' . CFGBLDOPT_PROCESS_MAX))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_PROCESS_MAX, '0.0');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_PROCESS_MAX, '0.0');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, '0.0', OPTION_PROCESS_MAX);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID_VALUE, '0.0', CFGBLDOPT_PROCESS_MAX);
     }
 
-    if ($self->begin('valid ' . OPTION_PROCESS_MAX))
+    if ($self->begin('valid ' . CFGBLDOPT_PROCESS_MAX))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_PROCESS_MAX, '2');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_PROCESS_MAX, '2');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
     }
 
     if ($self->begin('valid thread-max'))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, 'thread-max', '2');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetByName('thread-max', '2');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_PROCESS_MAX, 2);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_PROCESS_MAX, 2);
     }
 
-    if ($self->begin('valid float ' . OPTION_TEST_DELAY))
+    if ($self->begin('valid float ' . CFGBLDOPT_TEST_DELAY))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionBoolSetTest($oOption, OPTION_TEST);
-        $self->optionSetTest($oOption, OPTION_TEST_DELAY, '0.25');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_TEST);
+        $self->optionTestSet(CFGOPT_TEST_DELAY, '0.25');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
     }
 
-    if ($self->begin('valid int ' . OPTION_TEST_DELAY))
+    if ($self->begin('valid int ' . CFGBLDOPT_TEST_DELAY))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionBoolSetTest($oOption, OPTION_TEST);
-        $self->optionSetTest($oOption, OPTION_TEST_DELAY, 3);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_TEST);
+        $self->optionTestSet(CFGOPT_TEST_DELAY, 3);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
     }
 
-    if ($self->begin('restore valid ' . OPTION_TARGET_TIMELINE))
+    if ($self->begin('restore valid ' . CFGBLDOPT_TARGET_TIMELINE))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_TARGET_TIMELINE, 2);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_TARGET_TIMELINE, 2);
 
-        $self->configLoadExpect($oOption, CMD_RESTORE);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE);
     }
 
-    if ($self->begin('invalid ' . OPTION_COMPRESS_LEVEL))
+    if ($self->begin('invalid ' . CFGBLDOPT_COMPRESS_LEVEL))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_COMPRESS_LEVEL, '12');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_COMPRESS_LEVEL, '12');
 
-        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_RANGE, '12', OPTION_COMPRESS_LEVEL);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE, ERROR_OPTION_INVALID_RANGE, '12', CFGBLDOPT_COMPRESS_LEVEL);
     }
 
-    if ($self->begin(CMD_BACKUP . ' invalid value ' . OPTION_RETENTION_ARCHIVE_TYPE))
+    if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' invalid value ' . CFGBLDOPT_RETENTION_ARCHIVE_TYPE))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, BOGUS);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, OPTION_RETENTION_ARCHIVE_TYPE);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID_VALUE, BOGUS, CFGBLDOPT_RETENTION_ARCHIVE_TYPE);
     }
 
     if ($self->begin(
-        CMD_BACKUP . ' default value ' . OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE . ' for ' . OPTION_RETENTION_ARCHIVE_TYPE .
-        ' with valid ' . OPTION_RETENTION_FULL))
+        cfgCommandName(CFGCMD_BACKUP) . ' default value ' . cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_RETENTION_ARCHIVE_TYPE) .
+        ' for ' . CFGBLDOPT_RETENTION_ARCHIVE_TYPE . ' with valid ' . CFGBLDOPT_RETENTION_FULL))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RETENTION_FULL, 1);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RETENTION_FULL, 1);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_RETENTION_ARCHIVE, 1);
-        $self->optionTestExpect(OPTION_RETENTION_FULL, 1);
-        $self->optionTestExpect(OPTION_RETENTION_DIFF, undef);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE, 1);
+        $self->optionTestExpect(CFGOPT_RETENTION_FULL, 1);
+        $self->optionTestExpect(CFGOPT_RETENTION_DIFF, undef);
         # Default is FULL so this test will fail if the default is changed, alerting to the need to update configLoad.
-        $self->optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_FULL);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
     }
 
     if ($self->begin(
-        CMD_BACKUP . ' valid value ' . OPTION_RETENTION_ARCHIVE . ' for ' . OPTION_RETENTION_ARCHIVE_TYPE . ' ' .
-        BACKUP_TYPE_DIFF))
+        cfgCommandName(CFGCMD_BACKUP) . ' valid value ' . CFGBLDOPT_RETENTION_ARCHIVE . ' for ' . CFGBLDOPT_RETENTION_ARCHIVE_TYPE .
+            ' ' . CFGOPTVAL_BACKUP_TYPE_DIFF))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RETENTION_DIFF, 1);
-        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_DIFF);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_DIFF);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_RETENTION_ARCHIVE, 1);
-        $self->optionTestExpect(OPTION_RETENTION_DIFF, 1);
-        $self->optionTestExpect(OPTION_RETENTION_FULL, undef);
-        $self->optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_DIFF);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE, 1);
+        $self->optionTestExpect(CFGOPT_RETENTION_DIFF, 1);
+        $self->optionTestExpect(CFGOPT_RETENTION_FULL, undef);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_DIFF);
     }
 
     if ($self->begin(
-        CMD_BACKUP . ' warn no valid value ' . OPTION_RETENTION_ARCHIVE . ' for ' . OPTION_RETENTION_ARCHIVE_TYPE . ' ' .
-        BACKUP_TYPE_INCR))
+        cfgCommandName(CFGCMD_BACKUP) . ' warn no valid value ' . CFGBLDOPT_RETENTION_ARCHIVE . ' for ' .
+        CFGBLDOPT_RETENTION_ARCHIVE_TYPE . ' ' . CFGOPTVAL_BACKUP_TYPE_INCR))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RETENTION_FULL, 2);
-        $self->optionSetTest($oOption, OPTION_RETENTION_DIFF, 1);
-        $self->optionSetTest($oOption, OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_INCR);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RETENTION_FULL, 2);
+        $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
+        $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_INCR);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_RETENTION_ARCHIVE, undef);
-        $self->optionTestExpect(OPTION_RETENTION_ARCHIVE_TYPE, BACKUP_TYPE_INCR);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE, undef);
+        $self->optionTestExpect(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_INCR);
     }
 
-    if ($self->begin(CMD_BACKUP . ' invalid value ' . OPTION_PROTOCOL_TIMEOUT))
+    if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' invalid value ' . CFGBLDOPT_PROTOCOL_TIMEOUT))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-        $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 4);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+        $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 4);
 
-        $self->configLoadExpect(
-            $oOption, CMD_BACKUP, ERROR_OPTION_INVALID_VALUE, 4, OPTION_PROTOCOL_TIMEOUT,
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_INVALID_VALUE, 4, CFGBLDOPT_PROTOCOL_TIMEOUT,
             "'protocol-timeout' option should be greater than 'db-timeout' option");
     }
 
-    if ($self->begin(CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+    if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' invalid value ' . CFGBLDOPT_RECOVERY_OPTION))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, '=');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RECOVERY_OPTION, '=');
 
-        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=', OPTION_RESTORE_RECOVERY_OPTION);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=', CFGBLDOPT_RECOVERY_OPTION);
     }
 
-    if ($self->begin(CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+    if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' invalid value ' . CFGBLDOPT_RECOVERY_OPTION))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, '=' . BOGUS);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RECOVERY_OPTION, '=' . BOGUS);
 
-        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=' . BOGUS, OPTION_RESTORE_RECOVERY_OPTION);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE, ERROR_OPTION_INVALID_PAIR, '=' . BOGUS, CFGBLDOPT_RECOVERY_OPTION);
     }
 
-    if ($self->begin(CMD_RESTORE . ' invalid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+    if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' invalid value ' . CFGBLDOPT_RECOVERY_OPTION))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, BOGUS . '=');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RECOVERY_OPTION, BOGUS . '=');
 
-        $self->configLoadExpect($oOption, CMD_RESTORE, ERROR_OPTION_INVALID_PAIR, BOGUS . '=', OPTION_RESTORE_RECOVERY_OPTION);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE, ERROR_OPTION_INVALID_PAIR, BOGUS . '=', CFGBLDOPT_RECOVERY_OPTION);
     }
 
-    if ($self->begin(CMD_RESTORE . ' valid value ' . OPTION_RESTORE_RECOVERY_OPTION))
+    if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' valid value ' . CFGBLDOPT_RECOVERY_OPTION))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_RESTORE_RECOVERY_OPTION, 'primary-conn-info=db.domain.net');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_RECOVERY_OPTION, 'primary-conn-info=db.domain.net');
 
-        $self->configLoadExpect($oOption, CMD_RESTORE);
-        $self->optionTestExpect(OPTION_RESTORE_RECOVERY_OPTION, 'db.domain.net', 'primary-conn-info');
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE);
+        $self->optionTestExpect(&CFGOPT_RECOVERY_OPTION, 'db.domain.net', 'primary-conn-info');
     }
 
-    if ($self->begin(CMD_RESTORE . ' values passed to ' . CMD_ARCHIVE_GET))
+    if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' values passed to ' . cfgCommandName(CFGCMD_ARCHIVE_GET)))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db path/main');
-        $self->optionSetTest($oOption, OPTION_REPO_PATH, '/repo');
-        $self->optionSetTest($oOption, OPTION_BACKUP_HOST, 'db.mydomain.com');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db path/main');
+        $self->optionTestSet(CFGOPT_REPO_PATH, '/repo');
+        $self->optionTestSet(CFGOPT_BACKUP_HOST, 'db.mydomain.com');
 
-        $self->configLoadExpect($oOption, CMD_RESTORE);
+        $self->configTestLoadExpect(CFGBLDCMD_RESTORE);
 
-        my $strCommand = commandWrite(CMD_ARCHIVE_GET);
-        my $strExpectedCommand = abs_path($0) . " --backup-host=db.mydomain.com \"--db-path=/db path/main\"" .
-                                 " --repo-path=/repo --stanza=app " . CMD_ARCHIVE_GET;
+        my $strCommand = cfgCommandWrite(CFGCMD_ARCHIVE_GET);
+        my $strExpectedCommand = abs_path($0) . " --backup-host=db.mydomain.com \"--db1-path=/db path/main\"" .
+                                 " --repo-path=/repo --stanza=app " . cfgCommandName(CFGCMD_ARCHIVE_GET);
 
         if ($strCommand ne $strExpectedCommand)
         {
@@ -352,31 +352,31 @@ sub run
         }
     }
 
-    if ($self->begin(CMD_BACKUP . ' default value ' . OPTION_DB_CMD))
+    if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' default value ' . CFGBLDOPT_DB_CMD))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_HOST, 'db');
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_HOST, 'db');
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_DB_CMD, abs_path($0));
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_DB_CMD, abs_path($0));
     }
 
-    if ($self->begin(CMD_BACKUP . ' missing option ' . OPTION_DB_PATH))
+    if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' missing option ' . CFGBLDOPT_DB_PATH))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
 
-        $self->configLoadExpect($oOption, CMD_BACKUP, ERROR_OPTION_REQUIRED, OPTION_DB_PATH, 'does this stanza exist?');
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP, ERROR_OPTION_REQUIRED, 'db1-path', 'does this stanza exist?');
     }
 
-    if ($self->begin(CMD_BACKUP . ' automatically increase ' . OPTION_PROTOCOL_TIMEOUT))
+    if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' automatically increase ' . CFGBLDOPT_PROTOCOL_TIMEOUT))
     {
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_DB_PATH, '/db');
-        $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, OPTION_DEFAULT_PROTOCOL_TIMEOUT + 30);
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSet(CFGOPT_DB_TIMEOUT, cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_PROTOCOL_TIMEOUT) + 30);
 
-        $self->configLoadExpect($oOption, CMD_BACKUP);
-        $self->optionTestExpect(OPTION_PROTOCOL_TIMEOUT, OPTION_DEFAULT_PROTOCOL_TIMEOUT + 60);
+        $self->configTestLoadExpect(CFGBLDCMD_BACKUP);
+        $self->optionTestExpect(CFGOPT_PROTOCOL_TIMEOUT, cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_PROTOCOL_TIMEOUT) + 60);
     }
 }
 

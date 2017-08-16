@@ -16,6 +16,7 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config);
 
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -41,11 +42,12 @@ sub run
     # Increment the run, log, and decide whether this unit test should be run
     if ($self->begin('base'))
     {
-        $self->helpExecute(CMD_VERSION);
-        $self->helpExecute(CMD_HELP);
-        $self->helpExecute(CMD_HELP . ' version');
-        $self->helpExecute(CMD_HELP . ' --output=json --stanza=main info');
-        $self->helpExecute(CMD_HELP . ' --output=json --stanza=main info output');
+        $self->helpExecute(cfgCommandName(CFGCMD_VERSION));
+        $self->helpExecute(cfgCommandName(CFGCMD_HELP));
+        $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' version');
+        $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' --output=json --stanza=main --backup-host=backup info');
+        $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' --output=json --stanza=main info output');
+        $self->helpExecute(cfgCommandName(CFGCMD_HELP) . ' check');
     }
 }
 

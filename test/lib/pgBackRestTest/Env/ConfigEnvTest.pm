@@ -15,107 +15,132 @@ use English '-no_match_vars';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::LibC qw(:config :configRule);
 
-sub optionSetTest
+use pgBackRestBuild::Config::Data;
+
+use constant CONFIGENVTEST                                          => 'ConfigEnvTest';
+
+sub optionTestSet
 {
     my $self = shift;
-    my $oOption = shift;
-    my $strKey = shift;
+    my $iOptionId = shift;
     my $strValue = shift;
 
-    $$oOption{option}{$strKey} = $strValue;
+    $self->{&CONFIGENVTEST}{option}{cfgOptionName($iOptionId)} = $strValue;
 }
 
-sub optionBoolSetTest
+sub optionTestSetBool
 {
     my $self = shift;
-    my $oOption = shift;
-    my $strKey = shift;
+    my $iOptionId = shift;
     my $bValue = shift;
 
-    $$oOption{boolean}{$strKey} = defined($bValue) ? $bValue : true;
+    $self->{&CONFIGENVTEST}{boolean}{cfgOptionName($iOptionId)} = defined($bValue) ? $bValue : true;
 }
 
-sub commandSetTest
+sub optionTestClear
 {
     my $self = shift;
-    my $oOption = shift;
+    my $iOptionId = shift;
+
+    delete($self->{&CONFIGENVTEST}{option}{cfgOptionName($iOptionId)});
+    delete($self->{&CONFIGENVTEST}{boolean}{cfgOptionName($iOptionId)});
+}
+
+sub configTestClear
+{
+    my $self = shift;
+
+    my $rhConfig = $self->{&CONFIGENVTEST};
+
+    delete($self->{&CONFIGENVTEST});
+
+    return $rhConfig;
+}
+
+sub configTestSet
+{
+    my $self = shift;
+    my $rhConfig = shift;
+
+    $self->{&CONFIGENVTEST} = $rhConfig;
+}
+
+sub commandTestWrite
+{
+    my $self = shift;
     my $strCommand = shift;
+    my $rhConfig = shift;
 
-    $$oOption{command} = $strCommand;
-}
+    my @szyParam = ();
 
-sub optionReset
-{
-    my $self = shift;
-    my $oOption = shift;
-    my $strKey = shift;
-
-    delete($$oOption{option}{$strKey});
-    delete($$oOption{boolean}{$strKey});
-}
-
-# sub optionRemoveTest
-# {
-#     my $self = shift;
-#     my $oOption = shift;
-#     my $strKey = shift;
-#
-#     delete($$oOption{option}{$strKey});
-#     delete($$oOption{boolean}{$strKey});
-# }
-
-sub argvWriteTest
-{
-    my $self = shift;
-    my $oOption = shift;
-
-    @ARGV = ();
-
-    if (defined($$oOption{boolean}))
+    if (defined($rhConfig->{boolean}))
     {
-        foreach my $strKey (keys(%{$$oOption{boolean}}))
+        foreach my $strOption (sort(keys(%{$rhConfig->{boolean}})))
         {
-            if ($$oOption{boolean}{$strKey})
+            if ($rhConfig->{boolean}{$strOption})
             {
-                $ARGV[@ARGV] = "--${strKey}";
+                push(@szyParam, "--${strOption}");
             }
             else
             {
-                $ARGV[@ARGV] = "--no-${strKey}";
+                push(@szyParam, "--no-${strOption}");
             }
         }
     }
 
-    if (defined($$oOption{option}))
+    if (defined($rhConfig->{option}))
     {
-        foreach my $strKey (keys(%{$$oOption{option}}))
+        foreach my $strOption (sort(keys(%{$rhConfig->{option}})))
         {
-            $ARGV[@ARGV] = "--${strKey}=$$oOption{option}{$strKey}";
+            push(@szyParam, "--${strOption}=$rhConfig->{option}{$strOption}");
         }
     }
 
-    $ARGV[@ARGV] = $$oOption{command};
+    push(@szyParam, $strCommand);
 
-    &log(INFO, "    command line: " . join(" ", @ARGV));
-
-    %$oOption = ();
+    return @szyParam;
 }
 
-sub configLoadExpect
+sub configTestLoad
 {
     my $self = shift;
-    my $oOption = shift;
+    my $iCommandId = shift;
+
+    @ARGV = $self->commandTestWrite(cfgCommandName($iCommandId), $self->{&CONFIGENVTEST});
+    $self->testResult(sub {configLoad(false)}, true, 'config load: ' . join(" ", @ARGV));
+}
+
+####################################################################################################################################
+# optionTestSetByName - used only by config unit tests, general option set should be done with optionTestSet
+####################################################################################################################################
+sub optionTestSetByName
+{
+    my $self = shift;
+    my $strOption = shift;
+    my $strValue = shift;
+
+    $self->{&CONFIGENVTEST}{option}{$strOption} = $strValue;
+}
+
+####################################################################################################################################
+# configTestLoadExpect - used only by config unit tests, for general config load use configTestLoad()
+####################################################################################################################################
+sub configTestLoadExpect
+{
+    my $self = shift;
     my $strCommand = shift;
     my $iExpectedError = shift;
     my $strErrorParam1 = shift;
     my $strErrorParam2 = shift;
     my $strErrorParam3 = shift;
 
-    my $oOptionRuleExpected = optionRuleGet();
+    my $oOptionRuleExpected = cfgbldOptionRuleGet();
 
-    $self->commandSetTest($oOption, $strCommand);
-    $self->argvWriteTest($oOption);
+    @ARGV = $self->commandTestWrite($strCommand, $self->{&CONFIGENVTEST});
+    $self->configTestClear();
+    &log(INFO, "    command line: " . join(" ", @ARGV));
 
     my $bErrorFound = false;
 
@@ -216,16 +241,21 @@ sub configLoadExpect
     }
 }
 
+####################################################################################################################################
+# configTestExpect - used only by config unit tests
+####################################################################################################################################
 sub optionTestExpect
 {
     my $self = shift;
-    my $strOption = shift;
+    my $iOptionId = shift;
     my $strExpectedValue = shift;
     my $strExpectedKey = shift;
 
+    my $strOption = cfgOptionName($iOptionId);
+
     if (defined($strExpectedValue))
     {
-        my $strActualValue = optionGet($strOption);
+        my $strActualValue = cfgOption($iOptionId);
 
         if (defined($strExpectedKey))
         {
@@ -240,9 +270,9 @@ sub optionTestExpect
         $strActualValue eq $strExpectedValue
             or confess "expected option ${strOption} to have value ${strExpectedValue} but ${strActualValue} found instead";
     }
-    elsif (optionTest($strOption))
+    elsif (cfgOptionTest(cfgOptionId($strOption)))
     {
-        confess "expected option ${strOption} to be [undef], but " . optionGet($strOption) . ' found instead';
+        confess "expected option ${strOption} to be [undef], but " . cfgOption(cfgOptionId($strOption)) . ' found instead';
     }
 }
 
