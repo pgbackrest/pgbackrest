@@ -48,6 +48,10 @@
                     <release-item>
                         <p>Ignore auto-generated C code created by release 2.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Simplified smart logic for C Library and package builds.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
