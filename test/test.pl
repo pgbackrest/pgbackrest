@@ -31,9 +31,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::Storage::Helper;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
 use pgBackRest::Version;
@@ -317,38 +315,8 @@ eval
             confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
         }
 
-        if (!$bDryRun)
-        {
-            # Run Perl critic
-            if (!$bNoLint && !$bBuildOnly)
-            {
-                my $strBasePath = dirname(dirname(abs_path($0)));
-
-                &log(INFO, "Performing static code analysis using perl -cw");
-
-                # Check the exe for warnings
-                my $strWarning = trim(executeTest("perl -cw ${strBasePath}/bin/pgbackrest 2>&1"));
-
-                if ($strWarning ne "${strBasePath}/bin/pgbackrest syntax OK")
-                {
-                    confess &log(ERROR, "${strBasePath}/bin/pgbackrest failed syntax check:\n${strWarning}");
-                }
-
-                &log(INFO, "Performing static code analysis using perlcritic");
-
-                executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
-                            ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
-                            " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
-                            " ${strBasePath}/bin/pgbackrest ${strBasePath}/lib/*" .
-                            " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
-                            " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
-            }
-
-            logFileSet(cwd() . "/test");
-        }
-
         # Clean up
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         my $iTestFail = 0;
         my $iTestRetry = 0;
         my $oyProcess = [];
@@ -368,80 +336,47 @@ eval
         }
 
         # Build the C Library and Packages
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
-            # Paths
+            # Build the C Library
+            #---------------------------------------------------------------------------------------------------------------------------
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
-            my $strPackagePath = "${strVagrantPath}/package";
-            my $strPackageSmart = "${strPackagePath}/build.timestamp";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
+            my @stryLibCSrcPath = ('libc');
 
             # VM Info
             my $oVm = vmGet();
 
-            # Find the lastest modified time in the libc dir
-            my $lTimestampLibCLast = 0;
+            # Find the lastest modified time for dirs that affect the libc build
+            my $lTimestampLast = $oStorageBackRest->exists($strLibCSmart) ? $oStorageBackRest->info($strLibCSmart)->mtime : 0;
 
-            my $hManifest = $oStorageBackRest->manifest('libc');
-
-            foreach my $strFile (sort(keys(%{$hManifest})))
+            foreach my $strLibCSrcPath (@stryLibCSrcPath)
             {
-                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLibCLast)
+                my $hManifest = $oStorageBackRest->manifest($strLibCSrcPath);
+
+                foreach my $strFile (sort(keys(%{$hManifest})))
                 {
-                    $lTimestampLibCLast = $hManifest->{$strFile}{modification_time};
+                    if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                    {
+                        $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                    }
                 }
             }
 
-            # Rebuild if the modification time of the makefile does not equal the latest file in libc
+            # Rebuild if the modification time of the smart file does equal the last changes in source paths
             if (!$bSmart || !$oStorageBackRest->exists($strLibCSmart) ||
-                $oStorageBackRest->info($strLibCSmart)->mtime != $lTimestampLibCLast)
+                $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
             {
                 if ($bSmart)
                 {
-                    &log(INFO, 'libC code has changed, library will be rebuilt');
+                    &log(INFO, 'libc dependencies have changed, rebuilding...');
                 }
 
                 executeTest("sudo rm -rf ${strLibCPath}");
                 executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC');
                 executeTest('sudo rm -rf ' . $oVm->{$strVmHost}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest');
-            }
-
-            # Find the lastest modified time in the bin, lib dirs
-            my $lTimestampPackageLast = $lTimestampLibCLast;
-
-            $hManifest = $oStorageBackRest->manifest('bin');
-
-            foreach my $strFile (sort(keys(%{$hManifest})))
-            {
-                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampPackageLast)
-                {
-                    $lTimestampPackageLast = $hManifest->{$strFile}{modification_time};
-                }
-            }
-
-            $hManifest = $oStorageBackRest->manifest('lib');
-
-            foreach my $strFile (sort(keys(%{$hManifest})))
-            {
-                if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampPackageLast)
-                {
-                    $lTimestampPackageLast = $hManifest->{$strFile}{modification_time};
-                }
-            }
-
-            # Rebuild if the modification time of the makefile does not equal the latest file in libc
-            if (!$bNoPackage &&
-                (!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
-                 $oStorageBackRest->info($strPackageSmart)->mtime != $lTimestampPackageLast))
-            {
-                if ($bSmart)
-                {
-                    &log(INFO, 'libC or Perl code has changed, packages will be rebuilt');
-                }
-
-                executeTest("sudo rm -rf ${strPackagePath}");
             }
 
             # Loop through VMs to do the C Library builds
@@ -450,12 +385,12 @@ eval
 
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
-                my $strBuildPath = "${strLibCPath}/${strBuildVM}";
+                my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
                 my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
 
                 if (!$oStorageBackRest->pathExists($strBuildPath))
                 {
-                    &log(INFO, "Build/test C library for ${strBuildVM} (${strBuildPath})");
+                    &log(INFO, "build/test C library for ${strBuildVM} (${strBuildPath})");
 
                     if ($bContainerExists)
                     {
@@ -465,8 +400,12 @@ eval
                             {bSuppressStdErr => true});
                     }
 
-                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
-                    executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
+                    foreach my $strLibCSrcPath (@stryLibCSrcPath)
+                    {
+                        $oStorageBackRest->pathCreate(
+                            "${strLibCPath}/${strBuildVM}/${strLibCSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                        executeTest("cp -r ${strBackRestBase}/${strLibCSrcPath}/* ${strLibCPath}/${strBuildVM}/${strLibCSrcPath}");
+                    }
 
                     executeTest(
                         ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
@@ -520,8 +459,41 @@ eval
 
             # Write files to indicate the last time a build was successful
             $oStorageBackRest->put($strLibCSmart);
-            utime($lTimestampLibCLast, $lTimestampLibCLast, $strLibCSmart) or
+            utime($lTimestampLast, $lTimestampLast, $strLibCSmart) or
                 confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
+
+            # Build the package
+            #---------------------------------------------------------------------------------------------------------------------------
+            my $strPackagePath = "${strVagrantPath}/package";
+            my $strPackageSmart = "${strPackagePath}/build.timestamp";
+            my @stryPackageSrcPath = ('bin', 'lib');
+
+            # Find the lastest modified time for additional dirs that affect the package build
+            foreach my $strPackageSrcPath (@stryPackageSrcPath)
+            {
+                my $hManifest = $oStorageBackRest->manifest($strPackageSrcPath);
+
+                foreach my $strFile (sort(keys(%{$hManifest})))
+                {
+                    if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                    {
+                        $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                    }
+                }
+            }
+
+            # Rebuild if the modification time of the smart file does equal the last changes in source paths
+            if (!$bNoPackage &&
+                (!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
+                 $oStorageBackRest->info($strPackageSmart)->mtime < $lTimestampLast))
+            {
+                if ($bSmart)
+                {
+                    &log(INFO, 'package dependencies have changed, rebuilding...');
+                }
+
+                executeTest("sudo rm -rf ${strPackagePath}");
+            }
 
             # Loop through VMs to do the package builds
             if (!$bNoPackage)
@@ -535,7 +507,7 @@ eval
 
                     if (!$oStorageBackRest->pathExists($strBuildPath) && $oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
-                        &log(INFO, "Build package for ${strBuildVM} (${strBuildPath})");
+                        &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
 
                         executeTest(
                             "docker run -itd -h test-build --name=test-build" .
@@ -591,7 +563,7 @@ eval
                 if (!$bNoPackage)
                 {
                     $oStorageBackRest->put($strPackageSmart);
-                    utime($lTimestampPackageLast, $lTimestampPackageLast, $strPackageSmart) or
+                    utime($lTimestampLast, $lTimestampLast, $strPackageSmart) or
                         confess "unable to set time for ${strPackageSmart}" . (defined($!) ? ":$!" : '');
                 }
             }
@@ -600,8 +572,40 @@ eval
             exit 0 if $bBuildOnly;
         }
 
+        # Perform static source code analysis
+        #---------------------------------------------------------------------------------------------------------------------------
+        if (!$bDryRun)
+        {
+            # Run Perl critic
+            if (!$bNoLint && !$bBuildOnly)
+            {
+                my $strBasePath = dirname(dirname(abs_path($0)));
+
+                &log(INFO, "Performing static code analysis using perl -cw");
+
+                # Check the exe for warnings
+                my $strWarning = trim(executeTest("perl -cw ${strBasePath}/bin/pgbackrest 2>&1"));
+
+                if ($strWarning ne "${strBasePath}/bin/pgbackrest syntax OK")
+                {
+                    confess &log(ERROR, "${strBasePath}/bin/pgbackrest failed syntax check:\n${strWarning}");
+                }
+
+                &log(INFO, "Performing static code analysis using perlcritic");
+
+                executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
+                            ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
+                            " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
+                            " ${strBasePath}/bin/pgbackrest ${strBasePath}/lib/*" .
+                            " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
+                            " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
+            }
+
+            logFileSet($oStorageTest, cwd() . "/test");
+        }
+
         # Determine which tests to run
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
             $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly);
 
@@ -696,7 +700,7 @@ eval
         while ($iVmTotal > 0);
 
         # Write out coverage info and test coverage
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         my $iUncoveredCodeModuleTotal = 0;
 
         if (vmCoverage($strVm) && !$bDryRun)
@@ -826,7 +830,7 @@ eval
         }
 
         # Print test info and exit
-        #-----------------------------------------------------------------------------------------------------------------------
+        #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO,
             ($bDryRun ? 'DRY RUN COMPLETED' : 'TESTS COMPLETED') . ($iTestFail == 0 ? ' SUCCESSFULLY' .
                 ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :

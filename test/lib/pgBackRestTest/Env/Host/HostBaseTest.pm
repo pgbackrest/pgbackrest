@@ -81,7 +81,7 @@ sub new
 
     # Install Perl C Library
     my $oVm = vmGet();
-    my $strBuildPath = testRunGet()->basePath() . "/test/.vagrant/libc/$self->{strOS}";
+    my $strBuildPath = testRunGet()->basePath() . "/test/.vagrant/libc/$self->{strOS}/libc";
     my $strPerlAutoPath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
     my $strPerlModulePath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
 
