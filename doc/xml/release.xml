@@ -50,6 +50,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Merge release 2 container build changes.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Simplified smart logic for C Library and package builds.</p>
                     </release-item>
                 </release-refactor-list>

@@ -323,7 +323,8 @@ sub containerBuild
                 "    yum -y install epel-release && \\\n" .
                 "    yum -y update && \\\n" .
                 "    yum -y install openssh-server openssh-clients wget sudo python-pip build-essential git \\\n" .
-                "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL ";
+                "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL \\\n" .
+                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple";
 
             if ($strOS eq VM_CO6)
             {
@@ -560,9 +561,7 @@ sub containerBuild
         }
         else
         {
-            $strScript = sectionHeader() .
-                "# Install package build tools and package source\n" .
-                "    yum install -y gcc make perl-ExtUtils-MakeMaker perl-Test-Simple\n";
+            $strScript = '';
         }
 
         containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy,$strScript, $bVmForce);
