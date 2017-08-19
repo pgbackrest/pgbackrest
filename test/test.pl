@@ -340,12 +340,12 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
-            # Paths
+            # Build the C Library
+            #---------------------------------------------------------------------------------------------------------------------------
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
-            my $strPackagePath = "${strVagrantPath}/package";
-            my $strPackageSmart = "${strPackagePath}/build.timestamp";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
+            my @stryLibCSrcPath = ('build', 'doc', 'libc', 'src');
 
             # VM Info
             my $oVm = vmGet();
@@ -353,9 +353,9 @@ eval
             # Find the lastest modified time for dirs that affect the libc build
             my $lTimestampLast = $oStorageBackRest->exists($strLibCSmart) ? $oStorageBackRest->info($strLibCSmart)->mtime : 0;
 
-            foreach my $strTimestampPath ('build', 'doc', 'libc', 'src')
+            foreach my $strLibCSrcPath (@stryLibCSrcPath)
             {
-                my $hManifest = $oStorageBackRest->manifest($strTimestampPath);
+                my $hManifest = $oStorageBackRest->manifest($strLibCSrcPath);
 
                 foreach my $strFile (sort(keys(%{$hManifest})))
                 {
@@ -366,7 +366,7 @@ eval
                 }
             }
 
-            # Rebuild if the modification time of the makefile does not equal the latest file in libc
+            # Rebuild if the modification time of the smart file does equal the last changes in source paths
             if (!$bSmart || !$oStorageBackRest->exists($strLibCSmart) ||
                 $oStorageBackRest->info($strLibCSmart)->mtime < $lTimestampLast)
             {
@@ -387,8 +387,6 @@ eval
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
                 my $strBuildPath = "${strLibCPath}/${strBuildVM}/libc";
-                my $strLibPath = "${strLibCPath}/${strBuildVM}/lib";
-                my $strSrcPath = "${strLibCPath}/${strBuildVM}/src";
                 my $bContainerExists = $strVm eq VM_ALL || $strBuildVM ne $strVmHost;
 
                 if (!$oStorageBackRest->pathExists($strBuildPath))
@@ -403,22 +401,12 @@ eval
                             {bSuppressStdErr => true});
                     }
 
-                    $oStorageBackRest->pathCreate($strLibPath, {bIgnoreExists => true, bCreateParent => true});
-                    executeTest("cp -r ${strBackRestBase}/lib/* ${strLibPath}");
-
-                    $oStorageBackRest->pathCreate(
-                        "${strLibCPath}/${strBuildVM}/doc", {bIgnoreExists => true, bCreateParent => true});
-                    executeTest("cp -r ${strBackRestBase}/doc/* ${strLibCPath}/${strBuildVM}/doc");
-
-                    $oStorageBackRest->pathCreate(
-                        "${strLibCPath}/${strBuildVM}/build", {bIgnoreExists => true, bCreateParent => true});
-                    executeTest("cp -r ${strBackRestBase}/build/* ${strLibCPath}/${strBuildVM}/build");
-
-                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
-                    executeTest("cp -r ${strBackRestBase}/libc/* ${strBuildPath}");
-
-                    $oStorageBackRest->pathCreate($strSrcPath, {bIgnoreExists => true, bCreateParent => true});
-                    executeTest("cp -r ${strBackRestBase}/src/* ${strSrcPath}");
+                    foreach my $strLibCSrcPath (@stryLibCSrcPath, 'lib')
+                    {
+                        $oStorageBackRest->pathCreate(
+                            "${strLibCPath}/${strBuildVM}/${strLibCSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                        executeTest("cp -r ${strBackRestBase}/${strLibCSrcPath}/* ${strLibCPath}/${strBuildVM}/${strLibCSrcPath}");
+                    }
 
                     executeTest(
                         ($bContainerExists ? "docker exec -i test-build bash -c '" : '') .
@@ -443,7 +431,6 @@ eval
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath}",
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath} test",
@@ -490,10 +477,16 @@ eval
             utime($lTimestampLast, $lTimestampLast, $strLibCSmart) or
                 confess "unable to set time for ${strLibCSmart}" . (defined($!) ? ":$!" : '');
 
+            # Build the package
+            #---------------------------------------------------------------------------------------------------------------------------
+            my $strPackagePath = "${strVagrantPath}/package";
+            my $strPackageSmart = "${strPackagePath}/build.timestamp";
+            my @stryPackageSrcPath = ('bin', 'lib');
+
             # Find the lastest modified time for additional dirs that affect the package build
-            foreach my $strTimestampPath ('bin', 'lib')
+            foreach my $strPackageSrcPath (@stryPackageSrcPath)
             {
-                my $hManifest = $oStorageBackRest->manifest($strTimestampPath);
+                my $hManifest = $oStorageBackRest->manifest($strPackageSrcPath);
 
                 foreach my $strFile (sort(keys(%{$hManifest})))
                 {
@@ -504,7 +497,7 @@ eval
                 }
             }
 
-            # Rebuild if the modification time of the makefile does not equal the latest file in libc
+            # Rebuild if the modification time of the smart file does equal the last changes in source paths
             if (!$bNoPackage &&
                 (!$bSmart || !$oStorageBackRest->exists($strPackageSmart) ||
                  $oStorageBackRest->info($strPackageSmart)->mtime < $lTimestampLast))
