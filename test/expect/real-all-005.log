@@ -99,7 +99,7 @@ primary_conninfo = 'host=db-master port=6543 user=replicator'
 standby_mode = 'on'
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
-full backup - backup from standby, failure to access all standbys (backup host)
+full backup - backup from standby, failure to access at least one standby (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --db3-host=bogus --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
