@@ -6,6 +6,7 @@ package pgBackRest::Db;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use DBD::Pg ':async';
 use DBI;
@@ -97,7 +98,15 @@ sub new
                 $self->{oProtocol} = protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iRemoteIdx}, {bWarnOnError => $bWarnOnError});
                 return true;
             }
-            or do {};
+            or do
+            {
+                # If errors are not being changed to warnings, then confess the error that bubbled up. Do not use &log here as
+                # that will log the error twice.
+                if ($bWarnOnError == false)
+                {
+                    confess $EVAL_ERROR;  # Added "use English '-no_match_vars';" to use $EVAL_ERROR
+                }
+            };
         }
     }
 
@@ -152,10 +161,17 @@ sub connect
     my $bResult = true;
 
     # Run remotely
-    if (defined($self->{oProtocol}))
+    if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
     {
-        # Set bResult to false if undef is returned
-        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
+        if (defined($self->{oProtocol}))
+        {
+            # Set bResult to false if undef is returned
+            $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
+        }
+        else
+        {
+            $bResult = false;
+        }
     }
     # Else run locally
     else
@@ -253,10 +269,21 @@ sub executeSql
     my @stryResult;
 
     # Run remotely
-    if (defined($self->{oProtocol}))
+    if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
     {
-        # Execute the command
-        @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
+        if (defined($self->{oProtocol}))
+        {
+            # Execute the command
+            @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
+        }
+        # If remote protocol object is undefined, do not just return an empty array as that may indicate a query that
+        # was not expected to return a result when in fact, we can not actually attempt to execute the query.
+        else
+        {
+            # Confess the host for which the protocol object was not defined.
+            confess &log(ASSERT, 'no protocol object for database ' . cfgOption(cfgOptionIndex(CFGOPT_DB_HOST,
+                $self->{iRemoteIdx})));
+        }
     }
     # Else run locally
     else
@@ -474,12 +501,22 @@ sub info
     {
         # Get info from remote
         #---------------------------------------------------------------------------------------------------------------------------
-        if (defined($self->{oProtocol}))
+        if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
-            # Execute the command
-            ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
-                $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
-                    $self->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
+            if (defined($self->{oProtocol}))
+            {
+                # Execute the command
+                ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
+                    $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
+                        $self->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
+            }
+            # If this is a remote and the protocol object is not defined, then problem with DB object
+            else
+            {
+                # Confess the host for which the protocol object was not defined.
+                confess &log(ASSERT, 'no protocol object for database ' . cfgOption(cfgOptionIndex(CFGOPT_DB_HOST,
+                    $self->{iRemoteIdx})));
+            }
         }
         # Get info locally
         #---------------------------------------------------------------------------------------------------------------------------
