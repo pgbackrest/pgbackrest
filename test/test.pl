@@ -345,6 +345,7 @@ eval
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
+            # my @stryLibCSrcPath = ('build', 'doc', 'lib', 'libc', 'src');
             my @stryLibCSrcPath = ('build', 'doc', 'libc', 'src');
 
             # VM Info
@@ -903,7 +904,7 @@ or do
     exit $EVAL_ERROR->code() if (isException($EVAL_ERROR));
 
     # Else output the unhandled error
-    print $EVAL_ERROR;
+    syswrite(*STDOUT, $EVAL_ERROR);
     exit ERROR_UNHANDLED;
 };
 

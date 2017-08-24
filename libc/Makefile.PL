@@ -106,10 +106,10 @@ my $rhExport =
 # Generate LibC.pm
 ####################################################################################################################################
 use pgBackRest::Common::String;
+use pgBackRest::Config::Data;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build::Common;
-use pgBackRestBuild::Config::Data;
 
 use constant LIB_NAME                                               => 'LibC';
 
@@ -169,7 +169,7 @@ sub formatText
 
     # Generate constants for options that have a list of strings as allowed values
     my $bFirst = true;
-    my $rhOptionRule = cfgbldOptionRuleHelpGet();
+    my $rhOptionRule = cfgdefRule();
 
     $strLibC .=
         "\n# Configuration option value constants\n" .
@@ -180,7 +180,7 @@ sub formatText
     {
         my $rhOption = $rhOptionRule->{$strOption};
 
-        next if $rhOption->{&CFGBLDDEF_RULE_TYPE} ne CFGBLDDEF_TYPE_STRING;
+        next if $rhOption->{&CFGBLDDEF_RULE_TYPE} ne CFGOPTDEF_TYPE_STRING;
         next if $strOption =~ /^log-level-/;
 
         if (defined($rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}))

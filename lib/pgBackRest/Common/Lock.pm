@@ -16,7 +16,6 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Storage::Helper;
 
 ####################################################################################################################################

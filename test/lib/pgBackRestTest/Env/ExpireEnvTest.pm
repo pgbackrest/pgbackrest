@@ -21,7 +21,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Manifest;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Stanza;
 use pgBackRest::Storage::Helper;

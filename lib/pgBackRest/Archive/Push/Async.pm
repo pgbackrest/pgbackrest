@@ -28,7 +28,6 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Storage::Helper;

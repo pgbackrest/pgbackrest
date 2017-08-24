@@ -21,7 +21,6 @@ use pgBackRest::Backup::Info;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 

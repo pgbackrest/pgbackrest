@@ -16,7 +16,6 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Common::ExecuteTest;

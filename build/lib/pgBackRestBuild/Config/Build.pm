@@ -16,13 +16,14 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Config::Data;
+use pgBackRest::Config::Rule;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::CodeGen::Common;
 use pgBackRestBuild::CodeGen::Lookup;
 use pgBackRestBuild::CodeGen::Switch;
-use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
 # Constants
@@ -108,7 +109,7 @@ my $rhOptionIdConstantMap;
 my $rhOptionNameConstantMap;
 my $rhOptionNameIdMap;
 my $iOptionTotal = 0;
-my $rhOptionRule = cfgbldOptionRuleGet();
+my $rhOptionRule = cfgdefRuleIndex();
 my @stryOptionAlt;
 
 foreach my $strOption (sort(keys(%{$rhOptionRule})))
@@ -452,92 +453,42 @@ my $rhBuild =
 };
 
 ####################################################################################################################################
-# Option rule helper functions
+# functionMatrix - add a param/value array to the function matrix
 ####################################################################################################################################
-sub optionRule
+sub functionMatrix
 {
-    my $strRule = shift;
+    my $strFunction = shift;
+    my $rxyParam = shift;
     my $strValue = shift;
-    my $iCommandId = shift;
-    my $iOptionId = shift;
 
-    push(
-        @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{$strRule}{&BLD_MATRIX}},
-        [$iCommandId, $iOptionId, $strValue]);
-}
+    # Find the function in a file
+    my $rhMatrix;
 
-sub optionRuleDepend
-{
-    my $rhDepend = shift;
-    my $iCommandId = shift;
-    my $iOptionId = shift;
-
-    my $strDependOption = $rhDepend->{&CFGBLDDEF_RULE_DEPEND_OPTION};
-
-    optionRule(BLDLCL_FUNCTION_DEPEND, defined($strDependOption) ? true : false, $iCommandId, $iOptionId);
-
-    if (defined($strDependOption))
+    foreach my $strFileMatch (sort(keys(%{$rhBuild->{&BLD_FILE}})))
     {
-        optionRule(BLDLCL_FUNCTION_DEPEND_OPTION, $rhOptionNameIdMap->{$strDependOption}, $iCommandId, $iOptionId);
-
-        my $iValueTotal = 0;
-
-        if (defined($rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}))
+        foreach my $strFunctionMatch (sort(keys(%{$rhBuild->{&BLD_FILE}{$strFileMatch}{&BLD_FUNCTION}})))
         {
-            foreach my $strValue (@{$rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}})
+            if ($strFunctionMatch eq $strFunction)
             {
-                push(
-                    @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_DEPEND_VALUE}{&BLD_MATRIX}},
-                    [$iCommandId, $iOptionId, $iValueTotal, $strValue]);
+                my $rhFunction = $rhBuild->{&BLD_FILE}{$strFileMatch}{&BLD_FUNCTION}{$strFunctionMatch};
 
-                $iValueTotal++;
+                if (!defined($rhFunction->{&BLD_MATRIX}))
+                {
+                    $rhFunction->{&BLD_MATRIX} = [];
+                }
+
+                $rhMatrix = $rhFunction->{&BLD_MATRIX};
             }
         }
-
-        optionRule(BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
     }
-}
 
-sub optionRuleRange
-{
-    my $riyRange = shift;
-    my $iCommandId = shift;
-    my $iOptionId = shift;
-
-    optionRule(
-        BLDLCL_FUNCTION_ALLOW_RANGE, defined($riyRange) ? true : false, $iCommandId, $iOptionId);
-
-    if (defined($riyRange))
+    # Error if function is not found
+    if (!defined($rhMatrix))
     {
-        optionRule(BLDLCL_FUNCTION_ALLOW_RANGE_MIN, $riyRange->[0], $iCommandId, $iOptionId);
-        optionRule(BLDLCL_FUNCTION_ALLOW_RANGE_MAX, $riyRange->[1], $iCommandId, $iOptionId);
+        confess &log(ASSERT, "function '${strFunction}' not found in build hash");
     }
-}
 
-sub optionRuleAllowList
-{
-    my $rhAllowList = shift;
-    my $iCommandId = shift;
-    my $iOptionId = shift;
-
-    optionRule(
-        BLDLCL_FUNCTION_ALLOW_LIST, defined($rhAllowList) ? true : false, $iCommandId, $iOptionId);
-
-    if (defined($rhAllowList))
-    {
-        my $iValueTotal = 0;
-
-        foreach my $strValue (@{$rhAllowList})
-        {
-            push(
-                @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_ALLOW_LIST_VALUE}{&BLD_MATRIX}},
-                [$iCommandId, $iOptionId, $iValueTotal, $strValue]);
-
-            $iValueTotal++;
-        }
-
-        optionRule(BLDLCL_FUNCTION_ALLOW_LIST_VALUE_TOTAL, $iValueTotal, $iCommandId, $iOptionId);
-    }
+    push(@{$rhMatrix}, [@{$rxyParam}, $strValue]);
 }
 
 ####################################################################################################################################
@@ -587,79 +538,83 @@ sub buildConfig
     #-------------------------------------------------------------------------------------------------------------------------------
     foreach my $strOption (sort(keys(%{$rhOptionRule})))
     {
-        my $rhOption = $rhOptionRule->{$strOption};
         my $iOptionId = $rhOptionNameIdMap->{$strOption};
 
         foreach my $strCommand (sort(keys(%{cfgbldCommandGet()})))
         {
-            my $rhCommand = $rhOption->{&CFGBLDDEF_RULE_COMMAND}{$strCommand};
             my $iCommandId = $rhCommandNameIdMap->{$strCommand};
 
-            optionRule(BLDLCL_FUNCTION_VALID, defined($rhCommand) ? true : false, $iCommandId, $iOptionId);
+            functionMatrix(BLDLCL_FUNCTION_VALID, [$iCommandId, $iOptionId], cfgRuleOptionValid($strCommand, $strOption));
 
-            if (defined($rhCommand))
+            if (cfgRuleOptionValid($strCommand, $strOption))
             {
-                optionRule(
-                    BLDLCL_FUNCTION_REQUIRED,
-                    coalesce($rhCommand->{&CFGBLDDEF_RULE_REQUIRED}, $rhOption->{&CFGBLDDEF_RULE_REQUIRED}, true), $iCommandId,
-                    $iOptionId);
+                functionMatrix(BLDLCL_FUNCTION_DEFAULT, [$iCommandId, $iOptionId], cfgRuleOptionDefault($strCommand, $strOption));
+                functionMatrix(BLDLCL_FUNCTION_HINT, [$iCommandId, $iOptionId], cfgRuleOptionHint($strCommand, $strOption));
+                functionMatrix(BLDLCL_FUNCTION_REQUIRED, [$iCommandId, $iOptionId], cfgRuleOptionRequired($strCommand, $strOption));
 
-                optionRule(
-                    BLDLCL_FUNCTION_DEFAULT,
-                    defined($rhCommand->{&CFGBLDDEF_RULE_DEFAULT}) ?
-                        $rhCommand->{&CFGBLDDEF_RULE_DEFAULT} : $rhOption->{&CFGBLDDEF_RULE_DEFAULT},
-                    $iCommandId, $iOptionId);
-                optionRule(
-                    BLDLCL_FUNCTION_HINT,
-                        defined($rhCommand->{&CFGBLDDEF_RULE_HINT}) ?
-                            $rhCommand->{&CFGBLDDEF_RULE_HINT} : $rhOption->{&CFGBLDDEF_RULE_HINT},
-                    $iCommandId, $iOptionId);
-                optionRuleDepend(
-                    defined($rhCommand->{&CFGBLDDEF_RULE_DEPEND}) ?
-                        $rhCommand->{&CFGBLDDEF_RULE_DEPEND} : $rhOption->{&CFGBLDDEF_RULE_DEPEND},
-                    $iCommandId, $iOptionId);
-                optionRuleRange(
-                    defined($rhCommand->{&CFGBLDDEF_RULE_ALLOW_RANGE}) ?
-                        $rhCommand->{&CFGBLDDEF_RULE_ALLOW_RANGE} : $rhOption->{&CFGBLDDEF_RULE_ALLOW_RANGE},
-                    $iCommandId, $iOptionId);
-                optionRuleAllowList(
-                    defined($rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}) ?
-                        $rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST} : $rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST},
-                    $iCommandId, $iOptionId);
+                # Option dependencies
+                functionMatrix(BLDLCL_FUNCTION_DEPEND, [$iCommandId, $iOptionId], cfgRuleOptionDepend($strCommand, $strOption));
+
+                if (cfgRuleOptionDepend($strCommand, $strOption))
+                {
+                    functionMatrix(
+                        BLDLCL_FUNCTION_DEPEND_OPTION, [$iCommandId, $iOptionId],
+                        $rhOptionNameIdMap->{cfgRuleOptionDependOption($strCommand, $strOption)});
+
+                    functionMatrix(
+                        BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL, [$iCommandId, $iOptionId],
+                        cfgRuleOptionDependValueTotal($strCommand, $strOption));
+
+                    for (my $iValueIdx = 0; $iValueIdx < cfgRuleOptionDependValueTotal($strCommand, $strOption); $iValueIdx++)
+                    {
+                        functionMatrix(
+                            BLDLCL_FUNCTION_DEPEND_VALUE, [$iCommandId, $iOptionId, $iValueIdx],
+                            cfgRuleOptionDependValue($strCommand, $strOption, $iValueIdx));
+                    }
+                }
+
+                # Allow range
+                functionMatrix(
+                    BLDLCL_FUNCTION_ALLOW_RANGE, [$iCommandId, $iOptionId], cfgRuleOptionAllowRange($strCommand, $strOption));
+
+                if (cfgRuleOptionAllowRange($strCommand, $strOption))
+                {
+                    functionMatrix(
+                        BLDLCL_FUNCTION_ALLOW_RANGE_MIN, [$iCommandId, $iOptionId],
+                        cfgRuleOptionAllowRangeMin($strCommand, $strOption));
+                    functionMatrix(
+                        BLDLCL_FUNCTION_ALLOW_RANGE_MAX, [$iCommandId, $iOptionId],
+                        cfgRuleOptionAllowRangeMax($strCommand, $strOption));
+                }
+
+                # Allow list
+                functionMatrix(
+                    BLDLCL_FUNCTION_ALLOW_LIST, [$iCommandId, $iOptionId], cfgRuleOptionAllowList($strCommand, $strOption));
+
+                if (cfgRuleOptionAllowList($strCommand, $strOption))
+                {
+                    functionMatrix(
+                        BLDLCL_FUNCTION_ALLOW_LIST_VALUE_TOTAL, [$iCommandId, $iOptionId],
+                        cfgRuleOptionAllowListValueTotal($strCommand, $strOption));
+
+                    for (my $iValueIdx = 0; $iValueIdx < cfgRuleOptionAllowListValueTotal($strCommand, $strOption); $iValueIdx++)
+                    {
+                        functionMatrix(
+                            BLDLCL_FUNCTION_ALLOW_LIST_VALUE, [$iCommandId, $iOptionId, $iValueIdx],
+                            cfgRuleOptionAllowListValue($strCommand, $strOption, $iValueIdx));
+                    }
+                }
             }
         }
 
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_INDEX_TOTAL}{&BLD_MATRIX}},
-            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_INDEX}]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_NEGATE}{&BLD_MATRIX}},
-            [$iOptionId, coalesce($rhOption->{&CFGBLDDEF_RULE_NEGATE}, false)]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_NAME_ALT}{&BLD_MATRIX}},
-            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_ALT_NAME}]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_PREFIX}{&BLD_MATRIX}},
-            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_PREFIX}]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_SECTION}{&BLD_MATRIX}},
-            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECTION}]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_SECURE}{&BLD_MATRIX}},
-            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_SECURE}]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_TYPE}{&BLD_MATRIX}},
-            [$iOptionId, $rhOptionTypeNameIdMap->{$rhOption->{&CFGBLDDEF_RULE_TYPE}}]);
-
-        push(
-            @{$rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG_RULE}{&BLD_FUNCTION}{&BLDLCL_FUNCTION_VALUE_HASH}{&BLD_MATRIX}},
-            [$iOptionId, $rhOption->{&CFGBLDDEF_RULE_HASH_VALUE}]);
+        functionMatrix(BLDLCL_FUNCTION_INDEX_TOTAL, [$iOptionId], cfgOptionIndexTotal($strOption));
+        functionMatrix(BLDLCL_FUNCTION_NEGATE, [$iOptionId], cfgRuleOptionNegate($strOption));
+        functionMatrix(BLDLCL_FUNCTION_NAME_ALT, [$iOptionId], cfgRuleOptionNameAlt($strOption));
+        functionMatrix(BLDLCL_FUNCTION_PREFIX, [$iOptionId], cfgRuleOptionPrefix($strOption));
+        functionMatrix(BLDLCL_FUNCTION_SECTION, [$iOptionId], cfgRuleOptionSection($strOption));
+        functionMatrix(BLDLCL_FUNCTION_SECURE, [$iOptionId], cfgRuleOptionSecure($strOption));
+        functionMatrix(BLDLCL_FUNCTION_TYPE, [$iOptionId], $rhOptionTypeNameIdMap->{cfgRuleOptionType($strOption)});
+        functionMatrix(BLDLCL_FUNCTION_VALUE_HASH, [$iOptionId], cfgRuleOptionValueHash($strOption));
     }
 
     # Build lookup functions that are not implemented with switch statements

@@ -13,7 +13,6 @@ use Exporter qw(import);
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Remote::Master;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Version;
 
 ####################################################################################################################################

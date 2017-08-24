@@ -11,7 +11,6 @@ use Carp qw(confess);
 use pgBackRest::Backup::File;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Command::Master;
 
 ####################################################################################################################################

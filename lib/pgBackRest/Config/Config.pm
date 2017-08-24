@@ -20,8 +20,13 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::LibC qw(:config :configRule);
+use pgBackRest::Config::Load;
 use pgBackRest::Version;
+
+####################################################################################################################################
+# Export config constants and functions
+####################################################################################################################################
+push(@EXPORT, @pgBackRest::Config::Load::EXPORT);
 
 ####################################################################################################################################
 # SOURCE Constants
@@ -361,7 +366,7 @@ sub optionValidate
 
     my $iCommandId = cfgCommandId($strCommand);
 
-    if ($iCommandId == -1)
+    if ($iCommandId eq "-1")
     {
         confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
     }
@@ -415,7 +420,7 @@ sub optionValidate
                     confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
                 }
 
-                if ($bNegate && cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_BOOLEAN)
+                if ($bNegate && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                 {
                     $strValue = false;
                 }
@@ -541,7 +546,7 @@ sub optionValidate
                             $strValue = undef;
                         }
                         # Convert Y or N to boolean
-                        elsif (cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_BOOLEAN)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                         {
                             if ($strValue eq 'y')
                             {
@@ -558,7 +563,7 @@ sub optionValidate
                             }
                         }
                         # Convert a list of key/value pairs to a hash
-                        elsif (cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_HASH)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
                         {
                             my @oValue = ();
 
@@ -618,7 +623,7 @@ sub optionValidate
                 # If a depend value exists, make sure the option value matches
                 if ($strDependType eq 'value')
                 {
-                    if (cfgRuleOptionType($iDependOptionId) == CFGOPTDEF_TYPE_BOOLEAN)
+                    if (cfgRuleOptionType($iDependOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                     {
                         $strError .=
                             "'" . (cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) ? '' : 'no-') . "${strDependOption}'";
@@ -652,8 +657,8 @@ sub optionValidate
             if (defined($strValue))
             {
                 # Check that floats and integers are valid
-                if (cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_INTEGER ||
-                    cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_FLOAT)
+                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_INTEGER ||
+                    cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_FLOAT)
                 {
                     # Test that the string is a valid float or integer by adding 1 to it.  It's pretty hokey but it works and it
                     # beats requiring Scalar::Util::Numeric to do it properly.
@@ -670,7 +675,7 @@ sub optionValidate
                     };
 
                     # Check that integers are really integers
-                    if (!$bError && cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_INTEGER &&
+                    if (!$bError && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_INTEGER &&
                         (int($strValue) . 'S') ne ($strValue . 'S'))
                     {
                         $bError = true;
@@ -697,7 +702,7 @@ sub optionValidate
                 }
 
                 # Set option value
-                if (cfgRuleOptionType($iOptionId) == CFGOPTDEF_TYPE_HASH && ref($strValue) eq 'ARRAY')
+                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH && ref($strValue) eq 'ARRAY')
                 {
                     foreach my $strItem (@{$strValue})
                     {
@@ -828,7 +833,7 @@ sub configFileValidate
                 }
 
                 # Is the option a valid pgbackrest option?
-                if (!(cfgOptionId($strOption) != -1 || defined($strOptionAltName)))
+                if (!(cfgOptionId($strOption) ne '-1' || defined($strOptionAltName)))
                 {
                     &log(WARN, cfgOption(CFGOPT_CONFIG) . " file contains invalid option '${strOptionDisplay}'");
                     $bFileValid = false;
@@ -1155,12 +1160,20 @@ sub cfgCommandWrite
         # Skip option if it is secure and should not be output in logs or the command line
         next if (cfgRuleOptionSecure($iOptionId));
 
-        # Process any option overrides first
-        if (defined($$oOptionOverride{$iOptionId}))
+        # Process any option id overrides first
+        if (defined($oOptionOverride->{$iOptionId}))
         {
-            if (defined($$oOptionOverride{$iOptionId}{value}))
+            if (defined($oOptionOverride->{$iOptionId}{value}))
             {
-                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $$oOptionOverride{$iOptionId}{value}});
+                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$iOptionId}{value}});
+            }
+        }
+        # And process overrides passed by string - this is used by Perl compitiblity functions
+        elsif (defined($oOptionOverride->{$strOption}))
+        {
+            if (defined($oOptionOverride->{$strOption}{value}))
+            {
+                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$strOption}{value}});
             }
         }
         # else look for non-default options in the current configuration
@@ -1215,7 +1228,7 @@ sub cfgCommandWriteOptionFormat
         my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
 
         # Handle the no- prefix for boolean values
-        if (cfgRuleOptionType(cfgOptionId($strOption)) == CFGOPTDEF_TYPE_BOOLEAN)
+        if (cfgRuleOptionType(cfgOptionId($strOption)) eq CFGOPTDEF_TYPE_BOOLEAN)
         {
             $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
         }

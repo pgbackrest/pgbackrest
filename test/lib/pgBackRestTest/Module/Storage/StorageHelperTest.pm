@@ -17,7 +17,6 @@ use Storable qw(dclone);
 use pgBackRest::Config::Config;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
 

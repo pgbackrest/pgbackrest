@@ -16,7 +16,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config :configRule);
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -352,13 +351,13 @@ sub configHelpOptionFind
     my $iOptionId = cfgOptionId($strOption);
 
     # If not found then this is an indexed value
-    if ($iOptionId == -1)
+    if ($iOptionId eq -1)
     {
         my $strPrefix = substr($strOption, 0, index($strOption, '-'));
         $iOptionId = cfgOptionId("${strPrefix}1" . substr($strOption, index($strOption, '-')));
 
         # If still not found then error
-        if ($iOptionId == -1)
+        if ($iOptionId eq -1)
         {
             confess &log(ASSERT, "option '${strOption}' not found in help");
         }

@@ -17,7 +17,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::RestoreFile;
 use pgBackRest::Protocol::Helper;
