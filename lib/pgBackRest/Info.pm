@@ -98,12 +98,12 @@ sub process
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
 
     # Get stanza if specified
-    my $strStanza = optionTest(OPTION_STANZA) ? optionGet(OPTION_STANZA) : undef;
+    my $strStanza = cfgOptionTest(CFGOPT_STANZA) ? cfgOption(CFGOPT_STANZA) : undef;
 
     # Get the stanza list with all info
     my $oyStanzaList = $self->stanzaList($strStanza);
 
-    if (optionTest(OPTION_OUTPUT, INFO_OUTPUT_TEXT))
+    if (cfgOptionTest(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_TEXT))
     {
         my $strOutput = $self->formatText($oyStanzaList);
 
@@ -116,14 +116,14 @@ sub process
             syswrite(*STDOUT, 'No stanzas exist in ' . storageRepo()->pathGet() . ".\n");
         }
     }
-    elsif (optionTest(OPTION_OUTPUT, INFO_OUTPUT_JSON))
+    elsif (cfgOptionTest(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_JSON))
     {
         my $oJSON = JSON::PP->new()->canonical()->pretty()->indent_length(4);
         $self->outputJSON($oJSON->encode($oyStanzaList));
     }
     else
     {
-        confess &log(ASSERT, "invalid info output option '" . optionGet(OPTION_OUTPUT) . "'");
+        confess &log(ASSERT, "invalid info output option '" . cfgOption(CFGOPT_OUTPUT) . "'");
     }
 
     # Return from function and log return values if any
@@ -370,12 +370,12 @@ sub stanzaList
     # Run remotely
     if (!isRepoLocal())
     {
-        @oyStanzaList = @{protocolGet(BACKUP)->cmdExecute(OP_INFO_STANZA_LIST, [$strStanza], true)};
+        @oyStanzaList = @{protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(OP_INFO_STANZA_LIST, [$strStanza], true)};
     }
     # Run locally
     else
     {
-        my @stryStanza = storageRepo()->list(CMD_BACKUP, {bIgnoreMissing => true});
+        my @stryStanza = storageRepo()->list(cfgCommandName(CFGCMD_BACKUP), {bIgnoreMissing => true});
 
         foreach my $strStanzaFound (@stryStanza)
         {
@@ -492,7 +492,8 @@ sub backupList
         );
 
     # Load the backup.info but do not attempt to validate it or confirm it's existence
-    my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(CMD_BACKUP . "/${strStanza}"), false, false, {bIgnoreMissing => true});
+    my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(
+        cfgCommandName(CFGCMD_BACKUP) . "/${strStanza}"), false, false, {bIgnoreMissing => true});
 
     # Build the db list
     my @oyDbList;

@@ -24,6 +24,7 @@ use Time::HiRes qw(gettimeofday);
 
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/lib';
+use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/doc/lib';
 
 use pgBackRest::Common::Exception;
@@ -344,7 +345,7 @@ eval
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
-            my @stryLibCSrcPath = ('libc');
+            my @stryLibCSrcPath = ('build', 'doc', 'lib', 'libc', 'src');
 
             # VM Info
             my $oVm = vmGet();
@@ -412,6 +413,20 @@ eval
                         "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                         ($bContainerExists ? "'" : ''),
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+
+                    if ($strBuildVM eq $strVmHost)
+                    {
+                        foreach my $strFile (
+                            'src/config/config.auto.c', 'src/config/config.auto.h', 'src/config/config.auto.md',
+                            'src/config/configRule.auto.c', 'src/config/configRule.auto.md', 'libc/lib/pgBackRest/LibC.pm')
+                        {
+                            $oStorageBackRest->copy(
+                                "${strLibCPath}/${strBuildVM}/${strFile}",
+                                $oStorageBackRest->openWrite(
+                                    "${strBackRestBase}/${strFile}", {bPathCreate => true, lTimestamp => $lTimestampLast}));
+                        }
+                    }
+
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                         "make -C ${strBuildPath}",
@@ -888,7 +903,7 @@ or do
     exit $EVAL_ERROR->code() if (isException($EVAL_ERROR));
 
     # Else output the unhandled error
-    print $EVAL_ERROR;
+    syswrite(*STDOUT, $EVAL_ERROR);
     exit ERROR_UNHANDLED;
 };
 

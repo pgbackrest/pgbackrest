@@ -29,7 +29,7 @@ sub new
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Init object and store variables
-    my $self = $class->SUPER::new(CMD_LOCAL, optionGet(OPTION_BUFFER_SIZE), optionGet(OPTION_PROTOCOL_TIMEOUT));
+    my $self = $class->SUPER::new(cfgCommandName(CFGCMD_LOCAL), cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
     bless $self, $class;
 
     # Return from function and log return values if any

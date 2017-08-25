@@ -171,7 +171,7 @@ sub openRead
         push(
             @{$rhParam->{rhyFilter}},
             {strClass => STORAGE_FILTER_GZIP,
-                rxyParam => [{iLevel => optionGet(OPTION_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
+                rxyParam => [{iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
         delete($rhParam->{bProtocolCompress});
     }
 
@@ -235,7 +235,7 @@ sub openWrite
     if ($bProtocolCompress)
     {
         $oDestinationFileIo = new pgBackRest::Storage::Filter::Gzip(
-            $oDestinationFileIo, {iLevel => optionGet(OPTION_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
+            $oDestinationFileIo, {iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false});
     }
 
     # Return from function and log return values if any

@@ -250,7 +250,7 @@ sub backupEnd
     }
 
     # Make sure tablespace links are correct
-    if (($strType eq BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
+    if (($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink()) && $self->hasLink())
     {
         my $hTablespaceManifest = storageRepo()->manifest(
             STORAGE_REPO_BACKUP . "/${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC);
@@ -314,7 +314,7 @@ sub backupEnd
     my $strLatestLink = storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . LINK_LATEST);
     my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
 
-    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq REPO_TYPE_POSIX) && $self->hasLink())
+    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq CFGOPTVAL_REPO_TYPE_POSIX) && $self->hasLink())
     {
         my $strLatestLinkDestination = readlink($strLatestLink);
 
@@ -896,6 +896,37 @@ sub stop
     return logDebugReturn($strOperation);
 }
 
+
+####################################################################################################################################
+# optionIndexName - return name for options that can be indexed (e.g. db1-host, db2-host)
+#
+# This differs from cfgOptionIndex because it allows the index number for index 1 to be ommitted for testing.
+####################################################################################################################################
+sub optionIndexName
+{
+    my $self = shift;
+    my $iOptionId = shift;
+    my $iIndex = shift;
+    my $bForce = shift;
+
+    # If the option doesn't have a prefix it can't be indexed
+    $iIndex = defined($iIndex) ? $iIndex : 1;
+    my $strPrefix = cfgRuleOptionPrefix($iOptionId);
+
+    if (!defined($strPrefix) && $iIndex > 1)
+    {
+        confess &log(ASSERT, "'" . cfgOptionName($iOptionId) . "' option does not allow indexing");
+    }
+
+    # Index 1 is the same name as the option unless forced to include the index
+    if ($iIndex == 1 && (!defined($bForce) || !$bForce))
+    {
+        return $strPrefix . substr(cfgOptionName($iOptionId), index(cfgOptionName($iOptionId), '-'));
+    }
+
+    return "${strPrefix}${iIndex}" . substr(cfgOptionName($iOptionId), index(cfgOptionName($iOptionId), '-'));
+}
+
 ####################################################################################################################################
 # configCreate
 ####################################################################################################################################
@@ -926,45 +957,45 @@ sub configCreate
 
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_CONSOLE} = lc(DEBUG);
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_FILE} = lc(TRACE);
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_LEVEL_STDERR} = lc(OFF);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE)} = lc(DEBUG);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_FILE)} = lc(TRACE);
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_LEVEL_STDERR)} = lc(OFF);
 
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
 
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_PROTOCOL_TIMEOUT} = 60;
-    $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_DB_TIMEOUT} = 45;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
 
     if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_COMPRESS} = 'n';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';
     }
 
     if ($self->isHostBackup())
     {
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_PATH} = $self->repoPath();
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_PATH)} = $self->repoPath();
 
         # S3 settings
         if ($oParam->{bS3})
         {
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_TYPE} = REPO_TYPE_S3;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_KEY} = HOST_S3_ACCESS_KEY;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_KEY_SECRET} = HOST_S3_ACCESS_SECRET_KEY;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_BUCKET} = HOST_S3_BUCKET;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_ENDPOINT} = HOST_S3_ENDPOINT;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_REGION} = HOST_S3_REGION;
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_REPO_S3_VERIFY_SSL} = 'n';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_TYPE)} = CFGOPTVAL_REPO_TYPE_S3;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY)} = HOST_S3_ACCESS_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_KEY_SECRET)} = HOST_S3_ACCESS_SECRET_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_BUCKET)} = HOST_S3_BUCKET;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_ENDPOINT)} = HOST_S3_ENDPOINT;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_REGION)} = HOST_S3_REGION;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_S3_VERIFY_SSL)} = 'n';
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
             $self->{bHardLink} = true;
-            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_HARDLINK} = 'y';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_HARDLINK)} = 'y';
         }
 
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_BACKUP_ARCHIVE_COPY} = 'y';
-        $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_BACKUP}{&OPTION_START_FAST} = 'y';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_ARCHIVE_COPY)} = 'y';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_START_FAST)} = 'y';
     }
 
     # Host specific options
@@ -989,32 +1020,32 @@ sub configCreate
 
         if ($self->nameTest(HOST_BACKUP))
         {
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
 
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
             {
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 1, $bForce)} = $oHostDb1->pgPort();
+                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 1, $bForce)} = $oHostDb1->pgPort();
             }
         }
 
-        $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
+        $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
 
         if (defined($oHostDb2))
         {
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_HOST, 2)} = $oHostDb2->nameGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_USER, 2)} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CMD, 2)} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{optionIndex(OPTION_DB_PATH, 2)} = $oHostDb2->dbBasePath();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 2)} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 2)} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 2)} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 2)} = $oHostDb2->dbBasePath();
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{optionIndex(OPTION_DB_PORT, 2)} = $oHostDb2->pgPort();
+                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 2)} = $oHostDb2->pgPort();
             }
         }
     }
@@ -1022,31 +1053,32 @@ sub configCreate
     # If this is a database host
     if ($self->isHostDb())
     {
-        $oParamHash{$strStanza}{&OPTION_DB_PATH} = $self->dbBasePath();
+        $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH)} = $self->dbBasePath();
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{&OPTION_DB_SOCKET_PATH} = $self->pgSocketPath();
-            $oParamHash{$strStanza}{&OPTION_DB_PORT} = $self->pgPort();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_SOCKET_PATH)} = $self->pgSocketPath();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT)} = $self->pgPort();
         }
 
         if ($bArchiveAsync)
         {
-            $oParamHash{&CONFIG_SECTION_GLOBAL . ':' . &CMD_ARCHIVE_PUSH}{&OPTION_ARCHIVE_ASYNC} = 'y';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' .
+                cfgCommandName(CFGCMD_ARCHIVE_PUSH)}{cfgOptionName(CFGOPT_ARCHIVE_ASYNC)} = 'y';
         }
 
-        $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_SPOOL_PATH} = $self->spoolPath();
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_SPOOL_PATH)} = $self->spoolPath();
 
         # If the the backup host is remote
         if (!$self->isHostBackup())
         {
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_HOST} = $oHostBackup->nameGet();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_USER} = $oHostBackup->userGet();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CMD} = $oHostBackup->backrestExe();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_BACKUP_CONFIG} = $oHostBackup->backrestConfig();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_HOST)} = $oHostBackup->nameGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_USER)} = $oHostBackup->userGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CMD)} = $oHostBackup->backrestExe();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CONFIG)} = $oHostBackup->backrestConfig();
 
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOG_PATH} = $self->logPath();
-            $oParamHash{&CONFIG_SECTION_GLOBAL}{&OPTION_LOCK_PATH} = $self->lockPath();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
         }
     }
 

@@ -24,6 +24,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Configuration rules are now pulled from the C library when present.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
                     </release-item>
                 </release-refactor-list>
@@ -46,11 +50,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Ignore auto-generated C code created by release 2.</p>
+                        <p>Ignore auto-generated C code.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Merge release 2 container build changes.</p>
+                        <p>Update containers to support C library builds in the documentation.</p>
                     </release-item>
 
                     <release-item>

@@ -164,25 +164,24 @@ sub setup
     }
 
     # Set options needed for storage helper
-    my $oOption = {};
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $oHostDbMaster->dbBasePath());
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $oHostBackup->repoPath());
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $oHostDbMaster->dbBasePath());
+    $self->optionTestSet(CFGOPT_REPO_PATH, $oHostBackup->repoPath());
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
 
     # Set S3 options
     if (defined($oHostS3))
     {
-        $self->optionSetTest($oOption, OPTION_REPO_TYPE, REPO_TYPE_S3);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_BUCKET, HOST_S3_BUCKET);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_REGION, HOST_S3_REGION);
-        $self->optionSetTest($oOption, OPTION_REPO_S3_HOST, $oHostS3->ipGet());
-        $self->optionBoolSetTest($oOption, OPTION_REPO_S3_VERIFY_SSL, false);
+        $self->optionTestSet(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3);
+        $self->optionTestSet(CFGOPT_REPO_S3_KEY, HOST_S3_ACCESS_KEY);
+        $self->optionTestSet(CFGOPT_REPO_S3_KEY_SECRET, HOST_S3_ACCESS_SECRET_KEY);
+        $self->optionTestSet(CFGOPT_REPO_S3_BUCKET, HOST_S3_BUCKET);
+        $self->optionTestSet(CFGOPT_REPO_S3_ENDPOINT, HOST_S3_ENDPOINT);
+        $self->optionTestSet(CFGOPT_REPO_S3_REGION, HOST_S3_REGION);
+        $self->optionTestSet(CFGOPT_REPO_S3_HOST, $oHostS3->ipGet());
+        $self->optionTestSetBool(CFGOPT_REPO_S3_VERIFY_SSL, false);
     }
 
-    $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
+    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
     return $oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3;
 }

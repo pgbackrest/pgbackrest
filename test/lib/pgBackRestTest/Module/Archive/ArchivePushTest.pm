@@ -62,8 +62,9 @@ sub initTest
     # Create archive info
     storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
 
-    my $oOption = $self->initOption();
-    logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+    $self->initOption();
+    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+
     my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
     $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
 
@@ -77,19 +78,15 @@ sub initOption
 {
     my $self = shift;
 
-    my $oOption = {};
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
+    $self->optionTestSetBool(CFGOPT_COMPRESS, false);
 
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
-    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
-    $self->optionBoolSetTest($oOption, OPTION_COMPRESS, false);
-
-    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
-    $self->optionSetTest($oOption, OPTION_ARCHIVE_TIMEOUT, 3);
-
-    return $oOption;
+    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
+    $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 3);
 }
 
 ####################################################################################################################################
@@ -99,12 +96,10 @@ sub run
 {
     my $self = shift;
 
-    my $oOption = $self->initOption();
-
     ################################################################################################################################
     if ($self->begin("ArchivePushFile::archivePushCheck"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strWalSegment = '000000010000000100000001';
@@ -188,11 +183,11 @@ sub run
         my $iWalMajor = 1;
         my $iWalMinor = 1;
 
-        $self->optionSetTest($oOption, OPTION_BACKUP_HOST, 'localhost');
-        $self->optionSetTest($oOption, OPTION_BACKUP_USER, $self->pgUser());
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_BACKUP_HOST, 'localhost');
+        $self->optionTestSet(CFGOPT_BACKUP_USER, $self->pgUser());
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        protocolGet(BACKUP, undef, {strBackRestBin => $self->backrestExe()});
+        protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()});
 
         # Generate a normal segment
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
@@ -211,18 +206,18 @@ sub run
         # Destroy protocol object
         protocolDestroy();
 
-        $self->optionReset($oOption, OPTION_BACKUP_HOST);
-        $self->optionReset($oOption, OPTION_BACKUP_USER);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_BACKUP_HOST);
+        $self->optionTestClear(CFGOPT_BACKUP_USER);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
 
     ################################################################################################################################
     if ($self->begin("ArchivePush->readyList()"))
     {
         my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
-        $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC, true);
-        $self->optionSetTest($oOption, OPTION_SPOOL_PATH, $self->{strRepoPath});
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC, true);
+        $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->{strRepoPath});
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
         $oPushAsync->initServer();
 
         my $iWalTimeline = 1;
@@ -298,8 +293,8 @@ sub run
     if ($self->begin("ArchivePush->dropList()"))
     {
         my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         my $iWalTimeline = 1;
         my $iWalMajor = 1;
@@ -315,16 +310,16 @@ sub run
             'WAL files not dropped');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 2);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 2);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testResult(
             sub {$oPushAsync->dropList($oPushAsync->readyList())},
             '(000000010000000100000001, 000000010000000100000002, 000000010000000100000003)', 'WAL files that exceed queue max');
 
         # Reset queue max
-        $self->optionReset($oOption, OPTION_ARCHIVE_QUEUE_MAX);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_ARCHIVE_QUEUE_MAX);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
 
     ################################################################################################################################
@@ -333,7 +328,7 @@ sub run
         my $oPush = new pgBackRest::Archive::Push::Push();
 
         my $oPushAsync = new pgBackRest::Archive::Push::Async($self->{strWalPath}, $self->{strSpoolPath});
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
         $oPushAsync->initServer();
 
         my $iWalTimeline = 1;
@@ -436,9 +431,9 @@ sub run
         my $oPushAsync = new pgBackRest::Archive::Push::Async(
             $self->{strWalPath}, $self->{strSpoolPath}, $self->backrestExe());
 
-        $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC, true);
-        $self->optionSetTest($oOption, OPTION_SPOOL_PATH, $self->{strRepoPath});
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC, true);
+        $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->{strRepoPath});
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $oPushAsync->initServer();
 
@@ -498,8 +493,8 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Enable compression
-        $self->optionBoolSetTest($oOption, OPTION_COMPRESS, true);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSetBool(CFGOPT_COMPRESS, true);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         # Create history file
         my $strHistoryFile = "00000001.history";
@@ -575,12 +570,12 @@ sub run
         $self->walRemove($self->{strWalPath}, $strSegment);
 
         # Disable compression
-        $self->optionBoolSetTest($oOption, OPTION_COMPRESS, false);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSetBool(CFGOPT_COMPRESS, false);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 2);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 2);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         # Generate WAL to test queue limits
         my @strySegment =
@@ -607,15 +602,15 @@ sub run
             $self->testResult(
                 sub {${storageSpool()->get("$self->{strSpoolPath}/${strSegment}.ok")}},
                 $strSegment eq $strySegment[0] ? undef :
-                    "0\ndropped WAL file ${strSegment} because archive queue exceeded " . optionGet(OPTION_ARCHIVE_QUEUE_MAX) .
+                    "0\ndropped WAL file ${strSegment} because archive queue exceeded " . cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) .
                         ' bytes',
                 "verify ${strSegment} status");
 
             $self->walRemove($self->{strWalPath}, $strSegment);
         }
 
-        $self->optionReset($oOption, OPTION_ARCHIVE_QUEUE_MAX);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_ARCHIVE_QUEUE_MAX);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oPushAsync->processQueue()}, '(0, 0, 0, 0)', "final process to remove ok files");
@@ -628,9 +623,9 @@ sub run
     {
         my $oPush = new pgBackRest::Archive::Push::Push($self->backrestExe());
 
-        $self->optionReset($oOption, OPTION_ARCHIVE_ASYNC);
-        $self->optionReset($oOption, OPTION_SPOOL_PATH);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_ARCHIVE_ASYNC);
+        $self->optionTestClear(CFGOPT_SPOOL_PATH);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         my $iWalTimeline = 1;
         my $iWalMajor = 1;
@@ -640,15 +635,15 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Set db-host to trick archive-push into thinking it is running on the backup server
-        $self->optionSetTest($oOption, OPTION_DB_HOST, BOGUS);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_DB_HOST, BOGUS);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testException(sub {$oPush->process(undef)}, ERROR_HOST_INVALID, 'archive-push operation must run on db host');
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Reset db-host
-        $self->optionReset($oOption, OPTION_DB_HOST);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_DB_HOST);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testException(sub {$oPush->process(undef)}, ERROR_PARAM_REQUIRED, 'WAL file to push required');
 
@@ -666,8 +661,8 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Set unrealistic queue max to make synchronous push drop a WAL
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_QUEUE_MAX, 0);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, 0);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
@@ -678,8 +673,8 @@ sub run
             "${strSegment} WAL in archive");
 
         # Set more realistic queue max and allow segment to push
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_ARCHIVE_QUEUE_MAX, PG_WAL_SIZE * 4);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed");
         $self->testResult(
@@ -689,14 +684,14 @@ sub run
         $self->walRemove($self->{strWalPath}, $strSegment);
 
         # Reset queue max
-        $self->optionReset($oOption, OPTION_ARCHIVE_QUEUE_MAX);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_ARCHIVE_QUEUE_MAX);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Enable async archiving
-        $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC, true);
-        $self->optionSetTest($oOption, OPTION_SPOOL_PATH, $self->{strRepoPath});
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC, true);
+        $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->{strRepoPath});
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         # Write an error file and verify that it doesn't error the first time around
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
@@ -742,8 +737,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
 
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_TIMEOUT, 1);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 1);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testException(
             sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_ARCHIVE_TIMEOUT,
@@ -754,10 +749,10 @@ sub run
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
 
-        $self->optionSetTest($oOption, OPTION_BACKUP_HOST, BOGUS);
-        $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 60);
-        $self->optionSetTest($oOption, OPTION_ARCHIVE_TIMEOUT, 5);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_BACKUP_HOST, BOGUS);
+        $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 60);
+        $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testException(
             sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_FILE_READ,
@@ -765,9 +760,9 @@ sub run
         exit if ($iProcessId != $PID);
 
         # Disable async archiving
-        $self->optionReset($oOption, OPTION_ARCHIVE_ASYNC);
-        $self->optionReset($oOption, OPTION_SPOOL_PATH);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestClear(CFGOPT_ARCHIVE_ASYNC);
+        $self->optionTestClear(CFGOPT_SPOOL_PATH);
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
 }
 

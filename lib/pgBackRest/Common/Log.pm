@@ -114,16 +114,13 @@ use constant TEST_ARCHIVE_PUSH_ASYNC_START                          => 'ARCHIVE-
 ####################################################################################################################################
 sub logFileSet
 {
+    my $oStorage = shift;
     my $strFile = shift;
 
     # Only open the log file if file logging is enabled
     if ($strLogLevelFile ne OFF)
     {
-        # Load Storage::Helper module
-        require pgBackRest::Storage::Helper;
-        pgBackRest::Storage::Helper->import();
-
-        storageLocal()->pathCreate(dirname($strFile), {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+        $oStorage->pathCreate(dirname($strFile), {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
         $strFile .= '.log';
         $bLogFileExists = -e $strFile ? true : false;

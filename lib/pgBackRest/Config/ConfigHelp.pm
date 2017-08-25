@@ -76,8 +76,6 @@ sub configHelp
     pgBackRest::Config::ConfigHelpData->import();
 
     # Get config data
-    my $oCommandHash = commandHashGet();
-    my $oOptionRule = optionRuleGet();
     my $oConfigHelpData = configHelpDataGet();
 
     # Build version
@@ -104,7 +102,7 @@ sub configHelp
     {
         $strCommand = lc($strCommand);
 
-        if (defined($$oCommandHash{$strCommand}))
+        if (defined($oConfigHelpData->{&CONFIG_HELP_COMMAND}{$strCommand}))
         {
             $strTitle = "'${strCommand}' command";
 
@@ -191,7 +189,7 @@ sub configHelp
                         $iOptionLength = length($strOption);
                     }
 
-                    my ($oOption, $strSection) = configHelpOptionFind($oConfigHelpData, $oOptionRule, $strCommand, $strOption);
+                    my ($oOption, $strSection) = configHelpOptionFind($oConfigHelpData, $strCommand, $strOption);
 
                     $$oSection{$strSection}{$strOption} = $oOption;
                 }
@@ -250,7 +248,7 @@ sub configHelp
         # Else option help
         else
         {
-            my ($oOption) = configHelpOptionFind($oConfigHelpData, $oOptionRule, $strCommand, $strOption);
+            my ($oOption) = configHelpOptionFind($oConfigHelpData, $strCommand, $strOption);
 
             # Set current and default values
             my $strDefault = '';
@@ -344,12 +342,26 @@ sub configHelpFormatText
 sub configHelpOptionFind
 {
     my $oConfigHelpData = shift;
-    my $oOptionRule = shift;
     my $strCommand = shift;
     my $strOption = shift;
 
     my $strSection = CONFIG_HELP_COMMAND;
     my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
+    my $iCommandId = cfgCommandId($strCommand);
+    my $iOptionId = cfgOptionId($strOption);
+
+    # If not found then this is an indexed value
+    if ($iOptionId eq -1)
+    {
+        my $strPrefix = substr($strOption, 0, index($strOption, '-'));
+        $iOptionId = cfgOptionId("${strPrefix}1" . substr($strOption, index($strOption, '-')));
+
+        # If still not found then error
+        if ($iOptionId eq -1)
+        {
+            confess &log(ASSERT, "option '${strOption}' not found in help");
+        }
+    }
 
     if (ref(\$oOption) eq 'SCALAR')
     {
@@ -370,7 +382,7 @@ sub configHelpOptionFind
         }
 
         if (($strSection ne CONFIG_SECTION_GENERAL && $strSection ne CONFIG_SECTION_LOG &&
-             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CONFIG_SECTION_STANZA &&
+             $strSection ne CONFIG_SECTION_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA &&
              $strSection ne CONFIG_SECTION_EXPIRE) ||
             $strSection eq $strCommand)
         {
@@ -378,27 +390,31 @@ sub configHelpOptionFind
         }
     }
 
-    if (defined(optionDefault($strOption, $strCommand)))
+    # Check if the current set value is default (some defaults are set at runtime and are not in the rules)
+    if (defined(cfgOption($iOptionId, false, false)) && cfgOptionSource($iOptionId, false) eq CONFIG_HELP_SOURCE_DEFAULT)
     {
-        if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
-        {
-            $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand) ? 'y' : 'n';
-        }
-        else
-        {
-            $$oOption{&CONFIG_HELP_DEFAULT} = optionDefault($strOption, $strCommand);
-        }
+        $oOption->{&CONFIG_HELP_DEFAULT} = cfgOption($iOptionId, true, false);
     }
 
-    if (optionTest($strOption) && optionSource($strOption) ne CONFIG_HELP_SOURCE_DEFAULT)
+    # If no default is set see if there is a default in the rules
+    if (!defined($oOption->{&CONFIG_HELP_DEFAULT}) && defined(cfgRuleOptionDefault($iCommandId, $iOptionId)))
     {
-        if ($$oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq &OPTION_TYPE_BOOLEAN)
+        $oOption->{&CONFIG_HELP_DEFAULT} = cfgRuleOptionDefault($iCommandId, $iOptionId);
+    }
+
+    # Format the default properly if it is a boolean
+    if (defined($oOption->{&CONFIG_HELP_DEFAULT}) && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
+    {
+        $oOption->{&CONFIG_HELP_DEFAULT} = $oOption->{&CONFIG_HELP_DEFAULT} ? 'y' : 'n';
+    }
+
+    if (defined(cfgOption($iOptionId, false, false)) && cfgOptionSource($iOptionId, false) ne CONFIG_HELP_SOURCE_DEFAULT)
+    {
+        $oOption->{&CONFIG_HELP_CURRENT} = cfgOption($iOptionId, true, false);
+
+        if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
         {
-            $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption) ? 'y' : 'n';
-        }
-        else
-        {
-            $$oOption{&CONFIG_HELP_CURRENT} = optionGet($strOption);
+            $$oOption{&CONFIG_HELP_CURRENT} = $oOption->{&CONFIG_HELP_CURRENT} ? 'y' : 'n';
         }
     }
 

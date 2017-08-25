@@ -60,7 +60,7 @@ sub archivePushCheck
     if (!isRepoLocal())
     {
         # Execute the command
-        ($strArchiveId, $strChecksum) = protocolGet(BACKUP)->cmdExecute(
+        ($strArchiveId, $strChecksum) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
             OP_ARCHIVE_PUSH_CHECK, [$strArchiveFile, $strDbVersion, $ullDbSysId], true);
     }
     else
@@ -89,7 +89,7 @@ sub archivePushCheck
 
     my $strWarning;
 
-    if (defined($strChecksum) && !commandTest(CMD_REMOTE))
+    if (defined($strChecksum) && !cfgCommandTest(CFGCMD_REMOTE))
     {
         my ($strChecksumNew) = storageDb()->hashSize($strWalFile);
 

@@ -90,7 +90,7 @@ sub getCheck
     # Get db info from the repo
     if (!isRepoLocal())
     {
-        ($strArchiveId, $strArchiveFile) = protocolGet(BACKUP)->cmdExecute(
+        ($strArchiveId, $strArchiveFile) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
             OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strWalFile], true);
     }
     else

@@ -159,7 +159,7 @@ sub stanzaCreate
     my $strDbVersionTemp = $strDbVersion;
     $strDbVersionTemp =~ s/\.//;
 
-    my $strDbPath = optionGet(OPTION_DB_PATH);
+    my $strDbPath = cfgOption(CFGOPT_DB_PATH);
 
     # Create the test path for pg_control
     storageTest()->pathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
@@ -202,13 +202,13 @@ sub stanzaUpgrade
     $strDbVersionTemp =~ s/\.//;
 
     # Remove pg_control
-    storageTest()->remove(optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+    storageTest()->remove(cfgOption(CFGOPT_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     # Copy pg_control for stanza-upgrade
     executeTest(
-        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . optionGet(OPTION_DB_PATH) .
+        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . cfgOption(CFGOPT_DB_PATH) .
         '/' . DB_FILE_PGCONTROL);
-    executeTest('sudo chmod 600 ' . optionGet(OPTION_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+    executeTest('sudo chmod 600 ' . cfgOption(CFGOPT_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     $self->stanzaSet($strStanza, $strDbVersion, true);
 
@@ -252,7 +252,7 @@ sub backupCreate
     }
 
     # Create the manifest
-    my $oLastManifest = $strType ne BACKUP_TYPE_FULL ? $$oStanza{oManifest} : undef;
+    my $oLastManifest = $strType ne CFGOPTVAL_BACKUP_TYPE_FULL ? $$oStanza{oManifest} : undef;
 
     my $strBackupLabel =
         backupLabelFormat($strType,
@@ -284,7 +284,7 @@ sub backupCreate
     $oManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
     $oManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef, BACKREST_VERSION);
 
-    if ($strType ne BACKUP_TYPE_FULL)
+    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
         if (!defined($oLastManifest))
         {
@@ -526,9 +526,9 @@ sub process
     undef($$oStanza{strBackupDescription});
 
     my $strCommand = $self->{strBackRestExe} .
-                     ' --' . OPTION_CONFIG . '="' . $self->{oHostBackup}->backrestConfig() . '"' .
-                     ' --' . OPTION_STANZA . '=' . $strStanza .
-                     ' --' . OPTION_LOG_LEVEL_CONSOLE . '=' . lc(DETAIL);
+                     ' --' . cfgOptionName(CFGOPT_CONFIG) . '="' . $self->{oHostBackup}->backrestConfig() . '"' .
+                     ' --' . cfgOptionName(CFGOPT_STANZA) . '=' . $strStanza .
+                     ' --' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
 
     if (defined($iExpireFull))
     {

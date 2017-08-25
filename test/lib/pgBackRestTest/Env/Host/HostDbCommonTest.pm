@@ -179,7 +179,7 @@ sub configRecovery
 
     if (@stryRecoveryOption)
     {
-        $oConfig->{$strStanza}{&OPTION_RESTORE_RECOVERY_OPTION} = \@stryRecoveryOption;
+        $oConfig->{$strStanza}{cfgOptionName(CFGOPT_RECOVERY_OPTION)} = \@stryRecoveryOption;
     }
 
     # Save db config file
@@ -213,7 +213,7 @@ sub configRemap
     }
 
     # Rewrite recovery section
-    delete($oConfig->{"${strStanza}:restore"}{&OPTION_TABLESPACE_MAP});
+    delete($oConfig->{"${strStanza}:restore"}{cfgOptionName(CFGOPT_TABLESPACE_MAP)});
     my @stryTablespaceMap;
 
     foreach my $strRemap (sort(keys(%$oRemapHashRef)))
@@ -222,13 +222,14 @@ sub configRemap
 
         if ($strRemap eq MANIFEST_TARGET_PGDATA)
         {
-            $oConfig->{$strStanza}{&OPTION_DB_PATH} = $strRemapPath;
+            $oConfig->{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1)} = $strRemapPath;
+
             ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
             if (defined($oHostBackup))
             {
                 my $bForce = $oHostBackup->nameTest(HOST_BACKUP) && defined(hostGroupGet()->hostGet(HOST_DB_STANDBY, true));
-                $oRemoteConfig->{$strStanza}{optionIndex(OPTION_DB_PATH, 1, $bForce)} = $strRemapPath;
+                $oRemoteConfig->{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1, $bForce)} = $strRemapPath;
             }
         }
         else
@@ -243,7 +244,7 @@ sub configRemap
 
     if (@stryTablespaceMap)
     {
-        $oConfig->{"${strStanza}:restore"}{&OPTION_TABLESPACE_MAP} = \@stryTablespaceMap;
+        $oConfig->{"${strStanza}:restore"}{cfgOptionName(CFGOPT_TABLESPACE_MAP)} = \@stryTablespaceMap;
     }
 
     # Save db config file
@@ -330,13 +331,13 @@ sub restore
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
-                  ($strBackup ne OPTION_DEFAULT_RESTORE_SET ? ", backup '${strBackup}'" : '') .
+                  ($strBackup ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? ", backup '${strBackup}'" : '') .
                   ($strType ? ", type '${strType}'" : '') .
                   ($strTarget ? ", target '${strTarget}'" : '') .
                   ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
                   (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
-                  (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
-                      ? ', ' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
+                  (defined($strTargetAction) && $strTargetAction ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
+                      ? ', ' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
                   (defined($oRemapHashRef) ? ', remap' : '') .
                   (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
                   (defined($strComment) ? " - ${strComment}" : '') .
@@ -416,16 +417,16 @@ sub restore
         ' --config=' . $self->backrestConfig() .
         (defined($bDelta) && $bDelta ? ' --delta' : '') .
         (defined($bForce) && $bForce ? ' --force' : '') .
-        ($strBackup ne OPTION_DEFAULT_RESTORE_SET ? " --set=${strBackup}" : '') .
+        ($strBackup ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
-        (defined($strType) && $strType ne RECOVERY_TYPE_DEFAULT ? " --type=${strType}" : '') .
+        (defined($strType) && $strType ne CFGOPTVAL_RESTORE_TYPE_DEFAULT ? " --type=${strType}" : '') .
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
         (defined($strTargetTimeline) ? " --target-timeline=\"${strTargetTimeline}\"" : '') .
         (defined($bTargetExclusive) && $bTargetExclusive ? ' --target-exclusive' : '') .
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
-        (defined($strTargetAction) && $strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION
-            ? ' --' . OPTION_TARGET_ACTION . "=${strTargetAction}" : '') .
+        (defined($strTargetAction) && $strTargetAction ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
+            ? ' --' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()},

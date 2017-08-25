@@ -50,18 +50,17 @@ sub run
     my $iFileSize = length($strFileContent);
 
     # Setup parameters
-    my $oOption = {};
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->testPath() . '/db');
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->testPath() . '/repo');
-    $self->optionSetTest($oOption, OPTION_SPOOL_PATH, $self->testPath() . '/spool');
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionBoolSetTest($oOption, OPTION_ARCHIVE_ASYNC, true);
+    $self->optionTestSet(CFGOPT_DB_PATH, $self->testPath() . '/db');
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
+    $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->testPath() . '/spool');
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSetBool(CFGOPT_ARCHIVE_ASYNC, true);
+
+    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($self->begin("storageLocal()"))
     {
-        $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
-
         $self->testResult(sub {storageLocal($self->testPath())->put($strFile, $strFileContent)}, $iFileSize, 'put');
         $self->testResult(sub {${storageTest()->get($strFile)}}, $strFileContent, '    check put');
 
@@ -72,8 +71,6 @@ sub run
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($self->begin("storageDb()"))
     {
-        $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
-
         $self->testResult(sub {storageDb()->put($strFile, $strFileContent)}, $iFileSize, 'put');
         $self->testResult(sub {${storageTest()->get("db/${strFile}")}}, $strFileContent, '    check put');
 
@@ -84,9 +81,6 @@ sub run
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($self->begin("storageRepo()"))
     {
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
-
         $self->testResult(sub {storageRepo()->put($strFile, $strFileContent)}, $iFileSize, 'put');
         $self->testResult(sub {${storageTest()->get("repo/${strFile}")}}, $strFileContent, '    check put');
 
@@ -129,8 +123,6 @@ sub run
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($self->begin("storageSpool()"))
     {
-        $self->testResult(sub {$self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH)}, '', 'config load');
-
         $self->testResult(sub {storageSpool()->put($strFile, $strFileContent)}, $iFileSize, 'put');
         $self->testResult(sub {${storageTest()->get("spool/${strFile}")}}, $strFileContent, '    check put');
 

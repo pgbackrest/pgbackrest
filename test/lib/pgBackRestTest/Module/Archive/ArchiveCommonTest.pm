@@ -38,23 +38,24 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
-            sub {walPath($strWalFileRelative, undef, CMD_ARCHIVE_GET)}, ERROR_OPTION_REQUIRED,
-            "option '" . OPTION_DB_PATH . "' must be specified when relative xlog paths are used\n" .
-            "HINT: Is \%f passed to " . CMD_ARCHIVE_GET . " instead of \%p?\n" .
+            sub {walPath($strWalFileRelative, undef, cfgCommandName(CFGCMD_ARCHIVE_GET))}, ERROR_OPTION_REQUIRED,
+            "option 'db-path' must be specified when relative xlog paths are used\n" .
+            "HINT: Is \%f passed to " . cfgCommandName(CFGCMD_ARCHIVE_GET) . " instead of \%p?\n" .
             "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {walPath($strWalFileRelative, $strDbPath, CMD_ARCHIVE_PUSH)}, $strWalFileAbsolute, 'relative path is contructed');
+            sub {walPath($strWalFileRelative, $strDbPath, cfgCommandName(CFGCMD_ARCHIVE_PUSH))}, $strWalFileAbsolute,
+            'relative path is contructed');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {walPath($strWalFileAbsolute, $strDbPath, CMD_ARCHIVE_PUSH)}, $strWalFileAbsolute,
+            sub {walPath($strWalFileAbsolute, $strDbPath, cfgCommandName(CFGCMD_ARCHIVE_PUSH))}, $strWalFileAbsolute,
             'path is not relative and db-path is still specified');
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(
-            sub {walPath($strWalFileAbsolute, $strDbPath, CMD_ARCHIVE_PUSH)}, $strWalFileAbsolute,
+            sub {walPath($strWalFileAbsolute, $strDbPath, cfgCommandName(CFGCMD_ARCHIVE_PUSH))}, $strWalFileAbsolute,
             'path is not relative and db-path is undef');
     }
 
@@ -94,10 +95,9 @@ sub run
     ################################################################################################################################
     if ($self->begin("${strModule}::walSegmentFind()"))
     {
-        my $oOption = {};
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->testPath());
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath());
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         my $strArchiveId = '9.4-1';
         my $strArchivePath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveId}");

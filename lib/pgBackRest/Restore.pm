@@ -40,11 +40,11 @@ sub new
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->new');
 
     # Initialize protocol
-    $self->{oProtocol} = !isRepoLocal() ? protocolGet(BACKUP) : undef;
+    $self->{oProtocol} = !isRepoLocal() ? protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP) : undef;
 
     # Initialize variables
-    $self->{strDbClusterPath} = optionGet(OPTION_DB_PATH);
-    $self->{strBackupSet} = optionGet(OPTION_SET);
+    $self->{strDbClusterPath} = cfgOption(CFGOPT_DB_PATH);
+    $self->{strBackupSet} = cfgOption(CFGOPT_SET);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -218,7 +218,7 @@ sub manifestLoad
     # If backup is latest then set it equal to backup label, else verify that requested backup and label match
     my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);
 
-    if ($self->{strBackupSet} eq OPTION_DEFAULT_RESTORE_SET)
+    if ($self->{strBackupSet} eq cfgOptionDefault(CFGOPT_SET))
     {
         $self->{strBackupSet} = $strBackupLabel;
     }
@@ -238,9 +238,9 @@ sub manifestLoad
     # Remap tablespaces when requested
     my $oTablespaceRemap;
 
-    if (optionTest(OPTION_TABLESPACE_MAP))
+    if (cfgOptionTest(CFGOPT_TABLESPACE_MAP))
     {
-        my $oTablespaceRemapRequest = optionGet(OPTION_TABLESPACE_MAP);
+        my $oTablespaceRemapRequest = cfgOption(CFGOPT_TABLESPACE_MAP);
 
         for my $strKey (sort(keys(%{$oTablespaceRemapRequest})))
         {
@@ -272,7 +272,7 @@ sub manifestLoad
     }
 
     # Remap all tablespaces (except ones that were done individually above)
-    if (optionTest(OPTION_TABLESPACE_MAP_ALL))
+    if (cfgOptionTest(CFGOPT_TABLESPACE_MAP_ALL))
     {
         for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
         {
@@ -280,7 +280,7 @@ sub manifestLoad
             {
                 if (!defined(${$oTablespaceRemap}{$strTarget}))
                 {
-                    ${$oTablespaceRemap}{$strTarget} = optionGet(OPTION_TABLESPACE_MAP_ALL) . '/' .
+                    ${$oTablespaceRemap}{$strTarget} = cfgOption(CFGOPT_TABLESPACE_MAP_ALL) . '/' .
                         $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_TABLESPACE_NAME);
                 }
             }
@@ -289,7 +289,7 @@ sub manifestLoad
 
     # Issue a warning message when we remap tablespaces in postgre < 9.2
     if ($oManifest->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION) < PG_VERSION_92 &&
-       (optionTest(OPTION_TABLESPACE_MAP) || optionTest(OPTION_TABLESPACE_MAP_ALL)))
+       (cfgOptionTest(CFGOPT_TABLESPACE_MAP) || cfgOptionTest(CFGOPT_TABLESPACE_MAP_ALL)))
     {
         &log(WARN, "update pg_tablespace.spclocation with new tablespace location in PostgreSQL < " . PG_VERSION_92);
     }
@@ -315,9 +315,9 @@ sub manifestLoad
     # Remap links when requested
     my $oLinkRemap;
 
-    if (optionTest(OPTION_LINK_MAP))
+    if (cfgOptionTest(CFGOPT_LINK_MAP))
     {
-        my $oLinkRemapRequest = optionGet(OPTION_LINK_MAP);
+        my $oLinkRemapRequest = cfgOption(CFGOPT_LINK_MAP);
 
         for my $strKey (sort(keys(%{$oLinkRemapRequest})))
         {
@@ -347,7 +347,7 @@ sub manifestLoad
     }
 
     # Remap all links (except ones that were done individually above)
-    if (optionGet(OPTION_LINK_ALL))
+    if (cfgOption(CFGOPT_LINK_ALL))
     {
         for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
         {
@@ -475,7 +475,7 @@ sub clean
 
     # Check that all targets exist and are empty (unless --force or --delta specified)
     my %oTargetFound;
-    my $bDelta = optionGet(OPTION_FORCE) || optionGet(OPTION_DELTA);
+    my $bDelta = cfgOption(CFGOPT_FORCE) || cfgOption(CFGOPT_DELTA);
 
     for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
     {
@@ -899,12 +899,12 @@ sub recovery
     # See if recovery.conf already exists
     my $bRecoveryConfExists = storageDb()->exists($strRecoveryConf);
 
-    # If RECOVERY_TYPE_PRESERVE then warn if recovery.conf does not exist and return
-    if (optionTest(OPTION_TYPE, RECOVERY_TYPE_PRESERVE))
+    # If CFGOPTVAL_RESTORE_TYPE_PRESERVE then warn if recovery.conf does not exist and return
+    if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_PRESERVE))
     {
         if (!$bRecoveryConfExists)
         {
-            &log(WARN, "recovery type is " . optionGet(OPTION_TYPE) . " but recovery file does not exist at ${strRecoveryConf}");
+            &log(WARN, "recovery type is " . cfgOption(CFGOPT_TYPE) . " but recovery file does not exist at ${strRecoveryConf}");
         }
     }
     else
@@ -915,16 +915,16 @@ sub recovery
             storageDb()->remove($strRecoveryConf);
         }
 
-        # If RECOVERY_TYPE_NONE then return
-        if (!optionTest(OPTION_TYPE, RECOVERY_TYPE_NONE))
+        # If CFGOPTVAL_RESTORE_TYPE_NONE then return
+        if (!cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_NONE))
         {
             # Write recovery options read from the configuration file
             my $strRecovery = '';
             my $bRestoreCommandOverride = false;
 
-            if (optionTest(OPTION_RESTORE_RECOVERY_OPTION))
+            if (cfgOptionTest(CFGOPT_RECOVERY_OPTION))
             {
-                my $oRecoveryRef = optionGet(OPTION_RESTORE_RECOVERY_OPTION);
+                my $oRecoveryRef = cfgOption(CFGOPT_RECOVERY_OPTION);
 
                 foreach my $strKey (sort(keys(%$oRecoveryRef)))
                 {
@@ -943,33 +943,33 @@ sub recovery
             # Write the restore command
             if (!$bRestoreCommandOverride)
             {
-                $strRecovery .=  "restore_command = '" . commandWrite(CMD_ARCHIVE_GET) . " %f \"%p\"'\n";
+                $strRecovery .=  "restore_command = '" . cfgCommandWrite(CFGCMD_ARCHIVE_GET) . " %f \"%p\"'\n";
             }
 
-            # If type is RECOVERY_TYPE_IMMEDIATE
-            if (optionTest(OPTION_TYPE, RECOVERY_TYPE_IMMEDIATE))
+            # If type is CFGOPTVAL_RESTORE_TYPE_IMMEDIATE
+            if (cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_IMMEDIATE))
             {
-                $strRecovery .= "recovery_target = '" . RECOVERY_TYPE_IMMEDIATE . "'\n";
+                $strRecovery .= "recovery_target = '" . CFGOPTVAL_RESTORE_TYPE_IMMEDIATE . "'\n";
             }
-            # If type is not RECOVERY_TYPE_DEFAULT write target options
-            elsif (!optionTest(OPTION_TYPE, RECOVERY_TYPE_DEFAULT))
+            # If type is not CFGOPTVAL_RESTORE_TYPE_DEFAULT write target options
+            elsif (!cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_RESTORE_TYPE_DEFAULT))
             {
                 # Write the recovery target
-                $strRecovery .= "recovery_target_" . optionGet(OPTION_TYPE) . " = '" . optionGet(OPTION_TARGET) . "'\n";
+                $strRecovery .= "recovery_target_" . cfgOption(CFGOPT_TYPE) . " = '" . cfgOption(CFGOPT_TARGET) . "'\n";
 
                 # Write recovery_target_inclusive
-                if (optionGet(OPTION_TARGET_EXCLUSIVE, false))
+                if (cfgOption(CFGOPT_TARGET_EXCLUSIVE, false))
                 {
                     $strRecovery .= "recovery_target_inclusive = 'false'\n";
                 }
             }
 
             # Write pause_at_recovery_target
-            if (optionTest(OPTION_TARGET_ACTION))
+            if (cfgOptionTest(CFGOPT_TARGET_ACTION))
             {
-                my $strTargetAction = optionGet(OPTION_TARGET_ACTION);
+                my $strTargetAction = cfgOption(CFGOPT_TARGET_ACTION);
 
-                if ($strTargetAction ne OPTION_DEFAULT_RESTORE_TARGET_ACTION)
+                if ($strTargetAction ne cfgOptionDefault(CFGOPT_TARGET_ACTION))
                 {
                     if ($strDbVersion >= PG_VERSION_95)
                     {
@@ -981,15 +981,16 @@ sub recovery
                     }
                     else
                     {
-                        confess &log(ERROR, OPTION_TARGET_ACTION .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
+                        confess &log(ERROR,
+                            cfgOptionName(CFGOPT_TARGET_ACTION) .  ' option is only available in PostgreSQL >= ' . PG_VERSION_91)
                     }
                 }
             }
 
             # Write recovery_target_timeline
-            if (optionTest(OPTION_TARGET_TIMELINE))
+            if (cfgOptionTest(CFGOPT_TARGET_TIMELINE))
             {
-                $strRecovery .= "recovery_target_timeline = '" . optionGet(OPTION_TARGET_TIMELINE) . "'\n";
+                $strRecovery .= "recovery_target_timeline = '" . cfgOption(CFGOPT_TARGET_TIMELINE) . "'\n";
             }
 
             # Write recovery.conf
@@ -1043,7 +1044,7 @@ sub process
     }
 
     # If the restore will be destructive attempt to verify that $PGDATA is valid
-    if ((optionGet(OPTION_DELTA) || optionGet(OPTION_FORCE)) &&
+    if ((cfgOption(CFGOPT_DELTA) || cfgOption(CFGOPT_FORCE)) &&
         !($oStorageDb->exists($self->{strDbClusterPath} . '/' . DB_FILE_PGVERSION) ||
           $oStorageDb->exists($self->{strDbClusterPath} . '/' . FILE_MANIFEST)))
     {
@@ -1052,8 +1053,8 @@ sub process
                    '  --delta and --force have been disabled and if any files exist in the destination directories the restore' .
                    ' will be aborted.');
 
-        optionSet(OPTION_DELTA, false);
-        optionSet(OPTION_FORCE, false);
+        cfgOptionSet(CFGOPT_DELTA, false);
+        cfgOptionSet(CFGOPT_FORCE, false);
     }
 
     # Copy backup info, load it, then delete
@@ -1066,9 +1067,9 @@ sub process
     $oStorageDb->remove($self->{strDbClusterPath} . '/' . FILE_BACKUP_INFO);
 
     # If set to restore is latest then get the actual set
-    if ($self->{strBackupSet} eq OPTION_DEFAULT_RESTORE_SET)
+    if ($self->{strBackupSet} eq cfgOptionDefault(CFGOPT_SET))
     {
-        $self->{strBackupSet} = $oBackupInfo->last(BACKUP_TYPE_INCR);
+        $self->{strBackupSet} = $oBackupInfo->last(CFGOPTVAL_BACKUP_TYPE_INCR);
 
         if (!defined($self->{strBackupSet}))
         {
@@ -1110,7 +1111,7 @@ sub process
     # Build an expression to match files that should be zeroed for filtered restores
     my $strDbFilter;
 
-    if (optionTest(OPTION_DB_INCLUDE))
+    if (cfgOptionTest(CFGOPT_DB_INCLUDE))
     {
         # Build a list of databases from the manifest since the db name/id mappings will not be available for an offline restore.
         my %oDbList;
@@ -1135,7 +1136,7 @@ sub process
         &log(DETAIL, 'databases for include/exclude (' . join(', ', sort(keys(%oDbList))) . ')');
 
         # Remove included databases from the list
-        my $oDbInclude = optionGet(OPTION_DB_INCLUDE);
+        my $oDbInclude = cfgOption(CFGOPT_DB_INCLUDE);
 
         for my $strDbKey (sort(keys(%{$oDbInclude})))
         {
@@ -1191,8 +1192,8 @@ sub process
     }
 
     # Initialize the restore process
-    my $oRestoreProcess = new pgBackRest::Protocol::Local::Process(BACKUP);
-    $oRestoreProcess->hostAdd(1, optionGet(OPTION_PROCESS_MAX));
+    my $oRestoreProcess = new pgBackRest::Protocol::Local::Process(CFGOPTVAL_LOCAL_TYPE_BACKUP);
+    $oRestoreProcess->hostAdd(1, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Variables used for parallel copy
     my $lSizeTotal = 0;
@@ -1240,13 +1241,13 @@ sub process
                 $oManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, $lSize > 0),
                 defined($strDbFilter) && $strRepoFile =~ $strDbFilter && $strRepoFile !~ /\/PG\_VERSION$/ ? true : false,
-                optionGet(OPTION_FORCE), $strRepoFile,
+                cfgOption(CFGOPT_FORCE), $strRepoFile,
                 $oManifest->boolTest(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, true) ? undef :
                     $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_REFERENCE, false),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_MODE),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
-                $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START),  optionGet(OPTION_DELTA),
+                $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START),  cfgOption(CFGOPT_DELTA),
                 $self->{strBackupSet}, $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS)]);
     }
 

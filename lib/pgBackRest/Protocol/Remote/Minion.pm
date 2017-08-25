@@ -46,7 +46,7 @@ sub new
         );
 
     # Init object and store variables
-    my $self = $class->SUPER::new(CMD_REMOTE, $iBufferMax, $iProtocolTimeout);
+    my $self = $class->SUPER::new(cfgCommandName(CFGCMD_REMOTE), $iBufferMax, $iProtocolTimeout);
     bless $self, $class;
 
     # Return from function and log return values if any
@@ -68,12 +68,12 @@ sub init
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->init');
 
     # Create objects
-    my $oStorage = optionTest(OPTION_TYPE, DB) ? storageDb() : storageRepo();
+    my $oStorage = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? storageDb() : storageRepo();
 
-    my $oArchiveGet = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Archive::Get::Get() : undef;
-    my $oCheck = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Check::Check() : undef;
-    my $oInfo = optionTest(OPTION_TYPE, BACKUP) ? new pgBackRest::Info() : undef;
-    my $oDb = optionTest(OPTION_TYPE, DB) ? new pgBackRest::Db() : undef;
+    my $oArchiveGet = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Archive::Get::Get() : undef;
+    my $oCheck = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Check::Check() : undef;
+    my $oInfo = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_BACKUP) ? new pgBackRest::Info() : undef;
+    my $oDb = cfgOptionTest(CFGOPT_TYPE, CFGOPTVAL_REMOTE_TYPE_DB) ? new pgBackRest::Db() : undef;
 
     # Create anonymous subs for each command
     my $hCommandMap =

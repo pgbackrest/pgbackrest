@@ -40,7 +40,7 @@ sub new
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strHostType'},
-            {name => 'iSelectTimeout', default => int(optionGet(OPTION_PROTOCOL_TIMEOUT) / 2)},
+            {name => 'iSelectTimeout', default => int(cfgOption(CFGOPT_PROTOCOL_TIMEOUT) / 2)},
             {name => 'strBackRestBin', default => BACKREST_BIN},
             {name => 'bConfessError', default => true},
         );
@@ -180,13 +180,15 @@ sub hostConnect
 
             my $oLocal = new pgBackRest::Protocol::Local::Master
             (
-                commandWrite(
-                    CMD_LOCAL, true, $self->{strBackRestBin}, undef,
+                cfgCommandWrite(
+                    CFGCMD_LOCAL, true, $self->{strBackRestBin}, undef,
                     {
-                        &OPTION_COMMAND => {value => commandGet()},
-                        &OPTION_PROCESS => {value => $iProcessId},
-                        &OPTION_TYPE => {value => $self->{strHostType}},
-                        &OPTION_HOST_ID => {value => $hHost->{iHostConfigIdx}},
+                        &CFGOPT_COMMAND => {value => cfgCommandName(cfgCommandGet())},
+                        &CFGOPT_PROCESS => {value => $iProcessId},
+                        &CFGOPT_TYPE => {value => $self->{strHostType}},
+                        &CFGOPT_HOST_ID => {value => $hHost->{iHostConfigIdx}},
+
+                        &CFGOPT_LOG_LEVEL_STDERR => {},
                     }),
                 $iLocalIdx + 1
             );

@@ -36,7 +36,7 @@ sub lockFileName
     my $strStanza = shift;
     my $bRemote = shift;
 
-    return optionGet(OPTION_LOCK_PATH) . '/' . (defined($strStanza) ? $strStanza : 'global') . "_${strLockType}" .
+    return cfgOption(CFGOPT_LOCK_PATH) . '/' . (defined($strStanza) ? $strStanza : 'global') . "_${strLockType}" .
            (defined($bRemote) && $bRemote ? '_remote' : '') . '.lock';
 }
 
@@ -47,7 +47,7 @@ sub lockFileName
 ####################################################################################################################################
 sub lockPathCreate
 {
-    storageLocal()->pathCreate(optionGet(OPTION_LOCK_PATH), {strMode => '770', bIgnoreExists => true, bCreateParent => true});
+    storageLocal()->pathCreate(cfgOption(CFGOPT_LOCK_PATH), {strMode => '770', bIgnoreExists => true, bCreateParent => true});
 }
 
 ####################################################################################################################################
@@ -92,7 +92,7 @@ sub lockAcquire
         lockPathCreate();
 
         # Attempt to open the lock file
-        $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA, false), $bRemote);
+        $strCurrentLockFile = lockFileName($strLockType, cfgOption(CFGOPT_STANZA, false), $bRemote);
 
         sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640))
             or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
@@ -182,7 +182,7 @@ sub lockStopFileName
 {
     my $strStanza = shift;
 
-    return optionGet(OPTION_LOCK_PATH) . (defined($strStanza) ? "/${strStanza}" : '/all') . '.stop';
+    return cfgOption(CFGOPT_LOCK_PATH) . (defined($strStanza) ? "/${strStanza}" : '/all') . '.stop';
 }
 
 ####################################################################################################################################
@@ -197,13 +197,13 @@ sub lockStop
     lockPathCreate();
 
     # Generate the stop file name
-    my $strStopFile = lockStopFileName(optionGet(OPTION_STANZA, false));
+    my $strStopFile = lockStopFileName(cfgOption(CFGOPT_STANZA, false));
 
     # If the stop file already exists then warn
     if (-e $strStopFile)
     {
         &log(WARN, 'stop file already exists' .
-                   (optionTest(OPTION_STANZA) ? ' for stanza ' . optionGet(OPTION_STANZA) : ' for all stanzas'));
+                   (cfgOptionTest(CFGOPT_STANZA) ? ' for stanza ' . cfgOption(CFGOPT_STANZA) : ' for all stanzas'));
         return false;
     }
 
@@ -213,9 +213,9 @@ sub lockStop
     close($hStopHandle);
 
     # If --force was specified then send term signals to running processes
-    if (optionGet(OPTION_FORCE))
+    if (cfgOption(CFGOPT_FORCE))
     {
-        my $strLockPath = optionGet(OPTION_LOCK_PATH);
+        my $strLockPath = cfgOption(CFGOPT_LOCK_PATH);
 
         opendir(my $hPath, $strLockPath)
             or confess &log(ERROR, "unable to open lock path ${strLockPath}", ERROR_PATH_OPEN);
@@ -285,14 +285,14 @@ sub lockStopTest
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::lockStopTest');
 
     # Check the stanza first if it is specified
-    if (optionTest(OPTION_STANZA))
+    if (cfgOptionTest(CFGOPT_STANZA))
     {
         # Generate the stop file name
-        my $strStopFile = lockStopFileName(optionGet(OPTION_STANZA));
+        my $strStopFile = lockStopFileName(cfgOption(CFGOPT_STANZA));
 
         if (-e $strStopFile)
         {
-            confess &log(ERROR, 'stop file exists for stanza ' . optionGet(OPTION_STANZA), ERROR_STOP);
+            confess &log(ERROR, 'stop file exists for stanza ' . cfgOption(CFGOPT_STANZA), ERROR_STOP);
         }
     }
 
@@ -318,12 +318,12 @@ push @EXPORT, qw(lockStopTest);
 sub lockStart
 {
     # Generate the stop file name
-    my $strStopFile = lockStopFileName(optionGet(OPTION_STANZA, false));
+    my $strStopFile = lockStopFileName(cfgOption(CFGOPT_STANZA, false));
 
     # If the stop file doesn't exist then warn
     if (!-e $strStopFile)
     {
-        &log(WARN, 'stop file does not exist' . (optionTest(OPTION_STANZA) ? ' for stanza ' . optionGet(OPTION_STANZA) : ''));
+        &log(WARN, 'stop file does not exist' . (cfgOptionTest(CFGOPT_STANZA) ? ' for stanza ' . cfgOption(CFGOPT_STANZA) : ''));
         return false;
     }
 

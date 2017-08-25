@@ -84,11 +84,11 @@ sub process
     # This first lock request is a quick test to see if the async process is running.  If the lock is successful we need to release
     # the lock, fork, and then let the async process acquire its own lock.  Otherwise the lock will be held by the client process
     # which will soon exit and leave the async process unlocked.
-    if (lockAcquire(commandGet(), false))
+    if (lockAcquire(cfgCommandName(cfgCommandGet()), false))
     {
         &log(TEST, TEST_ARCHIVE_PUSH_ASYNC_START);
 
-        lockRelease(commandGet());
+        lockRelease(cfgCommandName(cfgCommandGet()));
         $bClient = fork() == 0 ? false : true;
     }
     else
@@ -100,10 +100,10 @@ sub process
     if (!$bClient)
     {
         # uncoverable branch false - reacquire the lock since it was released by the client process above
-        if (lockAcquire(commandGet(), false))
+        if (lockAcquire(cfgCommandName(cfgCommandGet()), false))
         {
             # Open the log file
-            logFileSet(optionGet(OPTION_LOG_PATH) . '/' . optionGet(OPTION_STANZA) . '-archive-async');
+            logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-async');
 
             # uncoverable branch true - chdir to /
             chdir '/'
@@ -153,9 +153,9 @@ sub initServer
 
     # Initialize the archive process
     $self->{oArchiveProcess} = new pgBackRest::Protocol::Local::Process(
-        BACKUP, optionGet(OPTION_PROTOCOL_TIMEOUT) < 60 ? optionGet(OPTION_PROTOCOL_TIMEOUT) / 2 : 30,
+        CFGOPTVAL_LOCAL_TYPE_BACKUP, cfgOption(CFGOPT_PROTOCOL_TIMEOUT) < 60 ? cfgOption(CFGOPT_PROTOCOL_TIMEOUT) / 2 : 30,
         $self->{strBackRestBin}, false);
-    $self->{oArchiveProcess}->hostAdd(1, optionGet(OPTION_PROCESS_MAX));
+    $self->{oArchiveProcess}->hostAdd(1, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -201,7 +201,7 @@ sub processQueue
     foreach my $strWalFile (@{$stryWalFile})
     {
         $self->{oArchiveProcess}->queueJob(
-            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE, [$self->{strWalPath}, $strWalFile, optionGet(OPTION_COMPRESS)]);
+            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE, [$self->{strWalPath}, $strWalFile, cfgOption(CFGOPT_COMPRESS)]);
     }
 
     # Process jobs if there are any
@@ -218,7 +218,7 @@ sub processQueue
         eval
         {
             # Hold a lock when the repo is remote to be sure no other process is pushing WAL
-            !isRepoLocal() && protocolGet(BACKUP);
+            !isRepoLocal() && protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP);
 
             while (my $hyJob = $self->{oArchiveProcess}->process())
             {
@@ -256,7 +256,7 @@ sub processQueue
                 }
 
                 # Drop any jobs that exceed the queue max
-                if (optionTest(OPTION_ARCHIVE_QUEUE_MAX))
+                if (cfgOptionTest(CFGOPT_ARCHIVE_QUEUE_MAX))
                 {
                     my $stryDropList = $self->dropList($self->readyList());
 
@@ -267,7 +267,7 @@ sub processQueue
                             $self->walStatusWrite(
                                 WAL_STATUS_OK, $strDropFile, 0,
                                 "dropped WAL file ${strDropFile} because archive queue exceeded " .
-                                    optionGet(OPTION_ARCHIVE_QUEUE_MAX) . ' bytes');
+                                    cfgOption(CFGOPT_ARCHIVE_QUEUE_MAX) . ' bytes');
 
                             $iDropTotal++;
                         }

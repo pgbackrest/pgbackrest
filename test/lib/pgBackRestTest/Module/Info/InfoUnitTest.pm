@@ -2,7 +2,7 @@
 # InfoUnitTest.pm - Unit tests for Info module
 ####################################################################################################################################
 package pgBackRestTest::Module::Info::InfoUnitTest;
-use parent 'pgBackRestTest::Env::HostEnvTest';
+use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -72,21 +72,21 @@ sub initStanzaCreate
     my $self = shift;
 
     # Set options for stanzaCreate
-    my $oOption = {};
+    my $rhConfig = $self->configTestClear();
 
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
-    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
-    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
-    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
+    $self->optionTestSetBool(CFGOPT_ONLINE, false);
+    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
 
-    $self->configLoadExpect(dclone($oOption), CMD_STANZA_CREATE);
+    $self->configTestLoad(CFGCMD_STANZA_CREATE);
+    $self->configTestSet($rhConfig);
 
     # Create the test object
     $self->{oExpireTest} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), storageRepo(), undef, $self);
-
     $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
 }
 
@@ -98,17 +98,18 @@ sub initStanzaUpgrade
     my $self = shift;
 
     # Set options for stanzaCreate
-    my $oOption = {};
+    my $rhConfig = $self->configTestClear();
 
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_DB_PATH, $self->{strDbPath});
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
-    $self->optionSetTest($oOption, OPTION_LOG_PATH, $self->testPath());
-    $self->optionBoolSetTest($oOption, OPTION_ONLINE, false);
-    $self->optionSetTest($oOption, OPTION_DB_TIMEOUT, 5);
-    $self->optionSetTest($oOption, OPTION_PROTOCOL_TIMEOUT, 6);
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+    $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
+    $self->optionTestSetBool(CFGOPT_ONLINE, false);
+    $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
+    $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
 
-    $self->configLoadExpect(dclone($oOption), CMD_STANZA_UPGRADE);
+    $self->configTestLoad(CFGCMD_STANZA_UPGRADE);
+    $self->configTestSet($rhConfig);
 
     # Create the test object
     $self->{oExpireTest} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), storageRepo(), undef, $self);
@@ -123,8 +124,6 @@ sub run
 {
     my $self = shift;
 
-    my $oOption = {};
-
     # Used to create backups and WAL to test
     use constant SECONDS_PER_DAY => 86400;
     my $lBaseTime = 1486137448 - (60 * SECONDS_PER_DAY);
@@ -132,7 +131,7 @@ sub run
     ################################################################################################################################
     if ($self->begin("Info"))
     {
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
+        $self->configTestLoad(CFGCMD_INFO);
 
         my $oInfo = new pgBackRest::Info();
 
@@ -142,14 +141,14 @@ sub run
 
         # Invalid option
         #---------------------------------------------------------------------------------------------------------------------------
-        optionSet(OPTION_OUTPUT, BOGUS);
+        cfgOptionSet(CFGOPT_OUTPUT, BOGUS);
 
         $self->testException(sub {$oInfo->process()}, ERROR_ASSERT, "invalid info output option '" . BOGUS . "'");
 
         # Output json option with no stanza defined
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionSetTest($oOption, OPTION_OUTPUT, INFO_OUTPUT_JSON);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
+        $self->optionTestSet(CFGOPT_OUTPUT, CFGOPTVAL_INFO_OUTPUT_JSON);
+        $self->configTestLoad(CFGCMD_INFO);
 
         $self->testResult(sub {$oInfo->process()}, 0, 'json option');
 
@@ -196,7 +195,8 @@ sub run
 
         # Test !isRepoLocal branch
         #---------------------------------------------------------------------------------------------------------------------------
-        optionSet(OPTION_BACKUP_HOST, false);
+        cfgOptionSet(CFGOPT_BACKUP_HOST, false);
+        cfgOptionSet(CFGOPT_BACKUP_CONFIG, BOGUS);
         $self->testException(sub {$oInfo->stanzaList(BOGUS)}, ERROR_ASSERT, "option backup-cmd is required");
 
         # dbArchiveSection() -- no archive
@@ -225,9 +225,9 @@ sub run
 
         # Create more than one stanza but no data
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->{strRepoPath});
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+        $self->configTestLoad(CFGCMD_INFO);
 
         # Create archive info paths but no archive info
         storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
@@ -247,16 +247,16 @@ sub run
 
         # Define the stanza option
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-        $self->optionReset($oOption, OPTION_OUTPUT);
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestClear(CFGOPT_OUTPUT);
+        $self->configTestLoad(CFGCMD_INFO);
 
         $self->testResult(sub {$oInfo->process()}, 0, 'stanza set');
 
         # Create the stanza - no WAL or backups
         #---------------------------------------------------------------------------------------------------------------------------
         $self->initStanzaCreate();
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
+        $self->configTestLoad(CFGCMD_INFO);
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
@@ -266,7 +266,7 @@ sub run
 
         # Create a backup and list backup for just one stanza
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
@@ -294,10 +294,11 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         undef($self->{oExpireTest});
         $self->initStanzaUpgrade();
-        logDisable(); $self->configLoadExpect(dclone($oOption), CMD_INFO); logEnable();
 
-        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 1, 1);
-        $self->{oExpireTest}->backupCreate($self->stanza(), BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 1, 1);
+        $self->configTestLoad(CFGCMD_INFO);
+
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, 1, 1);
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY, 1, 1);
 
         # Remove the 9.4-1 path for condition test coverage
         storageTest()->remove($self->{strArchivePath} . "/9.4-1/", {bRecurse => true});

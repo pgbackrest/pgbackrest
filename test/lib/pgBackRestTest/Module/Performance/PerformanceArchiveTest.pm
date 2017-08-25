@@ -63,8 +63,10 @@ sub run
         for (my $iIndex = 0; $iIndex < $iRunTotal; $iIndex++)
         {
             executeTest(
-                $self->backrestExe() . ' --' . OPTION_STANZA . '=' . $self->stanza() .  ' --' . OPTION_ARCHIVE_ASYNC .
-                ' --' . OPTION_SPOOL_PATH . '=' . $self->{strSpoolPath} . ' --' . OPTION_ARCHIVE_TIMEOUT . '=1' .
+                $self->backrestExe() . ' --' . cfgOptionName(CFGOPT_STANZA) . '=' . $self->stanza() .
+                ' --' . cfgOptionName(CFGOPT_ARCHIVE_ASYNC) .
+                ' --' . cfgOptionName(CFGOPT_SPOOL_PATH) . '=' . $self->{strSpoolPath} .
+                ' --' . cfgOptionName(CFGOPT_ARCHIVE_TIMEOUT) . '=1' .
                 ' archive-push /pg_xlog/000000010000000100000001');
         }
 

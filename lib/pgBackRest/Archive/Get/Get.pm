@@ -44,7 +44,7 @@ sub process
     # Make sure the command happens on the db side
     if (!isDbLocal())
     {
-        confess &log(ERROR, CMD_ARCHIVE_GET . ' operation must run on db host', ERROR_HOST_INVALID);
+        confess &log(ERROR, cfgCommandName(CFGCMD_ARCHIVE_GET) . ' operation must run on db host', ERROR_HOST_INVALID);
     }
 
     # Make sure the archive file is defined
@@ -97,7 +97,7 @@ sub get
     my $oStorageRepo = storageRepo();
 
     # Construct absolute path to the WAL file when it is relative
-    $strDestinationFile = walPath($strDestinationFile, optionGet(OPTION_DB_PATH, false), commandGet());
+    $strDestinationFile = walPath($strDestinationFile, cfgOption(CFGOPT_DB_PATH, false), cfgCommandName(cfgCommandGet()));
 
     # Get the wal segment filename
     my ($strArchiveId, $strArchiveFile) = $self->getCheck(
@@ -162,7 +162,7 @@ sub getArchiveId
 
     if (!isRepoLocal())
     {
-        $strArchiveId = protocolGet(BACKUP)->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
+        $strArchiveId = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(OP_ARCHIVE_GET_ARCHIVE_ID, undef, true);
     }
     else
     {

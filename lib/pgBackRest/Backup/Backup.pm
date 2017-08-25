@@ -13,7 +13,6 @@ use File::Basename;
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Get::Get;
-use pgBackRest::Backup::Filter::PageChecksum; # ??? Temporary until isLibC is moved to a better place
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::File;
 use pgBackRest::Backup::Info;
@@ -26,6 +25,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
+use pgBackRest::LibCLoad;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
@@ -227,25 +227,26 @@ sub processManifest
 
     # Get the master protocol for keep-alive
     my $oProtocolMaster =
-        !isDbLocal({iRemoteIdx => $self->{iMasterRemoteIdx}}) ? protocolGet(DB, $self->{iMasterRemoteIdx}) : undef;
+        !isDbLocal({iRemoteIdx => $self->{iMasterRemoteIdx}}) ?
+            protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iMasterRemoteIdx}) : undef;
     defined($oProtocolMaster) && $oProtocolMaster->noOp();
 
     # Initialize the backup process
-    my $oBackupProcess = new pgBackRest::Protocol::Local::Process(DB);
+    my $oBackupProcess = new pgBackRest::Protocol::Local::Process(CFGOPTVAL_LOCAL_TYPE_DB);
 
     if ($self->{iCopyRemoteIdx} != $self->{iMasterRemoteIdx})
     {
         $oBackupProcess->hostAdd($self->{iMasterRemoteIdx}, 1);
     }
 
-    $oBackupProcess->hostAdd($self->{iCopyRemoteIdx}, optionGet(OPTION_PROCESS_MAX));
+    $oBackupProcess->hostAdd($self->{iCopyRemoteIdx}, cfgOption(CFGOPT_PROCESS_MAX));
 
     # Variables used for parallel copy
     my $lFileTotal = 0;
     my $lSizeTotal = 0;
 
     # If this is a full backup or hard-linked then create all paths and tablespace links
-    if ($bHardLink || $strType eq BACKUP_TYPE_FULL)
+    if ($bHardLink || $strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
     {
         # Create paths
         foreach my $strPath ($oBackupManifest->keys(MANIFEST_SECTION_TARGET_PATH))
@@ -345,9 +346,9 @@ sub processManifest
             $iHostConfigIdx, $strQueueKey, $strRepoFile, OP_BACKUP_FILE,
             [$strDbFile, $strRepoFile, $lSize,
                 $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
-                optionGet(OPTION_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
+                cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
                 $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false),
-                $bIgnoreMissing, optionGet(OPTION_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
+                $bIgnoreMissing, cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
 
         # Size and checksum will be removed and then verified later as a sanity check
         $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
@@ -355,7 +356,7 @@ sub processManifest
     }
 
     # pg_control should always be in the backup (unless this is an offline backup)
-    if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && optionGet(OPTION_ONLINE))
+    if (!$oBackupManifest->test(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL) && cfgOption(CFGOPT_ONLINE))
     {
         confess &log(ERROR, DB_FILE_PGCONTROL . " must be present in all online backups\n" .
                      'HINT: is something wrong with the clock or filesystem timestamps?', ERROR_FILE_MISSING);
@@ -363,7 +364,7 @@ sub processManifest
 
     # If there are no files to backup then we'll exit with an error unless in test mode.  The other way this could happen is if
     # the database is down and backup is called with --no-online twice in a row.
-    if ($lFileTotal == 0 && !optionGet(OPTION_TEST))
+    if ($lFileTotal == 0 && !cfgOption(CFGOPT_TEST))
     {
         confess &log(ERROR, "no files have changed since the last backup - this seems unlikely", ERROR_FILE_MISSING);
     }
@@ -375,10 +376,10 @@ sub processManifest
     my $lManifestSaveCurrent = 0;
     my $lManifestSaveSize = int($lSizeTotal / 100);
 
-    if (optionSource(OPTION_MANIFEST_SAVE_THRESHOLD) ne SOURCE_DEFAULT ||
-        $lManifestSaveSize < optionGet(OPTION_MANIFEST_SAVE_THRESHOLD))
+    if (cfgOptionSource(CFGOPT_MANIFEST_SAVE_THRESHOLD) ne CFGDEF_SOURCE_DEFAULT ||
+        $lManifestSaveSize < cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD))
     {
-        $lManifestSaveSize = optionGet(OPTION_MANIFEST_SAVE_THRESHOLD);
+        $lManifestSaveSize = cfgOption(CFGOPT_MANIFEST_SAVE_THRESHOLD);
     }
 
     # Run the backup jobs and process results
@@ -387,7 +388,7 @@ sub processManifest
         foreach my $hJob (@{$hyJob})
         {
             ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-                $oBackupManifest, optionGet(optionIndex(OPTION_DB_HOST, $hJob->{iHostConfigIdx}), false), $hJob->{iProcessId},
+                $oBackupManifest, cfgOption(cfgOptionIndex(CFGOPT_DB_HOST, $hJob->{iHostConfigIdx}), false), $hJob->{iProcessId},
                 @{$hJob->{rParam}}[0..4], @{$hJob->{rResult}},
                 $lSizeTotal, $lSizeCurrent, $lManifestSaveSize, $lManifestSaveCurrent);
         }
@@ -427,9 +428,9 @@ sub process
     my $oStorageRepo = storageRepo();
 
     # Store local type, compress, and hardlink options since they can be modified by the process
-    my $strType = optionGet(OPTION_TYPE);
-    my $bCompress = optionGet(OPTION_COMPRESS);
-    my $bHardLink = optionGet(OPTION_HARDLINK);
+    my $strType = cfgOption(CFGOPT_TYPE);
+    my $bCompress = cfgOption(CFGOPT_COMPRESS);
+    my $bHardLink = cfgOption(CFGOPT_HARDLINK);
 
     # Create the cluster backup and history path
     $oStorageRepo->pathCreate(
@@ -451,11 +452,11 @@ sub process
         $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
     }
 
-    # If backup from standby option is set but we could not get the standby object then, turn off OPTION_BACKUP_STANDBY & warn that
+    # If backup from standby option is set but we could not get the standby object then, turn off CFGOPT_BACKUP_STANDBY & warn that
     # backups will be performed from the master.
-    if (!defined($oDbStandby) && optionGet(OPTION_BACKUP_STANDBY))
+    if (!defined($oDbStandby) && cfgOption(CFGOPT_BACKUP_STANDBY))
     {
-        optionSet(OPTION_BACKUP_STANDBY, false);
+        cfgOptionSet(CFGOPT_BACKUP_STANDBY, false);
         &log(WARN, 'option backup-standby is enabled but standby is not properly configured - ' .
             'backups will be performed from the master');
     }
@@ -464,8 +465,8 @@ sub process
     my $oStorageDbMaster = storageDb({iRemoteIdx => $self->{iMasterRemoteIdx}});
 
     # Determine the database paths
-    my $strDbMasterPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iMasterRemoteIdx}));
-    my $strDbCopyPath = optionGet(optionIndex(OPTION_DB_PATH, $self->{iCopyRemoteIdx}));
+    my $strDbMasterPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $self->{iMasterRemoteIdx}));
+    my $strDbCopyPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $self->{iCopyRemoteIdx}));
 
     # Database info
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
@@ -476,9 +477,10 @@ sub process
     my $oLastManifest;
     my $strBackupLastPath;
 
-    if ($strType ne BACKUP_TYPE_FULL)
+    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL)
     {
-        $strBackupLastPath = $oBackupInfo->last($strType eq BACKUP_TYPE_DIFF ? BACKUP_TYPE_FULL : BACKUP_TYPE_INCR);
+        $strBackupLastPath = $oBackupInfo->last(
+            $strType eq CFGOPTVAL_BACKUP_TYPE_DIFF ? CFGOPTVAL_BACKUP_TYPE_FULL : CFGOPTVAL_BACKUP_TYPE_INCR);
 
         # If there is a prior backup and it is for the current database, then use it as base
         if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))
@@ -511,7 +513,7 @@ sub process
         else
         {
             &log(WARN, "no prior backup exists, ${strType} backup has been changed to full");
-            $strType = BACKUP_TYPE_FULL;
+            $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
             $strBackupLastPath = undef;
         }
     }
@@ -534,7 +536,7 @@ sub process
 
             # Attempt to read the manifest file in the aborted backup to see if it can be used.  If any error at all occurs then the
             # backup will be considered unusable and a resume will not be attempted.
-            if (optionGet(OPTION_RESUME))
+            if (cfgOption(CFGOPT_RESUME))
             {
                 $strReason = "unable to read ${strBackupPath}/" . FILE_MANIFEST;
 
@@ -580,18 +582,18 @@ sub process
                     }
                     # Check compression
                     elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS) !=
-                           optionGet(OPTION_COMPRESS))
+                           cfgOption(CFGOPT_COMPRESS))
                     {
                         $strKey = MANIFEST_KEY_COMPRESS;
-                        $strValueNew = optionGet(OPTION_COMPRESS);
+                        $strValueNew = cfgOption(CFGOPT_COMPRESS);
                         $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS);
                     }
                     # Check hardlink
                     elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK) !=
-                           optionGet(OPTION_HARDLINK))
+                           cfgOption(CFGOPT_HARDLINK))
                     {
                         $strKey = MANIFEST_KEY_HARDLINK;
-                        $strValueNew = optionGet(OPTION_HARDLINK);
+                        $strValueNew = cfgOption(CFGOPT_HARDLINK);
                         $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
                     }
 
@@ -645,15 +647,15 @@ sub process
     # Backup settings
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_START, undef, $lTimestampStart);
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, optionGet(OPTION_BACKUP_STANDBY));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef, cfgOption(CFGOPT_BACKUP_STANDBY));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef, $bCompress);
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK, undef, $bHardLink);
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, optionGet(OPTION_ONLINE));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ONLINE, undef, cfgOption(CFGOPT_ONLINE));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
-                              !optionGet(OPTION_ONLINE) ||
-                              (optionGet(OPTION_BACKUP_ARCHIVE_CHECK) && optionGet(OPTION_BACKUP_ARCHIVE_COPY)));
+                              !cfgOption(CFGOPT_ONLINE) ||
+                              (cfgOption(CFGOPT_ARCHIVE_CHECK) && cfgOption(CFGOPT_ARCHIVE_COPY)));
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef,
-                              !optionGet(OPTION_ONLINE) || optionGet(OPTION_BACKUP_ARCHIVE_CHECK));
+                              !cfgOption(CFGOPT_ONLINE) || cfgOption(CFGOPT_ARCHIVE_CHECK));
 
     # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
@@ -663,11 +665,11 @@ sub process
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
 
     # Backup from standby can only be used on PostgreSQL >= 9.1
-    if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
+    if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_BACKUP_STANDBY) && $strDbVersion < PG_VERSION_BACKUP_STANDBY)
     {
-        confess &log(
-            ERROR,
-            'option \'' . OPTION_BACKUP_STANDBY . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY, ERROR_CONFIG);
+        confess &log(ERROR,
+            'option \'' . cfgOptionName(CFGOPT_BACKUP_STANDBY) . '\' not valid for PostgreSQL < ' . PG_VERSION_BACKUP_STANDBY,
+            ERROR_CONFIG);
     }
 
     # Start backup (unless --no-online is set)
@@ -677,33 +679,33 @@ sub process
 	my $hDatabaseMap = undef;
 
     # Only allow page checksums if the C library is available
-    if (!isLibC())
+    if (!libC())
     {
         # Warn if page checksums were expicitly requested
-        if (optionTest(OPTION_CHECKSUM_PAGE) && optionGet(OPTION_CHECKSUM_PAGE))
+        if (cfgOptionTest(CFGOPT_CHECKSUM_PAGE) && cfgOption(CFGOPT_CHECKSUM_PAGE))
         {
             &log(WARN, "page checksums disabled - pgBackRest::LibC module is not present");
         }
 
         # Disable page checksums
-        optionSet(OPTION_CHECKSUM_PAGE, false);
+        cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
     }
 
     # If this is an offline backup
-    if (!optionGet(OPTION_ONLINE))
+    if (!cfgOption(CFGOPT_ONLINE))
     {
         # If checksum-page is not explictly enabled then disable it.  Even if the version is high enough to have checksums we can't
         # know if they are enabled without asking the database.  When pg_control can be reliably parsed then this decision could be
         # based on that.
-        if (!optionTest(OPTION_CHECKSUM_PAGE))
+        if (!cfgOptionTest(CFGOPT_CHECKSUM_PAGE))
         {
-            optionSet(OPTION_CHECKSUM_PAGE, false);
+            cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
         }
 
         # Check if Postgres is running and if so only continue when forced
         if ($oStorageDbMaster->exists($strDbMasterPath . '/' . DB_FILE_POSTMASTERPID))
         {
-            if (optionGet(OPTION_FORCE))
+            if (cfgOption(CFGOPT_FORCE))
             {
                 &log(WARN, '--no-online passed and ' . DB_FILE_POSTMASTERPID . ' exists but --force was passed so backup will ' .
                            'continue though it looks like the postmaster is running and the backup will probably not be ' .
@@ -722,7 +724,7 @@ sub process
         # Start the backup
         ($strArchiveStart, $strLsnStart) =
             $oDbMaster->backupStart(
-                BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), optionGet(OPTION_START_FAST));
+                BACKREST_NAME . ' backup started at ' . timestampFormat(undef, $lTimestampStart), cfgOption(CFGOPT_START_FAST));
 
         # Record the archive start location
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_ARCHIVE_START, undef, $strArchiveStart);
@@ -736,7 +738,7 @@ sub process
         $hDatabaseMap = $oDbMaster->databaseMapGet();
 
         # Wait for replay on the standby to catch up
-        if (optionGet(OPTION_BACKUP_STANDBY))
+        if (cfgOption(CFGOPT_BACKUP_STANDBY))
         {
             my ($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId) = $oDbStandby->info();
             $oBackupInfo->check($strStandbyDbVersion, $iStandbyControlVersion, $iStandbyCatalogVersion, $ullStandbyDbSysId);
@@ -754,41 +756,41 @@ sub process
 
             # The standby db object won't be used anymore so undef it to catch any subsequent references
             undef($oDbStandby);
-            protocolDestroy(DB, $self->{iCopyRemoteIdx}, true);
+            protocolDestroy(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iCopyRemoteIdx}, true);
         }
     }
 
     # Don't allow the checksum-page option to change in a diff or incr backup.  This could be confusing as only certain files would
     # be checksummed and the list could be incomplete during reporting.
-    if ($strType ne BACKUP_TYPE_FULL && defined($strBackupLastPath))
+    if ($strType ne CFGOPTVAL_BACKUP_TYPE_FULL && defined($strBackupLastPath))
     {
         # If not defined this backup was done in a version prior to page checksums being introduced.  Just set checksum-page to
         # false and move on without a warning.  Page checksums will start on the next full backup.
         if (!$oLastManifest->test(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE))
         {
-            optionSet(OPTION_CHECKSUM_PAGE, false);
+            cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
         }
         else
         {
             my $bChecksumPageLast =
                 $oLastManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE);
 
-            if ($bChecksumPageLast != optionGet(OPTION_CHECKSUM_PAGE))
+            if ($bChecksumPageLast != cfgOption(CFGOPT_CHECKSUM_PAGE))
             {
                 &log(WARN,
-                    "${strType} backup cannot alter '" . OPTION_CHECKSUM_PAGE . "' option to '" .
-                        boolFormat(optionGet(OPTION_CHECKSUM_PAGE)) . "', reset to '" . boolFormat($bChecksumPageLast) .
+                    "${strType} backup cannot alter '" . cfgOptionName(CFGOPT_CHECKSUM_PAGE) . "' option to '" .
+                        boolFormat(cfgOption(CFGOPT_CHECKSUM_PAGE)) . "', reset to '" . boolFormat($bChecksumPageLast) .
                         "' from ${strBackupLastPath}");
-                optionSet(OPTION_CHECKSUM_PAGE, $bChecksumPageLast);
+                cfgOptionSet(CFGOPT_CHECKSUM_PAGE, $bChecksumPageLast);
             }
         }
     }
 
     # Record checksum-page option in the manifest
-    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, optionGet(OPTION_CHECKSUM_PAGE));
+    $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
 
     # Build the manifest
-    $oBackupManifest->build($oStorageDbMaster, $strDbVersion, $strDbMasterPath, $oLastManifest, optionGet(OPTION_ONLINE),
+    $oBackupManifest->build($oStorageDbMaster, $strDbVersion, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
                             $hTablespaceMap, $hDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -825,7 +827,7 @@ sub process
     my $strArchiveStop = undef;
     my $strLsnStop = undef;
 
-    if (optionGet(OPTION_ONLINE))
+    if (cfgOption(CFGOPT_ONLINE))
     {
         ($strArchiveStop, $strLsnStop, my $strTimestampDbStop, my $oFileHash) = $oDbMaster->backupStop();
 
@@ -872,7 +874,7 @@ sub process
     # If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
     # archive logs are going to a different server.  Be careful of this option because there is no way to verify that the backup
     # will be consistent - at least not here.
-    if (optionGet(OPTION_ONLINE) && optionGet(OPTION_BACKUP_ARCHIVE_CHECK))
+    if (cfgOption(CFGOPT_ONLINE) && cfgOption(CFGOPT_ARCHIVE_CHECK))
     {
         # Save the backup manifest before getting archive logs in case of failure
         $oBackupManifest->saveCopy();
@@ -887,10 +889,10 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = walSegmentFind($oStorageRepo, $strArchiveId, $strArchive, optionGet(OPTION_ARCHIVE_TIMEOUT));
+            my $strArchiveFile = walSegmentFind($oStorageRepo, $strArchiveId, $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
             $strArchive = substr($strArchiveFile, 0, 24);
 
-            if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
+            if (cfgOption(CFGOPT_ARCHIVE_COPY))
             {
                 logDebugMisc($strOperation, "archive: ${strArchive} (${strArchiveFile})");
 

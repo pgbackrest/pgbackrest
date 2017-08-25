@@ -2,7 +2,7 @@
 # BackupInfoUnitTest.pm - Unit tests for BackupInfo
 ####################################################################################################################################
 package pgBackRestTest::Module::Backup::BackupInfoUnitTest;
-use parent 'pgBackRestTest::Env::HostEnvTest';
+use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -28,7 +28,6 @@ use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
@@ -49,10 +48,10 @@ sub initTest
     my $self = shift;
 
     # Load options
-    my $oOption = {};
-    $self->optionSetTest($oOption, OPTION_STANZA, $self->stanza());
-    $self->optionSetTest($oOption, OPTION_REPO_PATH, $self->testPath() . '/repo');
-    logDisable(); $self->configLoadExpect(dclone($oOption), CMD_ARCHIVE_PUSH); logEnable();
+    $self->configTestClear();
+    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
+    $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
     # Create the local file object
     $self->{oStorage} = storageRepo();

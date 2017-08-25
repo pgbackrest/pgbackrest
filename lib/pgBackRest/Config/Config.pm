@@ -18,2119 +18,44 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
+use pgBackRest::Config::LoadFailback;
 use pgBackRest::Version;
 
 ####################################################################################################################################
-# Command constants - basic commands that are allowed in backrest
+# Export config constants and functions
 ####################################################################################################################################
-my %oCommandHash;
-
-use constant CMD_ARCHIVE_GET                                        => 'archive-get';
-    push @EXPORT, qw(CMD_ARCHIVE_GET);
-    $oCommandHash{&CMD_ARCHIVE_GET} = true;
-use constant CMD_ARCHIVE_PUSH                                       => 'archive-push';
-    push @EXPORT, qw(CMD_ARCHIVE_PUSH);
-    $oCommandHash{&CMD_ARCHIVE_PUSH} = true;
-use constant CMD_BACKUP                                             => 'backup';
-    push @EXPORT, qw(CMD_BACKUP);
-    $oCommandHash{&CMD_BACKUP} = true;
-use constant CMD_CHECK                                              => 'check';
-    push @EXPORT, qw(CMD_CHECK);
-    $oCommandHash{&CMD_CHECK} = true;
-use constant CMD_EXPIRE                                             => 'expire';
-    push @EXPORT, qw(CMD_EXPIRE);
-    $oCommandHash{&CMD_EXPIRE} = true;
-use constant CMD_HELP                                               => 'help';
-    push @EXPORT, qw(CMD_HELP);
-    $oCommandHash{&CMD_HELP} = true;
-use constant CMD_INFO                                               => 'info';
-    push @EXPORT, qw(CMD_INFO);
-    $oCommandHash{&CMD_INFO} = true;
-use constant CMD_LOCAL                                              => 'local';
-    push @EXPORT, qw(CMD_LOCAL);
-    $oCommandHash{&CMD_LOCAL} = true;
-use constant CMD_REMOTE                                             => 'remote';
-    push @EXPORT, qw(CMD_REMOTE);
-    $oCommandHash{&CMD_REMOTE} = true;
-use constant CMD_RESTORE                                            => 'restore';
-    push @EXPORT, qw(CMD_RESTORE);
-    $oCommandHash{&CMD_RESTORE} = true;
-use constant CMD_STANZA_CREATE                                      => 'stanza-create';
-    push @EXPORT, qw(CMD_STANZA_CREATE);
-    $oCommandHash{&CMD_STANZA_CREATE} = true;
-use constant CMD_STANZA_UPGRADE                                     => 'stanza-upgrade';
-    push @EXPORT, qw(CMD_STANZA_UPGRADE);
-    $oCommandHash{&CMD_STANZA_UPGRADE} = true;
-use constant CMD_START                                              => 'start';
-    push @EXPORT, qw(CMD_START);
-    $oCommandHash{&CMD_START} = true;
-use constant CMD_STOP                                               => 'stop';
-    push @EXPORT, qw(CMD_STOP);
-    $oCommandHash{&CMD_STOP} = true;
-use constant CMD_VERSION                                            => 'version';
-    push @EXPORT, qw(CMD_VERSION);
-    $oCommandHash{&CMD_VERSION} = true;
-
-####################################################################################################################################
-# DB/BACKUP Constants
-####################################################################################################################################
-use constant DB                                                     => 'db';
-    push @EXPORT, qw(DB);
-use constant BACKUP                                                 => 'backup';
-    push @EXPORT, qw(BACKUP);
-
-####################################################################################################################################
-# BACKUP Type Constants
-####################################################################################################################################
-use constant BACKUP_TYPE_FULL                                       => 'full';
-    push @EXPORT, qw(BACKUP_TYPE_FULL);
-use constant BACKUP_TYPE_DIFF                                       => 'diff';
-    push @EXPORT, qw(BACKUP_TYPE_DIFF);
-use constant BACKUP_TYPE_INCR                                       => 'incr';
-    push @EXPORT, qw(BACKUP_TYPE_INCR);
-
-####################################################################################################################################
-# REPO Type Constants
-####################################################################################################################################
-use constant REPO_TYPE_CIFS                                         => 'cifs';
-    push @EXPORT, qw(REPO_TYPE_CIFS);
-use constant REPO_TYPE_POSIX                                        => 'posix';
-    push @EXPORT, qw(REPO_TYPE_POSIX);
-use constant REPO_TYPE_S3                                           => 's3';
-    push @EXPORT, qw(REPO_TYPE_S3);
-
-####################################################################################################################################
-# INFO Output Constants
-####################################################################################################################################
-use constant INFO_OUTPUT_TEXT                                       => 'text';
-    push @EXPORT, qw(INFO_OUTPUT_TEXT);
-use constant INFO_OUTPUT_JSON                                       => 'json';
-    push @EXPORT, qw(INFO_OUTPUT_JSON);
+push(@EXPORT, @pgBackRest::Config::LoadFailback::EXPORT);
 
 ####################################################################################################################################
 # SOURCE Constants
 ####################################################################################################################################
-use constant SOURCE_CONFIG                                          => 'config';
-    push @EXPORT, qw(SOURCE_CONFIG);
-use constant SOURCE_PARAM                                           => 'param';
-    push @EXPORT, qw(SOURCE_PARAM);
-use constant SOURCE_DEFAULT                                         => 'default';
-    push @EXPORT, qw(SOURCE_DEFAULT);
-
-####################################################################################################################################
-# RECOVERY Type Constants
-####################################################################################################################################
-use constant RECOVERY_TYPE_NAME                                     => 'name';
-    push @EXPORT, qw(RECOVERY_TYPE_NAME);
-use constant RECOVERY_TYPE_TIME                                     => 'time';
-    push @EXPORT, qw(RECOVERY_TYPE_TIME);
-use constant RECOVERY_TYPE_XID                                      => 'xid';
-    push @EXPORT, qw(RECOVERY_TYPE_XID);
-use constant RECOVERY_TYPE_PRESERVE                                 => 'preserve';
-    push @EXPORT, qw(RECOVERY_TYPE_PRESERVE);
-use constant RECOVERY_TYPE_NONE                                     => 'none';
-    push @EXPORT, qw(RECOVERY_TYPE_NONE);
-use constant RECOVERY_TYPE_IMMEDIATE                                => 'immediate';
-    push @EXPORT, qw(RECOVERY_TYPE_IMMEDIATE);
-use constant RECOVERY_TYPE_DEFAULT                                  => 'default';
-    push @EXPORT, qw(RECOVERY_TYPE_DEFAULT);
-
-####################################################################################################################################
-# RECOVERY Action Constants
-####################################################################################################################################
-use constant RECOVERY_ACTION_PAUSE                                  => 'pause';
-    push @EXPORT, qw(RECOVERY_ACTION_PAUSE);
-use constant RECOVERY_ACTION_PROMOTE                                => 'promote';
-    push @EXPORT, qw(RECOVERY_ACTION_PROMOTE);
-use constant RECOVERY_ACTION_SHUTDOWN                               => 'shutdown';
-    push @EXPORT, qw(RECOVERY_ACTION_SHUTDOWN);
-
-####################################################################################################################################
-# Option Rules
-####################################################################################################################################
-use constant OPTION_RULE_ALT_NAME                                   => 'alt-name';
-    push @EXPORT, qw(OPTION_RULE_ALT_NAME);
-use constant OPTION_RULE_ALLOW_LIST                                 => 'allow-list';
-    push @EXPORT, qw(OPTION_RULE_ALLOW_LIST);
-use constant OPTION_RULE_ALLOW_RANGE                                => 'allow-range';
-    push @EXPORT, qw(OPTION_RULE_ALLOW_RANGE);
-use constant OPTION_RULE_DEFAULT                                    => 'default';
-    push @EXPORT, qw(OPTION_RULE_DEFAULT);
-use constant OPTION_RULE_DEPEND                                     => 'depend';
-    push @EXPORT, qw(OPTION_RULE_DEPEND);
-use constant OPTION_RULE_DEPEND_OPTION                              => 'depend-option';
-    push @EXPORT, qw(OPTION_RULE_DEPEND_OPTION);
-use constant OPTION_RULE_DEPEND_LIST                                => 'depend-list';
-    push @EXPORT, qw(OPTION_RULE_DEPEND_LIST);
-use constant OPTION_RULE_DEPEND_VALUE                               => 'depend-value';
-    push @EXPORT, qw(OPTION_RULE_DEPEND_VALUE);
-use constant OPTION_RULE_HASH_VALUE                                 => 'hash-value';
-    push @EXPORT, qw(OPTION_RULE_HASH_VALUE);
-use constant OPTION_RULE_HINT                                       => 'hint';
-    push @EXPORT, qw(OPTION_RULE_HINT);
-use constant OPTION_RULE_NEGATE                                     => 'negate';
-    push @EXPORT, qw(OPTION_RULE_NEGATE);
-use constant OPTION_RULE_PREFIX                                     => 'prefix';
-    push @EXPORT, qw(OPTION_RULE_PREFIX);
-use constant OPTION_RULE_COMMAND                                    => 'command';
-    push @EXPORT, qw(OPTION_RULE_COMMAND);
-use constant OPTION_RULE_REQUIRED                                   => 'required';
-    push @EXPORT, qw(OPTION_RULE_REQUIRED);
-use constant OPTION_RULE_SECTION                                    => 'section';
-    push @EXPORT, qw(OPTION_RULE_SECTION);
-use constant OPTION_RULE_SECURE                                     => 'secure';
-    push @EXPORT, qw(OPTION_RULE_SECURE);
-use constant OPTION_RULE_TYPE                                       => 'type';
-    push @EXPORT, qw(OPTION_RULE_TYPE);
-
-####################################################################################################################################
-# Option Types
-####################################################################################################################################
-use constant OPTION_TYPE_BOOLEAN                                    => 'boolean';
-    push @EXPORT, qw(OPTION_TYPE_BOOLEAN);
-use constant OPTION_TYPE_FLOAT                                      => 'float';
-    push @EXPORT, qw(OPTION_TYPE_FLOAT);
-use constant OPTION_TYPE_HASH                                       => 'hash';
-    push @EXPORT, qw(OPTION_TYPE_HASH);
-use constant OPTION_TYPE_INTEGER                                    => 'integer';
-    push @EXPORT, qw(OPTION_TYPE_INTEGER);
-use constant OPTION_TYPE_STRING                                     => 'string';
-    push @EXPORT, qw(OPTION_TYPE_STRING);
+use constant CFGDEF_SOURCE_CONFIG                                   => 'config';
+    push @EXPORT, qw(CFGDEF_SOURCE_CONFIG);
+use constant CFGDEF_SOURCE_PARAM                                    => 'param';
+    push @EXPORT, qw(CFGDEF_SOURCE_PARAM);
+use constant CFGDEF_SOURCE_DEFAULT                                  => 'default';
+    push @EXPORT, qw(CFGDEF_SOURCE_DEFAULT);
 
 ####################################################################################################################################
 # Configuration section constants
 ####################################################################################################################################
-use constant CONFIG_SECTION_GLOBAL                                  => 'global';
-    push @EXPORT, qw(CONFIG_SECTION_GLOBAL);
-use constant CONFIG_SECTION_STANZA                                  => 'stanza';
-    push @EXPORT, qw(CONFIG_SECTION_STANZA);
-
-####################################################################################################################################
-# Option constants
-####################################################################################################################################
-# Command-line only
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_CONFIG                                          => 'config';
-    push @EXPORT, qw(OPTION_CONFIG);
-use constant OPTION_DELTA                                           => 'delta';
-    push @EXPORT, qw(OPTION_DELTA);
-use constant OPTION_FORCE                                           => 'force';
-    push @EXPORT, qw(OPTION_FORCE);
-use constant OPTION_ONLINE                                          => 'online';
-    push @EXPORT, qw(OPTION_ONLINE);
-use constant OPTION_SET                                             => 'set';
-    push @EXPORT, qw(OPTION_SET);
-use constant OPTION_STANZA                                          => 'stanza';
-    push @EXPORT, qw(OPTION_STANZA);
-use constant OPTION_TARGET                                          => 'target';
-    push @EXPORT, qw(OPTION_TARGET);
-use constant OPTION_TARGET_EXCLUSIVE                                => 'target-exclusive';
-    push @EXPORT, qw(OPTION_TARGET_EXCLUSIVE);
-use constant OPTION_TARGET_ACTION                                   => 'target-action';
-    push @EXPORT, qw(OPTION_TARGET_ACTION);
-use constant OPTION_TARGET_TIMELINE                                 => 'target-timeline';
-    push @EXPORT, qw(OPTION_TARGET_TIMELINE);
-use constant OPTION_TYPE                                            => 'type';
-    push @EXPORT, qw(OPTION_TYPE);
-use constant OPTION_OUTPUT                                          => 'output';
-    push @EXPORT, qw(OPTION_OUTPUT);
-
-# Command-line only help/version
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_HELP                                            => 'help';
-    push @EXPORT, qw(OPTION_HELP);
-use constant OPTION_VERSION                                         => 'version';
-    push @EXPORT, qw(OPTION_VERSION);
-
-# Command-line only local/remote
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_COMMAND                                          => 'command';
-    push @EXPORT, qw(OPTION_COMMAND);
-use constant OPTION_PROCESS                                          => 'process';
-    push @EXPORT, qw(OPTION_PROCESS);
-use constant OPTION_HOST_ID                                          => 'host-id';
-    push @EXPORT, qw(OPTION_HOST_ID);
-
-# Command-line only test
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_TEST                                            => 'test';
-    push @EXPORT, qw(OPTION_TEST);
-use constant OPTION_TEST_DELAY                                      => 'test-delay';
-    push @EXPORT, qw(OPTION_TEST_DELAY);
-use constant OPTION_TEST_POINT                                      => 'test-point';
-    push @EXPORT, qw(OPTION_TEST_POINT);
-
-# GENERAL Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_ARCHIVE_TIMEOUT                                 => 'archive-timeout';
-    push @EXPORT, qw(OPTION_ARCHIVE_TIMEOUT);
-use constant OPTION_BUFFER_SIZE                                     => 'buffer-size';
-    push @EXPORT, qw(OPTION_BUFFER_SIZE);
-use constant OPTION_DB_TIMEOUT                                      => 'db-timeout';
-    push @EXPORT, qw(OPTION_DB_TIMEOUT);
-use constant OPTION_COMPRESS                                        => 'compress';
-    push @EXPORT, qw(OPTION_COMPRESS);
-use constant OPTION_COMPRESS_LEVEL                                  => 'compress-level';
-    push @EXPORT, qw(OPTION_COMPRESS_LEVEL);
-use constant OPTION_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
-    push @EXPORT, qw(OPTION_COMPRESS_LEVEL_NETWORK);
-use constant OPTION_NEUTRAL_UMASK                                   => 'neutral-umask';
-    push @EXPORT, qw(OPTION_NEUTRAL_UMASK);
-use constant OPTION_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
-    push @EXPORT, qw(OPTION_PROTOCOL_TIMEOUT);
-use constant OPTION_PROCESS_MAX                                     => 'process-max';
-    push @EXPORT, qw(OPTION_PROCESS_MAX);
-
-# Commands
-use constant OPTION_CMD_SSH                                         => 'cmd-ssh';
-    push @EXPORT, qw(OPTION_CMD_SSH);
-
-# Paths
-use constant OPTION_LOCK_PATH                                       => 'lock-path';
-    push @EXPORT, qw(OPTION_LOCK_PATH);
-use constant OPTION_LOG_PATH                                        => 'log-path';
-    push @EXPORT, qw(OPTION_LOG_PATH);
-use constant OPTION_SPOOL_PATH                                      => 'spool-path';
-    push @EXPORT, qw(OPTION_SPOOL_PATH);
-
-# Repository
-use constant OPTION_REPO_PATH                                       => 'repo-path';
-    push @EXPORT, qw(OPTION_REPO_PATH);
-use constant OPTION_REPO_TYPE                                       => 'repo-type';
-    push @EXPORT, qw(OPTION_REPO_TYPE);
-
-# Repository S3
-use constant OPTION_REPO_S3_KEY                                     => 'repo-s3-key';
-    push @EXPORT, qw(OPTION_REPO_S3_KEY);
-use constant OPTION_REPO_S3_KEY_SECRET                              => 'repo-s3-key-secret';
-    push @EXPORT, qw(OPTION_REPO_S3_KEY_SECRET);
-use constant OPTION_REPO_S3_BUCKET                                  => 'repo-s3-bucket';
-    push @EXPORT, qw(OPTION_REPO_S3_BUCKET);
-use constant OPTION_REPO_S3_CA_FILE                                 => 'repo-s3-ca-file';
-    push @EXPORT, qw(OPTION_REPO_S3_CA_FILE);
-use constant OPTION_REPO_S3_CA_PATH                                 => 'repo-s3-ca-path';
-    push @EXPORT, qw(OPTION_REPO_S3_CA_PATH);
-use constant OPTION_REPO_S3_ENDPOINT                                => 'repo-s3-endpoint';
-    push @EXPORT, qw(OPTION_REPO_S3_ENDPOINT);
-use constant OPTION_REPO_S3_HOST                                    => 'repo-s3-host';
-    push @EXPORT, qw(OPTION_REPO_S3_HOST);
-use constant OPTION_REPO_S3_REGION                                  => 'repo-s3-region';
-    push @EXPORT, qw(OPTION_REPO_S3_REGION);
-use constant OPTION_REPO_S3_VERIFY_SSL                              => 'repo-s3-verify-ssl';
-    push @EXPORT, qw(OPTION_REPO_S3_VERIFY_SSL);
-
-# Log level
-use constant OPTION_LOG_LEVEL_CONSOLE                               => 'log-level-console';
-    push @EXPORT, qw(OPTION_LOG_LEVEL_CONSOLE);
-use constant OPTION_LOG_LEVEL_FILE                                  => 'log-level-file';
-    push @EXPORT, qw(OPTION_LOG_LEVEL_FILE);
-use constant OPTION_LOG_LEVEL_STDERR                                => 'log-level-stderr';
-    push @EXPORT, qw(OPTION_LOG_LEVEL_STDERR);
-use constant OPTION_LOG_TIMESTAMP                                   => 'log-timestamp';
-    push @EXPORT, qw(OPTION_LOG_TIMESTAMP);
-
-# ARCHIVE Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_ARCHIVE_ASYNC                                   => 'archive-async';
-    push @EXPORT, qw(OPTION_ARCHIVE_ASYNC);
-# Deprecated and to be removed
-use constant OPTION_ARCHIVE_MAX_MB                                  => 'archive-max-mb';
-    push @EXPORT, qw(OPTION_ARCHIVE_MAX_MB);
-use constant OPTION_ARCHIVE_QUEUE_MAX                               => 'archive-queue-max';
-    push @EXPORT, qw(OPTION_ARCHIVE_QUEUE_MAX);
-
-# BACKUP Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_BACKUP_ARCHIVE_CHECK                            => 'archive-check';
-    push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_CHECK);
-use constant OPTION_BACKUP_ARCHIVE_COPY                             => 'archive-copy';
-    push @EXPORT, qw(OPTION_BACKUP_ARCHIVE_COPY);
-use constant OPTION_BACKUP_CMD                                      => 'backup-cmd';
-    push @EXPORT, qw(OPTION_BACKUP_CMD);
-use constant OPTION_BACKUP_CONFIG                                   => 'backup-config';
-    push @EXPORT, qw(OPTION_BACKUP_CONFIG);
-use constant OPTION_BACKUP_HOST                                     => 'backup-host';
-    push @EXPORT, qw(OPTION_BACKUP_HOST);
-use constant OPTION_BACKUP_SSH_PORT                                 => 'backup-ssh-port';
-    push @EXPORT, qw(OPTION_BACKUP_SSH_PORT);
-use constant OPTION_BACKUP_STANDBY                                  => 'backup-standby';
-    push @EXPORT, qw(OPTION_BACKUP_STANDBY);
-use constant OPTION_BACKUP_USER                                     => 'backup-user';
-    push @EXPORT, qw(OPTION_BACKUP_USER);
-use constant OPTION_CHECKSUM_PAGE                                   => 'checksum-page';
-    push @EXPORT, qw(OPTION_CHECKSUM_PAGE);
-use constant OPTION_HARDLINK                                        => 'hardlink';
-    push @EXPORT, qw(OPTION_HARDLINK);
-use constant OPTION_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
-    push @EXPORT, qw(OPTION_MANIFEST_SAVE_THRESHOLD);
-use constant OPTION_RESUME                                          => 'resume';
-    push @EXPORT, qw(OPTION_RESUME);
-use constant OPTION_START_FAST                                      => 'start-fast';
-    push @EXPORT, qw(OPTION_START_FAST);
-use constant OPTION_STOP_AUTO                                       => 'stop-auto';
-    push @EXPORT, qw(OPTION_STOP_AUTO);
-
-# EXPIRE Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_RETENTION_ARCHIVE                               => 'retention-archive';
-    push @EXPORT, qw(OPTION_RETENTION_ARCHIVE);
-use constant OPTION_RETENTION_ARCHIVE_TYPE                          => 'retention-archive-type';
-    push @EXPORT, qw(OPTION_RETENTION_ARCHIVE_TYPE);
-use constant OPTION_RETENTION_DIFF                                  => 'retention-' . BACKUP_TYPE_DIFF;
-    push @EXPORT, qw(OPTION_RETENTION_DIFF);
-use constant OPTION_RETENTION_FULL                                  => 'retention-' . BACKUP_TYPE_FULL;
-    push @EXPORT, qw(OPTION_RETENTION_FULL);
-
-# RESTORE Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DB_INCLUDE                                      => 'db-include';
-    push @EXPORT, qw(OPTION_DB_INCLUDE);
-use constant OPTION_LINK_ALL                                        => 'link-all';
-    push @EXPORT, qw(OPTION_LINK_ALL);
-use constant OPTION_LINK_MAP                                        => 'link-map';
-    push @EXPORT, qw(OPTION_LINK_MAP);
-use constant OPTION_TABLESPACE_MAP_ALL                              => 'tablespace-map-all';
-    push @EXPORT, qw(OPTION_TABLESPACE_MAP_ALL);
-use constant OPTION_TABLESPACE_MAP                                  => 'tablespace-map';
-    push @EXPORT, qw(OPTION_TABLESPACE_MAP);
-use constant OPTION_RESTORE_RECOVERY_OPTION                         => 'recovery-option';
-    push @EXPORT, qw(OPTION_RESTORE_RECOVERY_OPTION);
-
-# STANZA Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_PREFIX_DB                                       => 'db';
-    push @EXPORT, qw(OPTION_PREFIX_DB);
-
-use constant OPTION_DB_CMD                                          => OPTION_PREFIX_DB . '-cmd';
-    push @EXPORT, qw(OPTION_DB_CMD);
-use constant OPTION_DB_CONFIG                                       => OPTION_PREFIX_DB . '-config';
-    push @EXPORT, qw(OPTION_DB_CONFIG);
-use constant OPTION_DB_HOST                                         => OPTION_PREFIX_DB . '-host';
-    push @EXPORT, qw(OPTION_DB_HOST);
-use constant OPTION_DB_PATH                                         => OPTION_PREFIX_DB . '-path';
-    push @EXPORT, qw(OPTION_DB_PATH);
-use constant OPTION_DB_PORT                                         => OPTION_PREFIX_DB . '-port';
-    push @EXPORT, qw(OPTION_DB_PORT);
-use constant OPTION_DB_SSH_PORT                                     => OPTION_PREFIX_DB . '-ssh-port';
-    push @EXPORT, qw(OPTION_DB_SSH_PORT);
-use constant OPTION_DB_SOCKET_PATH                                  => OPTION_PREFIX_DB . '-socket-path';
-    push @EXPORT, qw(OPTION_DB_SOCKET_PATH);
-use constant OPTION_DB_USER                                         => OPTION_PREFIX_DB . '-user';
-    push @EXPORT, qw(OPTION_DB_USER);
-
-
-####################################################################################################################################
-# Option Defaults
-####################################################################################################################################
-
-# Command-line only
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_BACKUP_TYPE                             => BACKUP_TYPE_INCR;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_TYPE);
-use constant OPTION_DEFAULT_INFO_OUTPUT                             => INFO_OUTPUT_TEXT;
-    push @EXPORT, qw(OPTION_DEFAULT_INFO_OUTPUT);
-use constant OPTION_DEFAULT_RESTORE_DELTA                           => false;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_DELTA);
-use constant OPTION_DEFAULT_RESTORE_FORCE                           => false;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_FORCE);
-use constant OPTION_DEFAULT_RESTORE_SET                             => 'latest';
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_SET);
-use constant OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE                => false;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE);
-use constant OPTION_DEFAULT_RESTORE_TARGET_ACTION                   => RECOVERY_ACTION_PAUSE;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TARGET_ACTION);
-use constant OPTION_DEFAULT_RESTORE_TYPE                            => RECOVERY_TYPE_DEFAULT;
-    push @EXPORT, qw(OPTION_DEFAULT_RESTORE_TYPE);
-use constant OPTION_DEFAULT_STANZA_CREATE_FORCE                     => false;
-    push @EXPORT, qw(OPTION_DEFAULT_STANZA_CREATE_FORCE);
-
-# Command-line only test
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_TEST                                    => false;
-    push @EXPORT, qw(OPTION_DEFAULT_TEST);
-use constant OPTION_DEFAULT_TEST_DELAY                              => 5;
-    push @EXPORT, qw(OPTION_DEFAULT_TEST_DELAY);
-
-# GENERAL Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT                         => 60;
-    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT);
-use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN                     => WAIT_TIME_MINIMUM;
-    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN);
-use constant OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX                     => 86400;
-    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX);
-
-use constant OPTION_DEFAULT_BUFFER_SIZE                             => COMMON_IO_BUFFER_MAX;
-    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE);
-use constant OPTION_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
-    push @EXPORT, qw(OPTION_DEFAULT_BUFFER_SIZE_MIN);
-
-use constant OPTION_DEFAULT_COMPRESS                                => true;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS);
-
-use constant OPTION_DEFAULT_COMPRESS_LEVEL                          => 6;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL);
-use constant OPTION_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_MIN);
-use constant OPTION_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_MAX);
-
-use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK                  => 3;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK);
-use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN              => 0;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN);
-use constant OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX              => 9;
-    push @EXPORT, qw(OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX);
-
-use constant OPTION_DEFAULT_DB_TIMEOUT                              => 1800;
-    push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT);
-use constant OPTION_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME_MINIMUM;
-    push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MIN);
-use constant OPTION_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
-    push @EXPORT, qw(OPTION_DEFAULT_DB_TIMEOUT_MAX);
-
-use constant OPTION_DEFAULT_REPO_SYNC                               => true;
-
-use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT                        => OPTION_DEFAULT_DB_TIMEOUT + 30;
-    push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT);
-use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN                    => OPTION_DEFAULT_DB_TIMEOUT_MIN;
-    push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN);
-use constant OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX                    => OPTION_DEFAULT_DB_TIMEOUT_MAX;
-    push @EXPORT, qw(OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX);
-
-use constant OPTION_DEFAULT_CMD_SSH                                 => 'ssh';
-    push @EXPORT, qw(OPTION_DEFAULT_CMD_SSH);
-use constant OPTION_DEFAULT_CONFIG                                  => '/etc/' . BACKREST_CONF;
-    push @EXPORT, qw(OPTION_DEFAULT_CONFIG);
-use constant OPTION_DEFAULT_LOCK_PATH                               => '/tmp/' . BACKREST_EXE;
-    push @EXPORT, qw(OPTION_DEFAULT_LOCK_PATH);
-use constant OPTION_DEFAULT_LOG_PATH                                => '/var/log/' . BACKREST_EXE;
-    push @EXPORT, qw(OPTION_DEFAULT_LOG_PATH);
-use constant OPTION_DEFAULT_NEUTRAL_UMASK                           => true;
-    push @EXPORT, qw(OPTION_DEFAULT_NEUTRAL_UMASK);
-use constant OPTION_DEFAULT_REPO_LINK                               => true;
-    push @EXPORT, qw(OPTION_DEFAULT_REPO_LINK);
-use constant OPTION_DEFAULT_REPO_PATH                               => '/var/lib/' . BACKREST_EXE;
-    push @EXPORT, qw(OPTION_DEFAULT_REPO_PATH);
-use constant OPTION_DEFAULT_REPO_S3_VERIFY_SSL                      => true;
-    push @EXPORT, qw(OPTION_DEFAULT_REPO_S3_VERIFY_SSL);
-use constant OPTION_DEFAULT_REPO_TYPE                               => REPO_TYPE_POSIX;
-    push @EXPORT, qw(OPTION_DEFAULT_REPO_TYPE);
-use constant OPTION_DEFAULT_SPOOL_PATH                              => '/var/spool/' . BACKREST_EXE;
-    push @EXPORT, qw(OPTION_DEFAULT_SPOOL_PATH);
-use constant OPTION_DEFAULT_PROCESS_MAX                              => 1;
-    push @EXPORT, qw(OPTION_DEFAULT_PROCESS_MAX);
-use constant OPTION_DEFAULT_PROCESS_MAX_MIN                          => 1;
-    push @EXPORT, qw(OPTION_DEFAULT_PROCESS_MAX_MIN);
-use constant OPTION_DEFAULT_PROCESS_MAX_MAX                          => 96;
-    push @EXPORT, qw(OPTION_DEFAULT_PROCESS_MAX_MAX);
-
-# LOG Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_LOG_LEVEL_CONSOLE                       => lc(WARN);
-    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_CONSOLE);
-use constant OPTION_DEFAULT_LOG_LEVEL_FILE                          => lc(INFO);
-    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_FILE);
-use constant OPTION_DEFAULT_LOG_LEVEL_STDERR                        => lc(WARN);
-    push @EXPORT, qw(OPTION_DEFAULT_LOG_LEVEL_STDERR);
-use constant OPTION_DEFAULT_LOG_TIMESTAMP                           => true;
-    push @EXPORT, qw(OPTION_DEFAULT_LOG_TIMESTAMP);
-
-# ARCHIVE SECTION
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_ARCHIVE_ASYNC                           => false;
-    push @EXPORT, qw(OPTION_DEFAULT_ARCHIVE_ASYNC);
-
-# BACKUP Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK                    => true;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK);
-use constant OPTION_DEFAULT_BACKUP_ARCHIVE_COPY                     => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_ARCHIVE_COPY);
-use constant OPTION_DEFAULT_BACKUP_FORCE                            => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_FORCE);
-use constant OPTION_DEFAULT_BACKUP_HARDLINK                         => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_HARDLINK);
-use constant OPTION_DEFAULT_BACKUP_ONLINE                           => true;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_ONLINE);
-use constant OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD          => 1073741824;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD);
-use constant OPTION_DEFAULT_BACKUP_RESUME                           => true;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_RESUME);
-use constant OPTION_DEFAULT_BACKUP_STANDBY                          => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STANDBY);
-use constant OPTION_DEFAULT_BACKUP_STOP_AUTO                        => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_STOP_AUTO);
-use constant OPTION_DEFAULT_BACKUP_START_FAST                       => false;
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_START_FAST);
-use constant OPTION_DEFAULT_BACKUP_USER                             => 'backrest';
-    push @EXPORT, qw(OPTION_DEFAULT_BACKUP_USER);
-
-# START/STOP Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_STOP_FORCE                              => false;
-    push @EXPORT, qw(OPTION_DEFAULT_STOP_FORCE);
-
-# EXPIRE Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE                  => BACKUP_TYPE_FULL;
-    push @EXPORT, qw(OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE);
-use constant OPTION_DEFAULT_RETENTION_MIN                           => 1;
-    push @EXPORT, qw(OPTION_DEFAULT_RETENTION_MIN);
-use constant OPTION_DEFAULT_RETENTION_MAX                           => 999999999;
-    push @EXPORT, qw(OPTION_DEFAULT_RETENTION_MAX);
-
-# RESTORE Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_LINK_ALL                                => false;
-    push @EXPORT, qw(OPTION_DEFAULT_LINK_ALL);
-
-# STANZA Section
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant OPTION_DEFAULT_DB_PORT                                 => 5432;
-    push @EXPORT, qw(OPTION_DEFAULT_DB_PORT);
-use constant OPTION_DEFAULT_DB_USER                                 => 'postgres';
-    push @EXPORT, qw(OPTION_DEFAULT_DB_USER);
-
-####################################################################################################################################
-# Option Rule Hash
-#
-# Contains the rules for options: which commands the option can/cannot be specified, for which commands it is required, default
-# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
-# section meaning the rules defined there apply to all commands listed for the option.
-#
-# OPTION_RULE_COMMAND: List of commands the option can or cannot be specified.
-#   true - the option is valid and can be specified
-#         &OPTION_RULE_COMMAND =>
-#         {
-# 	        &CMD_CHECK => true,
-#   false - used in conjuntion with OPTION_RULE_DEFAULT so the user cannot override this option. If the option is provided for the
-#           command by the user, it will be ignored and the default will be used.
-#   NOTE: If the option (A) has a dependency on another option (B) then the CMD_ must also be specified in the other option (B),
-#         else it will still error on the option (A).
-#
-# OPTION_RULE_REQUIRED:
-#   In global section:
-#       true - if the option does not have a default, then setting OPTION_RULE_REQUIRED in the global section means all commands
-#              listed in OPTION_RULE_COMMAND require the user to set it.
-#       false - no commands listed require it as an option but it can be set. This can be overridden for individual commands by
-#               setting OPTION_RULE_REQUIRED in the OPTION_RULE_COMMAND section.
-#   In OPTION_RULE_COMMAND section:
-#       true - the option must be set somehow for the command, either by default (OPTION_RULE_DEFAULT) or by the user.
-# 	        &CMD_CHECK =>
-#             {
-#                 &OPTION_RULE_REQUIRED => true
-#             },
-#       false - mainly used for overriding the OPTION_RULE_REQUIRED in the global section.
-#
-# OPTION_RULE_DEFAULT:
-#   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
-#   OPTION_RULE_COMMAND section.
-#
-# OPTION_RULE_NEGATE:
-#   The option can be negated with "no" e.g. --no-compress.
-#
-# OPTION_RULE_DEPEND:
-#   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
-#   dependent option(s).
-#   OPTION_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
-#
-# OPTION_RULE_ALLOW_LIST:
-#   Lists the allowable settings for the option.
-####################################################################################################################################
-my %oOptionRule =
-(
-    # Command-line only
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_CONFIG =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
-        &OPTION_RULE_NEGATE => true,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true
-        }
-    },
-
-    &OPTION_DELTA =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_DELTA,
-            }
-        }
-    },
-
-    &OPTION_FORCE =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_FORCE,
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_ONLINE,
-                    &OPTION_RULE_DEPEND_VALUE   => false
-                }
-            },
-
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_FORCE,
-            },
-
-            &CMD_STANZA_CREATE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STANZA_CREATE_FORCE,
-            },
-
-            &CMD_STOP =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_STOP_FORCE
-            }
-        }
-    },
-
-    &OPTION_ONLINE =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_NEGATE => true,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ONLINE,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_SET =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_SET,
-            }
-        }
-    },
-
-    &OPTION_STANZA =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_ARCHIVE_PUSH =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_CHECK =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_EXPIRE =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_INFO =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_LOCAL =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_REMOTE =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_STANZA_CREATE =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_STANZA_UPGRADE =>
-            {
-                &OPTION_RULE_REQUIRED => true
-            },
-            &CMD_START =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_STOP =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            }
-        }
-    },
-
-    &OPTION_TARGET =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
-                    &OPTION_RULE_DEPEND_LIST =>
-                    {
-                        &RECOVERY_TYPE_NAME => true,
-                        &RECOVERY_TYPE_TIME => true,
-                        &RECOVERY_TYPE_XID  => true
-                    }
-                }
-            }
-        }
-    },
-
-    &OPTION_TARGET_EXCLUSIVE =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TARGET_EXCLUSIVE,
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
-                    &OPTION_RULE_DEPEND_LIST =>
-                    {
-                        &RECOVERY_TYPE_TIME => true,
-                        &RECOVERY_TYPE_XID  => true
-                    }
-                }
-            }
-        }
-    },
-
-    &OPTION_TARGET_ACTION =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TARGET_ACTION,
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
-                    &OPTION_RULE_DEPEND_LIST =>
-                    {
-                        &RECOVERY_TYPE_NAME => true,
-                        &RECOVERY_TYPE_TIME => true,
-                        &RECOVERY_TYPE_XID  => true
-                    }
-                }
-            }
-        }
-    },
-
-    &OPTION_TARGET_TIMELINE =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_REQUIRED => false,
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
-                    &OPTION_RULE_DEPEND_LIST =>
-                    {
-                        &RECOVERY_TYPE_DEFAULT  => true,
-                        &RECOVERY_TYPE_NAME     => true,
-                        &RECOVERY_TYPE_TIME     => true,
-                        &RECOVERY_TYPE_XID      => true
-                    }
-                }
-            }
-        }
-    },
-
-    &OPTION_TYPE =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_TYPE,
-                &OPTION_RULE_ALLOW_LIST =>
-                {
-                    &BACKUP_TYPE_FULL => true,
-                    &BACKUP_TYPE_DIFF => true,
-                    &BACKUP_TYPE_INCR => true,
-                }
-            },
-
-            &CMD_LOCAL =>
-            {
-                &OPTION_RULE_ALLOW_LIST =>
-                {
-                    &DB                      => true,
-                    &BACKUP                  => true,
-                },
-            },
-
-            &CMD_REMOTE =>
-            {
-                &OPTION_RULE_ALLOW_LIST =>
-                {
-                    &DB                      => true,
-                    &BACKUP                  => true,
-                },
-            },
-
-            &CMD_RESTORE =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RESTORE_TYPE,
-                &OPTION_RULE_ALLOW_LIST =>
-                {
-                    &RECOVERY_TYPE_NAME      => true,
-                    &RECOVERY_TYPE_TIME      => true,
-                    &RECOVERY_TYPE_XID       => true,
-                    &RECOVERY_TYPE_PRESERVE  => true,
-                    &RECOVERY_TYPE_NONE      => true,
-                    &RECOVERY_TYPE_IMMEDIATE => true,
-                    &RECOVERY_TYPE_DEFAULT   => true
-                }
-            }
-        }
-    },
-
-    &OPTION_OUTPUT =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_INFO =>
-            {
-                &OPTION_RULE_DEFAULT => OPTION_DEFAULT_INFO_OUTPUT,
-                &OPTION_RULE_ALLOW_LIST =>
-                {
-                    &INFO_OUTPUT_TEXT => true,
-                    &INFO_OUTPUT_JSON => true
-                }
-            }
-        }
-    },
-
-    # Command-line only local/remote
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_COMMAND =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-        }
-    },
-
-    &OPTION_HOST_ID =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_LOCAL => true,
-        },
-    },
-
-    &OPTION_PROCESS =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_LOCAL =>
-            {
-                &OPTION_RULE_REQUIRED => true,
-            },
-            &CMD_REMOTE =>
-            {
-                &OPTION_RULE_REQUIRED => false,
-            },
-        },
-    },
-
-    # Command-line only test
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_TEST =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_TEST_DELAY =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_TEST_DELAY,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST,
-            &OPTION_RULE_DEPEND_VALUE => true
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_TEST_POINT =>
-    {
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TEST,
-            &OPTION_RULE_DEPEND_VALUE => true
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true
-        }
-    },
-
-    # GENERAL Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_ARCHIVE_TIMEOUT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_ARCHIVE_TIMEOUT,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_ARCHIVE_TIMEOUT_MIN, OPTION_DEFAULT_ARCHIVE_TIMEOUT_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-        },
-    },
-
-    &OPTION_BUFFER_SIZE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BUFFER_SIZE,
-        &OPTION_RULE_ALLOW_LIST =>
-        {
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN         => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 2     => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 4     => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 8     => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 16    => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 32    => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 64    => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 128   => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 256   => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 512   => true,
-            &OPTION_DEFAULT_BUFFER_SIZE_MIN * 1024  => true,
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => false,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_DB_TIMEOUT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_TIMEOUT,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_DB_TIMEOUT_MIN, OPTION_DEFAULT_DB_TIMEOUT_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => false,
-            &CMD_ARCHIVE_PUSH => false,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => false,
-            &CMD_INFO => false,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => false,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_COMPRESS =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMPRESS,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_EXPIRE => false,
-            &CMD_RESTORE => true,
-        }
-    },
-
-    &OPTION_COMPRESS_LEVEL =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMPRESS_LEVEL,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_COMPRESS_LEVEL_MIN, OPTION_DEFAULT_COMPRESS_LEVEL_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => false,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_COMPRESS_LEVEL_NETWORK =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MIN, OPTION_DEFAULT_COMPRESS_LEVEL_NETWORK_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => false,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_NEUTRAL_UMASK =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_NEUTRAL_UMASK,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => false,
-            &CMD_EXPIRE => false,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => false,
-            &CMD_STOP => false
-        }
-    },
-
-    &OPTION_CMD_SSH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CMD_SSH,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-            &CMD_EXPIRE => true,
-        },
-    },
-
-    &OPTION_LOCK_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOCK_PATH,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-    },
-
-    &OPTION_LOG_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_PATH,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-    },
-
-    &OPTION_PROTOCOL_TIMEOUT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_FLOAT,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_PROTOCOL_TIMEOUT,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_PROTOCOL_TIMEOUT_MIN, OPTION_DEFAULT_PROTOCOL_TIMEOUT_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => false,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_REPO_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_PATH,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-    },
-
-    &OPTION_REPO_S3_BUCKET =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_REPO_TYPE,
-            &OPTION_RULE_DEPEND_VALUE   => REPO_TYPE_S3,
-        },
-        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
-    },
-
-    &OPTION_REPO_S3_CA_FILE => &OPTION_REPO_S3_HOST,
-    &OPTION_REPO_S3_CA_PATH => &OPTION_REPO_S3_HOST,
-
-    &OPTION_REPO_S3_KEY =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_SECURE => true,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_REPO_TYPE,
-            &OPTION_RULE_DEPEND_VALUE   => REPO_TYPE_S3,
-        },
-        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
-    },
-
-    &OPTION_REPO_S3_KEY_SECRET => OPTION_REPO_S3_KEY,
-
-    &OPTION_REPO_S3_ENDPOINT => OPTION_REPO_S3_BUCKET,
-
-    &OPTION_REPO_S3_HOST =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_REQUIRED  => false,
-        &OPTION_RULE_DEPEND => OPTION_REPO_S3_BUCKET,
-        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
-    },
-
-    &OPTION_REPO_S3_REGION => OPTION_REPO_S3_BUCKET,
-
-    &OPTION_REPO_S3_VERIFY_SSL =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_S3_VERIFY_SSL,
-        &OPTION_RULE_COMMAND => OPTION_REPO_TYPE,
-        &OPTION_RULE_DEPEND => OPTION_REPO_S3_BUCKET,
-    },
-
-    &OPTION_REPO_TYPE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_REPO_TYPE,
-        &OPTION_RULE_ALLOW_LIST =>
-        {
-            &REPO_TYPE_CIFS     => true,
-            &REPO_TYPE_POSIX    => true,
-            &REPO_TYPE_S3       => true,
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-    },
-
-    &OPTION_SPOOL_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_SPOOL_PATH,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_ARCHIVE_ASYNC,
-            &OPTION_RULE_DEPEND_VALUE   => true
-        },
-    },
-
-    &OPTION_PROCESS_MAX =>
-    {
-        &OPTION_RULE_ALT_NAME => 'thread-max',
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_PROCESS_MAX,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_PROCESS_MAX_MIN, OPTION_DEFAULT_PROCESS_MAX_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_RESTORE => true
-        }
-    },
-
-    # LOG Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_LOG_LEVEL_CONSOLE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_LEVEL_CONSOLE,
-        &OPTION_RULE_ALLOW_LIST =>
-        {
-            lc(OFF)    => true,
-            lc(ERROR)  => true,
-            lc(WARN)   => true,
-            lc(INFO)   => true,
-            lc(DETAIL) => true,
-            lc(DEBUG)  => true,
-            lc(TRACE)  => true
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true
-        }
-    },
-
-    &OPTION_LOG_LEVEL_FILE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_LEVEL_FILE,
-        &OPTION_RULE_ALLOW_LIST =>
-        {
-            lc(OFF)    => true,
-            lc(ERROR)  => true,
-            lc(WARN)   => true,
-            lc(INFO)   => true,
-            lc(DEBUG)  => true,
-            lc(DETAIL) => true,
-            lc(TRACE)  => true
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true
-        }
-    },
-
-    &OPTION_LOG_LEVEL_STDERR =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_LEVEL_STDERR,
-        &OPTION_RULE_ALLOW_LIST =>
-        {
-            lc(OFF)    => true,
-            lc(ERROR)  => true,
-            lc(WARN)   => true,
-            lc(INFO)   => true,
-            lc(DETAIL) => true,
-            lc(DEBUG)  => true,
-            lc(TRACE)  => true
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true,
-            &CMD_START => true,
-            &CMD_STOP => true
-        }
-    },
-
-    &OPTION_LOG_TIMESTAMP =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LOG_TIMESTAMP,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_INFO => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_START => true,
-            &CMD_STOP => true
-        }
-    },
-
-    # ARCHIVE Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_ARCHIVE_ASYNC =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_ARCHIVE_ASYNC,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true
-        }
-    },
-
-    # Deprecated and to be removed
-    &OPTION_ARCHIVE_MAX_MB =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true
-        }
-    },
-
-    &OPTION_ARCHIVE_QUEUE_MAX =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-        },
-    },
-
-    # BACKUP Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_BACKUP_ARCHIVE_CHECK =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_CHECK,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION  => OPTION_ONLINE,
-            &OPTION_RULE_DEPEND_VALUE   => true,
-        },
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-        },
-    },
-
-    &OPTION_BACKUP_ARCHIVE_COPY =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_ARCHIVE_COPY,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP =>
-            {
-                &OPTION_RULE_DEPEND =>
-                {
-                    &OPTION_RULE_DEPEND_OPTION  => OPTION_BACKUP_ARCHIVE_CHECK,
-                    &OPTION_RULE_DEPEND_VALUE   => true
-                }
-            }
-        }
-    },
-
-    &OPTION_BACKUP_CMD =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => BACKREST_BIN,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
-        },
-    },
-
-    &OPTION_BACKUP_CONFIG =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
-        },
-    },
-
-    &OPTION_BACKUP_HOST =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-    },
-
-    &OPTION_BACKUP_SSH_PORT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND => OPTION_BACKUP_HOST,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
-        }
-    },
-
-    &OPTION_BACKUP_STANDBY =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STANDBY,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        },
-    },
-
-    &OPTION_BACKUP_USER =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_USER,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET => true,
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_CHECK => true,
-            &CMD_INFO => true,
-            &CMD_LOCAL => true,
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_BACKUP_HOST
-        }
-    },
-
-    &OPTION_CHECKSUM_PAGE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_HARDLINK =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_HARDLINK,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_MANIFEST_SAVE_THRESHOLD =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_MANIFEST_SAVE_THRESHOLD,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_RESUME =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_RESUME,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_START_FAST =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_START_FAST,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    &OPTION_STOP_AUTO =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_BACKUP_STOP_AUTO,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true
-        }
-    },
-
-    # EXPIRE Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_RETENTION_ARCHIVE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_RETENTION_MIN, OPTION_DEFAULT_RETENTION_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_EXPIRE => true
-        }
-    },
-
-    &OPTION_RETENTION_ARCHIVE_TYPE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_RETENTION_ARCHIVE_TYPE,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_EXPIRE => true
-        },
-        &OPTION_RULE_ALLOW_LIST =>
-        {
-            &BACKUP_TYPE_FULL => 1,
-            &BACKUP_TYPE_DIFF => 1,
-            &BACKUP_TYPE_INCR => 1
-        }
-    },
-
-    &OPTION_RETENTION_DIFF =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_RETENTION_MIN, OPTION_DEFAULT_RETENTION_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_EXPIRE => true
-        }
-    },
-
-    &OPTION_RETENTION_FULL =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_ALLOW_RANGE => [OPTION_DEFAULT_RETENTION_MIN, OPTION_DEFAULT_RETENTION_MAX],
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_EXPIRE => true
-        }
-    },
-
-    # RESTORE Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_DB_INCLUDE =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
-        &OPTION_RULE_HASH_VALUE => false,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
-        },
-    },
-
-    &OPTION_LINK_ALL =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_BOOLEAN,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_LINK_ALL,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
-        }
-    },
-
-    &OPTION_LINK_MAP =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
-        },
-    },
-
-    &OPTION_TABLESPACE_MAP_ALL =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
-        }
-    },
-
-    &OPTION_TABLESPACE_MAP =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
-        },
-    },
-
-    &OPTION_RESTORE_RECOVERY_OPTION =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_HASH,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_RESTORE => true
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_TYPE,
-            &OPTION_RULE_DEPEND_LIST =>
-            {
-                &RECOVERY_TYPE_DEFAULT  => true,
-                &RECOVERY_TYPE_NAME     => true,
-                &RECOVERY_TYPE_TIME     => true,
-                &RECOVERY_TYPE_XID      => true
-            }
-        }
-    },
-
-    # STANZA Section
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &OPTION_DB_CMD =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_DEFAULT => BACKREST_BIN,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_LOCAL => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
-        },
-    },
-
-    &OPTION_DB_CONFIG =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_GLOBAL,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_CONFIG,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_LOCAL => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        },
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
-        },
-    },
-
-    &OPTION_DB_HOST =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_PUSH => true,
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_EXPIRE => true,
-            &CMD_LOCAL => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-            &CMD_START => true,
-            &CMD_STOP => true,
-        }
-    },
-
-    &OPTION_DB_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_REQUIRED => true,
-        &OPTION_RULE_HINT => "does this stanza exist?",
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_ARCHIVE_GET =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_ARCHIVE_PUSH =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_LOCAL =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_REMOTE =>
-            {
-                &OPTION_RULE_REQUIRED => false
-            },
-            &CMD_RESTORE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        },
-    },
-
-    &OPTION_DB_PORT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_PORT,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_REMOTE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_DB_SOCKET_PATH =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_LOCAL => true,
-            &CMD_REMOTE => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        }
-    },
-
-    &OPTION_DB_SSH_PORT =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_TYPE => OPTION_TYPE_INTEGER,
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_COMMAND => OPTION_DB_HOST,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
-        },
-    },
-
-    &OPTION_DB_USER =>
-    {
-        &OPTION_RULE_SECTION => CONFIG_SECTION_STANZA,
-        &OPTION_RULE_PREFIX => OPTION_PREFIX_DB,
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
-        &OPTION_RULE_DEFAULT => OPTION_DEFAULT_DB_USER,
-        &OPTION_RULE_COMMAND =>
-        {
-            &CMD_BACKUP => true,
-            &CMD_CHECK => true,
-            &CMD_LOCAL => true,
-            &CMD_STANZA_CREATE => true,
-            &CMD_STANZA_UPGRADE => true,
-        },
-        &OPTION_RULE_REQUIRED => false,
-        &OPTION_RULE_DEPEND =>
-        {
-            &OPTION_RULE_DEPEND_OPTION => OPTION_DB_HOST
-        },
-    },
-);
-
-####################################################################################################################################
-# Process rule defaults
-####################################################################################################################################
-foreach my $strKey (sort(keys(%oOptionRule)))
-{
-    # If the rule is a scalar then copy the entire rule from the referenced option
-    if (!ref($oOptionRule{$strKey}))
-    {
-        $oOptionRule{$strKey} = dclone($oOptionRule{$oOptionRule{$strKey}});
-    }
-
-    # Default type is string
-    if (!defined($oOptionRule{$strKey}{&OPTION_RULE_TYPE}))
-    {
-        $oOptionRule{$strKey}{&OPTION_RULE_TYPE} = OPTION_TYPE_STRING;
-    }
-
-    # If the command section is a scalar then copy the section from the referenced option
-    if (defined($oOptionRule{$strKey}{&OPTION_RULE_COMMAND}) && !ref($oOptionRule{$strKey}{&OPTION_RULE_COMMAND}))
-    {
-        $oOptionRule{$strKey}{&OPTION_RULE_COMMAND} =
-            dclone($oOptionRule{$oOptionRule{$strKey}{&OPTION_RULE_COMMAND}}{&OPTION_RULE_COMMAND});
-    }
-
-    # If the required section is a scalar then copy the section from the referenced option
-    if (defined($oOptionRule{$strKey}{&OPTION_RULE_DEPEND}) && !ref($oOptionRule{$strKey}{&OPTION_RULE_DEPEND}))
-    {
-        $oOptionRule{$strKey}{&OPTION_RULE_DEPEND} =
-            dclone($oOptionRule{$oOptionRule{$strKey}{&OPTION_RULE_DEPEND}}{&OPTION_RULE_DEPEND});
-    }
-}
+use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
+    push @EXPORT, qw(CFGDEF_SECTION_GLOBAL);
+use constant CFGDEF_SECTION_STANZA                                  => 'stanza';
+    push @EXPORT, qw(CFGDEF_SECTION_STANZA);
 
 ####################################################################################################################################
 # Module variables
 ####################################################################################################################################
 my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
+my $strCommandHelp;         # The command that help is being generate for
 my $bInitLog = false;       # Has logging been initialized yet?
 
 ####################################################################################################################################
-# configLogging
-#
-# Configure logging based on options.
+# configLogging - configure logging based on options
 ####################################################################################################################################
 sub configLogging
 {
@@ -2139,10 +64,10 @@ sub configLogging
     if ($bInitLog || (defined($bLogInitForce) && $bLogInitForce))
     {
         logLevelSet(
-            optionValid(OPTION_LOG_LEVEL_FILE) ? optionGet(OPTION_LOG_LEVEL_FILE) : OFF,
-            optionValid(OPTION_LOG_LEVEL_CONSOLE) ? optionGet(OPTION_LOG_LEVEL_CONSOLE) : OFF,
-            optionValid(OPTION_LOG_LEVEL_STDERR) ? optionGet(OPTION_LOG_LEVEL_STDERR) : OFF,
-            optionValid(OPTION_LOG_TIMESTAMP) ? optionGet(OPTION_LOG_TIMESTAMP) : undef);
+            cfgOptionValid(CFGOPT_LOG_LEVEL_FILE) ? cfgOption(CFGOPT_LOG_LEVEL_FILE) : OFF,
+            cfgOptionValid(CFGOPT_LOG_LEVEL_CONSOLE) ? cfgOption(CFGOPT_LOG_LEVEL_CONSOLE) : OFF,
+            cfgOptionValid(CFGOPT_LOG_LEVEL_STDERR) ? cfgOption(CFGOPT_LOG_LEVEL_STDERR) : OFF,
+            cfgOptionValid(CFGOPT_LOG_TIMESTAMP) ? cfgOption(CFGOPT_LOG_TIMESTAMP) : undef);
 
         $bInitLog = true;
     }
@@ -2151,9 +76,9 @@ sub configLogging
 push @EXPORT, qw(configLogging);
 
 ####################################################################################################################################
-# configLoad
+# configLoad - load configuration
 #
-# Load configuration. Additional conditions that cannot be codified by the OptionRule hash are also tested here.
+# Additional conditions that cannot be codified by the OptionRule hash are also tested here.
 ####################################################################################################################################
 sub configLoad
 {
@@ -2162,80 +87,44 @@ sub configLoad
     # Clear option in case it was loaded before
     %oOption = ();
 
-    # Build options for all possible db configurations
-    foreach my $strKey (sort(keys(%oOptionRule)))
-    {
-        if (defined($oOptionRule{$strKey}{&OPTION_RULE_PREFIX}) && $oOptionRule{$strKey}{&OPTION_RULE_PREFIX} eq OPTION_PREFIX_DB)
-        {
-            my $strPrefix = $oOptionRule{$strKey}{&OPTION_RULE_PREFIX};
-
-            # For now only allow one replica
-            for (my $iIndex = 2; $iIndex <= 2; $iIndex++)
-            {
-                my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
-
-                $oOptionRule{$strKeyNew} = dclone($oOptionRule{$strKey});
-                $oOptionRule{$strKeyNew}{&OPTION_RULE_REQUIRED} = false;
-
-                if (defined($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}) &&
-                    defined($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}))
-                {
-                    $oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION} =
-                        "${strPrefix}${iIndex}" .
-                        substr($oOptionRule{$strKeyNew}{&OPTION_RULE_DEPEND}{&OPTION_RULE_DEPEND_OPTION}, length($strPrefix));
-                }
-            }
-
-            # Create an alternate name for the base db option
-            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} = "${strPrefix}1" . substr($strKey, length($strPrefix));
-        }
-    }
-
     # Build hash with all valid command-line options
-    my %oOptionAllow;
+    my @stryOptionAllow;
 
-    foreach my $strKey (keys(%oOptionRule))
+    for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
     {
-        foreach my $bAltName ((false, true))
+        my $strKey = cfgOptionName($iOptionId);
+
+        foreach my $bAltName (false, true)
         {
             my $strOptionName = $strKey;
 
             if ($bAltName)
             {
-                if (!defined($oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME}))
+                if (!defined(cfgRuleOptionNameAlt($iOptionId)))
                 {
                     next;
                 }
 
-                $strOptionName = $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME};
+                $strOptionName = cfgRuleOptionNameAlt($iOptionId);
             }
 
             my $strOption = $strOptionName;
 
-            if (!defined($oOptionRule{$strKey}{&OPTION_RULE_TYPE}))
-            {
-                confess  &log(ASSERT, "Option ${strKey} does not have a defined type", ERROR_ASSERT);
-            }
-            elsif ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH)
+            if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
             {
                 $strOption .= '=s@';
             }
-            elsif ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} ne OPTION_TYPE_BOOLEAN)
+            elsif (cfgRuleOptionType($iOptionId) ne CFGOPTDEF_TYPE_BOOLEAN)
             {
                 $strOption .= '=s';
             }
 
-            $oOptionAllow{$strOption} = $strOption;
+            push(@stryOptionAllow, $strOption);
 
             # Check if the option can be negated
-            if ((defined($oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) &&
-                 $oOptionRule{$strKey}{&OPTION_RULE_NEGATE}) ||
-                ($oOptionRule{$strKey}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN &&
-                 defined($oOptionRule{$strKey}{&OPTION_RULE_SECTION})))
+            if (cfgRuleOptionNegate($iOptionId))
             {
-                $strOption = 'no-' . $strOptionName;
-                $oOptionAllow{$strOption} = $strOption;
-                $oOptionRule{$strKey}{&OPTION_RULE_NEGATE} = true;
+                push(@stryOptionAllow, 'no-' . $strOptionName);
             }
         }
     }
@@ -2246,24 +135,25 @@ sub configLoad
     # If nothing was passed on the command line then display help
     if (@ARGV == 0)
     {
-        commandSet(CMD_HELP);
+        cfgCommandSet(CFGCMD_HELP);
     }
     # Else process command line options
     else
     {
         # Parse command line options
-        if (!GetOptions(\%oOptionTest, %oOptionAllow))
+        if (!GetOptions(\%oOptionTest, @stryOptionAllow))
         {
-            commandSet(CMD_HELP);
+            $strCommand = cfgCommandName(CFGCMD_HELP);
             return false;
         }
 
         # Validate and store options
         my $bHelp = false;
 
-        if (defined($ARGV[0]) && $ARGV[0] eq CMD_HELP && defined($ARGV[1]))
+        if (defined($ARGV[0]) && $ARGV[0] eq cfgCommandName(CFGCMD_HELP) && defined($ARGV[1]))
         {
             $bHelp = true;
+            $strCommandHelp = $ARGV[1];
             $ARGV[0] = $ARGV[1];
         }
 
@@ -2271,7 +161,7 @@ sub configLoad
 
         if ($bHelp)
         {
-            commandSet(CMD_HELP);
+            cfgCommandSet(CFGCMD_HELP);
         }
     }
 
@@ -2286,44 +176,60 @@ sub configLoad
     # Log the command begin
     commandBegin();
 
-    # Return and display version and help in main
-    if (commandTest(CMD_HELP) || commandTest(CMD_VERSION))
-    {
-        return true;
-    }
-
     # Neutralize the umask to make the repository file/path modes more consistent
-    if (optionTest(OPTION_NEUTRAL_UMASK) && optionGet(OPTION_NEUTRAL_UMASK))
+    if (cfgOptionValid(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
     {
         umask(0000);
     }
 
+    # Set db-cmd and backup-cmd to defaults if they are not set.  The command depends on the currently running exe so can't be
+    # calculated correctly in the C Library -- perhaps in the future this value will be passed in or set some other way
+    if (cfgOptionValid(CFGOPT_BACKUP_CMD) && cfgOptionTest(CFGOPT_BACKUP_HOST) && !cfgOptionTest(CFGOPT_BACKUP_CMD))
+    {
+        cfgOptionSet(CFGOPT_BACKUP_CMD, BACKREST_BIN);
+        $oOption{cfgOptionName(CFGOPT_BACKUP_CMD)}{source} = CFGDEF_SOURCE_DEFAULT;
+    }
+
+    if (cfgOptionValid(CFGOPT_DB_CMD))
+    {
+        for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
+        {
+            if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iOptionIdx)) &&
+                !cfgOptionTest(cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)))
+            {
+                cfgOptionSet(cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx), BACKREST_BIN);
+                $oOption{cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)}{source} = CFGDEF_SOURCE_DEFAULT;
+            }
+        }
+    }
+
     # Protocol timeout should be greater than db timeout
-    if (optionTest(OPTION_DB_TIMEOUT) && optionTest(OPTION_PROTOCOL_TIMEOUT) &&
-        optionGet(OPTION_PROTOCOL_TIMEOUT) <= optionGet(OPTION_DB_TIMEOUT))
+    if (cfgOptionTest(CFGOPT_DB_TIMEOUT) && cfgOptionTest(CFGOPT_PROTOCOL_TIMEOUT) &&
+        cfgOption(CFGOPT_PROTOCOL_TIMEOUT) <= cfgOption(CFGOPT_DB_TIMEOUT))
     {
         # If protocol-timeout is default then increase it to be greater than db-timeout
-        if (optionSource(OPTION_PROTOCOL_TIMEOUT) eq SOURCE_DEFAULT)
+        if (cfgOptionSource(CFGOPT_PROTOCOL_TIMEOUT) eq CFGDEF_SOURCE_DEFAULT)
         {
-            optionSet(OPTION_PROTOCOL_TIMEOUT, optionGet(OPTION_DB_TIMEOUT) + 30);
+            cfgOptionSet(CFGOPT_PROTOCOL_TIMEOUT, cfgOption(CFGOPT_DB_TIMEOUT) + 30);
         }
         else
         {
             confess &log(ERROR,
-                "'" . optionGet(OPTION_PROTOCOL_TIMEOUT) . "' is not valid for '" . OPTION_PROTOCOL_TIMEOUT . "' option\n" .
-                "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
+                "'" . cfgOption(CFGOPT_PROTOCOL_TIMEOUT) . "' is not valid for '" .
+                    cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT) . "' option\n" .
+                    "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
                 ERROR_OPTION_INVALID_VALUE);
         }
     }
 
     # Make sure that backup and db are not both remote
-    if (optionTest(OPTION_DB_HOST) && optionTest(OPTION_BACKUP_HOST))
+    if (cfgOptionTest(CFGOPT_DB_HOST) && cfgOptionTest(CFGOPT_BACKUP_HOST))
     {
         confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
     }
 
     # Warn when retention-full is not set
-    if (optionValid(OPTION_RETENTION_FULL) && !optionTest(OPTION_RETENTION_FULL))
+    if (cfgOptionValid(CFGOPT_RETENTION_FULL) && !cfgOptionTest(CFGOPT_RETENTION_FULL))
     {
         &log(WARN,
             "option retention-full is not set, the repository may run out of space\n" .
@@ -2331,14 +237,14 @@ sub configLoad
     }
 
     # If archive retention is valid for the command, then set archive settings
-    if (optionValid(OPTION_RETENTION_ARCHIVE))
+    if (cfgOptionValid(CFGOPT_RETENTION_ARCHIVE))
     {
-        my $strArchiveRetentionType = optionGet(OPTION_RETENTION_ARCHIVE_TYPE, false);
-        my $iArchiveRetention = optionGet(OPTION_RETENTION_ARCHIVE, false);
-        my $iFullRetention = optionGet(OPTION_RETENTION_FULL, false);
-        my $iDifferentialRetention = optionGet(OPTION_RETENTION_DIFF, false);
+        my $strArchiveRetentionType = cfgOption(CFGOPT_RETENTION_ARCHIVE_TYPE, false);
+        my $iArchiveRetention = cfgOption(CFGOPT_RETENTION_ARCHIVE, false);
+        my $iFullRetention = cfgOption(CFGOPT_RETENTION_FULL, false);
+        my $iDifferentialRetention = cfgOption(CFGOPT_RETENTION_DIFF, false);
 
-        my $strMsgArchiveOff = "WAL segments will not be expired: option '" . &OPTION_RETENTION_ARCHIVE_TYPE .
+        my $strMsgArchiveOff = "WAL segments will not be expired: option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE_TYPE) .
              "=${strArchiveRetentionType}' but ";
 
         # If the archive retention is not explicitly set then determine what it should be set to so the user does not have to.
@@ -2346,30 +252,30 @@ sub configLoad
         {
             # If retention-archive-type is default, then if retention-full is set, set the retention-archive to this value,
             # else ignore archiving
-            if ($strArchiveRetentionType eq BACKUP_TYPE_FULL)
+            if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_FULL)
             {
                 if (defined($iFullRetention))
                 {
-                    optionSet(OPTION_RETENTION_ARCHIVE, $iFullRetention);
+                    cfgOptionSet(CFGOPT_RETENTION_ARCHIVE, $iFullRetention);
                 }
             }
-            elsif ($strArchiveRetentionType eq BACKUP_TYPE_DIFF)
+            elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF)
             {
                 # if retention-diff is set then user must have set it
                 if (defined($iDifferentialRetention))
                 {
-                    optionSet(OPTION_RETENTION_ARCHIVE, $iDifferentialRetention);
+                    cfgOptionSet(CFGOPT_RETENTION_ARCHIVE, $iDifferentialRetention);
                 }
                 else
                 {
                     &log(WARN,
-                        $strMsgArchiveOff . "neither option '" . &OPTION_RETENTION_ARCHIVE .
-                            "' nor option '" .  &OPTION_RETENTION_DIFF . "' is set");
+                        $strMsgArchiveOff . "neither option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE) .
+                            "' nor option '" .  cfgOptionName(CFGOPT_RETENTION_DIFF) . "' is set");
                 }
             }
-            elsif ($strArchiveRetentionType eq BACKUP_TYPE_INCR)
+            elsif ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_INCR)
             {
-                &log(WARN, $strMsgArchiveOff . "option '" . &OPTION_RETENTION_ARCHIVE . "' is not set");
+                &log(WARN, $strMsgArchiveOff . "option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE) . "' is not set");
             }
         }
         else
@@ -2377,21 +283,23 @@ sub configLoad
             # If retention-archive is set then check retention-archive-type and issue a warning if the corresponding setting is
             # UNDEF since UNDEF means backups will not be expired but they should be in the practice of setting this
             # value even though expiring the archive itself is OK and will be performed.
-            if ($strArchiveRetentionType eq BACKUP_TYPE_DIFF && !defined($iDifferentialRetention))
+            if ($strArchiveRetentionType eq CFGOPTVAL_BACKUP_TYPE_DIFF && !defined($iDifferentialRetention))
             {
                 &log(WARN,
-                    "option '" . &OPTION_RETENTION_DIFF . "' is not set for '" . &OPTION_RETENTION_ARCHIVE_TYPE . "=" .
-                        &BACKUP_TYPE_DIFF . "' \n" .
+                    "option '" . cfgOptionName(CFGOPT_RETENTION_DIFF) . "' is not set for '" .
+                        cfgOptionName(CFGOPT_RETENTION_ARCHIVE_TYPE) . "=" . &CFGOPTVAL_BACKUP_TYPE_DIFF . "' \n" .
                         "HINT: to retain differential backups indefinitely (without warning), set option '" .
-                        &OPTION_RETENTION_DIFF . "' to the maximum.");
+                        cfgOptionName(CFGOPT_RETENTION_DIFF) . "' to the maximum.");
             }
         }
     }
 
     # Warn if ARCHIVE_MAX_MB is present
-    if (optionValid(OPTION_ARCHIVE_MAX_MB) && optionTest(OPTION_ARCHIVE_MAX_MB))
+    if (cfgOptionValid(CFGOPT_ARCHIVE_MAX_MB) && cfgOptionTest(CFGOPT_ARCHIVE_MAX_MB))
     {
-        &log(WARN, "'" . OPTION_ARCHIVE_MAX_MB . "' is no longer not longer valid, use '" . OPTION_ARCHIVE_QUEUE_MAX . "' instead");
+        &log(WARN,
+            "'" . cfgOptionName(CFGOPT_ARCHIVE_MAX_MB) . "' is no longer not longer valid, use '" .
+            cfgOptionName(CFGOPT_ARCHIVE_QUEUE_MAX) . "' instead");
     }
 
     return true;
@@ -2409,27 +317,28 @@ sub optionValueGet
     my $strOption = shift;
     my $hOption = shift;
 
-    my $strValue = $$hOption{$strOption};
+    my $strValue = $hOption->{$strOption};
 
     # Some options have an alternate name so check for that as well
-    if (defined($oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME}))
-    {
-        my $strAltValue = $$hOption{$oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME}};
+    my $iOptionId = cfgOptionId($strOption);
 
-        if (defined($strAltValue))
+    if (defined(cfgRuleOptionNameAlt($iOptionId)))
+    {
+        my $strOptionAlt = cfgRuleOptionNameAlt($iOptionId);
+        my $strValueAlt = $hOption->{$strOptionAlt};
+
+        if (defined($strValueAlt))
         {
             if (!defined($strValue))
             {
-                $strValue = $strAltValue;
+                $strValue = $strValueAlt;
 
-                delete($hOption->{$oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME}});
+                delete($hOption->{$strOptionAlt});
                 $hOption->{$strOption} = $strValue;
             }
             else
             {
-                confess &log(
-                    ERROR, "'${strOption}' and '" . $oOptionRule{$strOption}{&OPTION_RULE_ALT_NAME} .
-                    ' cannot both be defined', ERROR_OPTION_INVALID_VALUE);
+                confess &log(ERROR, "'${strOption}' and '${strOptionAlt}' cannot both be defined", ERROR_OPTION_INVALID_VALUE);
             }
         }
     }
@@ -2455,7 +364,9 @@ sub optionValidate
         confess &log(ERROR, "command must be specified", ERROR_COMMAND_REQUIRED);
     }
 
-    if (!defined($oCommandHash{$strCommand}))
+    my $iCommandId = cfgCommandId($strCommand);
+
+    if ($iCommandId eq "-1")
     {
         confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
     }
@@ -2475,33 +386,23 @@ sub optionValidate
         # Assume that all dependencies will be resolved in this loop
         $bDependUnresolved = false;
 
-        foreach my $strOption (sort(keys(%oOptionRule)))
+        for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
         {
+            my $strOption = cfgOptionName($iOptionId);
+
             # Skip the option if it has been resolved in a prior loop
             if (defined($oOptionResolved{$strOption}))
             {
                 next;
             }
 
-            # The command rules must be explicitly set
-            if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}))
-            {
-                confess &log(ASSERT, OPTION_RULE_COMMAND . " rules must be set for '${strOption}' option");
-            }
-
             # Determine if an option is valid for a command
-            if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
+            $oOption{$strOption}{valid} = cfgRuleOptionValid($iCommandId, $iOptionId);
+
+            if (!$oOption{$strOption}{valid})
             {
-                $oOption{$strOption}{valid} = false;
                 $oOptionResolved{$strOption} = true;
                 next;
-            }
-
-            $oOption{$strOption}{valid} = true;
-
-            if (defined($oOptionRule{$strOption}{&OPTION_RULE_SECURE}) && $oOptionRule{$strOption}{&OPTION_RULE_SECURE})
-            {
-                $oOption{$strOption}{&OPTION_RULE_SECURE} = true;
             }
 
             # Store the option value
@@ -2510,7 +411,7 @@ sub optionValidate
             # Check to see if an option can be negated.  Make sure that it is not set and negated at the same time.
             my $bNegate = false;
 
-            if (defined($oOptionRule{$strOption}{&OPTION_RULE_NEGATE}) && $oOptionRule{$strOption}{&OPTION_RULE_NEGATE})
+            if (cfgRuleOptionNegate($iOptionId))
             {
                 $bNegate = defined($$oOptionTest{'no-' . $strOption});
 
@@ -2519,27 +420,23 @@ sub optionValidate
                     confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
                 }
 
-                if ($bNegate && $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+                if ($bNegate && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                 {
                     $strValue = false;
                 }
             }
 
-            # If the command has rules store them for later evaluation
-            my $oCommandRule = optionCommandRule($strOption, $strCommand);
-
             # Check dependency for the command then for the option
             my $bDependResolved = true;
-            my $oDepend = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_DEPEND} :
-                                                   $oOptionRule{$strOption}{&OPTION_RULE_DEPEND};
             my $strDependOption;
             my $strDependValue;
             my $strDependType;
 
-            if (defined($oDepend))
+            if (cfgRuleOptionDepend($iCommandId, $iOptionId))
             {
                 # Check if the depend option has a value
-                $strDependOption = $$oDepend{&OPTION_RULE_DEPEND_OPTION};
+                my $iDependOptionId = cfgRuleOptionDependOption($iCommandId, $iOptionId);
+                $strDependOption = cfgOptionName($iDependOptionId);
                 $strDependValue = $oOption{$strDependOption}{value};
 
                 # Make sure the depend option has been resolved, otherwise skip this option for now
@@ -2556,16 +453,16 @@ sub optionValidate
                 }
 
                 # If a depend value exists, make sure the option value matches
-                if ($bDependResolved && defined($$oDepend{&OPTION_RULE_DEPEND_VALUE}) &&
-                    $$oDepend{&OPTION_RULE_DEPEND_VALUE} ne $strDependValue)
+                if ($bDependResolved && cfgRuleOptionDependValueTotal($iCommandId, $iOptionId) == 1 &&
+                    cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) ne $strDependValue)
                 {
                     $bDependResolved = false;
                     $strDependType = 'value';
                 }
 
                 # If a depend list exists, make sure the value is in the list
-                if ($bDependResolved && defined($$oDepend{&OPTION_RULE_DEPEND_LIST}) &&
-                    !defined($$oDepend{&OPTION_RULE_DEPEND_LIST}{$strDependValue}))
+                if ($bDependResolved && cfgRuleOptionDependValueTotal($iCommandId, $iOptionId) > 1 &&
+                    !cfgRuleOptionDependValueValid($iCommandId, $iOptionId, $strDependValue))
                 {
                     $bDependResolved = false;
                     $strDependType = 'list';
@@ -2573,23 +470,24 @@ sub optionValidate
             }
 
             # If the option value is undefined and not negated, see if it can be loaded from the config file
-            if (!defined($strValue) && !$bNegate && $strOption ne OPTION_CONFIG &&
-                $oOptionRule{$strOption}{&OPTION_RULE_SECTION} && $bDependResolved)
+            if (!defined($strValue) && !$bNegate && $strOption ne cfgOptionName(CFGOPT_CONFIG) &&
+                defined(cfgRuleOptionSection($iOptionId)) && $bDependResolved)
             {
                 # If the config option has not been resolved yet then continue processing
-                if (!defined($oOptionResolved{&OPTION_CONFIG}) || !defined($oOptionResolved{&OPTION_STANZA}))
+                if (!defined($oOptionResolved{cfgOptionName(CFGOPT_CONFIG)}) ||
+                    !defined($oOptionResolved{cfgOptionName(CFGOPT_STANZA)}))
                 {
                     $bDependUnresolved = true;
                     next;
                 }
 
                 # If the config option is defined try to get the option from the config file
-                if ($bConfigExists && defined($oOption{&OPTION_CONFIG}{value}))
+                if ($bConfigExists && defined($oOption{cfgOptionName(CFGOPT_CONFIG)}{value}))
                 {
                     # Attempt to load the config file if it has not been loaded
                     if (!defined($oConfig))
                     {
-                        my $strConfigFile = $oOption{&OPTION_CONFIG}{value};
+                        my $strConfigFile = $oOption{cfgOptionName(CFGOPT_CONFIG)}{value};
                         $bConfigExists = -e $strConfigFile;
 
                         if ($bConfigExists)
@@ -2608,40 +506,34 @@ sub optionValidate
                     }
 
                     # Get the section that the value should be in
-                    my $strSection = $oOptionRule{$strOption}{&OPTION_RULE_SECTION};
+                    my $strSection = cfgRuleOptionSection($iOptionId);
 
-                    # Always check for the option in the sanza section first
-                    if (optionTest(OPTION_STANZA))
+                    # Always check for the option in the stanza section first
+                    if (cfgOptionTest(CFGOPT_STANZA))
                     {
-                        $strValue = optionValueGet($strOption, $$oConfig{optionGet(OPTION_STANZA)});
+                        $strValue = optionValueGet($strOption, $$oConfig{cfgOption(CFGOPT_STANZA)});
                     }
 
-                    # Only continue searching when strSection != CONFIG_SECTION_STANZA.  Some options (e.g. db-path) can only be
+                    # Only continue searching when strSection != CFGDEF_SECTION_STANZA.  Some options (e.g. db-path) can only be
                     # configured in the stanza section.
-                    if (!defined($strValue) && $strSection ne CONFIG_SECTION_STANZA)
+                    if (!defined($strValue) && $strSection ne CFGDEF_SECTION_STANZA)
                     {
-                        # Check command sections for a value.  This allows options (e.g. compress-level) to be set on a per-command
-                        # basis.
-                        if (defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}) &&
-                            $oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand} != false)
+                        # Check the stanza command section
+                        if (cfgOptionTest(CFGOPT_STANZA))
                         {
-                            # Check the stanza command section
-                            if (optionTest(OPTION_STANZA))
-                            {
-                                $strValue = optionValueGet($strOption, $$oConfig{optionGet(OPTION_STANZA) . ":${strCommand}"});
-                            }
+                            $strValue = optionValueGet($strOption, $$oConfig{cfgOption(CFGOPT_STANZA) . ":${strCommand}"});
+                        }
 
-                            # Check the global command section
-                            if (!defined($strValue))
-                            {
-                                $strValue = optionValueGet($strOption, $$oConfig{&CONFIG_SECTION_GLOBAL . ":${strCommand}"});
-                            }
+                        # Check the global command section
+                        if (!defined($strValue))
+                        {
+                            $strValue = optionValueGet($strOption, $$oConfig{&CFGDEF_SECTION_GLOBAL . ":${strCommand}"});
                         }
 
                         # Finally check the global section
                         if (!defined($strValue))
                         {
-                            $strValue = optionValueGet($strOption, $$oConfig{&CONFIG_SECTION_GLOBAL});
+                            $strValue = optionValueGet($strOption, $$oConfig{&CFGDEF_SECTION_GLOBAL});
                         }
                     }
 
@@ -2654,7 +546,7 @@ sub optionValidate
                             $strValue = undef;
                         }
                         # Convert Y or N to boolean
-                        elsif ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                         {
                             if ($strValue eq 'y')
                             {
@@ -2671,7 +563,7 @@ sub optionValidate
                             }
                         }
                         # Convert a list of key/value pairs to a hash
-                        elsif ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
                         {
                             my @oValue = ();
 
@@ -2713,14 +605,15 @@ sub optionValidate
                                 ERROR, "option '${strOption}' cannot be specified multiple times", ERROR_OPTION_MULTIPLE_VALUE);
                         }
 
-                        $oOption{$strOption}{source} = SOURCE_CONFIG;
+                        $oOption{$strOption}{source} = CFGDEF_SOURCE_CONFIG;
                     }
                 }
             }
 
-            if (defined($oDepend) && !$bDependResolved && defined($strValue))
+            if (cfgRuleOptionDepend($iCommandId, $iOptionId) && !$bDependResolved && defined($strValue))
             {
                 my $strError = "option '${strOption}' not valid without option ";
+                my $iDependOptionId = cfgOptionId($strDependOption);
 
                 if ($strDependType eq 'source')
                 {
@@ -2730,13 +623,14 @@ sub optionValidate
                 # If a depend value exists, make sure the option value matches
                 if ($strDependType eq 'value')
                 {
-                    if ($oOptionRule{$strDependOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+                    if (cfgRuleOptionType($iDependOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                     {
-                        $strError .= "'" . ($$oDepend{&OPTION_RULE_DEPEND_VALUE} ? '' : 'no-') . "${strDependOption}'";
+                        $strError .=
+                            "'" . (cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) ? '' : 'no-') . "${strDependOption}'";
                     }
                     else
                     {
-                        $strError .= "'${strDependOption}' = '$$oDepend{&OPTION_RULE_DEPEND_VALUE}'";
+                        $strError .= "'${strDependOption}' = '" . cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) . "'";
                     }
 
                     confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
@@ -2749,9 +643,9 @@ sub optionValidate
                 {
                     my @oyValue;
 
-                    foreach my $strValue (sort(keys(%{$$oDepend{&OPTION_RULE_DEPEND_LIST}})))
+                    for (my $iValueId = 0; $iValueId < cfgRuleOptionDependValueTotal($iCommandId, $iOptionId); $iValueId++)
                     {
-                        push(@oyValue, "'${strValue}'");
+                        push(@oyValue, "'" . cfgRuleOptionDependValue($iCommandId, $iOptionId, $iValueId) . "'");
                     }
 
                     $strError .= @oyValue == 1 ? " = $oyValue[0]" : " in (" . join(", ", @oyValue) . ")";
@@ -2763,10 +657,10 @@ sub optionValidate
             if (defined($strValue))
             {
                 # Check that floats and integers are valid
-                if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_INTEGER ||
-                    $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_FLOAT)
+                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_INTEGER ||
+                    cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_FLOAT)
                 {
-                    # Test that the string is a valid float or integer  by adding 1 to it.  It's pretty hokey but it works and it
+                    # Test that the string is a valid float or integer by adding 1 to it.  It's pretty hokey but it works and it
                     # beats requiring Scalar::Util::Numeric to do it properly.
                     my $bError = false;
 
@@ -2781,7 +675,7 @@ sub optionValidate
                     };
 
                     # Check that integers are really integers
-                    if (!$bError && $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_INTEGER &&
+                    if (!$bError && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_INTEGER &&
                         (int($strValue) . 'S') ne ($strValue . 'S'))
                     {
                         $bError = true;
@@ -2793,25 +687,22 @@ sub optionValidate
                 }
 
                 # Process an allow list for the command then for the option
-                my $oAllow = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_ALLOW_LIST} :
-                                                      $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_LIST};
-
-                if (defined($oAllow) && !defined($$oAllow{$strValue}))
+                if (cfgRuleOptionAllowList($iCommandId, $iOptionId) &&
+                    !cfgRuleOptionAllowListValueValid($iCommandId, $iOptionId, $strValue))
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
                 }
 
                 # Process an allow range for the command then for the option
-                $oAllow = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_ALLOW_RANGE} :
-                                                     $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE};
-
-                if (defined($oAllow) && ($strValue < $$oAllow[0] || $strValue > $$oAllow[1]))
+                if (cfgRuleOptionAllowRange($iCommandId, $iOptionId) &&
+                    ($strValue < cfgRuleOptionAllowRangeMin($iCommandId, $iOptionId) ||
+                     $strValue > cfgRuleOptionAllowRangeMax($iCommandId, $iOptionId)))
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_RANGE);
                 }
 
                 # Set option value
-                if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH && ref($strValue) eq 'ARRAY')
+                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH && ref($strValue) eq 'ARRAY')
                 {
                     foreach my $strItem (@{$strValue})
                     {
@@ -2819,8 +710,7 @@ sub optionValidate
                         my $strValue;
 
                         # If the keys are expected to have values
-                        if (!defined($oOptionRule{$strOption}{&OPTION_RULE_HASH_VALUE}) ||
-                            $oOptionRule{$strOption}{&OPTION_RULE_HASH_VALUE})
+                        if (cfgRuleOptionValueHash($iOptionId))
                         {
                             # Check for = and make sure there is a least one character on each side
                             my $iEqualPos = index($strItem, '=');
@@ -2860,19 +750,17 @@ sub optionValidate
                 # If not config sourced then it must be a param
                 if (!defined($oOption{$strOption}{source}))
                 {
-                    $oOption{$strOption}{source} = SOURCE_PARAM;
+                    $oOption{$strOption}{source} = CFGDEF_SOURCE_PARAM;
                 }
             }
             # Else try to set a default
-            elsif ($bDependResolved &&
-                   (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
-                    defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand})))
+            elsif ($bDependResolved)
             {
                 # Source is default for this option
-                $oOption{$strOption}{source} = SOURCE_DEFAULT;
+                $oOption{$strOption}{source} = CFGDEF_SOURCE_DEFAULT;
 
                 # Check for default in command then option
-                my $strDefault = optionDefault($strOption, $strCommand);
+                my $strDefault = cfgRuleOptionDefault($iCommandId, $iOptionId);
 
                 # If default is defined
                 if (defined($strDefault))
@@ -2881,12 +769,13 @@ sub optionValidate
                     $oOption{$strOption}{value} = $strDefault if !$bNegate;
                 }
                 # Else check required
-                elsif (optionRequired($strOption, $strCommand) && !$bHelp)
+                elsif (cfgRuleOptionRequired($iCommandId, $iOptionId) && !$bHelp)
                 {
-                    confess &log(ERROR, "${strCommand} command requires option: ${strOption}" .
-                                        (defined($oOptionRule{$strOption}{&OPTION_RULE_HINT}) ?
-                                         "\nHINT: " . $oOptionRule{$strOption}{&OPTION_RULE_HINT} : ''),
-                                        ERROR_OPTION_REQUIRED);
+                    confess &log(ERROR,
+                        "${strCommand} command requires option: ${strOption}" .
+                        (defined(cfgRuleOptionHint($iCommandId, $iOptionId)) ?
+                            "\nHINT: " . cfgRuleOptionHint($iCommandId, $iOptionId) : ''),
+                        ERROR_OPTION_REQUIRED);
                 }
             }
 
@@ -2924,7 +813,7 @@ sub configFileValidate
 
     my $bFileValid = true;
 
-    if (!commandTest(CMD_REMOTE) && !commandTest(CMD_LOCAL))
+    if (!cfgCommandTest(CFGCMD_REMOTE) && !cfgCommandTest(CFGCMD_LOCAL))
     {
         foreach my $strSectionKey (keys(%$oConfig))
         {
@@ -2932,6 +821,7 @@ sub configFileValidate
 
             foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
             {
+                my $strOptionDisplay = $strOption;
                 my $strValue = $$oConfig{$strSectionKey}{$strOption};
 
                 # Is the option listed as an alternate name for another option? If so, replace it with the recognized option.
@@ -2943,9 +833,9 @@ sub configFileValidate
                 }
 
                 # Is the option a valid pgbackrest option?
-                if (!(exists($oOptionRule{$strOption}) || defined($strOptionAltName)))
+                if (!(cfgOptionId($strOption) ne '-1' || defined($strOptionAltName)))
                 {
-                    &log(WARN, optionGet(OPTION_CONFIG) . " file contains invalid option '${strOption}'");
+                    &log(WARN, cfgOption(CFGOPT_CONFIG) . " file contains invalid option '${strOptionDisplay}'");
                     $bFileValid = false;
                 }
                 else
@@ -2953,20 +843,21 @@ sub configFileValidate
                     # Is the option valid for the command section in which it is located?
                     if (defined($strCommand) && $strCommand ne '')
                     {
-                        if (!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}))
+                        if (!cfgRuleOptionValid(cfgCommandId($strCommand), cfgOptionId($strOption)))
                         {
-                            &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is not valid for command " .
+                            &log(WARN, cfgOption(CFGOPT_CONFIG) . " valid option '${strOptionDisplay}' is not valid for command " .
                                 "'${strCommand}'");
                             $bFileValid = false;
                         }
                     }
 
                     # Is the valid option a stanza-only option and not located in a global section?
-                    if ($oOptionRule{$strOption}{&OPTION_RULE_SECTION} eq CONFIG_SECTION_STANZA &&
-                        $strSection eq CONFIG_SECTION_GLOBAL)
+                    if (cfgRuleOptionSection(cfgOptionId($strOption)) eq CFGDEF_SECTION_STANZA &&
+                        $strSection eq CFGDEF_SECTION_GLOBAL)
                     {
-                        &log(WARN, optionGet(OPTION_CONFIG) . " valid option '${strOption}' is a stanza section option and is not " .
-                            "valid in section ${strSection}\n" .
+                        &log(WARN,
+                            cfgOption(CFGOPT_CONFIG) .  " valid option '${strOptionDisplay}' is a stanza section option and is" .
+                            " not valid in section ${strSection}\n" .
                             "HINT: global options can be specified in global or stanza sections but not visa-versa");
                         $bFileValid = false;
                     }
@@ -2977,8 +868,6 @@ sub configFileValidate
 
     return $bFileValid;
 }
-
-push @EXPORT, qw(configFileValidate);
 
 ####################################################################################################################################
 # optionAltName
@@ -2992,10 +881,11 @@ sub optionAltName
     my $strOptionAltName = undef;
 
     # Check if the options exists as an alternate name (e.g. db-host has altname db1-host)
-    foreach my $strKey (keys(%oOptionRule))
+    for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
     {
-        if (defined($oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME}) &&
-            $oOptionRule{$strKey}{&OPTION_RULE_ALT_NAME} eq $strOption)
+        my $strKey = cfgOptionName($iOptionId);
+
+        if (defined(cfgRuleOptionNameAlt($iOptionId)) && cfgRuleOptionNameAlt($iOptionId) eq $strOption)
         {
             $strOptionAltName = $strKey;
         }
@@ -3004,221 +894,102 @@ sub optionAltName
     return $strOptionAltName;
 }
 
-push @EXPORT, qw(optionAltName);
-
 ####################################################################################################################################
-# optionCommandRule
-#
-# Returns the option rules based on the command.
+# cfgOptionIndex - return name for options that can be indexed (e.g. db1-host, db2-host).
 ####################################################################################################################################
-sub optionCommandRule
+sub cfgOptionIndex
 {
-    my $strOption = shift;
-    my $strCommand = shift;
-
-    if (defined($strCommand))
-    {
-        return defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) &&
-               defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}) &&
-               ref($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand}) eq 'HASH' ?
-               $oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strCommand} : undef;
-    }
-
-    return;
-}
-
-####################################################################################################################################
-# optionRequired
-#
-# Is the option required for this command?
-####################################################################################################################################
-sub optionRequired
-{
-    my $strOption = shift;
-    my $strCommand = shift;
-
-    # Get the command rule
-    my $oCommandRule = optionCommandRule($strOption, $strCommand);
-
-    # Check for required in command then option
-    my $bRequired = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_REQUIRED} :
-                                             $oOptionRule{$strOption}{&OPTION_RULE_REQUIRED};
-
-    # Return required
-    return !defined($bRequired) || $bRequired;
-}
-
-push @EXPORT, qw(optionRequired);
-
-####################################################################################################################################
-# optionType
-#
-# Get the option type.
-####################################################################################################################################
-sub optionType
-{
-    my $strOption = shift;
-
-    return $oOptionRule{$strOption}{&OPTION_RULE_TYPE};
-}
-
-push @EXPORT, qw(optionType);
-
-####################################################################################################################################
-# optionTypeTest
-#
-# Test the option type.
-####################################################################################################################################
-sub optionTypeTest
-{
-    my $strOption = shift;
-    my $strType = shift;
-
-    return optionType($strOption) eq $strType;
-}
-
-push @EXPORT, qw(optionTypeTest);
-
-####################################################################################################################################
-# optionIndex
-#
-# Return name for options that can be indexed (e.g. db1-host, db2-host).
-####################################################################################################################################
-sub optionIndex
-{
-    my $strOption = shift;
+    my $iOptionId = shift;
     my $iIndex = shift;
     my $bForce = shift;
 
     # If the option doesn't have a prefix it can't be indexed
     $iIndex = defined($iIndex) ? $iIndex : 1;
-    my $strPrefix = $oOptionRule{$strOption}{&OPTION_RULE_PREFIX};
+    my $strPrefix = cfgRuleOptionPrefix($iOptionId);
 
-    if (!defined($strPrefix) && $iIndex > 1)
+    if (!defined($strPrefix))
     {
-        confess &log(ASSERT, "'${strOption}' option does not allow indexing");
+        if ($iIndex > 1)
+        {
+            confess &log(ASSERT, "'" . cfgOptionName($iOptionId) . "' option does not allow indexing");
+        }
+
+        return $iOptionId;
     }
 
-    # Index 1 is the same name as the option unless forced to include the index
-    if ($iIndex == 1 && (!defined($bForce) || !$bForce))
-    {
-        return $strOption;
-    }
-
-    return "${strPrefix}${iIndex}" . substr($strOption, length($strPrefix));
+    return cfgOptionId("${strPrefix}${iIndex}" . substr(cfgOptionName($iOptionId), index(cfgOptionName($iOptionId), '-')));
 }
 
-push @EXPORT, qw(optionIndex);
+push @EXPORT, qw(cfgOptionIndex);
 
 ####################################################################################################################################
-# optionDefault
-#
-# Does the option have a default for this command?
+# cfgOptionSource - how was the option set?
 ####################################################################################################################################
-sub optionDefault
+sub cfgOptionSource
 {
-    my $strOption = shift;
-    my $strCommand = shift;
+    my $iOptionId = shift;
 
-    # Get the command rule
-    my $oCommandRule = optionCommandRule($strOption, $strCommand);
+    cfgOptionValid($iOptionId, true);
 
-    # Check for default in command
-    my $strDefault = defined($oCommandRule) ? $$oCommandRule{&OPTION_RULE_DEFAULT} : undef;
-
-    # If defined return, else try to grab the global default
-    return defined($strDefault) ? $strDefault : $oOptionRule{$strOption}{&OPTION_RULE_DEFAULT};
+    return $oOption{cfgOptionName($iOptionId)}{source};
 }
 
-push @EXPORT, qw(optionDefault);
+push @EXPORT, qw(cfgOptionSource);
 
 ####################################################################################################################################
-# optionRange
-#
-# Gets the allowed setting range for the option if it exists.
+# cfgOptionValid - is the option valid for the current command?
 ####################################################################################################################################
-sub optionRange
+sub cfgOptionValid
 {
-    my $strOption = shift;
-    my $strCommand = shift;
-
-    # Get the command rule
-    my $oCommandRule = optionCommandRule($strOption, $strCommand);
-
-    # Check for default in command
-    if (defined($oCommandRule) && defined($$oCommandRule{&OPTION_RULE_ALLOW_RANGE}))
-    {
-        return $$oCommandRule{&OPTION_RULE_ALLOW_RANGE}[0], $$oCommandRule{&OPTION_RULE_ALLOW_RANGE}[1];
-    }
-
-    # If defined return, else try to grab the global default
-    return $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE}[0], $oOptionRule{$strOption}{&OPTION_RULE_ALLOW_RANGE}[1];
-}
-
-push @EXPORT, qw(optionRange);
-
-####################################################################################################################################
-# optionSource
-#
-# How was the option set?
-####################################################################################################################################
-sub optionSource
-{
-    my $strOption = shift;
-
-    optionValid($strOption, true);
-
-    return $oOption{$strOption}{source};
-}
-
-push @EXPORT, qw(optionSource);
-
-####################################################################################################################################
-# optionValid
-#
-# Is the option valid for the current command?
-####################################################################################################################################
-sub optionValid
-{
-    my $strOption = shift;
+    my $iOptionId = shift;
     my $bError = shift;
 
-    if (defined($oOption{$strOption}) && defined($oOption{$strOption}{valid}) && $oOption{$strOption}{valid})
+    # If defined then this is the command help is being generated for so all valid checks should be against that command
+    my $iCommandId;
+
+    if (defined($strCommandHelp))
+    {
+        $iCommandId = cfgCommandId($strCommandHelp);
+    }
+    # Else try to use the normal command
+    elsif (defined($strCommand))
+    {
+        $iCommandId = cfgCommandId($strCommand);
+    }
+
+    if (defined($iCommandId) && cfgRuleOptionValid($iCommandId, $iOptionId))
     {
         return true;
     }
 
     if (defined($bError) && $bError)
     {
+        my $strOption = cfgOptionName($iOptionId);
+
         if (!defined($oOption{$strOption}))
         {
             confess &log(ASSERT, "option '${strOption}' does not exist");
         }
 
-        if (!defined($oOption{$strOption}{valid}))
-        {
-            confess &log(ASSERT, "option '${strOption}' does not have 'valid' flag set");
-        }
-
-        confess &log(ASSERT, "option '${strOption}' not valid for command '" . commandGet() . "'");
+        confess &log(ASSERT, "option '${strOption}' not valid for command '" . cfgCommandName(cfgCommandGet()) . "'");
     }
 
     return false;
 }
 
-push @EXPORT, qw(optionValid);
+push @EXPORT, qw(cfgOptionValid);
 
 ####################################################################################################################################
-# optionGet
-#
-# Get option value.
+# cfgOption - get option value
 ####################################################################################################################################
-sub optionGet
+sub cfgOption
 {
-    my $strOption = shift;
+    my $iOptionId = shift;
     my $bRequired = shift;
 
-    optionValid($strOption, true);
+    cfgOptionValid($iOptionId, true);
+
+    my $strOption = cfgOptionName($iOptionId);
 
     if (!defined($oOption{$strOption}{value}) && (!defined($bRequired) || $bRequired))
     {
@@ -3228,92 +999,88 @@ sub optionGet
     return $oOption{$strOption}{value};
 }
 
-push @EXPORT, qw(optionGet);
+push @EXPORT, qw(cfgOption);
 
 ####################################################################################################################################
-# optionSet
-#
-# Set option value and source if the option is valid for the command.
+# cfgOptionDefault - get option default value
 ####################################################################################################################################
-sub optionSet
+sub cfgOptionDefault
 {
-    my $strOption = shift;
+    my $iOptionId = shift;
+
+    cfgOptionValid($iOptionId, true);
+
+    return cfgRuleOptionDefault(cfgCommandId($strCommand), $iOptionId);
+}
+
+push @EXPORT, qw(cfgOptionDefault);
+
+####################################################################################################################################
+# cfgOptionSet - set option value and source
+####################################################################################################################################
+sub cfgOptionSet
+{
+    my $iOptionId = shift;
     my $oValue = shift;
     my $bForce = shift;
 
-    if (!optionValid($strOption, !defined($bForce) || !$bForce))
+    my $strOption = cfgOptionName($iOptionId);
+
+    if (!cfgOptionValid($iOptionId, !defined($bForce) || !$bForce))
     {
         $oOption{$strOption}{valid} = true;
     }
 
-    $oOption{$strOption}{source} = SOURCE_PARAM;
+    $oOption{$strOption}{source} = CFGDEF_SOURCE_PARAM;
     $oOption{$strOption}{value} = $oValue;
 }
 
-push @EXPORT, qw(optionSet);
+push @EXPORT, qw(cfgOptionSet);
 
 ####################################################################################################################################
-# optionTest
-#
-# Test a option value.
+# cfgOptionTest - test if an option exists or has a specific value
 ####################################################################################################################################
-sub optionTest
+sub cfgOptionTest
 {
-    my $strOption = shift;
+    my $iOptionId = shift;
     my $strValue = shift;
 
-    if (!optionValid($strOption))
+    if (!cfgOptionValid($iOptionId))
     {
         return false;
     }
 
     if (defined($strValue))
     {
-        return optionGet($strOption) eq $strValue ? true : false;
+        return cfgOption($iOptionId) eq $strValue ? true : false;
     }
 
-    return defined($oOption{$strOption}{value}) ? true : false;
+    return defined($oOption{cfgOptionName($iOptionId)}{value}) ? true : false;
 }
 
-push @EXPORT, qw(optionTest);
+push @EXPORT, qw(cfgOptionTest);
 
 ####################################################################################################################################
-# optionRuleGet
-#
-# Get the option rules.
+# cfgCommandGet - get the current command
 ####################################################################################################################################
-sub optionRuleGet
+sub cfgCommandGet
 {
-    return dclone(\%oOptionRule);
+    return cfgCommandId($strCommand);
 }
 
-push @EXPORT, qw(optionRuleGet);
+push @EXPORT, qw(cfgCommandGet);
 
 ####################################################################################################################################
-# commandGet
-#
-# Get the current command.
+# cfgCommandTest - test that the current command is equal to the provided value
 ####################################################################################################################################
-sub commandGet
+sub cfgCommandTest
 {
-    return $strCommand;
+    my $iCommandIdTest = shift;
+
+    return cfgCommandName($iCommandIdTest) eq $strCommand;
 }
 
-push @EXPORT, qw(commandGet);
-
-####################################################################################################################################
-# commandTest
-#
-# Test the current command.
-####################################################################################################################################
-sub commandTest
-{
-    my $strCommandTest = shift;
-
-    return $strCommandTest eq $strCommand;
-}
-
-push @EXPORT, qw(commandTest);
+push @EXPORT, qw(cfgCommandTest);
 
 ####################################################################################################################################
 # commandBegin
@@ -3323,11 +1090,9 @@ push @EXPORT, qw(commandTest);
 sub commandBegin
 {
     &log(
-        $strCommand eq CMD_INFO ? DEBUG : INFO,
-        "${strCommand} command begin " . BACKREST_VERSION . ':' . commandWrite($strCommand, true, '', false));
+        $strCommand eq cfgCommandName(CFGCMD_INFO) ? DEBUG : INFO,
+        "${strCommand} command begin " . BACKREST_VERSION . ':' . cfgCommandWrite(cfgCommandId($strCommand), true, '', false));
 }
-
-push @EXPORT, qw(commandBegin);
 
 ####################################################################################################################################
 # commandEnd
@@ -3342,7 +1107,7 @@ sub commandEnd
     if (defined($strCommand))
     {
         &log(
-            $strCommand eq CMD_INFO ? DEBUG : INFO,
+            $strCommand eq cfgCommandName(CFGCMD_INFO) ? DEBUG : INFO,
             "${strCommand} command end: " . (defined($iExitCode) && $iExitCode != 0 ?
                 ($iExitCode == ERROR_TERM ? "terminated on signal " .
                     (defined($strSignal) ? "[SIG${strSignal}]" : 'from child process') :
@@ -3354,32 +1119,29 @@ sub commandEnd
 push @EXPORT, qw(commandEnd);
 
 ####################################################################################################################################
-# commandSet
-#
-# Set current command (usually for triggering follow-on commands).
+# cfgCommandSet - set current command (usually for triggering follow-on commands)
 ####################################################################################################################################
-sub commandSet
+sub cfgCommandSet
 {
-    my $strValue = shift;
+    my $iCommandId = shift;
 
     commandEnd();
 
-    $strCommand = $strValue;
+    $strCommand = cfgCommandName($iCommandId);
 
     commandBegin();
 }
 
-push @EXPORT, qw(commandSet);
+push @EXPORT, qw(cfgCommandSet);
 
 ####################################################################################################################################
-# commandWrite
+# cfgCommandWrite - using the options for the current command, write the command string for another command
 #
-# Using the options that were passed to the current command, write the command string for another command.  For example, this
-# can be used to write the archive-get command for recovery.conf during a restore.
+# For example, this can be used to write the archive-get command for recovery.conf during a restore.
 ####################################################################################################################################
-sub commandWrite
+sub cfgCommandWrite
 {
-    my $strNewCommand = shift;
+    my $iNewCommandId = shift;
     my $bIncludeConfig = shift;
     my $strExeString = shift;
     my $bIncludeCommand = shift;
@@ -3391,24 +1153,34 @@ sub commandWrite
     $bIncludeCommand = defined($bIncludeCommand) ? $bIncludeCommand : true;
 
     # Iterate the options to figure out which ones are not default and need to be written out to the new command string
-    foreach my $strOption (sort(keys(%oOptionRule)))
+    for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
     {
-        # Skip option if it is secure and should not be output in logs or the command line
-        next if ($oOption{$strOption}{&OPTION_RULE_SECURE});
+        my $strOption = cfgOptionName($iOptionId);
 
-        # Process any option overrides first
-        if (defined($$oOptionOverride{$strOption}))
+        # Skip option if it is secure and should not be output in logs or the command line
+        next if (cfgRuleOptionSecure($iOptionId));
+
+        # Process any option id overrides first
+        if (defined($oOptionOverride->{$iOptionId}))
         {
-            if (defined($$oOptionOverride{$strOption}{value}))
+            if (defined($oOptionOverride->{$iOptionId}{value}))
             {
-                $strExeString .= commandWriteOptionFormat($strOption, false, {value => $$oOptionOverride{$strOption}{value}});
+                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$iOptionId}{value}});
+            }
+        }
+        # And process overrides passed by string - this is used by Perl compitiblity functions
+        elsif (defined($oOptionOverride->{$strOption}))
+        {
+            if (defined($oOptionOverride->{$strOption}{value}))
+            {
+                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$strOption}{value}});
             }
         }
         # else look for non-default options in the current configuration
-        elsif ((!defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}) ||
-                defined($oOptionRule{$strOption}{&OPTION_RULE_COMMAND}{$strNewCommand})) &&
+        elsif (cfgRuleOptionValid($iNewCommandId, $iOptionId) &&
                defined($oOption{$strOption}{value}) &&
-               ($bIncludeConfig ? $oOption{$strOption}{source} ne SOURCE_DEFAULT : $oOption{$strOption}{source} eq SOURCE_PARAM))
+               ($bIncludeConfig ?
+                    $oOption{$strOption}{source} ne CFGDEF_SOURCE_DEFAULT : $oOption{$strOption}{source} eq CFGDEF_SOURCE_PARAM))
         {
             my $oValue;
             my $bMulti = false;
@@ -3425,22 +1197,22 @@ sub commandWrite
                 $oValue = {value => $oOption{$strOption}{value}};
             }
 
-            $strExeString .= commandWriteOptionFormat($strOption, $bMulti, $oValue);
+            $strExeString .= cfgCommandWriteOptionFormat($strOption, $bMulti, $oValue);
         }
     }
 
     if ($bIncludeCommand)
     {
-        $strExeString .= " ${strNewCommand}";
+        $strExeString .= ' ' . cfgCommandName($iNewCommandId);
     }
 
     return $strExeString;
 }
 
-push @EXPORT, qw(commandWrite);
+push @EXPORT, qw(cfgCommandWrite);
 
-# Helper function for commandWrite() to correctly format options for command-line usage
-sub commandWriteOptionFormat
+# Helper function for cfgCommandWrite() to correctly format options for command-line usage
+sub cfgCommandWriteOptionFormat
 {
     my $strOption = shift;
     my $bMulti = shift;
@@ -3456,7 +1228,7 @@ sub commandWriteOptionFormat
         my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
 
         # Handle the no- prefix for boolean values
-        if ($oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_BOOLEAN)
+        if (cfgRuleOptionType(cfgOptionId($strOption)) eq CFGOPTDEF_TYPE_BOOLEAN)
         {
             $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
         }
@@ -3471,17 +1243,5 @@ sub commandWriteOptionFormat
 
     return $strOptionFormat;
 }
-
-####################################################################################################################################
-# commandHashGet
-#
-# Get the hash that contains all valid commands.
-####################################################################################################################################
-sub commandHashGet
-{
-    return dclone(\%oCommandHash);
-}
-
-push @EXPORT, qw(commandHashGet);
 
 1;

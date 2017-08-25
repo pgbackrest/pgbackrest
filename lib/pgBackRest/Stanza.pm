@@ -70,19 +70,19 @@ sub process
     my $iResult = 0;
 
     # Process stanza create
-    if (commandTest(CMD_STANZA_CREATE))
+    if (cfgCommandTest(CFGCMD_STANZA_CREATE))
     {
         $iResult = $self->stanzaCreate();
     }
     # Process stanza upgrade
-    elsif (commandTest(CMD_STANZA_UPGRADE))
+    elsif (cfgCommandTest(CFGCMD_STANZA_UPGRADE))
     {
         $iResult = $self->stanzaUpgrade();
     }
     # Else error if any other command is found
     else
     {
-        confess &log(ASSERT, "stanza->process() called with invalid command: " . commandGet());
+        confess &log(ASSERT, "stanza->process() called with invalid command: " . cfgCommandName(cfgCommandGet()));
     }
 
     # Return from function and log return values if any
@@ -115,7 +115,7 @@ sub stanzaCreate
 
     # If force not used, then if files exist force should be required since create must have already occurred and reissuing a create
     # needs to be a consciuos effort to rewrite the files
-    if (!optionGet(OPTION_FORCE))
+    if (!cfgOption(CFGOPT_FORCE))
     {
         # At least one directory is not empty, then check to see if the info files exist
         if (@stryFileListArchive || @stryFileListBackup)
@@ -166,7 +166,7 @@ sub stanzaCreate
 
     if ($iResult != 0)
     {
-        &log(WARN, "unable to create stanza '" . optionGet(OPTION_STANZA) . "'");
+        &log(WARN, "unable to create stanza '" . cfgOption(CFGOPT_STANZA) . "'");
         confess &log(ERROR, $strResultMessage, $iResult);
     }
 
@@ -330,12 +330,12 @@ sub infoObject
         # If force was not used, and the file is missing, then confess the error with hint to use force if the option is
         # configurable (force is not configurable for stanza-upgrade so this will always confess errors on stanza-upgrade)
         # else confess all other errors
-        if ((optionValid(OPTION_FORCE) && !optionGet(OPTION_FORCE)) ||
-            (!optionValid(OPTION_FORCE)))
+        if ((cfgOptionValid(CFGOPT_FORCE) && !cfgOption(CFGOPT_FORCE)) ||
+            (!cfgOptionValid(CFGOPT_FORCE)))
         {
             if ($iResult == ERROR_FILE_MISSING)
             {
-                confess &log(ERROR, (optionValid(OPTION_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage), $iResult);
+                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage, $iResult);
             }
             else
             {
@@ -392,7 +392,7 @@ sub infoFileCreate
 
     # If force was not used and the info file does not exist and the directory is not empty, then error
     # This should also be performed by the calling routine before this function is called, so this is just a safety check
-    if (!optionGet(OPTION_FORCE) && !$oInfo->{bExists} && @$stryFileList)
+    if (!cfgOption(CFGOPT_FORCE) && !$oInfo->{bExists} && @$stryFileList)
     {
         confess &log(ERROR, ($strPathType eq STORAGE_REPO_BACKUP ? 'backup directory ' : 'archive directory ') .
             $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
@@ -426,7 +426,7 @@ sub infoFileCreate
             if ($oInfoOnDisk->hash() ne $oInfo->hash())
             {
                 # If force was not used and the hashes are different then error
-                if (!optionGet(OPTION_FORCE))
+                if (!cfgOption(CFGOPT_FORCE))
                 {
                     $iResult = ERROR_FILE_INVALID;
                     $strResultMessage =
@@ -488,7 +488,7 @@ sub dbInfoGet
     # Validate the database configuration. Do not require the database to be online before creating a stanza because the
     # archive_command will attempt to push an achive before the archive.info file exists which will result in an error in the
     # postgres logs.
-    if (optionGet(OPTION_ONLINE))
+    if (cfgOption(CFGOPT_ONLINE))
     {
         # If the db-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
         $self->{oDb}->configValidate();
