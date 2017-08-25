@@ -13,9 +13,8 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Config::Data;
 use pgBackRest::Version;
-
-use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
 # Help types
@@ -99,7 +98,7 @@ sub process
 
     foreach my $strCommand (sort(keys(%{cfgbldCommandGet()})))
     {
-        if ($strCommand eq CFGBLDCMD_REMOTE || $strCommand eq CFGBLDCMD_LOCAL)
+        if ($strCommand eq CFGCMD_REMOTE || $strCommand eq CFGCMD_LOCAL)
         {
             next;
         }
@@ -114,11 +113,11 @@ sub process
     }
 
     # Iterate through all options
-    my $oOptionRule = cfgbldOptionRuleHelpGet();
+    my $oOptionRule = cfgdefRule();
 
     foreach my $strOption (sort(keys(%{$oOptionRule})))
     {
-        if ($strOption =~ /^test/ || $strOption eq CFGBLDOPT_ARCHIVE_MAX_MB)
+        if ($strOption =~ /^test/ || $strOption eq CFGOPT_ARCHIVE_MAX_MB)
         {
             next;
         }
@@ -555,7 +554,7 @@ sub manGet
     }
 
     # Build command and config hashes
-    my $hOptionRule = cfgbldOptionRuleHelpGet();
+    my $hOptionRule = cfgdefRule();
     my $hConfig = $self->{oConfigHash};
     my $hCommandList = {};
     my $iCommandMaxLen = 0;
@@ -629,11 +628,11 @@ sub manGet
 
             if (defined($strDefault))
             {
-                if ($strOption eq CFGBLDOPT_BACKUP_CMD || $strOption eq CFGBLDOPT_DB_CMD)
+                if ($strOption eq CFGOPT_BACKUP_CMD || $strOption eq CFGOPT_DB_CMD)
                 {
                     $strDefault = BACKREST_EXE;
                 }
-                elsif ($$hOptionRule{$strOption}{&CFGBLDDEF_RULE_TYPE} eq &CFGBLDDEF_TYPE_BOOLEAN)
+                elsif ($$hOptionRule{$strOption}{&CFGBLDDEF_RULE_TYPE} eq &CFGOPTDEF_TYPE_BOOLEAN)
                 {
                     $strDefault = $strDefault ? 'y' : 'n';
                 }
@@ -659,31 +658,31 @@ sub manGet
     $strManPage .= "\n\n" .
         "FILES\n" .
         "\n" .
-        '  ' . cfgbldOptionDefault(CFGBLDOPT_CONFIG) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGBLDOPT_REPO_PATH) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGBLDOPT_LOG_PATH) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGBLDOPT_SPOOL_PATH) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGBLDOPT_LOCK_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGOPT_CONFIG) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGOPT_REPO_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGOPT_LOG_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGOPT_SPOOL_PATH) . "\n" .
+        '  ' . cfgbldOptionDefault(CFGOPT_LOCK_PATH) . "\n" .
         "\n" .
         "EXAMPLES\n" .
         "\n" .
         "  * Create a backup of the PostgreSQL `main` cluster:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' --' . CFGBLDOPT_STANZA . "=main backup\n" .
+        '    $ ' . BACKREST_EXE . ' --' . CFGOPT_STANZA . "=main backup\n" .
         "\n" .
-        '    The `main` cluster should be configured in `' . cfgbldOptionDefault(CFGBLDOPT_CONFIG) . "`\n" .
+        '    The `main` cluster should be configured in `' . cfgbldOptionDefault(CFGOPT_CONFIG) . "`\n" .
         "\n" .
         "  * Show all available backups:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' ' . CFGBLDCMD_INFO . "\n" .
+        '    $ ' . BACKREST_EXE . ' ' . CFGCMD_INFO . "\n" .
         "\n" .
         "  * Show all available backups for a specific cluster:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' --' . CFGBLDOPT_STANZA . '=main ' . CFGBLDCMD_INFO . "\n" .
+        '    $ ' . BACKREST_EXE . ' --' . CFGOPT_STANZA . '=main ' . CFGCMD_INFO . "\n" .
         "\n" .
         "  * Show backup specific options:\n" .
         "\n" .
-        '    $ ' . BACKREST_EXE . ' ' . CFGBLDCMD_HELP . ' ' . CFGBLDCMD_BACKUP . "\n" .
+        '    $ ' . BACKREST_EXE . ' ' . CFGCMD_HELP . ' ' . CFGCMD_BACKUP . "\n" .
         "\n" .
         "SEE ALSO\n" .
         "\n" .
@@ -763,6 +762,9 @@ sub helpConfigDocGet
 
         my $oSectionDoc = $oConfigDoc->nodeGet('config-section-list')->nodeGetById('config-section', $strSection);
 
+        # Set the summary text for the section
+        $oSectionElement->textSet($oSectionDoc->textGet());
+
         $oSectionElement->
             nodeAdd('title')->textSet(
                 {name => 'text',
@@ -797,7 +799,7 @@ sub helpCommandDocGet
     # Working variables
     my $oConfigHash = $self->{oConfigHash};
     my $oOperationDoc = $self->{oDoc}->nodeGet('operation');
-    my $oOptionRule = cfgbldOptionRuleHelpGet();
+    my $oOptionRule = cfgdefRule();
 
     my $oDoc = new BackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $oOperationDoc->paramGet('title'));
@@ -890,7 +892,7 @@ sub helpCommandDocGetOptionFind
         }
 
         if (($strSection ne CFGDEF_GENERAL && $strSection ne CFGDEF_LOG &&
-             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGBLDDEF_SECTION_STANZA &&
+             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA &&
              $strSection ne CFGDEF_EXPIRE) ||
             $strSection eq $strCommand)
         {
@@ -937,13 +939,13 @@ sub helpOptionGet
     {
         my $strDefault;
 
-        if ($strOption eq CFGBLDOPT_BACKUP_CMD || $strOption eq CFGBLDOPT_DB_CMD)
+        if ($strOption eq CFGOPT_BACKUP_CMD || $strOption eq CFGOPT_DB_CMD)
         {
             $strDefault = '[INSTALL-PATH]/' . BACKREST_EXE;
         }
         else
         {
-            if (cfgbldOptionTypeTest($strOption, CFGBLDDEF_TYPE_BOOLEAN))
+            if (cfgbldOptionTypeTest($strOption, CFGOPTDEF_TYPE_BOOLEAN))
             {
                 $strDefault = cfgbldOptionDefault($strOption, $strCommand) ? 'y' : 'n';
             }
@@ -974,7 +976,7 @@ sub helpOptionGet
 
     if (defined($strCommand))
     {
-        if (cfgbldOptionTypeTest($strOption, CFGBLDDEF_TYPE_BOOLEAN))
+        if (cfgbldOptionTypeTest($strOption, CFGOPTDEF_TYPE_BOOLEAN))
         {
             if ($$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'n' && $$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'y')
             {

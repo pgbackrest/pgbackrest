@@ -6,7 +6,7 @@ package pgBackRest::Db;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
-use English '-no_match_vars';
+use English '-no_match_vars'; # Required to use $EVAL_ERROR
 
 use DBD::Pg ':async';
 use DBI;
@@ -21,7 +21,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
@@ -104,7 +103,7 @@ sub new
                 # that will log the error twice.
                 if ($bWarnOnError == false)
                 {
-                    confess $EVAL_ERROR;  # Added "use English '-no_match_vars';" to use $EVAL_ERROR
+                    confess $EVAL_ERROR;
                 }
             };
         }

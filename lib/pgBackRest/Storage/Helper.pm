@@ -13,7 +13,6 @@ use File::Basename qw(basename);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
 use pgBackRest::Version;

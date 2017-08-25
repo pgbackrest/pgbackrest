@@ -12,6 +12,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 
 ####################################################################################################################################
 # Generate functions that return config rule data
@@ -29,6 +30,23 @@ use constant CGEN_DATATYPE_CONSTCHAR                                => 'const ch
 
 use constant CGEN_DATAVAL_NULL                                      => '^^{{[[NULL]]}}^^';
     push @EXPORT, qw(CGEN_DATAVAL_NULL);
+
+####################################################################################################################################
+# cgenBanner - build general banner
+####################################################################################################################################
+sub cgenBanner
+{
+    my $strContent = shift;
+
+    my $strBanner =
+        qw{/} . (qw{*} x 131) . "\n" .
+        trim($strContent) . "\n" .
+        (qw{*} x 131) . qw{/} . "\n";
+
+    return $strBanner;
+}
+
+push @EXPORT, qw(cgenBanner);
 
 ####################################################################################################################################
 # cgenFunction - format type names for C
@@ -55,9 +73,7 @@ sub cgenFunction
     }
 
     my $strFunction =
-        qw{/} . (qw{*} x 131) . "\n" .
-        $strName . (defined($strSummary) ? " - ${strSummary}" : '') . "\n" .
-        (qw{*} x 131) . qw{/} . "\n" .
+        cgenBanner($strName . (defined($strSummary) ? " - ${strSummary}" : '')) .
         $strSource;
 
     return $strFunction;

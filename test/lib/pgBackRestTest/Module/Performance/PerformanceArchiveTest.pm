@@ -17,7 +17,6 @@ use Time::HiRes qw(gettimeofday);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;

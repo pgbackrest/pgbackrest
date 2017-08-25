@@ -17,7 +17,6 @@ use pgBackRest::Archive::Common;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::Host::HostBackupTest;

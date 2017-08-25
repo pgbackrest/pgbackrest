@@ -16,7 +16,6 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config :configRule);
 use pgBackRest::Version;
 
 ####################################################################################################################################
@@ -352,13 +351,13 @@ sub configHelpOptionFind
     my $iOptionId = cfgOptionId($strOption);
 
     # If not found then this is an indexed value
-    if ($iOptionId == -1)
+    if ($iOptionId eq -1)
     {
         my $strPrefix = substr($strOption, 0, index($strOption, '-'));
         $iOptionId = cfgOptionId("${strPrefix}1" . substr($strOption, index($strOption, '-')));
 
         # If still not found then error
-        if ($iOptionId == -1)
+        if ($iOptionId eq -1)
         {
             confess &log(ASSERT, "option '${strOption}' not found in help");
         }
@@ -398,13 +397,13 @@ sub configHelpOptionFind
     }
 
     # If no default is set see if there is a default in the rules
-    if (!defined($oOption->{&CONFIG_HELP_DEFAULT}) && defined(cfgOptionRuleDefault($iCommandId, $iOptionId)))
+    if (!defined($oOption->{&CONFIG_HELP_DEFAULT}) && defined(cfgRuleOptionDefault($iCommandId, $iOptionId)))
     {
-        $oOption->{&CONFIG_HELP_DEFAULT} = cfgOptionRuleDefault($iCommandId, $iOptionId);
+        $oOption->{&CONFIG_HELP_DEFAULT} = cfgRuleOptionDefault($iCommandId, $iOptionId);
     }
 
     # Format the default properly if it is a boolean
-    if (defined($oOption->{&CONFIG_HELP_DEFAULT}) && cfgOptionRuleType($iOptionId) eq CFGOPTRULE_TYPE_BOOLEAN)
+    if (defined($oOption->{&CONFIG_HELP_DEFAULT}) && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
     {
         $oOption->{&CONFIG_HELP_DEFAULT} = $oOption->{&CONFIG_HELP_DEFAULT} ? 'y' : 'n';
     }
@@ -413,7 +412,7 @@ sub configHelpOptionFind
     {
         $oOption->{&CONFIG_HELP_CURRENT} = cfgOption($iOptionId, true, false);
 
-        if (cfgOptionRuleType($iOptionId) eq CFGOPTRULE_TYPE_BOOLEAN)
+        if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
         {
             $$oOption{&CONFIG_HELP_CURRENT} = $oOption->{&CONFIG_HELP_CURRENT} ? 'y' : 'n';
         }

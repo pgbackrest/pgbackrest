@@ -23,7 +23,6 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 

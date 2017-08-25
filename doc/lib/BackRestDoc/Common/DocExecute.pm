@@ -17,9 +17,8 @@ use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Config::Data;
 use pgBackRest::Version;
-
-use pgBackRestBuild::Config::Data;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostTest;
@@ -517,7 +516,7 @@ sub backrestConfig
                 else
                 {
                     # Get the config options hash
-                    my $oOption = cfgbldOptionRuleGet();
+                    my $oOption = cfgdefRuleIndex();
 
                     # Make sure the specified option exists
                     # ??? This is too simplistic to handle new indexed options.  The check below works for now but it would be good
@@ -529,7 +528,7 @@ sub backrestConfig
 
                     # If this option is a hash and the value is already set then append to the array
                     if (defined($$oOption{$strKey}) &&
-                        $$oOption{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGBLDDEF_TYPE_HASH &&
+                        $$oOption{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGOPTDEF_TYPE_HASH &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();
@@ -571,13 +570,13 @@ sub backrestConfig
             # Remove the log-console-stderr option before pushing into the cache
             # ??? This is not very pretty and should be replaced with a general way to hide config options
             my $oConfigClean = dclone($self->{config}{$strHostName}{$$hCacheKey{file}});
-            delete($$oConfigClean{&CFGBLDDEF_SECTION_GLOBAL}{&CFGBLDOPT_LOG_LEVEL_STDERR});
-            delete($$oConfigClean{&CFGBLDDEF_SECTION_GLOBAL}{&CFGBLDOPT_LOG_TIMESTAMP});
-            delete($$oConfigClean{&CFGBLDDEF_SECTION_GLOBAL}{&CFGBLDOPT_REPO_S3_VERIFY_SSL});
+            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_LEVEL_STDERR});
+            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_LOG_TIMESTAMP});
+            delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL}{&CFGOPT_REPO_S3_VERIFY_SSL});
 
-            if (keys(%{$$oConfigClean{&CFGBLDDEF_SECTION_GLOBAL}}) == 0)
+            if (keys(%{$$oConfigClean{&CFGDEF_SECTION_GLOBAL}}) == 0)
             {
-                delete($$oConfigClean{&CFGBLDDEF_SECTION_GLOBAL});
+                delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL});
             }
 
             $self->{oManifest}->storage()->put("${strLocalFile}.clean", iniRender($oConfigClean, true));

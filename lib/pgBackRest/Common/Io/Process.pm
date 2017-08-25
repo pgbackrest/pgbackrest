@@ -124,7 +124,7 @@ sub error
                         $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_FILE_READ;
 
                     my $strErrorMessage = 'process ' . $self->id() . ' terminated unexpectedly' .
-                        ($iExitStatus != 255 ?  sprintf(' [%03d]', $iExitStatus) : '') . ' :';
+                        ($iExitStatus != 255 ?  sprintf(' [%03d]', $iExitStatus) : '');
 
                     if ((defined($bWarnOnError) ? $bWarnOnError : false) == false)
                     {
@@ -135,7 +135,7 @@ sub error
                     # are unavailable
                     else
                     {
-                        confess &log(WARN, "[$iErrorCode] $strErrorMessage $strError");
+                        confess &log(WARN, "[$iErrorCode] $strErrorMessage : $strError");
                     }
                 }
             }

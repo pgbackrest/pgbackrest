@@ -23,7 +23,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:checksum :config :configRule);
+use pgBackRest::LibC qw(:checksum);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Version;
@@ -1076,7 +1076,7 @@ sub run
                          {&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'selective restore 16384', undef, "${strLogReduced} --db-include=16384");
 
         # Restore checksum values for next test
@@ -1093,18 +1093,18 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'selective restore 32768', undef, "${strLogReduced} --db-include=32768");
 
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
 
         $oHostDbMaster->restore(
-            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'error on invalid id', ERROR_DB_MISSING, '--log-level-console=warn --db-include=7777');
 
         $oHostDbMaster->restore(
-            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'error on system id', ERROR_DB_INVALID, '--log-level-console=warn --db-include=1');
 
         # Compact Restore
@@ -1120,14 +1120,14 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'no tablespace remap - error when tablespace dir does not exist', ERROR_PATH_MISSING,
             "${strLogReduced} --tablespace-map-all=../../tablespace", false);
 
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
 
         $oHostDbMaster->restore(
-            cfgOptionRuleDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef,
+            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef,
             undef, undef, 'no tablespace remap', undef, "--tablespace-map-all=../../tablespace ${strLogReduced}", false);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';

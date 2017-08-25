@@ -25,7 +25,6 @@ use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Base;

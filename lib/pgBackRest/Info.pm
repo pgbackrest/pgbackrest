@@ -20,7 +20,6 @@ use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Config::Config;
 use pgBackRest::InfoCommon;
-use pgBackRest::LibC qw(:config);
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;

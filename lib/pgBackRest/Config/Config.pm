@@ -20,8 +20,13 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::LibC qw(:config :configRule);
+use pgBackRest::Config::Load;
 use pgBackRest::Version;
+
+####################################################################################################################################
+# Export config constants and functions
+####################################################################################################################################
+push(@EXPORT, @pgBackRest::Config::Load::EXPORT);
 
 ####################################################################################################################################
 # SOURCE Constants
@@ -95,21 +100,21 @@ sub configLoad
 
             if ($bAltName)
             {
-                if (!defined(cfgOptionRuleNameAlt($iOptionId)))
+                if (!defined(cfgRuleOptionNameAlt($iOptionId)))
                 {
                     next;
                 }
 
-                $strOptionName = cfgOptionRuleNameAlt($iOptionId);
+                $strOptionName = cfgRuleOptionNameAlt($iOptionId);
             }
 
             my $strOption = $strOptionName;
 
-            if (cfgOptionRuleType($iOptionId) eq CFGOPTRULE_TYPE_HASH)
+            if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
             {
                 $strOption .= '=s@';
             }
-            elsif (cfgOptionRuleType($iOptionId) ne CFGOPTRULE_TYPE_BOOLEAN)
+            elsif (cfgRuleOptionType($iOptionId) ne CFGOPTDEF_TYPE_BOOLEAN)
             {
                 $strOption .= '=s';
             }
@@ -117,7 +122,7 @@ sub configLoad
             push(@stryOptionAllow, $strOption);
 
             # Check if the option can be negated
-            if (cfgOptionRuleNegate($iOptionId))
+            if (cfgRuleOptionNegate($iOptionId))
             {
                 push(@stryOptionAllow, 'no-' . $strOptionName);
             }
@@ -317,9 +322,9 @@ sub optionValueGet
     # Some options have an alternate name so check for that as well
     my $iOptionId = cfgOptionId($strOption);
 
-    if (defined(cfgOptionRuleNameAlt($iOptionId)))
+    if (defined(cfgRuleOptionNameAlt($iOptionId)))
     {
-        my $strOptionAlt = cfgOptionRuleNameAlt($iOptionId);
+        my $strOptionAlt = cfgRuleOptionNameAlt($iOptionId);
         my $strValueAlt = $hOption->{$strOptionAlt};
 
         if (defined($strValueAlt))
@@ -361,7 +366,7 @@ sub optionValidate
 
     my $iCommandId = cfgCommandId($strCommand);
 
-    if ($iCommandId == -1)
+    if ($iCommandId eq "-1")
     {
         confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
     }
@@ -392,7 +397,7 @@ sub optionValidate
             }
 
             # Determine if an option is valid for a command
-            $oOption{$strOption}{valid} = cfgOptionRuleValid($iCommandId, $iOptionId);
+            $oOption{$strOption}{valid} = cfgRuleOptionValid($iCommandId, $iOptionId);
 
             if (!$oOption{$strOption}{valid})
             {
@@ -406,7 +411,7 @@ sub optionValidate
             # Check to see if an option can be negated.  Make sure that it is not set and negated at the same time.
             my $bNegate = false;
 
-            if (cfgOptionRuleNegate($iOptionId))
+            if (cfgRuleOptionNegate($iOptionId))
             {
                 $bNegate = defined($$oOptionTest{'no-' . $strOption});
 
@@ -415,7 +420,7 @@ sub optionValidate
                     confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
                 }
 
-                if ($bNegate && cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_BOOLEAN)
+                if ($bNegate && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                 {
                     $strValue = false;
                 }
@@ -427,10 +432,10 @@ sub optionValidate
             my $strDependValue;
             my $strDependType;
 
-            if (cfgOptionRuleDepend($iCommandId, $iOptionId))
+            if (cfgRuleOptionDepend($iCommandId, $iOptionId))
             {
                 # Check if the depend option has a value
-                my $iDependOptionId = cfgOptionRuleDependOption($iCommandId, $iOptionId);
+                my $iDependOptionId = cfgRuleOptionDependOption($iCommandId, $iOptionId);
                 $strDependOption = cfgOptionName($iDependOptionId);
                 $strDependValue = $oOption{$strDependOption}{value};
 
@@ -448,16 +453,16 @@ sub optionValidate
                 }
 
                 # If a depend value exists, make sure the option value matches
-                if ($bDependResolved && cfgOptionRuleDependValueTotal($iCommandId, $iOptionId) == 1 &&
-                    cfgOptionRuleDependValue($iCommandId, $iOptionId, 0) ne $strDependValue)
+                if ($bDependResolved && cfgRuleOptionDependValueTotal($iCommandId, $iOptionId) == 1 &&
+                    cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) ne $strDependValue)
                 {
                     $bDependResolved = false;
                     $strDependType = 'value';
                 }
 
                 # If a depend list exists, make sure the value is in the list
-                if ($bDependResolved && cfgOptionRuleDependValueTotal($iCommandId, $iOptionId) > 1 &&
-                    !cfgOptionRuleDependValueValid($iCommandId, $iOptionId, $strDependValue))
+                if ($bDependResolved && cfgRuleOptionDependValueTotal($iCommandId, $iOptionId) > 1 &&
+                    !cfgRuleOptionDependValueValid($iCommandId, $iOptionId, $strDependValue))
                 {
                     $bDependResolved = false;
                     $strDependType = 'list';
@@ -466,7 +471,7 @@ sub optionValidate
 
             # If the option value is undefined and not negated, see if it can be loaded from the config file
             if (!defined($strValue) && !$bNegate && $strOption ne cfgOptionName(CFGOPT_CONFIG) &&
-                defined(cfgOptionRuleSection($iOptionId)) && $bDependResolved)
+                defined(cfgRuleOptionSection($iOptionId)) && $bDependResolved)
             {
                 # If the config option has not been resolved yet then continue processing
                 if (!defined($oOptionResolved{cfgOptionName(CFGOPT_CONFIG)}) ||
@@ -501,7 +506,7 @@ sub optionValidate
                     }
 
                     # Get the section that the value should be in
-                    my $strSection = cfgOptionRuleSection($iOptionId);
+                    my $strSection = cfgRuleOptionSection($iOptionId);
 
                     # Always check for the option in the stanza section first
                     if (cfgOptionTest(CFGOPT_STANZA))
@@ -541,7 +546,7 @@ sub optionValidate
                             $strValue = undef;
                         }
                         # Convert Y or N to boolean
-                        elsif (cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_BOOLEAN)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                         {
                             if ($strValue eq 'y')
                             {
@@ -558,7 +563,7 @@ sub optionValidate
                             }
                         }
                         # Convert a list of key/value pairs to a hash
-                        elsif (cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_HASH)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
                         {
                             my @oValue = ();
 
@@ -605,7 +610,7 @@ sub optionValidate
                 }
             }
 
-            if (cfgOptionRuleDepend($iCommandId, $iOptionId) && !$bDependResolved && defined($strValue))
+            if (cfgRuleOptionDepend($iCommandId, $iOptionId) && !$bDependResolved && defined($strValue))
             {
                 my $strError = "option '${strOption}' not valid without option ";
                 my $iDependOptionId = cfgOptionId($strDependOption);
@@ -618,14 +623,14 @@ sub optionValidate
                 # If a depend value exists, make sure the option value matches
                 if ($strDependType eq 'value')
                 {
-                    if (cfgOptionRuleType($iDependOptionId) == CFGOPTRULE_TYPE_BOOLEAN)
+                    if (cfgRuleOptionType($iDependOptionId) eq CFGOPTDEF_TYPE_BOOLEAN)
                     {
                         $strError .=
-                            "'" . (cfgOptionRuleDependValue($iCommandId, $iOptionId, 0) ? '' : 'no-') . "${strDependOption}'";
+                            "'" . (cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) ? '' : 'no-') . "${strDependOption}'";
                     }
                     else
                     {
-                        $strError .= "'${strDependOption}' = '" . cfgOptionRuleDependValue($iCommandId, $iOptionId, 0) . "'";
+                        $strError .= "'${strDependOption}' = '" . cfgRuleOptionDependValue($iCommandId, $iOptionId, 0) . "'";
                     }
 
                     confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
@@ -638,9 +643,9 @@ sub optionValidate
                 {
                     my @oyValue;
 
-                    for (my $iValueId = 0; $iValueId < cfgOptionRuleDependValueTotal($iCommandId, $iOptionId); $iValueId++)
+                    for (my $iValueId = 0; $iValueId < cfgRuleOptionDependValueTotal($iCommandId, $iOptionId); $iValueId++)
                     {
-                        push(@oyValue, "'" . cfgOptionRuleDependValue($iCommandId, $iOptionId, $iValueId) . "'");
+                        push(@oyValue, "'" . cfgRuleOptionDependValue($iCommandId, $iOptionId, $iValueId) . "'");
                     }
 
                     $strError .= @oyValue == 1 ? " = $oyValue[0]" : " in (" . join(", ", @oyValue) . ")";
@@ -652,8 +657,8 @@ sub optionValidate
             if (defined($strValue))
             {
                 # Check that floats and integers are valid
-                if (cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_INTEGER ||
-                    cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_FLOAT)
+                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_INTEGER ||
+                    cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_FLOAT)
                 {
                     # Test that the string is a valid float or integer by adding 1 to it.  It's pretty hokey but it works and it
                     # beats requiring Scalar::Util::Numeric to do it properly.
@@ -670,7 +675,7 @@ sub optionValidate
                     };
 
                     # Check that integers are really integers
-                    if (!$bError && cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_INTEGER &&
+                    if (!$bError && cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_INTEGER &&
                         (int($strValue) . 'S') ne ($strValue . 'S'))
                     {
                         $bError = true;
@@ -682,22 +687,22 @@ sub optionValidate
                 }
 
                 # Process an allow list for the command then for the option
-                if (cfgOptionRuleAllowList($iCommandId, $iOptionId) &&
-                    !cfgOptionRuleAllowListValueValid($iCommandId, $iOptionId, $strValue))
+                if (cfgRuleOptionAllowList($iCommandId, $iOptionId) &&
+                    !cfgRuleOptionAllowListValueValid($iCommandId, $iOptionId, $strValue))
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
                 }
 
                 # Process an allow range for the command then for the option
-                if (cfgOptionRuleAllowRange($iCommandId, $iOptionId) &&
-                    ($strValue < cfgOptionRuleAllowRangeMin($iCommandId, $iOptionId) ||
-                     $strValue > cfgOptionRuleAllowRangeMax($iCommandId, $iOptionId)))
+                if (cfgRuleOptionAllowRange($iCommandId, $iOptionId) &&
+                    ($strValue < cfgRuleOptionAllowRangeMin($iCommandId, $iOptionId) ||
+                     $strValue > cfgRuleOptionAllowRangeMax($iCommandId, $iOptionId)))
                 {
                     confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_RANGE);
                 }
 
                 # Set option value
-                if (cfgOptionRuleType($iOptionId) == CFGOPTRULE_TYPE_HASH && ref($strValue) eq 'ARRAY')
+                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH && ref($strValue) eq 'ARRAY')
                 {
                     foreach my $strItem (@{$strValue})
                     {
@@ -705,7 +710,7 @@ sub optionValidate
                         my $strValue;
 
                         # If the keys are expected to have values
-                        if (cfgOptionRuleValueHash($iOptionId))
+                        if (cfgRuleOptionValueHash($iOptionId))
                         {
                             # Check for = and make sure there is a least one character on each side
                             my $iEqualPos = index($strItem, '=');
@@ -755,7 +760,7 @@ sub optionValidate
                 $oOption{$strOption}{source} = CFGDEF_SOURCE_DEFAULT;
 
                 # Check for default in command then option
-                my $strDefault = cfgOptionRuleDefault($iCommandId, $iOptionId);
+                my $strDefault = cfgRuleOptionDefault($iCommandId, $iOptionId);
 
                 # If default is defined
                 if (defined($strDefault))
@@ -764,12 +769,12 @@ sub optionValidate
                     $oOption{$strOption}{value} = $strDefault if !$bNegate;
                 }
                 # Else check required
-                elsif (cfgOptionRuleRequired($iCommandId, $iOptionId) && !$bHelp)
+                elsif (cfgRuleOptionRequired($iCommandId, $iOptionId) && !$bHelp)
                 {
                     confess &log(ERROR,
                         "${strCommand} command requires option: ${strOption}" .
-                        (defined(cfgOptionRuleHint($iCommandId, $iOptionId)) ?
-                            "\nHINT: " . cfgOptionRuleHint($iCommandId, $iOptionId) : ''),
+                        (defined(cfgRuleOptionHint($iCommandId, $iOptionId)) ?
+                            "\nHINT: " . cfgRuleOptionHint($iCommandId, $iOptionId) : ''),
                         ERROR_OPTION_REQUIRED);
                 }
             }
@@ -828,7 +833,7 @@ sub configFileValidate
                 }
 
                 # Is the option a valid pgbackrest option?
-                if (!(cfgOptionId($strOption) != -1 || defined($strOptionAltName)))
+                if (!(cfgOptionId($strOption) ne '-1' || defined($strOptionAltName)))
                 {
                     &log(WARN, cfgOption(CFGOPT_CONFIG) . " file contains invalid option '${strOptionDisplay}'");
                     $bFileValid = false;
@@ -838,7 +843,7 @@ sub configFileValidate
                     # Is the option valid for the command section in which it is located?
                     if (defined($strCommand) && $strCommand ne '')
                     {
-                        if (!cfgOptionRuleValid(cfgCommandId($strCommand), cfgOptionId($strOption)))
+                        if (!cfgRuleOptionValid(cfgCommandId($strCommand), cfgOptionId($strOption)))
                         {
                             &log(WARN, cfgOption(CFGOPT_CONFIG) . " valid option '${strOptionDisplay}' is not valid for command " .
                                 "'${strCommand}'");
@@ -847,7 +852,7 @@ sub configFileValidate
                     }
 
                     # Is the valid option a stanza-only option and not located in a global section?
-                    if (cfgOptionRuleSection(cfgOptionId($strOption)) eq CFGDEF_SECTION_STANZA &&
+                    if (cfgRuleOptionSection(cfgOptionId($strOption)) eq CFGDEF_SECTION_STANZA &&
                         $strSection eq CFGDEF_SECTION_GLOBAL)
                     {
                         &log(WARN,
@@ -880,7 +885,7 @@ sub optionAltName
     {
         my $strKey = cfgOptionName($iOptionId);
 
-        if (defined(cfgOptionRuleNameAlt($iOptionId)) && cfgOptionRuleNameAlt($iOptionId) eq $strOption)
+        if (defined(cfgRuleOptionNameAlt($iOptionId)) && cfgRuleOptionNameAlt($iOptionId) eq $strOption)
         {
             $strOptionAltName = $strKey;
         }
@@ -900,7 +905,7 @@ sub cfgOptionIndex
 
     # If the option doesn't have a prefix it can't be indexed
     $iIndex = defined($iIndex) ? $iIndex : 1;
-    my $strPrefix = cfgOptionRulePrefix($iOptionId);
+    my $strPrefix = cfgRuleOptionPrefix($iOptionId);
 
     if (!defined($strPrefix))
     {
@@ -952,7 +957,7 @@ sub cfgOptionValid
         $iCommandId = cfgCommandId($strCommand);
     }
 
-    if (defined($iCommandId) && cfgOptionRuleValid($iCommandId, $iOptionId))
+    if (defined($iCommandId) && cfgRuleOptionValid($iCommandId, $iOptionId))
     {
         return true;
     }
@@ -1005,7 +1010,7 @@ sub cfgOptionDefault
 
     cfgOptionValid($iOptionId, true);
 
-    return cfgOptionRuleDefault(cfgCommandId($strCommand), $iOptionId);
+    return cfgRuleOptionDefault(cfgCommandId($strCommand), $iOptionId);
 }
 
 push @EXPORT, qw(cfgOptionDefault);
@@ -1153,18 +1158,26 @@ sub cfgCommandWrite
         my $strOption = cfgOptionName($iOptionId);
 
         # Skip option if it is secure and should not be output in logs or the command line
-        next if (cfgOptionRuleSecure($iOptionId));
+        next if (cfgRuleOptionSecure($iOptionId));
 
-        # Process any option overrides first
-        if (defined($$oOptionOverride{$iOptionId}))
+        # Process any option id overrides first
+        if (defined($oOptionOverride->{$iOptionId}))
         {
-            if (defined($$oOptionOverride{$iOptionId}{value}))
+            if (defined($oOptionOverride->{$iOptionId}{value}))
             {
-                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $$oOptionOverride{$iOptionId}{value}});
+                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$iOptionId}{value}});
+            }
+        }
+        # And process overrides passed by string - this is used by Perl compitiblity functions
+        elsif (defined($oOptionOverride->{$strOption}))
+        {
+            if (defined($oOptionOverride->{$strOption}{value}))
+            {
+                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$strOption}{value}});
             }
         }
         # else look for non-default options in the current configuration
-        elsif (cfgOptionRuleValid($iNewCommandId, $iOptionId) &&
+        elsif (cfgRuleOptionValid($iNewCommandId, $iOptionId) &&
                defined($oOption{$strOption}{value}) &&
                ($bIncludeConfig ?
                     $oOption{$strOption}{source} ne CFGDEF_SOURCE_DEFAULT : $oOption{$strOption}{source} eq CFGDEF_SOURCE_PARAM))
@@ -1215,7 +1228,7 @@ sub cfgCommandWriteOptionFormat
         my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
 
         # Handle the no- prefix for boolean values
-        if (cfgOptionRuleType(cfgOptionId($strOption)) == CFGOPTRULE_TYPE_BOOLEAN)
+        if (cfgRuleOptionType(cfgOptionId($strOption)) eq CFGOPTDEF_TYPE_BOOLEAN)
         {
             $strParam = '--' . ($strValue ? '' : 'no-') . $strOption;
         }

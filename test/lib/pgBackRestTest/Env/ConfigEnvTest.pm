@@ -15,9 +15,7 @@ use English '-no_match_vars';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::LibC qw(:config :configRule);
-
-use pgBackRestBuild::Config::Data;
+use pgBackRest::Config::Data;
 
 use constant CONFIGENVTEST                                          => 'ConfigEnvTest';
 
@@ -136,7 +134,7 @@ sub configTestLoadExpect
     my $strErrorParam2 = shift;
     my $strErrorParam3 = shift;
 
-    my $oOptionRuleExpected = cfgbldOptionRuleGet();
+    my $oOptionRuleExpected = cfgdefRuleIndex();
 
     @ARGV = $self->commandTestWrite($strCommand, $self->{&CONFIGENVTEST});
     $self->configTestClear();
