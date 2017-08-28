@@ -34,6 +34,7 @@ sub new
         $strUser,                                   # User to connect to for remote (must be set if strHost is set)
         $iSshPort,                                  # Specified if other than default port is needed for ssh
         $iProtocolTimeout,                          # Protocol timeout
+        $bWarnOnError,                              # Throw Errors as Warnings
     ) =
         logDebugParam
         (
@@ -47,6 +48,7 @@ sub new
             {name => 'strUser'},
             {name => 'iSshPort', required => false},
             {name => 'iProtocolTimeout'},
+            {name => 'bWarnOnError'},
         );
 
     my $strCommandSshPort = defined($iSshPort) ? '-p ' . $iSshPort . ' ' : '';
@@ -59,7 +61,7 @@ sub new
     # Init object and store variables
     my $self = $class->SUPER::new(
         'remote', "'$strHost remote'", $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork,
-        $iProtocolTimeout);
+        $iProtocolTimeout, {bWarnOnError => $bWarnOnError});
     bless $self, $class;
 
     # Store the host

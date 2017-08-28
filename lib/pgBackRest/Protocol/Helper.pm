@@ -155,6 +155,7 @@ sub protocolGet
         $strBackRestBin,
         $iProcessIdx,
         $strCommand,
+        $bWarnOnError,
     ) =
         logDebugParam
         (
@@ -165,6 +166,7 @@ sub protocolGet
             {name => 'strBackRestBin', optional => true},
             {name => 'iProcessIdx', optional => true},
             {name => 'strCommand', optional => true, default => cfgCommandName(cfgCommandGet())},
+            {name => 'bWarnOnError', optional => true, default => false},
         );
 
     # Protocol object
@@ -278,7 +280,8 @@ sub protocolGet
                 cfgOption($iOptionIdHost),
                 cfgOption($iOptionIdUser),
                 cfgOption($strOptionSshPort, false),
-                cfgOption(CFGOPT_PROTOCOL_TIMEOUT)
+                cfgOption(CFGOPT_PROTOCOL_TIMEOUT),
+                $bWarnOnError
             );
 
             # Cache the protocol

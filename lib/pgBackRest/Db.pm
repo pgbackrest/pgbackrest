@@ -6,6 +6,7 @@ package pgBackRest::Db;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars'; # Required to use $EVAL_ERROR
 
 use DBD::Pg ':async';
 use DBI;
@@ -76,11 +77,13 @@ sub new
     (
         my $strOperation,
         $self->{iRemoteIdx},
+        my $bWarnOnError,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'iRemoteIdx', required => false},
+            {name => 'bWarnOnError', optional => true, default => false},
         );
 
     if (defined($self->{iRemoteIdx}))
@@ -89,7 +92,20 @@ sub new
 
         if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
-            $self->{oProtocol} = protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iRemoteIdx});
+            eval
+            {
+                $self->{oProtocol} = protocolGet(CFGOPTVAL_REMOTE_TYPE_DB, $self->{iRemoteIdx}, {bWarnOnError => $bWarnOnError});
+                return true;
+            }
+            or do
+            {
+                # If errors are not being changed to warnings, then confess the error that bubbled up. Do not use &log here as
+                # that will log the error twice.
+                if ($bWarnOnError == false)
+                {
+                    confess $EVAL_ERROR;
+                }
+            };
         }
     }
 
@@ -144,10 +160,17 @@ sub connect
     my $bResult = true;
 
     # Run remotely
-    if (defined($self->{oProtocol}))
+    if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
     {
-        # Set bResult to false if undef is returned
-        $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
+        if (defined($self->{oProtocol}))
+        {
+            # Set bResult to false if undef is returned
+            $bResult = $self->{oProtocol}->cmdExecute(OP_DB_CONNECT, undef, false, $bWarnOnError) ? true : false;
+        }
+        else
+        {
+            $bResult = false;
+        }
     }
     # Else run locally
     else
@@ -245,10 +268,21 @@ sub executeSql
     my @stryResult;
 
     # Run remotely
-    if (defined($self->{oProtocol}))
+    if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
     {
-        # Execute the command
-        @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
+        if (defined($self->{oProtocol}))
+        {
+            # Execute the command
+            @stryResult = @{$self->{oProtocol}->cmdExecute(OP_DB_EXECUTE_SQL, [$strSql, $bIgnoreError, $bResult], $bResult)};
+        }
+        # If remote protocol object is undefined, do not just return an empty array as that may indicate a query that
+        # was not expected to return a result when in fact, we can not actually attempt to execute the query.
+        else
+        {
+            # Confess the host for which the protocol object was not defined.
+            confess &log(ASSERT, 'no protocol object for database ' . cfgOption(cfgOptionIndex(CFGOPT_DB_HOST,
+                $self->{iRemoteIdx})));
+        }
     }
     # Else run locally
     else
@@ -466,12 +500,22 @@ sub info
     {
         # Get info from remote
         #---------------------------------------------------------------------------------------------------------------------------
-        if (defined($self->{oProtocol}))
+        if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
-            # Execute the command
-            ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
-                $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
-                    $self->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
+            if (defined($self->{oProtocol}))
+            {
+                # Execute the command
+                ($self->{info}{$strDbPath}{strDbVersion}, $self->{info}{$strDbPath}{iDbControlVersion},
+                    $self->{info}{$strDbPath}{iDbCatalogVersion}, $self->{info}{$strDbPath}{ullDbSysId}) =
+                        $self->{oProtocol}->cmdExecute(OP_DB_INFO, [$strDbPath], true);
+            }
+            # If this is a remote and the protocol object is not defined, then problem with DB object
+            else
+            {
+                # Confess the host for which the protocol object was not defined.
+                confess &log(ASSERT, 'no protocol object for database ' . cfgOption(cfgOptionIndex(CFGOPT_DB_HOST,
+                    $self->{iRemoteIdx})));
+            }
         }
         # Get info locally
         #---------------------------------------------------------------------------------------------------------------------------
@@ -962,7 +1006,15 @@ sub replayWait
 sub dbObjectGet
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbObjectGet');
+    my (
+            $strOperation,
+            $bMasterOnly,
+        ) =
+            logDebugParam
+            (
+                __PACKAGE__ . '::dbObjectGet', \@_,
+                {name => 'bMasterOnly', optional => true, default => false},
+            );
 
     my $iStandbyIdx = undef;
     my $iMasterRemoteIdx = 1;
@@ -971,7 +1023,7 @@ sub dbObjectGet
 
     # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
     # this is simple and works.
-    if (cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, 2)))
+    if (!$bMasterOnly && cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && multipleDb())
     {
         for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
@@ -980,7 +1032,7 @@ sub dbObjectGet
                 cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
                 # Create the db object
-                my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $oDb = new pgBackRest::Db($iRemoteIdx, {bWarnOnError => true});
                 my $bAssigned = false;
 
                 # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
@@ -1021,16 +1073,18 @@ sub dbObjectGet
             }
         }
 
-        # Make sure the standby database is defined when backup from standby requested
+        # Make sure a standby database is defined when backup from standby option is set
         if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
         {
-            confess &log(ERROR, 'unable to find standby database - cannot proceed');
+            # Throw an error that is distinct from connecting to the master for testing purposes
+            confess &log(ERROR, 'unable to find standby database - cannot proceed', ERROR_HOST_CONNECT);
         }
 
         # A master database is always required
         if (!defined($oDbMaster))
         {
-            confess &log(ERROR, 'unable to find master database - cannot proceed');
+            # Throw an error that is distinct from connecting to a standy for testing purposes
+            confess &log(ERROR, 'unable to find master database - cannot proceed', ERROR_DB_CONNECT);
         }
     }
 
@@ -1064,7 +1118,7 @@ sub dbMasterGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbMasterGet');
 
-    my ($oDbMaster) = dbObjectGet();
+    my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1075,5 +1129,24 @@ sub dbMasterGet
 }
 
 push @EXPORT, qw(dbMasterGet);
+
+####################################################################################################################################
+# multipleDb
+#
+# Helper function to determine if there is more than one database defined.
+####################################################################################################################################
+sub multipleDb
+{
+    for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_DB_PATH); $iDbPathIdx++)
+    {
+        # If an index exists above 1 then return true
+        if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 1;

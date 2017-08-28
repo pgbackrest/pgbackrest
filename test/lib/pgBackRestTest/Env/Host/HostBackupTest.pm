@@ -1036,16 +1036,24 @@ sub configCreate
 
         if (defined($oHostDb2))
         {
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 2)} = $oHostDb2->nameGet();
+            # Add an invalid replica to simulate more than one replica. A warning should be thrown by dbObjectGet when a stanza is
+            # created and a valid replica should be chosen.
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 2)} = BOGUS;
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 2)} = $oHostDb2->userGet();
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 2)} = $oHostDb2->backrestExe();
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 2)} = $oHostDb2->backrestConfig();
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 2)} = $oHostDb2->dbBasePath();
 
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 3)} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 3)} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 3)} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 3)} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 3)} = $oHostDb2->dbBasePath();
+
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 2)} = $oHostDb2->pgPort();
+                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 3)} = $oHostDb2->pgPort();
             }
         }
     }

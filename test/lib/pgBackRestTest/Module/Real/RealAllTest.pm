@@ -461,6 +461,28 @@ sub run
             # Update message for standby
             $oHostDbMaster->sqlExecute("update test set message = '$strStandbyMessage'");
 
+            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
+            {
+                # If there is only a master and a replica and the replica is the backup destination, then if db2-host and db3-host
+                # are BOGUS, confirm failure to reach the master
+                if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
+                {
+                    my $strStandbyBackup = $oHostBackup->backup(
+                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach master',
+                        {bStandby => true,
+                         iExpectedExitStatus => ERROR_DB_CONNECT,
+                         strOptionalParam => '--' . $oHostBackup->optionIndexName(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                }
+                else
+                {
+                    my $strStandbyBackup = $oHostBackup->backup(
+                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
+                        {bStandby => true,
+                         iExpectedExitStatus => ERROR_HOST_CONNECT,
+                         strOptionalParam => '--' . $oHostBackup->optionIndexName(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                }
+            }
+
             my $strStandbyBackup = $oHostBackup->backup(
                 CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
                 {bStandby => true,
