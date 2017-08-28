@@ -55,8 +55,9 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
-    # Initialize the database object
-    my $oDb = dbMasterGet();
+    # Initialize the database object. This will also check the configured replicas and throw an error if at least one is not
+    # able to be connected to and warnings for any that cannot be properly connected to.
+    my ($oDb) = dbObjectGet();
 
     # Validate the database configuration
     $oDb->configValidate();

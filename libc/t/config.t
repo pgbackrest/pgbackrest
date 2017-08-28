@@ -59,7 +59,7 @@ ok (!cfgRuleOptionDependValueValid(CFGCMD_RESTORE, CFGOPT_TARGET, 'bogus'));
 
 ok (cfgRuleOptionHint(CFGCMD_BACKUP, CFGOPT_DB1_PATH) eq 'does this stanza exist?');
 
-ok (cfgOptionIndexTotal(CFGOPT_DB_PATH) == 2);
+ok (cfgOptionIndexTotal(CFGOPT_DB_PATH) == 8);
 ok (cfgOptionIndexTotal(CFGOPT_REPO_PATH) == 1);
 
 ok (cfgRuleOptionNameAlt(CFGOPT_DB1_HOST) eq 'db-host');

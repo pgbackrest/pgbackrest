@@ -88,7 +88,8 @@ P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferenti
 P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPathExp = [TEST_PATH]/db-master/repo/backup/db, strSortOrder = <forward>
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
-P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
+P00  DEBUG:     Db->new(): bWarnOnError = <false>, iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 16384, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
@@ -150,7 +151,7 @@ P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 16384, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local, strId = 'local-1', strName = local
+P00  DEBUG:     Protocol::Command::Master->new(): bWarnOnError = <false>, iBufferMax = 16384, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local, strId = 'local-1', strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -468,7 +469,8 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
-P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
+P00  DEBUG:     Db->new(): bWarnOnError = <false>, iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
@@ -635,7 +637,8 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
 P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
 P00  DEBUG:     Backup::Info->delete(): strBackupLabel = [BACKUP-FULL-1]
-P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
+P00  DEBUG:     Db->new(): bWarnOnError = <false>, iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
@@ -707,7 +710,7 @@ P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = 'local-1', strName = local
+P00  DEBUG:     Protocol::Command::Master->new(): bWarnOnError = <false>, iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = 'local-1', strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -1104,7 +1107,7 @@ P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/PG_VERSION, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 0), strKey = pg_data/PG_VERSION, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = backup
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = 'local-1', strName = local
+P00  DEBUG:     Protocol::Command::Master->new(): bWarnOnError = <false>, iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = 'local-1', strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -1530,7 +1533,8 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
-P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
+P00  DEBUG:     Db->new(): bWarnOnError = <false>, iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
@@ -1592,7 +1596,7 @@ P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VER
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = 'local-1', strName = local
+P00  DEBUG:     Protocol::Command::Master->new(): bWarnOnError = <false>, iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = 'local-1', strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 1
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -1834,7 +1838,8 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
 P00   WARN: backup [BACKUP-INCR-1] missing in repository removed from backup.info
 P00  DEBUG:     Backup::Info->delete(): strBackupLabel = [BACKUP-INCR-1]
-P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
+P00  DEBUG:     Db->new(): bWarnOnError = <false>, iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
@@ -1905,7 +1910,7 @@ P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VER
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
 P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = 'local-1', strName = local
+P00  DEBUG:     Protocol::Command::Master->new(): bWarnOnError = <false>, iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = 'local-1', strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 2
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
