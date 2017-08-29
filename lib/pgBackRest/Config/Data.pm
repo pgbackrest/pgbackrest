@@ -6,7 +6,7 @@
 # section meaning the rules defined there apply to all commands listed for the option.
 #
 # CFGBLDDEF_RULE_COMMAND:
-#     List of commands the option can be used with this option.  An empty hash signifies that the command does no deviate from the
+#     List of commands the option can be used with this option.  An empty hash signifies that the command does not deviate from the
 #     option defaults.  Otherwise, overrides can be specified.
 #
 # NOTE: If the option (A) has a dependency on another option (B) then the CFGCMD_ must also be specified in the other option
@@ -284,7 +284,7 @@ use constant CFGOPT_RECOVERY_OPTION                                 => 'recovery
 # Stanza options
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many databases can be configured
-use constant CFGDEF_INDEX_DB                                        => 2;
+use constant CFGDEF_INDEX_DB                                        => 8;
 
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGDEF_PREFIX_DB                                       => 'db';

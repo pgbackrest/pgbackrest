@@ -626,7 +626,9 @@
 
             <!-- CONFIG - STANZA -->
             <config-section id="stanza" name="Stanza">
-                <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
+                <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
+
+                <b>Indexing</b>: All <setting>db-</setting> options can be indexed for configuring standby replicas. For example if a single standby replica is configured then index the <setting>db-</setting> options as <setting>db2-</setting> (e.g. db2-host, db2-path, etc). If an index is not specified (e.g. db-host) it will be aliased to <setting>db1-</setting> (e.g. db1-host).</text>
 
                 <config-key-list>
                     <!-- CONFIG - STANZA SECTION - DB-CMD KEY -->

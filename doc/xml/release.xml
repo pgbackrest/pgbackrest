@@ -11,6 +11,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Added ability to configure up to 7 replicas and to log replica connection errors as warnings.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-bug-list>
                     <release-item>
