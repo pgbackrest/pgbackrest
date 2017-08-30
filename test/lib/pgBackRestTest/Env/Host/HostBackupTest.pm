@@ -1045,7 +1045,8 @@ sub configCreate
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, $iInvalidReplica)} = $oHostDb2->backrestConfig();
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, $iInvalidReplica)} = $oHostDb2->dbBasePath();
 
-            my $iValidReplica = 8;
+            # Set a valid replica to the last possible index to ensure skipping indexes does not make a difference.
+            my $iValidReplica = cfgOptionIndexTotal(CFGOPT_DB_PATH);
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, $iValidReplica)} = $oHostDb2->nameGet();
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, $iValidReplica)} = $oHostDb2->userGet();
             $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, $iValidReplica)} = $oHostDb2->backrestExe();

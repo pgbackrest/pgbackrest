@@ -471,7 +471,8 @@ sub run
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach master',
                         {bStandby => true,
                          iExpectedExitStatus => ERROR_DB_CONNECT,
-                         strOptionalParam => '--' . $oHostBackup->optionIndexName(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                         strOptionalParam => '--' .
+                         $oHostBackup->optionIndexName(CFGOPT_DB_HOST, cfgOptionIndexTotal(CFGOPT_DB_PATH)) . '=' . BOGUS});
                 }
                 else
                 {
@@ -479,7 +480,8 @@ sub run
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
                         {bStandby => true,
                          iExpectedExitStatus => ERROR_HOST_CONNECT,
-                         strOptionalParam => '--' . $oHostBackup->optionIndexName(CFGOPT_DB_HOST, 3) . '=' . BOGUS});
+                         strOptionalParam => '--' .
+                         $oHostBackup->optionIndexName(CFGOPT_DB_HOST, cfgOptionIndexTotal(CFGOPT_DB_PATH)) . '=' . BOGUS});
                 }
             }
 

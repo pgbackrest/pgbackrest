@@ -124,6 +124,15 @@ my $oTestDef =
                         'Common/Io/Process' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
+                {
+                    &TESTDEF_NAME => 'log',
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Log' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
             ]
         },
         # Help tests
