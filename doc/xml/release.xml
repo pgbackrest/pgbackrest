@@ -11,6 +11,18 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cox.william"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue with keep-alives not being sent to the remote from the local process.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-bug-list>
                     <release-item>
@@ -3187,6 +3199,11 @@
         <contributor id="biberhofer.sascha">
             <contributor-name-display>Sascha Biberhofer</contributor-name-display>
             <contributor-id type="github">sbiberhofer</contributor-id>
+        </contributor>
+
+        <contributor id="cox.william">
+            <contributor-name-display>William Cox</contributor-name-display>
+            <contributor-id type="github">mydimension</contributor-id>
         </contributor>
 
         <contributor id="didovicher.dmitry">

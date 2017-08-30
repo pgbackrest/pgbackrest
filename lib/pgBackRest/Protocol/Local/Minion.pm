@@ -14,6 +14,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Storage::Local;
 use pgBackRest::Protocol::Base::Master;
+use pgBackRest::Protocol::Base::Minion;
 use pgBackRest::Protocol::Command::Minion;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::RestoreFile;
@@ -56,6 +57,9 @@ sub init
         &OP_ARCHIVE_PUSH_FILE => sub {archivePushFile(@{shift()})},
         &OP_BACKUP_FILE => sub {backupFile(@{shift()})},
         &OP_RESTORE_FILE => sub {restoreFile(@{shift()})},
+
+        # To be run after each command to keep the remote alive
+        &OP_POST => sub {protocolKeepAlive()},
     };
 
     # Return from function and log return values if any

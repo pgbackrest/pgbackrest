@@ -8,6 +8,8 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Exporter qw(import);
+    our @EXPORT = qw();
 use JSON::PP;
 
 use pgBackRest::Common::Exception;
@@ -17,6 +19,12 @@ use pgBackRest::Common::String;
 use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
+
+####################################################################################################################################
+# Constant used to define code to run after each operation
+####################################################################################################################################
+use constant OP_POST                                                => 'post';
+    push @EXPORT, qw(OP_POST);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -154,6 +162,12 @@ sub process
                 else
                 {
                     confess "invalid command: ${strCommand}";
+                }
+
+                # Run the post command if defined
+                if (defined($self->{hCommandMap}{&OP_POST}))
+                {
+                    $self->{hCommandMap}{&OP_POST}->();
                 }
 
                 return true;
