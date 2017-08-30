@@ -55,12 +55,26 @@ sub new
     # Size tracks number of bytes read and written
     $self->{lSize} = 0;
 
+    # Initialize EOF to false
+    $self->{bEOF} = false;
+
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'self', value => $self}
     );
+}
+
+####################################################################################################################################
+# eof - have reads reached eof?
+#
+# Note that there may be more bytes to be read but this is set to true whenever there is a zero read and back to false on a
+# non-zero read.
+####################################################################################################################################
+sub eof
+{
+    return shift->{bEOF};
 }
 
 ####################################################################################################################################
@@ -92,6 +106,9 @@ sub read
 
     # Update size
     $self->{lSize} += $iActualSize;
+
+    # Update EOF
+    $self->{bEOF} = $iActualSize == 0 ? true : false;
 
     return $iActualSize;
 }

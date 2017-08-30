@@ -126,6 +126,8 @@ sub read
 
     if ($self->{strCompressType} eq STORAGE_COMPRESS)
     {
+        return 0 if $self->eof();
+
         my $lSizeBegin = defined($$rtBuffer) ? length($$rtBuffer) : 0;
         my $lUncompressedSize;
         my $lCompressedSize;
@@ -172,8 +174,8 @@ sub read
             }
         }
 
-        # Actual size is the lesser of the local buffer size or requested size - if the local buffer is smaller than the requested size
-        # it means that there was nothing more to be read.
+        # Actual size is the lesser of the local buffer size or requested size - if the local buffer is smaller than the requested
+        # size it means that there was nothing more to be read
         my $iActualSize = $self->{lUncompressedBufferSize} < $iSize ? $self->{lUncompressedBufferSize} : $iSize;
 
         # Append the to the request buffer

@@ -105,12 +105,15 @@ sub run
         $self->testResult(sub {$oIoHandle->read(\$tContent, $iFileLengthHalf)}, $iFileLengthHalf, '    read part 1');
         $self->testResult($tContent, substr($strFileContent, 0, $iFileLengthHalf), '    check read');
 
+        $self->testResult(sub {$oIoHandle->eof()}, false, '    not eof');
+
         $self->testResult(
             sub {$oIoHandle->read(
                 \$tContent, $iFileLength - $iFileLengthHalf)}, $iFileLength - $iFileLengthHalf, '    read part 2');
         $self->testResult($tContent, $strFileContent, '    check read');
 
-        $self->testResult(sub {$oIoHandle->read(\$tContent, 1)}, 0, '    eof');
+        $self->testResult(sub {$oIoHandle->read(\$tContent, 1)}, 0, '    zero read');
+        $self->testResult(sub {$oIoHandle->eof()}, true, '    eof');
     }
 
     ################################################################################################################################

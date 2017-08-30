@@ -183,6 +183,27 @@ sub run
             sub {sha1_hex(${storageTest()->get($strFile)})}, '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
 
         #---------------------------------------------------------------------------------------------------------------------------
+        $tBuffer = undef;
+
+        my $oFile = $self->testResult(
+            sub {storageTest()->openWrite($strFile)}, '[object]', 'open file to extend during compression');
+
+        $oGzipIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::Gzip($oDriver->openRead($strFile), {lCompressBufferMax => 4194304})},
+            '[object]', '    new read compress');
+
+        $self->testResult(sub {$oFile->write(\$strFileContent)}, length($strFileContent), '   write first block');
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2000000) > 0}, true, '    read compressed first block (compression done)');
+
+        $self->testResult(sub {$oFile->write(\$strFileContent)}, length($strFileContent), '   write second block');
+        $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2000000)}, 0, '    read compressed  = 0');
+
+        $self->testResult(sub {storageTest()->put($strFileGz, $tBuffer) > 0}, true, '    put content');
+        executeTest("gzip -df ${strFileGz}");
+        $self->testResult(
+            sub {${storageTest()->get($strFile)}}, $strFileContent, '    check content');
+
+        #---------------------------------------------------------------------------------------------------------------------------
         storageTest()->put($strFileGz, $strFileContent);
 
         $oGzipIo = $self->testResult(

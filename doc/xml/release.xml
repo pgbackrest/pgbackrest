@@ -15,6 +15,15 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="stjohn.jesper"/>
+                            <release-item-ideator id="rogozin.aleksandr"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that could cause compression to abort on growing files.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="cox.william"/>
                         </release-item-contributor-list>
 
@@ -3286,6 +3295,11 @@
             <contributor-id type="github">eradman</contributor-id>
         </contributor>
 
+        <contributor id="rogozin.aleksandr">
+            <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
+            <contributor-id type="github">arogozin</contributor-id>
+        </contributor>
+
         <contributor id="shang.cynthia">
             <contributor-name-display>Cynthia Shang</contributor-name-display>
             <contributor-id type="github">cmwshang</contributor-id>
@@ -3299,6 +3313,11 @@
         <contributor id="smith.greg">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
+        </contributor>
+
+        <contributor id="stjohn.jesper">
+            <contributor-name-display>Jesper St John</contributor-name-display>
+            <contributor-id type="github">Underhunden</contributor-id>
         </contributor>
 
         <contributor id="vernick.todd">
