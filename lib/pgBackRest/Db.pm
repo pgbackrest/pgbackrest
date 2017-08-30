@@ -1033,7 +1033,7 @@ sub dbObjectGet
                         }
                     }
                 }
-                
+
                 # If the db was not used then destroy the protocol object underneath it
                 if (!$bAssigned)
                 {
