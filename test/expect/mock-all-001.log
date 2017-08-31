@@ -88,6 +88,7 @@ P00  DEBUG:     Backup::Common::backupRegExpGet(): bAnchor = <true>, bDifferenti
 P00  DEBUG:     Backup::Common::backupRegExpGet=>: strRegExp = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = <false>, strExpression = ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, strPathExp = [TEST_PATH]/db-master/repo/backup/db, strSortOrder = <forward>
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 16384, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
@@ -468,6 +469,7 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-1]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
@@ -635,6 +637,7 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
 P00   WARN: backup [BACKUP-FULL-1] missing in repository removed from backup.info
 P00  DEBUG:     Backup::Info->delete(): strBackupLabel = [BACKUP-FULL-1]
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
@@ -1530,6 +1533,7 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Storage::Local->exists(): strFileExp = [TEST_PATH]/db-master/repo/backup/db/[BACKUP-FULL-2]/backup.manifest
 P00  DEBUG:     Storage::Local->exists=>: bExists = true
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
@@ -1834,6 +1838,7 @@ P00  DEBUG:     Storage::Local->pathExists(): strPathExp = [TEST_PATH]/db-master
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = false
 P00   WARN: backup [BACKUP-INCR-1] missing in repository removed from backup.info
 P00  DEBUG:     Backup::Info->delete(): strBackupLabel = [BACKUP-INCR-1]
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = <false>
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp

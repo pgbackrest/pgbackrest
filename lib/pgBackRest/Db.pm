@@ -962,7 +962,15 @@ sub replayWait
 sub dbObjectGet
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbObjectGet');
+    my (
+            $strOperation,
+            $bMasterOnly,
+        ) =
+            logDebugParam
+            (
+                __PACKAGE__ . '::dbObjectGet', \@_,
+                {name => 'bMasterOnly', optional => true, default => false},
+            );
 
     my $iStandbyIdx = undef;
     my $iMasterRemoteIdx = 1;
@@ -971,7 +979,7 @@ sub dbObjectGet
 
     # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
     # this is simple and works.
-    if (cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, 2)))
+    if (!$bMasterOnly && cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && multipleDb())
     {
         for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
@@ -980,36 +988,49 @@ sub dbObjectGet
                 cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
                 # Create the db object
-                my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $oDb;
+
+                logWarnOnErrorEnable();
+                eval
+                {
+                    $oDb = new pgBackRest::Db($iRemoteIdx);
+                    return true;
+                }
+                or do {};
+
+                logWarnOnErrorDisable();
                 my $bAssigned = false;
 
-                # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
-                # reached as long as the databases required for the backup type are present.
-                if ($oDb->connect(true))
+                if (defined($oDb))
                 {
-                    # If this db is a standby
-                    if ($oDb->isStandby())
+                    # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
+                    # reached as long as the databases required for the backup type are present.
+                    if ($oDb->connect(true))
                     {
-                        # If standby backup is requested then use the first standby found
-                        if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
+                        # If this db is a standby
+                        if ($oDb->isStandby())
                         {
-                            $oDbStandby = $oDb;
-                            $iStandbyIdx = $iRemoteIdx;
+                            # If standby backup is requested then use the first standby found
+                            if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
+                            {
+                                $oDbStandby = $oDb;
+                                $iStandbyIdx = $iRemoteIdx;
+                                $bAssigned = true;
+                            }
+                        }
+                        # Else this db is a master
+                        else
+                        {
+                            # Error if more than one master is found
+                            if (defined($oDbMaster))
+                            {
+                                confess &log(ERROR, 'more than one master database found');
+                            }
+
+                            $oDbMaster = $oDb;
+                            $iMasterRemoteIdx = $iRemoteIdx;
                             $bAssigned = true;
                         }
-                    }
-                    # Else this db is a master
-                    else
-                    {
-                        # Error if more than one master is found
-                        if (defined($oDbMaster))
-                        {
-                            confess &log(ERROR, 'more than one master database found');
-                        }
-
-                        $oDbMaster = $oDb;
-                        $iMasterRemoteIdx = $iRemoteIdx;
-                        $bAssigned = true;
                     }
                 }
 
@@ -1021,16 +1042,18 @@ sub dbObjectGet
             }
         }
 
-        # Make sure the standby database is defined when backup from standby requested
+        # Make sure a standby database is defined when backup from standby option is set
         if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
         {
-            confess &log(ERROR, 'unable to find standby database - cannot proceed');
+            # Throw an error that is distinct from connecting to the master for testing purposes
+            confess &log(ERROR, 'unable to find standby database - cannot proceed', ERROR_HOST_CONNECT);
         }
 
         # A master database is always required
         if (!defined($oDbMaster))
         {
-            confess &log(ERROR, 'unable to find master database - cannot proceed');
+            # Throw an error that is distinct from connecting to a standy for testing purposes
+            confess &log(ERROR, 'unable to find master database - cannot proceed', ERROR_DB_CONNECT);
         }
     }
 
@@ -1064,7 +1087,7 @@ sub dbMasterGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbMasterGet');
 
-    my ($oDbMaster) = dbObjectGet();
+    my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1075,5 +1098,24 @@ sub dbMasterGet
 }
 
 push @EXPORT, qw(dbMasterGet);
+
+####################################################################################################################################
+# multipleDb
+#
+# Helper function to determine if there is more than one database defined.
+####################################################################################################################################
+sub multipleDb
+{
+    for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_DB_PATH); $iDbPathIdx++)
+    {
+        # If an index exists above 1 then return true
+        if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 1;

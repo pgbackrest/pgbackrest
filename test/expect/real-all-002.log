@@ -17,9 +17,14 @@ db-port=[PORT-1]
 db-socket-path=[TEST_PATH]/db-master/db
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=db-standby
+db2-host=bogus
 db2-path=[TEST_PATH]/db-standby/db/base
 db2-user=[USER-1]
+db8-cmd=[BACKREST-BIN]
+db8-config=[TEST_PATH]/db-standby/pgbackrest.conf
+db8-host=db-standby
+db8-path=[TEST_PATH]/db-standby/db/base
+db8-user=[USER-1]
 
 [global]
 compress=n
@@ -69,6 +74,10 @@ primary_conninfo = 'host=db-master port=6543 user=replicator'
 standby_mode = 'on'
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
+full backup - backup from standby, failure to access at least one standby (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --db8-host=bogus --backup-standby --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
 full backup - backup from standby (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=1 --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -81,9 +90,14 @@ db-port=[PORT-1]
 db-socket-path=[TEST_PATH]/db-master/db
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=db-standby
+db2-host=bogus
 db2-path=[TEST_PATH]/db-standby/db/base
 db2-user=[USER-1]
+db8-cmd=[BACKREST-BIN]
+db8-config=[TEST_PATH]/db-standby/pgbackrest.conf
+db8-host=db-standby
+db8-path=[TEST_PATH]/db-standby/db/base
+db8-user=[USER-1]
 
 [global]
 archive-async=y
@@ -142,9 +156,14 @@ db-port=[PORT-1]
 db-socket-path=[TEST_PATH]/db-master/db
 db2-cmd=[BACKREST-BIN]
 db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=db-standby
+db2-host=bogus
 db2-path=[TEST_PATH]/db-standby/db/base
 db2-user=[USER-1]
+db8-cmd=[BACKREST-BIN]
+db8-config=[TEST_PATH]/db-standby/pgbackrest.conf
+db8-host=db-standby
+db8-path=[TEST_PATH]/db-standby/db/base
+db8-user=[USER-1]
 
 [global]
 archive-async=y

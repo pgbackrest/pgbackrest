@@ -2209,7 +2209,7 @@
     <section id="standby-backup" depend="/replication/streaming">
         <title>Backup from a Standby</title>
 
-        <p><backrest/> can perform backups on a standby instead of the master.  Standby backups require the <host>db-standby</host> host to be configured and the <br-option>backup-standby</br-option> option enabled.</p>
+        <p><backrest/> can perform backups on a standby instead of the master.  Standby backups require the <host>db-standby</host> host to be configured and the <br-option>backup-standby</br-option> option enabled.  If more than one standby is configured then the first running standby found will be used for the backup.</p>
 
         <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
             <title>Configure <br-option>db2-host</br-option>/<br-option>db2-user</br-option> and <br-option>db2-path</br-option></title>

@@ -30,6 +30,16 @@
                         <p>Fixed an issue with keep-alives not being sent to the remote from the local process.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Up to seven standbys can be configured for backup from standby.</p>
+                    </release-item>
+                </release-feature-list>
             </release-core-list>
 
             <release-doc-list>
