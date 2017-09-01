@@ -213,7 +213,7 @@ sub manifestLoad
 
     # Load the manifest into a hash
     my $oManifest = new pgBackRest::Manifest(
-        storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), undef, {oStorage => storageDb()});
+        storageDb()->pathGet($self->{strDbClusterPath} . '/' . FILE_MANIFEST), {oStorage => storageDb()});
 
     # If backup is latest then set it equal to backup label, else verify that requested backup and label match
     my $strBackupLabel = $oManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL);

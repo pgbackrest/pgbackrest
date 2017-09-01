@@ -111,7 +111,7 @@ sub process
     # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
     if ($iResult == 0 && !$oDb->isStandby())
     {
-        $strWalSegment = $oDb->xlogSwitch();
+        $strWalSegment = $oDb->walSwitch();
 
         eval
         {
@@ -142,14 +142,14 @@ sub process
         }
         else
         {
-            &log(INFO, "switch xlog cannot be performed on the standby, all other checks passed successfully");
+            &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
         }
     }
     else
     {
         &log(ERROR, $strResultMessage, $iResult);
 
-        # If a switch xlog was attempted, then alert the user to the WAL that did not reach the archive
+        # If a WAL switch was attempted, then alert the user that the WAL that did not reach the archive
         if (defined($strWalSegment))
         {
             &log(WARN,

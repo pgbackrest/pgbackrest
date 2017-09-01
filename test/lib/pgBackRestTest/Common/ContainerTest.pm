@@ -448,7 +448,8 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . "-pgdg main' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS ne VM_U12 ? ' 10' : '') .
+                        "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update";
             }

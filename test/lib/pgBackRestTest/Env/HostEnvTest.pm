@@ -194,7 +194,7 @@ sub setup
 sub archiveGenerate
 {
     my $self = shift;
-    my $strXlogPath = shift;
+    my $strWalPath = shift;
     my $iSourceNo = shift;
     my $iArchiveNo = shift;
     my $strWalVersion = shift;
@@ -204,7 +204,7 @@ sub archiveGenerate
                          (defined($bPartial) && $bPartial ? '.partial' : '');
     my $strArchiveTestFile = $self->dataPath() . "/backup.wal${iSourceNo}_${strWalVersion}.bin";
 
-    my $strSourceFile = "${strXlogPath}/${strArchiveFile}";
+    my $strSourceFile = "${strWalPath}/${strArchiveFile}";
 
     storageTest()->copy($strArchiveTestFile, $strSourceFile);
 

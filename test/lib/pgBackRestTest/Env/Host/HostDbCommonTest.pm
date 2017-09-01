@@ -112,7 +112,7 @@ sub archivePush
     my
     (
         $strOperation,
-        $strXlogPath,
+        $strWalPath,
         $strArchiveTestFile,
         $iArchiveNo,
         $iExpectedError,
@@ -121,7 +121,7 @@ sub archivePush
         logDebugParam
         (
             __PACKAGE__ . '->archivePush', \@_,
-            {name => 'strXlogPath'},
+            {name => 'strWalPath'},
             {name => 'strArchiveTestFile', required => false},
             {name => 'iArchiveNo', required => false},
             {name => 'iExpectedError', required => false},
@@ -132,12 +132,12 @@ sub archivePush
 
     if (defined($strArchiveTestFile))
     {
-        $strSourceFile = "${strXlogPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
+        $strSourceFile = "${strWalPath}/" . uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
         storageTest()->copy($strArchiveTestFile, storageTest()->openWrite($strSourceFile, {bPathCreate => true}));
 
-        storageTest()->pathCreate("${strXlogPath}/archive_status/", {bIgnoreExists => true, bCreateParent => true});
-        storageTest()->put("${strXlogPath}/archive_status/" . uc(sprintf('0000000100000001%08x', $iArchiveNo)) . '.ready');
+        storageTest()->pathCreate("${strWalPath}/archive_status/", {bIgnoreExists => true, bCreateParent => true});
+        storageTest()->put("${strWalPath}/archive_status/" . uc(sprintf('0000000100000001%08x', $iArchiveNo)) . '.ready');
     }
 
     $self->executeSimple(
@@ -357,8 +357,7 @@ sub restore
         my $oExpectedManifest = new pgBackRest::Manifest(
             storageRepo()->pathGet(
                 STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . qw{/} .
-                    FILE_MANIFEST),
-                true);
+                    FILE_MANIFEST));
 
         $oExpectedManifestRef = $oExpectedManifest->{oContent};
 
@@ -470,15 +469,13 @@ sub restoreCompare
             new pgBackRest::Manifest(
                 storageRepo()->pathGet(
                     STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) .
-                        '/'. FILE_MANIFEST),
-                true);
+                        '/'. FILE_MANIFEST));
 
         $oLastManifest =
             new pgBackRest::Manifest(
                 storageRepo()->pathGet(
                     STORAGE_REPO_BACKUP . qw{/} .
-                        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST),
-                true);
+                        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST));
     }
 
     # Generate the tablespace map for real backups
@@ -530,7 +527,9 @@ sub restoreCompare
         }
     }
 
-    my $oActualManifest = new pgBackRest::Manifest("${strTestPath}/" . FILE_MANIFEST, false);
+    my $oActualManifest = new pgBackRest::Manifest(
+        "${strTestPath}/" . FILE_MANIFEST,
+        {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}});
 
     $oActualManifest->set(
         MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
@@ -539,9 +538,7 @@ sub restoreCompare
         MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef,
         $$oExpectedManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG});
 
-    $oActualManifest->build(
-        storageTest(), ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}, $strDbClusterPath,
-        $oLastManifest, false, $oTablespaceMap);
+    $oActualManifest->build(storageTest(), $strDbClusterPath, $oLastManifest, false, $oTablespaceMap);
 
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
@@ -700,10 +697,12 @@ sub restoreCompare
     }
 
     # Check that archive status exists in the manifest for an online backup
+    my $strArchiveStatusPath = MANIFEST_TARGET_PGDATA . qw{/} . $oActualManifest->walPath() . qw{/} . DB_PATH_ARCHIVESTATUS;
+
     if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} &&
-        !defined($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_PATH_PGXLOG_ARCHIVESTATUS}))
+        !defined($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_PATH}{$strArchiveStatusPath}))
     {
-        confess &log(ERROR, DB_PATH_PGXLOG_ARCHIVESTATUS . ' expected for online backup', ERROR_ASSERT);
+        confess &log(ERROR, "${strArchiveStatusPath} expected for online backup", ERROR_ASSERT);
     }
 
     # Delete the list of DBs

@@ -166,12 +166,10 @@ use constant MANIFEST_SUBKEY_USER                                   => 'user';
 ####################################################################################################################################
 # Database locations for important files/paths
 ####################################################################################################################################
-use constant DB_PATH_PGXLOG_ARCHIVESTATUS                           => 'pg_xlog/archive_status';
-    push @EXPORT, qw(DB_PATH_PGXLOG_ARCHIVESTATUS);
+use constant DB_PATH_ARCHIVESTATUS                                  => 'archive_status';
+    push @EXPORT, qw(DB_PATH_ARCHIVESTATUS);
 use constant DB_PATH_BASE                                           => 'base';
     push @EXPORT, qw(DB_PATH_BASE);
-use constant DB_PATH_PGCLOG                                         => 'pg_clog';
-    push @EXPORT, qw(DB_PATH_PGCLOG);
 use constant DB_PATH_GLOBAL                                         => 'global';
     push @EXPORT, qw(DB_PATH_GLOBAL);
 use constant DB_PATH_PGDYNSHMEM                                     => 'pg_dynshmem';
@@ -192,8 +190,6 @@ use constant DB_PATH_PGSUBTRANS                                     => 'pg_subtr
     push @EXPORT, qw(DB_PATH_PGSUBTRANS);
 use constant DB_PATH_PGTBLSPC                                       => 'pg_tblspc';
     push @EXPORT, qw(DB_PATH_PGTBLSPC);
-use constant DB_PATH_PGXLOG                                         => 'pg_xlog';
-    push @EXPORT, qw(DB_PATH_PGXLOG);
 
 use constant DB_FILE_BACKUPLABEL                                    => 'backup_label';
     push @EXPORT, qw(DB_FILE_BACKUPLABEL);
@@ -226,12 +222,8 @@ use constant DB_FILE_PREFIX_TMP                                     => 'pgsql_tm
 ####################################################################################################################################
 # Manifest locations for important files/paths
 ####################################################################################################################################
-use constant MANIFEST_PATH_PGXLOG_ARCHIVESTATUS                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG_ARCHIVESTATUS;
-    push @EXPORT, qw(MANIFEST_PATH_PGXLOG_ARCHIVESTATUS);
 use constant MANIFEST_PATH_BASE                                     => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE;
     push @EXPORT, qw(MANIFEST_PATH_BASE);
-use constant MANIFEST_PATH_PGCLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGCLOG;
-    push @EXPORT, qw(MANIFEST_PATH_PGCLOG);
 use constant MANIFEST_PATH_GLOBAL                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL;
     push @EXPORT, qw(MANIFEST_PATH_GLOBAL);
 use constant MANIFEST_PATH_PGDYNSHMEM                               => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGDYNSHMEM;
@@ -252,8 +244,6 @@ use constant MANIFEST_PATH_PGSUBTRANS                               => MANIFEST_
     push @EXPORT, qw(MANIFEST_PATH_PGSUBTRANS);
 use constant MANIFEST_PATH_PGTBLSPC                                 => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC;
     push @EXPORT, qw(MANIFEST_PATH_PGTBLSPC);
-use constant MANIFEST_PATH_PGXLOG                                   => MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGXLOG;
-    push @EXPORT, qw(MANIFEST_PATH_PGXLOG);
 
 use constant MANIFEST_FILE_BACKUPLABEL                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_BACKUPLABEL;
     push @EXPORT, qw(MANIFEST_FILE_BACKUPLABEL);
@@ -281,14 +271,6 @@ use constant DB_USER_OBJECT_MINIMUM_ID                              => 16384;
     push @EXPORT, qw(DB_USER_OBJECT_MINIMUM_ID);
 
 ####################################################################################################################################
-# Expression to determine whether files can be copied from a standby
-####################################################################################################################################
-use constant COPY_STANDBY_EXPRESSION                                => '^(' . MANIFEST_TARGET_PGDATA . '\/' .
-                                                                       '(' . DB_PATH_BASE . '|' . DB_PATH_GLOBAL . '|' .
-                                                                       DB_PATH_PGCLOG . '|' . DB_PATH_PGMULTIXACT . ')|' .
-                                                                       DB_PATH_PGTBLSPC . ')\/';
-
-####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -302,20 +284,30 @@ sub new
         $strFileName,
         $bLoad,
         $oStorage,
+        $strDbVersion,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
             {name => 'strFileName', trace => true},
-            {name => 'bLoad', required => false, trace => true},
+            {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'oStorage', optional => true, default => storageRepo(), trace => true},
+            {name => 'strDbVersion', optional => true, trace => true},
         );
-
-    # Set defaults
-    $bLoad = defined($bLoad) ? $bLoad : true;
 
     # Init object and store variables
     my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad, oStorage => $oStorage});
+
+    # If manifest not loaded from a file then the db version must be set
+    if (!$bLoad)
+    {
+        if (!defined($strDbVersion))
+        {
+            &log(ASSERT, 'strDbVersion must be provided with bLoad = false');
+        }
+
+        $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -565,7 +557,6 @@ sub build
     (
         $strOperation,
         $oStorageDbMaster,
-        $strDbVersion,
         $strPath,
         $oLastManifest,
         $bOnline,
@@ -580,7 +571,6 @@ sub build
         (
             __PACKAGE__ . '->build', \@_,
             {name => 'oStorageDbMaster'},
-            {name => 'strDbVersion'},
             {name => 'strPath'},
             {name => 'oLastManifest', required => false},
             {name => 'bOnline'},
@@ -686,10 +676,10 @@ sub build
             $strManifestType = MANIFEST_VALUE_PATH;
         }
 
-        # Skip pg_xlog/* when doing an online backup.  WAL will be restored from the archive or stored in pg_xlog at the end of the
-        # backup if the archive-copy option is set.
-        next if ($bOnline && $strFile =~ ('^' . MANIFEST_PATH_PGXLOG . '\/') &&
-                 $strFile !~ ('^' . MANIFEST_PATH_PGXLOG_ARCHIVESTATUS . '$'));
+        # Skip wal directory when doing an online backup.  WAL will be restored from the archive or stored in the wal directory at
+        # the end of the backup if the archive-copy option is set.
+        next if ($bOnline && $strFile =~ (qw{^} . MANIFEST_TARGET_PGDATA . qw{/} . $self->walPath() . '\/') &&
+                 $strFile !~ ('^' . MANIFEST_TARGET_PGDATA . qw{/} . $self->walPath() . qw{/} . DB_PATH_ARCHIVESTATUS . '$'));
 
         # Skip all directories and files that start with pgsql_tmp.  The files are removed when the server is restarted and the
         # directories are recreated.  Since temp files cannnot be created on the replica it makes sense to delete the directories
@@ -698,10 +688,10 @@ sub build
 
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $strDbVersion >= PG_VERSION_84;
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $self->dbVersion() >= PG_VERSION_84;
 
         # Skip pg_replslot/* since these files are generally not useful after a restore
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $strDbVersion >= PG_VERSION_94;
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $self->dbVersion() >= PG_VERSION_94;
 
         # Skip pg_subtrans/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
@@ -791,7 +781,7 @@ sub build
                        $hManifest->{$strName}{modification_time} + 0);
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $hManifest->{$strName}{size} + 0);
             $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_MASTER,
-                ($strFile eq MANIFEST_FILE_PGCONTROL || $strFile !~ COPY_STANDBY_EXPRESSION) ? true : false);
+                ($strFile eq MANIFEST_FILE_PGCONTROL || $self->isMasterFile($strFile)));
         }
 
         # Link destination required for link type only
@@ -807,7 +797,7 @@ sub build
             {
                 # Only versions >= 9.0  have the special top-level tablespace path.  Below 9.0 the database files are stored
                 # directly in the path referenced by the symlink.
-                if ($strDbVersion >= PG_VERSION_90)
+                if ($self->dbVersion() >= PG_VERSION_90)
                 {
                     $strFilter = $self->tablespacePathGet();
                 }
@@ -821,8 +811,9 @@ sub build
 
             $strPath = dirname("${strPath}/${strName}");
 
-            $self->build($oStorageDbMaster, $strDbVersion, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap,
-                         $strFile, $bTablespace, $strPath, $strFilter, $strLinkDestination);
+            $self->build(
+                $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $strFile, $bTablespace,
+                $strPath, $strFilter, $strLinkDestination);
         }
     }
 
@@ -1170,6 +1161,51 @@ sub validate
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
+# dbVersion - version of PostgreSQL that the manifest is being built for
+####################################################################################################################################
+sub dbVersion
+{
+    my $self = shift;
+
+    return $self->get(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION);
+}
+
+####################################################################################################################################
+# xactPath - return the transaction directory based on the PostgreSQL version
+####################################################################################################################################
+sub xactPath
+{
+    my $self = shift;
+
+    return $self->dbVersion() >= PG_VERSION_10 ? 'pg_xact' : 'pg_clog';
+}
+
+####################################################################################################################################
+# walPath - return the wal directory based on the PostgreSQL version
+####################################################################################################################################
+sub walPath
+{
+    my $self = shift;
+
+    return $self->dbVersion() >= PG_VERSION_10 ? 'pg_wal' : 'pg_xlog';
+}
+
+####################################################################################################################################
+# isMasterFile
+#
+# Is this file required to copied from the master?
+####################################################################################################################################
+sub isMasterFile
+{
+    my $self = shift;
+    my $strFile = shift;
+
+    return
+        $strFile !~ ('^(' . MANIFEST_TARGET_PGDATA . '\/' . '(' . DB_PATH_BASE . '|' . DB_PATH_GLOBAL . '|' .
+        $self->xactPath() . '|' . DB_PATH_PGMULTIXACT . ')|' . DB_PATH_PGTBLSPC . ')\/');
 }
 
 ####################################################################################################################################

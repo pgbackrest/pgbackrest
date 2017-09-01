@@ -39,6 +39,10 @@
 
                         <p>Up to seven standbys can be configured for backup from standby.</p>
                     </release-item>
+
+                    <release-item>
+                        <p><postgres/> 10 support.</p>
+                    </release-item>
                 </release-feature-list>
             </release-core-list>
 

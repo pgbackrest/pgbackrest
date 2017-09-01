@@ -33,13 +33,13 @@ sub run
     if ($self->begin("${strModule}::walPath()"))
     {
         my $strDbPath = '/db';
-        my $strWalFileRelative = 'pg_xlog/000000010000000100000001';
+        my $strWalFileRelative = 'pg_wal/000000010000000100000001';
         my $strWalFileAbsolute = "${strDbPath}/${strWalFileRelative}";
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(
             sub {walPath($strWalFileRelative, undef, cfgCommandName(CFGCMD_ARCHIVE_GET))}, ERROR_OPTION_REQUIRED,
-            "option 'db-path' must be specified when relative xlog paths are used\n" .
+            "option 'db-path' must be specified when relative wal paths are used\n" .
             "HINT: Is \%f passed to " . cfgCommandName(CFGCMD_ARCHIVE_GET) . " instead of \%p?\n" .
             "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.");
 

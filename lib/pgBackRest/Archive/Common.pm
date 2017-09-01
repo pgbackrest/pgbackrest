@@ -57,6 +57,7 @@ my $oWalMagicHash =
     hex('0xD07E') => PG_VERSION_94,
     hex('0xD087') => PG_VERSION_95,
     hex('0xD093') => PG_VERSION_96,
+    hex('0xD097') => PG_VERSION_10,
 };
 
 ####################################################################################################################################
@@ -193,7 +194,7 @@ sub walInfo
 
     # Read magic
     sysread($hFile, $tBlock, 2) == 2
-        or confess &log(ERROR, "unable to read xlog magic");
+        or confess &log(ERROR, "unable to read wal magic");
 
     my $iMagic = unpack('S', $tBlock);
 
@@ -219,7 +220,7 @@ sub walInfo
     # Check flags to be sure the long header is present (this is an extra check to be sure the system id exists)
     #-------------------------------------------------------------------------------------------------------------------------------
     sysread($hFile, $tBlock, 2) == 2
-        or confess &log(ERROR, "unable to read xlog info");
+        or confess &log(ERROR, "unable to read wal info");
 
     my $iFlag = unpack('S', $tBlock);
 
@@ -353,7 +354,7 @@ push @EXPORT, qw(walSegmentFind);
 ####################################################################################################################################
 # walPath
 #
-# Generates the location of the pg_xlog directory using a relative xlog path and the supplied db path.
+# Generates the location of the wal directory using a relative wal path and the supplied db path.
 ####################################################################################################################################
 sub walPath
 {
@@ -378,7 +379,7 @@ sub walPath
         if (!defined($strDbPath))
         {
             confess &log(ERROR,
-                "option 'db-path' must be specified when relative xlog paths are used\n" .
+                "option 'db-path' must be specified when relative wal paths are used\n" .
                 "HINT: Is \%f passed to ${strCommand} instead of \%p?\n" .
                 "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.",
                 ERROR_OPTION_REQUIRED);

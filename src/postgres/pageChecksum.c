@@ -71,18 +71,18 @@ For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
 ***********************************************************************************************************************************/
 typedef struct
 {
-    uint32 xlogid;      /* high bits */
+    uint32 walid;      /* high bits */
     uint32 xrecoff;     /* low bits */
-} PageXLogRecPtr;
+} PageWalRecPtr;
 
 /***********************************************************************************************************************************
 Space management information generic to any page.  Only values required for pgBackRest are represented here.
 
-    pd_lsn - identifies xlog record for last change to this page.
+    pd_lsn - identifies wal record for last change to this page.
     pd_checksum - page checksum, if set.
 
-The LSN is used by the buffer manager to enforce the basic rule of WAL: "thou shalt write xlog before data".  A dirty buffer cannot
-be dumped to disk until xlog has been flushed at least as far as the page's LSN.
+The LSN is used by the buffer manager to enforce the basic rule of WAL: "thou shalt write wal before data".  A dirty buffer cannot
+be dumped to disk until wal has been flushed at least as far as the page's LSN.
 
 pd_checksum stores the page checksum, if it has been set for this page; zero is a valid value for a checksum. If a checksum is not
 in use then we leave the field unset. This will typically mean the field is zero though non-zero values may also be present if
@@ -94,7 +94,7 @@ relating to checksums.
 typedef struct PageHeaderData
 {
     // LSN is member of *any* block, not only page-organized ones
-    PageXLogRecPtr pd_lsn;  /* LSN: next byte after last byte of xlog * record for last change to this page */
+    PageWalRecPtr pd_lsn;  /* LSN: next byte after last byte of wal * record for last change to this page */
     uint16 pd_checksum;     /* checksum */
     uint16 pd_flags;        /* flag bits, see below */
     uint16 pd_lower;        /* offset to start of free space */
@@ -197,7 +197,7 @@ pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize, uint32
         // This is a new page so don't test checksum
         ((PageHeader)szPage)->pd_upper == 0 ||
         // LSN is after the backup started so checksum is not tested because pages may be torn
-        (((PageHeader)szPage)->pd_lsn.xlogid >= uiIgnoreWalId && ((PageHeader)szPage)->pd_lsn.xrecoff >= uiIgnoreWalOffset) ||
+        (((PageHeader)szPage)->pd_lsn.walid >= uiIgnoreWalId && ((PageHeader)szPage)->pd_lsn.xrecoff >= uiIgnoreWalOffset) ||
         // Checksum is valid
         ((PageHeader)szPage)->pd_checksum == pageChecksum(szPage, uiBlockNo, uiPageSize);
 }

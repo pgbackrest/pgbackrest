@@ -45,6 +45,8 @@ use constant PG_VERSION_95                                          => '9.5';
     push @EXPORT, qw(PG_VERSION_95);
 use constant PG_VERSION_96                                          => '9.6';
     push @EXPORT, qw(PG_VERSION_96);
+use constant PG_VERSION_10                                          => '10';
+    push @EXPORT, qw(PG_VERSION_10);
 
 use constant PG_VERSION_APPLICATION_NAME                            => PG_VERSION_90;
     push @EXPORT, qw(PG_VERSION_APPLICATION_NAME);

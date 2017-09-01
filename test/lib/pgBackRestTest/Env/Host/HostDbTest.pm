@@ -92,7 +92,8 @@ sub new
 
         my @stryVersionToken = split(/ /, $strOutLog);
         @stryVersionToken = split(/\./, $stryVersionToken[2]);
-        my $strDbVersionActual = $stryVersionToken[0] . '.' . trim($stryVersionToken[1]);
+        my $strDbVersionActual =
+            trim($stryVersionToken[0]) . (defined($stryVersionToken[1]) ? '.' . trim($stryVersionToken[1]) : '');
 
         # Warn if this is a devel/alpha/beta version
         my $strVersionRegExp = '(devel|((alpha|beta|rc)[0-9]+))$';
@@ -123,8 +124,8 @@ sub new
         }
     }
 
-    # Create pg_xlog directory
-    storageTest()->pathCreate($self->dbPath() . '/pg_xlog', {strMode => '0700'});
+    # Create wal directory
+    storageTest()->pathCreate($self->dbPath() . '/pg_' . $self->walId(), {strMode => '0700'});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -146,9 +147,10 @@ sub sqlConnect
     my $iTimeout = defined($$hParam{iTimeout}) ? $$hParam{iTimeout} : HOST_DB_TIMEOUT;
     my $strDb = defined($$hParam{strDb}) ? $$hParam{strDb} : HOST_DB_DEFAULT;
 
+    # If not connected
     if (!defined($self->{db}{$strDb}{hDb}))
     {
-        # Setup the wait loop
+        # Retry until connection is successful
         my $oWait = waitInit($iTimeout);
 
         do
@@ -164,6 +166,7 @@ sub sqlConnect
         }
         while (!defined($self->{db}{$strDb}{hDb}) && waitMore($oWait));
 
+        # Error if unable to connect
         if (!defined($self->{db}{$strDb}{hDb}))
         {
             confess &log(ERROR, "unable to connect to PostgreSQL after ${iTimeout} second(s):\n" . $DBI::errstr, ERROR_DB_CONNECT);
@@ -293,12 +296,15 @@ sub sqlSelectOneTest
 
     do
     {
+        $self->sqlConnect();
         $strActualValue = $self->sqlSelectOne($strSql);
 
         if (defined($strActualValue) && $strActualValue eq $strExpectedValue)
         {
             return;
         }
+
+        $self->sqlDisconnect();
     }
     while (defined($iTimeout) && (time() - $lStartTime) <= $iTimeout);
 
@@ -321,13 +327,13 @@ sub sqlCommit
 }
 
 ####################################################################################################################################
-# sqlXlogRotate
+# sqlWalRotate
 ####################################################################################################################################
-sub sqlXlogRotate
+sub sqlWalRotate
 {
     my $self = shift;
 
-    $self->sqlExecute('select pg_switch_xlog()', {bCommit => false, bCheckPoint => false});
+    $self->sqlExecute('select pg_switch_'  . $self->walId() . '()', {bCommit => false, bCheckPoint => false});
 }
 
 ####################################################################################################################################
@@ -341,13 +347,13 @@ sub clusterCreate
     my $hParam = shift;
 
     # Set defaults
-    my $strXlogPath = defined($$hParam{strXlogPath}) ? $$hParam{strXlogPath} : $self->dbPath() . '/pg_xlog';
+    my $strWalPath = defined($$hParam{strWalPath}) ? $$hParam{strWalPath} : $self->dbPath() . '/pg_' . $self->walId();
 
-    # Don't link pg_xlog for versions < 9.2 because some recovery scenarios won't work.
+    # Don't link WAL directory for versions < 9.2 because some recovery scenarios won't work
     $self->executeSimple(
         $self->pgBinPath() . '/initdb ' .
         ($self->pgVersion() >= PG_VERSION_93 ? ' -k' : '') .
-        ($self->pgVersion() >= PG_VERSION_92 ? " --xlogdir=${strXlogPath}" : '') .
+        ($self->pgVersion() >= PG_VERSION_92 ? ' --' . $self->walId() . "dir=${strWalPath}" : '') .
         ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
     if (!$self->standby() && $self->pgVersion() >= PG_VERSION_HOT_STANDBY)
@@ -426,12 +432,7 @@ sub clusterStart
 
     if ($self->pgVersion() >= PG_VERSION_90)
     {
-        $strCommand .= " -c wal_level=hot_standby";
-
-        if ($bHotStandby)
-        {
-            $strCommand .= ' -c hot_standby=on';
-        }
+        $strCommand .= ' -c wal_level=hot_standby -c hot_standby=' . ($bHotStandby ? 'on' : 'off');
     }
 
     $strCommand .=
@@ -502,6 +503,7 @@ sub clusterRestart
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
+sub walId {return shift->pgVersion() >= PG_VERSION_10 ? 'wal' : 'xlog'}
 sub pgBinPath {return testRunGet()->pgBinPath()}
 sub pgLogFile {return shift->{strPgLogFile}}
 sub pgLogPath {return shift->{strPgLogPath}}

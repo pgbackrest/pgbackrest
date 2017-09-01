@@ -106,9 +106,9 @@ sub run
             $strLogDebug = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . qw{=} . lc(WARN);
         }
 
-        # Create the xlog path
-        my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        storageTest()->pathCreate($strXlogPath, {bCreateParent => true});
+        # Create the wal path
+        my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        storageTest()->pathCreate($strWalPath, {bCreateParent => true});
 
         # Create the test path for pg_control
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
@@ -130,15 +130,15 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    archive.info missing');
         my $strSourceFile1 = $self->walSegment(1, 1, 1);
-        storageTest()->pathCreate("${strXlogPath}/archive_status");
-        my $strArchiveFile1 = $self->walGenerate($strXlogPath, WAL_VERSION_94, 1, $strSourceFile1);
+        storageTest()->pathCreate("${strWalPath}/archive_status");
+        my $strArchiveFile1 = $self->walGenerate($strWalPath, WAL_VERSION_94, 1, $strSourceFile1);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile1}",
+            $strCommandPush . " ${strWalPath}/${strSourceFile1}",
             {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strXlogPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
             {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -151,10 +151,10 @@ sub run
 
         my @stryExpectedWAL;
         my $strSourceFile = $self->walSegment(1, 1, 1);
-        my $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, $strSourceFile);
+        my $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strLogDebug} ${strXlogPath}/${strSourceFile}",
+            $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strLogDebug} ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}");
 
@@ -165,16 +165,16 @@ sub run
         &log(INFO, '    get first WAL');
 
         # Remove WAL so it can be recovered
-        storageTest()->remove("${strXlogPath}/${strSourceFile}", {bIgnoreMissing => false});
+        storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strLogDebug} ${strSourceFile} ${strXlogPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strLogDebug} ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists
-        if (storageDb()->exists("${strXlogPath}/RECOVERYXLOG"))
+        if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
         {
-            my ($strActualChecksum) = storageDb()->hashSize("${strXlogPath}/RECOVERYXLOG");
+            my ($strActualChecksum) = storageDb()->hashSize("${strWalPath}/RECOVERYXLOG");
 
             if ($strActualChecksum ne $strArchiveChecksum)
             {
@@ -183,7 +183,7 @@ sub run
         }
         else
         {
-            confess "archive file '${strXlogPath}/RECOVERYXLOG' is not in destination";
+            confess "archive file '${strWalPath}/RECOVERYXLOG' is not in destination";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ sub run
 
         # Generate second WAL segment
         $strSourceFile = $self->walSegment(1, 1, 2);
-        $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, $strSourceFile);
+        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 2, $strSourceFile);
 
         # Create a temp file to make sure it is deleted later (skip when S3 since it doesn't use temp files)
         my $strArchiveTmp;
@@ -217,7 +217,7 @@ sub run
 
         # Push the WAL
         $oHostDbMaster->executeSimple(
-            "${strCommandPush} --compress --archive-async --process-max=2 ${strXlogPath}/${strSourceFile}",
+            "${strCommandPush} --compress --archive-async --process-max=2 ${strWalPath}/${strSourceFile}",
             {oLogTest => $self->expect()});
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}." . COMPRESS_EXT);
 
@@ -253,11 +253,11 @@ sub run
             {&INFO_ARCHIVE_SECTION_DB => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}});
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}",
+            $strCommandPush . " ${strWalPath}/${strSourceFile}",
             {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strXlogPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
             {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -268,11 +268,11 @@ sub run
                 {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}",
+            $strCommandPush . " ${strWalPath}/${strSourceFile}",
             {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strXlogPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
             {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
         # Restore the file to its original condition
@@ -284,11 +284,11 @@ sub run
         $oHostDbMaster->stop({strStanza => $oHostDbMaster->stanza()});
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}",
+            $strCommandPush . " ${strWalPath}/${strSourceFile}",
             {iExpectedExitStatus => ERROR_STOP, oLogTest => $self->expect()});
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strXlogPath}/RECOVERYXLOG",
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
             {iExpectedExitStatus => ERROR_STOP, oLogTest => $self->expect()});
 
         $oHostDbMaster->start({strStanza => $oHostDbMaster->stanza()});
@@ -296,31 +296,31 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    WAL duplicate ok');
 
-        $oHostDbMaster->executeSimple($strCommandPush . " ${strXlogPath}/${strSourceFile}", {oLogTest => $self->expect()});
+        $oHostDbMaster->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}", {oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    WAL duplicate error');
 
-        $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 1, $strSourceFile);
+        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 1, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}",
+            $strCommandPush . " ${strWalPath}/${strSourceFile}",
             {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    get second WAL');
 
         # Remove WAL so it can be recovered
-        storageTest()->remove("${strXlogPath}/${strSourceFile}", {bIgnoreMissing => false});
+        storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
 
         $oHostDbMaster->executeSimple(
-            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strSourceFile} ${strXlogPath}/RECOVERYXLOG",
+            $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists
-        if (storageDb()->exists("${strXlogPath}/RECOVERYXLOG"))
+        if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
         {
-            my ($strActualChecksum) = storageDb()->hashSize("${strXlogPath}/RECOVERYXLOG");
+            my ($strActualChecksum) = storageDb()->hashSize("${strWalPath}/RECOVERYXLOG");
 
             if ($strActualChecksum ne $strArchiveChecksum)
             {
@@ -329,15 +329,15 @@ sub run
         }
         else
         {
-            confess "archive file '${strXlogPath}/RECOVERYXLOG' is not in destination";
+            confess "archive file '${strWalPath}/RECOVERYXLOG' is not in destination";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    .partial WAL');
 
-        $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
+        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}.partial",
+            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
             {oLogTest => $self->expect()});
         $self->archiveCheck("${strSourceFile}.partial", $strArchiveChecksum, false);
 
@@ -347,16 +347,16 @@ sub run
         &log(INFO, '    .partial WAL duplicate');
 
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}.partial", {oLogTest => $self->expect()});
+            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial", {oLogTest => $self->expect()});
         $self->archiveCheck(
             "${strSourceFile}.partial", $strArchiveChecksum, false);
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    .partial WAL with different checksum');
 
-        $strArchiveFile = $self->walGenerate($strXlogPath, WAL_VERSION_94, 1, "${strSourceFile}.partial");
+        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 1, "${strSourceFile}.partial");
         $oHostDbMaster->executeSimple(
-            $strCommandPush . " ${strXlogPath}/${strSourceFile}.partial",
+            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
             {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------

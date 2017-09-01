@@ -58,9 +58,9 @@ sub run
         # Create compression extension
         my $strCompressExt = $bCompress ? qw{.} . COMPRESS_EXT : '';
 
-        # Create the xlog path
-        my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        $oStorage->pathCreate($strXlogPath, {bCreateParent => true});
+        # Create the wal path
+        my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        $oStorage->pathCreate($strWalPath, {bCreateParent => true});
 
         # Create the test path for pg_control and copy pg_control for stanza-create
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
@@ -72,7 +72,7 @@ sub run
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Push a WAL segment
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 1);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
 
         # Break the database version of the archive info file
         if ($iError == 0)
@@ -84,13 +84,13 @@ sub run
 
         # Push two more segments with errors to exceed archive-max-mb
         $oHostDbMaster->archivePush(
-            $strXlogPath, $strArchiveTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strArchiveTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         $oHostDbMaster->archivePush(
-            $strXlogPath, $strArchiveTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strArchiveTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 4);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 4);
 
         # Fix the database version
         if ($iError == 0)
@@ -107,7 +107,7 @@ sub run
             'segment 2-4 not pushed (2 is pushed sometimes when remote but ignore)', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile, 5);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 5);
 
         $self->testResult(
             sub {$oStorage->list(

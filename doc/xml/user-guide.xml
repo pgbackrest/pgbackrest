@@ -920,7 +920,7 @@
                     <exe-cmd>{[cmd-backup-last]}</exe-cmd>
                 </execute>
 
-                <!-- Push a few xlogs to make the example below more interesting -->
+                <!-- Push a few WAL segments to make the example below more interesting -->
                 <execute show="n">
                     <exe-cmd>psql -c "
                         select pg_create_restore_point('generate WAL'); select pg_switch_xlog();
@@ -1625,7 +1625,7 @@
         <section id="async-archiving" depend="install-config">
             <title>Asynchronous Archiving</title>
 
-            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
+            <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path>/<path>pg_wal</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
 
             <p>The spool directory is created to hold the current status of WAL archiving.  Status files written into the spool directory are typically zero length and should consume a minimal amount of space (a few MB at most) and very little IO.  All the information in this directory can be recreated so it is not necessary to preserve the spool directory if the cluster is moved to new hardware.</p>
 
@@ -2258,7 +2258,7 @@
         <execute-list host="{[host-db-master]}">
             <title>Drop default cluster and create the new demo cluster</title>
 
-            <execute user="root" keyword="default">
+            <execute user="root" keyword="default" err-suppress="y">
                 <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
             </execute>
 
@@ -2287,7 +2287,7 @@
                 <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
 
-            <execute user="root" keyword="default">
+            <execute user="root" keyword="default" err-suppress="y">
                 <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
             </execute>
         </execute-list>
