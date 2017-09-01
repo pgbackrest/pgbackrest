@@ -89,6 +89,15 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'http-client',
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Http/Client' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'ini',
                     &TESTDEF_TOTAL => 10,
 

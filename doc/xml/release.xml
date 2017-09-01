@@ -43,6 +43,14 @@
                     <release-item>
                         <p><postgres/> 10 support.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gdalevich.victor"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <id>content-length</id> (in addition to chunked encoding) when reading XML data to improve compatibility with third-party S3 gateways.</p>
+                    </release-item>
                 </release-feature-list>
             </release-core-list>
 
@@ -3252,6 +3260,11 @@
         <contributor id="frost.stephen">
             <contributor-name-display>Stephen Frost</contributor-name-display>
             <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="gdalevich.victor">
+            <contributor-name-display>Victor Gdalevich</contributor-name-display>
+            <contributor-id type="github">ntrvic</contributor-id>
         </contributor>
 
         <contributor id="golpayegani.navid">

@@ -266,19 +266,28 @@ sub responseBody
     # Nothing to do if content length is 0
     if ($self->{iContentLength} != 0)
     {
-        while (1)
+        # Transfer encoding is chunked
+        if ($self->{iContentLength} == -1)
         {
-            # Read chunk length
-            my $strChunkLength = trim($self->readLine());
-            my $iChunkLength = hex($strChunkLength);
+            while (1)
+            {
+                # Read chunk length
+                my $strChunkLength = trim($self->readLine());
+                my $iChunkLength = hex($strChunkLength);
 
-            # Exit if chunk length is 0
-            last if ($iChunkLength == 0);
+                # Exit if chunk length is 0
+                last if ($iChunkLength == 0);
 
-            # Read the chunk and consume the terminating LF
-            $self->SUPER::read(\$strResponseBody, $iChunkLength, true);
-            $self->readLine();
-        };
+                # Read the chunk and consume the terminating LF
+                $self->SUPER::read(\$strResponseBody, $iChunkLength, true);
+                $self->readLine();
+            };
+        }
+        # Else content length is known
+        else
+        {
+            $self->SUPER::read(\$strResponseBody, $self->{iContentLength}, true);
+        }
 
         $self->close();
     }
