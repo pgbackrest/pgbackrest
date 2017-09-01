@@ -52,6 +52,12 @@
                         <p>Allow <id>content-length</id> (in addition to chunked encoding) when reading XML data to improve compatibility with third-party S3 gateways.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Increase HTTP timeout for S3.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>

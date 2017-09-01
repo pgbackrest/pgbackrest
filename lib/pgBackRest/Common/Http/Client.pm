@@ -29,9 +29,9 @@ use constant HTTP_VERB_POST                                         => 'POST';
 use constant HTTP_VERB_PUT                                          => 'PUT';
     push @EXPORT, qw(HTTP_VERB_PUT);
 
-use constant HTTP_HEADER_CONTENT_LENGTH                               => 'content-length';
+use constant HTTP_HEADER_CONTENT_LENGTH                             => 'content-length';
     push @EXPORT, qw(HTTP_HEADER_CONTENT_LENGTH);
-use constant HTTP_HEADER_TRANSFER_ENCODING                            => 'transfer-encoding';
+use constant HTTP_HEADER_TRANSFER_ENCODING                          => 'transfer-encoding';
     push @EXPORT, qw(HTTP_HEADER_TRANSFER_ENCODING);
 
 ####################################################################################################################################
@@ -70,7 +70,7 @@ sub new
             {name => 'hQuery', optional => true, trace => true},
             {name => 'hRequestHeader', optional => true, trace => true},
             {name => 'rstrRequestBody', optional => true, trace => true},
-            {name => 'iProtocolTimeout', optional => true, default => 30, trace => true},
+            {name => 'iProtocolTimeout', optional => true, default => 90, trace => true},
             {name => 'lBufferMax', optional => true, default => 32768, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
             {name => 'strCaPath', optional => true, trace => true},
