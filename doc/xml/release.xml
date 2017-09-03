@@ -57,6 +57,10 @@
                     <release-item>
                         <p>Increase HTTP timeout for S3.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add HTTP retries to harden against transient S3 network errors.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

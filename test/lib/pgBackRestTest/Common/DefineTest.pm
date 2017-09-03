@@ -90,7 +90,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'http-client',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
 
                     &TESTDEF_COVERAGE =>
                     {

@@ -163,7 +163,8 @@ sub request
             $self->{strHost}, $strVerb,
             {iPort => $self->{iPort}, strUri => $strUri, hQuery => $hQuery, hRequestHeader => $hHeader,
                 rstrRequestBody => $rstrBody, bVerifySsl => $self->{bVerifySsl}, strCaPath => $self->{strCaPath},
-                strCaFile => $self->{strCaFile}, lBufferMax => $self->{lBufferMax}});
+                strCaFile => $self->{strCaFile}, bResponseBodyPrefetch => $strResponseType eq S3_RESPONSE_TYPE_XML,
+                lBufferMax => $self->{lBufferMax}});
 
         # Check response code
         my $iResponseCode = $oHttpClient->responseCode();
