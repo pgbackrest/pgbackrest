@@ -10,7 +10,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
+        <release date="2017-09-03" version="1.23" title="Multiple Standbys and PostgreSQL 10 Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -55,6 +55,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Configuration rules are now pulled from the C library when present.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Increase HTTP timeout for S3.</p>
                     </release-item>
 
@@ -77,10 +81,6 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Configuration rules are now pulled from the C library when present.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
                     </release-item>
                 </release-refactor-list>
@@ -89,7 +89,7 @@
             <release-test-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Changed log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
+                        <p>Change log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
                     </release-item>
 
                     <release-item>
@@ -99,11 +99,7 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Updated Docker build in <file>Vagrantfile</file>.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Ignore auto-generated C code.</p>
+                        <p>Update Docker build in <file>Vagrantfile</file>.</p>
                     </release-item>
 
                     <release-item>
@@ -111,7 +107,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Simplified smart logic for C Library and package builds.</p>
+                        <p>Simplify smart logic for C Library and package builds.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>
