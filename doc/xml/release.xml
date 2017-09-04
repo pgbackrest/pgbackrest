@@ -10,6 +10,20 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.24dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Exclude contents of <path>pg_snapshots</path>, <path>pg_serial</path>, <path>pg_notify</path>, and <path>pg_dynshmem</path> from backup since they are rebuilt on startup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Exclude <file>pg_internal.init</file> files from backup since they are rebuilt on startup.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+        </release>
+
         <release date="2017-09-03" version="1.23" title="Multiple Standbys and PostgreSQL 10 Support">
             <release-core-list>
                 <release-bug-list>
