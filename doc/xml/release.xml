@@ -22,6 +22,14 @@
                     </release-item>
                 </release-feature-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Rename <proper>master</proper> to <proper>primary</proper> in documentation to align with <postgres/> convention.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
         </release>
 
         <release date="2017-09-03" version="1.23" title="Multiple Standbys and PostgreSQL 10 Support">
@@ -423,7 +431,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the master) if the standby is not configured and/or reachable.</p>
+                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the primary) if the standby is not configured and/or reachable.</p>
                     </release-item>
 
                     <release-item>
@@ -1153,7 +1161,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Abstracted code to determine which database cluster is the master and which are standbys.</p>
+                        <p>Abstracted code to determine which database cluster is the primary and which are standbys.</p>
                     </release-item>
 
                     <release-item>
@@ -1569,7 +1577,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Fixed an issue where tablespaces were copied from the master during standby backup.</p>
+                        <p>Fixed an issue where tablespaces were copied from the primary during standby backup.</p>
                     </release-item>
 
                     <release-item>
@@ -1595,7 +1603,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the master do not become part of the backup.</p>
+                        <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the primary do not become part of the backup.</p>
                     </release-item>
 
                     <release-item>
@@ -1701,11 +1709,11 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Backup from a standby cluster.  A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the master.</p>
+                        <p>Backup from a standby cluster.  A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the primary.</p>
                     </release-item>
 
                     <release-item>
-                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the master.  This means no configuration changes for backup are required after failing over from a master to standby when a separate backup server is used.</p>
+                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the primary.  This means no configuration changes for backup are required after failing over from a primary to standby when a separate backup server is used.</p>
                     </release-item>
 
                     <release-item>
