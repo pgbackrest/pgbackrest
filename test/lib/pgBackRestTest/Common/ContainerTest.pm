@@ -664,51 +664,6 @@ sub containerBuild
             containerWrite(
                 $oStorageDocker, $strTempPath, $strOS, 'Test', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
         }
-
-        # Db doc image
-        ########################################################################################################################
-        if (!$bDeprecated)
-        {
-            $strImageParent = containerRepo() . ":${strOS}-base";
-            $strImage = "${strOS}-doc-db";
-
-            $strScript = sshSetup($strOS, POSTGRES_USER, POSTGRES_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
-
-            containerWrite(
-                $oStorageDocker, $strTempPath, $strOS, "Db Doc", $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
-        }
-
-        # Backup doc image
-        ###########################################################################################################################
-        if (!$bDeprecated)
-        {
-            $strImageParent = containerRepo() . ":${strOS}-base";
-            $strImage = "${strOS}-doc-backup";
-            $strCopy = undef;
-
-            $strScript .= sectionHeader() .
-                "# Create pgbackrest user\n" .
-                '    ' . userCreate($strOS, BACKREST_USER, BACKREST_USER_ID, TEST_GROUP);
-
-            $strScript .=
-                sshSetup($strOS, BACKREST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
-
-            #-----------------------------------------------------------------------------------------------------------------------
-            $strScript .=  sectionHeader() .
-                "# Create pgbackrest.conf\n" .
-                "    touch /etc/pgbackrest.conf && \\\n" .
-                "    chmod 640 /etc/pgbackrest.conf && \\\n" .
-                "    chown " . BACKREST_USER . ":" . POSTGRES_GROUP . " /etc/pgbackrest.conf";
-
-            $strScript .=  sectionHeader() .
-                "# Setup repository\n" .
-                "    mkdir /var/lib/pgbackrest && \\\n" .
-                "    chown -R " . BACKREST_USER . ":" . POSTGRES_GROUP . " /var/lib/pgbackrest && \\\n" .
-                "    chmod 750 /var/lib/pgbackrest";
-
-            containerWrite(
-                $oStorageDocker, $strTempPath, $strOS, 'Backup Doc', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
-        }
     }
 
     &log(INFO, "Build Complete");

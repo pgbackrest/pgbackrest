@@ -23,10 +23,16 @@
         <variable key="pg-version-upgrade" keyword="default">9.5</variable>
         <variable key="pg-version-upgrade" keyword="co6">9.6</variable>
 
+        <variable key="pg-home-path">/home/postgres</variable>
+
         <variable key="perl-lib-path">/usr/share/perl5</variable>
         <variable key="perl-bin-path">/usr/bin</variable>
 
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
+        <variable key="br-user">backrest</variable>
+        <variable key="br-group">{[br-user]}</variable>
+        <variable key="br-home-path">/home/{[br-user]}</variable>
+
         <variable key="postgres-cluster-demo">demo</variable>
         <variable key="backrest-config-demo">/etc/{[project-exe]}.conf</variable>
 
@@ -56,7 +62,7 @@
         <variable key="postgres-hba-demo-upgrade" keyword="default">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
         <variable key="postgres-hba-demo-upgrade" keyword="co6">{[db-path-upgrade]}/pg_hba.conf</variable>
 
-        <variable key="postgres-pgpass">/home/postgres/.pgpass</variable>
+        <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
         <variable key="postgres-log-demo" keyword="default">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
         <variable key="postgres-log-demo" keyword="co6">{[db-path]}/pg_log/postgresql.log</variable>
@@ -78,7 +84,7 @@
 
         <variable key="host-db-primary">db-primary</variable>
         <variable key="host-db-primary-user">{[host-user]}</variable>
-        <variable key="host-db-primary-image">{[image-repo]}:{[host-os]}-doc-db</variable>
+        <variable key="host-db-primary-image">{[image-repo]}:{[host-os]}-base</variable>
         <variable key="host-db-primary-mount">{[host-mount]}</variable>
 
         <variable key="host-db-standby">db-standby</variable>
@@ -88,7 +94,7 @@
 
         <variable key="host-backup">backup</variable>
         <variable key="host-backup-user">{[host-user]}</variable>
-        <variable key="host-backup-image">{[image-repo]}:{[host-os]}-doc-backup</variable>
+        <variable key="host-backup-image">{[image-repo]}:{[host-os]}-base</variable>
         <variable key="host-backup-mount">{[host-mount]}</variable>
 
         <!-- Commands for various operations -->
@@ -98,7 +104,7 @@
         <variable key="test-table-data">Important Data</variable>
 
         <!-- Database cluster commmands -->
-        <variable key="db-cluster-wait">sleep 1</variable>
+        <variable key="db-cluster-wait">sleep 2</variable>
 
         <variable key="db-cluster-create" keyword="default">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
         <variable key="db-cluster-create" keyword="co6">service postgresql-{[pg-version]} initdb</variable>
@@ -124,6 +130,195 @@
         <variable key="db-cluster-check-upgrade" keyword="default">pg_lsclusters</variable>
         <variable key="db-cluster-check-upgrade" keyword="co6">service postgresql-{[pg-version-upgrade]} status</variable>
     </variable-list>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="setup-ssh-intro">
+        <p><backrest/> requires trusted (no password) SSH to enable communication between the hosts.</p>
+    </block-define>
+
+    <block-define id="setup-ssh">
+        <execute-list host="{[setup-ssh-host]}">
+            <title>Create <host>{[setup-ssh-host]}</host> host key pair</title>
+
+            <execute user="postgres">
+                <exe-cmd>mkdir -m 750 -p {[pg-home-path]}/.ssh</exe-cmd>
+            </execute>
+            <execute user="postgres">
+                <exe-cmd>ssh-keygen -f {[pg-home-path]}/.ssh/id_rsa -t rsa -b 4096 -N ""</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Exchange keys between <host>{[host-backup]}</host> and <host>{[setup-ssh-host]}</host>.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Copy <host>{[setup-ssh-host]}</host> public key to <host>{[host-backup]}</host></title>
+
+            <execute user="root" err-suppress="y">
+                <exe-cmd>ssh root@{[setup-ssh-host]} cat {[pg-home-path]}/.ssh/id_rsa.pub |
+                    sudo -u backrest tee -a {[br-home-path]}/.ssh/authorized_keys</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[setup-ssh-host]}">
+            <title>Copy <host>{[host-backup]}</host> public key to <host>{[setup-ssh-host]}</host></title>
+
+            <execute user="root" err-suppress="y">
+                <exe-cmd>ssh root@{[host-backup]} cat {[br-home-path]}/.ssh/id_rsa.pub |
+                    sudo -u postgres tee -a {[pg-home-path]}/.ssh/authorized_keys</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Test that connections can be made from <host>{[host-backup]}</host> to <host>{[setup-ssh-host]}</host> and vice versa.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Test connection from <host>{[host-backup]}</host> to <host>{[setup-ssh-host]}</host></title>
+
+            <execute user="backrest" err-suppress="y">
+                <exe-cmd>ssh postgres@{[setup-ssh-host]}</exe-cmd>
+                <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[setup-ssh-host]}">
+            <title>Test connection from <host>{[setup-ssh-host]}</host> to <host>{[host-backup]}</host></title>
+
+            <execute user="postgres" err-suppress="y">
+                <exe-cmd>ssh backrest@{[host-backup]}</exe-cmd>
+                <exe-cmd-extra>-o StrictHostKeyChecking=no ls</exe-cmd-extra>
+            </execute>
+        </execute-list>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="br-install">
+        <p keyword="default"><backrest/> is written in Perl which is included with {[user-guide-os]} by default.  Some additional modules must also be installed but they are available as standard packages.</p>
+
+        <execute-list host="{[br-install-host]}" keyword="default">
+            <title>Install required Perl packages</title>
+
+            <execute user="root">
+                <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
+                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <p keyword="co6"><backrest/> is written in Perl which is not included with {[user-guide-os]} by default, however all required modules are available as standard packages.</p>
+
+        <execute-list host="{[br-install-host]}" keyword="co6">
+            <title>Install required Perl packages</title>
+
+            <execute user="root">
+                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
+                    perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
+                <exe-cmd-extra>-y</exe-cmd-extra>
+            </execute>
+        </execute-list>
+
+        <p keyword="default">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
+
+        <p keyword="co6">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+
+        <execute-list host="{[br-install-host]}">
+            <title>Download version <id>{[version]}</id> of <backrest/></title>
+
+            <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
+            <execute user="root" skip="y">
+                <exe-cmd>wget -q -O -
+                    {[github-url-release]}/{[version]}.tar.gz |
+                    sudo tar zx -C /root</exe-cmd>
+            </execute>
+
+            <!-- These commands simulate what the command above would do if it could be run -->
+            <execute user="root" show="n">
+                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+            <execute user="root" show="n">
+                <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[br-install-host]}">
+            <title>Install <backrest/></title>
+
+            <execute user="root">
+                <exe-cmd>cp -r /root/pgbackrest-release-{[version]}/lib/pgBackRest
+                    {[perl-lib-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>cp /root/pgbackrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} /var/log/pgbackrest</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chmod 640 {[backrest-config-demo]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-config-demo]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <!-- LibC installation - disabled for better testing of the C/Perl failback mechanism -->
+        <!-- <p><backrest/> includes an optional companion C library that enhances performance and enables the `checksum-page` option.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
+
+        <execute-list host="{[host-db-primary]}">
+            <title>Build and Install C Library</title>
+
+            <execute user="root">
+                <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
+                    perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
+            </execute>
+            <execute user="root" err-suppress="y">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc test</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
+            </execute>
+        </execute-list> -->
+    </block-define>
+
+    <block-define id="br-install-repo">
+        <execute-list host="{[br-install-host]}">
+            <title>Create the <backrest/> repository</title>
+
+            <execute user="root">
+                <exe-cmd>mkdir {[backrest-repo-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chmod 750 {[backrest-repo-path]}</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>chown {[br-install-user]}:{[br-install-group]} {[backrest-repo-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+    </block-define>
 
     <!-- SECTION => INTRODUCTION -->
     <section id="introduction">
@@ -182,66 +377,11 @@
         <title>Installation</title>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add name="{[host-s3-server]}" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}">
-        </host-add>
+        <host-add name="{[host-s3-server]}" user="root" image="{[image-repo]}:{[host-os]}-s3-server" os="{[host-os]}"/>
 
-        <host-add name="{[host-db-primary]}" user="{[host-db-primary-user]}" image="{[host-db-primary-image]}" os="{[host-os]}" mount="{[host-db-primary-mount]}">
-            <execute user="root">
-                <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-        </host-add>
+        <p>A new host named <host>db-primary</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <p keyword="default"><backrest/> is written in Perl which is included with {[user-guide-os]} by default.  The <id>DBD::Pg</id> module must also be installed.</p>
-
-        <execute-list host="{[host-db-primary]}" keyword="default">
-            <title>Install the <id>DBD::Pg</id> module</title>
-
-            <execute user="root">
-                <exe-cmd>apt-get install libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl</exe-cmd>
-                <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <p keyword="co6"><backrest/> is written in Perl which is not included with {[user-guide-os]} by default, however all required modules are available as standard packages.</p>
-
-        <execute-list host="{[host-db-primary]}" keyword="co6">
-            <title>Install required Perl packages</title>
-
-            <execute user="root">
-                <exe-cmd>yum install perl perl-Time-HiRes perl-parent perl-JSON
-                    perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL</exe-cmd>
-                <exe-cmd-extra>-y</exe-cmd-extra>
-            </execute>
-        </execute-list>
-
-        <p keyword="default">{[user-guide-os]} packages for <backrest/> are available, but if they are not provided on your distribution/version it is easy to download the source and install manually.</p>
-
-        <p keyword="co6">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
-
-        <execute-list host="{[host-db-primary]}">
-            <title>Download version <id>{[version]}</id> of <backrest/></title>
-
-            <execute user="root" skip="y">
-                <exe-cmd>wget -q -O -
-                    {[github-url-release]}/{[version]}.tar.gz |
-                    sudo tar zx -C /root</exe-cmd>
-            </execute>
-        </execute-list>
+        <host-add name="{[host-db-primary]}" user="{[host-db-primary-user]}" image="{[host-db-primary-image]}" os="{[host-os]}" mount="{[host-db-primary-mount]}"/>
 
         <p>If <backrest/> has been installed before it's best to be sure that no prior copies of it are still installed.  Depending on how old the version of pgBackRest is it may have been installed in a few different locations.  The following commands will remove all prior versions of pgBackRest.</p>
 
@@ -268,61 +408,11 @@
             </execute>
         </execute-list>
 
-        <p>The new version can now be installed.</p>
-
-        <execute-list host="{[host-db-primary]}">
-            <title>Install <backrest/></title>
-
-            <execute user="root">
-                <exe-cmd>cp -r /root/pgbackrest-release-{[version]}/lib/pgBackRest
-                    {[perl-lib-path]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>cp /root/pgbackrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>touch {[backrest-config-demo]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chmod 640 {[backrest-config-demo]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chown postgres:postgres {[backrest-config-demo]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <!-- LibC installation - disabled for better testing of the C/Perl failback mechanism -->
-        <!-- <p><backrest/> includes an optional companion C library that enhances performance and enables the `checksum-page` option.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
-
-        <execute-list host="{[host-db-primary]}">
-            <title>Build and Install C Library</title>
-
-            <execute user="root">
-                <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
-                    perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
-            </execute>
-            <execute user="root" err-suppress="y">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc test</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
-            </execute>
-        </execute-list> -->
+        <block id="br-install">
+            <block-variable-replace key="br-install-host">{[host-db-primary]}</block-variable-replace>
+            <block-variable-replace key="br-install-user">postgres</block-variable-replace>
+            <block-variable-replace key="br-install-group">postgres</block-variable-replace>
+        </block>
 
         <p><backrest/> should now be properly installed but it is best to check.  If any dependencies were missed then you will get an error when running <backrest/> from the command line.</p>
 
@@ -342,7 +432,7 @@
         <p>The Quick Start section will cover basic configuration of <backrest/> and <postgres/> and introduce the <cmd>backup</cmd>, <cmd>restore</cmd>, and <cmd>info</cmd> commands.</p>
 
         <!-- SECTION => QUICKSTART - SETUP DEMO CLUSTER -->
-        <section id="setup-demo-cluster" depend="/quickstart">
+        <section id="setup-demo-cluster">
             <title>Setup Demo Cluster</title>
 
             <p>Creating the demo cluster is optional but is strongly recommended, especially for new users, since the example commands in the user guide reference the demo cluster; the examples assume the demo cluster is running on the default port (i.e. 5432). The cluster will not be started until a later section because there is still some configuration to do.</p>
@@ -419,19 +509,11 @@
 
             <p>For this demonstration the repository will be stored on the same host as the <postgres/> server.  This is the simplest configuration and is useful in cases where traditional backup software is employed to backup the database host.</p>
 
-            <execute-list host="{[host-db-primary]}">
-                <title>Create the <backrest/> repository</title>
-
-                <execute user="root">
-                    <exe-cmd>mkdir {[backrest-repo-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chmod 750 {[backrest-repo-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chown postgres:postgres {[backrest-repo-path]}</exe-cmd>
-                </execute>
-            </execute-list>
+            <block id="br-install-repo">
+                <block-variable-replace key="br-install-host">{[host-db-primary]}</block-variable-replace>
+                <block-variable-replace key="br-install-user">postgres</block-variable-replace>
+                <block-variable-replace key="br-install-group">postgres</block-variable-replace>
+            </block>
 
             <p>The repository path must be configured so <backrest/> knows where to find it.</p>
 
@@ -1433,60 +1515,68 @@
 
         <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>backup</host> host.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>backup</host> host.</p>
 
+        <section id="install">
+            <title>Installation</title>
+
+            <p>A new host named <host>backup</host> is created to store the cluster backups.</p>
+
+            <host-add name="{[host-backup]}" user="{[host-backup-user]}" image="{[host-backup-image]}" os="{[host-os]}" mount="{[host-backup-mount]}"/>
+
+            <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
+
+            <execute-list host="{[host-backup]}">
+                <title>Create <user>{[br-user]}</user></title>
+
+                <execute keyword="default" user="root">
+                    <exe-cmd>adduser --disabled-password --gecos "" {[br-user]}</exe-cmd>
+                </execute>
+                <execute keyword="co6" user="root">
+                    <exe-cmd>groupadd {[br-group]}</exe-cmd>
+                </execute>
+                <execute keyword="co6" user="root">
+                    <exe-cmd>adduser -g{[br-group]} -n {[br-user]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <block id="br-install">
+                <block-variable-replace key="br-install-host">{[host-backup]}</block-variable-replace>
+                <block-variable-replace key="br-install-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="br-install-group">{[br-user]}</block-variable-replace>
+            </block>
+
+            <block id="br-install-repo">
+                <block-variable-replace key="br-install-host">{[host-backup]}</block-variable-replace>
+                <block-variable-replace key="br-install-user">{[br-group]}</block-variable-replace>
+                <block-variable-replace key="br-install-group">{[br-group]}</block-variable-replace>
+            </block>
+        </section>
+
+        <section id="setup-ssh">
+            <title>Setup Trusted SSH</title>
+
+            <block id="setup-ssh-intro">
+                <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
+            </block>
+
+            <execute-list host="{[host-backup]}">
+                <title>Create <host>{[host-backup]}</host> host key pair</title>
+
+                <execute user="backrest">
+                    <exe-cmd>mkdir -m 750 {[br-home-path]}/.ssh</exe-cmd>
+                </execute>
+                <execute user="backrest">
+                    <exe-cmd>ssh-keygen -f {[br-home-path]}/.ssh/id_rsa -t rsa -b 4096 -N ""</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <block id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-db-primary]}</block-variable-replace>
+            </block>
+        </section>
+
         <!-- SECTION => BACKUP HOST - INSTALL/CONFIGURE -->
-        <section id="install-config">
-            <title>Installation and Configuration</title>
-
-            <host-add name="{[host-backup]}" user="{[host-backup-user]}" image="{[host-backup-image]}" os="{[host-os]}" mount="{[host-backup-mount]}">
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/lib/pgBackRest {[perl-lib-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp /backrest/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chown backrest:postgres /var/log/pgbackrest</exe-cmd>
-                </execute>
-
-                <!-- LibC installation -->
-                <!-- <execute user="root">
-                    <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
-                        perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
-                </execute>
-                <execute user="root" err-suppress="y">
-                    <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
-                </execute> -->
-            </host-add>
+        <section id="config">
+            <title>Configuration</title>
 
             <backrest-config host="{[host-backup]}" show="n" owner="backrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure the <backrest/> repository path</title>
@@ -1494,7 +1584,7 @@
                 <backrest-config-option section="global" key="repo-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>For this example a new host named <host>backup</host> has been created to store the cluster backups. Follow the instructions in <link section="/installation">Installation</link> to install <backrest/>, <link section="/quickstart/create-repository">Create the Repository</link> to create the <backrest/> repository and <link section="/quickstart/create-stanza">Create the Stanza</link> to create the stanza. The <host>backup</host> host must also be configured with the <host>db-primary</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>The <host>backup</host> host must be configured with the <host>db-primary</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-backup]}" owner="backrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>db1-host</br-option>/<br-option>db1-user</br-option> and <br-option>db1-path</br-option></title>
@@ -1622,7 +1712,7 @@
         </section>
 
         <!-- SECTION => BACKUP HOST - ASYNCHRONOUS ARCHIVING -->
-        <section id="async-archiving" depend="install-config">
+        <section id="async-archiving" depend="config">
             <title>Asynchronous Archiving</title>
 
             <p>The <br-option>archive-async</br-option> option offloads WAL archiving to a separate process (or processes) to improve throughput.  It works by <quote>looking ahead</quote> to see which WAL segments are ready to be archived beyond the request that <postgres/> is currently making via the <code>archive_command</code>. WAL segments are transferred to the archive directly from the <path>pg_xlog</path>/<path>pg_wal</path> directory and success is only returned by the <code>archive_command</code> when the WAL segment has been safely stored in the archive.</p>
@@ -1692,7 +1782,7 @@
     </section>
 
     <!-- SECTION => PARALLEL BACKUP-RESTORE -->
-    <section id="parallel-backup-restore" depend="backup-host/install-config">
+    <section id="parallel-backup-restore" depend="backup-host/config">
         <title>Parallel Backup / Restore</title>
 
         <p><backrest/> offers parallel processing to improve performance of compression and transfer. The number of processes to be used for this feature is set using the <br-option>--process-max</br-option> option.</p>
@@ -1745,7 +1835,7 @@
     </section>
 
     <!-- SECTION => START/STOP -->
-    <section id="start-stop" depend="/backup-host/install-config">
+    <section id="start-stop" depend="/backup-host/config">
         <title>Starting and Stopping</title>
 
         <p>Sometimes it is useful to prevent <backrest/> from running on a system.  For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed.  This will also prevent <backrest/> from running on <id>cron</id>.</p>
@@ -1827,81 +1917,49 @@
 
         <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary.  The standbys are useful for balancing reads and to provide redundancy in case the primary host fails.</p>
 
+        <!-- SECTION => REPLICATION - INSTALLATION -->
+        <section id="installation">
+            <title>Installation</title>
+
+            <p>A new host named <host>db-standby</host> is created to run the standby.</p>
+
+            <host-add name="{[host-db-standby]}" user="{[host-db-standby-user]}" image="{[host-db-standby-image]}" os="{[host-os]}" mount="{[host-db-standby-mount]}"/>
+
+            <block id="br-install">
+                <block-variable-replace key="br-install-host">{[host-db-standby]}</block-variable-replace>
+                <block-variable-replace key="br-install-user">postgres</block-variable-replace>
+                <block-variable-replace key="br-install-group">postgres</block-variable-replace>
+            </block>
+
+            <p>The demo cluster must be created even though it will be overwritten later.</p>
+
+            <execute-list host="{[host-db-standby]}">
+                <title>Create demo cluster</title>
+
+                <execute user="root">
+                    <exe-cmd>{[db-cluster-create]}</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <!-- SECTION => REPLICATION - SETUP-SSH -->
+        <section id="setup-ssh">
+            <title>Setup Trusted SSH</title>
+
+            <block id="setup-ssh-intro">
+                <block-variable-replace key="bogus">bogus !!!</block-variable-replace>
+            </block>
+
+            <block id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-db-standby]}</block-variable-replace>
+            </block>
+        </section>
+
         <!-- SECTION => REPLICATION - HOT-STANDBY -->
         <section id="hot-standby">
             <title>Hot Standby</title>
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
-
-            <p>A new host named <host>db-standby</host> will be created to run the standby.  Follow the instructions in <link section="/installation">Installation</link> to install <backrest/> and <link section="/quickstart/setup-demo-cluster">Setup Demo Cluster</link> to setup the demo cluster.</p>
-
-            <host-add name="{[host-db-standby]}" user="{[host-db-standby-user]}" image="{[host-db-standby-image]}" os="{[host-os]}" mount="{[host-db-standby-mount]}">
-                <!-- Install packages -->
-                <execute user="root" keyword="default">
-                    <exe-cmd>apt-get -y install libdbd-pg-perl</exe-cmd>
-                </execute>
-
-                <execute user="root" keyword="co6">
-                    <exe-cmd>yum -y install perl perl-Time-HiRes perl-parent
-                        perl-JSON perl-Digest-SHA perl-DBD-Pg</exe-cmd>
-                </execute>
-
-                <!-- Install backrest -->
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/lib/pgBackRest {[perl-lib-path]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type f -exec chmod 644 {} +</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp /backrest/bin/{[project-exe]}
-                        {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chown postgres:postgres /var/log/pgbackrest</exe-cmd>
-                </execute>
-
-                <!-- LibC installation -->
-                <!-- <execute user="root">
-                    <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/lib /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/libc /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>cp -r /backrest/src /root/pgbackrest-release-{[version]}</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>sh -c 'cd /root/pgbackrest-release-{[version]}/libc &amp;&amp;
-                        perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none'</exe-cmd>
-                </execute>
-                <execute user="root" err-suppress="y">
-                    <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
-                </execute> -->
-
-                <!-- Start the cluster -->
-                <execute user="root" output="y" filter="n">
-                    <exe-cmd>{[db-cluster-create]}</exe-cmd>
-                </execute>
-            </host-add>
 
             <postgres-config host="{[host-db-standby]}" keyword="default" file="{[postgres-config-demo]}" show="n">
                 <title>Set options</title>

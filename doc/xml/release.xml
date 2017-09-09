@@ -28,6 +28,14 @@
                     <release-item>
                         <p>Rename <proper>master</proper> to <proper>primary</proper> in documentation to align with <postgres/> convention.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add trusted SSH configuration.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add full installation where required and remove doc containers that included parts of the installation.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
         </release>
