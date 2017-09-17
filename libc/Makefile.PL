@@ -360,6 +360,17 @@ sub formatText
 ####################################################################################################################################
 use ExtUtils::MakeMaker;
 
+# Create C files array
+my @stryCFile = qw(LibC.c);
+
+foreach my $strFile (sort(keys(%{$oStorage->manifest('')})))
+{
+    # Skip all files except .c files (including .auto.c)
+    next if $strFile !~ /(?<!\.auto)\.c$/;
+
+    push(@stryCFile, "../${strFile}");
+}
+
 WriteMakefile
 (
     NAME => BACKREST_NAME . '::LibC',
@@ -380,12 +391,7 @@ WriteMakefile
         -I../src
     )),
 
-    C => [qw(
-        LibC.c
-        ../src/config/config.c
-        ../src/config/configRule.c
-        ../src/postgres/pageChecksum.c
-    )],
+    C => \@stryCFile,
 
     OBJECT => '$(O_FILES)',
 );

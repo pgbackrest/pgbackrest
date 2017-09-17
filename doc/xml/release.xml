@@ -21,6 +21,12 @@
                         <p>Exclude <file>pg_internal.init</file> files from backup since they are rebuilt on startup.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Dynamically generate list of files for C library build.</p>
+                    </release-item>
+                </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>
