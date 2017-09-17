@@ -26,6 +26,10 @@
                     <release-item>
                         <p>Dynamically generate list of files for C library build.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Break up <file>LibC.xs</file> into separate module files.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
