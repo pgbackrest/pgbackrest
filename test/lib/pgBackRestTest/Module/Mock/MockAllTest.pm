@@ -326,9 +326,15 @@ sub run
         $strFullBackup = $oHostBackup->backup(
             $strType, 'create pg_stat link, pg_clog dir',
             {oExpectedManifest => \%oManifest,
-                strOptionalParam => $strOptionalParam . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
-                ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
+                strOptionalParam => $strOptionalParam .
+                    # Pass ssh path to make sure it is used
+                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_CMD_SSH) . '=/usr/bin/ssh' : '') .
+                    # Pass bogus ssh port to make sure it is passed through the protocol layer (it won't be used)
+                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_DB_PORT) . '=9999' : '') .
+                    # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
+                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_DB_SOCKET_PATH) . ' =/test_socket_path' : '') .
+                    ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
+                    ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
                 strRepoType => $bS3 ? undef : CFGOPTVAL_REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
 
         # Error on backup option to check logging

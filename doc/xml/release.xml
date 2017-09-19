@@ -16,6 +16,10 @@
                     <release-item>
                         <p>Fixed an issue where warnings were being emitted in place of lower priority log messages during backup from standby initialization.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where some <id>db-*</id> options (e.g. <br-option>db-port</br-option>) were not being passed to remotes.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

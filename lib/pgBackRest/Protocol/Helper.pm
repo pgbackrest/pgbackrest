@@ -203,6 +203,7 @@ sub protocolGet
             my $iOptionIdConfig = CFGOPT_BACKUP_CONFIG;
             my $iOptionIdHost = CFGOPT_BACKUP_HOST;
             my $iOptionIdUser = CFGOPT_BACKUP_USER;
+            my $strOptionDbPath = undef;
             my $strOptionDbPort = undef;
             my $strOptionDbSocketPath = undef;
             my $strOptionSshPort = CFGOPT_BACKUP_SSH_PORT;
@@ -216,7 +217,15 @@ sub protocolGet
                 $strOptionSshPort = cfgOptionIndex(CFGOPT_DB_SSH_PORT, $iRemoteIdx);
             }
 
-            # Db socket is not valid in all contexts (restore, for instance)
+            # Db path is not valid in all contexts (restore, for instance)
+            if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)))
+            {
+                $strOptionDbPath =
+                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                        undef : cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx));
+            }
+
+            # Db port is not valid in all contexts (restore, for instance)
             if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx)))
             {
                 $strOptionDbPort =
@@ -248,6 +257,7 @@ sub protocolGet
                 # option will be set to 'protocol' which is not a valid value from the command line.
                 &CFGOPT_LOG_LEVEL_STDERR => {},
 
+                &CFGOPT_DB_PATH => {value => $strOptionDbPath},
                 &CFGOPT_DB_PORT => {value => $strOptionDbPort},
                 &CFGOPT_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
 
@@ -259,11 +269,21 @@ sub protocolGet
             };
 
             # Override some per-db options that shouldn't be passed to the command. ??? This could be done better as a new rule for
-            # these options which would then implemented in cfgCommandWrite().
-            for (my $iOptionIdx = 1; $iOptionIdx < cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
+            # these options which would then be implemented in cfgCommandWrite().
+            for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
             {
-                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_PORT, $iOptionIdx)} = {};
-                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iOptionIdx)} = {};
+                if ($iOptionIdx != 1)
+                {
+                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_CONFIG, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_HOST, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_PATH, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_PORT, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iOptionIdx)} = {};
+                }
+
+                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)} = {};
+                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_USER, $iOptionIdx)} = {};
+                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_SSH_PORT, $iOptionIdx)} = {};
             }
 
             $oProtocol = new pgBackRest::Protocol::Remote::Master
