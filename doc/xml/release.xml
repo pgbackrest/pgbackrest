@@ -12,6 +12,12 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.24dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fixed an issue where warnings were being emitted in place of lower priority log messages during backup from standby initialization.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>Exclude contents of <path>pg_snapshots</path>, <path>pg_serial</path>, <path>pg_notify</path>, and <path>pg_dynshmem</path> from backup since they are rebuilt on startup.</p>

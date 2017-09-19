@@ -34,6 +34,9 @@ sub run
         $self->testResult(sub {&log(ERROR, "my test log", 27)}, "[object]", 'log error as warning',
             {strLogExpect => "WARN: [027]: my test log"});
 
+        $self->testResult(sub {&log(INFO, "my test log")}, "my test log", 'log info as info',
+            {strLogLevel => INFO, strLogExpect => "INFO: my test log"});
+
         logWarnOnErrorDisable();
         $self->testResult(sub {&log(ERROR, "my test log", 27)}, "[object]", 'log error',
             {strLogExpect => "ERROR: [027]: my test log"});

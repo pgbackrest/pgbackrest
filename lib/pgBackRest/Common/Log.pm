@@ -689,8 +689,8 @@ sub log
 
     # If logging warnings as errors then change the display level and rank. These will be used to determine if the message will be
     # displayed or not.
-    my $strDisplayLevel = (!$bLogWarnOnError ? $strLevel : WARN);
-    my $iLogDisplayLevelRank = (!$bLogWarnOnError ? $iLogLevelRank : $oLogLevelRank{$strDisplayLevel}{rank});
+    my $strDisplayLevel = ($bLogWarnOnError && $strLevel eq ERROR ? WARN : $strLevel);
+    my $iLogDisplayLevelRank = ($bLogWarnOnError && $strLevel eq ERROR ? $oLogLevelRank{$strDisplayLevel}{rank} : $iLogLevelRank);
 
     $strMessageFormat =
         ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
