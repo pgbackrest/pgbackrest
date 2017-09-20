@@ -66,6 +66,14 @@
                     </release-item>
                 </release-refactor-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improve C library smart build by ignoring changes outside of <path>/lib/pgBackRest/Config</path>.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2017-09-03" version="1.23" title="Multiple Standbys and PostgreSQL 10 Support">

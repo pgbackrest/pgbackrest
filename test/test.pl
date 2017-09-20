@@ -345,7 +345,7 @@ eval
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
-            my @stryLibCSrcPath = ('build', 'doc', 'lib', 'libc', 'src');
+            my @stryLibCSrcPath = ('build', 'doc', 'libc', 'src', 'lib/pgBackRest/Config');
 
             # VM Info
             my $oVm = vmGet();
@@ -400,6 +400,10 @@ eval
                             " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
                             {bSuppressStdErr => true});
                     }
+
+                    # Replace config path with base lib path for copy operation
+                    pop(@stryLibCSrcPath);
+                    push(@stryLibCSrcPath, 'lib');
 
                     foreach my $strLibCSrcPath (@stryLibCSrcPath)
                     {
