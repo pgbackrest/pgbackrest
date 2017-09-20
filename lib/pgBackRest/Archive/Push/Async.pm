@@ -102,9 +102,6 @@ sub process
         # uncoverable branch false - reacquire the lock since it was released by the client process above
         if (lockAcquire(cfgCommandName(cfgCommandGet()), false))
         {
-            # Open the log file
-            logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-async');
-
             # uncoverable branch true - chdir to /
             chdir '/'
                 or confess &log(ERROR, "unable to chdir to /: $OS_ERROR", ERROR_PATH_MISSING);
@@ -122,6 +119,9 @@ sub process
             # uncoverable branch true - create new session group
             setsid()
                 or confess &log(ERROR, "unable to create new session group: $OS_ERROR", ERROR_ASSERT);
+
+            # Open the log file
+            logFileSet(storageLocal(), cfgOption(CFGOPT_LOG_PATH) . '/' . cfgOption(CFGOPT_STANZA) . '-archive-async');
 
             # Start processing
             $self->processServer();

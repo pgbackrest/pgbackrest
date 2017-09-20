@@ -34,6 +34,14 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Open log file after async process is completely separated from the main process to prevent the main process from also logging to the file.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Dynamically generate list of files for C library build.</p>
                     </release-item>
 
