@@ -10,14 +10,22 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.24dev" title="UNDER DEVELOPMENT">
+        <release date="2017-09-28" version="1.24" title="New Backup Exclusions">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
                         <p>Fixed an issue where warnings were being emitted in place of lower priority log messages during backup from standby initialization.</p>
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
                         <p>Fixed an issue where some <id>db-*</id> options (e.g. <br-option>db-port</br-option>) were not being passed to remotes.</p>
                     </release-item>
                 </release-bug-list>
@@ -3280,7 +3288,7 @@
 
         <!-- The order of other contributors is alpha by name -->
         <contributor id="avellar.leonardo">
-            <contributor-name-display>Leonardo Avellar</contributor-name-display>
+            <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
         </contributor>
 
@@ -3417,6 +3425,11 @@
         <contributor id="stjohn.jesper">
             <contributor-name-display>Jesper St John</contributor-name-display>
             <contributor-id type="github">Underhunden</contributor-id>
+        </contributor>
+
+        <contributor id="uspen">
+            <contributor-name-display>Uspen</contributor-name-display>
+            <contributor-id type="github">uspen</contributor-id>
         </contributor>
 
         <contributor id="vernick.todd">

@@ -156,8 +156,8 @@ my $oConfigHelpData =
             summary =>
                 "Backup from the standby cluster.",
             description =>
-                "Enable backup from standby to reduce load on the master cluster. This option requires that both the master and " .
-                    "standby hosts be configured."
+                "Enable backup from standby to reduce load on the primary cluster. This option requires that both the primary " .
+                    "and standby hosts be configured."
         },
 
         # BACKUP-USER Option Help
@@ -574,7 +574,7 @@ my $oConfigHelpData =
             summary =>
                 "Protocol timeout.",
             description =>
-                "Sets the timeout, in seconds, that the master or remote process will wait for a new message to be received on " .
+                "Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on " .
                     "the protocol layer. This prevents processes from waiting indefinitely for a message. The protocol-timeout " .
                     "option must be greater than the db-timeout option."
         },
