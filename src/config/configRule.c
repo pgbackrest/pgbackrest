@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
-Command and Option Rules
+Command and Option Configuration Rules
 ***********************************************************************************************************************************/
+#include <string.h>
+
 #include "config.h"
 #include "configRule.h"
 
@@ -9,7 +11,7 @@ Command and Option Rules
 /***********************************************************************************************************************************
 cfgCommandTotal - total number of commands
 ***********************************************************************************************************************************/
-uint32
+int
 cfgCommandTotal()
 {
     return CFGCMDDEF_TOTAL;
@@ -18,7 +20,7 @@ cfgCommandTotal()
 /***********************************************************************************************************************************
 cfgOptionTotal - total number of configuration options
 ***********************************************************************************************************************************/
-uint32
+int
 cfgOptionTotal()
 {
     return CFGOPTDEF_TOTAL;
@@ -28,12 +30,12 @@ cfgOptionTotal()
 cfgRuleOptionAllowListValueValid - check if the value matches a value in the allow list
 ***********************************************************************************************************************************/
 bool
-cfgRuleOptionAllowListValueValid(uint32 uiCommandId, uint32 uiOptionId, const char *szValue)
+cfgRuleOptionAllowListValueValid(int commandId, int optionId, const char *value)
 {
-    if (szValue != NULL)
+    if (value != NULL)
     {
-        for (uint32 uiIndex = 0; uiIndex < cfgRuleOptionAllowListValueTotal(uiCommandId, uiOptionId); uiIndex++)
-            if (strcmp(szValue, cfgRuleOptionAllowListValue(uiCommandId, uiOptionId, uiIndex)) == 0)
+        for (int valueIdx = 0; valueIdx < cfgRuleOptionAllowListValueTotal(commandId, optionId); valueIdx++)
+            if (strcmp(value, cfgRuleOptionAllowListValue(commandId, optionId, valueIdx)) == 0)
                 return true;
     }
 
@@ -44,12 +46,12 @@ cfgRuleOptionAllowListValueValid(uint32 uiCommandId, uint32 uiOptionId, const ch
 cfgRuleOptionDependValueValid - check if the value matches a value in the allow list
 ***********************************************************************************************************************************/
 bool
-cfgRuleOptionDependValueValid(uint32 uiCommandId, uint32 uiOptionId, const char *szValue)
+cfgRuleOptionDependValueValid(int commandId, int optionId, const char *value)
 {
-    if (szValue != NULL)
+    if (value != NULL)
     {
-        for (uint32 uiIndex = 0; uiIndex < cfgRuleOptionDependValueTotal(uiCommandId, uiOptionId); uiIndex++)
-            if (strcmp(szValue, cfgRuleOptionDependValue(uiCommandId, uiOptionId, uiIndex)) == 0)
+        for (int valueIdx = 0; valueIdx < cfgRuleOptionDependValueTotal(commandId, optionId); valueIdx++)
+            if (strcmp(value, cfgRuleOptionDependValue(commandId, optionId, valueIdx)) == 0)
                 return true;
     }
 

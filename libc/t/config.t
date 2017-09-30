@@ -11,7 +11,7 @@ use Fcntl qw(O_RDONLY);
 # Set number of tests
 use Test::More tests => 56;
 
-# Load the module dynamically so it does not interfere with the test above
+# Load the module
 use pgBackRest::LibC qw(:config :configRule);
 
 # Config rule functions

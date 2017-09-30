@@ -28,6 +28,7 @@ my $oStorage = new pgBackRest::Storage::Local(
 ####################################################################################################################################
 # Build C files required for the library
 ####################################################################################################################################
+use pgBackRestBuild::CodeGen::Common;
 use pgBackRestBuild::Build;
 
 my $rhBuild = buildAll($strBuildPath);
@@ -150,6 +151,11 @@ sub formatText
     }
 
     my $strLibC =
+        ('#' x 132) . "\n" .
+        "# C to Perl Interface\n" .
+        "# \n" .
+        '# ' . cgenAutoWarning('Makefile.PL') . "\n" .
+        ('#' x 132) . "\n" .
         'package ' . BACKREST_NAME . '::' . LIB_NAME . ";\n" .
         "\n" .
         "use 5.010001;\n" .

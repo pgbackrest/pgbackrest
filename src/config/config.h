@@ -1,3 +1,6 @@
+/***********************************************************************************************************************************
+Command and Option Configuration
+***********************************************************************************************************************************/
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -7,8 +10,8 @@
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const char *cfgCommandName(uint32 uiCommandId);
-int32 cfgOptionIndexTotal(uint32 uiOptionId);
-const char *cfgOptionName(uint32 uiCommandId);
+const char *cfgCommandName(int commandId);
+int cfgOptionIndexTotal(int optionId);
+const char *cfgOptionName(int commandId);
 
 #endif

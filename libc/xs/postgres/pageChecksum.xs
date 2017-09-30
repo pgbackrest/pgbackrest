@@ -5,24 +5,39 @@
 MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC
 
 U16
-pageChecksum(page, blkno, pageSize)
+pageChecksum(page, blockNo, pageSize)
     const char *page
-    U32 blkno
+    U32 blockNo
     U32 pageSize
+CODE:
+    RETVAL = pageChecksum(
+        (const unsigned char *)page, blockNo, pageSize);
+OUTPUT:
+    RETVAL
 
 bool
-pageChecksumTest(szPage, uiBlockNo, uiPageSize, uiIgnoreWalId, uiIgnoreWalOffset)
-    const char *szPage
-    U32 uiBlockNo
-    U32 uiPageSize
-    U32 uiIgnoreWalId
-    U32 uiIgnoreWalOffset
+pageChecksumTest(page, blockNo, pageSize, ignoreWalId, ignoreWalOffset)
+    const char *page
+    U32 blockNo
+    U32 pageSize
+    U32 ignoreWalId
+    U32 ignoreWalOffset
+CODE:
+    RETVAL = pageChecksumTest(
+        (const unsigned char *)page, blockNo, pageSize, ignoreWalId, ignoreWalOffset);
+OUTPUT:
+    RETVAL
 
 bool
-pageChecksumBufferTest(szPageBuffer, uiBufferSize, uiBlockNoStart, uiPageSize, uiIgnoreWalId, uiIgnoreWalOffset)
-    const char *szPageBuffer
-    U32 uiBufferSize
-    U32 uiBlockNoStart
-    U32 uiPageSize
-    U32 uiIgnoreWalId
-    U32 uiIgnoreWalOffset
+pageChecksumBufferTest(pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset)
+    const char *pageBuffer
+    U32 pageBufferSize
+    U32 blockNoBegin
+    U32 pageSize
+    U32 ignoreWalId
+    U32 ignoreWalOffset
+CODE:
+    RETVAL = pageChecksumBufferTest(
+        (const unsigned char *)pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset);
+OUTPUT:
+    RETVAL

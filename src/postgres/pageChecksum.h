@@ -1,3 +1,6 @@
+/***********************************************************************************************************************************
+Checksum Implementation for Data Pages
+***********************************************************************************************************************************/
 #ifndef PAGE_CHECKSUM_H
 #define PAGE_CHECKSUM_H
 
@@ -6,10 +9,10 @@
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-uint16 pageChecksum(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize);
-bool pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize, uint32 uiIgnoreWalId, uint32 uiIgnoreWalOffset);
+uint16 pageChecksum(const unsigned char *page, int blockNo, int pageSize);
+bool pageChecksumTest(const unsigned char *page, int blockNo, int pageSize, uint32 ignoreWalId, uint32 ignoreWalOffset);
 bool pageChecksumBufferTest(
-    const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 uiIgnoreWalId,
-    uint32 uiIgnoreWalOffset);
+    const unsigned char *pageBuffer, int pageBufferSize, int blockNoBegin, int pageSize, uint32 ignoreWalId,
+    uint32 ignoreWalOffset);
 
 #endif

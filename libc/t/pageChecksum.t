@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# pgBackRest-LibC.t - Unit tests for the LibC module
+# Page Checksum Tests
 ####################################################################################################################################
 use strict;
 use warnings;
@@ -9,17 +9,10 @@ use English '-no_match_vars';
 use Fcntl qw(O_RDONLY);
 
 # Set number of tests
-use Test::More tests => 11;
+use Test::More tests => 9;
 
-# Make sure the module loads without errors
-BEGIN {use_ok('pgBackRest::LibC')};
-
-# Load the module dynamically so it does not interfere with the test above
-require pgBackRest::LibC;
-pgBackRest::LibC->import(qw(:debug :checksum));
-
-# UVSIZE determines the pointer and long long int size.  This needs to be 8 to indicate 64-bit types are available.
-ok (&UVSIZE == 8, 'UVSIZE == 8');
+# Load the module
+use pgBackRest::LibC qw(:checksum);
 
 sub pageBuild
 {
@@ -88,7 +81,7 @@ sub pageBuild
 
     ok (pageChecksumBufferTest($tBufferMulti, length($tBufferMulti), 0, $iPageSize, 0xFFFF, 0xFFFF), 'pass valid page buffer');
 
-    # Make sure that an invalid buffer size throws an exception
+    # Make sure that an invalid buffer size throws an error
     eval
     {
         pageChecksumBufferTest($tBufferMulti, length($tBufferMulti) - 1, 0, $iPageSize, 0xFFFF, 0xFFFF);

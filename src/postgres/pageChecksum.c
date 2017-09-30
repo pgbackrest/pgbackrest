@@ -1,7 +1,5 @@
 /***********************************************************************************************************************************
-pageChecksum.c
-
-Checksum implementation for data pages.
+Checksum Implementation for Data Pages
 
 Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
@@ -64,15 +62,20 @@ calculate a subset of the columns at a time and perform multiple passes to avoid
 is not used. Current coding also assumes that the compiler has the ability to unroll the inner loop to avoid loop overhead and
 minimize register spilling. For less sophisticated compilers it might be beneficial to manually unroll the inner loop.
 ***********************************************************************************************************************************/
-#include "LibC.h"
+#include "EXTERN.h"
+#include "perl.h"
+
+#include <string.h>
+
+#include "common/type.h"
 
 /***********************************************************************************************************************************
 For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
 ***********************************************************************************************************************************/
 typedef struct
 {
-    uint32 walid;      /* high bits */
-    uint32 xrecoff;     /* low bits */
+    uint32 walid;                                                   // high bits
+    uint32 xrecoff;                                                 // low bits
 } PageWalRecPtr;
 
 /***********************************************************************************************************************************
@@ -104,9 +107,9 @@ typedef struct PageHeaderData
 typedef PageHeaderData *PageHeader;
 
 /***********************************************************************************************************************************
-pageChecksumBlock
+pageChecksumBlock - block checksum algorithm
 
-Block checksum algorithm.  The data argument must be aligned on a 4-byte boundary.
+The data argument must be aligned on a 4-byte boundary.
 ***********************************************************************************************************************************/
 // number of checksums to calculate in parallel
 #define N_SUMS 32
@@ -115,7 +118,7 @@ Block checksum algorithm.  The data argument must be aligned on a 4-byte boundar
 #define FNV_PRIME 16777619
 
 // Base offsets to initialize each of the parallel FNV hashes into a different initial state.
-static const uint32 uiyChecksumBaseOffsets[N_SUMS] =
+static const uint32 checksumBaseOffsets[N_SUMS] =
 {
     0x5B1F36E9, 0xB8525960, 0x02AB50AA, 0x1DE66D2A, 0x79FF467A, 0x9BB9F8A3, 0x217E7CD2, 0x83E13D2C,
     0xF8D4474F, 0xE39EB970, 0x42C6AE16, 0x993216FA, 0x7B093B5D, 0x98DAFF3C, 0xF718902A, 0x0B1C9CDB,
@@ -124,107 +127,101 @@ static const uint32 uiyChecksumBaseOffsets[N_SUMS] =
 };
 
 // Calculate one round of the checksum.
-#define CHECKSUM_COMP(uiChecksum, uiValue) \
+#define CHECKSUM_COMP(checksum, value) \
 do { \
-    uint32 uiTemp = (uiChecksum) ^ (uiValue); \
-    (uiChecksum) = uiTemp * FNV_PRIME ^ (uiTemp >> 17); \
+    uint32 temp = (checksum) ^ (value); \
+    (checksum) = temp * FNV_PRIME ^ (temp >> 17); \
 } while (0)
 
 static uint32
-pageChecksumBlock(const char *szData, uint32 uiSize)
+pageChecksumBlock(const unsigned char *data, uint32 size)
 {
-    uint32 uiySums[N_SUMS];
-    uint32 (*puiyDataArray)[N_SUMS] = (uint32 (*)[N_SUMS])szData;
-    uint32 uiResult = 0;
+    uint32 sums[N_SUMS];
+    uint32 (*dataArray)[N_SUMS] = (uint32 (*)[N_SUMS])data;
+    uint32 result = 0;
     uint32 i, j;
 
     /* initialize partial checksums to their corresponding offsets */
-    memcpy(uiySums, uiyChecksumBaseOffsets, sizeof(uiyChecksumBaseOffsets));
+    memcpy(sums, checksumBaseOffsets, sizeof(checksumBaseOffsets));
 
     /* main checksum calculation */
-    for (i = 0; i < uiSize / sizeof(uint32) / N_SUMS; i++)
+    for (i = 0; i < size / sizeof(uint32) / N_SUMS; i++)
         for (j = 0; j < N_SUMS; j++)
-            CHECKSUM_COMP(uiySums[j], puiyDataArray[i][j]);
+            CHECKSUM_COMP(sums[j], dataArray[i][j]);
 
     /* finally add in two rounds of zeroes for additional mixing */
     for (i = 0; i < 2; i++)
         for (j = 0; j < N_SUMS; j++)
-            CHECKSUM_COMP(uiySums[j], 0);
+            CHECKSUM_COMP(sums[j], 0);
 
     // xor fold partial checksums together
     for (i = 0; i < N_SUMS; i++)
-        uiResult ^= uiySums[i];
+        result ^= sums[i];
 
-    return uiResult;
+    return result;
 }
 
 /***********************************************************************************************************************************
-pageChecksum
-
-Compute the checksum for a Postgres page.  The page must be aligned on a 4-byte boundary.
+pageChecksum - compute the checksum for a PostgreSQL page
 
 The checksum includes the block number (to detect the case where a page is somehow moved to a different location), the page header
 (excluding the checksum itself), and the page data.
 ***********************************************************************************************************************************/
 uint16
-pageChecksum(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize)
+pageChecksum(const unsigned char *page, int blockNo, int pageSize)
 {
     // Save pd_checksum and temporarily set it to zero, so that the checksum calculation isn't affected by the old checksum stored
     // on the page. Restore it after, because actually updating the checksum is NOT part of the API of this function.
-    PageHeader pxPageHeader = (PageHeader)szPage;
+    PageHeader pageHeader = (PageHeader)page;
 
-    uint usOriginalChecksum = pxPageHeader->pd_checksum;
-    pxPageHeader->pd_checksum = 0;
-    uint uiChecksum = pageChecksumBlock(szPage, uiPageSize);
-    pxPageHeader->pd_checksum = usOriginalChecksum;
+    uint32 originalChecksum = pageHeader->pd_checksum;
+    pageHeader->pd_checksum = 0;
+    uint32 checksum = pageChecksumBlock(page, pageSize);
+    pageHeader->pd_checksum = originalChecksum;
 
     // Mix in the block number to detect transposed pages
-    uiChecksum ^= uiBlockNo;
+    checksum ^= blockNo;
 
     // Reduce to a uint16 with an offset of one. That avoids checksums of zero, which seems like a good idea.
-    return (uiChecksum % 65535) + 1;
+    return (checksum % 65535) + 1;
 }
 
 /***********************************************************************************************************************************
-pageChecksumTest
-
-Test if checksum is valid for a single page.
+pageChecksumTest - test if checksum is valid for a single page
 ***********************************************************************************************************************************/
 bool
-pageChecksumTest(const char *szPage, uint32 uiBlockNo, uint32 uiPageSize, uint32 uiIgnoreWalId, uint32 uiIgnoreWalOffset)
+pageChecksumTest(const unsigned char *page, int blockNo, int pageSize, uint32 ignoreWalId, uint32 ignoreWalOffset)
 {
     return
         // This is a new page so don't test checksum
-        ((PageHeader)szPage)->pd_upper == 0 ||
+        ((PageHeader)page)->pd_upper == 0 ||
         // LSN is after the backup started so checksum is not tested because pages may be torn
-        (((PageHeader)szPage)->pd_lsn.walid >= uiIgnoreWalId && ((PageHeader)szPage)->pd_lsn.xrecoff >= uiIgnoreWalOffset) ||
+        (((PageHeader)page)->pd_lsn.walid >= ignoreWalId && ((PageHeader)page)->pd_lsn.xrecoff >= ignoreWalOffset) ||
         // Checksum is valid
-        ((PageHeader)szPage)->pd_checksum == pageChecksum(szPage, uiBlockNo, uiPageSize);
+        ((PageHeader)page)->pd_checksum == pageChecksum(page, blockNo, pageSize);
 }
 
 /***********************************************************************************************************************************
-pageChecksumBufferTest
-
-Test if checksums are valid for all pages in a buffer.
+pageChecksumBufferTest - test if checksums are valid for all pages in a buffer
 ***********************************************************************************************************************************/
 bool
 pageChecksumBufferTest(
-    const char *szPageBuffer, uint32 uiBufferSize, uint32 uiBlockNoStart, uint32 uiPageSize, uint32 uiIgnoreWalId,
-    uint32 uiIgnoreWalOffset)
+    const unsigned char *pageBuffer, int pageBufferSize, int blockNoBegin, int pageSize, uint32 ignoreWalId,
+    uint32 ignoreWalOffset)
 {
     // If the buffer does not represent an even number of pages then error
-    if (uiBufferSize % uiPageSize != 0 || uiBufferSize / uiPageSize == 0)
+    if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)
     {
-        croak("buffer size %lu, page size %lu are not divisible", uiBufferSize, uiPageSize);
+        croak("buffer size %lu, page size %lu are not divisible", pageBufferSize, pageSize);
     }
 
     // Loop through all pages in the buffer
-    for (uint32 uiIndex = 0; uiIndex < uiBufferSize / uiPageSize; uiIndex++)
+    for (int pageIdx = 0; pageIdx < pageBufferSize / pageSize; pageIdx++)
     {
-        const char *szPage = szPageBuffer + (uiIndex * uiPageSize);
+        const unsigned char *page = pageBuffer + (pageIdx * pageSize);
 
         // Return false if the checksums do not match
-        if (!pageChecksumTest(szPage, uiBlockNoStart + uiIndex, uiPageSize, uiIgnoreWalId, uiIgnoreWalOffset))
+        if (!pageChecksumTest(page, blockNoBegin + pageIdx, pageSize, ignoreWalId, ignoreWalOffset))
             return false;
     }
 

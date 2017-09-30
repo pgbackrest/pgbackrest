@@ -23,6 +23,11 @@ use pgBackRestBuild::CodeGen::Truth;
 use pgBackRestBuild::Config::Build;
 
 ####################################################################################################################################
+# Define generator used for auto generated warning messages
+####################################################################################################################################
+use constant GENERATOR                                              => 'Build.pm';
+
+####################################################################################################################################
 # buildAll - execute all build functions and generate C source code
 ####################################################################################################################################
 sub buildAll
@@ -112,7 +117,7 @@ sub buildAll
 
             # Build general banner
             #-------------------------------------------------------------------------------------------------------------------------------
-            my $strBanner = cgenBanner($rhFile->{&BLD_SUMMARY});
+            my $strBanner = cgenBanner($rhFile->{&BLD_SUMMARY}, GENERATOR);
 
             # Build header file
             #-------------------------------------------------------------------------------------------------------------------------------
@@ -130,7 +135,7 @@ sub buildAll
                 {
                     my $rhConstantGroup = $rhFileConstant->{$strConstantGroup};
 
-                    $strHeader .= "\n" . cgenBanner($rhConstantGroup->{&BLD_SUMMARY} . ' constants');
+                    $strHeader .= "\n" . cgenBanner($rhConstantGroup->{&BLD_SUMMARY} . ' constants', GENERATOR);
 
                     # Iterate constants
                     foreach my $strConstant (sort(keys(%{$rhConstantGroup->{&BLD_CONSTANT}})))

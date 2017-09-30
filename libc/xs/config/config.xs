@@ -5,13 +5,13 @@
 MODULE = pgBackRest::LibC PACKAGE = pgBackRest::LibC
 
 const char *
-cfgCommandName(uiCommandId)
-    U32 uiCommandId
+cfgCommandName(commandId)
+    U32 commandId
 
 I32
-cfgOptionIndexTotal(uiOptionId)
-    U32 uiOptionId
+cfgOptionIndexTotal(optionId)
+    U32 optionId
 
 const char *
-cfgOptionName(uiOptionId)
-    U32 uiOptionId
+cfgOptionName(optionId)
+    U32 optionId

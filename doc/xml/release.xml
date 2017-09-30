@@ -10,6 +10,24 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.25dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Update C naming conventions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Use <id>int</id> datatype wherever possible.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Better separation of C source from Perl interface.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+        </release>
+
         <release date="2017-09-28" version="1.24" title="New Backup Exclusions">
             <release-core-list>
                 <release-bug-list>

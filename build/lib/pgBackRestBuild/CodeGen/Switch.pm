@@ -95,7 +95,7 @@ sub cgenSwitchBuild
     # Construct the function based on the best switch statement
     return
         cgenTypeName($strType) . "\n" .
-        "${strName}(uint32 " . join(', uint32 ', @{$rstryParam}) . ")\n" .
+        "${strName}(int " . join(', int ', @{$rstryParam}) . ")\n" .
         "{\n" .
         "${strBestSwitch}\n" .
         "}\n";

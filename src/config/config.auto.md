@@ -1,4 +1,4 @@
-# Query Configuration Settings
+# Command and Option Configuration
 
 ## cfgOptionIndexTotal
 
@@ -8,8 +8,8 @@ Total index values allowed.
 
 This function is valid when `cfgRuleOptionValid()` = `true`. Permutations that return `1` are excluded for brevity.
 
-| Function | uiOptionId | Result |
-| -------- | ---------- | ------ |
+| Function | optionId | Result |
+| -------- | -------- | ------ |
 | cfgOptionIndexTotal | `CFGOPT_DB1_CMD` | `8` |
 | cfgOptionIndexTotal | `CFGOPT_DB1_CONFIG` | `8` |
 | cfgOptionIndexTotal | `CFGOPT_DB1_HOST` | `8` |

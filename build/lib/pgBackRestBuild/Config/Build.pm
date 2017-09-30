@@ -32,10 +32,10 @@ use pgBackRestBuild::Config::Rule;
 use constant BLDLCL_FILE_CONFIG                                     => 'config';
 use constant BLDLCL_FILE_CONFIG_RULE                                => BLDLCL_FILE_CONFIG . 'Rule';
 
-use constant BLDLCL_PARAM_OPTIONID                                  => 'uiOptionId';
-use constant BLDLCL_PARAM_COMMANDID                                 => 'uiCommandId';
+use constant BLDLCL_PARAM_OPTIONID                                  => 'optionId';
+use constant BLDLCL_PARAM_COMMANDID                                 => 'commandId';
     push @EXPORT, qw(BLDLCL_PARAM_COMMANDID);
-use constant BLDLCL_PARAM_VALUEID                                   => 'uiValueId';
+use constant BLDLCL_PARAM_VALUEID                                   => 'valueId';
 
 use constant BLDLCL_CONSTANT_COMMAND                                => 'CFGCMDDEF';
 use constant BLDLCL_CONSTANT_COMMAND_TOTAL                          => BLDLCL_CONSTANT_COMMAND . '_TOTAL';
@@ -181,7 +181,7 @@ my $rhBuild =
         #---------------------------------------------------------------------------------------------------------------------------
         &BLDLCL_FILE_CONFIG =>
         {
-            &BLD_SUMMARY => 'Query Configuration Settings',
+            &BLD_SUMMARY => 'Command and Option Configuration',
 
             &BLD_CONSTANT_GROUP =>
             {
@@ -228,7 +228,7 @@ my $rhBuild =
                 &BLDLCL_FUNCTION_INDEX_TOTAL =>
                 {
                     &BLD_SUMMARY => 'total index values allowed',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT,
                     &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
                     &BLD_TRUTH_DEFAULT => 1,
                     &BLD_FUNCTION_DEPEND => BLDLCL_FUNCTION_VALID,
@@ -245,7 +245,7 @@ my $rhBuild =
         #---------------------------------------------------------------------------------------------------------------------------
         &BLDLCL_FILE_CONFIG_RULE =>
         {
-            &BLD_SUMMARY => 'Parse Configuration Settings',
+            &BLD_SUMMARY => 'Command and Option Configuration Rules',
 
             &BLD_FUNCTION =>
             {
@@ -276,7 +276,7 @@ my $rhBuild =
                 &BLDLCL_FUNCTION_ALLOW_LIST_VALUE_TOTAL =>
                 {
                     &BLD_SUMMARY => 'total number of values allowed',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT,
                     &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
                     &BLD_FUNCTION_DEPEND => BLDLCL_FUNCTION_ALLOW_LIST,
                     &BLD_FUNCTION_DEPEND_RESULT => true,
@@ -333,7 +333,7 @@ my $rhBuild =
                 &BLDLCL_FUNCTION_DEPEND_OPTION =>
                 {
                     &BLD_SUMMARY => 'name of the option that this option depends in order to be set',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT,
                     &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
                     &BLD_RETURN_VALUE_MAP => $rhOptionIdConstantMap,
                     &BLD_FUNCTION_DEPEND => BLDLCL_FUNCTION_DEPEND,
@@ -352,7 +352,7 @@ my $rhBuild =
                 &BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL =>
                 {
                     &BLD_SUMMARY => 'total depend values for this option',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT,
                     &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
                     &BLD_FUNCTION_DEPEND => BLDLCL_FUNCTION_DEPEND,
                     &BLD_FUNCTION_DEPEND_RESULT => true,
@@ -428,7 +428,7 @@ my $rhBuild =
                 &BLDLCL_FUNCTION_TYPE =>
                 {
                     &BLD_SUMMARY => 'secure options can never be passed on the commmand-line',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT32,
+                    &BLD_RETURN_TYPE => CGEN_DATATYPE_INT,
                     &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
                     &BLD_RETURN_VALUE_MAP => $rhOptionTypeIdConstantMap,
                 },
