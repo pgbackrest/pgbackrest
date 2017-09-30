@@ -26,6 +26,14 @@
                     </release-item>
                 </release-refactor-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Warnings in C builds treated as errors.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
         </release>
 
         <release date="2017-09-28" version="1.24" title="New Backup Exclusions">
