@@ -93,7 +93,8 @@ sub new
         my @stryVersionToken = split(/ /, $strOutLog);
         @stryVersionToken = split(/\./, $stryVersionToken[2]);
         my $strDbVersionActual =
-            trim($stryVersionToken[0]) . (defined($stryVersionToken[1]) ? '.' . trim($stryVersionToken[1]) : '');
+            trim($stryVersionToken[0]) .
+            (defined($stryVersionToken[1]) && trim($stryVersionToken[0]) < 10 ? '.' . trim($stryVersionToken[1]) : '');
 
         # Warn if this is a devel/alpha/beta version
         my $strVersionRegExp = '(devel|((alpha|beta|rc)[0-9]+))$';

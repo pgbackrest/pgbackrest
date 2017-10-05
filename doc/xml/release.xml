@@ -32,6 +32,10 @@
                     <release-item>
                         <p>Warnings in C builds treated as errors.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove Debian test repo after PostgreSQL 10 release.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
