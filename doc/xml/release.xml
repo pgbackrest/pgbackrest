@@ -24,6 +24,10 @@
                     <release-item>
                         <p>Better separation of C source from Perl interface.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <file>LibC.template.pm</file> to simplify LibC module generation.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
