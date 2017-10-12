@@ -32,6 +32,12 @@
             </release-core-list>
 
             <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Add C unit test infrastructure.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Warnings in C builds treated as errors.</p>

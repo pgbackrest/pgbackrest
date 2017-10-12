@@ -312,12 +312,12 @@ use ExtUtils::MakeMaker;
 # Create C files array
 my @stryCFile = qw(LibC.c);
 
-foreach my $strFile (sort(keys(%{$oStorage->manifest('')})))
+foreach my $strFile (sort(keys(%{$oStorage->manifest('src')})))
 {
     # Skip all files except .c files (including .auto.c)
     next if $strFile !~ /(?<!\.auto)\.c$/;
 
-    push(@stryCFile, "../${strFile}");
+    push(@stryCFile, "../src/${strFile}");
 }
 
 WriteMakefile

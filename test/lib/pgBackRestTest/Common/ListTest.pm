@@ -14,6 +14,7 @@ use Exporter qw(import);
     our @EXPORT = qw();
 
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::VmTest;
@@ -23,6 +24,10 @@ use pgBackRestTest::Common::VmTest;
 ################################################################################################################################
 use constant TEST_DB                                                => 'db';
     push @EXPORT, qw(TEST_DB);
+use constant TEST_C                                                 => 'c';
+    push @EXPORT, qw(TEST_C);
+use constant TEST_CLIB                                              => 'clib';
+    push @EXPORT, qw(TEST_CLIB);
 use constant TEST_CONTAINER                                         => 'container';
     push @EXPORT, qw(TEST_CONTAINER);
 use constant TEST_MODULE                                            => 'module';
@@ -49,6 +54,7 @@ sub testListGet
     my $iyModuleTestRun = shift;
     my $strDbVersion = shift;
     my $bCoverageOnly = shift;
+    my $bCOnly = shift;
 
     my $oyVm = vmGet();
     my $oyTestRun = [];
@@ -94,6 +100,9 @@ sub testListGet
                         # Skip this test if it can't run on this VM
                         next if (defined($hTest->{&TESTDEF_VM}) && grep(/^$strTestOS$/i, @{$hTest->{&TESTDEF_VM}}) == 0);
 
+                        # Skip this test if only C tests are requested and this is not a C test
+                        next if ($bCOnly && !$hTest->{&TESTDEF_C});
+
                         for (my $iDbVersionIdx = $iDbVersionMax; $iDbVersionIdx >= $iDbVersionMin; $iDbVersionIdx--)
                         {
                             if ($iDbVersionIdx == -1 || $strDbVersion eq 'all' || $strDbVersion eq 'minimal' ||
@@ -134,6 +143,8 @@ sub testListGet
                                     my $oTestRun =
                                     {
                                         &TEST_VM => $strTestOS,
+                                        &TEST_C => coalesce($hTest->{&TESTDEF_C}, $hModule->{&TESTDEF_C}, false),
+                                        &TEST_CLIB => coalesce($hTest->{&TESTDEF_CLIB}, $hModule->{&TESTDEF_CLIB}, false),
                                         &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
                                             $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
                                         &TEST_PGSQL_BIN => $strPgSqlBin,

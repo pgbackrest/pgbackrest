@@ -14,7 +14,7 @@ use English '-no_match_vars';
 use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday);
 
@@ -24,6 +24,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 
 use pgBackRestTest::Common::ContainerTest;
+use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
 use pgBackRestTest::Common::RunTest;
@@ -84,6 +85,9 @@ sub new
     # Set try to 0
     $self->{iTry} = 0;
 
+    # Setup the path where gcc coverage will be performed
+    $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{iVmIdx}";
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -102,6 +106,9 @@ sub run
     # Assign function parameters, defaults, and log debug info
     (my $strOperation) = logDebugParam (__PACKAGE__ . '->run', \@_,);
 
+    # Start the test timer
+    my $fTestStartTime = gettimeofday();
+
     # Was the job run?
     my $bRun = false;
 
@@ -115,14 +122,15 @@ sub run
             $self->{strLogLevel} = lc(DEBUG);
         }
 
-        my $strTest = sprintf('P%0' . length($self->{iVmMax}) . 'd-T%0' . length($self->{iTestMax}) . 'd/%0' .
-                              length($self->{iTestMax}) . "d - ", $self->{iVmIdx} + 1, $self->{iTestIdx} + 1, $self->{iTestMax}) .
-                              'vm=' . $self->{oTest}->{&TEST_VM} .
-                              ', module=' . $self->{oTest}->{&TEST_MODULE} .
-                              ', test=' . $self->{oTest}->{&TEST_NAME} .
-                              (defined($self->{oTest}->{&TEST_RUN}) ? ', run=' . join(',', @{$self->{oTest}->{&TEST_RUN}}) : '') .
-                              (defined($self->{oTest}->{&TEST_DB}) ? ', db=' . $self->{oTest}->{&TEST_DB} : '') .
-                              ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
+        my $strTest = sprintf(
+            'P%0' . length($self->{iVmMax}) . 'd-T%0' . length($self->{iTestMax}) . 'd/%0' .
+            length($self->{iTestMax}) . "d - ", $self->{iVmIdx} + 1, $self->{iTestIdx} + 1, $self->{iTestMax}) .
+            'vm=' . $self->{oTest}->{&TEST_VM} .
+            ', module=' . $self->{oTest}->{&TEST_MODULE} .
+            ', test=' . $self->{oTest}->{&TEST_NAME} .
+            (defined($self->{oTest}->{&TEST_RUN}) ? ', run=' . join(',', sort(@{$self->{oTest}->{&TEST_RUN}})) : '') .
+            (defined($self->{oTest}->{&TEST_DB}) ? ', db=' . $self->{oTest}->{&TEST_DB} : '') .
+            ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
         my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_94);
@@ -141,31 +149,38 @@ sub run
             # Create host test directory
             $self->{oStorageTest}->pathCreate($strHostTestPath, {strMode => '0770'});
 
+            # Create gcov directory
+            $self->{oStorageTest}->pathCreate($self->{strGCovPath}, {strMode => '0770'});
+
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
                 executeTest(
                     'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
                     " -v $self->{strCoveragePath}:$self->{strCoveragePath} " .
                     " -v ${strHostTestPath}:${strVmTestPath}" .
+                    " -v $self->{strGCovPath}:$self->{strGCovPath}" .
                     " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
                     containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
                     "-test",
                     {bSuppressStdErr => true});
 
                 # Install Perl C Library
-                # my $oVm = vmGet();
-                # my $strOS = $self->{oTest}->{&TEST_VM};
-                # my $strBuildPath = $self->{strBackRestBase} . "/test/.vagrant/libc/$strOS/libc/";
-                # my $strPerlAutoPath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
-                # my $strPerlModulePath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
-                #
-                # executeTest(
-                #     "docker exec -i -u root ${strImage} bash -c '" .
-                #     "mkdir -p -m 755 ${strPerlAutoPath} && " .
-                #     "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
-                #     "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
-                #     "mkdir -p -m 755 ${strPerlModulePath} && " .
-                #     "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}'");
+                if ($self->{oTest}->{&TEST_CLIB})
+                {
+                    my $oVm = vmGet();
+                    my $strOS = $self->{oTest}->{&TEST_VM};
+                    my $strBuildPath = $self->{strBackRestBase} . "/test/.vagrant/libc/$strOS/libc/";
+                    my $strPerlAutoPath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
+                    my $strPerlModulePath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
+
+                    executeTest(
+                        "docker exec -i -u root ${strImage} bash -c '" .
+                        "mkdir -p -m 755 ${strPerlAutoPath} && " .
+                        "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
+                        "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
+                        "mkdir -p -m 755 ${strPerlModulePath} && " .
+                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}'");
+                }
             }
         }
 
@@ -178,32 +193,39 @@ sub run
         }
 
         # Create command
-        my $strCommand =
-            ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-            (vmCoverage($self->{oTest}->{&TEST_VM}) ? testRunExe(
-                abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
-                $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
-                abs_path($0)) .
-            " --test-path=${strVmTestPath}" .
-            " --vm=$self->{oTest}->{&TEST_VM}" .
-            " --vm-id=$self->{iVmIdx}" .
-            " --module=" . $self->{oTest}->{&TEST_MODULE} .
-            ' --test=' . $self->{oTest}->{&TEST_NAME} .
-            $strCommandRunParam .
-            (defined($self->{oTest}->{&TEST_DB}) ? ' --db-version=' . $self->{oTest}->{&TEST_DB} : '') .
-            ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
-            ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
-            ($self->{bLogForce} ? ' --log-force' : '') .
-            ($self->{bDryRun} ? ' --dry-run' : '') .
-            ($self->{bDryRun} ? ' --vm-out' : '') .
-            ($self->{bNoCleanup} ? " --no-cleanup" : '');
+        my $strCommand;
+
+        if ($self->{oTest}->{&TEST_C})
+        {
+            $strCommand = 'docker exec -i -u ' . TEST_USER . " ${strImage} $self->{strGCovPath}/test";
+        }
+        else
+        {
+            $strCommand =
+                ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                (vmCoverage($self->{oTest}->{&TEST_VM}) ? testRunExe(
+                    abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
+                    $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
+                    abs_path($0)) .
+                " --test-path=${strVmTestPath}" .
+                " --vm=$self->{oTest}->{&TEST_VM}" .
+                " --vm-id=$self->{iVmIdx}" .
+                " --module=" . $self->{oTest}->{&TEST_MODULE} .
+                ' --test=' . $self->{oTest}->{&TEST_NAME} .
+                $strCommandRunParam .
+                (defined($self->{oTest}->{&TEST_DB}) ? ' --db-version=' . $self->{oTest}->{&TEST_DB} : '') .
+                ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
+                ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
+                ($self->{bLogForce} ? ' --log-force' : '') .
+                ($self->{bDryRun} ? ' --dry-run' : '') .
+                ($self->{bDryRun} ? ' --vm-out' : '') .
+                ($self->{bNoCleanup} ? " --no-cleanup" : '');
+        }
 
         &log(DETAIL, $strCommand);
 
         if (!$self->{bDryRun} || $self->{bVmOut})
         {
-            my $fTestStartTime = gettimeofday();
-
             # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
             # Docker and the host VM.
             if ($self->{oTest}->{&TEST_CONTAINER})
@@ -211,9 +233,104 @@ sub run
                 executeTest("docker exec ${strImage} chown " . TEST_USER . ':' . TEST_GROUP . " -R ${strVmTestPath}");
             }
 
+            if ($self->{oTest}->{&TEST_C})
+            {
+                my $strCSrcPath = "$self->{strBackRestBase}/src";
+                my $hTest = (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}));
+                my $hTestCoverage = $hTest->{&TESTDEF_COVERAGE};
+
+                my @stryCFile;
+
+                foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($strCSrcPath)})))
+                {
+                    # Skip all files except .c files (including .auto.c)
+                    next if $strFile !~ /(?<!\.auto)\.c$/;
+
+                    # ??? Temporarily skip because it has Perl includes which will be removed in a later commit
+                    next if $strFile =~ /pageChecksum.c$/;
+
+                    if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}))
+                    {
+                        push(@stryCFile, "${strCSrcPath}/${strFile}");
+                    }
+                }
+
+                # Generate list of C files to include for testing
+                my $strTestFile =
+                    "module/$self->{oTest}->{&TEST_MODULE}/" . testRunName($self->{oTest}->{&TEST_NAME}, false) . 'Test.c';
+                my $strCInclude;
+
+                foreach my $strFile (sort(keys(%{$hTestCoverage})))
+                {
+                    # Don't include the test file as it is already included below
+                    next if $strFile =~ /Test$/;
+
+                    # Don't any auto files as they are included in their companion C files
+                    next if $strFile =~ /auto$/;
+
+                    # Include the C file if it exists
+                    my $strCIncludeFile = "${strFile}.c";
+
+                    # If the C file does not exist use the header file instead
+                    if (!$self->{oStorageTest}->exists("${strCSrcPath}/${strCIncludeFile}"))
+                    {
+                        # Error if code was expected
+                        if ($hTestCoverage->{$strFile} ne TESTDEF_COVERAGE_NOCODE)
+                        {
+                            confess &log(ERROR, "unable to file source file '${strCIncludeFile}'");
+                        }
+
+                        $strCIncludeFile = "${strFile}.h";
+                    }
+
+                    $strCInclude .= (defined($strCInclude) ? "\n" : '') . "#include \"${strCIncludeFile}\"";
+                }
+
+                # Update C test file with test module
+                my $strTestC = ${$self->{oStorageTest}->get("$self->{strBackRestBase}/test/src/test.c")};
+                $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
+                $strTestC =~ s/\{\[C\_TEST\_INCLUDE\]\}/\#include \"$strTestFile\"/g;
+
+                # Initialize tests
+                my $strTestInit;
+
+                for (my $iTestIdx = 1; $iTestIdx <= $hTest->{&TESTDEF_TOTAL}; $iTestIdx++)
+                {
+                    my $bSelected = false;
+
+                    # use Data::Dumper; confess "RUN: " . Dumper($self->{oTest}->{&TEST_RUN});
+
+                    if (!defined($self->{oTest}->{&TEST_RUN}) || @{$self->{oTest}->{&TEST_RUN}} == 0 ||
+                        grep(/^$iTestIdx$/, @{$self->{oTest}->{&TEST_RUN}}))
+                    {
+                        $bSelected = true;
+                    }
+
+                    $strTestInit .=
+                        (defined($strTestInit) ? "\n    " : '') .
+                        sprintf("testAdd(%3d, %8s);" , $iTestIdx, ($bSelected ? 'true' : 'false'));
+                }
+
+                $strTestC =~ s/\{\[C\_TEST\_LIST\]\}/$strTestInit/g;
+
+                # Save C test file
+                $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
+
+                my $strGccCommand =
+                    'gcc -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
+                    "-I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c " .
+                    "/$self->{strBackRestBase}/test/src/common/harnessTest.c " .
+                    join(' ', @stryCFile) . ' -o test';
+
+                executeTest(
+                    'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
+                    "cd $self->{strGCovPath} && " .
+                    "${strGccCommand}'");
+            }
+
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
                 $strCommand,
-                {bSuppressError => true, bShowOutputAsync => $self->{bShowOutputAsync}});
+                {bSuppressError => !$self->{oTest}->{&TEST_C}, bShowOutputAsync => $self->{bShowOutputAsync}});
 
             $oExec->begin();
 
@@ -261,13 +378,96 @@ sub end
 
     if (defined($iExitStatus))
     {
+        my $strImage = 'test-' . $self->{iVmIdx};
+
         if ($self->{bShowOutputAsync})
         {
             syswrite(*STDOUT, "\n");
         }
 
+        # If C library generate coverage info
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C})
+        {
+            # Generate a list of files to cover
+            my $hTestCoverage =
+                (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}))->{&TESTDEF_COVERAGE};
+
+            my @stryCoveredModule;
+
+            foreach my $strModule (sort(keys(%{$hTestCoverage})))
+            {
+                # Skip modules that have no code
+                next if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE);
+
+                push (@stryCoveredModule, testRunName(basename($strModule), false) . ".c.gcov");
+            }
+
+            # Generate coverage reports for the modules
+            executeTest(
+                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
+                "cd $self->{strGCovPath} && " .
+                "gcov test.c'", {bSuppressStdErr => true});
+
+            # Mark uncoverable statements as successful
+            foreach my $strModule (sort(keys(%{$hTestCoverage})))
+            {
+                # File that contains coverage info for the module
+                my $strCoverageFile = "$self->{strGCovPath}/" . testRunName(basename($strModule), false) . ".c.gcov";
+
+                # If marked as no code then error if there is code
+                if ($hTestCoverage->{$strModule} eq TESTDEF_COVERAGE_NOCODE)
+                {
+                    if ($self->{oStorageTest}->exists($strCoverageFile))
+                    {
+                        confess &log(ERROR, "module '${strModule}' is marked 'no code' but has code");
+                    }
+
+                    next;
+                }
+
+                # Load the coverage file
+                my $strCoverage = ${$self->{oStorageTest}->get($strCoverageFile)};
+
+                # Go line by line and update uncovered statements
+                my $strUpdatedCoverage;
+
+                foreach my $strLine (split("\n", trim($strCoverage)))
+                {
+                    # If the statement is marked uncoverable
+                    if ($strLine =~ /\/\/ \{(uncoverable - [^\}]+|\+uncoverable|uncovered - [^\}]+|\+uncovered)\}\s*$/)
+                    {
+                        # Error if the statement is marked uncoverable but is in fact covered
+                        if ($strLine !~ /^    \#\#\#\#\#/)
+                        {
+                            &log(ERROR, "line in ${strModule}.c is marked as uncoverable but is covered:\n${strLine}");
+                        }
+
+                        # Mark the statement as covered with 0 executions
+                        $strLine =~ s/^    \#\#\#\#\#/^        0/;
+                    }
+
+                    # Add to updated file
+                    $strUpdatedCoverage .= "${strLine}\n";
+                }
+
+                # Store the updated file
+                $self->{oStorageTest}->put($strCoverageFile, $strUpdatedCoverage);
+            }
+
+            executeTest(
+                'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
+                "cd $self->{strGCovPath} && " .
+                # Only generate coverage files for VMs that support coverage
+                (vmCoverage($self->{oTest}->{&TEST_VM}) ?
+                    "gcov2perl -db ../cover_db " . join(' ', @stryCoveredModule) . " && " : '') .
+                # If these aren't deleted then cover automagically finds them and includes them in the report
+                "rm *.gcda *.c.gcov'");
+        }
+
+        # Record elapsed time
         my $fTestElapsedTime = ceil((gettimeofday() - $self->{oProcess}{start_time}) * 100) / 100;
 
+        # Output error
         if ($iExitStatus != 0)
         {
             &log(ERROR, "${strTestDone} (err${iExitStatus}-${fTestElapsedTime}s)" .
@@ -275,6 +475,7 @@ sub end
                     ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
             $bFail = true;
         }
+        # Output success
         else
         {
             &log(INFO, "${strTestDone} (${fTestElapsedTime}s)".
@@ -284,11 +485,11 @@ sub end
 
         if (!$self->{bNoCleanup})
         {
-            my $strImage = 'test-' . $self->{iVmIdx};
             my $strHostTestPath = "$self->{strTestPath}/${strImage}";
 
             containerRemove("test-$self->{iVmIdx}");
             executeTest("sudo rm -rf ${strHostTestPath}");
+            executeTest("sudo rm -rf $self->{strGCovPath}");
         }
 
         $bDone = true;

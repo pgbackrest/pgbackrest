@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Sanity Tests for C Library
 #
-# Basic test to ensure the C library loads and has been compiled correctly.
+# Test to ensure the C library loads and is compiled correctly.  Unit and integration tests are performed by test/test.pl.
 ####################################################################################################################################
 use strict;
 use warnings;

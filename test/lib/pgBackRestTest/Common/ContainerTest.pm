@@ -339,7 +339,7 @@ sub containerBuild
         {
             $strScript .=
                 "    apt-get update && \\\n" .
-                "    apt-get -y install openssh-server wget sudo python-pip git \\\n" .
+                "    apt-get -y install openssh-server wget sudo python-pip build-essential git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl";
 
             if ($strOS eq VM_U14)

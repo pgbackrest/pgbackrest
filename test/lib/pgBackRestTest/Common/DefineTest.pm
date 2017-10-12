@@ -40,6 +40,12 @@ use constant TESTDEF_COVERAGE                                       => 'coverage
 # Should expect log tests be run
 use constant TESTDEF_EXPECT                                         => 'expect';
     push @EXPORT, qw(TESTDEF_EXPECT);
+# Is this a C test (instead of Perl)?
+use constant TESTDEF_C                                              => 'c';
+    push @EXPORT, qw(TESTDEF_C);
+# Is the C library required?  This only applies to unit tests, the C library is always supplied for integration tests.
+use constant TESTDEF_CLIB                                           => 'clib';
+    push @EXPORT, qw(TESTDEF_CLIB);
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
@@ -51,11 +57,14 @@ use constant TESTDEF_VM                                             => 'vm';
     push @EXPORT, qw(TESTDEF_VM);
 
 # The test provides full coverage for the module
-use constant TESTDEF_COVERAGE_FULL                                  => true;
+use constant TESTDEF_COVERAGE_FULL                                  => 'full';
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
 # The test provides partial coverage for the module
-use constant TESTDEF_COVERAGE_PARTIAL                               => false;
+use constant TESTDEF_COVERAGE_PARTIAL                               => 'partial';
     push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
+# The module does not have any code so does not have any coverage.  An error will be thrown if the module has code in the future.
+use constant TESTDEF_COVERAGE_NOCODE                                => 'nocode';
+    push @EXPORT, qw(TESTDEF_COVERAGE_NOCODE);
 
 ################################################################################################################################
 # Code modules
@@ -88,6 +97,16 @@ my $oTestDef =
 
             &TESTDEF_TEST =>
             [
+                {
+                    &TESTDEF_NAME => 'type',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
                 {
                     &TESTDEF_NAME => 'http-client',
                     &TESTDEF_TOTAL => 2,
@@ -252,6 +271,7 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'local',
                     &TESTDEF_TOTAL => 9,
+                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -494,7 +514,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_C, TESTDEF_CLIB, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
@@ -502,6 +522,14 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Set test count
         $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TOTAL} = $hModuleTest->{&TESTDEF_TOTAL};
+
+        # If this is a C test then add the test module to coverage
+        if ($hModuleTest->{&TESTDEF_C})
+        {
+            my $strTestFile = "module/${strModule}/${strTest}Test";
+
+            $hModuleTest->{&TESTDEF_COVERAGE}{$strTestFile} = TESTDEF_COVERAGE_FULL;
+        }
 
         # Concatenate coverage for modules and tests
         foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
@@ -521,9 +549,9 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
                 {
                     $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
                 }
-                elsif ($hCoverageType->{$strCodeModule} != $hCoverage->{$strCodeModule})
+                elsif ($hCoverageType->{$strCodeModule} ne $hCoverage->{$strCodeModule})
                 {
-                    confess &log(ASSERT, "cannot mix full/partial coverage for ${strCodeModule}");
+                    confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
                 }
 
                 # Add to coverage list

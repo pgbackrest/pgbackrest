@@ -72,6 +72,7 @@ test.pl [options]
    --no-lint            disable static source code analysis
    --build-only         compile the C library / packages and run tests only
    --coverage-only      only run coverage tests (as a subset of selected tests)
+   --c-only             only run C tests
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
@@ -122,6 +123,7 @@ my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
 my $bCoverageOnly = false;
+my $bCOnly = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -154,6 +156,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
+            'c-only' => \$bCOnly,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'expect' => \$bExpect,
@@ -639,7 +642,7 @@ eval
         # Determine which tests to run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly);
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly, $bCOnly);
 
         if (@{$oyTestRun} == 0)
         {
@@ -801,7 +804,7 @@ eval
 
                         if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
                         {
-                            $hCoverageActual->{$strCodeModule} = $hCoverageType->{$strCodeModule};
+                            $hCoverageActual->{testRunName($strCodeModule, false)} = $hCoverageType->{$strCodeModule};
                         }
                     }
                 }
@@ -815,12 +818,53 @@ eval
                     &log(INFO, 'no code modules had all tests run required for coverage');
                 }
 
+                my $strPartialCoverage;
+
                 foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
+                    my $strCodeModulePath = "${strBackRestBase}/";
+
+                    # If the first char of the module is lower case when this is a c module
+                    if (substr($strCodeModule, 0, 1) eq lc(substr($strCodeModule, 0, 1)))
+                    {
+                        # If it ends with Test then it is a test modile
+                        if ($strCodeModule =~ /Test$/)
+                        {
+                            $strCodeModulePath .= "test/src/${strCodeModule}.c";
+                        }
+                        else
+                        {
+                            $strCodeModulePath .= "src/${strCodeModule}.c";
+                        }
+                    }
+                    # Else a Perl module
+                    else
+                    {
+                        $strCodeModulePath .= "lib/" . BACKREST_NAME . "/${strCodeModule}.pm"
+                    }
+
                     # Get summary results (??? Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
-                    my $hCoverageResultAll =
-                        $hCoverageResult->{'summary'}
-                            {"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"}{total};
+                    my $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
+
+                    # Try an extra / if the module is not found
+                    if (!defined($hCoverageResultAll))
+                    {
+                        $strCodeModulePath = "/${strCodeModulePath}";
+                        $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
+                    }
+
+                    # If module is marked as having no code
+                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_NOCODE)
+                    {
+                        # Error if it really does have coverage
+                        if ($hCoverageResultAll)
+                        {
+                            confess &log(ERROR, "module ${strCodeModule} is marked 'no code' but has code");
+                        }
+
+                        # Skip to next module
+                        next;
+                    }
 
                     if (!defined($hCoverageResultAll))
                     {
@@ -830,9 +874,9 @@ eval
                     # Check that all code has been covered
                     my $iCoverageTotal = $hCoverageResultAll->{total};
                     my $iCoverageUncoverable = coalesce($hCoverageResultAll->{uncoverable}, 0);
-                    my $iCoverageCovered = $hCoverageResultAll->{covered};
+                    my $iCoverageCovered = coalesce($hCoverageResultAll->{covered}, 0);
 
-                    if ($hCoverageActual->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
+                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_FULL)
                     {
                         my $iUncoveredLines = $iCoverageTotal - $iCoverageCovered - $iCoverageUncoverable;
 
@@ -842,8 +886,8 @@ eval
                             $iUncoveredCodeModuleTotal++;
                         }
                     }
-                    # Else test how much partial coverage where was
-                    else
+                    # Else test how much partial coverage there was
+                    elsif ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_PARTIAL)
                     {
                         my $iCoveragePercent = int(($iCoverageCovered + $iCoverageUncoverable) * 100 / $iCoverageTotal);
 
@@ -854,9 +898,16 @@ eval
                         }
                         else
                         {
-                            &log(INFO, "code module ${strCodeModule} has (expected) partial coverage of ${iCoveragePercent}%");
+                            $strPartialCoverage .=
+                                (defined($strPartialCoverage) ? ', ' : '') . "${strCodeModule} (${iCoveragePercent}%)";
                         }
                     }
+                }
+
+                # If any modules had partial coverage then display them
+                if (defined($strPartialCoverage))
+                {
+                    &log(INFO, "module (expected) partial coverage: ${strPartialCoverage}");
                 }
             }
         }

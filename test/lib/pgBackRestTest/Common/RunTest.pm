@@ -454,17 +454,24 @@ sub testException
 sub testRunName
 {
     my $strName = shift;
+    my $bInitCapFirst = shift;
+
+    $bInitCapFirst = defined($bInitCapFirst) ? $bInitCapFirst : true;
+    my $bFirst = true;
 
     my @stryName = split('\-', $strName);
     $strName = undef;
 
     foreach my $strPart (@stryName)
     {
-        $strName .= ucfirst($strPart);
+        $strName .= ($bFirst && $bInitCapFirst) || !$bFirst ? ucfirst($strPart) : $strPart;
+        $bFirst = false;
     }
 
     return $strName;
 }
+
+push @EXPORT, qw(testRunName);
 
 ####################################################################################################################################
 # testRun
