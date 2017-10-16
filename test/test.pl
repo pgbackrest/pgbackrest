@@ -968,7 +968,7 @@ eval
 or do
 {
     # If a backrest exception then return the code
-    exit $EVAL_ERROR->code() if (isException($EVAL_ERROR));
+    exit $EVAL_ERROR->code() if (isException(\$EVAL_ERROR));
 
     # Else output the unhandled error
     syswrite(*STDOUT, $EVAL_ERROR);

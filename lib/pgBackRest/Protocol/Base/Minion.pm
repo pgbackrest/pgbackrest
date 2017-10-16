@@ -92,7 +92,7 @@ sub errorWrite
     my $oException = shift;
 
     # Throw hard error if this is not a standard exception
-    if (!isException($oException))
+    if (!isException(\$oException))
     {
         confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
     }
@@ -189,7 +189,7 @@ sub process
         logLevelSet(undef, undef, PROTOCOL);
 
         # If standard exception
-        if (isException($oException))
+        if (isException(\$oException))
         {
             confess &log($oException->level(), $oException->message(), $oException->code());
         }

@@ -32,6 +32,10 @@
                     <release-item>
                         <p>Add C error handler.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Perl error handler recognizes errors thrown from the C library.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

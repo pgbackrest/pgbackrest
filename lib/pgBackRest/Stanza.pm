@@ -322,7 +322,7 @@ sub infoObject
         # Reset console logging and capture error information
         logEnable();
         $iResult = exceptionCode($EVAL_ERROR);
-        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+        $strResultMessage = exceptionMessage($EVAL_ERROR);
     };
 
     if ($iResult != 0)
@@ -445,7 +445,7 @@ sub infoFileCreate
         # Reset console logging and capture error information
         logEnable();
         $iResult = exceptionCode($EVAL_ERROR);
-        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+        $strResultMessage = exceptionMessage($EVAL_ERROR);
     };
 
     # If we got here without error then save the reconstructed file

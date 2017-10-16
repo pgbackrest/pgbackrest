@@ -112,7 +112,7 @@ sub close
             my $strError = 'unable to shutdown protocol';
             my $strHint = 'HINT: the process completed all operations successfully but protocol-timeout may need to be increased.';
 
-            if (isException($oException))
+            if (isException(\$oException))
             {
                 $iExitStatus = $oException->code();
             }

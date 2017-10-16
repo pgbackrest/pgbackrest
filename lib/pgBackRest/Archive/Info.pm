@@ -102,7 +102,7 @@ sub new
     {
         # Capture error information
         $iResult = exceptionCode($EVAL_ERROR);
-        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+        $strResultMessage = exceptionMessage($EVAL_ERROR);
     };
 
     if ($iResult != 0)

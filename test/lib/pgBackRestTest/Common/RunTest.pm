@@ -344,7 +344,7 @@ sub testResult
             # Restore the log level
             logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
 
-            if (!isException($EVAL_ERROR))
+            if (!isException(\$EVAL_ERROR))
             {
                 confess "unexpected standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
             }
@@ -421,7 +421,7 @@ sub testException
     {
         logEnable();
 
-        if (!isException($EVAL_ERROR))
+        if (!isException(\$EVAL_ERROR))
         {
             confess "${strError} but actual was standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
         }

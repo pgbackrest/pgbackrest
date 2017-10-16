@@ -334,7 +334,7 @@ sub process
                 my $oException = $EVAL_ERROR;
 
                 # If not a backrest exception then always confess it - something has gone very wrong
-                confess $oException if (!isException($oException));
+                confess $oException if (!isException(\$oException));
 
                 # If the process is has terminated throw the exception
                 if (!defined($hLocal->{oLocal}->io()->processId()))

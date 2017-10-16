@@ -248,15 +248,32 @@ sub trace
 }
 
 ####################################################################################################################################
-# isException
-#
-# Is this a structured exception?
+# isException - is this a structured exception or a default Perl exception?
 ####################################################################################################################################
 sub isException
 {
-    my $oException = shift;
+    my $roException = shift;
 
-    return defined($oException) && blessed($oException) && $oException->isa('pgBackRest::Common::Exception') ? 1 : 0;
+    # Only check if defined
+    if (defined($roException) && defined($$roException))
+    {
+        # If a standard Exception
+        if (blessed($$roException))
+        {
+            return $$roException->isa('pgBackRest::Common::Exception') ? 1 : 0;
+        }
+        # Else if a specially formatted string from the C library
+        elsif ($$roException =~ /^PGBRCLIB\:[0-9]+\:/)
+        {
+            my @stryException = split(/\:/, $$roException);
+            $$roException = new pgBackRest::Common::Exception(
+                "ERROR", $stryException[1] + 0, $stryException[4], $stryException[2] . qw{:} . $stryException[3]);
+
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 push @EXPORT, qw(isException);
@@ -270,7 +287,7 @@ sub exceptionCode
 {
     my $oException = shift;
 
-    return isException($oException) ? $oException->code() : ERROR_UNKNOWN;
+    return isException(\$oException) ? $oException->code() : ERROR_UNKNOWN;
 }
 
 push @EXPORT, qw(exceptionCode);
@@ -284,7 +301,7 @@ sub exceptionMessage
 {
     my $oException = shift;
 
-    return isException($oException) ? $oException->message() : $oException;
+    return isException(\$oException) ? $oException->message() : $oException;
 }
 
 push @EXPORT, qw(exceptionMessage);
