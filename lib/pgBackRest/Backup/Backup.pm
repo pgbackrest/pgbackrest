@@ -889,7 +889,9 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = walSegmentFind($oStorageRepo, $strArchiveId, $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
+            my $strArchiveFile = walSegmentFind(
+                $oStorageRepo, $strArchiveId, substr($strArchiveStop, 0, 8) . $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
+
             $strArchive = substr($strArchiveFile, 0, 24);
 
             if (cfgOption(CFGOPT_ARCHIVE_COPY))

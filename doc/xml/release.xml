@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.25dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lobréau.benoit"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove error when overlapping timelines are detected.  Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Update C naming conventions.</p>

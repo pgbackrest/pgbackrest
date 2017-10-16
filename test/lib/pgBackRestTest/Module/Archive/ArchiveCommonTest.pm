@@ -131,11 +131,6 @@ sub run
             sub {walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment)}, $strWalSegmentHash, "${strWalSegment} WAL found");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(
-            sub {walSegmentFind(storageRepo(), $strArchiveId, substr($strWalSegment, 8, 16))}, $strWalSegmentHash,
-            "${strWalSegment} WAL found without timeline");
-
-        #---------------------------------------------------------------------------------------------------------------------------
         my $strWalSegmentHash2 = "${strWalSegment}-a0b0d38b8aa263e25b8ff52a0a4ba85b6be97f9b.gz";
 
         storageRepo()->put("${strWalMajorPath}/${strWalSegmentHash2}");
@@ -144,21 +139,7 @@ sub run
             sub {walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment)}, ERROR_ARCHIVE_DUPLICATE,
             "duplicates found in archive for WAL segment ${strWalSegment}: ${strWalSegmentHash}, ${strWalSegmentHash2}");
 
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $strWalSegment3 = '00000002' . substr($strWalSegment, 8, 16);
-        my $strWalSegmentHash3 = "${strWalSegment3}-dcdd09246e1918e88c67cf44b35edc23b803d879";
-        my $strWalMajorPath3 = "${strArchivePath}/" . substr($strWalSegment3, 0, 16);
-
-        storageRepo()->pathCreate($strWalMajorPath3, {bCreateParent => true});
-        storageRepo()->put("${strWalMajorPath3}/${strWalSegmentHash3}");
-
-        $self->testException(
-            sub {walSegmentFind(storageRepo(), $strArchiveId, substr($strWalSegment, 8, 16))}, ERROR_ARCHIVE_DUPLICATE,
-            "duplicates found in archive for WAL segment XXXXXXXX" . substr($strWalSegment, 8, 16) .
-            ": ${strWalSegmentHash}, ${strWalSegmentHash2}, ${strWalSegmentHash3}");
-
         storageRepo()->remove("${strWalMajorPath}/${strWalSegmentHash}");
-        storageRepo()->remove("${strWalMajorPath3}/${strWalSegmentHash3}");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(

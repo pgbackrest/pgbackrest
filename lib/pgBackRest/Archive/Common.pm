@@ -281,9 +281,7 @@ sub walSegmentFind
         );
 
     # Error if not a segment
-    my $bTimeline = $strWalSegment =~ /^[0-F]{16}$/ ? false : true;
-
-    if ($bTimeline && !walIsSegment($strWalSegment))
+    if (!walIsSegment($strWalSegment))
     {
         confess &log(ERROR, "${strWalSegment} is not a WAL segment", ERROR_ASSERT);
     }
@@ -294,35 +292,13 @@ sub walSegmentFind
 
     do
     {
-        # If the WAL segment includes the timeline then use it, otherwise contruct a regexp with the major WAL part to find paths
-        # where the wal could be found.
-        my @stryTimelineMajor;
-
-        if ($bTimeline)
-        {
-            @stryTimelineMajor = (substr($strWalSegment, 0, 16));
-        }
-        else
-        {
-            @stryTimelineMajor = $oStorageRepo->list(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}",
-                {strExpression => '[0-F]{8}' . substr($strWalSegment, 0, 8), bIgnoreMissing => true});
-        }
-
-        # Search each timelin/major path
-        foreach my $strTimelineMajor (@stryTimelineMajor)
-        {
-            # Construct the name of the WAL segment to find
-            my $strWalSegmentFind = $bTimeline ? substr($strWalSegment, 0, 24) : $strTimelineMajor . substr($strWalSegment, 8, 16);
-
-            # Get the name of the requested WAL segment (may have hash info and compression extension)
-            push(@stryWalFileName, $oStorageRepo->list(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strTimelineMajor}",
-                {strExpression =>
-                    "^${strWalSegmentFind}" . (walIsPartial($strWalSegment) ? "\\.partial" : '') .
-                    "-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$",
-                    bIgnoreMissing => true}));
-        }
+        # Get the name of the requested WAL segment (may have compression extension)
+        push(@stryWalFileName, $oStorageRepo->list(
+            STORAGE_REPO_ARCHIVE . "/${strArchiveId}/" . substr($strWalSegment, 0, 16),
+            {strExpression =>
+                '^' . substr($strWalSegment, 0, 24) . (walIsPartial($strWalSegment) ? "\\.partial" : '') .
+                "-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$",
+                bIgnoreMissing => true}));
     }
     while (@stryWalFileName == 0 && waitMore($oWait));
 
@@ -331,8 +307,9 @@ sub walSegmentFind
     if (@stryWalFileName > 1)
     {
         confess &log(ERROR,
-            "duplicates found in archive for WAL segment " . ($bTimeline ? $strWalSegment : "XXXXXXXX${strWalSegment}") . ': ' .
-            join(', ', @stryWalFileName), ERROR_ARCHIVE_DUPLICATE);
+            "duplicates found in archive for WAL segment ${strWalSegment}: " . join(', ', @stryWalFileName) .
+            "\nHINT: are multiple primaries archiving to this stanza?",
+            ERROR_ARCHIVE_DUPLICATE);
     }
 
     # If waiting and no WAL segment was found then throw an error
