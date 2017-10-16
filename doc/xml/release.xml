@@ -40,6 +40,10 @@
                     <release-item>
                         <p>Page checksum module uses new C error handler.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add C memory contexts.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

@@ -119,6 +119,16 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'mem-context',
+                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/memContext' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'http-client',
                     &TESTDEF_TOTAL => 2,
 
