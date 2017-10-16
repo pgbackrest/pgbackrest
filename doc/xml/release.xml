@@ -80,6 +80,10 @@
                     <release-item>
                         <p>Convert config and page checksum tests into C unit tests.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <postgres/> versions to Debian VMs for testing.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
