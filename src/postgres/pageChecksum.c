@@ -62,12 +62,10 @@ calculate a subset of the columns at a time and perform multiple passes to avoid
 is not used. Current coding also assumes that the compiler has the ability to unroll the inner loop to avoid loop overhead and
 minimize register spilling. For less sophisticated compilers it might be beneficial to manually unroll the inner loop.
 ***********************************************************************************************************************************/
-#include "EXTERN.h"
-#include "perl.h"
-
 #include <string.h>
 
-#include "common/type.h"
+#include "common/error.h"
+#include "postgres/pageChecksum.h"
 
 /***********************************************************************************************************************************
 For historical reasons, the 64-bit LSN value is stored as two 32-bit values.
@@ -211,9 +209,7 @@ pageChecksumBufferTest(
 {
     // If the buffer does not represent an even number of pages then error
     if (pageBufferSize % pageSize != 0 || pageBufferSize / pageSize == 0)
-    {
-        croak("buffer size %lu, page size %lu are not divisible", pageBufferSize, pageSize);
-    }
+        ERROR_THROW(AssertError, "buffer size %lu, page size %lu are not divisible", pageBufferSize, pageSize);
 
     // Loop through all pages in the buffer
     for (int pageIdx = 0; pageIdx < pageBufferSize / pageSize; pageIdx++)

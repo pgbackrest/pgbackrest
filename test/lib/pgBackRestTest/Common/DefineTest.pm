@@ -174,6 +174,25 @@ my $oTestDef =
                 },
             ]
         },
+        # PostgreSQL tests
+        {
+            &TESTDEF_NAME => 'postgres',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'page-checksum',
+                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'postgres/pageChecksum' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+            ]
+        },
         # Help tests
         {
             &TESTDEF_NAME => 'help',

@@ -10,8 +10,14 @@ pageChecksum(page, blockNo, pageSize)
     U32 blockNo
     U32 pageSize
 CODE:
-    RETVAL = pageChecksum(
-        (const unsigned char *)page, blockNo, pageSize);
+    RETVAL = 0;
+
+    ERROR_XS_BEGIN()
+    {
+        RETVAL = pageChecksum(
+            (const unsigned char *)page, blockNo, pageSize);
+    }
+    ERROR_XS_END();
 OUTPUT:
     RETVAL
 
@@ -23,8 +29,14 @@ pageChecksumTest(page, blockNo, pageSize, ignoreWalId, ignoreWalOffset)
     U32 ignoreWalId
     U32 ignoreWalOffset
 CODE:
-    RETVAL = pageChecksumTest(
-        (const unsigned char *)page, blockNo, pageSize, ignoreWalId, ignoreWalOffset);
+    RETVAL = false;
+
+    ERROR_XS_BEGIN()
+    {
+        RETVAL = pageChecksumTest(
+            (const unsigned char *)page, blockNo, pageSize, ignoreWalId, ignoreWalOffset);
+    }
+    ERROR_XS_END();
 OUTPUT:
     RETVAL
 
@@ -37,7 +49,13 @@ pageChecksumBufferTest(pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignor
     U32 ignoreWalId
     U32 ignoreWalOffset
 CODE:
-    RETVAL = pageChecksumBufferTest(
-        (const unsigned char *)pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset);
+    RETVAL = false;
+
+    ERROR_XS_BEGIN()
+    {
+        RETVAL = pageChecksumBufferTest(
+            (const unsigned char *)pageBuffer, pageBufferSize, blockNoBegin, pageSize, ignoreWalId, ignoreWalOffset);
+    }
+    ERROR_XS_END();
 OUTPUT:
     RETVAL

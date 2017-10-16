@@ -246,9 +246,6 @@ sub run
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
 
-                    # ??? Temporarily skip because it has Perl includes which will be removed in a later commit
-                    next if $strFile =~ /pageChecksum.c$/;
-
                     if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}))
                     {
                         push(@stryCFile, "${strCSrcPath}/${strFile}");
