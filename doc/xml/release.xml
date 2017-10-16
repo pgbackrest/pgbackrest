@@ -44,6 +44,10 @@
                     <release-item>
                         <p>Add C unit test infrastructure.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add test macros for C results and errors.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>
