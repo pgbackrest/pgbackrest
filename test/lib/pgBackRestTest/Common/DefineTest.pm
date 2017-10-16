@@ -215,6 +215,19 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'rule',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'config/config' => TESTDEF_COVERAGE_NOCODE,
+                        'config/config.auto' => TESTDEF_COVERAGE_FULL,
+                        'config/configRule' => TESTDEF_COVERAGE_FULL,
+                        'config/configRule.auto' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 1,
                 },

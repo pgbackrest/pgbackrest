@@ -64,7 +64,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Convert page checksum tests into C unit tests.</p>
+                        <p>Convert config and page checksum tests into C unit tests.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>
