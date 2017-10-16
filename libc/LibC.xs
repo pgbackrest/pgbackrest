@@ -25,6 +25,7 @@ C includes
 
 These includes are from the src directory.  There is no Perl-specific code in them.
 ***********************************************************************************************************************************/
+#include "common/error.h"
 #include "common/type.h"
 #include "config/config.h"
 #include "config/configRule.h"

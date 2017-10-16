@@ -108,6 +108,17 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'error',
+                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/error' => TESTDEF_COVERAGE_FULL,
+                        'common/errorType' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'http-client',
                     &TESTDEF_TOTAL => 2,
 
