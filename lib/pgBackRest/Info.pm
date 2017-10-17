@@ -502,7 +502,7 @@ sub backupList
     {
         my $oDbHash =
         {
-            &INFO_HISTORY_ID => $iHistoryId,
+            &INFO_HISTORY_ID => $iHistoryId + 0,
             &INFO_DB_VERSION =>
                 $oBackupInfo->get(INFO_BACKUP_SECTION_DB_HISTORY, $iHistoryId, INFO_BACKUP_KEY_DB_VERSION),
             &INFO_SYSTEM_ID =>
@@ -660,7 +660,7 @@ sub dbArchiveSection
             &INFO_KEY_MAX => $strArchiveStop,
             &INFO_SECTION_DB =>
             {
-                &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID},
+                &INFO_HISTORY_ID => $hDbInfo->{&INFO_HISTORY_ID} + 0,
             },
         };
     }
