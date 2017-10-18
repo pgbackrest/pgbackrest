@@ -16,6 +16,7 @@ typedef struct ErrorType ErrorType;
 // Error types
 ERROR_DECLARE(AssertError);
 
+ERROR_DECLARE(FormatError);
 ERROR_DECLARE(MemoryError);
 
 ERROR_DECLARE(RuntimeError);

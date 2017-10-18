@@ -129,6 +129,22 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'encode',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/encode' => TESTDEF_COVERAGE_FULL,
+                        'common/encode/base64' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'encode-perl',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_CLIB => true,
+                },
+                {
                     &TESTDEF_NAME => 'http-client',
                     &TESTDEF_TOTAL => 2,
 

@@ -63,6 +63,10 @@
                     <release-item>
                         <p>Add C memory contexts.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add base64 encode/decode.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

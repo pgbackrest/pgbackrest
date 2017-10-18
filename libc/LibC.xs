@@ -25,6 +25,7 @@ C includes
 
 These includes are from the src directory.  There is no Perl-specific code in them.
 ***********************************************************************************************************************************/
+#include "common/encode.h"
 #include "common/error.h"
 #include "config/config.h"
 #include "config/configRule.h"
@@ -34,6 +35,13 @@ These includes are from the src directory.  There is no Perl-specific code in th
 Helper macros
 ***********************************************************************************************************************************/
 #include "LibC.h"
+
+/***********************************************************************************************************************************
+XSH includes
+
+These includes define data structures that are required for the C to Perl interface but are not part of the regular C source.
+***********************************************************************************************************************************/
+#include "xs/common/encode.xsh"
 
 /***********************************************************************************************************************************
 Constant include
@@ -58,6 +66,7 @@ INCLUDE: const-xs.inc
 #
 # These modules should map 1-1 with C modules in src directory.
 # ----------------------------------------------------------------------------------------------------------------------------------
+INCLUDE: xs/common/encode.xs
 INCLUDE: xs/config/config.xs
 INCLUDE: xs/config/configRule.xs
 INCLUDE: xs/postgres/pageChecksum.xs

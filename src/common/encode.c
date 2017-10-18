@@ -1,79 +1,102 @@
 /***********************************************************************************************************************************
-Application-Defined Errors
+Binary to String Encode/Decode
 ***********************************************************************************************************************************/
-#include "errorType.h"
+#include <string.h>
+
+#include "common/encode.h"
+#include "common/encode/base64.h"
+#include "common/error.h"
 
 /***********************************************************************************************************************************
-Error code range -- chosen to not overlap with defined return values
+Macro to handle invalid encode type errors
 ***********************************************************************************************************************************/
-#define ERROR_CODE_MIN                                              25
-#define ERROR_CODE_MAX                                              125
+#define ENCODE_TYPE_INVALID_ERROR(encodeType)                                                                                      \
+    ERROR_THROW(AssertError, "invalid encode type %d", encodeType);
 
 /***********************************************************************************************************************************
-Represents an error type
+Encode binary data to a printable string
 ***********************************************************************************************************************************/
-struct ErrorType
+void
+encodeToStr(EncodeType encodeType, const unsigned char *source, int sourceSize, char *destination)
 {
-    const int code;
-    const char *name;
-    const struct ErrorType *parentType;
-};
+    if (encodeType == encodeBase64)
+        encodeToStrBase64(source, sourceSize, destination);
+    else
+        ENCODE_TYPE_INVALID_ERROR(encodeType);
+}
 
 /***********************************************************************************************************************************
-Macro to create error structs
-***********************************************************************************************************************************/
-#define ERROR_DEFINE(code, name, parentType)                                                                                       \
-    const ErrorType name = {code, #name, &parentType}
-
-/***********************************************************************************************************************************
-Define errors
-***********************************************************************************************************************************/
-ERROR_DEFINE(ERROR_CODE_MIN, AssertError, RuntimeError);
-
-ERROR_DEFINE(ERROR_CODE_MIN + 04, FormatError, RuntimeError);
-ERROR_DEFINE(ERROR_CODE_MIN + 69, MemoryError, RuntimeError);
-
-ERROR_DEFINE(ERROR_CODE_MAX, RuntimeError, RuntimeError);
-
-/***********************************************************************************************************************************
-Error type code
+Size of the string returned by encodeToStr()
 ***********************************************************************************************************************************/
 int
-errorTypeCode(const ErrorType *errorType)
+encodeToStrSize(EncodeType encodeType, int sourceSize)
 {
-    return errorType->code;
+    int destinationSize = 0;
+
+    if (encodeType == encodeBase64)
+        destinationSize = encodeToStrSizeBase64(sourceSize);
+    else
+        ENCODE_TYPE_INVALID_ERROR(encodeType);
+
+    return destinationSize;
 }
 
 /***********************************************************************************************************************************
-Error type name
+Decode a string to binary data
 ***********************************************************************************************************************************/
-const char *
-errorTypeName(const ErrorType *errorType)
+void
+decodeToBin(EncodeType encodeType, const char *source, unsigned char *destination)
 {
-    return errorType->name;
+    if (encodeType == encodeBase64)
+        decodeToBinBase64(source, destination);
+    else
+        ENCODE_TYPE_INVALID_ERROR(encodeType);
 }
 
 /***********************************************************************************************************************************
-Error type parent
+Size of the binary data returned by decodeToBin()
 ***********************************************************************************************************************************/
-const ErrorType *
-errorTypeParent(const ErrorType *errorType)
+int
+decodeToBinSize(EncodeType encodeType, const char *source)
 {
-    return errorType->parentType;
+    int destinationSize = 0;
+
+    if (encodeType == encodeBase64)
+        destinationSize = decodeToBinSizeBase64(source);
+    else
+        ENCODE_TYPE_INVALID_ERROR(encodeType);
+
+    return destinationSize;
 }
 
 /***********************************************************************************************************************************
-Does the child error type extend the parent error type?
+Check that the encoded string is valid
 ***********************************************************************************************************************************/
-bool errorTypeExtends(const ErrorType *child, const ErrorType *parent)
+bool
+decodeToBinValid(EncodeType encodeType, const char *source)
 {
-    // Search for the parent
-    for (; child && errorTypeParent(child) != child; child = (ErrorType *)errorTypeParent(child))
+    bool valid = true;
+
+    ERROR_TRY()
     {
-        if (errorTypeParent(child) == parent)
-            return true;
+        decodeToBinValidate(encodeType, source);
+    }
+    ERROR_CATCH(FormatError)
+    {
+        valid = false;
     }
 
-    // Parent was not found
-    return false;
+    return valid;
+}
+
+/***********************************************************************************************************************************
+Validate the encoded string
+***********************************************************************************************************************************/
+void
+decodeToBinValidate(EncodeType encodeType, const char *source)
+{
+    if (encodeType == encodeBase64)
+        decodeToBinValidateBase64(source);
+    else
+        ENCODE_TYPE_INVALID_ERROR(encodeType);
 }

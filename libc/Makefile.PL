@@ -101,6 +101,17 @@ my $rhExport =
             libCVersion
         )],
     },
+
+    'encode' =>
+    {
+        &BLD_EXPORTTYPE_CONSTANT => [qw(
+            ENCODE_TYPE_BASE64
+        )],
+
+        &BLD_EXPORTTYPE_SUB => [qw(
+            encodeToStr decodeToBin
+        )],
+    },
 };
 
 ####################################################################################################################################
