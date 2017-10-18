@@ -847,7 +847,7 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
         "archive" : [
             {
                 "database" : {
-                    "id" : "1"
+                    "id" : 1
                 },
                 "id" : "9.4-2",
                 "max" : "000000010000000100000001",
@@ -855,7 +855,7 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
             },
             {
                 "database" : {
-                    "id" : "2"
+                    "id" : 2
                 },
                 "id" : "9.5-4",
                 "max" : "000000010000000100000001",
@@ -924,12 +924,12 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
         ],
         "db" : [
             {
-                "id" : "1",
+                "id" : 1,
                 "system-id" : 6353949018581704918,
                 "version" : "9.4"
             },
             {
-                "id" : "2",
+                "id" : 2,
                 "system-id" : 6392579261579036436,
                 "version" : "9.5"
             }

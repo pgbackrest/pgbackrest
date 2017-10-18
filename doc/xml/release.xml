@@ -20,6 +20,15 @@
 
                         <p>Remove error when overlapping timelines are detected.  Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix instances where <id>database-id</id> was not rendered as an integer in JSON info output.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-refactor-list>

@@ -3680,7 +3680,7 @@ info db stanza - normal output (db-master host)
         "archive" : [
             {
                 "database" : {
-                    "id" : "1"
+                    "id" : 1
                 },
                 "id" : "9.4-1",
                 "max" : null,
@@ -3939,7 +3939,7 @@ info db stanza - normal output (db-master host)
         ],
         "db" : [
             {
-                "id" : "1",
+                "id" : 1,
                 "system-id" : 6353949018581704918,
                 "version" : "9.4"
             }
@@ -4298,7 +4298,7 @@ info all stanzas - normal output (db-master host)
         "archive" : [
             {
                 "database" : {
-                    "id" : "1"
+                    "id" : 1
                 },
                 "id" : "9.4-1",
                 "max" : null,
@@ -4369,7 +4369,7 @@ info all stanzas - normal output (db-master host)
         ],
         "db" : [
             {
-                "id" : "1",
+                "id" : 1,
                 "system-id" : 6353949018581704918,
                 "version" : "9.4"
             }
