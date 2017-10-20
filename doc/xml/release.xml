@@ -31,6 +31,16 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shvein.mihail"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of list requests on S3.  Any beginning literal portion of a filter expression is used to generate a search prefix which often helps keep the request small enough to avoid rate limiting.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Update C naming conventions.</p>
@@ -3506,6 +3516,11 @@
         <contributor id="sharma.yogesh">
             <contributor-name-display>Yogesh Sharma</contributor-name-display>
             <contributor-id type="github">sharmay</contributor-id>
+        </contributor>
+
+        <contributor id="shvein.mihail">
+            <contributor-name-display>Mihail Shvein</contributor-name-display>
+            <contributor-id type="github">M1hacka</contributor-id>
         </contributor>
 
         <contributor id="smith.greg">

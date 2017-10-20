@@ -16,6 +16,7 @@ use File::Basename qw(basename dirname);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::String;
 use pgBackRest::Common::Xml;
 use pgBackRest::Storage::S3::FileRead;
 use pgBackRest::Storage::S3::FileWrite;
@@ -243,15 +244,22 @@ sub list
     (
         $strOperation,
         $strPath,
+        $strExpression
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->list', \@_,
             {name => 'strPath', trace => true},
+            {name => 'strExpression', optional => true, trace => true},
         );
 
+    # Use the regexp to build a prefix to shorten searches
+    my $strPrefix = regexPrefix($strExpression);
+
     # Get list using manifest function
-    my @stryFileList = grep(!/^\.$/i, keys(%{$self->manifest($strPath, {bRecurse => false})}));
+    my @stryFileList = grep(
+        !/^\.$/i, keys(%{$self->manifest(
+            $strPath . (defined($strPrefix) ? "/${strPrefix}" : ''), {bRecurse => false, bPath => !defined($strPrefix)})}));
 
     # Return from function and log return values if any
     return logDebugReturn

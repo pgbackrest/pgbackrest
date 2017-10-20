@@ -290,7 +290,8 @@ sub list
         );
 
     # Get file list
-    my $rstryFileList = $self->driver()->list($self->pathGet($strPathExp), {bIgnoreMissing => $bIgnoreMissing});
+    my $rstryFileList = $self->driver()->list(
+        $self->pathGet($strPathExp), {strExpression => $strExpression, bIgnoreMissing => $bIgnoreMissing});
 
     # Apply expression if defined
     if (defined($strExpression))

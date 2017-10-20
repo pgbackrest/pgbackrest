@@ -200,4 +200,25 @@ sub stringSplit
 
 push @EXPORT, qw(stringSplit);
 
+####################################################################################################################################
+# regexPrefix - return the constant first part of the regex if it has a beginning anchor
+#
+# This works by scanning the string until the first special regex character is found so escaped characters will not be included.
+####################################################################################################################################
+sub regexPrefix
+{
+    my $strExpression = shift;
+    my $strPrefix;
+
+    # Only generate prefix if expression is defined and has a beginning anchor
+    if (defined($strExpression) && $strExpression =~ /^\^/)
+    {
+        ($strPrefix) = substr($strExpression, 1) =~ /^[^\.\^\$\*\+\-\?\(\)\[\]\{\}\\\|\ ]+/g;
+    }
+
+    return $strPrefix;
+}
+
+push @EXPORT, qw(regexPrefix);
+
 1;
