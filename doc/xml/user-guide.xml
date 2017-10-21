@@ -1855,7 +1855,7 @@
 
             <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>process .* terminated unexpectedly.*: stop file exists for all stanzas</exe-highlight>
+                <exe-highlight>\: stop file exists for all stanzas</exe-highlight>
             </execute>
         </execute-list>
 
@@ -1896,7 +1896,7 @@
 
             <execute user="backrest" err-expect="62" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
-                <exe-highlight>process .* terminated unexpectedly.*: stop file exists for stanza demo</exe-highlight>
+                <exe-highlight>\: stop file exists for stanza demo</exe-highlight>
             </execute>
         </execute-list>
 

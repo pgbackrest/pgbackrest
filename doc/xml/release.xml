@@ -43,6 +43,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Improve protocol error handling.  In particular, <quote>stop</quote> errors are no longer reported as <quote>unexpected</quote>.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update C naming conventions.</p>
                     </release-item>
 

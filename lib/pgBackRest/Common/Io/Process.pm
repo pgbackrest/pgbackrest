@@ -112,7 +112,7 @@ sub error
 
                 while (defined(my $strLine = $oIoError->readLine(true, false)))
                 {
-                    $strError .= "${strLine}\n";
+                    $strError .= (defined($strError) ? "\n" : '') . $strLine;
                 }
 
                 delete($self->{iProcessId});

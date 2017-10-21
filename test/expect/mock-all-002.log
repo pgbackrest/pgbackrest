@@ -513,7 +513,6 @@ P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  ERROR: [042]: process 'db-master remote' terminated unexpectedly [042]: unable to read line after 1 second(s) from stdio
-            
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
@@ -611,7 +610,6 @@ P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = <backup>, strRemoteType = db
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  ERROR: [063]: process 'db-master remote' terminated unexpectedly [063]: terminated on signal [SIGTERM]
-            
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy: found cached protocol: iRemoteIdx = 1, strRemoteType = db
@@ -657,8 +655,8 @@ P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = 
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=backup --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strCommandSSH = ssh, strHost = db-master, strUser = [USER-1]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no [USER-1]@db-master '[BACKREST-BIN] --buffer-size=4194304 --command=backup --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = 'db-master remote', strName = remote
-P00  ERROR: [062]: process 'db-master remote' terminated unexpectedly [062]: stop file exists for all stanzas
-            
+P00  ERROR: [062]: raised on 'db-master remote' host: stop file exists for all stanzas
+P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
@@ -728,8 +726,8 @@ P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = 
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=backup --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote, strCommandSSH = ssh, strHost = db-master, strUser = [USER-1]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no [USER-1]@db-master '[BACKREST-BIN] --buffer-size=4194304 --command=backup --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo-path=[TEST_PATH]/backup/repo --stanza=db --type=db remote', strId = 'db-master remote', strName = remote
-P00  ERROR: [062]: process 'db-master remote' terminated unexpectedly [062]: stop file exists for stanza db
-            
+P00  ERROR: [062]: raised on 'db-master remote' host: stop file exists for stanza db
+P00  DEBUG:     Protocol::Command::Master->close=>: iExitStatus = 0
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0

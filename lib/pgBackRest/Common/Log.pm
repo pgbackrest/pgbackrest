@@ -84,6 +84,9 @@ my $bLogDisable = 0;
 # Allow errors to be logged as warnings
 my $bLogWarnOnError = 0;
 
+# Store the last logged error
+my $oErrorLast;
+
 # Test globals
 my $bTest = false;
 my $fTestDelay;
@@ -588,7 +591,7 @@ sub logErrorResult
     my $strMessage = shift;
     my $strResult = shift;
 
-    confess &log(ERROR, $strMessage . (defined($strResult) ? ": $strResult" : ''), $iCode);
+    confess &log(ERROR, $strMessage . (defined($strResult) ? ': ' . trim($strResult) : ''), $iCode);
 }
 
 push @EXPORT, qw(logErrorResult);
@@ -776,17 +779,28 @@ sub log
         }
     }
 
-    # Throw a typed exception if code is defined
+    # Return a typed exception if code is defined
     if (defined($iCode))
     {
-        return new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
+        $oErrorLast = new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
+        return $oErrorLast;
     }
 
-    # Return the message test so it can be used in a confess
+    # Return the message so it can be used in a confess
     return $strMessage;
 }
 
 push @EXPORT, qw(log);
+
+####################################################################################################################################
+# logErrorLast - get the last logged error
+####################################################################################################################################
+sub logErrorLast
+{
+    return $oErrorLast;
+}
+
+push @EXPORT, qw(logErrorLast);
 
 ####################################################################################################################################
 # testSet
