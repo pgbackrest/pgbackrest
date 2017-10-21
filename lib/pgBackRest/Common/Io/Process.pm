@@ -123,7 +123,7 @@ sub error
                         $iExitStatus >= ERROR_MINIMUM && $iExitStatus <= ERROR_MAXIMUM ? $iExitStatus : ERROR_FILE_READ;
 
                     logErrorResult(
-                        $iErrorCode, 'process ' . $self->id() . ' terminated unexpectedly' .
+                        $iErrorCode, $self->id() . ' terminated unexpectedly' .
                             ($iExitStatus != 255 ?  sprintf(' [%03d]', $iExitStatus) : ''),
                         $strError);
                 }

@@ -47,6 +47,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve labeling for errors in helper processes.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Update C naming conventions.</p>
                     </release-item>
 

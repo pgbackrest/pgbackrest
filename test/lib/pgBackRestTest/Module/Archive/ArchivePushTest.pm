@@ -463,7 +463,7 @@ sub run
 
         $self->testResult(
             sub {${storageSpool()->get("$self->{strSpoolPath}/$strSegmentError.error")}},
-            ERROR_FILE_OPEN . "\nraised on 'local-1' host: unable to open $self->{strWalPath}/${strSegmentError}",
+            ERROR_FILE_OPEN . "\nraised from local-1 process: unable to open $self->{strWalPath}/${strSegmentError}",
             "test ${strSegmentError}.error contents");
 
         # Remove pushed WAL file
@@ -756,7 +756,7 @@ sub run
 
         $self->testException(
             sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_FILE_READ,
-            "process '" . BOGUS . " remote' terminated.*");
+            "remote process on '" . BOGUS . "' terminated.*");
         exit if ($iProcessId != $PID);
 
         # Disable async archiving

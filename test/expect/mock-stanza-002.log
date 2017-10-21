@@ -5,7 +5,7 @@ stanza-create db - fail on missing control file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/backup/repo --stanza=db
-P00  ERROR: [041]: raised on 'db-master remote' host: unable to open [TEST_PATH]/db-master/db/base/global/pg_control
+P00  ERROR: [041]: raised from remote process on 'db-master': unable to open [TEST_PATH]/db-master/db/base/global/pg_control
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 stanza-upgrade db - fail on stanza not initialized since archive.info is missing (backup host)
@@ -141,7 +141,7 @@ P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, strWal
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strUser = [USER-2]
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --stanza=db --type=backup remote', strId = 'backup remote', strName = remote
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=6 --compress-level-network=3 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --stanza=db --type=backup remote', strId = remote process on 'backup', strName = remote
 P00  DEBUG:     Protocol::Storage::Remote->new(): oProtocol = [object]
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
@@ -530,7 +530,7 @@ db-version="9.3"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: raised on 'backup remote' host: WAL segment version 9.4 does not match archive version 9.3
+P00  ERROR: [044]: raised from remote process on 'backup': WAL segment version 9.4 does not match archive version 9.3
             WAL segment system-id 6353949018581704918 does not match archive system-id 6395542721432104958
             HINT: are you archiving to the correct stanza?
 

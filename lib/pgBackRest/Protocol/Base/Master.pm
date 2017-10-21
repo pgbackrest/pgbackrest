@@ -60,7 +60,7 @@ sub new
     $self->{fKeepAliveTime} = gettimeofday();
 
     # Set the error prefix used when raising error messages
-    $self->{strErrorPrefix} = 'raised on ' . $self->{strId} . ' host';
+    $self->{strErrorPrefix} = 'raised from ' . $self->{strId};
 
     # Check greeting to be sure the protocol matches
     $self->greetingRead();
