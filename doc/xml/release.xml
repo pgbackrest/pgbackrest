@@ -55,6 +55,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Replace dynamically built class hierarchies in I/O layer with fixed <code>parent()</code> calls.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve labeling for errors in helper processes.</p>
                     </release-item>
 

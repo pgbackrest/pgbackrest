@@ -86,7 +86,7 @@ sub initOption
 
     $self->optionTestSet(CFGOPT_DB_TIMEOUT, 5);
     $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 6);
-    $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 3);
+    $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
 }
 
 ####################################################################################################################################

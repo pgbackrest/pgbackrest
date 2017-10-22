@@ -2,6 +2,7 @@
 # HTTP Client
 ####################################################################################################################################
 package pgBackRest::Common::Http::Client;
+use parent 'pgBackRest::Common::Io::Buffered';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -37,8 +38,6 @@ use constant HTTP_HEADER_TRANSFER_ENCODING                          => 'transfer
 ####################################################################################################################################
 # new
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -117,12 +116,9 @@ sub new
                     ERROR_HOST_CONNECT, coalesce(length($!) == 0 ? undef : $!, $SSL_ERROR), length($!) > 0 ? $SSL_ERROR : undef);
             }
 
-            # Create the buffered IO object
-            $self = new pgBackRest::Common::Io::Buffered(
+            # Bless with new class
+            $self = $class->SUPER::new(
                 new pgBackRest::Common::Io::Handle('httpClient', $oSocket, $oSocket), $iProtocolTimeout, $lBufferMax);
-
-            # Bless with the class
-            @ISA = $self->isA();                                    ## no critic (ClassHierarchies::ProhibitExplicitISA)
             bless $self, $class;
 
             # Store socket

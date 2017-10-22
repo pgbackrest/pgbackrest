@@ -72,6 +72,7 @@ sub run
         $self->testResult(sub {$oShaIo->read(\$tBuffer, 1)}, 0, '    read 0 bytes');
 
         $self->testResult(sub {$oShaIo->close()}, true, '    close');
+        $self->testResult(sub {$oShaIo->close()}, false, '    close again to make sure nothing bad happens');
         $self->testResult($oShaIo->result(STORAGE_FILTER_SHA), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check hash');
         $self->testResult(sha1_hex($tBuffer), '1c7e00fd09b9dd11fc2966590b3e3274645dd031', '    check content');
     }

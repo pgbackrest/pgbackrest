@@ -2,6 +2,7 @@
 # Buffered Handle IO
 ####################################################################################################################################
 package pgBackRest::Common::Io::Buffered;
+use parent 'pgBackRest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,6 +16,7 @@ use Time::HiRes qw(gettimeofday);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Io::Base;
+use pgBackRest::Common::Io::Handle;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Wait;
 
@@ -27,8 +29,6 @@ use constant COMMON_IO_BUFFERED                                     => __PACKAGE
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -37,20 +37,20 @@ sub new
     my
     (
         $strOperation,
-        $self,
+        $oParent,
         $iTimeout,
         $lBufferMax,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'self', trace => true},
+            {name => 'oParent', trace => true},
             {name => 'iTimeout', default => 0, trace => true},
             {name => 'lBufferMax', default => COMMON_IO_BUFFER_MAX, trace => true},
         );
 
     # Bless with new class
-    @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
+    my $self = $class->SUPER::new($oParent);
     bless $self, $class;
 
     # Set write handle so select object is created
@@ -110,7 +110,7 @@ sub read
         if ($self->{oReadSelect}->can_read($fRemaining))
         {
             # Read data into the buffer
-            my $iReadSize = $self->SUPER::read($tBufferRef, $iRemainingSize);
+            my $iReadSize = $self->parent()->read($tBufferRef, $iRemainingSize);
 
             # Check for EOF
             if ($iReadSize == 0)
@@ -177,7 +177,7 @@ sub readLine
 
             if ($self->{oReadSelect}->can_read($fRemaining))
             {
-                $iBufferRead = $self->SUPER::read(
+                $iBufferRead = $self->parent()->read(
                     \$self->{tBuffer},
                     $self->{lBufferSize} >= $self->bufferMax() ? $self->bufferMax() : $self->bufferMax() - $self->{lBufferSize});
 
@@ -240,7 +240,7 @@ sub writeLine
     my $strBuffer = shift;
 
     $strBuffer .= "\n";
-    return $self->SUPER::write(\$strBuffer);
+    return $self->parent()->write(\$strBuffer);
 }
 
 ####################################################################################################################################
@@ -257,7 +257,7 @@ sub handleReadSet
     my $self = shift;
     my $fhRead = shift;
 
-    $self->SUPER::handleReadSet($fhRead);
+    $self->parent()->handleReadSet($fhRead);
 
     $self->{oReadSelect} = IO::Select->new();
     $self->{oReadSelect}->add($self->handleRead());

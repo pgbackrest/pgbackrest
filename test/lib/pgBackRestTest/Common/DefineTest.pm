@@ -164,7 +164,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'io-handle',
-                    &TESTDEF_TOTAL => 7,
+                    &TESTDEF_TOTAL => 6,
 
                     &TESTDEF_COVERAGE =>
                     {

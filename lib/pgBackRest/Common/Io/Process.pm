@@ -2,6 +2,7 @@
 # Process Excecution, Management, and IO
 ####################################################################################################################################
 package pgBackRest::Common::Io::Process;
+use parent 'pgBackRest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -33,8 +34,6 @@ use constant IO_ERROR_TIMEOUT                                                => 
 ####################################################################################################################################
 # new - use open3 to run the command and get the io handles
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -43,18 +42,18 @@ sub new
     my
     (
         $strOperation,
-        $self,
+        $oParent,
         $strCommand,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'self', trace => true},
+            {name => 'oParent', trace => true},
             {name => 'strCommand', trace => true},
         );
 
     # Bless with new class
-    @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
+    my $self = $class->SUPER::new($oParent);
     bless $self, $class;
 
     # Use open3 to run the command
@@ -133,7 +132,7 @@ sub error
 
         if (defined($iCode))
         {
-            $self->SUPER::error($iCode, $strMessage, $strDetail);
+            $self->parent()->error($iCode, $strMessage, $strDetail);
         }
     }
     else
@@ -164,7 +163,7 @@ sub writeLine
     # abort if the remote process has already closed)
     $self->error();
 
-    return $self->SUPER::writeLine($strBuffer);
+    return $self->parent()->writeLine($strBuffer);
 }
 
 ####################################################################################################################################
@@ -179,7 +178,7 @@ sub close
         $self->error(undef, undef, undef, true);
 
         # Class parent close
-        $self->SUPER::close();
+        $self->parent()->close();
     }
 
     return true;
