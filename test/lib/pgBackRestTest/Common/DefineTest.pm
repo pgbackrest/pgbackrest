@@ -544,11 +544,16 @@ my $oTestDef =
         # Performance tests
         {
             &TESTDEF_NAME => 'performance',
+            &TESTDEF_CONTAINER => true,
 
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_NAME => 'archive',
+                    &TESTDEF_TOTAL => 1,
+                },
+                {
+                    &TESTDEF_NAME => 'io',
                     &TESTDEF_TOTAL => 1,
                 },
             ]

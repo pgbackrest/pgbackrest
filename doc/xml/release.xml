@@ -97,6 +97,10 @@
                     <release-item>
                         <p>Add test macros for C results and errors.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add I/O performance tests.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-refactor-list>
