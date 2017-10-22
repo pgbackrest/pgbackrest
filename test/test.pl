@@ -335,7 +335,11 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
+
+            executeTest("sudo umount ${strTestPath}", {bSuppressError => true});
             executeTest("sudo rm -rf ${strTestPath}/*");
+            $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true});
+            executeTest("sudo mount -t tmpfs -o size=2560M test ${strTestPath}");
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
         }
 

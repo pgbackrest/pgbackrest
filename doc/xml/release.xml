@@ -105,6 +105,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Run all tests on tempfs rather than local disk.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Remove Debian test repo after PostgreSQL 10 release.</p>
                     </release-item>
 
