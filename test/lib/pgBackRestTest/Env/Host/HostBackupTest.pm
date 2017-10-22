@@ -967,6 +967,15 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT)} = 60;
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_DB_TIMEOUT)} = 45;
 
+    # Set to make sure that changinf the default works and to speed compression for testing
+    $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL)} = 3;
+
+    # Only set network compress level if there is more than one host
+    if ($oHostBackup != $oHostDbMaster)
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS_LEVEL_NETWORK)} = 1;
+    }
+
     if (defined($$oParam{bCompress}) && !$$oParam{bCompress})
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_COMPRESS)} = 'n';

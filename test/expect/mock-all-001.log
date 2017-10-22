@@ -14,7 +14,7 @@ info all stanzas - no stanzas exist (db-master host)
 stanza-create db - create required data for stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -52,7 +52,7 @@ db-version="9.4"
 full backup - error on identical link destinations (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [070]: link [TEST_PATH]/db-master/db/base/postgresql.conf (../pg_config) references a subdirectory of or the same directory as link [TEST_PATH]/db-master/db/base/pg_config_bad (../../db/pg_config)
@@ -61,7 +61,7 @@ P00   INFO: backup command end: aborted with exception [070]
 full backup - error on link to a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
@@ -70,7 +70,7 @@ P00   INFO: backup command end: aborted with exception [070]
 full backup - create pg_stat link, pg_clog dir (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --manifest-save-threshold=3 --buffer-size=16384 --checksum-page --process-max=1 --repo-type=cifs --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=16384 --checksum-page --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --manifest-save-threshold=3 --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=16384 --checksum-page --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --manifest-save-threshold=3 --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 16384, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -137,21 +137,21 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreEx
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-1]/pg_data/pg_stat_tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-1]/pg_data/pg_subtrans
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-1]/pg_data/pg_tblspc
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, [undef], 1, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, [undef], 1, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, [undef], 1, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, [undef], 1, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, [undef], 1, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, [undef], 1, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 16384, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 16384, iCompressLevel = 3, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --buffer-size=16384 --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --repo-type=cifs --stanza=db --type=db local, strId = local-1 process, strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -302,6 +302,7 @@ db-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -445,7 +446,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 full backup - abort backup - local (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup --test --test-delay=5 --test-point=backup-start=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=5 --test-point=backup-start=y --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -516,7 +517,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 63
 full backup - global stop (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -559,7 +560,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 full backup - stanza stop (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -611,7 +612,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 full backup - resume (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --force --checksum-page --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -696,21 +697,21 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreEx
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]/pg_data/pg_stat_tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]/pg_data/pg_subtrans
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = <false>, bIgnoreExists = true, strMode = <0750>, strPathExp = <REPO:BACKUP>/[BACKUP-FULL-2]/pg_data/pg_tblspc
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, 89373d9f2973502940de06bc5212489df3f8a912, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, 22c98d248ff548311eda88559e4a8405ed77c003, 1, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33001, pg_data/base/32768/33001, 65536, 6bf316f11d28c28914ea9be92c00de9bea6d9a6b, 1, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33001, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000.32767, pg_data/base/32768/33000.32767, 32768, 21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5, 1, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000.32767, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/33000, pg_data/base/32768/33000, 32768, 4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f, 1, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/32768/33000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/17000, pg_data/base/16384/17000, 16384, e0101dd8ffb910c9c202ca35b5f828bcb9697bed, 1, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/16384/17000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/global/pg_control, pg_data/global/pg_control, 8192, 89373d9f2973502940de06bc5212489df3f8a912, 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-2], 0, [undef]), strKey = pg_data/global/pg_control, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/12000, pg_data/base/1/12000, 8192, 22c98d248ff548311eda88559e4a8405ed77c003, 1, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_data/base/1/12000, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/postgresql.conf, pg_data/postgresql.conf, 21, 6721d92c9fcdf4248acff1f9a1377127d9064807, 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/postgresql.conf, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_stat/global.stat, pg_data/pg_stat/global.stat, 5, e350d5ce0153f3e22d5db21cf2a4eff00f3ee877, 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-2], 1, [undef]), strKey = pg_data/pg_stat/global.stat, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/32768/PG_VERSION, pg_data/base/32768/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/32768/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/16384/PG_VERSION, pg_data/base/16384/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/16384/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, 184473f470864e067ee3a22e64b47b0a1c356f29, 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1 process, strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -812,6 +813,7 @@ db-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -935,7 +937,7 @@ db-version="9.4"
 full backup - invalid repo (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --repo-path=/bogus_path  --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=/bogus_path --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=/bogus_path --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [073]: repo-path '/bogus_path' does not exist
@@ -944,7 +946,7 @@ P00   INFO: backup command end: aborted with exception [073]
 restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
@@ -1121,8 +1123,8 @@ P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/base/1/PG_VERSION, [undef], 0660, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 0), strKey = pg_data/base/1/PG_VERSION, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, 3, [MODIFICATION-TIME-1], 184473f470864e067ee3a22e64b47b0a1c356f29, 0, 0, pg_data/PG_VERSION, [undef], 0600, [USER-1], [GROUP-1], [MODIFICATION-TIME-3], 1, [BACKUP-FULL-2], 0), strKey = pg_data/PG_VERSION, strOp = restoreFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = backup
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=restore --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=restore --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=backup local, strId = local-1 process, strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -1203,7 +1205,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=detail --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
@@ -1238,7 +1240,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-FULL-2]' - restore all links by mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=detail --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
@@ -1302,7 +1304,7 @@ P00  ERROR: [038]: unable to restore while PostgreSQL is running
 restore delta, backup '[BACKUP-FULL-2]' - restore all links --link-all and mapping (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2] --log-level-console=detail --link-map=pg_stat=../pg_stat  --link-all  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --link-map=pg_stat=../pg_stat --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --link-map=pg_stat=../pg_stat --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: backup user for pg_data/base/1/PG_VERSION was not mapped to a name, set to [USER-1]
@@ -1334,7 +1336,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '[TEST_PATH]/db-master/db/base' to confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files exist in the destination directories the restore will be aborted.
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
@@ -1348,7 +1350,7 @@ P00   INFO: restore command end: aborted with exception [040]
 restore delta, force, backup '[BACKUP-FULL-2]' - restore succeeds with backup.manifest file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   WARN: backup group for pg_data/base/16384/PG_VERSION was not mapped to a name, set to [GROUP-1]
 P00   WARN: group bogus in manifest cannot be used for restore, set to [USER-1]
@@ -1385,7 +1387,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - invalid database version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [051]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 8.0, system-id = 6353949018581704918
@@ -1395,7 +1397,7 @@ P00   INFO: backup command end: aborted with exception [051]
 incr backup - invalid system id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [051]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 9.4, system-id = 6999999999999999999
@@ -1405,7 +1407,7 @@ P00   INFO: backup command end: aborted with exception [051]
 incr backup - invalid control version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [051]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 842, catalog-version = 201409291
@@ -1415,7 +1417,7 @@ P00   INFO: backup command end: aborted with exception [051]
 incr backup - invalid catalog version (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [051]: database control-version = 942, catalog-version 201409291 does not match backup control-version = 942, catalog-version = 197208141
@@ -1425,7 +1427,7 @@ P00   INFO: backup command end: aborted with exception [051]
 incr backup - invalid path in pg_tblspc (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1436,7 +1438,7 @@ P00   INFO: backup command end: aborted with exception [069]
 incr backup - invalid relative tablespace is ../ (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1447,7 +1449,7 @@ P00   INFO: backup command end: aborted with exception [071]
 incr backup - invalid relative tablespace is .. (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1458,7 +1460,7 @@ P00   INFO: backup command end: aborted with exception [071]
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1469,7 +1471,7 @@ P00   INFO: backup command end: aborted with exception [071]
 incr backup - invalid relative tablespace is ../../$PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1480,7 +1482,7 @@ P00   INFO: backup command end: aborted with exception [071]
 incr backup - tablespace link references a link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1491,7 +1493,7 @@ P00   INFO: backup command end: aborted with exception [070]
 incr backup - invalid relative tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1502,7 +1504,7 @@ P00   INFO: backup command end: aborted with exception [071]
 incr backup - $PGDATA is a substring of valid tblspc excluding / (file missing err expected) (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1513,7 +1515,7 @@ P00   INFO: backup command end: aborted with exception [055]
 incr backup - invalid tablespace in $PGDATA (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -1524,7 +1526,7 @@ P00   INFO: backup command end: aborted with exception [071]
 incr backup - add tablespace 1 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --test --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -1602,16 +1604,16 @@ P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, [undef], 0, [BACKUP-INCR-1], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-1], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, [undef], 0, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, [undef], 1, [BACKUP-INCR-1], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1 process, strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 1
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -1692,6 +1694,7 @@ db-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -1821,7 +1824,7 @@ db-version="9.4"
 incr backup - resume and add tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --process-max=1 --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-resume=y
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
@@ -1914,17 +1917,17 @@ P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/17
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/global/pg_control to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, bogus, 0, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
-P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, 1, [BACKUP-INCR-2], 0, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/badchecksum.txt, pg_data/badchecksum.txt, 11, bogus, 0, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), strKey = pg_data/badchecksum.txt, strOp = backupFile, strQueue = pg_data
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, 7, [undef], 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt, strOp = backupFile, strQueue = pg_tblspc/2
+P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, 7, d85de07d6421d90aa9191c11c889bfde43680f0f, 1, [BACKUP-INCR-2], 0, 3, [MODIFICATION-TIME-1], 1, {iWalId => 65535, iWalOffset => 65535}), strKey = pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt, strOp = backupFile, strQueue = pg_tblspc/1
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/32768/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/16384/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/base/1/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Backup::Backup->processManifest: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 6, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 3, iProtocolTimeout = 60, strCommand = [BACKREST-BIN] --command=backup --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --host-id=1 --lock-path=[TEST_PATH]/db-master/lock --log-path=[TEST_PATH]/db-master/log --process=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --type=db local, strId = local-1 process, strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 2
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -2009,6 +2012,7 @@ db-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -2148,7 +2152,7 @@ db-version="9.4"
 diff backup - cannot resume - new diff (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: backup [BACKUP-INCR-2] missing manifest removed from backup.info
@@ -2175,6 +2179,7 @@ db-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -2310,7 +2315,7 @@ db-version="9.4"
 diff backup - cannot resume - disabled / no repo link (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --no-resume --log-level-console=detail --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --no-resume --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --no-resume --stanza=db --start-fast --test --test-delay=0.2 --test-point=backup-noresume=y --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: backup [BACKUP-DIFF-1] missing manifest removed from backup.info
@@ -2337,6 +2342,7 @@ db-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -2472,7 +2478,7 @@ db-version="9.4"
 restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00 DETAIL: check [TEST_PATH]/db-master/db/base exists
 P00  ERROR: [040]: cannot restore to path '[TEST_PATH]/db-master/db/base' that contains files - try using --delta if this is what you intended
@@ -2481,7 +2487,7 @@ P00   INFO: restore command end: aborted with exception [040]
 restore, backup '[BACKUP-DIFF-2]', remap - remap all paths (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2
 P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
@@ -2515,7 +2521,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, backup '[BACKUP-DIFF-2]', remap - ensure file in tblspc root remains after --delta (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-DIFF-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --set=[BACKUP-DIFF-2] --stanza=db --tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-2]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2
 P00   INFO: remap tablespace pg_tblspc/1 directory to [TEST_PATH]/db-master/db/tablespace/ts1-2
@@ -2553,7 +2559,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 incr backup - add files and remove tablespace 2 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --process-max=1 --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-1]
@@ -2580,6 +2586,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -2712,7 +2719,7 @@ db-version="9.4"
 incr backup - update files - fail on missing backup.info (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00  ERROR: [055]: unable to open [TEST_PATH]/db-master/repo/backup/db/backup.info or [TEST_PATH]/db-master/repo/backup/db/backup.info.copy
@@ -2723,7 +2730,7 @@ P00   INFO: backup command end: aborted with exception [055]
 stanza-create db - fail on backup directory missing backup.info (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: backup information missing
             HINT: use stanza-create --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [055]
@@ -2746,7 +2753,7 @@ db-version="9.4"
 stanza-create db - create required data for stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -2789,7 +2796,7 @@ db-version="9.4"
 incr backup - update files (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
@@ -2814,6 +2821,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -2947,7 +2955,7 @@ db-version="9.4"
 diff backup - updates since last full (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --process-max=1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -2979,6 +2987,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -3113,7 +3122,7 @@ db-version="9.4"
 incr backup - remove files - but won't affect manifest (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-1]
@@ -3138,6 +3147,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=y
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -3273,7 +3283,7 @@ db-version="9.4"
 diff backup - remove files during backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --process-max=1 --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --process-max=1 --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --test --test-delay=1 --test-point=manifest-build=y --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
@@ -3305,6 +3315,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=y
+compress-level=3
 db-timeout=45
 hardlink=y
 lock-path=[TEST_PATH]/db-master/lock
@@ -3440,7 +3451,7 @@ db-version="9.4"
 full backup - update file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=full
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P01   INFO: backup file [TEST_PATH]/db-master/db/base-2/base/32768/33001 (64KB, 44%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
@@ -3476,6 +3487,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=y
+compress-level=3
 db-timeout=45
 hardlink=y
 lock-path=[TEST_PATH]/db-master/lock
@@ -3670,7 +3682,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 144KB
-            repository size: 1.4KB, repository backup size: 1.4KB
+            repository size: 1.9KB, repository backup size: 1.9KB
 
 info db stanza - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db --output=json info
@@ -3969,7 +3981,7 @@ P00   INFO: expire command end: completed successfully
 diff backup - add file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=detail --checksum-page --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --checksum-page --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2 --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -4007,6 +4019,7 @@ tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
 compress=y
+compress-level=3
 db-timeout=45
 hardlink=y
 lock-path=[TEST_PATH]/db-master/lock
@@ -4139,7 +4152,7 @@ db-version="9.4"
 restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=16384  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384=1 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=16384=1 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
@@ -4176,7 +4189,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf
 restore delta, remap - selective restore 32768 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=detail --db-include=32768  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768=1 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-include=32768=1 --db1-path=[TEST_PATH]/db-master/db/base-2 --delta --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap tablespace pg_tblspc/2 directory to [TEST_PATH]/db-master/db/tablespace/ts2-2
 P00 DETAIL: check [TEST_PATH]/db-master/db/base-2 exists
@@ -4223,7 +4236,7 @@ P00  ERROR: [081]: system databases (template0, postgres, etc.) are included by 
 restore, remap, expect exit 73 - no tablespace remap - error when tablespace dir does not exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --tablespace-map-all=../../tablespace  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
@@ -4235,7 +4248,7 @@ P00   INFO: restore command end: aborted with exception [073]
 restore - no tablespace remap (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --tablespace-map-all=../../tablespace --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
+P00   INFO: restore command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --tablespace-map-all=../../tablespace
 P00   INFO: restore backup set [BACKUP-DIFF-5]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/db-master/db/base-2/base
 P00   INFO: remap tablespace pg_tblspc/2 directory to ../../tablespace/ts2
@@ -4278,13 +4291,13 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 144KB
-            repository size: 1.4KB, repository backup size: 1.4KB
+            repository size: 1.9KB, repository backup size: 1.9KB
 
         diff backup: [BACKUP-DIFF-5]
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 9B
-            repository size: 1.4KB, repository backup size: 29B
+            repository size: 2KB, repository backup size: 29B
             backup reference list: [BACKUP-FULL-3]
 
 stanza: db_empty
@@ -4437,7 +4450,7 @@ diff backup - config file warning on local (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=info 2>&1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 WARN: [TEST_PATH]/db-master/pgbackrest.conf file contains invalid option 'bogus'
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2/base --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2/base --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -4458,6 +4471,7 @@ db-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 compress=y
+compress-level=3
 db-timeout=45
 hardlink=y
 lock-path=[TEST_PATH]/db-master/lock
@@ -4592,7 +4606,7 @@ db-version="9.4"
 diff backup - option backup-standby reset - backup performed from master (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2/base --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base-2/base --hardlink --lock-path=[TEST_PATH]/db-master/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
@@ -4614,6 +4628,7 @@ db-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 compress=y
+compress-level=3
 db-timeout=45
 hardlink=y
 lock-path=[TEST_PATH]/db-master/lock

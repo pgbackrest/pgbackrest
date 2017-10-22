@@ -201,7 +201,8 @@ sub processQueue
     foreach my $strWalFile (@{$stryWalFile})
     {
         $self->{oArchiveProcess}->queueJob(
-            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE, [$self->{strWalPath}, $strWalFile, cfgOption(CFGOPT_COMPRESS)]);
+            1, 'default', $strWalFile, OP_ARCHIVE_PUSH_FILE,
+            [$self->{strWalPath}, $strWalFile, cfgOption(CFGOPT_COMPRESS), cfgOption(CFGOPT_COMPRESS_LEVEL)]);
     }
 
     # Process jobs if there are any

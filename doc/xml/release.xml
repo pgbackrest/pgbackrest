@@ -15,6 +15,14 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix custom settings for <br-option>compress-level</br-option> option being ignored.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="lobréau.benoit"/>
                         </release-item-contributor-list>
 

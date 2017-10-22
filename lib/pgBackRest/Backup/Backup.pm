@@ -347,8 +347,9 @@ sub processManifest
             [$strDbFile, $strRepoFile, $lSize,
                 $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
                 cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
-                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false),
-                $bIgnoreMissing, cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
+                cfgOption(CFGOPT_COMPRESS_LEVEL), $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile,
+                MANIFEST_SUBKEY_TIMESTAMP, false), $bIgnoreMissing,
+                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
 
         # Size and checksum will be removed and then verified later as a sanity check
         $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);

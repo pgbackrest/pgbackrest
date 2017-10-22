@@ -28,6 +28,7 @@ db8-user=[USER-1]
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -55,6 +56,7 @@ backup-config=[TEST_PATH]/db-master/pgbackrest.conf
 backup-host=db-master
 backup-user=[USER-1]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=debug
@@ -102,6 +104,7 @@ db8-user=[USER-1]
 [global]
 archive-async=y
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -131,6 +134,7 @@ backup-config=[TEST_PATH]/db-master/pgbackrest.conf
 backup-host=db-master
 backup-user=[USER-1]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=debug
@@ -168,6 +172,7 @@ db8-user=[USER-1]
 [global]
 archive-async=y
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -197,6 +202,7 @@ backup-config=[TEST_PATH]/db-master/pgbackrest.conf
 backup-host=db-master
 backup-user=[USER-1]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=debug

@@ -106,8 +106,9 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $oGzipIo = $self->testResult(
-            sub {new pgBackRest::Storage::Filter::Gzip($oDriver->openWrite($strFileGz), {bWantGzip => false})},
+            sub {new pgBackRest::Storage::Filter::Gzip($oDriver->openWrite($strFileGz), {bWantGzip => false, iLevel => 3})},
             '[object]', 'new write compress');
+        $self->testResult($oGzipIo->{iLevel}, 3, '    check level');
         $self->testResult(sub {$oGzipIo->write(\$strFileContent, $iFileLength)}, $iFileLength, '    write');
         $self->testResult(sub {$oGzipIo->close()}, true, '    close');
 

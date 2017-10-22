@@ -113,6 +113,8 @@ backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/backup/pgbackrest.conf
 backup-host=backup
 backup-user=[USER-1]
+compress-level=3
+compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -134,6 +136,8 @@ db-port=[PORT-1]
 db-user=[USER-2]
 
 [global]
+compress-level=3
+compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=debug
@@ -171,6 +175,8 @@ backup-cmd=[BACKREST-BIN]
 backup-config=[TEST_PATH]/backup/pgbackrest.conf
 backup-host=backup
 backup-user=[USER-1]
+compress-level=3
+compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -193,6 +199,8 @@ db-user=[USER-2]
 
 [global]
 archive-async=y
+compress-level=3
+compress-level-network=1
 db-timeout=45
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=debug
