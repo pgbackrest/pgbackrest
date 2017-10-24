@@ -55,6 +55,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow functions with sensitive options to be logged at debug level with redactions.  Previously, functions with sensitive options had to be logged at trace level to avoid exposing them.  Trace level logging may still expose secrets so use with caution.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Replace dynamically built class hierarchies in I/O layer with fixed <code>parent()</code> calls.</p>
                     </release-item>
 

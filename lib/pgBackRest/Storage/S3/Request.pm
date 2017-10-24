@@ -82,17 +82,17 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'strBucket', trace => true},
-            {name => 'strEndPoint', trace => true},
-            {name => 'strRegion', trace => true},
-            {name => 'strAccessKeyId', trace => true},
-            {name => 'strSecretAccessKey', trace => true},
-            {name => 'strHost', optional => true, trace => true},
-            {name => 'iPort', optional => true, trace => true},
-            {name => 'bVerifySsl', optional => true, default => true, trace => true},
-            {name => 'strCaPath', optional => true, trace => true},
-            {name => 'strCaFile', optional => true, trace => true},
-            {name => 'lBufferMax', optional => true, default => COMMON_IO_BUFFER_MAX, trace => true},
+            {name => 'strBucket'},
+            {name => 'strEndPoint'},
+            {name => 'strRegion'},
+            {name => 'strAccessKeyId', redact => true},
+            {name => 'strSecretAccessKey', redact => true},
+            {name => 'strHost', optional => true},
+            {name => 'iPort', optional => true},
+            {name => 'bVerifySsl', optional => true, default => true},
+            {name => 'strCaPath', optional => true},
+            {name => 'strCaFile', optional => true},
+            {name => 'lBufferMax', optional => true, default => COMMON_IO_BUFFER_MAX},
         );
 
     # If host is not set then it will be bucket + endpoint

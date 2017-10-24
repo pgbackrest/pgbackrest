@@ -341,6 +341,9 @@ sub logDebugProcess
         my $bParamRequired = !defined($oParam->{required}) || $oParam->{required};
         my $oValue;
 
+        # Should the param be redacted?
+        $oParamHash->{$strParamName}{redact} = $oParam->{redact} ? true : false;
+
         # If param is optional then the optional block has been entered
         if ($bParamOptional)
         {
@@ -546,14 +549,16 @@ sub logDebugOut
                 my $bDefault =
                     defined($$strValueRef) && defined($$oParamHash{$strParam}{default}) ? $$oParamHash{$strParam}{default} : false;
 
-                $strParamSet .= "${strParam} = " .
-                                ($bDefault ? '<' : '') .
-                                (defined($$strValueRef) ?
-                                    ($strParam =~ /^(b|is)/ ? ($$strValueRef ? 'true' : 'false'):
-                                    (length($$strValueRef) > DEBUG_STRING_MAX_LEN ?
-                                     substr($$strValueRef, 0, DEBUG_STRING_MAX_LEN) . ' ... <truncated>':
-                                     $$strValueRef)) : '[undef]') .
-                                ($bDefault ? '>' : '');
+                $strParamSet .=
+                    "${strParam} = " .
+                    ($oParamHash->{$strParam}{redact} && defined($$strValueRef) ? '<redacted>' :
+                        ($bDefault ? '<' : '') .
+                        (defined($$strValueRef) ?
+                            ($strParam =~ /^(b|is)/ ? ($$strValueRef ? 'true' : 'false'):
+                            (length($$strValueRef) > DEBUG_STRING_MAX_LEN ?
+                             substr($$strValueRef, 0, DEBUG_STRING_MAX_LEN) . ' ... <truncated>':
+                             $$strValueRef)) : '[undef]') .
+                        ($bDefault ? '>' : ''));
             }
 
             if (defined($strMessage))

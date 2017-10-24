@@ -65,6 +65,7 @@ db-version="9.4"
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = false, iCompressLevel = 3, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
@@ -80,6 +81,7 @@ P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.4-1, strChecksum = [undef], strWarning = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
@@ -101,6 +103,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000001
 P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000001
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Base->getCheck(): strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
 P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
@@ -120,6 +123,7 @@ P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000001
 P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
 P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strArchiveId = 9.4-1
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], xFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]

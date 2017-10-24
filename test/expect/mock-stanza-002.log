@@ -149,6 +149,7 @@ P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strWarning = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001

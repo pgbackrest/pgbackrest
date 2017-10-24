@@ -10,7 +10,9 @@
         <config-section-list title="Settings">
             <!-- CONFIG - LOG -->
             <config-section id="log" name="Log">
-                <text>The <setting>log</setting> section defines logging-related settings.</text>
+                <text>The <setting>log</setting> section defines logging-related settings.
+
+                <b>IMPORTANT NOTE</b>: Trace-level logging may expose secrets such as keys and passwords.  Use with caution!</text>
 
                 <!-- CONFIG - LOG SECTION - LOG-LEVEL-FILE KEY -->
                 <config-key-list>
@@ -53,7 +55,7 @@
                     <config-key id="log-level-stderr" name="Std Error Log Level">
                         <summary>Level for stderr logging.</summary>
 
-                        <text>Specifies which log levels must will be output to <id>stderr</id> rather than <id>stdout</id> (specified by <br-option>log-level-console</br-option>).  The timestamp and process will not be output to <id>stderr</id>.
+                        <text>Specifies which log levels will output to <id>stderr</id> rather than <id>stdout</id> (specified by <br-option>log-level-console</br-option>).  The timestamp and process will not be output to <id>stderr</id>.
 
                         The following log levels are supported:
                         <ul>

@@ -138,6 +138,7 @@ db-version="9.3"
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
@@ -153,6 +154,7 @@ P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^
 P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
 P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = [undef]
 P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strWarning = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
