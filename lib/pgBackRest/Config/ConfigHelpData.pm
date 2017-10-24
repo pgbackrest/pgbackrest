@@ -487,8 +487,8 @@ my $oConfigHelpData =
             summary =>
                 "Level for stderr logging.",
             description =>
-                "Specifies which log levels must will be output to stderr rather than stdout (specified by log-level-console). " .
-                    "The timestamp and process will not be output to stderr.\n" .
+                "Specifies which log levels will output to stderr rather than stdout (specified by log-level-console). The " .
+                    "timestamp and process will not be output to stderr.\n" .
                 "\n" .
                 "The following log levels are supported:\n" .
                 "\n" .
