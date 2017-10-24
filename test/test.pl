@@ -711,9 +711,10 @@ eval
                     }
                 }
 
-                if ($iVmTotal == $iVmMax)
+                # Only wait when all VMs are running or all tests have been assigned.  Otherwise, there is something to do.
+                if ($iVmTotal == $iVmMax || $iTestIdx == @{$oyTestRun})
                 {
-                    waitHiRes(.1);
+                    waitHiRes(.05);
                 }
             }
             while ($iVmTotal == $iVmMax);
