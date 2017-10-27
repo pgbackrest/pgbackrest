@@ -499,7 +499,7 @@
                     <config-key id="archive-timeout" name="Archive Timeout">
                         <summary>Archive timeout.</summary>
 
-                        <text>Set maximum time, in seconds, to wait for WAL segments to reach the archive.  The timeout applies to the <cmd>check</cmd> command and to the <cmd>backup</cmd> command when waiting for WAL segments required to make the backup consistent to be archived.</text>
+                        <text>Set maximum time, in seconds, to wait for WAL segments to reach the <backrest/> archive repository.  The timeout applies to the <cmd>check</cmd> command and to the <cmd>backup</cmd> command when waiting for WAL segments required to make the backup consistent to be archived.</text>
 
                         <example>30</example>
                     </config-key>
