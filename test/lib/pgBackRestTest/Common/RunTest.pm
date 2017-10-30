@@ -291,6 +291,7 @@ sub testResult
         $strDescription,
         $iWaitSeconds,
         $strLogExpect,
+        $strLogLevel,
     ) =
         logDebugParam
         (
@@ -300,6 +301,7 @@ sub testResult
             {name => 'strDescription', trace => true},
             {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
             {name => 'strLogExpect', optional => true, trace => true},
+            {name => 'strLogLevel', optional => true, default => WARN, trace => true},
         );
 
     &log(INFO, '    ' . $strDescription);
@@ -309,9 +311,9 @@ sub testResult
     my $oWait = waitInit($iWaitSeconds);
     my $bDone = false;
 
-    # Save the current log levels and set the file level to warn, console to off and timestamp false
+    # Save the current log levels and set the file level to strLogLevel, console to off, and timestamp false
     my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
-    logLevelSet(WARN, OFF, undef, false);
+    logLevelSet($strLogLevel, OFF, undef, false);
 
     # Clear the cache for this test
     logFileCacheClear();
@@ -342,7 +344,7 @@ sub testResult
             # Restore the log level
             logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
 
-            if (!isException($EVAL_ERROR))
+            if (!isException(\$EVAL_ERROR))
             {
                 confess "unexpected standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
             }
@@ -419,7 +421,7 @@ sub testException
     {
         logEnable();
 
-        if (!isException($EVAL_ERROR))
+        if (!isException(\$EVAL_ERROR))
         {
             confess "${strError} but actual was standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
         }
@@ -452,17 +454,24 @@ sub testException
 sub testRunName
 {
     my $strName = shift;
+    my $bInitCapFirst = shift;
+
+    $bInitCapFirst = defined($bInitCapFirst) ? $bInitCapFirst : true;
+    my $bFirst = true;
 
     my @stryName = split('\-', $strName);
     $strName = undef;
 
     foreach my $strPart (@stryName)
     {
-        $strName .= ucfirst($strPart);
+        $strName .= ($bFirst && $bInitCapFirst) || !$bFirst ? ucfirst($strPart) : $strPart;
+        $bFirst = false;
     }
 
     return $strName;
 }
+
+push @EXPORT, qw(testRunName);
 
 ####################################################################################################################################
 # testRun

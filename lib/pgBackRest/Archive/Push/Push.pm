@@ -128,7 +128,7 @@ sub process
         # Else push the WAL file
         else
         {
-            archivePushFile($strWalPath, $strWalFile, cfgOption(CFGOPT_COMPRESS));
+            archivePushFile($strWalPath, $strWalFile, cfgOption(CFGOPT_COMPRESS), cfgOption(CFGOPT_COMPRESS_LEVEL));
         }
     }
 

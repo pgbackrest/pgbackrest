@@ -8,15 +8,24 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Exporter qw(import);
+    our @EXPORT = qw();
 use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
+use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Protocol::Base::Master;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Version;
+
+####################################################################################################################################
+# Constant used to define code to run after each operation
+####################################################################################################################################
+use constant OP_POST                                                => 'post';
+    push @EXPORT, qw(OP_POST);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -84,7 +93,7 @@ sub errorWrite
     my $oException = shift;
 
     # Throw hard error if this is not a standard exception
-    if (!isException($oException))
+    if (!isException(\$oException))
     {
         confess &log(ERROR, 'unknown error: ' . $oException, ERROR_UNKNOWN);
     }
@@ -125,44 +134,79 @@ sub cmdRead
 sub process
 {
     my $self = shift;
+    my $strLockName = shift;
 
     # Reset stderr log level so random errors do not get output
     logLevelSet(undef, undef, OFF);
 
+    # A permanent error will be returned from every command once it has been set.  In some cases this is a more graceful way to
+    # exit than a hard error.
+    my $oPermanentError;
+
     # Loop until the exit command is received
     eval
     {
+        # Aquire a lock if a lock name is defined.  This is done here so any errors will be transmitted through the protocol layer
+        # and cause a graceful shutdown rather than a remote abort.
+        if (defined($strLockName))
+        {
+            eval
+            {
+                lockAcquire($strLockName, undef, true);
+                return true;
+            }
+            or do
+            {
+                $oPermanentError = $EVAL_ERROR;
+            }
+        }
+
         while (true)
         {
             my ($strCommand, $rParam) = $self->cmdRead();
 
             last if ($strCommand eq OP_EXIT);
 
-            eval
+            # If permanent error is set then always return it
+            if (defined($oPermanentError))
             {
-                # Check for the command in the map and run it if found
-                if (defined($self->{hCommandMap}{$strCommand}))
-                {
-                    $self->outputWrite($self->{hCommandMap}{$strCommand}->($rParam));
-                }
-                # Run the standard NOOP command.  This this can be overridden in hCommandMap to implement a custom NOOP.
-                elsif ($strCommand eq OP_NOOP)
-                {
-                    protocolKeepAlive();
-                    $self->outputWrite();
-                }
-                else
-                {
-                    confess "invalid command: ${strCommand}";
-                }
-
-                return true;
+                $self->errorWrite($oPermanentError);
             }
-            # Process errors
-            or do
+            # Else process as usual
+            else
             {
-                $self->errorWrite($EVAL_ERROR);
-            };
+                eval
+                {
+                    # Check for the command in the map and run it if found
+                    if (defined($self->{hCommandMap}{$strCommand}))
+                    {
+                        $self->outputWrite($self->{hCommandMap}{$strCommand}->($rParam));
+                    }
+                    # Run the standard NOOP command.  This this can be overridden in hCommandMap to implement a custom NOOP.
+                    elsif ($strCommand eq OP_NOOP)
+                    {
+                        protocolKeepAlive();
+                        $self->outputWrite();
+                    }
+                    else
+                    {
+                        confess "invalid command: ${strCommand}";
+                    }
+
+                    # Run the post command if defined
+                    if (defined($self->{hCommandMap}{&OP_POST}))
+                    {
+                        $self->{hCommandMap}{&OP_POST}->();
+                    }
+
+                    return true;
+                }
+                # Process errors
+                or do
+                {
+                    $self->errorWrite($EVAL_ERROR);
+                };
+            }
         }
 
         return true;
@@ -175,7 +219,7 @@ sub process
         logLevelSet(undef, undef, PROTOCOL);
 
         # If standard exception
-        if (isException($oException))
+        if (isException(\$oException))
         {
             confess &log($oException->level(), $oException->message(), $oException->code());
         }

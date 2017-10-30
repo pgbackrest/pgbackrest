@@ -265,7 +265,7 @@ sub backupCreate
     &log(INFO, "create backup ${strBackupLabel}");
 
     my $strManifestFile = "$$oStanza{strBackupClusterPath}/${strBackupLabel}/" . FILE_MANIFEST;
-    my $oManifest = new pgBackRest::Manifest($strManifestFile, false);
+    my $oManifest = new pgBackRest::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93});
 
     # Store information about the backup into the backup section
     $oManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);

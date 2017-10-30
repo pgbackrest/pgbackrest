@@ -140,7 +140,7 @@ sub close
         # On minion write the results
         else
         {
-            $self->{oProtocol}->outputWrite($self->{oFileIo}->{rhResult});
+            $self->{oProtocol}->outputWrite($self->{oFileIo}->resultAll());
         }
 
         # Delete protocol to prevent close from running again

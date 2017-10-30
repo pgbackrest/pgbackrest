@@ -48,8 +48,8 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'bFileSync', optional => true, default => true, trace => true},
-            {name => 'bPathSync', optional => true, default => true, trace => true},
+            {name => 'bFileSync', optional => true, default => true},
+            {name => 'bPathSync', optional => true, default => true},
         );
 
     # Set default temp extension

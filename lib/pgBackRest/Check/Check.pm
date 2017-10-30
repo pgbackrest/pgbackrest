@@ -55,8 +55,9 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
-    # Initialize the database object
-    my $oDb = dbMasterGet();
+    # Initialize the database object. This will also check the configured replicas and throw an error if at least one is not
+    # able to be connected to and warnings for any that cannot be properly connected to.
+    my ($oDb) = dbObjectGet();
 
     # Validate the database configuration
     $oDb->configValidate();
@@ -87,7 +88,7 @@ sub process
     {
         # Capture error information
         $iResult = exceptionCode($EVAL_ERROR);
-        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+        $strResultMessage = exceptionMessage($EVAL_ERROR);
     };
 
     # Check archive.info
@@ -103,14 +104,14 @@ sub process
         {
             # Capture error information
             $iResult = exceptionCode($EVAL_ERROR);
-            $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+            $strResultMessage = exceptionMessage($EVAL_ERROR);
         };
     }
 
     # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
     if ($iResult == 0 && !$oDb->isStandby())
     {
-        $strWalSegment = $oDb->xlogSwitch();
+        $strWalSegment = $oDb->walSwitch();
 
         eval
         {
@@ -122,7 +123,7 @@ sub process
         {
             # Capture error information
             $iResult = exceptionCode($EVAL_ERROR);
-            $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+            $strResultMessage = exceptionMessage($EVAL_ERROR);
         };
     }
 
@@ -141,14 +142,14 @@ sub process
         }
         else
         {
-            &log(INFO, "switch xlog cannot be performed on the standby, all other checks passed successfully");
+            &log(INFO, 'switch ' . $oDb->walId() . ' cannot be performed on the standby, all other checks passed successfully');
         }
     }
     else
     {
         &log(ERROR, $strResultMessage, $iResult);
 
-        # If a switch xlog was attempted, then alert the user to the WAL that did not reach the archive
+        # If a WAL switch was attempted, then alert the user that the WAL that did not reach the archive
         if (defined($strWalSegment))
         {
             &log(WARN,

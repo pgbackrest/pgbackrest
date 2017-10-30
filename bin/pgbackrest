@@ -28,7 +28,7 @@ use pgBackRest::Protocol::Helper;
 ####################################################################################################################################
 # Run in eval block to catch errors
 ####################################################################################################################################
-local $EVAL_ERROR = undef; eval
+eval
 {
     ################################################################################################################################
     # Load command line parameters and config
@@ -100,17 +100,19 @@ local $EVAL_ERROR = undef; eval
         my $oRemote = new pgBackRest::Protocol::Remote::Minion(cfgOption(CFGOPT_BUFFER_SIZE), cfgOption(CFGOPT_PROTOCOL_TIMEOUT));
 
         # Acquire a remote lock (except for commands that are read-only or local processes)
+        my $strLockName;
+
         if (!(cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_ARCHIVE_GET)) ||
               cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_INFO)) ||
               cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_RESTORE)) ||
               cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_CHECK)) ||
               cfgOptionTest(CFGOPT_COMMAND, cfgCommandName(CFGCMD_LOCAL))))
         {
-            lockAcquire(cfgOption(CFGOPT_COMMAND), undef, true);
+            $strLockName = cfgOption(CFGOPT_COMMAND);
         }
 
         # Process remote requests
-        exitSafe($oRemote->process());
+        exitSafe($oRemote->process($strLockName));
     }
 
     ################################################################################################################################
@@ -280,7 +282,10 @@ local $EVAL_ERROR = undef; eval
 ####################################################################################################################################
 or do
 {
-    exitSafe(undef, $EVAL_ERROR);
+    # Perl 5.10 seems to have a problem propogating errors up through a large call stack, so in the case that the error arrives
+    # blank just use the last logged error instead.  Don't do this in all cases because newer Perls seem to work fine and there are
+    # other errors that could be arriving in $EVAL_ERROR.
+    exitSafe(undef, defined($EVAL_ERROR) && length($EVAL_ERROR) > 0 ? $EVAL_ERROR : logErrorLast());
 };
 
 # uncoverable statement - errors should be handled in the do block above

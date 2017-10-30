@@ -57,6 +57,7 @@ my $oWalMagicHash =
     hex('0xD07E') => PG_VERSION_94,
     hex('0xD087') => PG_VERSION_95,
     hex('0xD093') => PG_VERSION_96,
+    hex('0xD097') => PG_VERSION_10,
 };
 
 ####################################################################################################################################
@@ -193,7 +194,7 @@ sub walInfo
 
     # Read magic
     sysread($hFile, $tBlock, 2) == 2
-        or confess &log(ERROR, "unable to read xlog magic");
+        or confess &log(ERROR, "unable to read wal magic");
 
     my $iMagic = unpack('S', $tBlock);
 
@@ -219,7 +220,7 @@ sub walInfo
     # Check flags to be sure the long header is present (this is an extra check to be sure the system id exists)
     #-------------------------------------------------------------------------------------------------------------------------------
     sysread($hFile, $tBlock, 2) == 2
-        or confess &log(ERROR, "unable to read xlog info");
+        or confess &log(ERROR, "unable to read wal info");
 
     my $iFlag = unpack('S', $tBlock);
 
@@ -280,9 +281,7 @@ sub walSegmentFind
         );
 
     # Error if not a segment
-    my $bTimeline = $strWalSegment =~ /^[0-F]{16}$/ ? false : true;
-
-    if ($bTimeline && !walIsSegment($strWalSegment))
+    if (!walIsSegment($strWalSegment))
     {
         confess &log(ERROR, "${strWalSegment} is not a WAL segment", ERROR_ASSERT);
     }
@@ -293,35 +292,13 @@ sub walSegmentFind
 
     do
     {
-        # If the WAL segment includes the timeline then use it, otherwise contruct a regexp with the major WAL part to find paths
-        # where the wal could be found.
-        my @stryTimelineMajor;
-
-        if ($bTimeline)
-        {
-            @stryTimelineMajor = (substr($strWalSegment, 0, 16));
-        }
-        else
-        {
-            @stryTimelineMajor = $oStorageRepo->list(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}",
-                {strExpression => '[0-F]{8}' . substr($strWalSegment, 0, 8), bIgnoreMissing => true});
-        }
-
-        # Search each timelin/major path
-        foreach my $strTimelineMajor (@stryTimelineMajor)
-        {
-            # Construct the name of the WAL segment to find
-            my $strWalSegmentFind = $bTimeline ? substr($strWalSegment, 0, 24) : $strTimelineMajor . substr($strWalSegment, 8, 16);
-
-            # Get the name of the requested WAL segment (may have hash info and compression extension)
-            push(@stryWalFileName, $oStorageRepo->list(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strTimelineMajor}",
-                {strExpression =>
-                    "^${strWalSegmentFind}" . (walIsPartial($strWalSegment) ? "\\.partial" : '') .
-                    "-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$",
-                    bIgnoreMissing => true}));
-        }
+        # Get the name of the requested WAL segment (may have compression extension)
+        push(@stryWalFileName, $oStorageRepo->list(
+            STORAGE_REPO_ARCHIVE . "/${strArchiveId}/" . substr($strWalSegment, 0, 16),
+            {strExpression =>
+                '^' . substr($strWalSegment, 0, 24) . (walIsPartial($strWalSegment) ? "\\.partial" : '') .
+                "-[0-f]{40}(\\." . COMPRESS_EXT . "){0,1}\$",
+                bIgnoreMissing => true}));
     }
     while (@stryWalFileName == 0 && waitMore($oWait));
 
@@ -330,8 +307,9 @@ sub walSegmentFind
     if (@stryWalFileName > 1)
     {
         confess &log(ERROR,
-            "duplicates found in archive for WAL segment " . ($bTimeline ? $strWalSegment : "XXXXXXXX${strWalSegment}") . ': ' .
-            join(', ', @stryWalFileName), ERROR_ARCHIVE_DUPLICATE);
+            "duplicates found in archive for WAL segment ${strWalSegment}: " . join(', ', @stryWalFileName) .
+            "\nHINT: are multiple primaries archiving to this stanza?",
+            ERROR_ARCHIVE_DUPLICATE);
     }
 
     # If waiting and no WAL segment was found then throw an error
@@ -353,7 +331,7 @@ push @EXPORT, qw(walSegmentFind);
 ####################################################################################################################################
 # walPath
 #
-# Generates the location of the pg_xlog directory using a relative xlog path and the supplied db path.
+# Generates the location of the wal directory using a relative wal path and the supplied db path.
 ####################################################################################################################################
 sub walPath
 {
@@ -378,7 +356,7 @@ sub walPath
         if (!defined($strDbPath))
         {
             confess &log(ERROR,
-                "option 'db-path' must be specified when relative xlog paths are used\n" .
+                "option 'db-path' must be specified when relative wal paths are used\n" .
                 "HINT: Is \%f passed to ${strCommand} instead of \%p?\n" .
                 "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.",
                 ERROR_OPTION_REQUIRED);

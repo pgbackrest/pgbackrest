@@ -10,7 +10,275 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.23dev" title="UNDER DEVELOPMENT">
+        <release date="2017-10-24" version="1.25" title="S3 Performance Improvements">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix custom settings for <br-option>compress-level</br-option> option being ignored.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lobréau.benoit"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove error when overlapping timelines are detected.  Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix instances where <id>database-id</id> was not rendered as an integer in JSON info output.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shvein.mihail"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve performance of list requests on S3.  Any beginning literal portion of a filter expression is used to generate a search prefix which often helps keep the request small enough to avoid rate limiting.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improve protocol error handling.  In particular, <quote>stop</quote> errors are no longer reported as <quote>unexpected</quote>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow functions with sensitive options to be logged at debug level with redactions.  Previously, functions with sensitive options had to be logged at trace level to avoid exposing them.  Trace level logging may still expose secrets so use with caution.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Replace dynamically built class hierarchies in I/O layer with fixed <code>parent()</code> calls.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve labeling for errors in helper processes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Update C naming conventions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Use <id>int</id> datatype wherever possible.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Better separation of C source from Perl interface.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <file>LibC.template.pm</file> to simplify LibC module generation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add C error handler.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Perl error handler recognizes errors thrown from the C library.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Page checksum module uses new C error handler.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add C memory contexts.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add base64 encode/decode.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-test-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Add C unit test infrastructure.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add test macros for C results and errors.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add I/O performance tests.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Warnings in C builds treated as errors.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Run all tests on tempfs rather than local disk.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve performance of test code. Wait when all tests have been assigned to reduce CPU load.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove Debian test repo after PostgreSQL 10 release.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Convert config and page checksum tests into C unit tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <postgres/> versions to Debian VMs for testing.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
+        <release date="2017-09-28" version="1.24" title="New Backup Exclusions">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where warnings were being emitted in place of lower priority log messages during backup from standby initialization.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where some <id>db-*</id> options (e.g. <br-option>db-port</br-option>) were not being passed to remotes.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Exclude contents of <path>pg_snapshots</path>, <path>pg_serial</path>, <path>pg_notify</path>, and <path>pg_dynshmem</path> from backup since they are rebuilt on startup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Exclude <file>pg_internal.init</file> files from backup since they are rebuilt on startup.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Open log file after async process is completely separated from the main process to prevent the main process from also logging to the file.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Dynamically generate list of files for C library build.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Break up <file>LibC.xs</file> into separate module files.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Rename <proper>master</proper> to <proper>primary</proper> in documentation to align with <postgres/> convention.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add trusted SSH configuration.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add full installation where required and remove doc containers that included parts of the installation.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Improve C library smart build by ignoring changes outside of <path>/lib/pgBackRest/Config</path>.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
+        <release date="2017-09-03" version="1.23" title="Multiple Standbys and PostgreSQL 10 Support">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stjohn.jesper"/>
+                            <release-item-ideator id="rogozin.aleksandr"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that could cause compression to abort on growing files.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cox.william"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue with keep-alives not being sent to the remote from the local process.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Up to seven standbys can be configured for backup from standby.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p><postgres/> 10 support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gdalevich.victor"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <id>content-length</id> (in addition to chunked encoding) when reading XML data to improve compatibility with third-party S3 gateways.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-refactor-list>
+                    <release-item>
+                        <p>Configuration rules are now pulled from the C library when present.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Increase HTTP timeout for S3.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add HTTP retries to harden against transient S3 network errors.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-bug-list>
                     <release-item>
@@ -24,10 +292,6 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Configuration rules are now pulled from the C library when present.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
                     </release-item>
                 </release-refactor-list>
@@ -36,7 +300,7 @@
             <release-test-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Changed log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
+                        <p>Change log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
                     </release-item>
 
                     <release-item>
@@ -46,11 +310,7 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Updated Docker build in <file>Vagrantfile</file>.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Ignore auto-generated C code.</p>
+                        <p>Update Docker build in <file>Vagrantfile</file>.</p>
                     </release-item>
 
                     <release-item>
@@ -58,7 +318,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Simplified smart logic for C Library and package builds.</p>
+                        <p>Simplify smart logic for C Library and package builds.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>
@@ -360,7 +620,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the master) if the standby is not configured and/or reachable.</p>
+                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the primary) if the standby is not configured and/or reachable.</p>
                     </release-item>
 
                     <release-item>
@@ -1090,7 +1350,7 @@
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
-                        <p>Abstracted code to determine which database cluster is the master and which are standbys.</p>
+                        <p>Abstracted code to determine which database cluster is the primary and which are standbys.</p>
                     </release-item>
 
                     <release-item>
@@ -1506,7 +1766,7 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Fixed an issue where tablespaces were copied from the master during standby backup.</p>
+                        <p>Fixed an issue where tablespaces were copied from the primary during standby backup.</p>
                     </release-item>
 
                     <release-item>
@@ -1532,7 +1792,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the master do not become part of the backup.</p>
+                        <p>Exclude contents of <path>$PGDATA/pg_replslot</path> directory so that replication slots on the primary do not become part of the backup.</p>
                     </release-item>
 
                     <release-item>
@@ -1638,11 +1898,11 @@
 
                 <release-feature-list>
                     <release-item>
-                        <p>Backup from a standby cluster.  A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the master.</p>
+                        <p>Backup from a standby cluster.  A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the primary.</p>
                     </release-item>
 
                     <release-item>
-                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the master.  This means no configuration changes for backup are required after failing over from a master to standby when a separate backup server is used.</p>
+                        <p>More flexible configuration for databases.  Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the primary.  This means no configuration changes for backup are required after failing over from a primary to standby when a separate backup server is used.</p>
                     </release-item>
 
                     <release-item>
@@ -3165,7 +3425,7 @@
 
         <!-- The order of other contributors is alpha by name -->
         <contributor id="avellar.leonardo">
-            <contributor-name-display>Leonardo Avellar</contributor-name-display>
+            <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
         </contributor>
 
@@ -3187,6 +3447,11 @@
         <contributor id="biberhofer.sascha">
             <contributor-name-display>Sascha Biberhofer</contributor-name-display>
             <contributor-id type="github">sbiberhofer</contributor-id>
+        </contributor>
+
+        <contributor id="cox.william">
+            <contributor-name-display>William Cox</contributor-name-display>
+            <contributor-id type="github">mydimension</contributor-id>
         </contributor>
 
         <contributor id="didovicher.dmitry">
@@ -3212,6 +3477,11 @@
         <contributor id="frost.stephen">
             <contributor-name-display>Stephen Frost</contributor-name-display>
             <contributor-id type="github">sfrost</contributor-id>
+        </contributor>
+
+        <contributor id="gdalevich.victor">
+            <contributor-name-display>Victor Gdalevich</contributor-name-display>
+            <contributor-id type="github">ntrvic</contributor-id>
         </contributor>
 
         <contributor id="golpayegani.navid">
@@ -3269,6 +3539,11 @@
             <contributor-id type="github">eradman</contributor-id>
         </contributor>
 
+        <contributor id="rogozin.aleksandr">
+            <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
+            <contributor-id type="github">arogozin</contributor-id>
+        </contributor>
+
         <contributor id="shang.cynthia">
             <contributor-name-display>Cynthia Shang</contributor-name-display>
             <contributor-id type="github">cmwshang</contributor-id>
@@ -3279,9 +3554,24 @@
             <contributor-id type="github">sharmay</contributor-id>
         </contributor>
 
+        <contributor id="shvein.mihail">
+            <contributor-name-display>Mihail Shvein</contributor-name-display>
+            <contributor-id type="github">M1hacka</contributor-id>
+        </contributor>
+
         <contributor id="smith.greg">
             <contributor-name-display>Greg Smith</contributor-name-display>
             <contributor-id type="github">gregscds</contributor-id>
+        </contributor>
+
+        <contributor id="stjohn.jesper">
+            <contributor-name-display>Jesper St John</contributor-name-display>
+            <contributor-id type="github">Underhunden</contributor-id>
+        </contributor>
+
+        <contributor id="uspen">
+            <contributor-name-display>Uspen</contributor-name-display>
+            <contributor-id type="github">uspen</contributor-id>
         </contributor>
 
         <contributor id="vernick.todd">

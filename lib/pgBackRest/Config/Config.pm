@@ -1091,7 +1091,8 @@ sub commandBegin
 {
     &log(
         $strCommand eq cfgCommandName(CFGCMD_INFO) ? DEBUG : INFO,
-        "${strCommand} command begin " . BACKREST_VERSION . ':' . cfgCommandWrite(cfgCommandId($strCommand), true, '', false));
+        "${strCommand} command begin " . BACKREST_VERSION . ':' .
+            cfgCommandWrite(cfgCommandId($strCommand), true, '', false, undef, true));
 }
 
 ####################################################################################################################################
@@ -1146,6 +1147,7 @@ sub cfgCommandWrite
     my $strExeString = shift;
     my $bIncludeCommand = shift;
     my $oOptionOverride = shift;
+    my $bDisplayOnly = shift;
 
     # Set defaults
     $strExeString = defined($strExeString) ? $strExeString : BACKREST_BIN;
@@ -1156,24 +1158,27 @@ sub cfgCommandWrite
     for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
     {
         my $strOption = cfgOptionName($iOptionId);
+        my $bSecure = cfgRuleOptionSecure($iOptionId);
 
         # Skip option if it is secure and should not be output in logs or the command line
-        next if (cfgRuleOptionSecure($iOptionId));
+        next if ($bSecure && !$bDisplayOnly);
 
         # Process any option id overrides first
         if (defined($oOptionOverride->{$iOptionId}))
         {
             if (defined($oOptionOverride->{$iOptionId}{value}))
             {
-                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$iOptionId}{value}});
+                $strExeString .= cfgCommandWriteOptionFormat(
+                    $strOption, false, $bSecure, {value => $oOptionOverride->{$iOptionId}{value}});
             }
         }
-        # And process overrides passed by string - this is used by Perl compitiblity functions
+        # And process overrides passed by string - this is used by Perl compatibility functions
         elsif (defined($oOptionOverride->{$strOption}))
         {
             if (defined($oOptionOverride->{$strOption}{value}))
             {
-                $strExeString .= cfgCommandWriteOptionFormat($strOption, false, {value => $oOptionOverride->{$strOption}{value}});
+                $strExeString .= cfgCommandWriteOptionFormat(
+                    $strOption, false, $bSecure, {value => $oOptionOverride->{$strOption}{value}});
             }
         }
         # else look for non-default options in the current configuration
@@ -1197,7 +1202,7 @@ sub cfgCommandWrite
                 $oValue = {value => $oOption{$strOption}{value}};
             }
 
-            $strExeString .= cfgCommandWriteOptionFormat($strOption, $bMulti, $oValue);
+            $strExeString .= cfgCommandWriteOptionFormat($strOption, $bMulti, $bSecure, $oValue);
         }
     }
 
@@ -1216,6 +1221,7 @@ sub cfgCommandWriteOptionFormat
 {
     my $strOption = shift;
     my $bMulti = shift;
+    my $bSecure = shift;
     my $oValue = shift;
 
     # Loops though all keys in the hash
@@ -1225,7 +1231,7 @@ sub cfgCommandWriteOptionFormat
     foreach my $strKey (sort(keys(%$oValue)))
     {
         # Get the value - if the original value was a hash then the key must be prefixed
-        my $strValue = ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
+        my $strValue = $bSecure ? '<redacted>' : ($bMulti ?  "${strKey}=" : '') . $$oValue{$strKey};
 
         # Handle the no- prefix for boolean values
         if (cfgRuleOptionType(cfgOptionId($strOption)) eq CFGOPTDEF_TYPE_BOOLEAN)

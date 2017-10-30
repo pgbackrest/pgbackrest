@@ -40,6 +40,12 @@ use constant TESTDEF_COVERAGE                                       => 'coverage
 # Should expect log tests be run
 use constant TESTDEF_EXPECT                                         => 'expect';
     push @EXPORT, qw(TESTDEF_EXPECT);
+# Is this a C test (instead of Perl)?
+use constant TESTDEF_C                                              => 'c';
+    push @EXPORT, qw(TESTDEF_C);
+# Is the C library required?  This only applies to unit tests, the C library is always supplied for integration tests.
+use constant TESTDEF_CLIB                                           => 'clib';
+    push @EXPORT, qw(TESTDEF_CLIB);
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
@@ -51,11 +57,14 @@ use constant TESTDEF_VM                                             => 'vm';
     push @EXPORT, qw(TESTDEF_VM);
 
 # The test provides full coverage for the module
-use constant TESTDEF_COVERAGE_FULL                                  => true;
+use constant TESTDEF_COVERAGE_FULL                                  => 'full';
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
 # The test provides partial coverage for the module
-use constant TESTDEF_COVERAGE_PARTIAL                               => false;
+use constant TESTDEF_COVERAGE_PARTIAL                               => 'partial';
     push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
+# The module does not have any code so does not have any coverage.  An error will be thrown if the module has code in the future.
+use constant TESTDEF_COVERAGE_NOCODE                                => 'nocode';
+    push @EXPORT, qw(TESTDEF_COVERAGE_NOCODE);
 
 ################################################################################################################################
 # Code modules
@@ -89,6 +98,62 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'type',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'error',
+                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/error' => TESTDEF_COVERAGE_FULL,
+                        'common/errorType' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'mem-context',
+                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/memContext' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'encode',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/encode' => TESTDEF_COVERAGE_FULL,
+                        'common/encode/base64' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'encode-perl',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_CLIB => true,
+                },
+                {
+                    &TESTDEF_NAME => 'http-client',
+                    &TESTDEF_TOTAL => 2,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Http/Client' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'ini',
                     &TESTDEF_TOTAL => 10,
 
@@ -99,7 +164,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'io-handle',
-                    &TESTDEF_TOTAL => 7,
+                    &TESTDEF_TOTAL => 6,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -122,6 +187,34 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'Common/Io/Process' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'log',
+                    &TESTDEF_TOTAL => 1,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Common/Log' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+            ]
+        },
+        # PostgreSQL tests
+        {
+            &TESTDEF_NAME => 'postgres',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'page-checksum',
+                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'postgres/pageChecksum' => TESTDEF_COVERAGE_FULL,
                     },
                 },
             ]
@@ -147,6 +240,19 @@ my $oTestDef =
 
             &TESTDEF_TEST =>
             [
+                {
+                    &TESTDEF_NAME => 'rule',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'config/config' => TESTDEF_COVERAGE_NOCODE,
+                        'config/config.auto' => TESTDEF_COVERAGE_FULL,
+                        'config/configRule' => TESTDEF_COVERAGE_FULL,
+                        'config/configRule.auto' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 1,
@@ -234,6 +340,7 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'local',
                     &TESTDEF_TOTAL => 9,
+                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -322,6 +429,8 @@ my $oTestDef =
                         'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
                         'Archive/Push/Async' => TESTDEF_COVERAGE_FULL,
                         'Archive/Push/File' => TESTDEF_COVERAGE_FULL,
+                        'Protocol/Local/Master' => TESTDEF_COVERAGE_FULL,
+                        'Protocol/Local/Minion' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
@@ -435,11 +544,16 @@ my $oTestDef =
         # Performance tests
         {
             &TESTDEF_NAME => 'performance',
+            &TESTDEF_CONTAINER => true,
 
             &TESTDEF_TEST =>
             [
                 {
                     &TESTDEF_NAME => 'archive',
+                    &TESTDEF_TOTAL => 1,
+                },
+                {
+                    &TESTDEF_NAME => 'io',
                     &TESTDEF_TOTAL => 1,
                 },
             ]
@@ -474,7 +588,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_C, TESTDEF_CLIB, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
@@ -482,6 +596,14 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Set test count
         $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TOTAL} = $hModuleTest->{&TESTDEF_TOTAL};
+
+        # If this is a C test then add the test module to coverage
+        if ($hModuleTest->{&TESTDEF_C})
+        {
+            my $strTestFile = "module/${strModule}/${strTest}Test";
+
+            $hModuleTest->{&TESTDEF_COVERAGE}{$strTestFile} = TESTDEF_COVERAGE_FULL;
+        }
 
         # Concatenate coverage for modules and tests
         foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
@@ -501,9 +623,9 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
                 {
                     $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
                 }
-                elsif ($hCoverageType->{$strCodeModule} != $hCoverage->{$strCodeModule})
+                elsif ($hCoverageType->{$strCodeModule} ne $hCoverage->{$strCodeModule})
                 {
-                    confess &log(ASSERT, "cannot mix full/partial coverage for ${strCodeModule}");
+                    confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
                 }
 
                 # Add to coverage list

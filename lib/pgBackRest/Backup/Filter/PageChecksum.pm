@@ -2,6 +2,7 @@
 # Backup Page Checksum Filter
 ####################################################################################################################################
 package pgBackRest::Backup::Filter::PageChecksum;
+use parent 'pgBackRest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -35,8 +36,6 @@ if (libC())
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -45,7 +44,7 @@ sub new
     my
     (
         $strOperation,
-        $self,
+        $oParent,
         $iSegmentNo,
         $iWalId,
         $iWalOffset,
@@ -53,14 +52,14 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'self', trace => true},
+            {name => 'oParent', trace => true},
             {name => 'iSegmentNo', trace => true},
             {name => 'iWalId', trace => true},
             {name => 'iWalOffset', trace => true},
         );
 
     # Bless with new class
-    @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
+    my $self = $class->SUPER::new($oParent);
     bless $self, $class;
 
     # Set variables
@@ -90,7 +89,7 @@ sub read
     my $iSize = shift;
 
     # Call the io method
-    my $iActualSize = $self->SUPER::read($rtBuffer, $iSize);
+    my $iActualSize = $self->parent()->read($rtBuffer, $iSize);
 
     # Validate page checksums for the read block
     if ($iActualSize > 0)
@@ -172,7 +171,7 @@ sub close
         undef($self->{hResult});
 
         # Close io
-        return $self->SUPER::close();
+        return $self->parent()->close();
     }
 }
 

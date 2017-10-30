@@ -72,6 +72,7 @@ test.pl [options]
    --no-lint            disable static source code analysis
    --build-only         compile the C library / packages and run tests only
    --coverage-only      only run coverage tests (as a subset of selected tests)
+   --c-only             only run C tests
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
@@ -122,6 +123,7 @@ my $bVmForce = false;
 my $bNoLint = false;
 my $bBuildOnly = false;
 my $bCoverageOnly = false;
+my $bCOnly = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -154,6 +156,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-package' => \$bNoPackage,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
+            'c-only' => \$bCOnly,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'expect' => \$bExpect,
@@ -332,7 +335,11 @@ eval
                 push(@{$oyProcess}, undef);
             }
 
+
+            executeTest("sudo umount ${strTestPath}", {bSuppressError => true});
             executeTest("sudo rm -rf ${strTestPath}/*");
+            $oStorageTest->pathCreate($strTestPath, {strMode => '0770', bIgnoreExists => true});
+            executeTest("sudo mount -t tmpfs -o size=2560M test ${strTestPath}");
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
         }
 
@@ -345,7 +352,7 @@ eval
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
-            my @stryLibCSrcPath = ('build', 'doc', 'lib', 'libc', 'src');
+            my @stryLibCSrcPath = ('build', 'doc', 'libc', 'src', 'lib/pgBackRest/Config');
 
             # VM Info
             my $oVm = vmGet();
@@ -401,6 +408,10 @@ eval
                             {bSuppressStdErr => true});
                     }
 
+                    # Replace config path with base lib path for copy operation
+                    pop(@stryLibCSrcPath);
+                    push(@stryLibCSrcPath, 'lib');
+
                     foreach my $strLibCSrcPath (@stryLibCSrcPath)
                     {
                         $oStorageBackRest->pathCreate(
@@ -427,18 +438,31 @@ eval
                         }
                     }
 
+                    # CO7 LibC.xs needs to be patched to ignore maybe-uninitialized warnings due to issue in a Perl header:
+                    #     embed.h:609:37: warning: 'iv' may be used uninitialized in this function [-Wmaybe-uninitialized]
+                    #     #define sv_setiv(a,b)  Perl_sv_setiv(aTHX_ a,b)
+                    if ($strBuildVM eq VM_CO7)
+                    {
+                        my $strLibXsFile = "${strBuildPath}/LibC.xs";
+
+                        $oStorageBackRest->put(
+                            $strLibXsFile,
+                            "#pragma GCC diagnostic ignored \"-Wmaybe-uninitialized\"\n" .
+                            ${$oStorageBackRest->get($strLibXsFile)});
+                    }
+
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                        "make -C ${strBuildPath}",
-                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                            "make --silent --directory ${strBuildPath}",
+                        {bShowOutputAsync => $bLogDetail});
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
-                        "make -C ${strBuildPath} test",
-                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                            "make --silent --directory ${strBuildPath} test",
+                        {bShowOutputAsync => $bLogDetail});
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : 'sudo ') .
-                        "make -C ${strBuildPath} install",
-                        {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
+                            "make --silent --directory ${strBuildPath} install",
+                        {bShowOutputAsync => $bLogDetail});
 
                     if ($bContainerExists)
                     {
@@ -622,7 +646,7 @@ eval
         # Determine which tests to run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly);
+            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly, $bCOnly);
 
         if (@{$oyTestRun} == 0)
         {
@@ -687,9 +711,10 @@ eval
                     }
                 }
 
-                if ($iVmTotal == $iVmMax)
+                # Only wait when all VMs are running or all tests have been assigned.  Otherwise, there is something to do.
+                if ($iVmTotal == $iVmMax || $iTestIdx == @{$oyTestRun})
                 {
-                    waitHiRes(.1);
+                    waitHiRes(.05);
                 }
             }
             while ($iVmTotal == $iVmMax);
@@ -784,7 +809,7 @@ eval
 
                         if (@{$hCoverageList->{$strCodeModule}} == $iCoverageTotal)
                         {
-                            $hCoverageActual->{$strCodeModule} = $hCoverageType->{$strCodeModule};
+                            $hCoverageActual->{testRunName($strCodeModule, false)} = $hCoverageType->{$strCodeModule};
                         }
                     }
                 }
@@ -798,12 +823,53 @@ eval
                     &log(INFO, 'no code modules had all tests run required for coverage');
                 }
 
+                my $strPartialCoverage;
+
                 foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
                 {
+                    my $strCodeModulePath = "${strBackRestBase}/";
+
+                    # If the first char of the module is lower case when this is a c module
+                    if (substr($strCodeModule, 0, 1) eq lc(substr($strCodeModule, 0, 1)))
+                    {
+                        # If it ends with Test then it is a test modile
+                        if ($strCodeModule =~ /Test$/)
+                        {
+                            $strCodeModulePath .= "test/src/${strCodeModule}.c";
+                        }
+                        else
+                        {
+                            $strCodeModulePath .= "src/${strCodeModule}.c";
+                        }
+                    }
+                    # Else a Perl module
+                    else
+                    {
+                        $strCodeModulePath .= "lib/" . BACKREST_NAME . "/${strCodeModule}.pm"
+                    }
+
                     # Get summary results (??? Need to fix this for coverage testing on bin/pgbackrest since .pm is required)
-                    my $hCoverageResultAll =
-                        $hCoverageResult->{'summary'}
-                            {"${strBackRestBase}/lib/" . BACKREST_NAME . "/${strCodeModule}.pm"}{total};
+                    my $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
+
+                    # Try an extra / if the module is not found
+                    if (!defined($hCoverageResultAll))
+                    {
+                        $strCodeModulePath = "/${strCodeModulePath}";
+                        $hCoverageResultAll = $hCoverageResult->{'summary'}{$strCodeModulePath}{total};
+                    }
+
+                    # If module is marked as having no code
+                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_NOCODE)
+                    {
+                        # Error if it really does have coverage
+                        if ($hCoverageResultAll)
+                        {
+                            confess &log(ERROR, "module ${strCodeModule} is marked 'no code' but has code");
+                        }
+
+                        # Skip to next module
+                        next;
+                    }
 
                     if (!defined($hCoverageResultAll))
                     {
@@ -813,9 +879,9 @@ eval
                     # Check that all code has been covered
                     my $iCoverageTotal = $hCoverageResultAll->{total};
                     my $iCoverageUncoverable = coalesce($hCoverageResultAll->{uncoverable}, 0);
-                    my $iCoverageCovered = $hCoverageResultAll->{covered};
+                    my $iCoverageCovered = coalesce($hCoverageResultAll->{covered}, 0);
 
-                    if ($hCoverageActual->{$strCodeModule} == TESTDEF_COVERAGE_FULL)
+                    if ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_FULL)
                     {
                         my $iUncoveredLines = $iCoverageTotal - $iCoverageCovered - $iCoverageUncoverable;
 
@@ -825,8 +891,8 @@ eval
                             $iUncoveredCodeModuleTotal++;
                         }
                     }
-                    # Else test how much partial coverage where was
-                    else
+                    # Else test how much partial coverage there was
+                    elsif ($hCoverageActual->{$strCodeModule} eq TESTDEF_COVERAGE_PARTIAL)
                     {
                         my $iCoveragePercent = int(($iCoverageCovered + $iCoverageUncoverable) * 100 / $iCoverageTotal);
 
@@ -837,9 +903,16 @@ eval
                         }
                         else
                         {
-                            &log(INFO, "code module ${strCodeModule} has (expected) partial coverage of ${iCoveragePercent}%");
+                            $strPartialCoverage .=
+                                (defined($strPartialCoverage) ? ', ' : '') . "${strCodeModule} (${iCoveragePercent}%)";
                         }
                     }
+                }
+
+                # If any modules had partial coverage then display them
+                if (defined($strPartialCoverage))
+                {
+                    &log(INFO, "module (expected) partial coverage: ${strPartialCoverage}");
                 }
             }
         }
@@ -900,7 +973,7 @@ eval
 or do
 {
     # If a backrest exception then return the code
-    exit $EVAL_ERROR->code() if (isException($EVAL_ERROR));
+    exit $EVAL_ERROR->code() if (isException(\$EVAL_ERROR));
 
     # Else output the unhandled error
     syswrite(*STDOUT, $EVAL_ERROR);

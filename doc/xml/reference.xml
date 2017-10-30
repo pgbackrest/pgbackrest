@@ -10,7 +10,9 @@
         <config-section-list title="Settings">
             <!-- CONFIG - LOG -->
             <config-section id="log" name="Log">
-                <text>The <setting>log</setting> section defines logging-related settings.</text>
+                <text>The <setting>log</setting> section defines logging-related settings.
+
+                <b>IMPORTANT NOTE</b>: Trace-level logging may expose secrets such as keys and passwords.  Use with caution!</text>
 
                 <!-- CONFIG - LOG SECTION - LOG-LEVEL-FILE KEY -->
                 <config-key-list>
@@ -53,7 +55,7 @@
                     <config-key id="log-level-stderr" name="Std Error Log Level">
                         <summary>Level for stderr logging.</summary>
 
-                        <text>Specifies which log levels must will be output to <id>stderr</id> rather than <id>stdout</id> (specified by <br-option>log-level-console</br-option>).  The timestamp and process will not be output to <id>stderr</id>.
+                        <text>Specifies which log levels will output to <id>stderr</id> rather than <id>stdout</id> (specified by <br-option>log-level-console</br-option>).  The timestamp and process will not be output to <id>stderr</id>.
 
                         The following log levels are supported:
                         <ul>
@@ -193,7 +195,7 @@
                     <config-key id="protocol-timeout" name="Protocol Timeout">
                         <summary>Protocol timeout.</summary>
 
-                        <text>Sets the timeout, in seconds, that the master or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message.  The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</text>
+                        <text>Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message.  The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</text>
 
                         <example>630</example>
                     </config-key>
@@ -383,7 +385,7 @@
 
                         <text>This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive by storing the WAL segments directly in the backup.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
 
-                        Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in pg_xlog.  This will get the database cluster to a consistent state.</text>
+                        Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in <path>pg_xlog</path>/<path>pg_wal</path>.  This will get the database cluster to a consistent state.</text>
 
                         <example>y</example>
                     </config-key>
@@ -392,7 +394,7 @@
                     <config-key id="backup-standby" name="Backup from Standby">
                         <summary>Backup from the standby cluster.</summary>
 
-                        <text>Enable backup from standby to reduce load on the master cluster.  This option requires that both the <host>master</host> and <host>standby</host> hosts be configured.</text>
+                        <text>Enable backup from standby to reduce load on the primary cluster.  This option requires that both the <host>primary</host> and <host>standby</host> hosts be configured.</text>
 
                         <example>y</example>
                     </config-key>
@@ -626,7 +628,9 @@
 
             <!-- CONFIG - STANZA -->
             <config-section id="stanza" name="Stanza">
-                <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.</text>
+                <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
+
+                <b>Indexing</b>: All <setting>db-</setting> options can be indexed for configuring standby replicas. For example if a single standby replica is configured then index the <setting>db-</setting> options as <setting>db2-</setting> (e.g. db2-host, db2-path, etc). If an index is not specified (e.g. db-host) it will be aliased to <setting>db1-</setting> (e.g. db1-host).</text>
 
                 <config-key-list>
                     <!-- CONFIG - STANZA SECTION - DB-CMD KEY -->
@@ -777,7 +781,7 @@
 
                         <text>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster.  In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.
 
-                        The purpose of this option is to allow offline backups.  The <path>pg_xlog</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
+                        The purpose of this option is to allow offline backups.  The <path>pg_xlog</path>/<path>pg_wal</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</text>
 
                         <example>n</example>
                     </option>
@@ -829,9 +833,9 @@
             <command id="check" name="Check">
                 <summary>Check the configuration.</summary>
 
-                <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the database or the backup host.  The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code> cannot be performed on the standby, the command will only test the repository configuration.
+                <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the database or the backup host.  The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> cannot be performed on the standby, the command will only test the repository configuration.
 
-                Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code> are called to force <postgres/> to archive a WAL segment.  Restore points are only supported in <postgres/> &gt;= 9.1 so for older versions the <cmd>check</cmd> command may fail if there has been no write activity since the last log rotation, therefore it is recommended that activity be generated by the user if there have been no writes since the last xlog switch before running the <cmd>check</cmd> command.</text>
+                Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> are called to force <postgres/> to archive a WAL segment.  Restore points are only supported in <postgres/> &gt;= 9.1 so for older versions the <cmd>check</cmd> command may fail if there has been no write activity since the last log rotation, therefore it is recommended that activity be generated by the user if there have been no writes since the last WAL switch before running the <cmd>check</cmd> command.</text>
 
                 <option-list>
                     <!-- ======================================================================================================= -->
@@ -915,7 +919,7 @@
                             <li><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</li>
                             <li><id>time</id> - recover to the time specified in <br-option>--target</br-option>.</li>
                             <li><id>preserve</id> - preserve the existing <file>recovery.conf</file> file.</li>
-                            <li><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>.  Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</li>
+                            <li><id>none</id> - no <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>.  Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</li>
                         </ul></text>
                         <example>xid</example>
                     </option>

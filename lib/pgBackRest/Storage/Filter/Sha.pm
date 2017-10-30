@@ -2,6 +2,7 @@
 # SHA Filter
 ####################################################################################################################################
 package pgBackRest::Storage::Filter::Sha;
+use parent 'pgBackRest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -23,8 +24,6 @@ use constant STORAGE_FILTER_SHA                                     => __PACKAGE
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -33,18 +32,18 @@ sub new
     my
     (
         $strOperation,
-        $self,
+        $oParent,
         $strAlgorithm,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'self', trace => true},
+            {name => 'oParent', trace => true},
             {name => 'strAlgorithm', optional => true, default => 'sha1', trace => true},
         );
 
     # Bless with new class
-    @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
+    my $self = $class->SUPER::new($oParent);
     bless $self, $class;
 
     # Set variables
@@ -72,7 +71,7 @@ sub read
 
     # Call the io method
     my $tShaBuffer;
-    my $iActualSize = $self->SUPER::read(\$tShaBuffer, $iSize);
+    my $iActualSize = $self->parent()->read(\$tShaBuffer, $iSize);
 
     # Calculate sha for the returned buffer
     if ($iActualSize > 0)
@@ -97,7 +96,7 @@ sub write
     $self->{oSha}->add($$rtBuffer);
 
     # Call the io method
-    return $self->SUPER::write($rtBuffer);
+    return $self->parent()->write($rtBuffer);
 }
 
 ####################################################################################################################################
@@ -116,8 +115,10 @@ sub close
         delete($self->{oSha});
 
         # Close io
-        return $self->SUPER::close();
+        return $self->parent->close();
     }
+
+    return false;
 }
 
 1;

@@ -28,6 +28,7 @@ my $oStorage = new pgBackRest::Storage::Local(
 ####################################################################################################################################
 # Build C files required for the library
 ####################################################################################################################################
+use pgBackRestBuild::CodeGen::Common;
 use pgBackRestBuild::Build;
 
 my $rhBuild = buildAll($strBuildPath);
@@ -100,6 +101,17 @@ my $rhExport =
             libCVersion
         )],
     },
+
+    'encode' =>
+    {
+        &BLD_EXPORTTYPE_CONSTANT => [qw(
+            ENCODE_TYPE_BASE64
+        )],
+
+        &BLD_EXPORTTYPE_SUB => [qw(
+            encodeToStr decodeToBin
+        )],
+    },
 };
 
 ####################################################################################################################################
@@ -139,6 +151,12 @@ sub formatText
 
 # Build file
 {
+    my $strLibC = ${$oStorage->get('libc/' . LIB_NAME . '.template.pm')};
+
+    # Generate auto-build warning
+    my $strAutoWarning = cgenAutoWarning('Makefile.PL');
+    $strLibC =~ s/\{\[LIBC\_AUTO\_WARNING\]\}/$strAutoWarning/g;
+
     # Get current version
     my $strVersion = BACKREST_VERSION;
     my $bDev = false;
@@ -149,32 +167,11 @@ sub formatText
         $bDev = true;
     }
 
-    my $strLibC =
-        'package ' . BACKREST_NAME . '::' . LIB_NAME . ";\n" .
-        "\n" .
-        "use 5.010001;\n" .
-        "use strict;\n" .
-        "use warnings;\n" .
-        "use Carp;\n" .
-        "\n" .
-        "require Exporter;\n" .
-        "use AutoLoader;\n" .
-        "\n" .
-        "our \@ISA = qw(Exporter);\n" .
-        "\n" .
-        '# Library version' . ($bDev ? " (.999 indicates development version)" : '') . "\n" .
-        "our \$VERSION = '${strVersion}';\n" .
-        "\n" .
-        "sub libCVersion {return \$VERSION};\n";
+    $strLibC =~ s/\{\[LIBC\_VERSION\]\}/$strVersion/g;
 
     # Generate constants for options that have a list of strings as allowed values
-    my $bFirst = true;
     my $rhOptionRule = cfgdefRule();
-
-    $strLibC .=
-        "\n# Configuration option value constants\n" .
-        "use constant\n" .
-        "{\n";
+    my $strConstantBlock;
 
     foreach my $strOption (sort(keys(%{$rhOptionRule})))
     {
@@ -185,15 +182,14 @@ sub formatText
 
         if (defined($rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}))
         {
-            $strLibC .= $bFirst ? '' : "\n";
-            $bFirst = false;
+            $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
 
             foreach my $strValue (@{$rhOption->{&CFGBLDDEF_RULE_ALLOW_LIST}})
             {
                 my $strConstant = 'CFGOPTVAL_' . uc("${strOption}_${strValue}");
                 $strConstant =~ s/\-/\_/g;
 
-                $strLibC .= "    ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> '${strValue}',\n";
+                $strConstantBlock .= "    ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> '${strValue}',\n";
                 push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
             }
         }
@@ -204,32 +200,24 @@ sub formatText
 
             if (defined($rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}))
             {
-                $strLibC .= $bFirst ? '' : "\n";
-                $bFirst = false;
+                $strConstantBlock .= defined($strConstantBlock) ? "\n" : '';
 
                 foreach my $strValue (@{$rhCommand->{&CFGBLDDEF_RULE_ALLOW_LIST}})
                 {
                     my $strConstant = 'CFGOPTVAL_' . uc("${strCommand}_${strOption}_${strValue}");
                     $strConstant =~ s/\-/\_/g;
 
-                    $strLibC .= "    ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> '${strValue}',\n";
+                    $strConstantBlock .= "    ${strConstant}" . (' ' x (69 - length($strConstant) - 4)) . "=> '${strValue}',\n";
                     push(@{$rhExport->{'config'}{&BLD_EXPORTTYPE_CONSTANT}}, $strConstant);
                 }
             }
         }
     }
 
-    $strLibC .=
-        "};\n";
+    $strConstantBlock = trim($strConstantBlock);
+    $strLibC =~ s/\{\[LIBC\_CONSTANT\]\}/$strConstantBlock/g;
 
     # Generate export sections
-    $bFirst = true;
-
-    $strLibC .=
-        "\n# Export function and constants\n" .
-        "our \%EXPORT_TAGS =\n" .
-        "(\n";
-
     foreach my $strPath (sort(keys(%{$rhBuild})))
     {
         foreach my $strFile (sort(keys(%{$rhBuild->{$strPath}{&BLD_FILE}})))
@@ -253,69 +241,41 @@ sub formatText
         }
     }
 
+    # Generate export tags
+    my $strExportTags;
+
     foreach my $strSection (sort(keys(%{$rhExport})))
     {
         my $rhExportSection = $rhExport->{$strSection};
 
-        $strLibC .= ($bFirst ? '' : "\n") . "    '${strSection}' => [qw(\n";
+        $strExportTags .= (defined($strExportTags) ? "\n" : '') . "    '${strSection}' => [qw(\n";
 
         if (defined($rhExportSection->{&BLD_EXPORTTYPE_CONSTANT}) && @{$rhExportSection->{&BLD_EXPORTTYPE_CONSTANT}} > 0)
         {
-            $strLibC .= formatText(join(' ', sort(@{$rhExportSection->{&BLD_EXPORTTYPE_CONSTANT}})), 132, 8) . "\n";
+            $strExportTags .= formatText(join(' ', sort(@{$rhExportSection->{&BLD_EXPORTTYPE_CONSTANT}})), 132, 8) . "\n";
         }
 
         if (defined($rhExportSection->{&BLD_EXPORTTYPE_SUB}) && @{$rhExportSection->{&BLD_EXPORTTYPE_SUB}} > 0)
         {
-            $strLibC .= formatText(join(' ', sort(@{$rhExportSection->{&BLD_EXPORTTYPE_SUB}})), 132, 8) . "\n";
+            $strExportTags .= formatText(join(' ', sort(@{$rhExportSection->{&BLD_EXPORTTYPE_SUB}})), 132, 8) . "\n";
         }
 
-        $strLibC .= "    )],\n";
-        $bFirst = false;
+        $strExportTags .= "    )],\n";
     }
 
-    $strLibC .=
-        ");\n" .
-        "\n" .
-        "our \@EXPORT_OK = (\n";
+    $strExportTags = trim($strExportTags);
+    $strLibC =~ s/\{\[LIBC\_EXPORT\_TAGS\]\}/$strExportTags/g;
+
+    # Generate export ok
+    my $strExportOk;
 
     foreach my $strSection (sort(keys(%{$rhExport})))
     {
-        $strLibC .= "    \@{\$EXPORT_TAGS{'${strSection}'}},\n";
+        $strExportOk .= "    \@{\$EXPORT_TAGS{'${strSection}'}},\n";
     }
 
-    $strLibC .=
-        ");\n" .
-        "\n" .
-        "# Nothing is exported by default\n" .
-        "our \@EXPORT = qw();\n" .
-        "\n" .
-        "# Autoload constants from the constant() XS function\n" .
-        "sub AUTOLOAD\n" .
-        "{\n" .
-        "    my \$strConstantFunctionName;\n" .
-        "    our \$AUTOLOAD;\n" .
-        "\n" .
-        "    (\$strConstantFunctionName = \$AUTOLOAD) =~ s/.*:://;\n" .
-        "\n" .
-        '    croak "&' . BACKREST_NAME . '::' . LIB_NAME . "::constant not defined\"\n" .
-        "        if \$strConstantFunctionName eq 'constant';\n" .
-        "    my (\$error, \$val) = constant(\$strConstantFunctionName);\n" .
-        "    if (\$error) {croak \$error;}\n" .
-        "\n" .
-        "    {\n" .
-        "        no strict 'refs';\n" .
-        "        *\$AUTOLOAD = sub {\$val};\n" .
-        "    }\n" .
-        "\n" .
-        "    goto &\$AUTOLOAD;\n" .
-        "}\n" .
-        "\n" .
-        "require XSLoader;\n" .
-        "XSLoader::load('" . BACKREST_NAME . '::' . LIB_NAME . "', \$VERSION);\n" .
-        "\n" .
-        "1;\n" .
-        "__END__\n";
-
+    $strExportOk = trim($strExportOk);
+    $strLibC =~ s/\{\[LIBC\_EXPORT\_OK\]\}/$strExportOk/g;
 
     my $strLibFile = 'libc/lib/' . BACKREST_NAME . '/' . LIB_NAME . '.pm';
     $oStorage->pathCreate(dirname($strLibFile), {bCreateParent => true, bIgnoreExists => true});
@@ -360,6 +320,17 @@ sub formatText
 ####################################################################################################################################
 use ExtUtils::MakeMaker;
 
+# Create C files array
+my @stryCFile = qw(LibC.c);
+
+foreach my $strFile (sort(keys(%{$oStorage->manifest('src')})))
+{
+    # Skip all files except .c files (including .auto.c)
+    next if $strFile !~ /(?<!\.auto)\.c$/;
+
+    push(@stryCFile, "../src/${strFile}");
+}
+
 WriteMakefile
 (
     NAME => BACKREST_NAME . '::LibC',
@@ -380,12 +351,9 @@ WriteMakefile
         -I../src
     )),
 
-    C => [qw(
-        LibC.c
-        ../src/config/config.c
-        ../src/config/configRule.c
-        ../src/postgres/pageChecksum.c
-    )],
+    PM => {('lib/' . BACKREST_NAME . '/' . LIB_NAME . '.pm') => ('$(INST_LIB)/' . BACKREST_NAME . '/' . LIB_NAME . '.pm')},
+
+    C => \@stryCFile,
 
     OBJECT => '$(O_FILES)',
 );

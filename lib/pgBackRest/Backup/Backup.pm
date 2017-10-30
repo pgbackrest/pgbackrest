@@ -347,8 +347,9 @@ sub processManifest
             [$strDbFile, $strRepoFile, $lSize,
                 $oBackupManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_CHECKSUM, false),
                 cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
-                $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_TIMESTAMP, false),
-                $bIgnoreMissing, cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
+                cfgOption(CFGOPT_COMPRESS_LEVEL), $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile,
+                MANIFEST_SUBKEY_TIMESTAMP, false), $bIgnoreMissing,
+                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
 
         # Size and checksum will be removed and then verified later as a sanity check
         $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
@@ -452,8 +453,8 @@ sub process
         $self->{iCopyRemoteIdx} = $self->{iMasterRemoteIdx};
     }
 
-    # If backup from standby option is set but we could not get the standby object then, turn off CFGOPT_BACKUP_STANDBY & warn that
-    # backups will be performed from the master.
+    # If backup from standby option is set but a standby was not configured in the config file or on the command line, then turn off
+    # CFGOPT_BACKUP_STANDBY & warn that backups will be performed from the master.
     if (!defined($oDbStandby) && cfgOption(CFGOPT_BACKUP_STANDBY))
     {
         cfgOptionSet(CFGOPT_BACKUP_STANDBY, false);
@@ -642,7 +643,8 @@ sub process
     }
 
     # Declare the backup manifest
-    my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST, false);
+    my $oBackupManifest = new pgBackRest::Manifest(
+        "$strBackupPath/" . FILE_MANIFEST, {bLoad => false, strDbVersion => $strDbVersion});
 
     # Backup settings
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
@@ -659,7 +661,6 @@ sub process
 
     # Database settings
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, $iDbHistoryId);
-    $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iControlVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
     $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $ullDbSysId);
@@ -790,7 +791,7 @@ sub process
     $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_CHECKSUM_PAGE, undef, cfgOption(CFGOPT_CHECKSUM_PAGE));
 
     # Build the manifest
-    $oBackupManifest->build($oStorageDbMaster, $strDbVersion, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
+    $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
                             $hTablespaceMap, $hDatabaseMap);
     &log(TEST, TEST_MANIFEST_BUILD);
 
@@ -889,7 +890,9 @@ sub process
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = walSegmentFind($oStorageRepo, $strArchiveId, $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
+            my $strArchiveFile = walSegmentFind(
+                $oStorageRepo, $strArchiveId, substr($strArchiveStop, 0, 8) . $strArchive, cfgOption(CFGOPT_ARCHIVE_TIMEOUT));
+
             $strArchive = substr($strArchiveFile, 0, 24);
 
             if (cfgOption(CFGOPT_ARCHIVE_COPY))
@@ -901,11 +904,11 @@ sub process
 
                 $oStorageRepo->copy(
                     STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
-                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . "/pg_xlog/${strArchive}" .
-                        ($bCompress ? qw{.} . COMPRESS_EXT : ''));
+                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath() .
+                        "/${strArchive}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''));
 
                 # Add the archive file to the manifest so it can be part of the restore and checked in validation
-                my $strPathLog = MANIFEST_TARGET_PGDATA . '/pg_xlog';
+                my $strPathLog = MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath();
                 my $strFileLog = "${strPathLog}/${strArchive}";
 
                 # Add file to manifest

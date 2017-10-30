@@ -26,9 +26,11 @@ sub cgenLookupString
     my $rhValue = shift;
     my $strFilter = shift;
 
+    my $strLowerName = lc($strName);
+
     # Generate list of command strings
     my $strFunction =
-        "const char *szy${strName}Name[${strTotal}] = \n" .
+        "const char *${strLowerName}NameList[${strTotal}] = \n" .
         "{\n";
 
     my $bFirst = true;
@@ -46,12 +48,12 @@ sub cgenLookupString
 
     $strFunction .=
         "const char *\n" .
-        "cfg${strName}Name(uint32 ui${strName}Id)\n" .
+        "cfg${strName}Name(int ${strLowerName}Id)\n" .
         "{\n" .
-        "    if (ui${strName}Id >= ${strTotal})\n" .
+        "    if (${strLowerName}Id < 0 || ${strLowerName}Id >= ${strTotal})\n" .
         "        return NULL;\n" .
         "\n" .
-        "    return szy${strName}Name[ui${strName}Id];\n" .
+        "    return ${strLowerName}NameList[${strLowerName}Id];\n" .
         "}\n";
 
     return $strFunction;
@@ -67,13 +69,15 @@ sub cgenLookupId
     my $strName = shift;
     my $strTotal = shift;
 
+    my $strLowerName = lc($strName);
+
     my $strFunction =
-        "int32\n" .
-        "cfg${strName}Id(const char *sz${strName}Name)\n" .
+        "int\n" .
+        "cfg${strName}Id(const char *${strLowerName}Name)\n" .
         "{\n" .
-        "    for (uint32 uiIndex = 0; uiIndex < ${strTotal}; uiIndex++)\n" .
-        "        if (strcmp(sz${strName}Name, cfg${strName}Name(uiIndex)) == 0)\n" .
-        "            return uiIndex;\n" .
+        "    for (int nameIdx = 0; nameIdx < ${strTotal}; nameIdx++)\n" .
+        "        if (strcmp(${strLowerName}Name, cfg${strName}Name(nameIdx)) == 0)\n" .
+        "            return nameIdx;\n" .
         "\n" .
         "    return -1;\n" .
         "}\n";

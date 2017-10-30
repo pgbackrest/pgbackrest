@@ -2,6 +2,7 @@
 # HTTP Client
 ####################################################################################################################################
 package pgBackRest::Common::Http::Client;
+use parent 'pgBackRest::Common::Io::Buffered';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -29,16 +30,14 @@ use constant HTTP_VERB_POST                                         => 'POST';
 use constant HTTP_VERB_PUT                                          => 'PUT';
     push @EXPORT, qw(HTTP_VERB_PUT);
 
-use constant HTTP_HEADER_CONTENT_LENGTH                               => 'content-length';
+use constant HTTP_HEADER_CONTENT_LENGTH                             => 'content-length';
     push @EXPORT, qw(HTTP_HEADER_CONTENT_LENGTH);
-use constant HTTP_HEADER_TRANSFER_ENCODING                            => 'transfer-encoding';
+use constant HTTP_HEADER_TRANSFER_ENCODING                          => 'transfer-encoding';
     push @EXPORT, qw(HTTP_HEADER_TRANSFER_ENCODING);
 
 ####################################################################################################################################
 # new
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -54,7 +53,9 @@ sub new
         $hQuery,
         $hRequestHeader,
         $rstrRequestBody,
+        $bResponseBodyPrefetch,
         $iProtocolTimeout,
+        $iTryTotal,
         $lBufferMax,
         $bVerifySsl,
         $strCaPath,
@@ -70,138 +71,179 @@ sub new
             {name => 'hQuery', optional => true, trace => true},
             {name => 'hRequestHeader', optional => true, trace => true},
             {name => 'rstrRequestBody', optional => true, trace => true},
-            {name => 'iProtocolTimeout', optional => true, default => 30, trace => true},
+            {name => 'bResponseBodyPrefetch', optional => true, default => false, trace => true},
+            {name => 'iProtocolTimeout', optional => true, default => 300, trace => true},
+            {name => 'iTryTotal', optional => true, default => 3, trace => true},
             {name => 'lBufferMax', optional => true, default => 32768, trace => true},
             {name => 'bVerifySsl', optional => true, default => true, trace => true},
             {name => 'strCaPath', optional => true, trace => true},
             {name => 'strCaFile', optional => true, trace => true},
         );
 
-    # Connect to the server
-    my $oSocket;
+    # Retry as many times as requested
+    my $self;
+    my $iTry = 1;
+    my $bRetry;
 
-    eval
+    do
     {
-        $oSocket = IO::Socket::SSL->new(
-            PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
-            SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile);
+        # Disable logging if a failure will be retried
+        logDisable() if $iTry < $iTryTotal;
+        $bRetry = false;
 
-        return 1;
-    }
-    or do
-    {
-        logErrorResult(ERROR_HOST_CONNECT, $EVAL_ERROR);
-    };
-
-    # Check for errors
-    if (!defined($oSocket))
-    {
-        logErrorResult(
-            ERROR_HOST_CONNECT, coalesce(length($!) == 0 ? undef : $!, $SSL_ERROR), length($!) > 0 ? $SSL_ERROR : undef);
-    }
-
-    # Create the buffered IO object
-    my $self = new pgBackRest::Common::Io::Buffered(
-        new pgBackRest::Common::Io::Handle('httpClient', $oSocket, $oSocket), $iProtocolTimeout, $lBufferMax);
-
-    # Bless with the class
-    @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
-    bless $self, $class;
-
-    # Store socket
-    $self->{oSocket} = $oSocket;
-
-    # Generate the query string
-    my $strQuery = httpQuery($hQuery);
-
-    # Construct the request headers
-    $self->{strRequestHeader} = "${strVerb} ${strUri}?${strQuery} HTTP/1.1" . "\r\n";
-
-    foreach my $strHeader (sort(keys(%{$hRequestHeader})))
-    {
-        $self->{strRequestHeader} .= "${strHeader}: $hRequestHeader->{$strHeader}\r\n";
-    }
-
-    $self->{strRequestHeader} .= "\r\n";
-
-    # Write request headers
-    $self->write(\$self->{strRequestHeader});
-
-    # Write content
-    if (defined($rstrRequestBody))
-    {
-        my $iTotalSize = length($$rstrRequestBody);
-        my $iTotalSent = 0;
-
-        # Write the request body in buffer-sized chunks
-        do
+        eval
         {
-            my $strBufferWrite = substr($$rstrRequestBody, $iTotalSent, $lBufferMax);
-            $iTotalSent += $self->write(\$strBufferWrite);
-        } while ($iTotalSent < $iTotalSize);
-    }
+            # Connect to the server
+            my $oSocket;
 
-    # Read response code
-    ($self->{strResponseProtocol}, $self->{iResponseCode}, $self->{strResponseMessage}) = split(' ', trim($self->readLine()));
-
-    # Read the response headers
-    $self->{iContentLength} = undef;
-
-    $self->{strResponseHeader} = '';
-    my $strHeader = trim($self->readLine());
-
-    while ($strHeader ne '')
-    {
-        # Validate header
-        $self->{strResponseHeader} .= "${strHeader}\n";
-
-        my $iColonPos = index($strHeader, ':');
-
-        if ($iColonPos == -1)
-        {
-            confess &log(ERROR, "http header '${strHeader}' requires colon separator", ERROR_PROTOCOL);
-        }
-
-        # Parse header
-        my $strHeaderKey = lc(substr($strHeader, 0, $iColonPos));
-        my $strHeaderValue = trim(substr($strHeader, $iColonPos + 1));
-
-        # Store the header
-        $self->{hResponseHeader}{$strHeaderKey} = $strHeaderValue;
-
-        # Process content length
-        if ($strHeaderKey eq HTTP_HEADER_CONTENT_LENGTH)
-        {
-            $self->{iContentLength} = $strHeaderValue + 0;
-            $self->{iContentRemaining} = $self->{iContentLength};
-        }
-        # Process transfer encoding (only chunked is supported)
-        elsif ($strHeaderKey eq HTTP_HEADER_TRANSFER_ENCODING)
-        {
-            if ($strHeaderValue eq 'chunked')
+            eval
             {
-                $self->{iContentLength} = -1;
+                $oSocket = IO::Socket::SSL->new(
+                    PeerHost => $strHost, PeerPort => $iPort, SSL_verify_mode => $bVerifySsl ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
+                    SSL_ca_path => $strCaPath, SSL_ca_file => $strCaFile);
+
+                return 1;
             }
-            else
+            or do
             {
-                confess &log(ERROR, "invalid value '${strHeaderValue} for http header '${strHeaderKey}'", ERROR_PROTOCOL);
+                logErrorResult(ERROR_HOST_CONNECT, $EVAL_ERROR);
+            };
+
+            # Check for errors
+            if (!defined($oSocket))
+            {
+                logErrorResult(
+                    ERROR_HOST_CONNECT, coalesce(length($!) == 0 ? undef : $!, $SSL_ERROR), length($!) > 0 ? $SSL_ERROR : undef);
             }
+
+            # Bless with new class
+            $self = $class->SUPER::new(
+                new pgBackRest::Common::Io::Handle('httpClient', $oSocket, $oSocket), $iProtocolTimeout, $lBufferMax);
+            bless $self, $class;
+
+            # Store socket
+            $self->{oSocket} = $oSocket;
+
+            # Generate the query string
+            my $strQuery = httpQuery($hQuery);
+
+            # Construct the request headers
+            $self->{strRequestHeader} = "${strVerb} ${strUri}?${strQuery} HTTP/1.1" . "\r\n";
+
+            foreach my $strHeader (sort(keys(%{$hRequestHeader})))
+            {
+                $self->{strRequestHeader} .= "${strHeader}: $hRequestHeader->{$strHeader}\r\n";
+            }
+
+            $self->{strRequestHeader} .= "\r\n";
+
+            # Write request headers
+            $self->write(\$self->{strRequestHeader});
+
+            # Write content
+            if (defined($rstrRequestBody))
+            {
+                my $iTotalSize = length($$rstrRequestBody);
+                my $iTotalSent = 0;
+
+                # Write the request body in buffer-sized chunks
+                do
+                {
+                    my $strBufferWrite = substr($$rstrRequestBody, $iTotalSent, $lBufferMax);
+                    $iTotalSent += $self->write(\$strBufferWrite);
+                } while ($iTotalSent < $iTotalSize);
+            }
+
+            # Read response code
+            ($self->{strResponseProtocol}, $self->{iResponseCode}, $self->{strResponseMessage}) =
+                split(' ', trim($self->readLine()));
+
+            # Read the response headers
+            $self->{iContentLength} = undef;
+
+            $self->{strResponseHeader} = '';
+            my $strHeader = trim($self->readLine());
+
+            while ($strHeader ne '')
+            {
+                # Validate header
+                $self->{strResponseHeader} .= "${strHeader}\n";
+
+                my $iColonPos = index($strHeader, ':');
+
+                if ($iColonPos == -1)
+                {
+                    confess &log(ERROR, "http header '${strHeader}' requires colon separator", ERROR_PROTOCOL);
+                }
+
+                # Parse header
+                my $strHeaderKey = lc(substr($strHeader, 0, $iColonPos));
+                my $strHeaderValue = trim(substr($strHeader, $iColonPos + 1));
+
+                # Store the header
+                $self->{hResponseHeader}{$strHeaderKey} = $strHeaderValue;
+
+                # Process content length
+                if ($strHeaderKey eq HTTP_HEADER_CONTENT_LENGTH)
+                {
+                    $self->{iContentLength} = $strHeaderValue + 0;
+                    $self->{iContentRemaining} = $self->{iContentLength};
+                }
+                # Process transfer encoding (only chunked is supported)
+                elsif ($strHeaderKey eq HTTP_HEADER_TRANSFER_ENCODING)
+                {
+                    if ($strHeaderValue eq 'chunked')
+                    {
+                        $self->{iContentLength} = -1;
+                    }
+                    else
+                    {
+                        confess &log(ERROR, "invalid value '${strHeaderValue} for http header '${strHeaderKey}'", ERROR_PROTOCOL);
+                    }
+                }
+
+                # Read next header
+                $strHeader = trim($self->readLine());
+            }
+
+            # Test response code
+            if ($self->{iResponseCode} == 200)
+            {
+                # Content length should have been defined either by content-length or transfer encoding
+                if (!defined($self->{iContentLength}))
+                {
+                    confess &log(ERROR,
+                        HTTP_HEADER_CONTENT_LENGTH . ' or ' . HTTP_HEADER_TRANSFER_ENCODING . ' must be defined', ERROR_PROTOCOL);
+                }
+            }
+
+            # Prefetch response - mostly useful when the response is known to be short
+            if ($bResponseBodyPrefetch)
+            {
+                $self->{strResponseBody} = $self->responseBody();
+            }
+
+            # Enable logging if a failure will be retried
+            logEnable() if $iTry < $iTryTotal;
+            return 1;
         }
-
-        # Read next header
-        $strHeader = trim($self->readLine());
-    }
-
-    # Test response code
-    if ($self->{iResponseCode} == 200)
-    {
-        # Content length should have been defined either by content-length or transfer encoding
-        if (!defined($self->{iContentLength}))
+        or do
         {
-            confess &log(ERROR,
-                HTTP_HEADER_CONTENT_LENGTH . ' or ' . HTTP_HEADER_TRANSFER_ENCODING . ' must be defined', ERROR_PROTOCOL);
-        }
+            # Enable logging if a failure will be retried
+            logEnable() if $iTry < $iTryTotal;
+
+            # If tries reaches total allowed then error
+            if ($iTry == $iTryTotal)
+            {
+                confess $EVAL_ERROR;
+            }
+
+            # Try again
+            $iTry++;
+            $bRetry = true;
+        };
     }
+    while ($bRetry);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -261,24 +303,36 @@ sub responseBody
             __PACKAGE__ . '->responseBody'
         );
 
+    # Return prefetched response body if it exists
+    return $self->{strResponseBody} if exists($self->{strResponseBody});
+
+    # Fetch response body if content length is not 0
     my $strResponseBody = undef;
 
-    # Nothing to do if content length is 0
     if ($self->{iContentLength} != 0)
     {
-        while (1)
+        # Transfer encoding is chunked
+        if ($self->{iContentLength} == -1)
         {
-            # Read chunk length
-            my $strChunkLength = trim($self->readLine());
-            my $iChunkLength = hex($strChunkLength);
+            while (1)
+            {
+                # Read chunk length
+                my $strChunkLength = trim($self->readLine());
+                my $iChunkLength = hex($strChunkLength);
 
-            # Exit if chunk length is 0
-            last if ($iChunkLength == 0);
+                # Exit if chunk length is 0
+                last if ($iChunkLength == 0);
 
-            # Read the chunk and consume the terminating LF
-            $self->SUPER::read(\$strResponseBody, $iChunkLength, true);
-            $self->readLine();
-        };
+                # Read the chunk and consume the terminating LF
+                $self->SUPER::read(\$strResponseBody, $iChunkLength, true);
+                $self->readLine();
+            };
+        }
+        # Else content length is known
+        else
+        {
+            $self->SUPER::read(\$strResponseBody, $self->{iContentLength}, true);
+        }
 
         $self->close();
     }

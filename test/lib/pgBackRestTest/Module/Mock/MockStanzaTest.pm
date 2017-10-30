@@ -80,14 +80,14 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('already up to date', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
-        # Create the xlog path
-        my $strXlogPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        storageDb()->pathCreate($strXlogPath, {bCreateParent => true});
+        # Create the wal path
+        my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
+        storageDb()->pathCreate($strWalPath, {bCreateParent => true});
 
         # Stanza Create fails - missing archive.info from non-empty archive dir
         #--------------------------------------------------------------------------------------------------------------------------
         # Generate WAL then push to get valid archive data in the archive directory
-        my ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strXlogPath, 1, 1, WAL_VERSION_93);
+        my ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strWalPath, 1, 1, WAL_VERSION_93);
         my $strCommand = $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
             ' --stanza=db archive-push';
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
@@ -216,7 +216,7 @@ sub run
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # Fail on attempt to push an archive
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
@@ -226,7 +226,7 @@ sub run
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------
         # Push a WAL segment so have a valid file in the latest DB archive dir only
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1);
         $self->testResult(
             sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-2/0000000100000001')},
             "000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27." . COMPRESS_EXT,
@@ -291,7 +291,7 @@ sub run
 
         # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->archivePush($strXlogPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
 
         # Test backup is changed from type=DIFF to FULL (WARN message displayed)
         my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',

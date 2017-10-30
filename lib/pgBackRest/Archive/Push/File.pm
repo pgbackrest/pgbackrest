@@ -131,6 +131,7 @@ sub archivePushFile
         $strWalPath,
         $strWalFile,
         $bCompress,
+        $iCompressLevel,
     ) =
         logDebugParam
         (
@@ -138,6 +139,7 @@ sub archivePushFile
             {name => 'strWalPath'},
             {name => 'strWalFile'},
             {name => 'bCompress'},
+            {name => 'iCompressLevel'},
         );
 
     # Get cluster info from the WAL
@@ -175,10 +177,17 @@ sub archivePushFile
             }
         }
 
+        # Add compression
+        my $rhyFilter;
+
+        if (walIsSegment($strWalFile) && $bCompress)
+        {
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => $iCompressLevel}]});
+        }
+
         # Copy
         $oStorageRepo->copy(
-            storageDb()->openRead("${strWalPath}/${strWalFile}",
-                {rhyFilter => walIsSegment($strWalFile) && $bCompress ? [{strClass => STORAGE_FILTER_GZIP}] : undef}),
+            storageDb()->openRead("${strWalPath}/${strWalFile}", {rhyFilter => $rhyFilter}),
             $oStorageRepo->openWrite(
                 STORAGE_REPO_ARCHIVE . "/${strArchiveFile}",
                 {bPathCreate => true, bAtomic => true, bProtocolCompress => !walIsSegment($strWalFile) || !$bCompress}));

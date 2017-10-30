@@ -55,15 +55,15 @@ sub new
     # Create JSON object
     $self->{oJSON} = JSON::PP->new()->allow_nonref();
 
-    # Check greeting to be sure the protocol matches
-    $self->greetingRead();
-
     # Setup the keepalive timer
     $self->{fKeepAliveTimeout} = $self->io()->timeout() / 2 > 120 ? 120 : $self->io()->timeout() / 2;
     $self->{fKeepAliveTime} = gettimeofday();
 
     # Set the error prefix used when raising error messages
-    $self->{strErrorPrefix} = 'raised on ' . $self->{strId} . ' host';
+    $self->{strErrorPrefix} = 'raised from ' . $self->{strId};
+
+    # Check greeting to be sure the protocol matches
+    $self->greetingRead();
 
     # Return from function and log return values if any
     return logDebugReturn

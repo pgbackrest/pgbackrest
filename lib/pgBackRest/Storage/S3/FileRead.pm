@@ -2,7 +2,7 @@
 # S3 File Read
 ####################################################################################################################################
 package pgBackRest::Storage::S3::FileRead;
-use parent 'pgBackRest::Common::Io::Base';
+use parent 'pgBackRest::Common::Http::Client';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -22,8 +22,6 @@ use pgBackRest::Storage::S3::Request;
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -51,7 +49,6 @@ sub new
     # Bless with new class if file exists
     if (defined($self))
     {
-        @ISA = $self->isA();                                        ## no critic (ClassHierarchies::ProhibitExplicitISA)
         bless $self, $class;
     }
 
@@ -62,5 +59,10 @@ sub new
         {name => 'self', value => $self, trace => true}
     );
 }
+
+####################################################################################################################################
+# Getters
+####################################################################################################################################
+sub name {shift->{strName}}
 
 1;

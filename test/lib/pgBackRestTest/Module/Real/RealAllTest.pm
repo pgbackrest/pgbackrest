@@ -93,6 +93,9 @@ sub run
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
              bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3});
 
+        # Create a manifest with the pg version to get version-specific paths
+        my $oManifest = new pgBackRest::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion()});
+
         # Only perform extra tests on certain runs to save time
         my $bTestLocal = $self->runCurrent() == 1;
         my $bTestExtra =
@@ -365,7 +368,7 @@ sub run
 
         # Create the table where test messages will be stored
         $oHostDbMaster->sqlExecute("create table test (message text not null)");
-        $oHostDbMaster->sqlXlogRotate();
+        $oHostDbMaster->sqlWalRotate();
         $oHostDbMaster->sqlExecute("insert into test values ('$strDefaultMessage')");
 
         if ($bTestLocal)
@@ -404,17 +407,17 @@ sub run
         # down enough to make it evident that the async process is working.
         if ($bTestExtra && $bCompress && $strBackupDestination eq HOST_BACKUP)
         {
-            &log(INFO, '    multiple pg_switch_xlog() to exercise async archiving');
-            $oHostDbMaster->sqlExecute("create table xlog_activity (id int)");
-            $oHostDbMaster->sqlXlogRotate();
-            $oHostDbMaster->sqlExecute("insert into xlog_activity values (1)");
-            $oHostDbMaster->sqlXlogRotate();
-            $oHostDbMaster->sqlExecute("insert into xlog_activity values (2)");
-            $oHostDbMaster->sqlXlogRotate();
-            $oHostDbMaster->sqlExecute("insert into xlog_activity values (3)");
-            $oHostDbMaster->sqlXlogRotate();
-            $oHostDbMaster->sqlExecute("insert into xlog_activity values (4)");
-            $oHostDbMaster->sqlXlogRotate();
+            &log(INFO, '    multiple wal switches to exercise async archiving');
+            $oHostDbMaster->sqlExecute("create table wal_activity (id int)");
+            $oHostDbMaster->sqlWalRotate();
+            $oHostDbMaster->sqlExecute("insert into wal_activity values (1)");
+            $oHostDbMaster->sqlWalRotate();
+            $oHostDbMaster->sqlExecute("insert into wal_activity values (2)");
+            $oHostDbMaster->sqlWalRotate();
+            $oHostDbMaster->sqlExecute("insert into wal_activity values (3)");
+            $oHostDbMaster->sqlWalRotate();
+            $oHostDbMaster->sqlExecute("insert into wal_activity values (4)");
+            $oHostDbMaster->sqlWalRotate();
         }
 
         # Setup replica
@@ -439,7 +442,7 @@ sub run
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_92)
             {
-                $oHostDbStandby->linkRemap(DB_PATH_PGXLOG, $oHostDbStandby->dbPath() . '/' . DB_PATH_PGXLOG);
+                $oHostDbStandby->linkRemap($oManifest->walPath(), $oHostDbStandby->dbPath() . '/' . $oManifest->walPath());
             }
 
             $oHostDbStandby->restore(
@@ -460,6 +463,30 @@ sub run
 
             # Update message for standby
             $oHostDbMaster->sqlExecute("update test set message = '$strStandbyMessage'");
+
+            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
+            {
+                # If there is only a master and a replica and the replica is the backup destination, then if db2-host and db3-host
+                # are BOGUS, confirm failure to reach the master
+                if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
+                {
+                    my $strStandbyBackup = $oHostBackup->backup(
+                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach master',
+                        {bStandby => true,
+                         iExpectedExitStatus => ERROR_DB_CONNECT,
+                         strOptionalParam => '--' .
+                         $oHostBackup->optionIndexName(CFGOPT_DB_HOST, cfgOptionIndexTotal(CFGOPT_DB_PATH)) . '=' . BOGUS});
+                }
+                else
+                {
+                    my $strStandbyBackup = $oHostBackup->backup(
+                        CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
+                        {bStandby => true,
+                         iExpectedExitStatus => ERROR_HOST_CONNECT,
+                         strOptionalParam => '--' .
+                         $oHostBackup->optionIndexName(CFGOPT_DB_HOST, cfgOptionIndexTotal(CFGOPT_DB_PATH)) . '=' . BOGUS});
+                }
+            }
 
             my $strStandbyBackup = $oHostBackup->backup(
                 CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
@@ -499,7 +526,7 @@ sub run
         # Setup the time target
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostDbMaster->sqlExecute("update test set message = '$strTimeMessage'");
-        $oHostDbMaster->sqlXlogRotate();
+        $oHostDbMaster->sqlWalRotate();
         my $strTimeTarget = $oHostDbMaster->sqlSelectOne("select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ')");
         &log(INFO, "        time target is ${strTimeTarget}");
 
@@ -540,9 +567,9 @@ sub run
 
         # Create a table in the tablespace
         $oHostDbMaster->sqlExecute("create table test_remove (id int)");
-        $oHostDbMaster->sqlXlogRotate();
+        $oHostDbMaster->sqlWalRotate();
         $oHostDbMaster->sqlExecute("update test set message = '$strDefaultMessage'");
-        $oHostDbMaster->sqlXlogRotate();
+        $oHostDbMaster->sqlWalRotate();
 
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
         # are run in non-exlusive mode.
@@ -568,7 +595,7 @@ sub run
 
         # Drop a table
         $oHostDbMaster->sqlExecute('drop table test_remove');
-        $oHostDbMaster->sqlXlogRotate();
+        $oHostDbMaster->sqlWalRotate();
         $oHostDbMaster->sqlExecute("update test set message = '$strIncrMessage'", {bCommit => true});
 
         # Check that application name is set
@@ -595,7 +622,7 @@ sub run
         if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute("update test set message = '$strXidMessage'", {bCommit => false});
-            $oHostDbMaster->sqlXlogRotate();
+            $oHostDbMaster->sqlWalRotate();
             $strXidTarget = $oHostDbMaster->sqlSelectOne("select txid_current()");
             $oHostDbMaster->sqlCommit();
             &log(INFO, "        xid target is ${strXidTarget}");
@@ -608,7 +635,7 @@ sub run
         if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute("update test set message = '$strNameMessage'", {bCommit => true});
-            $oHostDbMaster->sqlXlogRotate();
+            $oHostDbMaster->sqlWalRotate();
 
             if ($oHostDbMaster->pgVersion() >= PG_VERSION_91)
             {
@@ -628,7 +655,7 @@ sub run
                 'create table test_ts1 (id int) tablespace ts1;' .
                 'insert into test_ts1 values (2);',
                 {strDb => 'test2', bAutoCommit => true});
-            $oHostDbMaster->sqlXlogRotate();
+            $oHostDbMaster->sqlWalRotate();
         }
 
         # Restore (type = default)
@@ -671,8 +698,8 @@ sub run
         # Drop and recreate db path
         testPathRemove($oHostDbMaster->dbBasePath());
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(), {strMode => '0700'});
-        testPathRemove($oHostDbMaster->dbPath() . '/pg_xlog');
-        storageTest()->pathCreate($oHostDbMaster->dbPath() . '/pg_xlog', {strMode => '0700'});
+        testPathRemove($oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath());
+        storageTest()->pathCreate($oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath(), {strMode => '0700'});
         testPathRemove($oHostDbMaster->tablespacePath(1));
         storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700'});
 
@@ -797,7 +824,7 @@ sub run
             $oHostDbMaster->clusterStop();
 
             executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
-            executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_xlog/*");
+            executeTest('rm -rf ' . $oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath() . '/*');
 
             $oHostDbMaster->restore(
                 $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
@@ -834,7 +861,7 @@ sub run
             $oHostDbMaster->clusterStop();
 
             executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
-            executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_xlog/*");
+            executeTest('rm -rf ' . $oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath() . '/*');
             executeTest('rm -rf ' . $oHostDbMaster->tablespacePath(1) . "/*");
 
             # Restore recovery file that was saved in last test

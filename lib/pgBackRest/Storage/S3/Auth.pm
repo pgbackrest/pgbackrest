@@ -139,7 +139,7 @@ sub s3SigningKey
             __PACKAGE__ . '::s3SigningKey', \@_,
             {name => 'strDate', trace => true},
             {name => 'strRegion', trace => true},
-            {name => 'strSecretAccessKey', trace => true},
+            {name => 'strSecretAccessKey', redact => true, trace => true},
         );
 
     # Check for signing key in cache
@@ -232,8 +232,8 @@ sub s3AuthorizationHeader
             {name => 'strQuery', trace => true},
             {name => 'strDateTime', trace => true},
             {name => 'hHeader', required => false, trace => true},
-            {name => 'strAccessKeyId', trace => true},
-            {name => 'strSecretAccessKey', trace => true},
+            {name => 'strAccessKeyId', redact => true, trace => true},
+            {name => 'strSecretAccessKey', redact => true, trace => true},
             {name => 'strPayloadHash', trace => true},
         );
 

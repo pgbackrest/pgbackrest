@@ -138,6 +138,11 @@ my $oyVm =
         &VM_IMAGE => 'debian:8',
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
+
+        &VM_DB =>
+        [
+            PG_VERSION_95,
+        ],
     },
 
     # Debian 9
@@ -149,6 +154,11 @@ my $oyVm =
         &VM_IMAGE => 'debian:9',
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.24.1',
+
+        &VM_DB =>
+        [
+            PG_VERSION_96,
+        ],
     },
 
     # Ubuntu 12.04
@@ -166,6 +176,7 @@ my $oyVm =
             PG_VERSION_83,
             PG_VERSION_84,
             PG_VERSION_92,
+            PG_VERSION_93,
         ],
     },
 
@@ -197,8 +208,15 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_93,
             PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_10,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_94,
+            PG_VERSION_10,
         ],
     },
 };

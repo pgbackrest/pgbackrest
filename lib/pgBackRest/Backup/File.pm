@@ -52,7 +52,8 @@ sub backupFile
         $strChecksum,                               # File checksum to be checked
         $bChecksumPage,                             # Should page checksums be calculated?
         $strBackupLabel,                            # Label of current backup
-        $bDestinationCompress,                      # Compress destination file
+        $bCompress,                                 # Compress destination file
+        $iCompressLevel,                            # Compress level
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
         $hExtraParam,                               # Parameter to pass to the extra function
@@ -66,7 +67,8 @@ sub backupFile
             {name => 'strChecksum', required => false, trace => true},
             {name => 'bChecksumPage', trace => true},
             {name => 'strBackupLabel', trace => true},
-            {name => 'bDestinationCompress', trace => true},
+            {name => 'bCompress', trace => true},
+            {name => 'iCompressLevel', trace => true},
             {name => 'lModificationTime', trace => true},
             {name => 'bIgnoreMissing', default => true, trace => true},
             {name => 'hExtraParam', required => false, trace => true},
@@ -80,19 +82,24 @@ sub backupFile
     my $lRepoSize;                                  # Repo size
 
     # Add compression suffix if needed
-    my $strFileOp = $strRepoFile . ($bDestinationCompress ? '.' . COMPRESS_EXT : '');
+    my $strFileOp = $strRepoFile . ($bCompress ? '.' . COMPRESS_EXT : '');
 
     # If checksum is defined then the file already exists but needs to be checked
     my $bCopy = true;
 
     if (defined($strChecksum))
     {
+        # Add compression
+        my $rhyFilter;
+
+        if ($bCompress)
+        {
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]});
+        }
+
         # Get the checksum
         ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
-            $oStorageRepo->openRead(
-                STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                {rhyFilter => $bDestinationCompress ?
-                    [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef}));
+            $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}", {rhyFilter => $rhyFilter}));
 
         # Determine if the file needs to be recopied
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
@@ -120,9 +127,9 @@ sub backupFile
         };
 
         # Add compression
-        if ($bDestinationCompress)
+        if ($bCompress)
         {
-            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP});
+            push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => $iCompressLevel}]});
         }
 
         # Open the file
@@ -136,7 +143,7 @@ sub backupFile
                 $oSourceFileIo,
                 $oStorageRepo->openWrite(
                     STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                    {bPathCreate => true, bProtocolCompress => !$bDestinationCompress}));
+                    {bPathCreate => true, bProtocolCompress => !$bCompress}));
 
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);

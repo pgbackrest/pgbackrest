@@ -158,7 +158,7 @@ sub configTestLoadExpect
 
         $bErrorFound = true;
 
-        if (isException($oException))
+        if (isException(\$oException))
         {
             if ($oException->code() != $iExpectedError)
             {

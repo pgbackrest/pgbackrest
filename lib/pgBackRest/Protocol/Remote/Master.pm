@@ -58,7 +58,7 @@ sub new
 
     # Init object and store variables
     my $self = $class->SUPER::new(
-        'remote', "'$strHost remote'", $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork,
+        'remote', "remote process on '$strHost'", $strCommand, $iBufferMax, $iCompressLevel, $iCompressLevelNetwork,
         $iProtocolTimeout);
     bless $self, $class;
 

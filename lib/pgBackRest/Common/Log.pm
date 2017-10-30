@@ -81,6 +81,12 @@ my $bLogFileFirst;
 # Allow log to be globally enabled or disabled with logEnable() and logDisable()
 my $bLogDisable = 0;
 
+# Allow errors to be logged as warnings
+my $bLogWarnOnError = 0;
+
+# Store the last logged error
+my $oErrorLast;
+
 # Test globals
 my $bTest = false;
 my $fTestDelay;
@@ -232,6 +238,26 @@ sub logEnable
 push @EXPORT, qw(logEnable);
 
 ####################################################################################################################################
+# logWarnOnErrorDisable
+####################################################################################################################################
+sub logWarnOnErrorDisable
+{
+    $bLogWarnOnError--;
+}
+
+push @EXPORT, qw(logWarnOnErrorDisable);
+
+####################################################################################################################################
+# logWarnOnErrorEnable - when an error is thrown, log it as a warning instead
+####################################################################################################################################
+sub logWarnOnErrorEnable
+{
+    $bLogWarnOnError++;
+}
+
+push @EXPORT, qw(logWarnOnErrorEnable);
+
+####################################################################################################################################
 # logDebugParam
 #
 # Log parameters passed to functions.
@@ -314,6 +340,9 @@ sub logDebugProcess
         my $bParamOptional = defined($oParam->{optional}) && $oParam->{optional};
         my $bParamRequired = !defined($oParam->{required}) || $oParam->{required};
         my $oValue;
+
+        # Should the param be redacted?
+        $oParamHash->{$strParamName}{redact} = $oParam->{redact} ? true : false;
 
         # If param is optional then the optional block has been entered
         if ($bParamOptional)
@@ -520,14 +549,16 @@ sub logDebugOut
                 my $bDefault =
                     defined($$strValueRef) && defined($$oParamHash{$strParam}{default}) ? $$oParamHash{$strParam}{default} : false;
 
-                $strParamSet .= "${strParam} = " .
-                                ($bDefault ? '<' : '') .
-                                (defined($$strValueRef) ?
-                                    ($strParam =~ /^(b|is)/ ? ($$strValueRef ? 'true' : 'false'):
-                                    (length($$strValueRef) > DEBUG_STRING_MAX_LEN ?
-                                     substr($$strValueRef, 0, DEBUG_STRING_MAX_LEN) . ' ... <truncated>':
-                                     $$strValueRef)) : '[undef]') .
-                                ($bDefault ? '>' : '');
+                $strParamSet .=
+                    "${strParam} = " .
+                    ($oParamHash->{$strParam}{redact} && defined($$strValueRef) ? '<redacted>' :
+                        ($bDefault ? '<' : '') .
+                        (defined($$strValueRef) ?
+                            ($strParam =~ /^(b|is)/ ? ($$strValueRef ? 'true' : 'false'):
+                            (length($$strValueRef) > DEBUG_STRING_MAX_LEN ?
+                             substr($$strValueRef, 0, DEBUG_STRING_MAX_LEN) . ' ... <truncated>':
+                             $$strValueRef)) : '[undef]') .
+                        ($bDefault ? '>' : ''));
             }
 
             if (defined($strMessage))
@@ -565,7 +596,7 @@ sub logErrorResult
     my $strMessage = shift;
     my $strResult = shift;
 
-    confess &log(ERROR, $strMessage . (defined($strResult) ? ": $strResult" : ''), $iCode);
+    confess &log(ERROR, $strMessage . (defined($strResult) ? ': ' . trim($strResult) : ''), $iCode);
 }
 
 push @EXPORT, qw(logErrorResult);
@@ -598,7 +629,7 @@ sub log
 
     # Set operational variables
     my $strMessageFormat = $strMessage;
-    my $iLogLevelRank = $oLogLevelRank{"${strLevel}"}{rank};
+    my $iLogLevelRank = $oLogLevelRank{$strLevel}{rank};
 
     # If test message
     if ($strLevel eq TEST)
@@ -664,27 +695,32 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
+    # If logging warnings as errors then change the display level and rank. These will be used to determine if the message will be
+    # displayed or not.
+    my $strDisplayLevel = ($bLogWarnOnError && $strLevel eq ERROR ? WARN : $strLevel);
+    my $iLogDisplayLevelRank = ($bLogWarnOnError && $strLevel eq ERROR ? $oLogLevelRank{$strDisplayLevel}{rank} : $iLogLevelRank);
+
     $strMessageFormat =
         ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
         sprintf('P%02d', defined($iProcessId) ? $iProcessId : 0) .
-        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
+        (' ' x (7 - length($strDisplayLevel))) . "${strDisplayLevel}: ${strMessageFormat}\n";
 
     # Skip output if disabled
     if (!$bLogDisable)
     {
-        # Output to stderr depending on log level
-        if (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelStdErr}{rank})
+        # Output to stderr if configured log level setting rank is greater than the display level rank.
+        if (!$rExtra->{bLogConsole} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelStdErr}{rank})
         {
             if ($strLogLevelStdErr ne PROTOCOL)
             {
-                syswrite(*STDERR, $strLevel . (defined($iCode) ? sprintf(' [%03d]: ', $iCode) : '') . ': ');
+                syswrite(*STDERR, $strDisplayLevel . (defined($iCode) ? sprintf(' [%03d]: ', $iCode) : '') . ': ');
             }
 
             syswrite(*STDERR, "${strMessage}\n");
             $rExtra->{bLogConsole} = true;
         }
-        # Else output to stdout depending on log level and test flag
-        elsif (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
+        # Else output to stdout if configured log level setting rank is greater than the display level rank or test flag is set.
+        elsif (!$rExtra->{bLogConsole} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank} ||
                $bTest && $strLevel eq TEST)
         {
             if (!$bSuppressLog)
@@ -709,8 +745,8 @@ sub log
             $rExtra->{bLogConsole} = true;
         }
 
-        # Output to file depending on log level and test flag
-        if (!$rExtra->{bLogLogFile} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
+        # Output to file if configured log level setting rank is greater than the display level rank or test flag is set.
+        if (!$rExtra->{bLogLogFile} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
         {
             if (defined($hLogFile) || (defined($strLogLevelFile) && $strLogLevelFile ne OFF))
             {
@@ -726,8 +762,8 @@ sub log
                         $strLogFileCache .= $strMessageFormat;
                     }
 
-                    if ($strLevel eq ASSERT ||
-                        ($strLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
+                    if ($strDisplayLevel eq ASSERT ||
+                        ($strDisplayLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
                     {
                         my $strStackTrace = longmess() . "\n";
                         $strStackTrace =~ s/\n/\n                                   /g;
@@ -748,17 +784,28 @@ sub log
         }
     }
 
-    # Throw a typed exception if code is defined
+    # Return a typed exception if code is defined
     if (defined($iCode))
     {
-        return new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
+        $oErrorLast = new pgBackRest::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
+        return $oErrorLast;
     }
 
-    # Return the message test so it can be used in a confess
+    # Return the message so it can be used in a confess
     return $strMessage;
 }
 
 push @EXPORT, qw(log);
+
+####################################################################################################################################
+# logErrorLast - get the last logged error
+####################################################################################################################################
+sub logErrorLast
+{
+    return $oErrorLast;
+}
+
+push @EXPORT, qw(logErrorLast);
 
 ####################################################################################################################################
 # testSet

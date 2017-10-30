@@ -90,6 +90,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -134,6 +135,7 @@ db-socket-path=[TEST_PATH]/db-master/db
 [global]
 archive-async=y
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug
@@ -250,6 +252,7 @@ recovery-option=standby-mode=on
 [global]
 archive-async=y
 compress=n
+compress-level=3
 db-timeout=45
 lock-path=[TEST_PATH]/db-master/lock
 log-level-console=debug

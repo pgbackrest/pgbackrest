@@ -100,7 +100,7 @@ sub run
 
         $self->testException(
             sub {protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()})}, ERROR_FILE_READ,
-            "process 'localhost remote' terminated unexpectedly: ssh: connect to host localhost port 25:");
+            "remote process on 'localhost' terminated unexpectedly: ssh: connect to host localhost port 25:");
 
         # Destroy protocol object
         protocolDestroy();

@@ -73,7 +73,7 @@ sub exitSafe
     if (!defined($iExitCode))
     {
         # If a backrest exception
-        if (isException($oException))
+        if (isException(\$oException))
         {
             $iExitCode = $oException->code();
             logException($oException);

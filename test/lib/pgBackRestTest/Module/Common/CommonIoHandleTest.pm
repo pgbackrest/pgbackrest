@@ -105,12 +105,15 @@ sub run
         $self->testResult(sub {$oIoHandle->read(\$tContent, $iFileLengthHalf)}, $iFileLengthHalf, '    read part 1');
         $self->testResult($tContent, substr($strFileContent, 0, $iFileLengthHalf), '    check read');
 
+        $self->testResult(sub {$oIoHandle->eof()}, false, '    not eof');
+
         $self->testResult(
             sub {$oIoHandle->read(
                 \$tContent, $iFileLength - $iFileLengthHalf)}, $iFileLength - $iFileLengthHalf, '    read part 2');
         $self->testResult($tContent, $strFileContent, '    check read');
 
-        $self->testResult(sub {$oIoHandle->read(\$tContent, 1)}, 0, '    eof');
+        $self->testResult(sub {$oIoHandle->read(\$tContent, 1)}, 0, '    zero read');
+        $self->testResult(sub {$oIoHandle->eof()}, true, '    eof');
     }
 
     ################################################################################################################################
@@ -167,17 +170,6 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oIoHandle->{rhResult}}, '{Module::1 => 1, Module::2 => {value => 2}}', '    check all results');
-    }
-
-    ################################################################################################################################
-    if ($self->begin('isA()'))
-    {
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $oIoHandle = $self->testResult(
-            sub {new pgBackRest::Common::Io::Handle('test', undef, undef)}, '[object]', 'new - no handles');
-
-        $self->testResult(
-            sub {$oIoHandle->isA()}, '(' . COMMON_IO_HANDLE . ', ' . COMMON_IO_BASE . ')', '    check isA');
     }
 
     ################################################################################################################################

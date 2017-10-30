@@ -59,6 +59,10 @@ my $oPgControlVersionHash =
     {
         201608131 => PG_VERSION_96,
     },
+    1002 =>
+    {
+        201707211 => PG_VERSION_10,
+    },
 };
 
 ####################################################################################################################################
@@ -552,10 +556,21 @@ sub versionGet
     }
 
     # Get version and db-path from
-    ($self->{strDbVersion}, $self->{strDbPath}) =
-        $self->executeSqlRow("select (regexp_matches(split_part(version(), ' ', 2), '^[0-9]+\.[0-9]+'))[1], setting" .
-                             " from pg_settings where name = 'data_directory'");
+    (my $strVersionNum, $self->{strDbPath}) =
+        $self->executeSqlRow(
+            "select (select setting from pg_settings where name = 'server_version_num'), " .
+                " (select setting from pg_settings where name = 'data_directory')");
 
+    # Get first part of the major version - for 10 and above there will only be one part
+    $self->{strDbVersion} = substr($strVersionNum, 0, length($strVersionNum) - 4);
+
+    # Now retrieve the second part of the major version for versions less than 10
+    if ($self->{strDbVersion} < PG_VERSION_10)
+    {
+        $self->{strDbVersion} .= qw{.} . int(substr($strVersionNum, 1, 2));
+    }
+
+    # Check that the version is supported
     my @stryVersionSupport = versionSupport();
 
     if ($self->{strDbVersion} < $stryVersionSupport[0])
@@ -656,7 +671,7 @@ sub backupStart
                ($bStartFast ? "the requested immediate checkpoint" : "the next regular checkpoint") . " completes");
 
     my ($strTimestampDbStart, $strArchiveStart, $strLsnStart) = $self->executeSqlRow(
-        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), lsn::text" .
+        "select to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" . $self->walId() . "file_name(lsn), lsn::text" .
             " from pg_start_backup('${strLabel}'" .
             ($bStartFast ? ', true' : $self->{strDbVersion} >= PG_VERSION_84 ? ', false' : '') .
             ($self->{strDbVersion} >= PG_VERSION_96 ? ', false' : '') . ') as lsn');
@@ -687,13 +702,17 @@ sub backupStop
 
     my ($strTimestampDbStop, $strArchiveStop, $strLsnStop, $strLabel, $strTablespaceMap) =
         $self->executeSqlRow(
-            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_xlogfile_name(lsn), lsn::text, " .
+            "select to_char(clock_timestamp(), 'YYYY-MM-DD HH24:MI:SS.US TZ'), pg_" .
+            $self->walId() . "file_name(lsn), lsn::text, " .
             ($self->{strDbVersion} >= PG_VERSION_96 ?
                 'labelfile, ' .
                 'case when length(trim(both \'\t\n \' from spcmapfile)) = 0 then null else spcmapfile end as spcmapfile' :
                 'null as labelfile, null as spcmapfile') .
             ' from pg_stop_backup(' .
-            ($self->{strDbVersion} >= PG_VERSION_96 ? 'false)' : ') as lsn'));
+            # Add flag to use non-exclusive backup
+            ($self->{strDbVersion} >= PG_VERSION_96 ? 'false' : '') .
+            # Add flag to exit immediately after backup stop rather than waiting for WAL to archive (this is checked later)
+            ($self->{strDbVersion} >= PG_VERSION_10 ? ', false' : '') . ') as lsn');
 
     # Build a hash of the files that need to be written to the backup
     my $oFileHash =
@@ -783,33 +802,58 @@ sub configValidate
 }
 
 ####################################################################################################################################
-# xlogSwitch
+# walId
+#
+# Returns 'wal' or 'xlog' depending on the version of PostgreSQL.
+####################################################################################################################################
+sub walId
+{
+    my $self = shift;
+
+    return $self->{strDbVersion} >= PG_VERSION_10 ? 'wal' : 'xlog';
+}
+
+####################################################################################################################################
+# lsnId
+#
+# Returns 'lsn' or 'location' depending on the version of PostgreSQL.
+####################################################################################################################################
+sub lsnId
+{
+    my $self = shift;
+
+    return $self->{strDbVersion} >= PG_VERSION_10 ? 'lsn' : 'location';
+}
+
+####################################################################################################################################
+# walSwitch
 #
 # Forces a switch to the next transaction log in order to archive the current log.
 ####################################################################################################################################
-sub xlogSwitch
+sub walSwitch
 {
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(__PACKAGE__ . '->xlogSwitch');
+    my $strOperation = logDebugParam(__PACKAGE__ . '->walSwitch');
 
-    # Create a restore point to ensure current xlog will be archived.  For versions <= 9.0 activity will need to be generated by
-    # the user if there have been no writes since the last xlog switch.
+    # Create a restore point to ensure current WAL will be archived.  For versions <= 9.0 activity will need to be generated by
+    # the user if there have been no writes since the last WAL switch.
     if ($self->{strDbVersion} >= PG_VERSION_91)
     {
         $self->executeSql("select pg_create_restore_point('" . BACKREST_NAME . " Archive Check');");
     }
 
-    my $strWalFileName = $self->executeSqlOne('select pg_xlogfile_name from pg_xlogfile_name(pg_switch_xlog());');
+    my $strWalFileName = $self->executeSqlOne(
+        'select pg_' . $self->walId() . 'file_name from pg_' . $self->walId() . 'file_name(pg_switch_' . $self->walId() . '());');
 
-    &log(INFO, "switch xlog ${strWalFileName}");
+    &log(INFO, "switch WAL ${strWalFileName}");
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strXlogFileName', value => $strWalFileName}
+        {name => 'strWalFileName', value => $strWalFileName}
     );
 }
 
@@ -880,15 +924,19 @@ sub replayWait
     # Monitor the replay location
     do
     {
+        my $strLastWalReplayLsnFunction =
+            'pg_last_' . $self->walId() . '_replay_' . $self->lsnId() . '()';
+
         # Get the replay location
-        my $strLastReplayedLSN = $self->executeSqlOne("select coalesce(pg_last_xlog_replay_location()::text, '<NONE>')");
+        my $strLastReplayedLSN = $self->executeSqlOne(
+            "select coalesce(${strLastWalReplayLsnFunction}::text, '<NONE>')");
 
         # Error if the replay location could not be retrieved
         if ($strLastReplayedLSN eq '<NONE>')
         {
             confess &log(
                 ERROR,
-                "unable to query replay location on the standby using pg_last_xlog_replay_location()\n" .
+                "unable to query replay lsn on the standby using ${strLastWalReplayLsnFunction}\n" .
                     "Hint: Is this a standby?",
                 ERROR_ARCHIVE_TIMEOUT);
         }
@@ -930,7 +978,7 @@ sub replayWait
 
     if ($self->{strDbVersion} >= PG_VERSION_96)
     {
-        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_location from pg_control_checkpoint()');
+        $strCheckpointLSN = $self->executeSqlOne('select checkpoint_' . $self->lsnId() .' from pg_control_checkpoint()');
 
         if (lsnNormalize($strCheckpointLSN) le lsnNormalize($strTargetLSN))
         {
@@ -962,7 +1010,15 @@ sub replayWait
 sub dbObjectGet
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbObjectGet');
+    my (
+            $strOperation,
+            $bMasterOnly,
+        ) =
+            logDebugParam
+            (
+                __PACKAGE__ . '::dbObjectGet', \@_,
+                {name => 'bMasterOnly', optional => true, default => false},
+            );
 
     my $iStandbyIdx = undef;
     my $iMasterRemoteIdx = 1;
@@ -971,7 +1027,7 @@ sub dbObjectGet
 
     # Only iterate databases if online and more than one is defined.  It might be better to check the version of each database but
     # this is simple and works.
-    if (cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, 2)))
+    if (!$bMasterOnly && cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && multipleDb())
     {
         for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
@@ -980,36 +1036,49 @@ sub dbObjectGet
                 cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
                 # Create the db object
-                my $oDb = new pgBackRest::Db($iRemoteIdx);
+                my $oDb;
+
+                logWarnOnErrorEnable();
+                eval
+                {
+                    $oDb = new pgBackRest::Db($iRemoteIdx);
+                    return true;
+                }
+                or do {};
+
+                logWarnOnErrorDisable();
                 my $bAssigned = false;
 
-                # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
-                # reached as long as the databases required for the backup type are present.
-                if ($oDb->connect(true))
+                if (defined($oDb))
                 {
-                    # If this db is a standby
-                    if ($oDb->isStandby())
+                    # If able to connect then test if the database is a master or a standby.  It's OK if some databases cannot be
+                    # reached as long as the databases required for the backup type are present.
+                    if ($oDb->connect(true))
                     {
-                        # If standby backup is requested then use the first standby found
-                        if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
+                        # If this db is a standby
+                        if ($oDb->isStandby())
                         {
-                            $oDbStandby = $oDb;
-                            $iStandbyIdx = $iRemoteIdx;
+                            # If standby backup is requested then use the first standby found
+                            if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
+                            {
+                                $oDbStandby = $oDb;
+                                $iStandbyIdx = $iRemoteIdx;
+                                $bAssigned = true;
+                            }
+                        }
+                        # Else this db is a master
+                        else
+                        {
+                            # Error if more than one master is found
+                            if (defined($oDbMaster))
+                            {
+                                confess &log(ERROR, 'more than one master database found');
+                            }
+
+                            $oDbMaster = $oDb;
+                            $iMasterRemoteIdx = $iRemoteIdx;
                             $bAssigned = true;
                         }
-                    }
-                    # Else this db is a master
-                    else
-                    {
-                        # Error if more than one master is found
-                        if (defined($oDbMaster))
-                        {
-                            confess &log(ERROR, 'more than one master database found');
-                        }
-
-                        $oDbMaster = $oDb;
-                        $iMasterRemoteIdx = $iRemoteIdx;
-                        $bAssigned = true;
                     }
                 }
 
@@ -1021,16 +1090,18 @@ sub dbObjectGet
             }
         }
 
-        # Make sure the standby database is defined when backup from standby requested
+        # Make sure a standby database is defined when backup from standby option is set
         if (cfgOption(CFGOPT_BACKUP_STANDBY) && !defined($oDbStandby))
         {
-            confess &log(ERROR, 'unable to find standby database - cannot proceed');
+            # Throw an error that is distinct from connecting to the master for testing purposes
+            confess &log(ERROR, 'unable to find standby database - cannot proceed', ERROR_HOST_CONNECT);
         }
 
         # A master database is always required
         if (!defined($oDbMaster))
         {
-            confess &log(ERROR, 'unable to find master database - cannot proceed');
+            # Throw an error that is distinct from connecting to a standy for testing purposes
+            confess &log(ERROR, 'unable to find master database - cannot proceed', ERROR_DB_CONNECT);
         }
     }
 
@@ -1064,7 +1135,7 @@ sub dbMasterGet
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '::dbMasterGet');
 
-    my ($oDbMaster) = dbObjectGet();
+    my ($oDbMaster) = dbObjectGet({bMasterOnly => true});
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -1075,5 +1146,24 @@ sub dbMasterGet
 }
 
 push @EXPORT, qw(dbMasterGet);
+
+####################################################################################################################################
+# multipleDb
+#
+# Helper function to determine if there is more than one database defined.
+####################################################################################################################################
+sub multipleDb
+{
+    for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_DB_PATH); $iDbPathIdx++)
+    {
+        # If an index exists above 1 then return true
+        if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 1;

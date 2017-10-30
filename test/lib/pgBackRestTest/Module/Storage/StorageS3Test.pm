@@ -185,6 +185,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $oFileWrite = $self->testResult(sub {$oS3->openWrite("/path/to/${strFile}")}, '[object]', 'open write');
+        $self->testResult(sub {$oFileWrite->name()}, "/path/to/${strFile}", '    check filename');
         $self->testResult(sub {$oFileWrite->close()}, true, '    close without writing');
 
         #---------------------------------------------------------------------------------------------------------------------------

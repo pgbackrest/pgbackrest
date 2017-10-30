@@ -2,6 +2,7 @@
 # GZIP Filter
 ####################################################################################################################################
 package pgBackRest::Storage::Filter::Gzip;
+use parent 'pgBackRest::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -26,8 +27,6 @@ use constant STORAGE_FILTER_GZIP                                    => __PACKAGE
 ####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
-our @ISA = ();                                                      ## no critic (ClassHierarchies::ProhibitExplicitISA)
-
 sub new
 {
     my $class = shift;
@@ -36,7 +35,7 @@ sub new
     my
     (
         $strOperation,
-        $self,
+        $oParent,
         $bWantGzip,
         $strCompressType,
         $iLevel,
@@ -45,7 +44,7 @@ sub new
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'self', trace => true},
+            {name => 'oParent', trace => true},
             {name => 'bWantGzip', optional => true, default => true, trace => true},
             {name => 'strCompressType', optional => true, default => STORAGE_COMPRESS, trace => true},
             {name => 'iLevel', optional => true, default => 6, trace => true},
@@ -53,7 +52,7 @@ sub new
         );
 
     # Bless with new class
-    @ISA = $self->isA();                                            ## no critic (ClassHierarchies::ProhibitExplicitISA)
+    my $self = $class->SUPER::new($oParent);
     bless $self, $class;
 
     # Set variables
@@ -108,7 +107,8 @@ sub errorCheck
     {
         logErrorResult(
             $self->{bWrite} ? ERROR_FILE_WRITE : ERROR_FILE_READ,
-            'unable to ' . ($self->{strCompressType} eq STORAGE_COMPRESS ? 'deflate' : 'inflate') . " '$self->{strName}'",
+            'unable to ' . ($self->{strCompressType} eq STORAGE_COMPRESS ? 'deflate' : 'inflate') . " '" .
+                $self->parent()->name() . "'",
             $self->{oZLib}->msg());
     }
 
@@ -126,6 +126,8 @@ sub read
 
     if ($self->{strCompressType} eq STORAGE_COMPRESS)
     {
+        return 0 if $self->eof();
+
         my $lSizeBegin = defined($$rtBuffer) ? length($$rtBuffer) : 0;
         my $lUncompressedSize;
         my $lCompressedSize;
@@ -133,7 +135,7 @@ sub read
         do
         {
             my $tUncompressedBuffer;
-            $lUncompressedSize = $self->SUPER::read(\$tUncompressedBuffer, $iSize);
+            $lUncompressedSize = $self->parent()->read(\$tUncompressedBuffer, $iSize);
 
             if ($lUncompressedSize > 0)
             {
@@ -160,7 +162,7 @@ sub read
             {
                 if (!defined($self->{tCompressedBuffer}) || length($self->{tCompressedBuffer}) == 0)
                 {
-                    $self->SUPER::read(\$self->{tCompressedBuffer}, $self->{lCompressBufferMax});
+                    $self->parent()->read(\$self->{tCompressedBuffer}, $self->{lCompressBufferMax});
                 }
 
                 my $iZLibStatus = $self->{oZLib}->inflate($self->{tCompressedBuffer}, $self->{tUncompressedBuffer});
@@ -172,8 +174,8 @@ sub read
             }
         }
 
-        # Actual size is the lesser of the local buffer size or requested size - if the local buffer is smaller than the requested size
-        # it means that there was nothing more to be read.
+        # Actual size is the lesser of the local buffer size or requested size - if the local buffer is smaller than the requested
+        # size it means that there was nothing more to be read
         my $iActualSize = $self->{lUncompressedBufferSize} < $iSize ? $self->{lUncompressedBufferSize} : $iSize;
 
         # Append the to the request buffer
@@ -206,7 +208,7 @@ sub write
         # Only write when buffer is full
         if (defined($self->{tCompressedBuffer}) && length($self->{tCompressedBuffer}) > $self->{lCompressBufferMax})
         {
-            $self->SUPER::write(\$self->{tCompressedBuffer});
+            $self->parent()->write(\$self->{tCompressedBuffer});
             $self->{tCompressedBuffer} = undef;
         }
     }
@@ -219,7 +221,7 @@ sub write
             my $tUncompressedBuffer;
 
             my $iZLibStatus = $self->{oZLib}->inflate($tCompressedBuffer, $tUncompressedBuffer);
-            $self->SUPER::write(\$tUncompressedBuffer);
+            $self->parent()->write(\$tUncompressedBuffer);
 
             last if $iZLibStatus == Z_STREAM_END;
 
@@ -249,14 +251,14 @@ sub close
                 $self->errorCheck($self->{oZLib}->flush($self->{tCompressedBuffer}));
 
                 # Write last compressed bytes
-                $self->SUPER::write(\$self->{tCompressedBuffer});
+                $self->parent()->write(\$self->{tCompressedBuffer});
             }
         }
 
         undef($self->{oZLib});
 
         # Close io
-        return $self->SUPER::close();
+        return $self->parent()->close();
     }
 }
 
