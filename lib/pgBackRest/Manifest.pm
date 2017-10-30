@@ -303,7 +303,7 @@ sub new
     {
         if (!defined($strDbVersion))
         {
-            &log(ASSERT, 'strDbVersion must be provided with bLoad = false');
+            confess &log(ASSERT, 'strDbVersion must be provided with bLoad = false');
         }
 
         $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
