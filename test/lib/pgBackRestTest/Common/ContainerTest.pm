@@ -339,6 +339,9 @@ sub containerBuild
         {
             $strScript .=
                 "    apt-get update && \\\n" .
+                "    apt-get -y install wget python && \\\n" .
+                "    wget --no-check-certificate -O /root/get-pip.py https://bootstrap.pypa.io/get-pip.py && \\\n" .
+                "    python /root/get-pip.py && \\\n" .
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl";
 

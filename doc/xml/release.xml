@@ -10,6 +10,16 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.26dev" title="UNDER DEVELOPMENT">
+            <release-test-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Update Debian/Ubuntu containers to download lastest version of <file>pip</file>.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-test-list>
+        </release>
+
         <release date="2017-10-24" version="1.25" title="S3 Performance Improvements">
             <release-core-list>
                 <release-bug-list>
