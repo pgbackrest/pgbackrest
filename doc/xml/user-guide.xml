@@ -555,7 +555,7 @@
                 </execute>
             </execute-list>
 
-            <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) then the <br-option>archive-timeout</br-option> option should be increased.</p>
+            <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - RETENTION -->
@@ -885,7 +885,7 @@
         <section id="option-archive-timeout">
             <title>Archive Timeout</title>
 
-            <p>During an online backup, <backrest/> waits for WAL segments that are required to make the backup consistent to be archived. This wait time is governed by the <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer, then this option should be increased.</p>
+            <p>During an online backup <backrest/> waits for WAL segments that are required for backup consistency to be archived. This wait time is governed by the <backrest/> <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer then this option should be increased.</p>
         </section>
     </section>
 

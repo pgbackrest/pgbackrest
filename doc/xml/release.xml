@@ -23,6 +23,19 @@
                 </release-refactor-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="fiske.keith"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify usage of the <br-option>archive-timeout</br-option> option and describe how it is distinct from the <postgres/> <pg-option>archive_timeout</pg-option> setting.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-refactor-list>
                     <release-item>
@@ -3479,6 +3492,11 @@
         <contributor id="didovicher.dmitry">
             <contributor-name-display>Dmitry Didovicher</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
+        </contributor>
+
+        <contributor id="fiske.keith">
+            <contributor-name-display>Keith Fiske</contributor-name-display>
+            <contributor-id type="github">keithf4</contributor-id>
         </contributor>
 
         <contributor id="fort.chris">
