@@ -72,7 +72,6 @@ use constant BLDLCL_FUNCTION_DEPEND_OPTION                          => BLDLCL_FU
 use constant BLDLCL_FUNCTION_DEPEND_VALUE                           => BLDLCL_FUNCTION_DEPEND . 'Value';
 use constant BLDLCL_FUNCTION_DEPEND_VALUE_TOTAL                     => BLDLCL_FUNCTION_DEPEND_VALUE . 'Total';
 
-use constant BLDLCL_FUNCTION_HINT                                   => BLDLCL_PREFIX_RULE_OPTION . 'Hint';
 use constant BLDLCL_FUNCTION_NAME_ALT                               => BLDLCL_PREFIX_RULE_OPTION . 'NameAlt';
 use constant BLDLCL_FUNCTION_NEGATE                                 => BLDLCL_PREFIX_RULE_OPTION . 'Negate';
 use constant BLDLCL_FUNCTION_PREFIX                                 => BLDLCL_PREFIX_RULE_OPTION . 'Prefix';
@@ -357,16 +356,6 @@ my $rhBuild =
                     &BLD_FUNCTION_DEPEND_RESULT => true,
                 },
 
-                &BLDLCL_FUNCTION_HINT =>
-                {
-                    &BLD_SUMMARY => 'some clue as to what value the user should provide when the option is missing but required',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_CONSTCHAR,
-                    &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
-                    &BLD_TRUTH_DEFAULT => undef,
-                    &BLD_FUNCTION_DEPEND => BLDLCL_FUNCTION_VALID,
-                    &BLD_FUNCTION_DEPEND_RESULT => true,
-                },
-
                 &BLDLCL_FUNCTION_OPTION_ID =>
                 {
                     &BLD_SUMMARY => 'lookup option id using option name',
@@ -541,7 +530,6 @@ sub buildConfig
             if (cfgRuleOptionValid($strCommand, $strOption))
             {
                 functionMatrix(BLDLCL_FUNCTION_DEFAULT, [$iCommandId, $iOptionId], cfgRuleOptionDefault($strCommand, $strOption));
-                functionMatrix(BLDLCL_FUNCTION_HINT, [$iCommandId, $iOptionId], cfgRuleOptionHint($strCommand, $strOption));
                 functionMatrix(BLDLCL_FUNCTION_REQUIRED, [$iCommandId, $iOptionId], cfgRuleOptionRequired($strCommand, $strOption));
 
                 # Option dependencies

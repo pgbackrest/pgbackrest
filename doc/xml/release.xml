@@ -16,6 +16,10 @@
                     <release-item>
                         <p>Add <id>list</id> type for options.  The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove configurable option hints. <br-option>db-path</br-option> was the only option with a hint so the feature seemed wasteful.  All missing stanza options now output the same hint without needing configuration.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

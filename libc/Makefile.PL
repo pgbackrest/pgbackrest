@@ -77,7 +77,6 @@ my $rhExport =
             cfgRuleOptionDependValue
             cfgRuleOptionDependValueTotal
             cfgRuleOptionDependValueValid
-            cfgRuleOptionHint
             cfgRuleOptionNameAlt
             cfgRuleOptionNegate
             cfgRuleOptionPrefix

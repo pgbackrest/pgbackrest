@@ -775,8 +775,8 @@ sub optionValidate
                 {
                     confess &log(ERROR,
                         "${strCommand} command requires option: ${strOption}" .
-                        (defined(cfgRuleOptionHint($iCommandId, $iOptionId)) ?
-                            "\nHINT: " . cfgRuleOptionHint($iCommandId, $iOptionId) : ''),
+                            (defined(cfgRuleOptionSection($iOptionId)) &&
+                                cfgRuleOptionSection($iOptionId) eq CFGDEF_SECTION_STANZA ? "\nHINT: does this stanza exist?" : ''),
                         ERROR_OPTION_REQUIRED);
                 }
             }

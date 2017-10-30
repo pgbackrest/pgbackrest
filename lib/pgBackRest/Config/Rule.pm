@@ -388,19 +388,6 @@ sub cfgRuleOptionDependValueValid
 push @EXPORT, qw(cfgRuleOptionDependValueValid);
 
 ####################################################################################################################################
-# cfgRuleOptionHint - option hint, if any
-####################################################################################################################################
-sub cfgRuleOptionHint
-{
-    my $strCommand = shift;
-    my $strOption = cfgOptionName(shift);
-
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_HINT);
-}
-
-push @EXPORT, qw(cfgRuleOptionHint);
-
-####################################################################################################################################
 # cfgOptionIndexTotal - max index for options that are indexed (e.g., db)
 ####################################################################################################################################
 sub cfgOptionIndexTotal

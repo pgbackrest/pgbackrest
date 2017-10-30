@@ -29,7 +29,6 @@ bool cfgRuleOptionDepend(int commandId, int optionId);
 int cfgRuleOptionDependOption(int commandId, int optionId);
 const char *cfgRuleOptionDependValue(int commandId, int optionId, int valueId);
 int cfgRuleOptionDependValueTotal(int commandId, int optionId);
-const char *cfgRuleOptionHint(int commandId, int optionId);
 const char *cfgRuleOptionNameAlt(int optionId);
 bool cfgRuleOptionNegate(int optionId);
 const char *cfgRuleOptionPrefix(int optionId);

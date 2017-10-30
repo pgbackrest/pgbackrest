@@ -82,11 +82,6 @@ cfgRuleOptionDependValueValid(commandId, optionId, value)
     const char *value
 
 const char *
-cfgRuleOptionHint(commandId, optionId)
-    U32 commandId
-    U32 optionId
-
-const char *
 cfgRuleOptionNameAlt(optionId)
     U32 optionId
 

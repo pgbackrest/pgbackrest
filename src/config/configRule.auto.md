@@ -494,25 +494,6 @@ This function is valid when `cfgRuleOptionDepend()` = `true`.
 | cfgRuleOptionDependValueTotal | _\<ANY\>_ | `CFGOPT_TEST_DELAY` | `1` |
 | cfgRuleOptionDependValueTotal | _\<ANY\>_ | `CFGOPT_TEST_POINT` | `1` |
 
-## cfgRuleOptionHint
-
-Some clue as to what value the user should provide when the option is missing but required.
-
-### Truth Table:
-
-This function is valid when `cfgRuleOptionValid()` = `true`. Permutations that return `NULL` are excluded for brevity.
-
-| Function | commandId | optionId | Result |
-| -------- | --------- | -------- | ------ |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB1_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB2_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB3_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB4_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB5_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB6_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB7_PATH` | `"does this stanza exist?"` |
-| cfgRuleOptionHint | _\<ANY\>_ | `CFGOPT_DB8_PATH` | `"does this stanza exist?"` |
-
 ## cfgRuleOptionNameAlt
 
 Alternate name for the option primarily used for deprecated names.

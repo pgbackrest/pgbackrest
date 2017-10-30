@@ -409,8 +409,6 @@ use constant CFGBLDDEF_RULE_DEPEND_OPTION                           => 'depend-o
     push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_OPTION);
 use constant CFGBLDDEF_RULE_DEPEND_LIST                             => 'depend-list';
     push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_LIST);
-use constant CFGBLDDEF_RULE_HINT                                    => 'hint';
-    push @EXPORT, qw(CFGBLDDEF_RULE_HINT);
 use constant CFGBLDDEF_RULE_INDEX                                   => 'index';
     push @EXPORT, qw(CFGBLDDEF_RULE_INDEX);
 use constant CFGBLDDEF_RULE_NEGATE                                  => 'negate';
@@ -1694,7 +1692,6 @@ my %hOptionRule =
         &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
         &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
         &CFGBLDDEF_RULE_REQUIRED => true,
-        &CFGBLDDEF_RULE_HINT => "does this stanza exist?",
         &CFGBLDDEF_RULE_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET =>

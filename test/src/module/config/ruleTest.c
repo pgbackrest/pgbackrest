@@ -73,8 +73,6 @@ void testRun()
                             cfgRuleOptionDependValueValid(commandId, optionId, BOGUS_STR), NULL, "bogus depend option value");
                     }
 
-                    cfgRuleOptionHint(commandId, optionId);
-
                     cfgRuleOptionRequired(commandId, optionId);
                 }
             }
@@ -128,8 +126,6 @@ void testRun()
         TEST_RESULT_BOOL(cfgRuleOptionDependValueValid(CFGCMD_RESTORE, CFGOPT_TARGET, "time"), true, "depend option value valid");
         TEST_RESULT_BOOL(
             cfgRuleOptionDependValueValid(CFGCMD_RESTORE, CFGOPT_TARGET, BOGUS_STR), false, "depend option value not valid");
-
-        TEST_RESULT_STR(cfgRuleOptionHint(CFGCMD_BACKUP, CFGOPT_DB1_PATH), "does this stanza exist?", "hint exists");
 
         TEST_RESULT_INT(cfgOptionIndexTotal(CFGOPT_DB_PATH), 8, "index total > 1");
         TEST_RESULT_INT(cfgOptionIndexTotal(CFGOPT_REPO_PATH), 1, "index total == 1");
