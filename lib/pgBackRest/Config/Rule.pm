@@ -511,16 +511,4 @@ sub cfgRuleOptionValid
 
 push @EXPORT, qw(cfgRuleOptionValid);
 
-####################################################################################################################################
-# cfgRuleOptionValueHash - is the option a true hash or just a list of keys?
-####################################################################################################################################
-sub cfgRuleOptionValueHash
-{
-    my $strOption = cfgOptionName(shift);
-
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_HASH_VALUE};
-}
-
-push @EXPORT, qw(cfgRuleOptionValueHash);
-
 1;

@@ -23,7 +23,6 @@ void testRun()
             cfgRuleOptionSection(optionId);
             cfgRuleOptionSecure(optionId);
             cfgRuleOptionType(optionId);
-            cfgRuleOptionValueHash(optionId);
 
             for (int commandId = 0; commandId < cfgCommandTotal(); commandId++)
             {
@@ -160,9 +159,6 @@ void testRun()
 
         TEST_RESULT_BOOL(cfgRuleOptionValid(CFGCMD_BACKUP, CFGOPT_TYPE), true, "option valid");
         TEST_RESULT_BOOL(cfgRuleOptionValid(CFGCMD_INFO, CFGOPT_TYPE), false, "option not valid");
-
-        TEST_RESULT_BOOL(cfgRuleOptionValueHash(CFGOPT_LINK_MAP), true, "option is value hash");
-        TEST_RESULT_BOOL(cfgRuleOptionValueHash(CFGOPT_TYPE), false, "option is not value hash");
 
         TEST_RESULT_STR(cfgCommandName(CFGCMD_ARCHIVE_GET), "archive-get", "command name from id");
         TEST_RESULT_STR(cfgCommandName(-1), NULL, "invalid command id (lower bound)");

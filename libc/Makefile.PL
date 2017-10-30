@@ -87,7 +87,6 @@ my $rhExport =
             cfgRuleOptionType
             cfgRuleOptionValid
             cfgOptionTotal
-            cfgRuleOptionValueHash
         )],
     },
 

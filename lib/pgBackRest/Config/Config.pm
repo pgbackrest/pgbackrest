@@ -110,7 +110,7 @@ sub configLoad
 
             my $strOption = $strOptionName;
 
-            if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
+            if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH || cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_LIST)
             {
                 $strOption .= '=s@';
             }
@@ -563,7 +563,8 @@ sub optionValidate
                             }
                         }
                         # Convert a list of key/value pairs to a hash
-                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
+                        elsif (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH ||
+                               cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_LIST)
                         {
                             my @oValue = ();
 
@@ -702,7 +703,8 @@ sub optionValidate
                 }
 
                 # Set option value
-                if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH && ref($strValue) eq 'ARRAY')
+                if (ref($strValue) eq 'ARRAY' &&
+                    (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH || cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_LIST))
                 {
                     foreach my $strItem (@{$strValue})
                     {
@@ -710,7 +712,7 @@ sub optionValidate
                         my $strValue;
 
                         # If the keys are expected to have values
-                        if (cfgRuleOptionValueHash($iOptionId))
+                        if (cfgRuleOptionType($iOptionId) eq CFGOPTDEF_TYPE_HASH)
                         {
                             # Check for = and make sure there is a least one character on each side
                             my $iEqualPos = index($strItem, '=');

@@ -409,8 +409,6 @@ use constant CFGBLDDEF_RULE_DEPEND_OPTION                           => 'depend-o
     push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_OPTION);
 use constant CFGBLDDEF_RULE_DEPEND_LIST                             => 'depend-list';
     push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_LIST);
-use constant CFGBLDDEF_RULE_HASH_VALUE                              => 'hash-value';
-    push @EXPORT, qw(CFGBLDDEF_RULE_HASH_VALUE);
 use constant CFGBLDDEF_RULE_HINT                                    => 'hint';
     push @EXPORT, qw(CFGBLDDEF_RULE_HINT);
 use constant CFGBLDDEF_RULE_INDEX                                   => 'index';
@@ -440,6 +438,8 @@ use constant CFGOPTDEF_TYPE_HASH                                    => 'hash';
     push @EXPORT, qw(CFGOPTDEF_TYPE_HASH);
 use constant CFGOPTDEF_TYPE_INTEGER                                 => 'integer';
     push @EXPORT, qw(CFGOPTDEF_TYPE_INTEGER);
+use constant CFGOPTDEF_TYPE_LIST                                    => 'list';
+    push @EXPORT, qw(CFGOPTDEF_TYPE_LIST);
 use constant CFGOPTDEF_TYPE_STRING                                  => 'string';
     push @EXPORT, qw(CFGOPTDEF_TYPE_STRING);
 
@@ -1546,8 +1546,7 @@ my %hOptionRule =
     &CFGOPT_DB_INCLUDE =>
     {
         &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_HASH,
-        &CFGBLDDEF_RULE_HASH_VALUE => false,
+        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_LIST,
         &CFGBLDDEF_RULE_REQUIRED => false,
         &CFGBLDDEF_RULE_COMMAND =>
         {
@@ -1826,13 +1825,6 @@ foreach my $strKey (sort(keys(%hOptionRule)))
     if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE}))
     {
         &log(ASSERT, "type is required for option '${strKey}'");
-    }
-
-    # Hash types by default have hash values (rather than just a boolean list)
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_HASH_VALUE}))
-    {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_HASH_VALUE} =
-            $hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGOPTDEF_TYPE_HASH ? true : false;
     }
 
     # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.

@@ -121,7 +121,3 @@ cfgRuleOptionValid(commandId, optionId)
 
 U32
 cfgOptionTotal()
-
-bool
-cfgRuleOptionValueHash(optionId)
-    U32 optionId

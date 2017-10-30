@@ -883,7 +883,7 @@ Secure options can never be passed on the commmand-line.
 | cfgRuleOptionType | `CFGOPT_COMPRESS_LEVEL` | `CFGOPTDEF_TYPE_INTEGER` |
 | cfgRuleOptionType | `CFGOPT_COMPRESS_LEVEL_NETWORK` | `CFGOPTDEF_TYPE_INTEGER` |
 | cfgRuleOptionType | `CFGOPT_CONFIG` | `CFGOPTDEF_TYPE_STRING` |
-| cfgRuleOptionType | `CFGOPT_DB_INCLUDE` | `CFGOPTDEF_TYPE_HASH` |
+| cfgRuleOptionType | `CFGOPT_DB_INCLUDE` | `CFGOPTDEF_TYPE_LIST` |
 | cfgRuleOptionType | `CFGOPT_DB_TIMEOUT` | `CFGOPTDEF_TYPE_FLOAT` |
 | cfgRuleOptionType | `CFGOPT_DB1_CMD` | `CFGOPTDEF_TYPE_STRING` |
 | cfgRuleOptionType | `CFGOPT_DB1_CONFIG` | `CFGOPTDEF_TYPE_STRING` |
@@ -1915,18 +1915,3 @@ Permutations that return `false` are excluded for brevity.
 | cfgRuleOptionValid | `CFGCMD_STOP` | `CFGOPT_REPO_S3_VERIFY_SSL` | `true` |
 | cfgRuleOptionValid | `CFGCMD_STOP` | `CFGOPT_REPO_TYPE` | `true` |
 | cfgRuleOptionValid | `CFGCMD_STOP` | `CFGOPT_STANZA` | `true` |
-
-## cfgRuleOptionValueHash
-
-Is the option a true hash or just a list of keys?
-
-### Truth Table:
-
-Permutations that return `false` are excluded for brevity.
-
-| Function | optionId | Result |
-| -------- | -------- | ------ |
-| cfgRuleOptionValueHash | `CFGOPT_LINK_MAP` | `true` |
-| cfgRuleOptionValueHash | `CFGOPT_RECOVERY_OPTION` | `true` |
-| cfgRuleOptionValueHash | `CFGOPT_TABLESPACE_MAP` | `true` |
-| cfgRuleOptionValueHash | `CFGOPT_TEST_POINT` | `true` |

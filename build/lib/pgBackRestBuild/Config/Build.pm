@@ -81,7 +81,6 @@ use constant BLDLCL_FUNCTION_SECTION                                => BLDLCL_PR
 use constant BLDLCL_FUNCTION_SECURE                                 => BLDLCL_PREFIX_RULE_OPTION . 'Secure';
 use constant BLDLCL_FUNCTION_TYPE                                   => BLDLCL_PREFIX_RULE_OPTION . 'Type';
 use constant BLDLCL_FUNCTION_VALID                                  => BLDLCL_PREFIX_RULE_OPTION . 'Valid';
-use constant BLDLCL_FUNCTION_VALUE_HASH                             => BLDLCL_PREFIX_RULE_OPTION . 'ValueHash';
 
 ####################################################################################################################################
 # Build command constant maps
@@ -440,14 +439,6 @@ my $rhBuild =
                     &BLD_PARAM => [BLDLCL_PARAM_COMMANDID, BLDLCL_PARAM_OPTIONID],
                     &BLD_TRUTH_DEFAULT => false,
                 },
-
-                &BLDLCL_FUNCTION_VALUE_HASH =>
-                {
-                    &BLD_SUMMARY => 'is the option a true hash or just a list of keys?',
-                    &BLD_RETURN_TYPE => CGEN_DATATYPE_BOOL,
-                    &BLD_PARAM => [BLDLCL_PARAM_OPTIONID],
-                    &BLD_TRUTH_DEFAULT => false,
-                },
             },
         },
     },
@@ -615,7 +606,6 @@ sub buildConfig
         functionMatrix(BLDLCL_FUNCTION_SECTION, [$iOptionId], cfgRuleOptionSection($strOption));
         functionMatrix(BLDLCL_FUNCTION_SECURE, [$iOptionId], cfgRuleOptionSecure($strOption));
         functionMatrix(BLDLCL_FUNCTION_TYPE, [$iOptionId], $rhOptionTypeNameIdMap->{cfgRuleOptionType($strOption)});
-        functionMatrix(BLDLCL_FUNCTION_VALUE_HASH, [$iOptionId], cfgRuleOptionValueHash($strOption));
     }
 
     # Build lookup functions that are not implemented with switch statements

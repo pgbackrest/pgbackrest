@@ -38,6 +38,5 @@ const char *cfgRuleOptionSection(int optionId);
 bool cfgRuleOptionSecure(int optionId);
 int cfgRuleOptionType(int optionId);
 bool cfgRuleOptionValid(int commandId, int optionId);
-bool cfgRuleOptionValueHash(int optionId);
 
 #endif
