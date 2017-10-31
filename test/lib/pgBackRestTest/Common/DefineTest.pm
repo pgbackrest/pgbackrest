@@ -494,7 +494,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'all',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 3,
                     &TESTDEF_CONTAINER => true,
 
                     &TESTDEF_COVERAGE =>

@@ -477,6 +477,7 @@ sub clean
     my %oTargetFound;
     my $bDelta = cfgOption(CFGOPT_FORCE) || cfgOption(CFGOPT_DELTA);
 
+# CSHANG I'm confused by this - the only key I ever see in the backup.manifest under backup:target (MANIFEST_SECTION_BACKUP_TARGET) section is the pg_data - oh, and this has /var/lib/postgresql/9.4/demo - so that is what ${$self->{oTargetPath}}{$strTarget} is set to
     for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
     {
         ${$self->{oTargetPath}}{$strTarget} = $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH);
@@ -576,13 +577,13 @@ sub clean
 
     # Clean up each target starting from the most nested
     my %oFileChecked;
-
+# CSHANG This section appears to only valid when doing a --delta restore because the $oTargetFound{$strTarget} will always be false if all files were removed from the DB cluster
     for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET, INI_SORT_REVERSE))
     {
         if ($oTargetFound{$strTarget})
         {
             &log(INFO, "remove invalid files/paths/links from ${$self->{oTargetPath}}{$strTarget}");
-
+# CSHANG This is just looking to see if the /var/lib/postgresql/9.4/demo and if pg_data is a tablespace - if so it skips, so why do we have the check for tablespace later in repoPathGet?
             # OK for the special tablespace path to not exist yet - it will be created later
             if (!$oStorageDb->pathExists(${$self->{oTargetPath}}{$strTarget}) &&
                 $oManifest->isTargetTablespace($strTarget))
@@ -592,6 +593,15 @@ sub clean
 
             # Load path manifest so it can be compared to deleted files/paths/links that are not in the backup
             my $hTargetManifest = $oStorageDb->manifest(${$self->{oTargetPath}}{$strTarget});
+# CSHANG So this reads all the files/paths/links in  /var/lib/postgresql/9.4/demo into $hTargetManifest. It results in something like:
+        #  'base/1/12103' => {
+        #                       'type' => 'f',
+        #                       'user' => 'postgres',
+        #                       'group' => 'postgres',
+        #                       'modification_time' => 1509473002,
+        #                       'size' => 8192,
+        #                       'mode' => '0600'
+        #                     }, # CSHANG
 
             # If the target is a file it doesn't matter whether it already exists or not.
             if ($oManifest->isTargetFile($strTarget))
@@ -602,6 +612,7 @@ sub clean
             foreach my $strName (sort {$b cmp $a} (keys(%{$hTargetManifest})))
             {
                 # Skip the root path
+# CSHANG Or skip the manifest file
                 if ($strName eq '.' || ($strName eq FILE_MANIFEST && $strTarget eq MANIFEST_TARGET_PGDATA))
                 {
                     next;
@@ -609,7 +620,7 @@ sub clean
 
                 my $strOsFile = "${$self->{oTargetPath}}{$strTarget}/${strName}";
                 my $strManifestFile = $oManifest->repoPathGet($strTarget, $strName);
-
+# CSHANG repoPathGet just returns the same thing it was given, just concatenated with a slash in between (e.g. pg_data, xyz returns pg_data/xyz). And if it was a tablespace it would never be checked here, unless /var/lib/postgresql/9.4/demo does not exist - BUT if /var/lib/postgresql/9.4/demo did not exist, then $oTargetFound{$strTarget} would be false so we wouldn't get here...
                 # Determine the file/path/link type
                 my $strSection = MANIFEST_SECTION_TARGET_FILE;
 
