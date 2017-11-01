@@ -85,7 +85,9 @@ sub run
     my $strBackupPath = storageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     my $strBackupManifestFile = "$strBackupPath/" . FILE_MANIFEST;
     my $strDbMasterPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, 1));
+    my $iDbCatalogVersion = 201409291;
 
+    ################################################################################################################################
     if ($self->begin('new()'))
     {
         # Missing DB version
@@ -126,9 +128,14 @@ sub run
             '    saved manifest equals initial manifest');
     }
 
+    ################################################################################################################################
     if ($self->begin('build()'))
     {
+# CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set?
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+
+# CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating?
+        $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
 
         # Build error
         #---------------------------------------------------------------------------------------------------------------------------
@@ -139,7 +146,8 @@ sub run
         storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
 
         $oManifest->build(storageDb(), $strDbMasterPath, undef, false);
-# CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid? It seems not, so shouldn't the build function check for a minimum set - like backup-type, backup-timestamp-start, etc? Or at least on the save? Or on load, mabe we should require all the DB section settings - why are we requiring the db version but nothing else?
+
+# CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid?
     #  'oContent' => {
     #                  'target:file:default' => {
     #                                             'mode' => '0644',
@@ -180,8 +188,35 @@ sub run
     #                                   'db-version' => '9.4'
     #                                 }
     #                },
+
+# CSHANG It seems not, so shouldn't the build function check for a minimum set:
+# * backup:
+#     * backup-type
+#     * backup-timestamp-start
+#     * backup-archive-start
+#     * backup-lsn-start
+# * backup:option
+#     * option-backup-standby
+#     * option-compress
+#     * option-hardlink
+#     * option-online
+#     * option-archive-copy
+#     * option-archive-check
+#     * option-checksum-page
+# * backup:db
+#     * db-id
+#     * db-system-id
+#     * db-catalog-version
+#     * db-control-version?
+# CSHANG At least in the validate function? This is what the build provides - so why is there no checksum for pg_control in target:file? - at this point it fails the validate? manifest subvalue 'checksum' not set for file 'pg_data/global/pg_control'
+        foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
+        {
+            $self->testException(sub {$oManifest->validate()}, ERROR_ASSERT,
+                "manifest subvalue 'checksum' not set for file '${strFile}'");
+        }
     }
 
+    ################################################################################################################################
     if ($self->begin('get/set'))
     {
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
@@ -228,16 +263,9 @@ sub run
         $self->testResult(sub {$oManifest->get(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_USER, false)},
             "[undef]", 'get() - default section');
 
-        # Set and get tablespace path
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $iCatalogVersion = 1234;
-        $oManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iCatalogVersion);
-        $self->testResult(sub {$oManifest->tablespacePathGet()}, "PG_" . PG_VERSION_94 . "_" . $iCatalogVersion,
-            'tablespacePathGet()');
-
         # Get the correct path for the control file in the DB
         #---------------------------------------------------------------------------------------------------------------------------
-# CSHANG Should MANIFEST_SUBKEY_TYPE be required for MANIFEST_SUBKEY_PATH?
+# CSHANG Should MANIFEST_SUBKEY_TYPE be required for MANIFEST_SUBKEY_PATH? And why is there a MANIFEST_SUBKEY_FILE - shouldn't there be a MANIFEST_VALUE_FILE instead? pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"} is the only time I see it in the mock expect tests and the type is link - in restore, I see it firsts tests for link and then file - is this the only way "file" is used?
         $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbPath});
         $self->testResult(sub {$oManifest->dbPathGet($oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA,
             MANIFEST_SUBKEY_PATH), MANIFEST_FILE_PGCONTROL)},
@@ -246,9 +274,118 @@ sub run
         # Get filename - no path passed
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oManifest->dbPathGet(undef, BOGUS)}, BOGUS, 'dbPathGet() - filename');
-# CSHANG repoPathGet - I think this is more for when there are tablespaces? Else it just returns the same thing it was given, just concatenated with a slash in between. With tablespaces it will return the pg_data (seems to be the only thing ever passed as the first parameter) and then PG_9.4_1234 (e.g. db version and catalog number from the MANIFEST_SECTION_BACKUP_DB section) but in the code, this can never happen - there is only one place it is used (Restore->clean)
-# use Data::Dumper; print "KEYS: ".Dumper($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET));
-        # $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH)
+
+        # repoPathGet - no tablespace
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oManifest->repoPathGet(MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL)},
+            MANIFEST_TARGET_PGDATA . "/" . DB_FILE_PGCONTROL, 'repoPathGet() - pg_control');
+
+        # repoPathGet - tablespace - no subpath
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strTablespaceId = "1";
+        my $strTablespace = MANIFEST_TARGET_PGTBLSPC . "/" . $strTablespaceId;
+        my $strTablespaceName = "ts" . $strTablespaceId;
+
+        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTablespace, MANIFEST_SUBKEY_PATH, $self->{strDbPath} .
+            "/tablespace/" . $strTablespaceName);
+# CSHANG But this isn't right - shouldn't it error if there is no tablespace-id or tablespace-name or type is something other than link?
+        $self->testResult(sub {$oManifest->repoPathGet($strTablespace)}, $strTablespace,
+            'repoPathGet() - tablespace - no tablepace-id nor subpath');
+
+        # repoPathGet - fully qualified tablespace target
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Set the catalog for the DB since that is what is expected to be returned
+        $oManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
+        $self->testResult(sub {$oManifest->tablespacePathGet()}, "PG_" . PG_VERSION_94 . "_" . $iDbCatalogVersion,
+            'tablespacePathGet()');
+
+        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTablespace, MANIFEST_SUBKEY_TABLESPACE_ID, $strTablespaceId);
+        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTablespace, MANIFEST_SUBKEY_TABLESPACE_NAME, $strTablespaceName);
+        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, $strTablespace, MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_LINK);
+
+        $self->testResult(sub {$oManifest->repoPathGet($strTablespace, BOGUS)}, $strTablespace . "/PG_" . PG_VERSION_94 . "_" .
+            $iDbCatalogVersion . "/" . BOGUS, 'repoPathGet() - tablespace valid with subpath');
+
+        # isTargetLink
+        #---------------------------------------------------------------------------------------------------------------------------
+# CSHANG Shouldn't this error since no type has been set?
+        $self->testResult(sub {$oManifest->isTargetLink(MANIFEST_TARGET_PGDATA)}, false, "isTargetLink - false");
+        $self->testResult(sub {$oManifest->isTargetLink($strTablespace)}, true, "isTargetLink - true");
+
+        # isTargetLink
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oManifest->isTargetFile(MANIFEST_TARGET_PGDATA)}, false, "isTargetFile - false");
+
+        $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_FILE, BOGUS);
+        $self->testResult(sub {$oManifest->isTargetFile(MANIFEST_TARGET_PGDATA)}, true, "isTargetFile - true");
+    }
+
+    ################################################################################################################################
+    if ($self->begin('isTarget - exceptions'))
+    {
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+
+        # Target not defined
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(sub {$oManifest->isTargetValid()}, ERROR_ASSERT, 'target is not defined');
+        $self->testException(sub {$oManifest->isTargetFile()}, ERROR_ASSERT, 'target is not defined');
+        $self->testException(sub {$oManifest->isTargetLink()}, ERROR_ASSERT, 'target is not defined');
+        $self->testException(sub {$oManifest->isTargetTablespace()}, ERROR_ASSERT, 'target is not defined');
+
+        # Target not valid
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(sub {$oManifest->isTargetValid(BOGUS, true)}, ERROR_ASSERT, BOGUS . ' is not a valid target');
+        $self->testResult(sub {$oManifest->isTargetValid(BOGUS, false)}, false, 'isTargetValid - bError = false, return false');
+        $self->testResult(sub {$oManifest->isTargetValid(BOGUS)}, false, 'isTargetValid - bError = undef, false');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('dbVerion(), xactPath(), walPath()'))
+    {
+        # dbVersion, xactPath and walPath - PG < 10
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+
+        $self->testResult(sub {$oManifest->dbVersion()}, PG_VERSION_94, 'dbVersion < 10');
+        $self->testResult(sub {$oManifest->xactPath()}, 'pg_clog', '    xactPath - pg_clog');
+        $self->testResult(sub {$oManifest->walPath()}, 'pg_xlog', '    walPath - pg_xlog');
+
+        # dbVersion, xactPath and walPath - PG >= 10
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_10});
+
+        $self->testResult(sub {$oManifest->dbVersion()}, PG_VERSION_10, 'dbVersion >= 10');
+        $self->testResult(sub {$oManifest->xactPath()}, 'pg_xact', '    xactPath - pg_xact');
+        $self->testResult(sub {$oManifest->walPath()}, 'pg_wal', '    walPath - pg_wal');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('validate()'))
+    {
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+
+        # Set a target:file with only a timestamp - fail size not set
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_TIMESTAMP, 1509384645);
+        $self->testException(sub {$oManifest->validate()}, ERROR_ASSERT,
+            "manifest subvalue 'size' not set for file '" . BOGUS . "'");
+
+        # Set target:file size - fail checksum not set
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_SIZE, 1);
+        $self->testException(sub {$oManifest->validate()}, ERROR_ASSERT,
+            "manifest subvalue 'checksum' not set for file '" . BOGUS . "'");
+
+        # Set target:file checksum - validate passes when size > 0 and checksum set
+        #---------------------------------------------------------------------------------------------------------------------------
+# CSHANG Is a zero checksum valid?
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_CHECKSUM, 0);
+        $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated - size 1, checksum 0');
+
+        # Set target:file size to 0 - validate passes when size 0
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_SIZE, 0);
+        $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated - size 0');
     }
 }
 

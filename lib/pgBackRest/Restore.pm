@@ -512,7 +512,7 @@ sub clean
         {
             confess &log(ERROR, "cannot restore to missing path ${strCheckPath}", ERROR_PATH_MISSING);
         }
-
+# CSHANG When is there ever a file type in backup:target?
         # Check if the file exists
         if ($oManifest->isTargetFile($strTarget))
         {
@@ -577,13 +577,13 @@ sub clean
 
     # Clean up each target starting from the most nested
     my %oFileChecked;
-# CSHANG This section appears to only valid when doing a --delta restore because the $oTargetFound{$strTarget} will always be false if all files were removed from the DB cluster
+
     for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET, INI_SORT_REVERSE))
     {
         if ($oTargetFound{$strTarget})
         {
             &log(INFO, "remove invalid files/paths/links from ${$self->{oTargetPath}}{$strTarget}");
-# CSHANG This is just looking to see if the /var/lib/postgresql/9.4/demo and if pg_data is a tablespace - if so it skips, so why do we have the check for tablespace later in repoPathGet?
+# CSHANG This is just looking to see if the path in backup:target (path [TEST_PATH]db-master/db/tablespace/ts2) pg_tblspc/1={"path":"[TEST_PATH]/db-master/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"} does not exist, and pg_tblspc is a tablespace in backup:target - if so it skips, but isn't $oTargetFound{$strTarget} being set to true the same as checking $oStorageDb->pathExists(${$self->{oTargetPath}}{$strTarget})?
             # OK for the special tablespace path to not exist yet - it will be created later
             if (!$oStorageDb->pathExists(${$self->{oTargetPath}}{$strTarget}) &&
                 $oManifest->isTargetTablespace($strTarget))
@@ -602,7 +602,7 @@ sub clean
         #                       'size' => 8192,
         #                       'mode' => '0600'
         #                     }, # CSHANG
-
+# CSHANG I don't see anything in the expect logs where there is a file type in backup:target - what is this for?
             # If the target is a file it doesn't matter whether it already exists or not.
             if ($oManifest->isTargetFile($strTarget))
             {
@@ -612,7 +612,7 @@ sub clean
             foreach my $strName (sort {$b cmp $a} (keys(%{$hTargetManifest})))
             {
                 # Skip the root path
-# CSHANG Or skip the manifest file
+# CSHANG Or skip the manifest file if pg_data - do we ever copy the manifest file? Why is it necessary to check for MANIFEST_TARGET_PGDATA?
                 if ($strName eq '.' || ($strName eq FILE_MANIFEST && $strTarget eq MANIFEST_TARGET_PGDATA))
                 {
                     next;
@@ -620,7 +620,8 @@ sub clean
 
                 my $strOsFile = "${$self->{oTargetPath}}{$strTarget}/${strName}";
                 my $strManifestFile = $oManifest->repoPathGet($strTarget, $strName);
-# CSHANG repoPathGet just returns the same thing it was given, just concatenated with a slash in between (e.g. pg_data, xyz returns pg_data/xyz). And if it was a tablespace it would never be checked here, unless /var/lib/postgresql/9.4/demo does not exist - BUT if /var/lib/postgresql/9.4/demo did not exist, then $oTargetFound{$strTarget} would be false so we wouldn't get here...
+&log(DETAIL, "MANIFESTFILE REPO: ".$strManifestFile);
+# CSHANG repoPathGet just returns the same thing it was given, just concatenated with a slash in between (e.g. pg_data, xyz returns pg_data/xyz). And if it was a tablespace and path [TEST_PATH]db-master/db/tablespace/ts2 exits in the database from above check, then it would return pg_tblspc/2/PG_9.4_201409291 - which would be the location in the repo
                 # Determine the file/path/link type
                 my $strSection = MANIFEST_SECTION_TARGET_FILE;
 
