@@ -3,7 +3,7 @@ Error Handler
 
 Implement a try ... catch ... finally error handler.
 
-ERROR_TRY
+ERROR_TRY()
 {
     <Do something that might throw an error>
 }
@@ -19,7 +19,7 @@ ERROR_CATCH_ANY()
 {
     <Handle errors that are not Error1 or Error2>
 }
-FINALLY
+ERROR_FINALLY()
 {
     <Cleanup code that runs in all cases>
 }

@@ -266,4 +266,4 @@ void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fi
 
     // Propogate the error
     errorInternalPropagate();
-}                                                                   // {uncoverable - errorPropagate() does not return}
+}                                                                   // {uncoverable - errorInternalPropagate() does not return}
