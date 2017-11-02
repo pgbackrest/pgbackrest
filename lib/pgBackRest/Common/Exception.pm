@@ -157,7 +157,9 @@ use constant ERROR_PATH_EXISTS                                      => ERROR_MIN
 use constant ERROR_FILE_EXISTS                                      => ERROR_MINIMUM + 68;
     push @EXPORT, qw(ERROR_FILE_EXISTS);
 use constant ERROR_MEMORY                                           => ERROR_MINIMUM + 69; # Thrown by C library
-    push @EXPORT, qw(ERROR_CRYPT);
+    push @EXPORT, qw(ERROR_MEMORY);
+use constant ERROR_CIPHER                                           => ERROR_MINIMUM + 70;
+    push @EXPORT, qw(ERROR_CIPHER);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

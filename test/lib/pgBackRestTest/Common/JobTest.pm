@@ -318,7 +318,7 @@ sub run
                     'gcc -Wfatal-errors -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
                     "-I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c " .
                     "/$self->{strBackRestBase}/test/src/common/harnessTest.c " .
-                    join(' ', @stryCFile) . ' -o test';
+                    join(' ', @stryCFile) . " -l crypto -o test";
 
                 executeTest(
                     'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .

@@ -12,6 +12,17 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.26dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Repository encryption.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <p>Add <id>list</id> type for options.  The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>

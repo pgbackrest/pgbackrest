@@ -52,7 +52,7 @@ Vagrant.configure(2) do |config|
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Build Tools' && date
-        apt-get install -y devscripts build-essential lintian git txt2man debhelper
+        apt-get install -y devscripts build-essential lintian git txt2man debhelper libssl-dev
 
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install AWS CLI' && date

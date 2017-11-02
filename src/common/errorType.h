@@ -18,6 +18,7 @@ ERROR_DECLARE(AssertError);
 
 ERROR_DECLARE(FormatError);
 ERROR_DECLARE(MemoryError);
+ERROR_DECLARE(CipherError);
 
 ERROR_DECLARE(RuntimeError);
 
