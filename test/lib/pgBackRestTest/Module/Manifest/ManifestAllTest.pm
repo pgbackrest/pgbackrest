@@ -63,10 +63,10 @@ sub initTest
     # Create pg_control path
     storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
 
-    # Copy a pg_control file into the pg_control path
-    executeTest(
-        'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
-        DB_FILE_PGCONTROL);
+    # # Copy a pg_control file into the pg_control path
+    # executeTest(
+    #     'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
+    #     DB_FILE_PGCONTROL);
 }
 
 ####################################################################################################################################
@@ -137,13 +137,13 @@ sub run
 # CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating?
         $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
 
-        # Build error
-        #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oManifest->build(storageDb(), $strDbMasterPath, undef, false)}, ERROR_FILE_MISSING,
-            "unable to stat '" . $strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
-
-        # Create pg_tblspc path
-        storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
+        # # Build error --- DO LATER - want to start with empty directory
+        # #---------------------------------------------------------------------------------------------------------------------------
+        # $self->testException(sub {$oManifest->build(storageDb(), $strDbMasterPath, undef, false)}, ERROR_FILE_MISSING,
+        #     "unable to stat '" . $strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
+        #
+        # # Create pg_tblspc path
+        # storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
 
         $oManifest->build(storageDb(), $strDbMasterPath, undef, false);
 
@@ -151,7 +151,7 @@ sub run
     #  'oContent' => {
     #                  'target:file:default' => {
     #                                             'mode' => '0644',
-    #                                             'master' => bless( do{\(my $o = 1)}, 'JSON::PP::Boolean' ),
+    #                                             'master' => bless( do{\(my $o = 1)}, 'JSON::PP::Boolean' ), XXXXX
     #                                             'user' => 'ubuntu',
     #                                             'group' => 'ubuntu'
     #                                           },

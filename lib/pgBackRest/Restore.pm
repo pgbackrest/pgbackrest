@@ -477,7 +477,6 @@ sub clean
     my %oTargetFound;
     my $bDelta = cfgOption(CFGOPT_FORCE) || cfgOption(CFGOPT_DELTA);
 
-# CSHANG I'm confused by this - the only key I ever see in the backup.manifest under backup:target (MANIFEST_SECTION_BACKUP_TARGET) section is the pg_data - oh, and this has /var/lib/postgresql/9.4/demo - so that is what ${$self->{oTargetPath}}{$strTarget} is set to
     for my $strTarget ($oManifest->keys(MANIFEST_SECTION_BACKUP_TARGET))
     {
         ${$self->{oTargetPath}}{$strTarget} = $oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, $strTarget, MANIFEST_SUBKEY_PATH);
@@ -512,7 +511,7 @@ sub clean
         {
             confess &log(ERROR, "cannot restore to missing path ${strCheckPath}", ERROR_PATH_MISSING);
         }
-# CSHANG When is there ever a file type in backup:target?
+# CSHANG When is there ever a file type in backup:target? --- Only if link -- pointing a file outside pg_data - then the target can be a file
         # Check if the file exists
         if ($oManifest->isTargetFile($strTarget))
         {
@@ -602,7 +601,6 @@ sub clean
         #                       'size' => 8192,
         #                       'mode' => '0600'
         #                     }, # CSHANG
-# CSHANG I don't see anything in the expect logs where there is a file type in backup:target - what is this for?
             # If the target is a file it doesn't matter whether it already exists or not.
             if ($oManifest->isTargetFile($strTarget))
             {
