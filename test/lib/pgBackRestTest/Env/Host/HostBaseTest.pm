@@ -91,7 +91,8 @@ sub new
         "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
         "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
         "mkdir -p -m 755 ${strPerlModulePath} && " .
-        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}",
+        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
+        "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}",
         undef, 'root');
 
     # Return from function and log return values if any

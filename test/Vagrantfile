@@ -40,6 +40,11 @@ Vagrant.configure(2) do |config|
         echo 'supersede domain-name-servers 8.8.8.8;' >> /etc/dhcp/dhclient.conf
         /etc/init.d/networking restart
 
+        # If builds fail with 'modification time in the future', the following command will sync the vm clock with the host
+        #---------------------------------------------------------------------------------------------------------------------------
+        echo 'Start Time Sync Service' && date
+        sudo /usr/sbin/VBoxService --timesync-set-start
+
         #---------------------------------------------------------------------------------------------------------------------------
         echo 'Install Perl Modules' && date
         apt-get install -y libdbd-pg-perl libio-socket-ssl-perl libxml-libxml-perl libxml-checker-perl libperl-critic-perl \

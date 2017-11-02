@@ -446,7 +446,7 @@ sub run
             }
 
             $oHostDbStandby->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
                 ' --recovery-option=standby_mode=on' .
                     ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
@@ -678,7 +678,7 @@ sub run
             $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
         }
 
@@ -691,7 +691,7 @@ sub run
             $iExpectedExitStatus = ERROR_PATH_NOT_EMPTY;
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
         }
 
@@ -708,7 +708,7 @@ sub run
         $iExpectedExitStatus = undef;
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
             $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
             $bTestLocal ? ' --db-include=test1' : undef);
 
@@ -868,7 +868,7 @@ sub run
             storageDb()->move($self->testPath . '/recovery.conf', $oHostDbMaster->dbBasePath() . '/recovery.conf');
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
             $oHostDbMaster->clusterStart();
@@ -949,7 +949,7 @@ sub run
             $oHostDbMaster->clusterStop();
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
             $oHostDbMaster->clusterStart();

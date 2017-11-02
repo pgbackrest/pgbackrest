@@ -95,9 +95,9 @@ my $oConfigHelpData =
             summary =>
                 "Archive timeout.",
             description =>
-                "Set maximum time, in seconds, to wait for WAL segments to reach the archive. The timeout applies to the check " .
-                    "command and to the backup command when waiting for WAL segments required to make the backup consistent to " .
-                    "be archived."
+                "Set maximum time, in seconds, to wait for each WAL segment to reach the pgBackRest archive repository. The " .
+                    "timeout applies to the check and backup commands when waiting for WAL segments required for backup " .
+                    "consistency to be archived."
         },
 
         # BACKUP-CMD Option Help

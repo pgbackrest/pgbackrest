@@ -5,7 +5,7 @@ Error Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.h"
+#include "common/error.h"
 
 /***********************************************************************************************************************************
 Maximum allowed number of nested try blocks

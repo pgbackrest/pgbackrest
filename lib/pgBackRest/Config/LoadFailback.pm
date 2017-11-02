@@ -19,9 +19,9 @@ use pgBackRest::LibCLoad;
 if (libC())
 {
     require pgBackRest::LibC;
-    pgBackRest::LibC->import(qw(:config :configRule));
+    pgBackRest::LibC->import(qw(:config :configDefine));
     push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{config}});
-    push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{configRule}});
+    push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{configDefine}});
 }
 else
 {
@@ -29,9 +29,9 @@ else
     pgBackRest::Config::Data->import();
     push(@EXPORT, @pgBackRest::Config::Data::EXPORT);
 
-    require pgBackRest::Config::Rule;
-    pgBackRest::Config::Rule->import();
-    push(@EXPORT, @pgBackRest::Config::Rule::EXPORT);
+    require pgBackRest::Config::Define;
+    pgBackRest::Config::Define->import();
+    push(@EXPORT, @pgBackRest::Config::Define::EXPORT);
 }
 
 1;

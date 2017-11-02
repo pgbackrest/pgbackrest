@@ -37,6 +37,11 @@ use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
 use pgBackRest::Version;
 
+use pgBackRestBuild::Build;
+use pgBackRestBuild::Build::Common;
+use pgBackRestBuild::Config::Build;
+use pgBackRestBuild::Config::BuildDefine;
+
 use BackRestDoc::Custom::DocCustomRelease;
 
 use pgBackRestTest::Common::ContainerTest;
@@ -73,6 +78,7 @@ test.pl [options]
    --build-only         compile the C library / packages and run tests only
    --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
+   --gen-only           only run auto-generation
    --smart              perform libc/package builds only when source timestamps have changed
    --no-package         do not build packages
    --no-ci-config       don't overwrite the current continuous integration config
@@ -124,6 +130,7 @@ my $bNoLint = false;
 my $bBuildOnly = false;
 my $bCoverageOnly = false;
 my $bCOnly = false;
+my $bGenOnly = false;
 my $bSmart = false;
 my $bNoPackage = false;
 my $bNoCiConfig = false;
@@ -157,6 +164,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-ci-config' => \$bNoCiConfig,
             'coverage-only' => \$bCoverageOnly,
             'c-only' => \$bCOnly,
+            'gen-only' => \$bGenOnly,
             'smart' => \$bSmart,
             'dev' => \$bDev,
             'expect' => \$bExpect,
@@ -274,6 +282,41 @@ eval
         $strBackRestBase, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
 
     ################################################################################################################################
+    # Auto-generate C files
+    ################################################################################################################################
+    my $rhBuild =
+    {
+        'config' =>
+        {
+            &BLD_DATA => buildConfig(),
+            &BLD_PATH => 'config',
+        },
+
+        'configDefine' =>
+        {
+            &BLD_DATA => buildConfigDefine(),
+            &BLD_PATH => 'config',
+        },
+    };
+
+    buildAll("${strBackRestBase}/src", $rhBuild);
+
+    ################################################################################################################################
+    # Auto-generate XS files
+    #
+    # Use statements are put here so this will be easy to get ride of someday.
+    ################################################################################################################################
+    use lib dirname(dirname($0)) . '/libc/build/lib';
+    use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
+
+    buildXsAll("${strBackRestBase}/libc");
+
+    if ($bGenOnly)
+    {
+        exit 0;
+    }
+
+    ################################################################################################################################
     # Build Docker containers
     ################################################################################################################################
     if ($bVmBuild)
@@ -352,7 +395,7 @@ eval
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
-            my @stryLibCSrcPath = ('build', 'doc', 'libc', 'src', 'lib/pgBackRest/Config');
+            my @stryLibCSrcPath = ('libc', 'src');
 
             # VM Info
             my $oVm = vmGet();
@@ -408,10 +451,6 @@ eval
                             {bSuppressStdErr => true});
                     }
 
-                    # Replace config path with base lib path for copy operation
-                    pop(@stryLibCSrcPath);
-                    push(@stryLibCSrcPath, 'lib');
-
                     foreach my $strLibCSrcPath (@stryLibCSrcPath)
                     {
                         $oStorageBackRest->pathCreate(
@@ -424,19 +463,6 @@ eval
                         "cd ${strBuildPath} && perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none" .
                         ($bContainerExists ? "'" : ''),
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
-
-                    if ($strBuildVM eq $strVmHost)
-                    {
-                        foreach my $strFile (
-                            'src/config/config.auto.c', 'src/config/config.auto.h', 'src/config/config.auto.md',
-                            'src/config/configRule.auto.c', 'src/config/configRule.auto.md', 'libc/lib/pgBackRest/LibC.pm')
-                        {
-                            $oStorageBackRest->copy(
-                                "${strLibCPath}/${strBuildVM}/${strFile}",
-                                $oStorageBackRest->openWrite(
-                                    "${strBackRestBase}/${strFile}", {bPathCreate => true, lTimestamp => $lTimestampLast}));
-                        }
-                    }
 
                     # CO7 LibC.xs needs to be patched to ignore maybe-uninitialized warnings due to issue in a Perl header:
                     #     embed.h:609:37: warning: 'iv' may be used uninitialized in this function [-Wmaybe-uninitialized]
@@ -488,9 +514,9 @@ eval
                             BACKREST_VERSION =~ /dev$/ ?
                                 substr(BACKREST_VERSION, 0, length(BACKREST_VERSION) - 3) . '.999' : BACKREST_VERSION;
 
-                        if (libCVersion() ne $strLibCVersion)
+                        if (libcVersion() ne $strLibCVersion)
                         {
-                            confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libCVersion());
+                            confess &log(ERROR, $strLibCVersion . ' was expected for LibC version but found ' . libcVersion());
                         }
                     }
                 }

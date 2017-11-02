@@ -18,6 +18,7 @@ use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Config::Data;
+use pgBackRest::Config::Define;
 use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -516,19 +517,19 @@ sub backrestConfig
                 else
                 {
                     # Get the config options hash
-                    my $oOption = cfgdefRuleIndex();
+                    my $rhOptionIndex = cfgDefineIndex();
 
                     # Make sure the specified option exists
                     # ??? This is too simplistic to handle new indexed options.  The check below works for now but it would be good
                     # ??? to bring back more sophisticated checking in the future.
-                    # if (!defined($$oOption{$strKey}))
+                    # if (!defined($rhOptionIndex->{$strKey}))
                     # {
                     #     confess &log(ERROR, "option ${strKey} does not exist");
                     # }
 
                     # If this option is a hash and the value is already set then append to the array
-                    if (defined($$oOption{$strKey}) &&
-                        $$oOption{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGOPTDEF_TYPE_HASH &&
+                    if (defined($rhOptionIndex->{$strKey}) &&
+                        $rhOptionIndex->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();

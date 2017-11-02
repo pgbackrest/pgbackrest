@@ -1,7 +1,5 @@
 ####################################################################################################################################
 # C to Perl Interface
-#
-# {[LIBC_AUTO_WARNING]}
 ####################################################################################################################################
 package pgBackRest::LibC;
 
@@ -12,32 +10,37 @@ use Carp;
 
 require Exporter;
 use AutoLoader;
-
 our @ISA = qw(Exporter);
 
-# Library version (.999 indicates development version)
-our $VERSION = '{[LIBC_VERSION]}';
+use pgBackRest::LibCAuto;
 
-sub libCVersion {return $VERSION};
+# Library version
+our $VERSION = pgBackRest::LibCAuto::libcAutoVersion();
 
-# Configuration option value constants
-use constant
+sub libcVersion
 {
-    {[LIBC_CONSTANT]}
-};
+    return $VERSION;
+}
+
+# Dynamically create constants
+my $rhConstant = pgBackRest::LibCAuto::libcAutoConstant();
+
+foreach my $strConstant (keys(%{$rhConstant}))
+{
+    eval "use constant ${strConstant} => '" . $rhConstant->{$strConstant} . "'";
+}
 
 # Export function and constants
-our %EXPORT_TAGS =
-(
-    {[LIBC_EXPORT_TAGS]}
-);
+our %EXPORT_TAGS = %{pgBackRest::LibCAuto::libcAutoExportTag()};
+our @EXPORT_OK;
 
-our @EXPORT_OK = (
-    {[LIBC_EXPORT_OK]}
-);
+foreach my $strSection (keys(%EXPORT_TAGS))
+{
+    push(@EXPORT_OK, @{$EXPORT_TAGS{$strSection}});
+}
 
 # Nothing is exported by default
-our @EXPORT = qw();
+our @EXPORT = ();
 
 # Autoload constants from the constant() XS function
 sub AUTOLOAD

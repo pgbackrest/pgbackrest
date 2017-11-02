@@ -18,9 +18,6 @@ use pgBackRest::Storage::Local;
 use pgBackRest::Storage::Posix::Driver;
 
 use pgBackRestBuild::Build::Common;
-use pgBackRestBuild::CodeGen::Common;
-use pgBackRestBuild::CodeGen::Truth;
-use pgBackRestBuild::Config::Build;
 
 ####################################################################################################################################
 # Define generator used for auto generated warning messages
@@ -33,6 +30,8 @@ use constant GENERATOR                                              => 'Build.pm
 sub buildAll
 {
     my $strBuildPath = shift;
+    my $rhBuild = shift;
+    my $strFileExt = shift;
 
     # Storage object
     my $oStorage = new pgBackRest::Storage::Local(
@@ -40,102 +39,73 @@ sub buildAll
 
     # Build and output source code
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $rhBuild =
+    foreach my $strBuild (sort(keys(%{$rhBuild})))
     {
-        'src/config' => buildConfig(),
-    };
+        my $strPath = $rhBuild->{$strBuild}{&BLD_PATH};
 
-    foreach my $strPath (sort(keys(%{$rhBuild})))
-    {
-        foreach my $strFile (sort(keys(%{$rhBuild->{$strPath}{&BLD_FILE}})))
+        foreach my $strFile (sort(keys(%{$rhBuild->{$strBuild}{&BLD_DATA}{&BLD_FILE}})))
         {
-            my $rhFile = $rhBuild->{$strPath}{&BLD_FILE}{$strFile};
-            my $rhFileFunction = $rhFile->{&BLD_FUNCTION};
+            my $rhFile = $rhBuild->{$strBuild}{&BLD_DATA}{&BLD_FILE}{$strFile};
             my $rhFileConstant = $rhFile->{&BLD_CONSTANT_GROUP};
+            my $rhFileEnum = $rhFile->{&BLD_ENUM};
+            my $rhFileData = $rhFile->{&BLD_DATA};
             my $rhSource;
-
-            # Build the markdown documentation
-            #-------------------------------------------------------------------------------------------------------------------------------
-            if (defined($rhFileFunction))
-            {
-                my $strTruthTable = '# ' . $rhFile->{&BLD_SUMMARY} . "\n";
-
-                foreach my $strFunction (sort(keys(%{$rhFileFunction})))
-                {
-                    my $rhFunction = $rhFileFunction->{$strFunction};
-
-                    next if !defined($rhFunction->{&BLD_MATRIX});
-
-                    # Build function summary
-                    my $strSummary = ucfirst($rhFunction->{&BLD_SUMMARY});
-                    $strSummary .= $strSummary =~ /\?$/ ? '' : '.';
-
-                    $strTruthTable .=
-                        "\n## ${strFunction}\n\n" .
-                        "${strSummary}\n\n" .
-                        "### Truth Table:\n\n";
-
-                    my $strTruthDefault;
-                    my $strTruthSummary;
-
-                    # Does this function depend on the result of another function
-                    if (defined($rhFunction->{&BLD_FUNCTION_DEPEND}))
-                    {
-                        $strTruthSummary .=
-                            'This function is valid when `' . $rhFunction->{&BLD_FUNCTION_DEPEND} . '()` = `' .
-                            cgenTypeFormat(CGEN_DATATYPE_BOOL, $rhFunction->{&BLD_FUNCTION_DEPEND_RESULT}) . '`.';
-                    }
-
-                    # Are there permutations which are excluded?
-                    if (exists($rhFunction->{&BLD_TRUTH_DEFAULT}))
-                    {
-                        $strTruthDefault =
-                            defined($rhFunction->{&BLD_TRUTH_DEFAULT}) ? $rhFunction->{&BLD_TRUTH_DEFAULT} : CGEN_DATAVAL_NULL;
-
-                        $strTruthSummary .=
-                            (defined($strTruthSummary) ? ' ' : '') .
-                            'Permutations that return `' .
-                            cgenTypeFormat(
-                                $rhFunction->{&BLD_RETURN_TYPE},
-                                defined($rhFunction->{&BLD_RETURN_VALUE_MAP}) &&
-                                    defined($rhFunction->{&BLD_RETURN_VALUE_MAP}->{$strTruthDefault}) ?
-                                        $rhFunction->{&BLD_RETURN_VALUE_MAP}->{$strTruthDefault} : $strTruthDefault) .
-                                "` are excluded for brevity.";
-                    }
-
-                    # Build the truth table
-                    $strTruthTable .=
-                        (defined($strTruthSummary) ? "${strTruthSummary}\n\n" : '') .
-                        cgenTruthTable(
-                            $strFunction, $rhFunction->{&BLD_PARAM}, $rhFunction->{&BLD_RETURN_TYPE}, $strTruthDefault,
-                            $rhFunction->{&BLD_MATRIX}, BLDLCL_PARAM_COMMANDID, $rhBuild->{$strPath}{&BLD_PARAM_LABEL},
-                            $rhFunction->{&BLD_RETURN_VALUE_MAP});
-                }
-
-                $rhSource->{&BLD_MD} = $strTruthTable;
-            }
 
             # Build general banner
             #-------------------------------------------------------------------------------------------------------------------------------
-            my $strBanner = cgenBanner($rhFile->{&BLD_SUMMARY}, GENERATOR);
+            my $strBanner = bldBanner($rhFile->{&BLD_SUMMARY}, GENERATOR);
 
             # Build header file
             #-------------------------------------------------------------------------------------------------------------------------------
-            if (defined($rhFileConstant))
+            if (defined($rhFileEnum) || defined($rhFileConstant))
             {
-                my $strHeaderDefine = uc($strFile) . '_AUTO_H';
+                my $strHeaderDefine = uc("${strPath}/${strFile}") . '_AUTO_H';
+                $strHeaderDefine =~ s/\//_/g;
 
                 my $strHeader =
                     $strBanner .
                     "#ifndef ${strHeaderDefine}\n" .
                     "#define ${strHeaderDefine}\n";
 
+                foreach my $strEnum (sort(keys(%{$rhFileEnum})))
+                {
+                    my $rhEnum = $rhFileEnum->{$strEnum};
+
+                    $strHeader .=
+                        "\n" . bldBanner($rhEnum->{&BLD_SUMMARY} . ' enum');
+
+                    $strHeader .=
+                        "typedef enum\n" .
+                        "{\n";
+
+                    my $iExpectedValue = 0;
+
+                    # Iterate constants
+                    foreach my $strEnumItem (@{$rhEnum->{&BLD_LIST}})
+                    {
+                        $strHeader .=
+                            "    ${strEnumItem}";
+
+                        if (defined($rhEnum->{&BLD_VALUE}{$strEnumItem}) && $rhEnum->{&BLD_VALUE}{$strEnumItem} != $iExpectedValue)
+                        {
+                            $strHeader .= ' = ' . (' ' x (61 - length($strEnumItem)))  . $rhEnum->{&BLD_VALUE}{$strEnumItem};
+                            $iExpectedValue = $rhEnum->{&BLD_VALUE}{$strEnumItem};
+                        }
+
+                        $strHeader .= ",\n";
+                            $iExpectedValue++;
+                    }
+
+                    $strHeader .=
+                        "} " . $rhEnum->{&BLD_NAME} . ";\n";
+                }
+
                 # Iterate constant groups
                 foreach my $strConstantGroup (sort(keys(%{$rhFileConstant})))
                 {
                     my $rhConstantGroup = $rhFileConstant->{$strConstantGroup};
 
-                    $strHeader .= "\n" . cgenBanner($rhConstantGroup->{&BLD_SUMMARY} . ' constants', GENERATOR);
+                    $strHeader .= "\n" . bldBanner($rhConstantGroup->{&BLD_SUMMARY} . ' constants');
 
                     # Iterate constants
                     foreach my $strConstant (sort(keys(%{$rhConstantGroup->{&BLD_CONSTANT}})))
@@ -156,23 +126,51 @@ sub buildAll
 
             # Build C file
             #-----------------------------------------------------------------------------------------------------------------------
-            my $strFunctionCode = $strBanner;
-
-            foreach my $strFunction (sort(keys(%{$rhFileFunction})))
+            if (defined($rhFileData))
             {
-                my $rhFunction = $rhFileFunction->{$strFunction};
+                my $strCode;
 
-                $strFunctionCode .=
-                    "\n" . cgenFunction($strFunction, $rhFunction->{&BLD_SUMMARY}, undef, $rhFunction->{&BLD_SOURCE});
+                foreach my $strData (sort(keys(%{$rhFileData})))
+                {
+                    my $rhData = $rhFileData->{$strData};
+
+                    $strCode .= "\n" . bldBanner($rhData->{&BLD_SUMMARY});
+                    $strCode .= $rhData->{&BLD_SOURCE};
+                }
+
+                $rhSource->{&BLD_C} = "${strBanner}${strCode}";
             }
-
-            $rhSource->{&BLD_C} = $strFunctionCode;
 
             # Output files
             #-----------------------------------------------------------------------------------------------------------------------
             foreach my $strFileType (sort(keys(%{$rhSource})))
             {
-                $oStorage->put("${strPath}/${strFile}.auto.${strFileType}", trim($rhSource->{$strFileType}) . "\n");
+                my $strExt = $strFileType;
+
+                if (defined($strFileExt))
+                {
+                    $strExt = $strFileType eq BLD_C ? $strFileExt : "${strFileExt}h";
+                }
+
+                # Only save the file if the content has changed
+                my $strFileName = "${strPath}/${strFile}.auto.${strExt}";
+                my $strContent = trim($rhSource->{$strFileType}) . "\n";
+                my $bChanged = true;
+
+                if ($oStorage->exists($strFileName))
+                {
+                    my $strOldContent = ${$oStorage->get($strFileName)};
+
+                    if ($strContent eq $strOldContent)
+                    {
+                        $bChanged = false;
+                    }
+                }
+
+                if ($bChanged)
+                {
+                    $oStorage->put($strFileName, $strContent);
+                }
             }
         }
     }

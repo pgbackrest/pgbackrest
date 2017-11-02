@@ -1,45 +1,45 @@
 ####################################################################################################################################
-# Configuration Rule Data
+# Configuration Definition Data
 #
-# Contains the rules for options: which commands the option can/cannot be specified, for which commands it is required, default
+# Contains the defines for options: which commands the option can/cannot be specified, for which commands it is required, default
 # settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
-# section meaning the rules defined there apply to all commands listed for the option.
+# section meaning the defines defined there apply to all commands listed for the option.
 #
-# CFGBLDDEF_RULE_COMMAND:
+# CFGDEF_COMMAND:
 #     List of commands the option can be used with this option.  An empty hash signifies that the command does not deviate from the
 #     option defaults.  Otherwise, overrides can be specified.
 #
 # NOTE: If the option (A) has a dependency on another option (B) then the CFGCMD_ must also be specified in the other option
 #         (B), else it will still error on the option (A).
 #
-# CFGBLDDEF_RULE_REQUIRED:
+# CFGDEF_REQUIRED:
 #   In global section:
-#       true - if the option does not have a default, then setting CFGBLDDEF_RULE_REQUIRED in the global section means all commands
-#              listed in CFGBLDDEF_RULE_COMMAND require the user to set it.
+#       true - if the option does not have a default, then setting CFGDEF_REQUIRED in the global section means all commands
+#              listed in CFGDEF_COMMAND require the user to set it.
 #       false - no commands listed require it as an option but it can be set. This can be overridden for individual commands by
-#               setting CFGBLDDEF_RULE_REQUIRED in the CFGBLDDEF_RULE_COMMAND section.
-#   In CFGBLDDEF_RULE_COMMAND section:
-#       true - the option must be set somehow for the command, either by default (CFGBLDDEF_RULE_DEFAULT) or by the user.
+#               setting CFGDEF_REQUIRED in the CFGDEF_COMMAND section.
+#   In CFGDEF_COMMAND section:
+#       true - the option must be set somehow for the command, either by default (CFGDEF_DEFAULT) or by the user.
 # 	        &CFGCMD_CHECK =>
 #             {
-#                 &CFGBLDDEF_RULE_REQUIRED => true
+#                 &CFGDEF_REQUIRED => true
 #             },
-#       false - mainly used for overriding the CFGBLDDEF_RULE_REQUIRED in the global section.
+#       false - mainly used for overriding the CFGDEF_REQUIRED in the global section.
 #
-# CFGBLDDEF_RULE_DEFAULT:
+# CFGDEF_DEFAULT:
 #   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
-#   CFGBLDDEF_RULE_COMMAND section.
+#   CFGDEF_COMMAND section.
 #
-# CFGBLDDEF_RULE_NEGATE:
+# CFGDEF_NEGATE:
 #   The option can be negated with "no" e.g. --no-compress.  This applies tp options that are only valid on the command line (i.e.
 #   no config section defined).  All config options are automatically negatable.
 #
-# CFGBLDDEF_RULE_DEPEND:
+# CFGDEF_DEPEND:
 #   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
 #   dependent option(s).
-#   CFGBLDDEF_RULE_DEPEND_LIST further defines the allowable settings for the depended option.
+#   CFGDEF_DEPEND_LIST further defines the allowable settings for the depended option.
 #
-# CFGBLDDEF_RULE_ALLOW_LIST:
+# CFGDEF_ALLOW_LIST:
 #   Lists the allowable settings for the option.
 ####################################################################################################################################
 package pgBackRest::Config::Data;
@@ -285,9 +285,11 @@ use constant CFGOPT_RECOVERY_OPTION                                 => 'recovery
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many databases can be configured
 use constant CFGDEF_INDEX_DB                                        => 8;
+    push @EXPORT, qw(CFGDEF_INDEX_DB);
 
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGDEF_PREFIX_DB                                       => 'db';
+    push @EXPORT, qw(CFGDEF_PREFIX_DB);
 
 use constant CFGOPT_DB_CMD                                          => CFGDEF_PREFIX_DB . '-cmd';
     push @EXPORT, qw(CFGOPT_DB_CMD);
@@ -387,80 +389,82 @@ use constant CFGDEF_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
 
 use constant CFGDEF_DEFAULT_RETENTION_MIN                           => 1;
-use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 999999999;
+use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 9999999;
 
 ####################################################################################################################################
-# Option definition constants - rules, types, sections, etc.
+# Option definition constants - defines, types, sections, etc.
 ####################################################################################################################################
 
-# Option rules
+# Option defines
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGBLDDEF_RULE_ALT_NAME                                => 'alt-name';
-    push @EXPORT, qw(CFGBLDDEF_RULE_ALT_NAME);
-use constant CFGBLDDEF_RULE_ALLOW_LIST                              => 'allow-list';
-    push @EXPORT, qw(CFGBLDDEF_RULE_ALLOW_LIST);
-use constant CFGBLDDEF_RULE_ALLOW_RANGE                             => 'allow-range';
-    push @EXPORT, qw(CFGBLDDEF_RULE_ALLOW_RANGE);
-use constant CFGBLDDEF_RULE_DEFAULT                                 => 'default';
-    push @EXPORT, qw(CFGBLDDEF_RULE_DEFAULT);
-use constant CFGBLDDEF_RULE_DEPEND                                  => 'depend';
-    push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND);
-use constant CFGBLDDEF_RULE_DEPEND_OPTION                           => 'depend-option';
-    push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_OPTION);
-use constant CFGBLDDEF_RULE_DEPEND_LIST                             => 'depend-list';
-    push @EXPORT, qw(CFGBLDDEF_RULE_DEPEND_LIST);
-use constant CFGBLDDEF_RULE_INDEX                                   => 'index';
-    push @EXPORT, qw(CFGBLDDEF_RULE_INDEX);
-use constant CFGBLDDEF_RULE_NEGATE                                  => 'negate';
-    push @EXPORT, qw(CFGBLDDEF_RULE_NEGATE);
-use constant CFGBLDDEF_RULE_PREFIX                                  => 'prefix';
-    push @EXPORT, qw(CFGBLDDEF_RULE_PREFIX);
-use constant CFGBLDDEF_RULE_COMMAND                                 => 'command';
-    push @EXPORT, qw(CFGBLDDEF_RULE_COMMAND);
-use constant CFGBLDDEF_RULE_REQUIRED                                => 'required';
-    push @EXPORT, qw(CFGBLDDEF_RULE_REQUIRED);
-use constant CFGBLDDEF_RULE_SECTION                                 => 'section';
-    push @EXPORT, qw(CFGBLDDEF_RULE_SECTION);
-use constant CFGBLDDEF_RULE_SECURE                                  => 'secure';
-    push @EXPORT, qw(CFGBLDDEF_RULE_SECURE);
-use constant CFGBLDDEF_RULE_TYPE                                    => 'type';
-    push @EXPORT, qw(CFGBLDDEF_RULE_TYPE);
+use constant CFGDEF_ALT_NAME                                        => 'alt-name';
+    push @EXPORT, qw(CFGDEF_ALT_NAME);
+use constant CFGDEF_ALLOW_LIST                                      => 'allow-list';
+    push @EXPORT, qw(CFGDEF_ALLOW_LIST);
+use constant CFGDEF_ALLOW_RANGE                                     => 'allow-range';
+    push @EXPORT, qw(CFGDEF_ALLOW_RANGE);
+use constant CFGDEF_DEFAULT                                         => 'default';
+    push @EXPORT, qw(CFGDEF_DEFAULT);
+use constant CFGDEF_DEPEND                                          => 'depend';
+    push @EXPORT, qw(CFGDEF_DEPEND);
+use constant CFGDEF_DEPEND_OPTION                                   => 'depend-option';
+    push @EXPORT, qw(CFGDEF_DEPEND_OPTION);
+use constant CFGDEF_DEPEND_LIST                                     => 'depend-list';
+    push @EXPORT, qw(CFGDEF_DEPEND_LIST);
+use constant CFGDEF_INDEX                                           => 'index';
+    push @EXPORT, qw(CFGDEF_INDEX);
+use constant CFGDEF_INDEX_TOTAL                                     => 'indexTotal';
+    push @EXPORT, qw(CFGDEF_INDEX_TOTAL);
+use constant CFGDEF_NEGATE                                          => 'negate';
+    push @EXPORT, qw(CFGDEF_NEGATE);
+use constant CFGDEF_PREFIX                                          => 'prefix';
+    push @EXPORT, qw(CFGDEF_PREFIX);
+use constant CFGDEF_COMMAND                                         => 'command';
+    push @EXPORT, qw(CFGDEF_COMMAND);
+use constant CFGDEF_REQUIRED                                        => 'required';
+    push @EXPORT, qw(CFGDEF_REQUIRED);
+use constant CFGDEF_SECTION                                         => 'section';
+    push @EXPORT, qw(CFGDEF_SECTION);
+use constant CFGDEF_SECURE                                          => 'secure';
+    push @EXPORT, qw(CFGDEF_SECURE);
+use constant CFGDEF_TYPE                                            => 'type';
+    push @EXPORT, qw(CFGDEF_TYPE);
 
-# Option rules
+# Option types
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPTDEF_TYPE_BOOLEAN                                 => 'boolean';
-    push @EXPORT, qw(CFGOPTDEF_TYPE_BOOLEAN);
-use constant CFGOPTDEF_TYPE_FLOAT                                   => 'float';
-    push @EXPORT, qw(CFGOPTDEF_TYPE_FLOAT);
-use constant CFGOPTDEF_TYPE_HASH                                    => 'hash';
-    push @EXPORT, qw(CFGOPTDEF_TYPE_HASH);
-use constant CFGOPTDEF_TYPE_INTEGER                                 => 'integer';
-    push @EXPORT, qw(CFGOPTDEF_TYPE_INTEGER);
-use constant CFGOPTDEF_TYPE_LIST                                    => 'list';
-    push @EXPORT, qw(CFGOPTDEF_TYPE_LIST);
-use constant CFGOPTDEF_TYPE_STRING                                  => 'string';
-    push @EXPORT, qw(CFGOPTDEF_TYPE_STRING);
+use constant CFGDEF_TYPE_BOOLEAN                                    => 'boolean';
+    push @EXPORT, qw(CFGDEF_TYPE_BOOLEAN);
+use constant CFGDEF_TYPE_FLOAT                                      => 'float';
+    push @EXPORT, qw(CFGDEF_TYPE_FLOAT);
+use constant CFGDEF_TYPE_HASH                                       => 'hash';
+    push @EXPORT, qw(CFGDEF_TYPE_HASH);
+use constant CFGDEF_TYPE_INTEGER                                    => 'integer';
+    push @EXPORT, qw(CFGDEF_TYPE_INTEGER);
+use constant CFGDEF_TYPE_LIST                                       => 'list';
+    push @EXPORT, qw(CFGDEF_TYPE_LIST);
+use constant CFGDEF_TYPE_STRING                                     => 'string';
+    push @EXPORT, qw(CFGDEF_TYPE_STRING);
 
 # Option config sections
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGDEF_SECTION_GLOBAL                               => 'global';
+use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
     push @EXPORT, qw(CFGDEF_SECTION_GLOBAL);
-use constant CFGDEF_SECTION_STANZA                               => 'stanza';
+use constant CFGDEF_SECTION_STANZA                                  => 'stanza';
     push @EXPORT, qw(CFGDEF_SECTION_STANZA);
 
 ####################################################################################################################################
-# Option rules
+# Option definition data
 ####################################################################################################################################
-my %hOptionRule =
+my %hConfigDefine =
 (
     # Command-line only options
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_CONFIG =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => CFGDEF_DEFAULT_CONFIG,
-        &CFGBLDDEF_RULE_NEGATE => true,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_NEGATE => true,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -480,54 +484,54 @@ my %hOptionRule =
 
     &CFGOPT_DELTA =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => false,
+                &CFGDEF_DEFAULT => false,
             }
         }
     },
 
     &CFGOPT_FORCE =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => false,
-                &CFGBLDDEF_RULE_DEPEND =>
+                &CFGDEF_DEFAULT => false,
+                &CFGDEF_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_ONLINE,
-                    &CFGBLDDEF_RULE_DEPEND_LIST => [false],
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_ONLINE,
+                    &CFGDEF_DEPEND_LIST => [false],
                 },
             },
 
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => false,
+                &CFGDEF_DEFAULT => false,
             },
 
             &CFGCMD_STANZA_CREATE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => false,
+                &CFGDEF_DEFAULT => false,
             },
 
             &CFGCMD_STOP =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => false
+                &CFGDEF_DEFAULT => false
             }
         }
     },
 
     &CFGOPT_ONLINE =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_NEGATE => true,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_NEGATE => true,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -538,20 +542,20 @@ my %hOptionRule =
 
     &CFGOPT_SET =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => 'latest',
+                &CFGDEF_DEFAULT => 'latest',
             }
         }
     },
 
     &CFGOPT_STANZA =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -560,38 +564,38 @@ my %hOptionRule =
             &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_LOCAL => {},
             &CFGCMD_REMOTE =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_STOP =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             }
         }
     },
 
     &CFGOPT_TARGET =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEPEND =>
+                &CFGDEF_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_TYPE,
-                    &CFGBLDDEF_RULE_DEPEND_LIST =>
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_TYPE,
+                    &CFGDEF_DEPEND_LIST =>
                     [
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
@@ -604,16 +608,16 @@ my %hOptionRule =
 
     &CFGOPT_TARGET_EXCLUSIVE =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => false,
-                &CFGBLDDEF_RULE_DEPEND =>
+                &CFGDEF_DEFAULT => false,
+                &CFGDEF_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_TYPE,
-                    &CFGBLDDEF_RULE_DEPEND_LIST =>
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_TYPE,
+                    &CFGDEF_DEPEND_LIST =>
                     [
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
                         &CFGOPTVAL_RESTORE_TYPE_XID,
@@ -625,24 +629,24 @@ my %hOptionRule =
 
     &CFGOPT_TARGET_ACTION =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE,
+                &CFGDEF_DEFAULT => CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE,
 
-                &CFGBLDDEF_RULE_ALLOW_LIST =>
+                &CFGDEF_ALLOW_LIST =>
                 [
                     &CFGOPTVAL_RESTORE_TARGET_ACTION_PAUSE,
                     &CFGOPTVAL_RESTORE_TARGET_ACTION_PROMOTE,
                     &CFGOPTVAL_RESTORE_TARGET_ACTION_SHUTDOWN,
                 ],
 
-                &CFGBLDDEF_RULE_DEPEND =>
+                &CFGDEF_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_TYPE,
-                    &CFGBLDDEF_RULE_DEPEND_LIST =>
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_TYPE,
+                    &CFGDEF_DEPEND_LIST =>
                     [
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
                         &CFGOPTVAL_RESTORE_TYPE_TIME,
@@ -655,16 +659,16 @@ my %hOptionRule =
 
     &CFGOPT_TARGET_TIMELINE =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false,
-                &CFGBLDDEF_RULE_DEPEND =>
+                &CFGDEF_REQUIRED => false,
+                &CFGDEF_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_TYPE,
-                    &CFGBLDDEF_RULE_DEPEND_LIST =>
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_TYPE,
+                    &CFGDEF_DEPEND_LIST =>
                     [
                         &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
                         &CFGOPTVAL_RESTORE_TYPE_NAME,
@@ -678,13 +682,13 @@ my %hOptionRule =
 
     &CFGOPT_TYPE =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => CFGOPTVAL_BACKUP_TYPE_INCR,
-                &CFGBLDDEF_RULE_ALLOW_LIST =>
+                &CFGDEF_DEFAULT => CFGOPTVAL_BACKUP_TYPE_INCR,
+                &CFGDEF_ALLOW_LIST =>
                 [
                     &CFGOPTVAL_BACKUP_TYPE_FULL,
                     &CFGOPTVAL_BACKUP_TYPE_DIFF,
@@ -694,7 +698,7 @@ my %hOptionRule =
 
             &CFGCMD_LOCAL =>
             {
-                &CFGBLDDEF_RULE_ALLOW_LIST =>
+                &CFGDEF_ALLOW_LIST =>
                 [
                     &CFGOPTVAL_LOCAL_TYPE_DB,
                     &CFGOPTVAL_LOCAL_TYPE_BACKUP,
@@ -703,7 +707,7 @@ my %hOptionRule =
 
             &CFGCMD_REMOTE =>
             {
-                &CFGBLDDEF_RULE_ALLOW_LIST =>
+                &CFGDEF_ALLOW_LIST =>
                 [
                     &CFGOPTVAL_REMOTE_TYPE_DB,
                     &CFGOPTVAL_REMOTE_TYPE_BACKUP,
@@ -712,8 +716,8 @@ my %hOptionRule =
 
             &CFGCMD_RESTORE =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                &CFGBLDDEF_RULE_ALLOW_LIST =>
+                &CFGDEF_DEFAULT => CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                &CFGDEF_ALLOW_LIST =>
                 [
                     &CFGOPTVAL_RESTORE_TYPE_NAME,
                     &CFGOPTVAL_RESTORE_TYPE_TIME,
@@ -729,13 +733,13 @@ my %hOptionRule =
 
     &CFGOPT_OUTPUT =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_INFO =>
             {
-                &CFGBLDDEF_RULE_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
-                &CFGBLDDEF_RULE_ALLOW_LIST =>
+                &CFGDEF_DEFAULT => CFGOPTVAL_INFO_OUTPUT_TEXT,
+                &CFGDEF_ALLOW_LIST =>
                 [
                     &CFGOPTVAL_INFO_OUTPUT_TEXT,
                     &CFGOPTVAL_INFO_OUTPUT_JSON,
@@ -748,8 +752,8 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_COMMAND =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_LOCAL => {},
             &CFGCMD_REMOTE => {},
@@ -758,8 +762,8 @@ my %hOptionRule =
 
     &CFGOPT_HOST_ID =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_LOCAL => {},
         },
@@ -767,16 +771,16 @@ my %hOptionRule =
 
     &CFGOPT_PROCESS =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_LOCAL =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => true,
+                &CFGDEF_REQUIRED => true,
             },
             &CFGCMD_REMOTE =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false,
+                &CFGDEF_REQUIRED => false,
             },
         },
     },
@@ -785,9 +789,9 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_TEST =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
@@ -796,33 +800,33 @@ my %hOptionRule =
 
     &CFGOPT_TEST_DELAY =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_FLOAT,
-        &CFGBLDDEF_RULE_DEFAULT => 5,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_DEFAULT => 5,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_TEST,
-            &CFGBLDDEF_RULE_DEPEND_LIST => [true],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_TEST,
+            &CFGDEF_DEPEND_LIST => [true],
         },
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_TEST,
+        &CFGDEF_COMMAND => CFGOPT_TEST,
     },
 
     &CFGOPT_TEST_POINT =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_HASH,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_DEPEND => CFGOPT_TEST_DELAY,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_TEST,
+        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND => CFGOPT_TEST_DELAY,
+        &CFGDEF_COMMAND => CFGOPT_TEST,
     },
 
     # General options
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_ARCHIVE_TIMEOUT =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_FLOAT,
-        &CFGBLDDEF_RULE_DEFAULT => 60,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [WAIT_TIME_MINIMUM, 86400],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_DEFAULT => 60,
+        &CFGDEF_ALLOW_RANGE => [WAIT_TIME_MINIMUM, 86400],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
@@ -832,10 +836,10 @@ my %hOptionRule =
 
     &CFGOPT_BUFFER_SIZE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_DEFAULT => COMMON_IO_BUFFER_MAX,
-        &CFGBLDDEF_RULE_ALLOW_LIST =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => COMMON_IO_BUFFER_MAX,
+        &CFGDEF_ALLOW_LIST =>
         [
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN,
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN * 2,
@@ -849,7 +853,7 @@ my %hOptionRule =
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN * 512,
             &CFGDEF_DEFAULT_BUFFER_SIZE_MIN * 1024,
         ],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -867,11 +871,11 @@ my %hOptionRule =
 
     &CFGOPT_DB_TIMEOUT =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_FLOAT,
-        &CFGBLDDEF_RULE_DEFAULT => CFGDEF_DEFAULT_DB_TIMEOUT,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_DB_TIMEOUT_MIN, CFGDEF_DEFAULT_DB_TIMEOUT_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_DB_TIMEOUT,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_DB_TIMEOUT_MIN, CFGDEF_DEFAULT_DB_TIMEOUT_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -886,10 +890,10 @@ my %hOptionRule =
 
     &CFGOPT_COMPRESS =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -900,11 +904,11 @@ my %hOptionRule =
 
     &CFGOPT_COMPRESS_LEVEL =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_DEFAULT => 6,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => 6,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -921,11 +925,11 @@ my %hOptionRule =
 
     &CFGOPT_COMPRESS_LEVEL_NETWORK =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_DEFAULT => 3,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => 3,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -942,10 +946,10 @@ my %hOptionRule =
 
     &CFGOPT_NEUTRAL_UMASK =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -964,10 +968,10 @@ my %hOptionRule =
 
     &CFGOPT_CMD_SSH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => 'ssh',
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'ssh',
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -986,10 +990,10 @@ my %hOptionRule =
 
     &CFGOPT_LOCK_PATH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => '/tmp/' . BACKREST_EXE,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => '/tmp/' . BACKREST_EXE,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1008,10 +1012,10 @@ my %hOptionRule =
 
     &CFGOPT_LOG_PATH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => '/var/log/' . BACKREST_EXE,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => '/var/log/' . BACKREST_EXE,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1031,11 +1035,11 @@ my %hOptionRule =
 
     &CFGOPT_PROTOCOL_TIMEOUT =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_FLOAT,
-        &CFGBLDDEF_RULE_DEFAULT => CFGDEF_DEFAULT_DB_TIMEOUT + 30,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_DB_TIMEOUT_MIN, CFGDEF_DEFAULT_DB_TIMEOUT_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_DB_TIMEOUT + 30,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_DB_TIMEOUT_MIN, CFGDEF_DEFAULT_DB_TIMEOUT_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1052,10 +1056,10 @@ my %hOptionRule =
 
     &CFGOPT_REPO_PATH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => '/var/lib/' . BACKREST_EXE,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => '/var/lib/' . BACKREST_EXE,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1075,14 +1079,14 @@ my %hOptionRule =
 
     &CFGOPT_REPO_S3_BUCKET =>
     {
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_REPO_TYPE,
-            &CFGBLDDEF_RULE_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
         },
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_CA_FILE => &CFGOPT_REPO_S3_HOST,
@@ -1090,16 +1094,16 @@ my %hOptionRule =
 
     &CFGOPT_REPO_S3_KEY =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_SECURE => true,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_SECURE => true,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_REPO_TYPE,
-            &CFGBLDDEF_RULE_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
         },
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_KEY_SECRET => CFGOPT_REPO_S3_KEY,
@@ -1108,36 +1112,36 @@ my %hOptionRule =
 
     &CFGOPT_REPO_S3_HOST =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_REQUIRED  => false,
-        &CFGBLDDEF_RULE_DEPEND => CFGOPT_REPO_S3_BUCKET,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED  => false,
+        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_REGION => CFGOPT_REPO_S3_BUCKET,
 
     &CFGOPT_REPO_S3_VERIFY_SSL =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_REPO_TYPE,
-        &CFGBLDDEF_RULE_DEPEND => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
     },
 
     &CFGOPT_REPO_TYPE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => CFGOPTVAL_REPO_TYPE_POSIX,
-        &CFGBLDDEF_RULE_ALLOW_LIST =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => CFGOPTVAL_REPO_TYPE_POSIX,
+        &CFGDEF_ALLOW_LIST =>
         [
             &CFGOPTVAL_REPO_TYPE_CIFS,
             &CFGOPTVAL_REPO_TYPE_POSIX,
             &CFGOPTVAL_REPO_TYPE_S3,
         ],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1157,28 +1161,28 @@ my %hOptionRule =
 
     &CFGOPT_SPOOL_PATH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => '/var/spool/' . BACKREST_EXE,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => '/var/spool/' . BACKREST_EXE,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
         },
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_ARCHIVE_ASYNC,
-            &CFGBLDDEF_RULE_DEPEND_LIST => [true],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_ARCHIVE_ASYNC,
+            &CFGDEF_DEPEND_LIST => [true],
         },
     },
 
     &CFGOPT_PROCESS_MAX =>
     {
-        &CFGBLDDEF_RULE_ALT_NAME => 'thread-max',
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_DEFAULT => 1,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [1, 96],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_ALT_NAME => 'thread-max',
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => 1,
+        &CFGDEF_ALLOW_RANGE => [1, 96],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
@@ -1190,10 +1194,10 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_LOG_LEVEL_CONSOLE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => lc(WARN),
-        &CFGBLDDEF_RULE_ALLOW_LIST =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => lc(WARN),
+        &CFGDEF_ALLOW_LIST =>
         [
             lc(OFF),
             lc(ERROR),
@@ -1203,7 +1207,7 @@ my %hOptionRule =
             lc(DEBUG),
             lc(TRACE),
         ],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1221,20 +1225,20 @@ my %hOptionRule =
 
     &CFGOPT_LOG_LEVEL_FILE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => lc(INFO),
-        &CFGBLDDEF_RULE_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_LOG_LEVEL_CONSOLE,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => lc(INFO),
+        &CFGDEF_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
+        &CFGDEF_COMMAND => CFGOPT_LOG_LEVEL_CONSOLE,
     },
 
     &CFGOPT_LOG_LEVEL_STDERR =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => lc(WARN),
-        &CFGBLDDEF_RULE_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => lc(WARN),
+        &CFGDEF_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1252,20 +1256,20 @@ my %hOptionRule =
 
     &CFGOPT_LOG_TIMESTAMP =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_LOG_LEVEL_CONSOLE,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND => CFGOPT_LOG_LEVEL_CONSOLE,
     },
 
     # Archive options
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_ARCHIVE_ASYNC =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
         }
@@ -1274,10 +1278,10 @@ my %hOptionRule =
     # Deprecated and to be removed
     &CFGOPT_ARCHIVE_MAX_MB =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
         }
@@ -1285,10 +1289,10 @@ my %hOptionRule =
 
     &CFGOPT_ARCHIVE_QUEUE_MAX =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
         },
@@ -1298,15 +1302,15 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_ARCHIVE_CHECK =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_ONLINE,
-            &CFGBLDDEF_RULE_DEPEND_LIST => [true],
+            &CFGDEF_DEPEND_OPTION => CFGOPT_ONLINE,
+            &CFGDEF_DEPEND_LIST => [true],
         },
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1315,17 +1319,17 @@ my %hOptionRule =
 
     &CFGOPT_ARCHIVE_COPY =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP =>
             {
-                &CFGBLDDEF_RULE_DEPEND =>
+                &CFGDEF_DEPEND =>
                 {
-                    &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_ARCHIVE_CHECK,
-                    &CFGBLDDEF_RULE_DEPEND_LIST => [true],
+                    &CFGDEF_DEPEND_OPTION => CFGOPT_ARCHIVE_CHECK,
+                    &CFGDEF_DEPEND_LIST => [true],
                 }
             }
         }
@@ -1333,34 +1337,34 @@ my %hOptionRule =
 
     &CFGOPT_BACKUP_CMD =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_BACKUP_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
         },
     },
 
     &CFGOPT_BACKUP_CONFIG =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => CFGDEF_DEFAULT_CONFIG,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_BACKUP_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
         },
     },
 
     &CFGOPT_BACKUP_HOST =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1377,22 +1381,22 @@ my %hOptionRule =
 
     &CFGOPT_BACKUP_SSH_PORT =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_BACKUP_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
         }
     },
 
     &CFGOPT_BACKUP_STANDBY =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1403,23 +1407,23 @@ my %hOptionRule =
 
     &CFGOPT_BACKUP_USER =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => 'backrest',
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'backrest',
+        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_BACKUP_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
         }
     },
 
     &CFGOPT_CHECKSUM_PAGE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
         }
@@ -1427,10 +1431,10 @@ my %hOptionRule =
 
     &CFGOPT_HARDLINK =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
         }
@@ -1438,10 +1442,10 @@ my %hOptionRule =
 
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_DEFAULT => 1073741824,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => 1073741824,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
         }
@@ -1449,10 +1453,10 @@ my %hOptionRule =
 
     &CFGOPT_RESUME =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => true,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
         }
@@ -1460,10 +1464,10 @@ my %hOptionRule =
 
     &CFGOPT_START_FAST =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
         }
@@ -1471,10 +1475,10 @@ my %hOptionRule =
 
     &CFGOPT_STOP_AUTO =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
         }
@@ -1484,11 +1488,11 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_RETENTION_ARCHIVE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
@@ -1497,15 +1501,15 @@ my %hOptionRule =
 
     &CFGOPT_RETENTION_ARCHIVE_TYPE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => CFGOPTVAL_BACKUP_TYPE_FULL,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => CFGOPTVAL_BACKUP_TYPE_FULL,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
         },
-        &CFGBLDDEF_RULE_ALLOW_LIST =>
+        &CFGDEF_ALLOW_LIST =>
         [
             &CFGOPTVAL_BACKUP_TYPE_FULL,
             &CFGOPTVAL_BACKUP_TYPE_DIFF,
@@ -1515,11 +1519,11 @@ my %hOptionRule =
 
     &CFGOPT_RETENTION_DIFF =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
@@ -1528,11 +1532,11 @@ my %hOptionRule =
 
     &CFGOPT_RETENTION_FULL =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
@@ -1543,10 +1547,10 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_DB_INCLUDE =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_LIST,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_LIST,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
         },
@@ -1554,10 +1558,10 @@ my %hOptionRule =
 
     &CFGOPT_LINK_ALL =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_BOOLEAN,
-        &CFGBLDDEF_RULE_DEFAULT => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
         }
@@ -1565,10 +1569,10 @@ my %hOptionRule =
 
     &CFGOPT_LINK_MAP =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_HASH,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
         },
@@ -1576,10 +1580,10 @@ my %hOptionRule =
 
     &CFGOPT_TABLESPACE_MAP_ALL =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
         }
@@ -1587,10 +1591,10 @@ my %hOptionRule =
 
     &CFGOPT_TABLESPACE_MAP =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_HASH,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
         },
@@ -1598,17 +1602,17 @@ my %hOptionRule =
 
     &CFGOPT_RECOVERY_OPTION =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_HASH,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
         },
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_TYPE,
-            &CFGBLDDEF_RULE_DEPEND_LIST =>
+            &CFGDEF_DEPEND_OPTION => CFGOPT_TYPE,
+            &CFGDEF_DEPEND_LIST =>
             [
                 &CFGOPTVAL_RESTORE_TYPE_DEFAULT,
                 &CFGOPTVAL_RESTORE_TYPE_NAME,
@@ -1622,11 +1626,11 @@ my %hOptionRule =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_DB_CMD =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1637,19 +1641,19 @@ my %hOptionRule =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         },
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
         },
     },
 
     &CFGOPT_DB_CONFIG =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_DEFAULT => CFGDEF_DEFAULT_CONFIG,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1660,19 +1664,19 @@ my %hOptionRule =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         },
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
         },
     },
 
     &CFGOPT_DB_HOST =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
@@ -1688,29 +1692,29 @@ my %hOptionRule =
 
     &CFGOPT_DB_PATH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_REQUIRED => true,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_REQUIRED => true,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_ARCHIVE_PUSH =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
             &CFGCMD_LOCAL =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_REMOTE =>
             {
-                &CFGBLDDEF_RULE_REQUIRED => false
+                &CFGDEF_REQUIRED => false
             },
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
@@ -1720,11 +1724,11 @@ my %hOptionRule =
 
     &CFGOPT_DB_PORT =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_DEFAULT => 5432,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_DEFAULT => 5432,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1736,24 +1740,24 @@ my %hOptionRule =
 
     &CFGOPT_DB_SSH_PORT =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_INTEGER,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND => CFGOPT_DB_HOST,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_DB_HOST,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
         },
     },
 
     &CFGOPT_DB_SOCKET_PATH =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1766,11 +1770,11 @@ my %hOptionRule =
 
     &CFGOPT_DB_USER =>
     {
-        &CFGBLDDEF_RULE_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGBLDDEF_RULE_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGBLDDEF_RULE_TYPE => CFGOPTDEF_TYPE_STRING,
-        &CFGBLDDEF_RULE_DEFAULT => 'postgres',
-        &CFGBLDDEF_RULE_COMMAND =>
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'postgres',
+        &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
@@ -1778,141 +1782,159 @@ my %hOptionRule =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         },
-        &CFGBLDDEF_RULE_REQUIRED => false,
-        &CFGBLDDEF_RULE_DEPEND =>
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND =>
         {
-            &CFGBLDDEF_RULE_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
         },
     },
 );
 
 ####################################################################################################################################
-# Process rule defaults
+# Process define defaults
 ####################################################################################################################################
-foreach my $strKey (sort(keys(%hOptionRule)))
+foreach my $strKey (sort(keys(%hConfigDefine)))
 {
-    # If the rule is a scalar then copy the entire rule from the referenced option
-    if (!ref($hOptionRule{$strKey}))
+    # If the define is a scalar then copy the entire define from the referenced option
+    if (!ref($hConfigDefine{$strKey}))
     {
-        $hOptionRule{$strKey} = dclone($hOptionRule{$hOptionRule{$strKey}});
+        $hConfigDefine{$strKey} = dclone($hConfigDefine{$hConfigDefine{$strKey}});
     }
 
     # If the command section is a scalar then copy the section from the referenced option
-    if (defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_COMMAND}) && !ref($hOptionRule{$strKey}{&CFGBLDDEF_RULE_COMMAND}))
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_COMMAND} =
-            dclone($hOptionRule{$hOptionRule{$strKey}{&CFGBLDDEF_RULE_COMMAND}}{&CFGBLDDEF_RULE_COMMAND});
+        $hConfigDefine{$strKey}{&CFGDEF_COMMAND} =
+            dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_COMMAND}}{&CFGDEF_COMMAND});
     }
 
     # If the required section is a scalar then copy the section from the referenced option
-    if (defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND}) && !ref($hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND}))
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_DEPEND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_DEPEND}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND} =
-            dclone($hOptionRule{$hOptionRule{$strKey}{&CFGBLDDEF_RULE_DEPEND}}{&CFGBLDDEF_RULE_DEPEND});
+        $hConfigDefine{$strKey}{&CFGDEF_DEPEND} =
+            dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_DEPEND}}{&CFGDEF_DEPEND});
     }
 
     # If the allow list is a scalar then copy the list from the referenced option
-    if (defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST}) && !ref($hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST}))
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST}) && !ref($hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST} =
-            dclone($hOptionRule{$hOptionRule{$strKey}{&CFGBLDDEF_RULE_ALLOW_LIST}}{&CFGBLDDEF_RULE_ALLOW_LIST});
+        $hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST} =
+            dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST}}{&CFGDEF_ALLOW_LIST});
     }
 
     # Default type is string
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE}))
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_TYPE}))
     {
         &log(ASSERT, "type is required for option '${strKey}'");
     }
 
-    # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.
-    if ($hOptionRule{$strKey}{&CFGBLDDEF_RULE_TYPE} eq CFGOPTDEF_TYPE_BOOLEAN &&
-        defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_SECTION}))
+    # Default required is true
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_REQUIRED}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_NEGATE} = true;
+        $hConfigDefine{$strKey}{&CFGDEF_REQUIRED} = true;
+    }
+
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_INDEX}))
+    {
+    }
+
+    # Set index total for db-*
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) &&
+        $hConfigDefine{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_DB)
+    {
+        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_DB;
+    }
+    # Else default index total is 1
+    else
+    {
+        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
+    }
+
+    # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.
+    if ($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_BOOLEAN &&
+        defined($hConfigDefine{$strKey}{&CFGDEF_SECTION}))
+    {
+        $hConfigDefine{$strKey}{&CFGDEF_NEGATE} = true;
     }
 
     # Default for negation is false
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_NEGATE}))
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_NEGATE}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_NEGATE} = false;
+        $hConfigDefine{$strKey}{&CFGDEF_NEGATE} = false;
     }
 
     # By default options are not secure
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_SECURE}))
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_SECURE}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_SECURE} = false;
+        $hConfigDefine{$strKey}{&CFGDEF_SECURE} = false;
     }
 
     # Set all indices to 1 by default - this defines how many copies of any option there can be
-    if (!defined($hOptionRule{$strKey}{&CFGBLDDEF_RULE_INDEX}))
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL}))
     {
-        $hOptionRule{$strKey}{&CFGBLDDEF_RULE_INDEX} = 1;
+        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }
 }
 
 ####################################################################################################################################
-# Generate indexed rules
+# Get configuration definition
 ####################################################################################################################################
-my $rhOptionRuleIndex = dclone(\%hOptionRule);
-
-foreach my $strKey (sort(keys(%{$rhOptionRuleIndex})))
+sub cfgDefine
 {
-    # Build options for all possible db configurations
-    if (defined($rhOptionRuleIndex->{$strKey}{&CFGBLDDEF_RULE_PREFIX}) &&
-        $rhOptionRuleIndex->{$strKey}{&CFGBLDDEF_RULE_PREFIX} eq CFGDEF_PREFIX_DB)
-    {
-        my $strPrefix = $rhOptionRuleIndex->{$strKey}{&CFGBLDDEF_RULE_PREFIX};
-        $rhOptionRuleIndex->{$strKey}{&CFGBLDDEF_RULE_INDEX} = CFGDEF_INDEX_DB;
+    return dclone(\%hConfigDefine);
+}
 
-        for (my $iIndex = 1; $iIndex <= CFGDEF_INDEX_DB; $iIndex++)
+push @EXPORT, qw(cfgDefine);
+
+
+####################################################################################################################################
+# Get list of all commands
+####################################################################################################################################
+sub cfgDefineCommandList
+{
+    my $rhCommandMap;
+
+    # Get unique list of commands
+    foreach my $strOption (sort(keys(%hConfigDefine)))
+    {
+        foreach my $strCommand (sort(keys(%{$hConfigDefine{$strOption}{&CFGDEF_COMMAND}})))
         {
-            my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
-
-            $rhOptionRuleIndex->{$strKeyNew} = dclone($rhOptionRuleIndex->{$strKey});
-
-            # Create the alternate name for option index 1
-            if ($iIndex == 1)
-            {
-                $rhOptionRuleIndex->{$strKeyNew}{&CFGBLDDEF_RULE_ALT_NAME} = $strKey;
-            }
-            else
-            {
-                $rhOptionRuleIndex->{$strKeyNew}{&CFGBLDDEF_RULE_REQUIRED} = false;
-            }
-
-            if (defined($rhOptionRuleIndex->{$strKeyNew}{&CFGBLDDEF_RULE_DEPEND}) &&
-                defined($rhOptionRuleIndex->{$strKeyNew}{&CFGBLDDEF_RULE_DEPEND}{&CFGBLDDEF_RULE_DEPEND_OPTION}))
-            {
-                $rhOptionRuleIndex->{$strKeyNew}{&CFGBLDDEF_RULE_DEPEND}{&CFGBLDDEF_RULE_DEPEND_OPTION} =
-                    "${strPrefix}${iIndex}" .
-                    substr(
-                        $rhOptionRuleIndex->{$strKeyNew}{&CFGBLDDEF_RULE_DEPEND}{&CFGBLDDEF_RULE_DEPEND_OPTION},
-                        length($strPrefix));
-            }
+            $rhCommandMap->{$strCommand} = true;
         }
-
-        delete($rhOptionRuleIndex->{$strKey});
     }
+
+    # Add special commands
+    $rhCommandMap->{&CFGCMD_HELP} = true;
+    $rhCommandMap->{&CFGCMD_VERSION} = true;
+
+    # Return sorted list
+    return (sort(keys(%{$rhCommandMap})));
 }
 
+push @EXPORT, qw(cfgDefineCommandList);
+
 ####################################################################################################################################
-# cfgdefRule - get option rules without indexed options
+# Get list of all option types
 ####################################################################################################################################
-sub cfgdefRule
+sub cfgDefineOptionTypeList
 {
-    return dclone(\%hOptionRule);
+    my $rhOptionTypeMap;
+
+    # Get unique list of types
+    foreach my $strOption (sort(keys(%hConfigDefine)))
+    {
+        my $strOptionType = $hConfigDefine{$strOption}{&CFGDEF_TYPE};
+
+        if (!defined($rhOptionTypeMap->{$strOptionType}))
+        {
+            $rhOptionTypeMap->{$strOptionType} = true;
+        }
+    };
+
+    # Return sorted list
+    return (sort(keys(%{$rhOptionTypeMap})));
 }
 
-push @EXPORT, qw(cfgdefRule);
-
-####################################################################################################################################
-# cfgdefRuleIndex - get option rules
-####################################################################################################################################
-sub cfgdefRuleIndex
-{
-    return dclone($rhOptionRuleIndex);
-}
-
-push @EXPORT, qw(cfgdefRuleIndex);
+push @EXPORT, qw(cfgDefineOptionTypeList);
 
 1;

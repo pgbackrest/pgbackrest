@@ -179,7 +179,8 @@ sub run
                         "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
                         "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
                         "mkdir -p -m 755 ${strPerlModulePath} && " .
-                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}'");
+                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
+                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}'");
                 }
             }
         }
@@ -314,7 +315,7 @@ sub run
                 $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
 
                 my $strGccCommand =
-                    'gcc -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
+                    'gcc -Wfatal-errors -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
                     "-I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c " .
                     "/$self->{strBackRestBase}/test/src/common/harnessTest.c " .
                     join(' ', @stryCFile) . ' -o test';

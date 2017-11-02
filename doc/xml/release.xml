@@ -20,6 +20,10 @@
                     <release-item>
                         <p>Remove configurable option hints. <br-option>db-path</br-option> was the only option with a hint so the feature seemed wasteful.  All missing stanza options now output the same hint without needing configuration.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Convert configuration definitions from auto-generated functions to auto-generated data structures.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
@@ -301,7 +305,7 @@
 
                 <release-refactor-list>
                     <release-item>
-                        <p>Configuration rules are now pulled from the C library when present.</p>
+                        <p>Configuration definitions are now pulled from the C library when present.</p>
                     </release-item>
 
                     <release-item>

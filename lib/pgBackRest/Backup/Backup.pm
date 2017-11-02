@@ -389,9 +389,9 @@ sub processManifest
         foreach my $hJob (@{$hyJob})
         {
             ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-                $oBackupManifest, cfgOption(cfgOptionIndex(CFGOPT_DB_HOST, $hJob->{iHostConfigIdx}), false), $hJob->{iProcessId},
-                @{$hJob->{rParam}}[0..4], @{$hJob->{rResult}},
-                $lSizeTotal, $lSizeCurrent, $lManifestSaveSize, $lManifestSaveCurrent);
+                $oBackupManifest, cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $hJob->{iHostConfigIdx}), false),
+                $hJob->{iProcessId}, @{$hJob->{rParam}}[0..4], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent, $lManifestSaveSize,
+                $lManifestSaveCurrent);
         }
 
         # A keep-alive is required here because if there are a large number of resumed files that need to be checksummed
@@ -466,8 +466,8 @@ sub process
     my $oStorageDbMaster = storageDb({iRemoteIdx => $self->{iMasterRemoteIdx}});
 
     # Determine the database paths
-    my $strDbMasterPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $self->{iMasterRemoteIdx}));
-    my $strDbCopyPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $self->{iCopyRemoteIdx}));
+    my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $self->{iMasterRemoteIdx}));
+    my $strDbCopyPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $self->{iCopyRemoteIdx}));
 
     # Database info
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();

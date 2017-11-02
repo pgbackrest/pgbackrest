@@ -4,14 +4,14 @@ run 001 - remote 0, s3 0
 stanza-create db - fail on missing control file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [041]: unable to open [TEST_PATH]/db-master/db/base/global/pg_control
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 stanza-upgrade db - fail on stanza not initialized since archive.info is missing (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: archive.info does not exist but is required to push/get WAL segments
             HINT: is archive_command configured in postgresql.conf?
             HINT: has a stanza-create been performed?
@@ -21,7 +21,7 @@ P00   INFO: stanza-upgrade command end: aborted with exception [055]
 stanza-create db - successfully create the stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -59,7 +59,7 @@ db-version="9.3"
 stanza-create db - successful rerun of stanza-create (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -97,7 +97,7 @@ db-version="9.3"
 stanza-upgrade db - already up to date (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: the stanza data is already up to date
 P00   INFO: stanza-upgrade command end: completed successfully
 
@@ -135,7 +135,7 @@ db-version="9.3"
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
@@ -174,7 +174,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 stanza-create db - fail on archive info file missing from non-empty dir (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: archive information missing
             HINT: use stanza-create --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [055]
@@ -199,7 +199,7 @@ db-version="9.3"
 stanza-create db - gunzip fail on forced stanza-create (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
 P00  ERROR: [041]: unable to open '[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz': Permission denied
 P00   INFO: stanza-create command end: aborted with exception [041]
@@ -224,7 +224,7 @@ db-version="9.3"
 stanza-create db - force create archive.info from gz file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -262,7 +262,7 @@ db-version="9.3"
 stanza-create db - repeat create (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -300,7 +300,7 @@ db-version="9.3"
 stanza-create db - hash check fails requiring force (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
 P00  ERROR: [028]: archive info file invalid
             HINT: use stanza-upgrade if the database has been upgraded or use --force
@@ -341,7 +341,7 @@ db-version="8.0"
 stanza-create db - use force to overwrite the invalid file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -379,7 +379,7 @@ db-version="9.3"
 stanza-create db - fail on database mismatch without force option (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: unable to create stanza 'db'
 P00  ERROR: [028]: archive info file invalid
             HINT: use stanza-upgrade if the database has been upgraded or use --force
@@ -420,7 +420,7 @@ db-version="9.3"
 stanza-create db - force create archive.info from uncompressed file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -458,7 +458,7 @@ db-version="9.3"
 stanza-create db - force with missing WAL archive file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -496,7 +496,7 @@ db-version="9.3"
 stanza-create db - force with missing WAL archive directory (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: found empty directory [TEST_PATH]/db-master/repo/archive/db/9.3-1
 P00   INFO: stanza-create command end: completed successfully
 
@@ -541,7 +541,7 @@ P00  ERROR: [044]: WAL segment version 9.4 does not match archive version 9.3
 stanza-upgrade db - successful upgrade creates additional history (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-upgrade command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -584,7 +584,7 @@ db-version="9.4"
 stanza-create db - use force to recreate the stanza producing mismatched info history but same current db-id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: found empty directory [TEST_PATH]/db-master/repo/archive/db/9.3-1
 P00   INFO: stanza-create command end: completed successfully
 
@@ -624,7 +624,7 @@ db-version="9.4"
 stanza-create db - use force to recreate the stanza producing mismatched db-id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   WARN: found empty directory [TEST_PATH]/db-master/repo/archive/db/9.3-1
 P00   INFO: stanza-create command end: completed successfully
 
@@ -663,7 +663,7 @@ db-version="9.4"
 full backup - create first full backup  (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
@@ -699,7 +699,7 @@ start-fast=y
 stanza-create db - fail no force to recreate the stanza from backups (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: backup information missing
             HINT: use stanza-create --force to force the stanza data to be created.
 P00   INFO: stanza-create command end: aborted with exception [055]
@@ -722,7 +722,7 @@ db-version="9.4"
 stanza-create db - use force to recreate the stanza from backups (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -763,7 +763,7 @@ db-version="9.4"
 stanza-upgrade db - successfully upgrade with XX.Y-Z (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-upgrade command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -810,7 +810,7 @@ db-version="9.5"
 diff backup - diff changed to full backup (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db-timeout=45 --db1-path=[TEST_PATH]/db-master/db/base --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 15b1a1a35c26b17570aca7920980f0ad11c6d858
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum e28bf39d0a56bf9fabd4049b329fcae8878bfec6

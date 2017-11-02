@@ -10,6 +10,7 @@ use parent 'pgBackRestTest::Env::ConfigEnvTest';
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
 use Cwd qw(abs_path);
 
@@ -137,7 +138,7 @@ sub run
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
-        $self->optionTestSet(CFGOPT_TYPE, cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TYPE));
+        $self->optionTestSet(CFGOPT_TYPE, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_TYPE));
         $self->optionTestSet(CFGOPT_TARGET, BOGUS);
 
         @oyArray = (CFGOPTVAL_RESTORE_TYPE_NAME, CFGOPTVAL_RESTORE_TYPE_TIME, CFGOPTVAL_RESTORE_TYPE_XID);
@@ -247,7 +248,7 @@ sub run
     }
 
     if ($self->begin(
-        cfgCommandName(CFGCMD_BACKUP) . ' default value ' . cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_RETENTION_ARCHIVE_TYPE) .
+        cfgCommandName(CFGCMD_BACKUP) . ' default value ' . cfgDefOptionDefault(CFGCMD_BACKUP, CFGOPT_RETENTION_ARCHIVE_TYPE) .
         ' for ' . cfgOptionName(CFGOPT_RETENTION_ARCHIVE_TYPE) . ' with valid ' . cfgOptionName(CFGOPT_RETENTION_FULL)))
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
@@ -385,10 +386,10 @@ sub run
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
-        $self->optionTestSet(CFGOPT_DB_TIMEOUT, cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_PROTOCOL_TIMEOUT) + 30);
+        $self->optionTestSet(CFGOPT_DB_TIMEOUT, cfgDefOptionDefault(CFGCMD_BACKUP, CFGOPT_PROTOCOL_TIMEOUT) + 30);
 
         $self->configTestLoadExpect(cfgCommandName(CFGCMD_BACKUP));
-        $self->optionTestExpect(CFGOPT_PROTOCOL_TIMEOUT, cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_PROTOCOL_TIMEOUT) + 60);
+        $self->optionTestExpect(CFGOPT_PROTOCOL_TIMEOUT, cfgDefOptionDefault(CFGCMD_BACKUP, CFGOPT_PROTOCOL_TIMEOUT) + 60);
     }
 }
 

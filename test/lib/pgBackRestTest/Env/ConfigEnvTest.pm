@@ -134,8 +134,6 @@ sub configTestLoadExpect
     my $strErrorParam2 = shift;
     my $strErrorParam3 = shift;
 
-    my $oOptionRuleExpected = cfgdefRuleIndex();
-
     @ARGV = $self->commandTestWrite($strCommand, $self->{&CONFIGENVTEST});
     $self->configTestClear();
     &log(INFO, "    command line: " . join(" ", @ARGV));
