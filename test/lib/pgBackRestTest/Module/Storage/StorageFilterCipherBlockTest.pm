@@ -41,7 +41,7 @@ sub run
     my $strFileContent = 'TESTDATA';
     my $iFileLength = length($strFileContent);
     my $oDriver = new pgBackRest::Storage::Posix::Driver();
-    my $tCipherKey = 'areallybadkey';
+    my $tCipherPass = 'areallybadkey';
     my $strCipherType = 'aes-256-cbc';
     my $tContent;
 
@@ -54,22 +54,22 @@ sub run
 
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openRead($strFile), $strCipherType, $tCipherKey, {strMode => BOGUS})},
+                $oDriver->openRead($strFile), $strCipherType, $tCipherPass, {strMode => BOGUS})},
                 ERROR_ASSERT, 'unknown cipher mode: ' . BOGUS);
 
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openRead($strFile), BOGUS, $tCipherKey)},
+                $oDriver->openRead($strFile), BOGUS, $tCipherPass)},
                 ERROR_ASSERT, "unable to load cipher '" . BOGUS . "'");
 
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openWrite($strFile), $strCipherType, $tCipherKey, {strMode => BOGUS})},
+                $oDriver->openWrite($strFile), $strCipherType, $tCipherPass, {strMode => BOGUS})},
                 ERROR_ASSERT, 'unknown cipher mode: ' . BOGUS);
 
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openWrite($strFile), BOGUS, $tCipherKey)},
+                $oDriver->openWrite($strFile), BOGUS, $tCipherPass)},
             ERROR_ASSERT, "unable to load cipher '" . BOGUS . "'");
     }
 
@@ -84,7 +84,7 @@ sub run
 
         # Instantiate the cipher object - default action encrypt
         my $oEncryptIo = $self->testResult(sub {new pgBackRest::Storage::Filter::CipherBlock($oDriver->openRead($strFile),
-            $strCipherType, $tCipherKey)}, '[object]', 'new encrypt file');
+            $strCipherType, $tCipherPass)}, '[object]', 'new encrypt file');
 
         $self->testResult(sub {$oEncryptIo->read(\$tBuffer, 2)}, 16, '    read 16 bytes (header)');
         $self->testResult(sub {$oEncryptIo->read(\$tBuffer, 2)}, 16, '    read 16 bytes (data)');
@@ -98,7 +98,7 @@ sub run
         # tBuffer is now encrypted - test write decrypts correctly
         my $oDecryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock($oDriver->openWrite($strFileDecrypt),
-                $strCipherType, $tCipherKey, {strMode => STORAGE_DECRYPT})},
+                $strCipherType, $tCipherPass, {strMode => STORAGE_DECRYPT})},
             '[object]', '    new decrypt file');
 
         $self->testResult(sub {$oDecryptFileIo->write(\$tBuffer)}, 32, '    write decrypted');
@@ -110,7 +110,7 @@ sub run
         $tBuffer = $strFileContent;
         my $oEncryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock($oDriver->openWrite($strFileEncrypt),
-                $strCipherType, $tCipherKey)},
+                $strCipherType, $tCipherPass)},
             '[object]', 'new write encrypt');
 
         $tContent = '';
@@ -134,7 +134,7 @@ sub run
         $oEncryptFileIo =
             $self->testResult(
                 sub {new pgBackRest::Storage::Filter::CipherBlock(
-                    $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherKey,
+                    $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherPass,
                     {strMode => STORAGE_DECRYPT})},
                 '[object]', 'new read encrypted file, decrypt');
 
@@ -159,7 +159,7 @@ sub run
 
         $oEncryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openWrite($strFileBinEncrypt), $strCipherType, $tCipherKey)},
+                $oDriver->openWrite($strFileBinEncrypt), $strCipherType, $tCipherPass)},
             '[object]', '    new write encrypt');
 
         $self->testResult(sub {$oEncryptFileIo->write(\$tContent)}, length($tContent), '    write encrypted');
@@ -169,7 +169,7 @@ sub run
 
         my $oEncryptBinFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openRead($strFileBinEncrypt), $strCipherType, $tCipherKey,
+                $oDriver->openRead($strFileBinEncrypt), $strCipherType, $tCipherPass,
                 {strMode => STORAGE_DECRYPT})},
             '[object]', 'new read encrypted bin file');
 
@@ -177,7 +177,7 @@ sub run
         $self->testResult(sub {sha1_hex($tBuffer)}, $strFileBinHash, '    check sha1 same as original');
         $self->testResult(sub {$oEncryptBinFileIo->close()}, true, '    close');
 
-        # Try to read the file with the wrong key
+        # Try to read the file with the wrong passphrase
         undef($tBuffer);
         undef($oEncryptBinFileIo);
 
@@ -185,7 +185,7 @@ sub run
             sub {new pgBackRest::Storage::Filter::CipherBlock(
             $oDriver->openRead($strFileBinEncrypt), $strCipherType, BOGUS,
             {strMode => STORAGE_DECRYPT})},
-            '[object]', 'new read Encrypted bin file with wrong key');
+            '[object]', 'new read Encrypted bin file with wrong passphrase');
 
         $self->testResult(sub {$oEncryptBinFileIo->read(\$tBuffer, 16777216)}, 16777216, '    read all bytes');
         $self->testResult(sub {sha1_hex($tBuffer) ne $strFileBinHash}, true, '    check sha1 NOT same as original');
@@ -197,11 +197,11 @@ sub run
         $self->storageTest()->put($strFile, $strFileContent);
 
         executeTest(
-            "openssl enc -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFile} -out ${strFileEncrypt}");
+            "openssl enc -k ${tCipherPass} -md sha1 -aes-256-cbc -in ${strFile} -out ${strFileEncrypt}");
 
         $oEncryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherKey,
+                $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherPass,
                 {strMode => STORAGE_DECRYPT})},
             '[object]', 'read file encrypted by openssl');
 
@@ -214,14 +214,14 @@ sub run
 
         $oEncryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openWrite($strFileEncrypt), $strCipherType, $tCipherKey)},
+                $oDriver->openWrite($strFileEncrypt), $strCipherType, $tCipherPass)},
             '[object]', 'write file to be read by openssl');
 
         $self->testResult(sub {$oEncryptFileIo->write(\$tBuffer)}, 8, '    write 8 bytes');
         $self->testResult(sub {$oEncryptFileIo->close()}, true, '    close');
 
         executeTest(
-            "openssl enc -d -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}");
+            "openssl enc -d -k ${tCipherPass} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}");
 
         $self->testResult(sub {${$self->storageTest()->get($strFile)}}, $strFileContent, '    check content same as original');
 
@@ -232,11 +232,11 @@ sub run
         $self->storageTest()->put($strFile);
 
         executeTest(
-            "openssl enc -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFile} -out ${strFileEncrypt}");
+            "openssl enc -k ${tCipherPass} -md sha1 -aes-256-cbc -in ${strFile} -out ${strFileEncrypt}");
 
         $oEncryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherKey,
+                $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherPass,
                 {strMode => STORAGE_DECRYPT})},
             '[object]', 'read empty file encrypted by openssl');
 
@@ -249,14 +249,14 @@ sub run
 
         $oEncryptFileIo = $self->testResult(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openWrite($strFileEncrypt), $strCipherType, $tCipherKey)},
+                $oDriver->openWrite($strFileEncrypt), $strCipherType, $tCipherPass)},
             '[object]', 'write file to be read by openssl');
 
         $self->testResult(sub {$oEncryptFileIo->write(\$tBuffer)}, 0, '    write 0 bytes');
         $self->testResult(sub {$oEncryptFileIo->close()}, true, '    close');
 
         executeTest(
-            "openssl enc -d -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}");
+            "openssl enc -d -k ${tCipherPass} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}");
 
         $self->testResult(sub {${$self->storageTest()->get($strFile)}}, undef, '    check content same as original');
 
@@ -268,7 +268,7 @@ sub run
         $oEncryptFileIo =
             $self->testResult(
                 sub {new pgBackRest::Storage::Filter::CipherBlock(
-                    $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherKey,
+                    $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherPass,
                     {strMode => STORAGE_DECRYPT})},
                 '[object]', 'new read empty attempt decrypt');
 
@@ -277,7 +277,7 @@ sub run
 
         # OpenSSL should error on the empty file
         executeTest(
-            "openssl enc -d -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}",
+            "openssl enc -d -k ${tCipherPass} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}",
             {iExpectedExitStatus => 1});
     }
 }
