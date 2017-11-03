@@ -26,6 +26,7 @@ use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 use pgBackRest::Storage::Helper;
+use pgBackRest::Version;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
@@ -69,6 +70,29 @@ sub initTest
     #     DB_FILE_PGCONTROL);
 }
 
+sub manifestCompare
+{
+    my $self = shift;
+    my $oManifestExpected = shift;
+    my $oManifestActual = shift;
+# CSHANG Add the getters
+    # Section: target:path:default
+    ${$oManifestExpected}{&MANIFEST_SECTION_TARGET_PATH . ":default"}{&MANIFEST_SUBKEY_MODE} = $oManifestActual->;
+    ${$oManifestExpected}{&MANIFEST_SECTION_TARGET_PATH . ":default"}{&MANIFEST_SUBKEY_GROUP} = $oManifestActual->;
+    ${$oManifestExpected}{&MANIFEST_SECTION_TARGET_PATH . ":default"}{&MANIFEST_SUBKEY_USER} = $oManifestActual->;
+    # Section backup
+    $oManifestExpected{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START} = $oManifestActual->;
+
+    my $strTestPath = $self->testPath();
+
+    storageTest()->put("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
+    storageTest()->put("${strTestPath}/expected.manifest", iniRender($oExpectedManifest));
+
+    executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
+
+    storageTest()->remove("${strTestPath}/expected.manifest");
+    storageTest()->remove("${strTestPath}/actual.manifest");
+}
 ####################################################################################################################################
 # run
 ####################################################################################################################################
@@ -86,6 +110,20 @@ sub run
     my $strBackupManifestFile = "$strBackupPath/" . FILE_MANIFEST;
     my $strDbMasterPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, 1));
     my $iDbCatalogVersion = 201409291;
+
+    my %oManifestExpected;
+
+    # Section: backrest
+    $oManifestExpected{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
+    $oManifestExpected{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT;
+    # Section: backup:db
+    $oManifestExpected{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
+    # Section: target:path
+    $oManifestExpected{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA} = {};
+    $oManifestExpected{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA . "/" .&DB_PATH_GLOBAL} = {};
+    # Section backup:target
+    $oManifestExpected{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_TYPE} = MANIFEST_VALUE_PATH;
+    $oManifestExpected{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $self->{strDbPath};
 
     ################################################################################################################################
     if ($self->begin('new()'))
@@ -134,19 +172,30 @@ sub run
 # CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set?
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
+        # Online tests
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
 # CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating?
-        $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
+        # $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
+    executeTest(
+        'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
+        DB_FILE_PGCONTROL);
+        # Online tests
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
 
-        # # Build error --- DO LATER - want to start with empty directory
+        # # Create pg_tblspc path
+        # storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
+
+
+
+        # # Build error if offline = true and no tablespace path
         # #---------------------------------------------------------------------------------------------------------------------------
         # $self->testException(sub {$oManifest->build(storageDb(), $strDbMasterPath, undef, false)}, ERROR_FILE_MISSING,
         #     "unable to stat '" . $strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
         #
         # # Create pg_tblspc path
         # storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
-
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, false);
-
 # CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid?
     #  'oContent' => {
     #                  'target:file:default' => {
@@ -209,11 +258,7 @@ sub run
 #     * db-catalog-version
 #     * db-control-version?
 # CSHANG At least in the validate function? This is what the build provides - so why is there no checksum for pg_control in target:file? - at this point it fails the validate? manifest subvalue 'checksum' not set for file 'pg_data/global/pg_control'
-        foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
-        {
-            $self->testException(sub {$oManifest->validate()}, ERROR_ASSERT,
-                "manifest subvalue 'checksum' not set for file '${strFile}'");
-        }
+
     }
 
     ################################################################################################################################
