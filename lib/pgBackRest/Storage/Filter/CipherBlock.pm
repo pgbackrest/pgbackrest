@@ -99,7 +99,7 @@ sub read
         my $tCipherBuffer;
         my $iActualSize = $self->SUPER::read(\$tCipherBuffer, $iSize);
 
-        # If something was read, the process it
+        # If something was read, then process it
         if ($iActualSize > 0)
         {
             $tBufferRead .= $self->{oCipher}->process($tCipherBuffer);

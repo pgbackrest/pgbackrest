@@ -59,11 +59,6 @@ sub run
 
         $self->testException(
             sub {new pgBackRest::Storage::Filter::CipherBlock(
-                $oDriver->openRead($strFile), $strCipherType, $tCipherKey, {strMode => BOGUS})},
-                ERROR_ASSERT, 'unknown cipher mode: ' . BOGUS);
-
-        $self->testException(
-            sub {new pgBackRest::Storage::Filter::CipherBlock(
                 $oDriver->openRead($strFile), BOGUS, $tCipherKey)},
                 ERROR_ASSERT, "unable to load cipher '" . BOGUS . "'");
 
@@ -182,6 +177,20 @@ sub run
         $self->testResult(sub {sha1_hex($tBuffer)}, $strFileBinHash, '    check sha1 same as original');
         $self->testResult(sub {$oEncryptBinFileIo->close()}, true, '    close');
 
+        # Try to read the file with the wrong key
+        undef($tBuffer);
+        undef($oEncryptBinFileIo);
+
+        $oEncryptBinFileIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::CipherBlock(
+            $oDriver->openRead($strFileBinEncrypt), $strCipherType, BOGUS,
+            {strMode => STORAGE_DECRYPT})},
+            '[object]', 'new read Encrypted bin file with wrong key');
+
+        $self->testResult(sub {$oEncryptBinFileIo->read(\$tBuffer, 16777216)}, 16777216, '    read all bytes');
+        $self->testResult(sub {sha1_hex($tBuffer) ne $strFileBinHash}, true, '    check sha1 NOT same as original');
+
+        # Test file against openssl to make sure they are compatible
         #---------------------------------------------------------------------------------------------------------------------------
         undef($tBuffer);
 
@@ -215,6 +224,61 @@ sub run
             "openssl enc -d -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}");
 
         $self->testResult(sub {${$self->storageTest()->get($strFile)}}, $strFileContent, '    check content same as original');
+
+        # Test empty file against openssl to make sure they are compatible
+        #---------------------------------------------------------------------------------------------------------------------------
+        $tBuffer = '';
+
+        $self->storageTest()->put($strFile);
+
+        executeTest(
+            "openssl enc -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFile} -out ${strFileEncrypt}");
+
+        $oEncryptFileIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::CipherBlock(
+                $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherKey,
+                {strMode => STORAGE_DECRYPT})},
+            '[object]', 'read empty file encrypted by openssl');
+
+        $self->testResult(sub {$oEncryptFileIo->read(\$tBuffer, 16)}, 0, '    read 0 bytes');
+        $self->testResult(sub {$oEncryptFileIo->close()}, true, '    close');
+        $self->testResult(sub {$tBuffer}, '', '    check content same as original');
+
+        $self->storageTest()->remove($strFile);
+        $self->storageTest()->remove($strFileEncrypt);
+
+        $oEncryptFileIo = $self->testResult(
+            sub {new pgBackRest::Storage::Filter::CipherBlock(
+                $oDriver->openWrite($strFileEncrypt), $strCipherType, $tCipherKey)},
+            '[object]', 'write file to be read by openssl');
+
+        $self->testResult(sub {$oEncryptFileIo->write(\$tBuffer)}, 0, '    write 0 bytes');
+        $self->testResult(sub {$oEncryptFileIo->close()}, true, '    close');
+
+        executeTest(
+            "openssl enc -d -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}");
+
+        $self->testResult(sub {${$self->storageTest()->get($strFile)}}, undef, '    check content same as original');
+
+        # Error on empty file decrypt - an empty file that has been encrypted will be 32 bytes
+        #---------------------------------------------------------------------------------------------------------------------------
+        undef($tBuffer);
+        $self->storageTest()->put($strFileEncrypt);
+
+        $oEncryptFileIo =
+            $self->testResult(
+                sub {new pgBackRest::Storage::Filter::CipherBlock(
+                    $oDriver->openRead($strFileEncrypt), $strCipherType, $tCipherKey,
+                    {strMode => STORAGE_DECRYPT})},
+                '[object]', 'new read empty attempt decrypt');
+
+        $self->testException(sub {$oEncryptFileIo->read(\$tBuffer, 16)}, ERROR_CIPHER, 'cipher header missing');
+        $self->testResult(sub {$oEncryptFileIo->close()}, true, 'close');
+
+        # OpenSSL should error on the empty file
+        executeTest(
+            "openssl enc -d -k ${tCipherKey} -md sha1 -aes-256-cbc -in ${strFileEncrypt} -out ${strFile}",
+            {iExpectedExitStatus => 1});
     }
 }
 

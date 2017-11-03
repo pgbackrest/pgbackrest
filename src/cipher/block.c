@@ -123,105 +123,97 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
     // Actual destination size
     uint32 destinationSize = 0;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    // If the salt has not been generated/read yet
+    if (!this->saltDone)
     {
-        // Return 0 if there is nothing to process
-        if (sourceSize > 0)
+        const unsigned char *salt = NULL;
+
+        // On encrypt the salt is generated
+        if (this->mode == cipherModeEncrypt)
         {
-            // If the salt has not been generated/read yet
-            if (!this->saltDone)
+            // Add magic to the destination buffer so openssl knows the file is salted
+            memcpy(destination, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE);
+            destination += CIPHER_BLOCK_MAGIC_SIZE;
+            destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
+
+            // Add salt to the destination buffer
+            randomBytes(destination, PKCS5_SALT_LEN);
+            salt = destination;
+            destination += PKCS5_SALT_LEN;
+            destinationSize += PKCS5_SALT_LEN;
+        }
+        // On decrypt the salt is read from the header
+        else
+        {
+            // Check if the entire header has been read
+            if (this->headerSize + sourceSize >= CIPHER_BLOCK_HEADER_SIZE)
             {
-                const unsigned char *salt = NULL;
+                // Copy header (or remains of header) from source into the header buffer
+                memcpy(this->header + this->headerSize, source, CIPHER_BLOCK_HEADER_SIZE - this->headerSize);
+                salt = this->header + CIPHER_BLOCK_MAGIC_SIZE;
 
-                // On encrypt the salt is generated
-                if (this->mode == cipherModeEncrypt)
-                {
-                    // Add magic to the destination buffer so openssl knows the file is salted
-                    memcpy(destination, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE);
-                    destination += CIPHER_BLOCK_MAGIC_SIZE;
-                    destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
+                // Advance source and source size by the number of bytes read
+                source += CIPHER_BLOCK_HEADER_SIZE - this->headerSize;
+                sourceSize -= CIPHER_BLOCK_HEADER_SIZE - this->headerSize;
 
-                    // Add salt to the destination buffer
-                    randomBytes(destination, PKCS5_SALT_LEN);
-                    salt = destination;
-                    destination += PKCS5_SALT_LEN;
-                    destinationSize += PKCS5_SALT_LEN;
-                }
-                // On decrypt the salt is read from the header
-                else
-                {
-                    // Check if the entire header has been read
-                    if (this->headerSize + sourceSize >= CIPHER_BLOCK_HEADER_SIZE)
-                    {
-                        // Copy header (or remains of header) from source into the header buffer
-                        memcpy(this->header + this->headerSize, source, CIPHER_BLOCK_HEADER_SIZE - this->headerSize);
-                        salt = this->header + CIPHER_BLOCK_MAGIC_SIZE;
-
-                        // Advance source and source size by the number of bytes read
-                        source += CIPHER_BLOCK_HEADER_SIZE - this->headerSize;
-                        sourceSize -= CIPHER_BLOCK_HEADER_SIZE - this->headerSize;
-
-                        // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
-                        // encrypted file, or at least not in a format we recognize.
-                        if (memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
-                            ERROR_THROW(CipherError, "cipher header missing");
-                    }
-                    // Else copy what was provided into the header buffer and return 0
-                    else
-                    {
-                        memcpy(this->header + this->headerSize, source, sourceSize);
-                        this->headerSize += sourceSize;
-
-                        // Indicate that there is nothing left to process
-                        sourceSize = 0;
-                    }
-                }
-
-                // If salt generation/read is done
-                if (salt)
-                {
-                    // Generate key and initialization vector
-                    unsigned char key[EVP_MAX_KEY_LENGTH];
-                    unsigned char initVector[EVP_MAX_IV_LENGTH];
-
-                    EVP_BytesToKey(
-                        this->cipher, this->digest, salt, (unsigned char *)this->pass, this->passSize, 1, key, initVector);
-
-                    // Set free callback to ensure cipher context is freed
-                    memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
-
-                    // Create context to track cipher
-                    if (!(this->cipherContext = EVP_CIPHER_CTX_new()))
-                        ERROR_THROW(MemoryError, "unable to create context");               // {uncoverable - no failure path known}
-
-                    // Initialize cipher
-                    if (EVP_CipherInit_ex(
-                        this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt) != 1)
-                    {
-                        ERROR_THROW(MemoryError, "unable to initialize cipher");            // {uncoverable - no failure path known}
-                    }
-
-                    this->saltDone = true;
-                }
+                // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
+                // encrypted file, or at least not in a format we recognize.
+                if (memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
+                    ERROR_THROW(CipherError, "cipher header invalid");
             }
-
-            // Recheck that source size > 0 as the bytes may have been consumed reading the header
-            if (sourceSize > 0)
+            // Else copy what was provided into the header buffer and return 0
+            else
             {
-                // Process the data
-                int destinationUpdateSize = 0;
+                memcpy(this->header + this->headerSize, source, sourceSize);
+                this->headerSize += sourceSize;
 
-                if (!EVP_CipherUpdate(this->cipherContext, destination, &destinationUpdateSize, source, sourceSize))
-                    ERROR_THROW(CipherError, "unable to process");                           // {uncoverable - no failure path known}
-
-                destinationSize += destinationUpdateSize;
-
-                // Note that data has been processed so flush is valid
-                this->processDone = true;
+                // Indicate that there is nothing left to process
+                sourceSize = 0;
             }
         }
+
+        // If salt generation/read is done
+        if (salt)
+        {
+            // Generate key and initialization vector
+            unsigned char key[EVP_MAX_KEY_LENGTH];
+            unsigned char initVector[EVP_MAX_IV_LENGTH];
+
+            EVP_BytesToKey(
+                this->cipher, this->digest, salt, (unsigned char *)this->pass, this->passSize, 1, key, initVector);
+
+            // Set free callback to ensure cipher context is freed
+            memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
+
+            // Create context to track cipher
+            if (!(this->cipherContext = EVP_CIPHER_CTX_new()))
+                ERROR_THROW(MemoryError, "unable to create context");               // {uncoverable - no failure path known}
+
+            // Initialize cipher
+            if (EVP_CipherInit_ex(
+                this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt) != 1)
+            {
+                ERROR_THROW(MemoryError, "unable to initialize cipher");            // {uncoverable - no failure path known}
+            }
+
+            this->saltDone = true;
+        }
     }
-    MEM_CONTEXT_END();
+
+    // Recheck that source size > 0 as the bytes may have been consumed reading the header
+    if (sourceSize > 0)
+    {
+        // Process the data
+        int destinationUpdateSize = 0;
+
+        if (!EVP_CipherUpdate(this->cipherContext, destination, &destinationUpdateSize, source, sourceSize))
+            ERROR_THROW(CipherError, "unable to process");                           // {uncoverable - no failure path known}
+
+        destinationSize += destinationUpdateSize;
+
+        // Note that data has been processed so flush is valid
+        this->processDone = true;
+    }
 
     // Return actual destination size
     return destinationSize;
@@ -236,13 +228,13 @@ cipherBlockFlush(CipherBlock *this, unsigned char *destination)
     // Actual destination size
     int iDestinationSize = 0;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        // Only flush remaining data if some data was processed
-        if (this->processDone && !EVP_CipherFinal(this->cipherContext, destination, &iDestinationSize))
-            ERROR_THROW(CipherError, "unable to flush");
-    }
-    MEM_CONTEXT_END();
+    // If no header was processed then error
+    if (!this->saltDone)
+        ERROR_THROW(CipherError, "cipher header missing");
+
+    // Only flush remaining data if some data was processed
+    if (!EVP_CipherFinal(this->cipherContext, destination, &iDestinationSize))
+        ERROR_THROW(CipherError, "unable to flush");
 
     // Return actual destination size
     return iDestinationSize;
