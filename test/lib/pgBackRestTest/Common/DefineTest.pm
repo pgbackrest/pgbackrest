@@ -200,6 +200,35 @@ my $oTestDef =
                 },
             ]
         },
+        # Cipher tests
+        {
+            &TESTDEF_NAME => 'cipher',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'random',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'cipher/random' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'block',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'cipher/block' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+            ]
+        },
         # PostgreSQL tests
         {
             &TESTDEF_NAME => 'postgres',
@@ -283,6 +312,16 @@ my $oTestDef =
 
             &TESTDEF_TEST =>
             [
+                {
+                    &TESTDEF_NAME => 'filter-cipher-block',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_CLIB => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Storage/Filter/CipherBlock' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
                 {
                     &TESTDEF_NAME => 'filter-gzip',
                     &TESTDEF_TOTAL => 3,

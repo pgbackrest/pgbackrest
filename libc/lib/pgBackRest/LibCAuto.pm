@@ -61,6 +61,12 @@ sub libcAutoExportTag
             'pageChecksumTest',
         ],
 
+        cipher =>
+        [
+            'CIPHER_MODE_ENCRYPT',
+            'CIPHER_MODE_DECRYPT',
+        ],
+
         config =>
         [
             'CFGOPTVAL_INFO_OUTPUT_TEXT',
@@ -235,6 +241,11 @@ sub libcAutoExportTag
             'ENCODE_TYPE_BASE64',
             'decodeToBin',
             'encodeToStr',
+        ],
+
+        random =>
+        [
+            'randomBytes',
         ],
     }
 }

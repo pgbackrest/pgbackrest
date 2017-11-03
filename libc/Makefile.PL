@@ -74,6 +74,8 @@ my @stryCFile =
 (
     'LibC.c',
 
+    'cipher/block.c',
+    'cipher/random.c',
     'common/encode.c',
     'common/encode/base64.c',
     'common/error.c',
@@ -119,6 +121,8 @@ WriteMakefile
     },
 
     C => \@stryCFile,
+
+    LIBS => [-lcrypto],
 
     OBJECT => '$(O_FILES)',
 );
