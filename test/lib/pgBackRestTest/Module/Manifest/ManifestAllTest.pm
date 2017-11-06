@@ -35,17 +35,29 @@ use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 
 ####################################################################################################################################
+# Constants
+####################################################################################################################################
+use constant MODE_0750                                  => '0750';
+use constant MODE_0644                                  => '0644';
+use constant MODE_0600                                  => '0600';
+use constant TEST_USER                                  => 'ubuntu';
+use constant TEST_GROUP                                 => 'ubuntu';
+use constant PGCONTROL_SIZE                             => 8192;
+
+####################################################################################################################################
 # initModule
 ####################################################################################################################################
 sub initModule
 {
     my $self = shift;
 
-    $self->{strDbPath} = $self->testPath() . '/db';
-    $self->{strRepoPath} = $self->testPath() . '/repo';
+    $self->{strDbPath} = $self->testPath() . "/db";
+    $self->{strRepoPath} = $self->testPath() . "/repo";
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
     $self->{strSpoolPath} = "$self->{strArchivePath}/out";
+    $self->{strExpectedManifest} = $self->testPath() . "/expected.manifest";
+    $self->{strActualManifest} = $self->testPath() . "/actual.manifest";
 }
 
 ####################################################################################################################################
@@ -70,29 +82,36 @@ sub initTest
     #     DB_FILE_PGCONTROL);
 }
 
+####################################################################################################################################
+# manifestCompare
+####################################################################################################################################
 sub manifestCompare
 {
     my $self = shift;
     my $oManifestExpected = shift;
     my $oManifestActual = shift;
-# CSHANG Add the getters
-    # Section: target:path:default
-    ${$oManifestExpected}{&MANIFEST_SECTION_TARGET_PATH . ":default"}{&MANIFEST_SUBKEY_MODE} = $oManifestActual->;
-    ${$oManifestExpected}{&MANIFEST_SECTION_TARGET_PATH . ":default"}{&MANIFEST_SUBKEY_GROUP} = $oManifestActual->;
-    ${$oManifestExpected}{&MANIFEST_SECTION_TARGET_PATH . ":default"}{&MANIFEST_SUBKEY_USER} = $oManifestActual->;
-    # Section backup
-    $oManifestExpected{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START} = $oManifestActual->;
 
-    my $strTestPath = $self->testPath();
+    # Section backup. Confirm the copy-start timestamp is set for the actual manifest then copy it to the expected so files can
+    # be compared
+    if ($oManifestActual->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START))
+    {
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
+            $oManifestActual->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START));
+    }
+    else
+    {
+        return MANIFEST_KEY_TIMESTAMP_COPY_START . " not set in actual manifest";
+    }
 
-    storageTest()->put("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
-    storageTest()->put("${strTestPath}/expected.manifest", iniRender($oExpectedManifest));
+    storageTest()->put($self->{strActualManifest}, iniRender($oManifestActual->{oContent}));
+    storageTest()->put($self->{strExpectedManifest}, iniRender($oManifestExpected->{oContent}));
 
-    executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");
-
-    storageTest()->remove("${strTestPath}/expected.manifest");
-    storageTest()->remove("${strTestPath}/actual.manifest");
+    return executeTest("diff " . $self->{strExpectedManifest} . " " . $self->{strActualManifest});
+    #
+    # storageTest()->remove($self->{strExpectedManifest});
+    # storageTest()->remove("${strTestPath}/actual.manifest");
 }
+
 ####################################################################################################################################
 # run
 ####################################################################################################################################
@@ -111,19 +130,23 @@ sub run
     my $strDbMasterPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, 1));
     my $iDbCatalogVersion = 201409291;
 
-    my %oManifestExpected;
+    my $lTime = time() - 10000;
 
-    # Section: backrest
-    $oManifestExpected{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = BACKREST_VERSION;
-    $oManifestExpected{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT;
+    my $oManifestExpected = new pgBackRest::Common::Ini($self->{strExpectedManifest}, {bLoad => false});
+
     # Section: backup:db
-    $oManifestExpected{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
+    $oManifestExpected->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_94);
     # Section: target:path
-    $oManifestExpected{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA} = {};
-    $oManifestExpected{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA . "/" .&DB_PATH_GLOBAL} = {};
+    my $hDefault = {};
+    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, undef, $hDefault);
+    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_GLOBAL, undef, $hDefault);
+    # Section: target:path:default
+    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0750);
+    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
     # Section backup:target
-    $oManifestExpected{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_TYPE} = MANIFEST_VALUE_PATH;
-    $oManifestExpected{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $self->{strDbPath};
+    $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_PATH);
+    $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbPath});
 
     ################################################################################################################################
     if ($self->begin('new()'))
@@ -172,17 +195,60 @@ sub run
 # CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set?
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
-        # Online tests
+        # bOnline = true tests
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+
+        # Compare the base manifest
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'base manifest');
+
+        # Add global/pg_control file and PG_VERSION file and create a directory with a different mode than default
+        storageDb()->copy($self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGCONTROL,
+            {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}));
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGVERSION,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), PG_VERSION_94);
+
+# CSHANG !!! This is here only to stop test from flapping - need to resolve and remove
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/test',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), 'test');
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/test',
+            MANIFEST_SUBKEY_SIZE, length('test'));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/test',
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        # Create base path with different mode than default
+        storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_BASE, {strMode => MODE_0600});
+
+        # Update the expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
+
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_SIZE, PGCONTROL_SIZE);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_MODE, MODE_0644);
+
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' .DB_FILE_PGVERSION,
+            MANIFEST_SUBKEY_SIZE, length(&PG_VERSION_94));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' .DB_FILE_PGVERSION,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0600);
+
+        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
+
 # CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating?
         # $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
-    executeTest(
-        'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
-        DB_FILE_PGCONTROL);
-        # Online tests
-        #---------------------------------------------------------------------------------------------------------------------------
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+    # executeTest(
+    #     'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
+    #     DB_FILE_PGCONTROL);
+    #     # Online tests
+    #     #---------------------------------------------------------------------------------------------------------------------------
+    #     $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
 
         # # Create pg_tblspc path
         # storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
