@@ -31,6 +31,8 @@ use constant STORAGE_ENCRYPT                                        => 'encrypt'
     push @EXPORT, qw(STORAGE_ENCRYPT);
 use constant STORAGE_DECRYPT                                        => 'decrypt';
     push @EXPORT, qw(STORAGE_DECRYPT);
+use constant CIPHER_MAGIC                                           => 'Salted__';
+    push @EXPORT, qw(CIPHER_MAGIC);
 
 ####################################################################################################################################
 # Capability constants
@@ -69,7 +71,8 @@ sub new
 }
 
 ####################################################################################################################################
-# copy - copy a file
+# copy - copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed
+# instead of file names.
 ####################################################################################################################################
 sub copy
 {
@@ -94,7 +97,8 @@ sub copy
 
     # Is source an IO object or a file expression?
     my $oSourceFileIo =
-        defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($self->pathGet($xSourceFile))) : undef;
+        defined($xSourceFile) ?
+        (ref($xSourceFile) ? $xSourceFile : $self->openRead($self->pathGet($xSourceFile))) : undef;
 
     # Proceed if source file exists
     if (defined($oSourceFileIo))
@@ -142,15 +146,19 @@ sub get
     (
         $strOperation,
         $xFile,
+        $strCipherPass,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->get', \@_,
             {name => 'xFile', required => false, trace => true},
+            {name => 'strCipherPass', optional => true, redact => true},
         );
 
-    # Is this an IO object or a file expression?
-    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead($xFile)) : undef;
+    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or
+    # if the repo has a user passphrase defined - else pass undef
+    my $oFileIo = defined($xFile) ? (ref($xFile) ? $xFile : $self->openRead(
+        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()})) : undef;
 
     # Read only if there is something to read from
     my $tContent;
@@ -264,16 +272,20 @@ sub put
         $strOperation,
         $xFile,
         $xContent,
+        $strCipherPass,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->put', \@_,
             {name => 'xFile', trace => true},
             {name => 'xContent', required => false, trace => true},
+            {name => 'strCipherPass', optional => true, trace => true, redact => true},
         );
 
-    # Is this an IO object or a file expression?
-    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite($xFile);
+    # Is this an IO object or a file expression? If file expression, then open the file and pass passphrase if one is defined or if
+    # the repo has a user passphrase defined - else pass undef
+    my $oFileIo = ref($xFile) ? $xFile : $self->openWrite(
+        $xFile, {strCipherPass => defined($strCipherPass) ? $strCipherPass : $self->cipherPassUser()});
 
     # Determine size of content
     my $lSize = defined($xContent) ? length(ref($xContent) ? $$xContent : $xContent) : 0;
@@ -281,7 +293,7 @@ sub put
     # Write only if there is something to write
     if ($lSize > 0)
     {
-        $oFileIo->write(ref($xContent) ? $xContent : \$xContent, $lSize);
+        $oFileIo->write(ref($xContent) ? $xContent : \$xContent);
     }
     # Else open the file so a zero length file is created (since file is not opened until first write)
     else

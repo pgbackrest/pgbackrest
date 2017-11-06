@@ -321,6 +321,8 @@ sub regExpReplace
             $strReplacement = $strTypeReplacement;
         }
 
+        $strReplace =~ s/\//\\\//g;
+        $strReplace =~ s/\+/\\\+/g;
         $strLine =~ s/$strReplace/$strReplacement/g;
     }
 
@@ -396,6 +398,8 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'USER', '-user=[a-z0-9_]+', '[^=]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', '[^ ]+\@db\-master', '^[^\@]+');
     $strLine = $self->regExpReplace($strLine, 'USER', '[\( ]{1}' . TEST_USER . '[\,\)]{1}', TEST_USER);
+
+    $strLine = $self->regExpReplace($strLine, 'CIPHER-PASS', '^cipher\-pass\=.+$', '[^\=]+$');
 
     $strLine = $self->regExpReplace($strLine, 'PORT', 'db[1-9]{0,1}-port=[0-9]+', '[0-9]+$');
 

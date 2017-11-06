@@ -110,8 +110,14 @@ sub stanzaSet
     $$oStanza{iCatalogVersion} = $oStanzaCreate->{oDb}{iCatalogVersion};
     $$oStanza{iControlVersion} = $oStanzaCreate->{oDb}{iControlVersion};
 
-    my $oArchiveInfo = new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE));
-    my $oBackupInfo = new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP));
+    my $bEncrypted = defined($self->{oStorageRepo}->cipherType());
+
+    my $oArchiveInfo =
+        new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE),
+        {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_ARCHIVE : undef});
+    my $oBackupInfo =
+        new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP),
+        {strCipherPassSub => $bEncrypted ? ENCRYPTION_KEY_MANIFEST : undef});
 
     if ($bStanzaUpgrade)
     {
@@ -264,8 +270,22 @@ sub backupCreate
 
     &log(INFO, "create backup ${strBackupLabel}");
 
+    # Get passphrase (returns undefined if repo not encrypted) to access the manifest
+    my $strCipherPassManifest =
+        (new pgBackRest::Backup::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_BACKUP)))->cipherPassSub();
+    my $strCipherPassBackupSet;
+
+    # If repo is encrypted then get passphrase for accessing the backup files from the last manifest if it exists provide one
+    if (defined($strCipherPassManifest))
+    {
+        $strCipherPassBackupSet = (defined($oLastManifest)) ? $oLastManifest->cipherPassSub() :
+            ENCRYPTION_KEY_BACKUPSET;
+    }
+
     my $strManifestFile = "$$oStanza{strBackupClusterPath}/${strBackupLabel}/" . FILE_MANIFEST;
-    my $oManifest = new pgBackRest::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93});
+
+    my $oManifest = new pgBackRest::Manifest($strManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93,
+        strCipherPass => $strCipherPassManifest, strCipherPassSub => $strCipherPassBackupSet});
 
     # Store information about the backup into the backup section
     $oManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
@@ -396,6 +416,10 @@ sub archiveCreate
     my $strArchive = defined($$oStanza{strArchiveLast}) ? $self->archiveNext($$oStanza{strArchiveLast}, $bSkipFF) :
                                                           '000000010000000000000000';
 
+    # Get passphrase (returns undefined if repo not encrypted) to access the archive files
+    my $strCipherPass =
+        (new pgBackRest::Archive::Info($self->{oStorageRepo}->pathGet(STORAGE_REPO_ARCHIVE)))->cipherPassSub();
+
     push(my @stryArchive, $strArchive);
 
     do
@@ -404,7 +428,8 @@ sub archiveCreate
         storageRepo()->pathCreate($strPath, {bIgnoreExists => true});
 
         my $strFile = "${strPath}/${strArchive}-0000000000000000000000000000000000000000" . ($iArchiveIdx % 2 == 0 ? '.gz' : '');
-        storageRepo()->put($strFile, 'ARCHIVE');
+
+        storageRepo()->put($strFile, 'ARCHIVE', {strCipherPass => $strCipherPass});
 
         $iArchiveIdx++;
 

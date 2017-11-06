@@ -14,6 +14,11 @@
             <release-core-list>
                 <release-feature-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
                         <p>Repository encryption support.</p>
                     </release-item>
                 </release-feature-list>

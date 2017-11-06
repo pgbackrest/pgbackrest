@@ -188,6 +188,7 @@ sub forceStorageMove
         $oStorage,
         $strSourcePathExp,
         $strDestinationPathExp,
+        $bRecurse,
     ) =
         logDebugParam
         (
@@ -195,13 +196,14 @@ sub forceStorageMove
             {name => 'oStorage'},
             {name => 'strSourcePathExp'},
             {name => 'strDestinationPathExp'},
+            {name => 'bRecurse', optional => true, default => true},
         );
 
     # If S3 then use storage commands to remove
     if ($oStorage->driver()->className() eq STORAGE_S3_DRIVER)
     {
         hostGroupGet()->hostGet(HOST_S3)->executeS3(
-            'mv --recursive s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
+            'mv' . ($bRecurse ? ' --recursive' : '') . ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strSourcePathExp) .
                 ' s3://' . HOST_S3_BUCKET . $oStorage->pathGet($strDestinationPathExp));
     }
     # Else remove using filesystem commands

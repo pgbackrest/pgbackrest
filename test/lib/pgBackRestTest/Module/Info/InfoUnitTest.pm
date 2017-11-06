@@ -26,6 +26,7 @@ use pgBackRest::InfoCommon;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
+use pgBackRest::Storage::Local;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::RunTest;
@@ -33,6 +34,11 @@ use pgBackRestTest::Env::ExpireEnvTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 use pgBackRestTest::Env::HostEnvTest;
+
+####################################################################################################################################
+# initModule
+####################################################################################################################################
+use constant STANZA_ENCRYPT                             => 'encrypt';
 
 ####################################################################################################################################
 # initModule
@@ -45,6 +51,8 @@ sub initModule
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
     $self->{strBackupPath} = "$self->{strRepoPath}/backup/" . $self->stanza();
     $self->{strDbPath} = $self->testPath() . '/db';
+    $self->{strArchivePathEncrypt} = "$self->{strRepoPath}/archive/" . STANZA_ENCRYPT;
+    $self->{strBackupPathEncrypt} = "$self->{strRepoPath}/backup/" . STANZA_ENCRYPT;
 }
 
 ####################################################################################################################################
@@ -70,11 +78,30 @@ sub initTest
 sub initStanzaCreate
 {
     my $self = shift;
+    my $strStanza = shift;
+    my $bEncrypted = shift;
+    my $strDbVersion = shift;
 
     # Set options for stanzaCreate
     my $rhConfig = $self->configTestClear();
 
-    $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+    if (!defined($strStanza))
+    {
+        $strStanza = $self->stanza();
+    }
+
+    if (defined($bEncrypted) && $bEncrypted == true)
+    {
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+    }
+
+    if (!defined($strDbVersion))
+    {
+        $strDbVersion = PG_VERSION_94;
+    }
+
+    $self->optionTestSet(CFGOPT_STANZA, $strStanza);
     $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
     $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
@@ -85,9 +112,16 @@ sub initStanzaCreate
     $self->configTestLoad(CFGCMD_STANZA_CREATE);
     $self->configTestSet($rhConfig);
 
+    my $oTestObject = "oExpireTest";
+
     # Create the test object
-    $self->{oExpireTest} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), storageRepo(), undef, $self);
-    $self->{oExpireTest}->stanzaCreate($self->stanza(), PG_VERSION_94);
+    if (defined($bEncrypted) && $bEncrypted == true)
+    {
+        $oTestObject = "oExpireTestEncrypt";
+    }
+
+    $self->{$oTestObject} = new pgBackRestTest::Env::ExpireEnvTest(undef, $self->backrestExe(), storageRepo(), undef, $self);
+    $self->{$oTestObject}->stanzaCreate($strStanza, $strDbVersion);
 }
 
 ####################################################################################################################################
@@ -127,6 +161,9 @@ sub run
     # Used to create backups and WAL to test
     use constant SECONDS_PER_DAY => 86400;
     my $lBaseTime = 1486137448 - (60 * SECONDS_PER_DAY);
+
+    # Create the initial backup "day" number - backup day is incremented for each backup
+    my $iLastBackup = 5;
 
     ################################################################################################################################
     if ($self->begin("Info"))
@@ -229,21 +266,17 @@ sub run
         $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
         $self->configTestLoad(CFGCMD_INFO);
 
-        # Create archive info paths but no archive info
-        storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
+        # Create archive and backup paths but no info files
         storageTest()->pathCreate("$self->{strRepoPath}/archive/" . BOGUS, {bIgnoreExists => true, bCreateParent => true});
-
-        # Create backup info paths but no backup info
-        storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
         storageTest()->pathCreate("$self->{strRepoPath}/backup/" . BOGUS, {bIgnoreExists => true, bCreateParent => true});
 
         # Get a list of all stanzas in the repo
         $hyStanza = $oInfo->stanzaList();
 
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
-            "stanza: bogus\n    status: error (no valid backups)\n\n" .
-            "stanza: db\n    status: error (no valid backups)\n",
-            'fomatText() multiple stanzas');
+            "stanza: bogus\n    status: error (missing stanza data)\n\n" .
+            "stanza: db\n    status: error (missing stanza data)\n",
+            'fomatText() multiple stanzas missing data');
 
         # Define the stanza option
         #---------------------------------------------------------------------------------------------------------------------------
@@ -257,6 +290,12 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $self->initStanzaCreate();
         $self->configTestLoad(CFGCMD_INFO);
+
+        $self->testResult(sub {$oInfo->formatText($oInfo->stanzaList())},
+            "stanza: bogus\n    status: error (missing stanza data)\n\n" .
+            "stanza: db\n    status: error (no valid backups)\n\n" .
+            "    db (current)\n        wal archive min/max (9.4-1): none present\n",
+            "formatText() multiple stanzas, one missing data");
 
         $hyStanza = $oInfo->stanzaList($self->stanza());
         $self->testResult(sub {$oInfo->formatText($hyStanza)},
@@ -352,6 +391,79 @@ sub run
             PG_VERSION_94, WAL_VERSION_94_SYS_ID)},
             "{database => {id => 2}, id => 9.5-2, max => 000000010000000000000003, min => 000000010000000000000000}",
             'archive, db-ver mismatch, db-sys-id mismatch');
+
+        # Set last backup run in this test set
+        $iLastBackup = 8;
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Info - encryption"))
+    {
+        # create an unencrypted and an encrypted repo and run a backup in each
+        #--------------------------------------------------------------------------------------------------------------------------
+        $self->initStanzaCreate();
+        $self->{oExpireTest}->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
+        $iLastBackup++;
+        my $strUnencryptBackup = ($iLastBackup < 10) ? "0$iLastBackup" : $iLastBackup;
+
+        $self->initStanzaCreate(STANZA_ENCRYPT, true);
+        $self->{oExpireTestEncrypt}->backupCreate(STANZA_ENCRYPT, CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY, -1, -1);
+        $iLastBackup++;
+        my $strEncryptBackup = ($iLastBackup < 10) ? "0$iLastBackup" : $iLastBackup;;
+
+        # Clear the main storage repo settings
+        storageRepoCacheClear(STORAGE_REPO);
+
+        # Clear the stanza setting and set the main storage repo basePath to the testing repo path
+        $self->optionTestClear(CFGOPT_STANZA);
+        $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
+
+        # Recreate the main storage repo with default unencrypted repo setting and test basePath
+        storageRepo();
+
+        # Test the info command without option --stanza being configured
+        #--------------------------------------------------------------------------------------------------------------------------
+        $self->configTestLoad(CFGCMD_INFO);
+        my $oInfo = new pgBackRest::Info();
+
+        $self->testException(sub {$oInfo->stanzaList()}, ERROR_CIPHER,
+            "unable to parse '" . $self->{strBackupPathEncrypt} . "/backup.info'" .
+            "\nHINT: Is or was the repo encrypted?" .
+            "\nHINT: use option --stanza if encryption settings are different for the stanza than the global settings");
+
+        # Test the info command with option --stanza configured
+        #--------------------------------------------------------------------------------------------------------------------------
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->configTestLoad(CFGCMD_INFO);
+
+        $self->testResult(sub {$oInfo->formatText($oInfo->stanzaList($self->stanza()))},
+            "stanza: db\n    status: ok\n\n    db (current)\n        wal archive min/max (9.4-1): none present\n\n" .
+            "        full backup: 201612" . $strUnencryptBackup . "-155728F\n" .
+            "            timestamp start/stop: 2016-12-" . $strUnencryptBackup . " 15:57:28 / 2016-12-" . $strUnencryptBackup .
+            " 15:57:28\n" .
+            "            wal start/stop: n/a\n            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B\n",
+            "formatText() unencrypted stanza");
+
+        $self->optionTestSet(CFGOPT_STANZA, STANZA_ENCRYPT);
+        $self->configTestLoad(CFGCMD_INFO);
+
+        $self->testResult(sub {$oInfo->formatText($oInfo->stanzaList(STANZA_ENCRYPT))},
+            "stanza: " . STANZA_ENCRYPT ."\n    status: ok\n\n    db (current)" .
+            "\n        wal archive min/max (9.4-1): none present\n\n" .
+            "        full backup: 201612" . $strEncryptBackup . "-155728F\n" .
+            "            timestamp start/stop: 2016-12-" . $strEncryptBackup . " 15:57:28 / 2016-12-" . $strEncryptBackup .
+            " 15:57:28\n" .
+            "            wal start/stop: n/a\n            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B\n",
+            "formatText() encrypted stanza");
+
+        # Change the permissions of the backup file so it cannot be read and confirm correct error reported
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageMode(
+            storageRepo({strStanza => STANZA_ENCRYPT}), $self->{strBackupPathEncrypt} . "/backup.inf*", '220');
+        $self->testException(sub {$oInfo->backupList(STANZA_ENCRYPT)}, ERROR_FILE_OPEN,
+            "unable to open '" . $self->{strBackupPathEncrypt} . "/backup.info': Permission denied");
     }
 }
 

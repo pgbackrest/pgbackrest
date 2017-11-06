@@ -63,12 +63,14 @@ sub run
     {
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
+        my $bRepoEncrypt = $bS3 ? true : false;
+
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}")) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Reduce log level for many tests
         my $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
@@ -101,6 +103,11 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
+
+        if ($bRepoEncrypt)
+        {
+            $oManifest{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS} = 'REPLACEME';
+        }
 
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
@@ -916,9 +923,23 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
-        # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+        # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force. If backup.info is
+        # encrypted is cannot be deleted, so copy it to old instead.
+        my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
+        my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
+        my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
+        my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
+
+        if ($bRepoEncrypt)
+        {
+            forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+        }
+        else
+        {
+            forceStorageRemove(storageRepo(), $strBackupInfoFile);
+            forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
+        }
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
@@ -934,15 +955,18 @@ sub run
             # Fail on attempt to create the stanza data since force was not used
             $oHostBackup->stanzaCreate('fail on backup directory missing backup.info',
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-
-            # Use force to create the stanza
-            $oHostBackup->stanzaCreate('create required data for stanza',
-                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
-        else
+
+        # Use force to create the stanza (this is expected to fail for encrypted repos)
+        $oHostBackup->stanzaCreate('create required data for stanza',
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
+                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
+
+        # Copy encrypted backup info files back so testing can proceed
+        if ($bRepoEncrypt)
         {
-            $oHostBackup->stanzaCreate('create required data for stanza',
-                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
         }
 
         # Perform the backup
@@ -1153,7 +1177,7 @@ sub run
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the
         # directory is identical).
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bRemote)
+        if (!$bRemote && !$bS3)
         {
             executeTest('ls -1R ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/' . PATH_BACKUP_HISTORY),
                         {oLogTest => $self->expect(), bRemote => $bRemote});

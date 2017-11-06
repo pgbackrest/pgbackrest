@@ -310,6 +310,33 @@ sub move
 }
 
 ####################################################################################################################################
+# cipherPassUser
+####################################################################################################################################
+sub cipherPassUser
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->cipherPassUser', \@_,
+        );
+
+    my $strCipherPassUser = $self->{oProtocol}->cmdExecute(OP_STORAGE_CIPHER_PASS_USER);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strCipherPassUser', value => $strCipherPassUser, redact => true}
+    );
+}
+
+####################################################################################################################################
 # getters
 ####################################################################################################################################
 sub protocol {shift->{oProtocol}};

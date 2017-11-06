@@ -117,6 +117,7 @@ sub new
         $oStorage,
         $bLoad,                                     # Should the file attemp to be loaded?
         $bIgnoreMissing,                            # Don't error on missing files
+        $strCipherPassSub,                          # Generated passphrase to encrypt manifest files if the repo is encrypted
     ) =
         logDebugParam
         (
@@ -127,6 +128,7 @@ sub new
             {name => 'oStorage', optional => true, default => storageRepo()},
             {name => 'bLoad', optional => true, default => true},
             {name => 'bIgnoreMissing', optional => true, default => false},
+            {name => 'strCipherPassSub', optional => true},
         );
 
     # Build the backup info path/file name
@@ -139,7 +141,8 @@ sub new
     eval
     {
         $self = $class->SUPER::new($strBackupInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => $oStorage});
+            oStorage => $oStorage, strCipherPass => $oStorage->cipherPassUser(),
+            strCipherPassSub => $strCipherPassSub});
         return true;
     }
     or do
@@ -160,9 +163,13 @@ sub new
                 confess &log(ERROR, "${strBackupClusterPath}/$strBackupInfoMissingMsg", ERROR_FILE_MISSING);
             }
         }
+        elsif ($iResult == ERROR_CIPHER && $strResultMessage =~ "^unable to flush")
+        {
+            confess &log(ERROR, "unable to parse '$strBackupInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
+        }
         else
         {
-            confess &log(ERROR, $strResultMessage, $iResult);
+            confess $EVAL_ERROR;
         }
     }
 
@@ -247,7 +254,8 @@ sub reconstruct
 
         if (!$self->current($strBackup) && $self->{oStorage}->exists($strManifestFile))
         {
-            my $oManifest = pgBackRest::Manifest->new($strManifestFile);
+            my $oManifest = pgBackRest::Manifest->new($strManifestFile,
+                {strCipherPass => ($self->{oStorage}->encrypted($strManifestFile)) ? $self->cipherPassSub() : undef});
 
             # If we are reconstructing, then we need to be sure this db-id and version is in the history section. Also if it
             # has a db-id greater than anything in the history section, then add it to the db section.

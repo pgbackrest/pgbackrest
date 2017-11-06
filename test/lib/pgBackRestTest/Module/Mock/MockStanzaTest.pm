@@ -40,16 +40,29 @@ sub run
 {
     my $self = shift;
 
+    # Archive and backup info file names
+    my $strArchiveInfoFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE;
+    my $strArchiveInfoCopyFile = STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT;
+    my $strArchiveInfoOldFile = "${strArchiveInfoFile}.old";
+    my $strArchiveInfoCopyOldFile = "${strArchiveInfoCopyFile}.old";
+
+    my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
+    my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
+    my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
+    my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
+
     foreach my $bS3 (false, true)
     {
     foreach my $bRemote ($bS3 ? (false) : (false, true))
     {
+        my $bRepoEncrypt = $bRemote && !$bS3 ? true : false;
+
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote $bRemote, s3 $bS3")) {next}
+        if (!$self->begin("remote $bRemote, s3 $bS3, enc ${bRepoEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3});
+            true, $self->expect(), {bHostBackup => $bRemote, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Create the stanza
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
@@ -72,9 +85,28 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
-        # Rerun stanza-create and confirm success without the need to use force on empty directories
+        # Rerun stanza-create and confirm failure - need use force since archive.info and backup.info exist
+        #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
-            'successful rerun of stanza-create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+            'fail on rerun of stanza-create - info files exist',
+            {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+
+        # Stanza Create fails when not using force - database mismatch with pg_control file
+        #--------------------------------------------------------------------------------------------------------------------------
+        # Change the database version by copying a new pg_control file
+        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
+        $oHostBackup->stanzaCreate('fail on database mismatch without force option',
+            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+
+        # Restore pg_control
+        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
 
         # Perform a stanza upgrade which will indicate already up to date
         #--------------------------------------------------------------------------------------------------------------------------
@@ -93,11 +125,23 @@ sub run
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
 
         # With data existing in the archive dir, remove the info files and confirm failure
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+        if ($bRepoEncrypt)
+        {
+            forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
+        }
+        else
+        {
+            forceStorageRemove(storageRepo(), $strArchiveInfoFile);
+            forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
+        }
 
-        $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
-            {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        if (!$bRepoEncrypt)
+        {
+
+            $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
+                {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        }
 
         # Stanza Create fails using force - failure to unzip compressed file
         #--------------------------------------------------------------------------------------------------------------------------
@@ -126,87 +170,72 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         # Force creation of archive info from the gz file
         $oHostBackup->stanzaCreate('force create archive.info from gz file',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
+                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
 
-        # Rerun without the force to ensure the format is still valid - this will hash check the info files and indicate the
-        # stanza already exists
-        $oHostBackup->stanzaCreate('repeat create', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-
-        # Stanza Create fails when not using force - hash check failure
-        #--------------------------------------------------------------------------------------------------------------------------
-        # Munge and save the archive info file
-        $oHostBackup->infoMunge(
-            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-            {&INFO_BACKUP_SECTION_DB => {&INFO_BACKUP_KEY_DB_VERSION => '8.0'}});
-
-        $oHostBackup->stanzaCreate('hash check fails requiring force',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-
-        $oHostBackup->stanzaCreate('use force to overwrite the invalid file',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
-
-        # Cleanup the global hash but don't save the file (permission issues may prevent it anyway)
-        $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE), false);
-
-        # Stanza Create fails when not using force - database mismatch with pg_control file
-        #--------------------------------------------------------------------------------------------------------------------------
-        # Change the database version by copying a new pg_control file
-        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-
-        $oHostBackup->stanzaCreate('fail on database mismatch without force option',
-            {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-
-        # Restore pg_control
-        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        # Rerun without the force to ensure the files exist
+        $oHostBackup->stanzaCreate('repeat create - error that files exist',
+            {iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : ERROR_PATH_NOT_EMPTY,
+                strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Stanza Create succeeds when using force - recreates archive.info from uncompressed archive file
         #--------------------------------------------------------------------------------------------------------------------------
         # Unzip the archive file and recreate the archive.info file from it
         my $strArchiveTest = PG_VERSION_93 . "-1/${strArchiveFile}-f5035e2c3b83a9c32660f959b23451e78f7438f7";
 
-        forceStorageMode(
-            storageRepo(), dirname(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz")), 'g+w',
-            {bRecursive => true});
+        if (!$bRepoEncrypt)
+        {
+            forceStorageMode(
+                storageRepo(), dirname(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz")), 'g+w',
+                {bRecursive => true});
 
-        storageRepo()->copy(
-            storageRepo()->openRead(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz",
-                {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}]}),
-            STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
+            storageRepo()->copy(
+                storageRepo()->openRead(
+                    STORAGE_REPO_ARCHIVE . "/${strArchiveTest}.gz",
+                    {rhyFilter => [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}]}),
+                STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
 
-        $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            $oHostBackup->stanzaCreate('force create archive.info from uncompressed file',
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+        }
 
         # Stanza Create succeeds when using force - missing archive file
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the uncompressed WAL archive file and archive.info
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+        if (!$bRepoEncrypt)
+        {
+            forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/${strArchiveTest}");
+            forceStorageRemove(storageRepo(), $strArchiveInfoFile);
+            forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
 
-        $oHostBackup->stanzaCreate('force with missing WAL archive file',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            $oHostBackup->stanzaCreate('force with missing WAL archive file',
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+        }
 
         # Stanza Create succeeds when using force - missing archive directory
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the WAL archive directory
-        forceStorageRemove(
-            storageRepo(),
-            STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16), {bRecurse => true});
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+        if (!$bRepoEncrypt)
+        {
+            forceStorageRemove(
+                storageRepo(),
+                STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_93 . '-1/' . substr($strArchiveFile, 0, 16), {bRecurse => true});
+            forceStorageRemove(storageRepo(), $strArchiveInfoFile);
+            forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
 
-        $oHostBackup->stanzaCreate('force with missing WAL archive directory',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            $oHostBackup->stanzaCreate('force with missing WAL archive directory',
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+        }
 
         # Fail on archive push due to mismatch of DB since stanza not upgraded
         #--------------------------------------------------------------------------------------------------------------------------
+        # Encrypted info files could not be reconstructed above so just copy them back
+        if ($bRepoEncrypt)
+        {
+            forceStorageMove(storageRepo(), $strArchiveInfoOldFile, $strArchiveInfoFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
+        }
+
         my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
 
         # Upgrade the DB by copying new pg_control
@@ -235,19 +264,25 @@ sub run
         # Create a DB history mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
         # Remove the archive info file and force reconstruction
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE . INI_COPY_EXT);
+        if (!$bRepoEncrypt)
+        {
+            forceStorageRemove(storageRepo(), $strArchiveInfoFile);
+            forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile);
 
-        $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched info history but same current db-id',
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+        }
 
         # Create a DB-ID mismatch between the info files
         #--------------------------------------------------------------------------------------------------------------------------
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+        if (!$bRepoEncrypt)
+        {
+            forceStorageRemove(storageRepo(), $strBackupInfoFile);
+            forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
 
-        $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            $oHostBackup->stanzaCreate('use force to recreate the stanza producing mismatched db-id',
+                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+        }
 
         # Confirm successful backup at db-1 although archive at db-2
         #--------------------------------------------------------------------------------------------------------------------------
@@ -259,8 +294,16 @@ sub run
 
         # Stanza Create fails when not using force - no backup.info but backup exists
         #--------------------------------------------------------------------------------------------------------------------------
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+        if ($bRepoEncrypt)
+        {
+            forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+        }
+        else
+        {
+            forceStorageRemove(storageRepo(), $strBackupInfoFile);
+            forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
+        }
 
         $oHostBackup->stanzaCreate('fail no force to recreate the stanza from backups',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
@@ -268,7 +311,15 @@ sub run
         # Stanza Create succeeds using force - reconstruct backup.info from backup
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('use force to recreate the stanza from backups',
-            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
+                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
+
+        # Encrypted info files could not be reconstructed above so just copy them back
+        if ($bRepoEncrypt)
+        {
+            forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
+        }
 
         # Test archive dir version XX.Y-Z ensuring sort order of db ids is reconstructed correctly from the directory db-id value
         #--------------------------------------------------------------------------------------------------------------------------
@@ -276,8 +327,10 @@ sub run
         forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001', {bCreateParent => true});
         storageRepo()->copy(
-            storageDb()->openRead($self->dataPath() . '/backup.wal1_' . WAL_VERSION_92 . '.bin'),
-            STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001/000000010000000100000001');
+            storageDb()->openRead($strArchiveTestFile . WAL_VERSION_92 . '.bin'),
+            storageRepo()->openWrite(
+                STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001/000000010000000100000001',
+                {strCipherPass => $oHostBackup->cipherPassArchive()}));
         forceStorageOwner(storageRepo(), STORAGE_REPO_ARCHIVE . '/10.0-3', $oHostBackup->userGet(), {bRecurse => true});
 
         # Copy pg_control for 9.5

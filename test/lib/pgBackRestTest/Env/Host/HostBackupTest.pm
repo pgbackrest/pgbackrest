@@ -128,6 +128,9 @@ sub new
     # Create a placeholder hash for file munging
     $self->{hInfoFile} = {};
 
+    # Set whether repo should be encrypted or not
+    $self->{bRepoEncrypt} = defined($$oParam{bRepoEncrypt}) ? $$oParam{bRepoEncrypt} : false;
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -246,7 +249,10 @@ sub backupEnd
     if (!$self->synthetic())
     {
         $oExpectedManifest = iniParse(
-            ${storageRepo()->get(storageRepo()->pathGet('backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST))});
+            ${storageRepo()->get(
+                storageRepo()->openRead(
+                    'backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST,
+                    {strCipherPass => $self->cipherPassManifest()}))});
     }
 
     # Make sure tablespace links are correct
@@ -365,7 +371,10 @@ sub backupEnd
         {
             $self->{oLogTest}->supplementalAdd(
                 storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), undef,
-                ${storageRepo->get(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST)});
+                ${storageRepo()->get(
+                    storageRepo()->openRead(
+                        STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST,
+                        {strCipherPass => $self->cipherPassManifest()}))});
             $self->{oLogTest}->supplementalAdd(
                 storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO), undef,
                 ${storageRepo->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
@@ -440,7 +449,8 @@ sub backupCompare
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL} = $strBackup;
 
     my $oActualManifest = new pgBackRest::Manifest(
-        storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST));
+        storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST),
+        {strCipherPass => $self->cipherPassManifest()});
 
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
         $oActualManifest->get(MANIFEST_SECTION_BACKUP, &MANIFEST_KEY_TIMESTAMP_START);
@@ -452,17 +462,30 @@ sub backupCompare
         $oActualManifest->get(INI_SECTION_BACKREST, INI_KEY_CHECKSUM);
     ${$oExpectedManifest}{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = BACKREST_FORMAT + 0;
 
+    if (defined($oExpectedManifest->{&INI_SECTION_CIPHER}) &&
+        defined($oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS}) &&
+        $oActualManifest->test(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS))
+    {
+        $oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS} =
+            $oActualManifest->get(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS);
+    }
+
     my $strSectionPath = $oActualManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH);
 
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
-        # Determine repo size if compression is enabled
-        if ($oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS})
+        # Determine repo size if compression or encryption is enabled
+        my $bCompressed = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS};
+
+        if ($bCompressed ||
+            (defined($oExpectedManifest->{&INI_SECTION_CIPHER}) &&
+                defined($oExpectedManifest->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS})))
         {
+
             my $lRepoSize =
                 $oActualManifest->test(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REFERENCE) ?
                     $oActualManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strFileKey, MANIFEST_SUBKEY_REPO_SIZE, false) :
-                    (storageRepo()->info(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}.gz"))->size;
+                    (storageRepo()->info(STORAGE_REPO_BACKUP . "/${strBackup}/${strFileKey}" . ($bCompressed ? '.gz' : '')))->size;
 
             if (defined($lRepoSize) &&
                 $lRepoSize != $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE}{$strFileKey}{&MANIFEST_SUBKEY_SIZE})
@@ -751,21 +774,34 @@ sub stanzaCreate
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
 
-    # If the info file was created, then add it to the expect log
-    if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageRepo()->exists('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
+    if (storageRepo()->exists('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
     {
-        $self->{oLogTest}->supplementalAdd(
-            storageRepo()->pathGet('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO), undef,
-            ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
+        # If the info file was created, then add it to the expect log
+        if (defined($self->{oLogTest}) && $self->synthetic())
+        {
+            $self->{oLogTest}->supplementalAdd(
+                storageRepo()->pathGet('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO), undef,
+                ${storageRepo()->get(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO)});
+        }
+
+        # Get the passphrase for accessing the manifest file
+        $self->{strCipherPassManifest} =
+            (new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza())))->cipherPassSub();
     }
 
-    if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
+    if (storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
-        $self->{oLogTest}->supplementalAdd(
-            storageRepo()->pathGet('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE), undef,
-            ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
+        # If the info file was created, then add it to the expect log
+        if (defined($self->{oLogTest}) && $self->synthetic())
+        {
+            $self->{oLogTest}->supplementalAdd(
+                storageRepo()->pathGet('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE), undef,
+                ${storageRepo()->get(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE)});
+        }
+
+        # Get the passphrase for accessing the archived files
+        $self->{strCipherPassArchive} =
+            (new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza())))->cipherPassSub();
     }
 
     # Return from function and log return values if any
@@ -983,6 +1019,13 @@ sub configCreate
 
     if ($self->isHostBackup())
     {
+        if ($self->repoEncrypt())
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_CIPHER_TYPE)} =
+                CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_CIPHER_PASS)} = 'x';
+        }
+
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_PATH)} = $self->repoPath();
 
         # S3 settings
@@ -1181,7 +1224,7 @@ sub manifestMunge
             {name => 'bCache', default => true},
         );
 
-    $self->infoMunge(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), $hParam, $bCache);
+    $self->infoMunge(storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST), $hParam, $bCache, true);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1232,6 +1275,7 @@ sub infoMunge
         $strFileName,
         $hParam,
         $bCache,
+        $bManifest,
     ) =
         logDebugParam
         (
@@ -1239,18 +1283,21 @@ sub infoMunge
             {name => 'strFileName'},
             {name => 'hParam'},
             {name => 'bCache', default => true},
+            {name => 'bManifest', default => false},
         );
 
     # If the original file content does not exist then load it
     if (!defined($self->{hInfoFile}{$strFileName}))
     {
-        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini($strFileName, {oStorage => storageRepo()});
+        $self->{hInfoFile}{$strFileName} = new pgBackRest::Common::Ini($strFileName, {oStorage => storageRepo(),
+        strCipherPass => !$bManifest ? storageRepo()->cipherPassUser() : $self->cipherPassManifest()});
     }
 
     # Make a copy of the original file contents
     my $oMungeIni = new pgBackRest::Common::Ini(
         $strFileName,
-        {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}), oStorage => storageRepo()});
+        {bLoad => false, strContent => iniRender($self->{hInfoFile}{$strFileName}->{oContent}), oStorage => storageRepo(),
+        strCipherPass => !$bManifest ? storageRepo()->cipherPassUser() : $self->cipherPassManifest()});
 
     # Load params
     foreach my $strSection (keys(%{$hParam}))
@@ -1376,7 +1423,10 @@ sub isHostDb {my $self = shift; return $self->isHostDbMaster() || $self->isHostD
 sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
 sub repoPath {return shift->{strRepoPath}}
+sub repoEncrypt {return shift->{bRepoEncrypt}}
 sub stanza {return testRunGet()->stanza()}
 sub synthetic {return shift->{bSynthetic}}
+sub cipherPassManifest {return shift->{strCipherPassManifest}}
+sub cipherPassArchive {return shift->{strCipherPassArchive}}
 
 1;

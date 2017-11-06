@@ -53,6 +53,7 @@ sub archivePushCheck
     my $oStorageRepo = storageRepo();
     my $strArchiveId;
     my $strChecksum;
+    my $strCipherPass = undef;
 
     # WAL file is segment?
     my $bWalSegment = walIsSegment($strArchiveFile);
@@ -60,17 +61,18 @@ sub archivePushCheck
     if (!isRepoLocal())
     {
         # Execute the command
-        ($strArchiveId, $strChecksum) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
+        ($strArchiveId, $strChecksum, $strCipherPass) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
             OP_ARCHIVE_PUSH_CHECK, [$strArchiveFile, $strDbVersion, $ullDbSysId], true);
     }
     else
     {
+        my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE));
+
         # If a segment check db version and system-id
         if ($bWalSegment)
         {
             # If the info file exists check db version and system-id else error
-            $strArchiveId = (new pgBackRest::Archive::Info(
-                $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->check($strDbVersion, $ullDbSysId);
+            $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
 
             # Check if the WAL segment already exists in the archive
             my $strFoundFile = walSegmentFind($oStorageRepo, $strArchiveId, $strArchiveFile);
@@ -83,8 +85,11 @@ sub archivePushCheck
         # Else just get the archive id
         else
         {
-            $strArchiveId = (new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE)))->archiveId();
+            $strArchiveId = $oArchiveInfo->archiveId();
         }
+
+        # Get the encryption passphrase to read/write files (undefined if the repo is not encrypted)
+        $strCipherPass = $oArchiveInfo->cipherPassSub();
     }
 
     my $strWarning;
@@ -111,7 +116,8 @@ sub archivePushCheck
         $strOperation,
         {name => 'strArchiveId', value => $strArchiveId},
         {name => 'strChecksum', value => $strChecksum},
-        {name => 'strWarning', value => $strWarning}
+        {name => 'strCipherPass', value => $strCipherPass, redact => true},
+        {name => 'strWarning', value => $strWarning},
     );
 }
 
@@ -153,7 +159,7 @@ sub archivePushFile
     }
 
     # Check if the WAL already exists in the repo
-    my ($strArchiveId, $strChecksum, $strWarning) = archivePushCheck(
+    my ($strArchiveId, $strChecksum, $strCipherPass, $strWarning) = archivePushCheck(
         $strWalFile, $strDbVersion, $ullDbSysId, walIsSegment($strWalFile) ? "${strWalPath}/${strWalFile}" : undef);
 
     # Only copy the WAL segment if checksum is not defined.  If checksum is defined it means that the WAL segment already exists
@@ -185,12 +191,13 @@ sub archivePushFile
             push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP, rxyParam => [{iLevel => $iCompressLevel}]});
         }
 
-        # Copy
+        # Copy. If the file is encrypted, then the key from the info file is required to open the archive file in the repo.
         $oStorageRepo->copy(
             storageDb()->openRead("${strWalPath}/${strWalFile}", {rhyFilter => $rhyFilter}),
             $oStorageRepo->openWrite(
                 STORAGE_REPO_ARCHIVE . "/${strArchiveFile}",
-                {bPathCreate => true, bAtomic => true, bProtocolCompress => !walIsSegment($strWalFile) || !$bCompress}));
+                {bPathCreate => true, bAtomic => true, bProtocolCompress => !walIsSegment($strWalFile) || !$bCompress,
+                    strCipherPass => $strCipherPass}));
     }
 
     # Return from function and log return values if any

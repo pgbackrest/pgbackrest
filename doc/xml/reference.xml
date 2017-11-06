@@ -362,6 +362,29 @@
 
                         <example>cifs</example>
                     </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-CIPHER-TYPE KEY -->
+                    <config-key id="repo-cipher-type" name="Repository Cipher Type">
+                        <summary>Cipher used to encrypt the repository.</summary>
+
+                        <text>The following repository types are supported:
+                        <ul>
+                            <li><id>none</id> - The repository is not encrypted</li>
+                            <li><id>aes-256-cbc</id> - Advanced Encryption Standard with 256 bit key length</li>
+                        </ul></text>
+
+                        <default>none</default>
+                        <example>aes-256-cbc</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-CIPHER-PASS KEY -->
+                    <config-key id="repo-cipher-pass" name="Repository Cipher Passphrase">
+                        <summary>Repository cipher passphrase.</summary>
+
+                        <text>Passphrase used to encrypt/decrypt files of the repository.</text>
+
+                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 

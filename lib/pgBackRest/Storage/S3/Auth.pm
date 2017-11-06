@@ -161,7 +161,7 @@ sub s3SigningKey
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strSigningKey', value => $strSigningKey, trace => true}
+        {name => 'strSigningKey', value => $strSigningKey, redact => true, trace => true}
     );
 }
 

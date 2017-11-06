@@ -198,7 +198,16 @@ sub manifestLoad
     my $self = shift;           # Class hash
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam (__PACKAGE__ . '->manifestLoad');
+    my
+    (
+        $strOperation,
+        $strCipherPass,                                             # Passphrase to decrypt the manifest file if encrypted
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->manifestLoad', \@_,
+            {name => 'strCipherPass', required => false, redact => true},
+        );
 
     # Error if the backup set does not exist
     if (!storageRepo()->exists(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST))
@@ -208,7 +217,8 @@ sub manifestLoad
 
     # Copy the backup manifest to the db cluster path
     storageDb()->copy(
-        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST, {bProtocolCompress => true}),
+        storageRepo()->openRead(STORAGE_REPO_BACKUP . "/$self->{strBackupSet}/" . FILE_MANIFEST, {bProtocolCompress => true,
+            strCipherPass => $strCipherPass}),
         $self->{strDbClusterPath} . '/' . FILE_MANIFEST);
 
     # Load the manifest into a hash
@@ -1089,7 +1099,7 @@ sub process
     &log(INFO, "restore backup set " . $self->{strBackupSet});
 
     # Make sure the backup path is valid and load the manifest
-    my $oManifest = $self->manifestLoad();
+    my $oManifest = $self->manifestLoad($oBackupInfo->cipherPassSub());
 
     # Delete pg_control file.  This will be copied from the backup at the very end to prevent a partially restored database
     # from being started by PostgreSQL.
@@ -1248,7 +1258,8 @@ sub process
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_USER),
                 $oManifest->get(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_GROUP),
                 $oManifest->numericGet(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START),  cfgOption(CFGOPT_DELTA),
-                $self->{strBackupSet}, $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS)]);
+                $self->{strBackupSet}, $oManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS)],
+            {rParamSecure => $oManifest->cipherPassSub() ? [$oManifest->cipherPassSub()] : undef});
     }
 
     # Run the restore jobs and process results

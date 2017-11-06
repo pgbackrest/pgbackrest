@@ -79,6 +79,7 @@ sub getCheck
 
     my $strArchiveId;
     my $strArchiveFile;
+    my $strCipherPass;
 
     # If the dbVersion/dbSysId are not passed, then we need to retrieve the database information
     if (!defined($strDbVersion) || !defined($ullDbSysId) )
@@ -90,20 +91,23 @@ sub getCheck
     # Get db info from the repo
     if (!isRepoLocal())
     {
-        ($strArchiveId, $strArchiveFile) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
+        ($strArchiveId, $strArchiveFile, $strCipherPass) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
             OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strWalFile], true);
     }
     else
     {
+        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
+
         # check that the archive info is compatible with the database
-        $strArchiveId =
-            (new pgBackRest::Archive::Info(
-                storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true))->check($strDbVersion, $ullDbSysId);
+        $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
 
         if (defined($strWalFile))
         {
             $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile);
         }
+
+        # Get the encryption passphrase to read/write files (undefined if the repo is not encrypted)
+        $strCipherPass = $oArchiveInfo->cipherPassSub();
     }
 
     # Return from function and log return values if any
@@ -111,7 +115,8 @@ sub getCheck
     (
         $strOperation,
         {name => 'strArchiveId', value => $strArchiveId},
-        {name => 'strArchiveFile', value => $strArchiveFile}
+        {name => 'strArchiveFile', value => $strArchiveFile},
+        {name => 'strCipherPass', value => $strCipherPass, redact => true}
     );
 }
 

@@ -55,6 +55,8 @@ use constant OP_STORAGE_OPEN_READ                                   => 'storageO
     push @EXPORT, qw(OP_STORAGE_OPEN_READ);
 use constant OP_STORAGE_OPEN_WRITE                                  => 'storageOpenWrite';
     push @EXPORT, qw(OP_STORAGE_OPEN_WRITE);
+use constant OP_STORAGE_CIPHER_PASS_USER                            => 'storageCipherPassUser';
+    push @EXPORT, qw(OP_STORAGE_CIPHER_PASS_USER);
 use constant OP_STORAGE_EXISTS                                      => 'storageExists';
     push @EXPORT, qw(OP_STORAGE_EXISTS);
 use constant OP_STORAGE_LIST                                        => 'storageList';

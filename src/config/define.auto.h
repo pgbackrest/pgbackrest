@@ -96,6 +96,8 @@ typedef enum
     cfgDefOptProcessMax,
     cfgDefOptProtocolTimeout,
     cfgDefOptRecoveryOption,
+    cfgDefOptRepoCipherPass,
+    cfgDefOptRepoCipherType,
     cfgDefOptRepoPath,
     cfgDefOptRepoS3Bucket,
     cfgDefOptRepoS3CaFile,

@@ -349,7 +349,8 @@ sub processManifest
                 cfgOption(CFGOPT_CHECKSUM_PAGE) ? isChecksumPage($strRepoFile) : false, $strBackupLabel, $bCompress,
                 cfgOption(CFGOPT_COMPRESS_LEVEL), $oBackupManifest->numericGet(MANIFEST_SECTION_TARGET_FILE, $strRepoFile,
                 MANIFEST_SUBKEY_TIMESTAMP, false), $bIgnoreMissing,
-                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef]);
+                cfgOption(CFGOPT_CHECKSUM_PAGE) && isChecksumPage($strRepoFile) ? $hStartLsnParam : undef],
+            {rParamSecure => $oBackupManifest->cipherPassSub() ? [$oBackupManifest->cipherPassSub()] : undef});
 
         # Size and checksum will be removed and then verified later as a sanity check
         $oBackupManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strRepoFile, MANIFEST_SUBKEY_SIZE);
@@ -440,6 +441,10 @@ sub process
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
 
+    # Get passphrase to open manifest (undefined if repo not encrypted) and intialize passphrase variable for backup files
+    my $strCipherPassManifest = $oBackupInfo->cipherPassSub();
+    my $strCipherPassBackupSet;
+
     # Initialize database objects
     my $oDbMaster = undef;
     my $oDbStandby = undef;
@@ -487,7 +492,11 @@ sub process
         if (defined($strBackupLastPath) && $oBackupInfo->confirmDb($strBackupLastPath, $strDbVersion, $ullDbSysId))
         {
             $oLastManifest = new pgBackRest::Manifest(
-                $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLastPath}/" . FILE_MANIFEST));
+                $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLastPath}/" . FILE_MANIFEST),
+                {strCipherPass => $strCipherPassManifest});
+
+            # If the repo is encrypted then use the passphrase in this manifest for the backup set
+            $strCipherPassBackupSet = $oLastManifest->cipherPassSub();
 
             &log(INFO, 'last backup label = ' . $oLastManifest->get(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL) .
                        ', version = ' . $oLastManifest->get(INI_SECTION_BACKREST, INI_KEY_VERSION));
@@ -544,7 +553,8 @@ sub process
                 eval
                 {
                     # Load the aborted manifest
-                    $oAbortedManifest = new pgBackRest::Manifest("${strBackupPath}/" . FILE_MANIFEST);
+                    $oAbortedManifest = new pgBackRest::Manifest("${strBackupPath}/" . FILE_MANIFEST,
+                        {strCipherPass => $strCipherPassManifest});
 
                     # Key and values that do not match
                     my $strKey;
@@ -621,6 +631,12 @@ sub process
             if ($bUsable)
             {
                 $strBackupLabel = $strAbortedBackup;
+
+                # If the repo is encrypted, set the backup set passphrase from this manifest
+                if (defined($strCipherPassManifest))
+                {
+                    $strCipherPassBackupSet = $oAbortedManifest->cipherPassSub();
+                }
             }
             else
             {
@@ -635,6 +651,12 @@ sub process
         }
     }
 
+    # Generate a passphrase for the backup set if the repo is encrypted
+    if (defined($strCipherPassManifest) && !defined($strCipherPassBackupSet) && $strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
+    {
+        $strCipherPassBackupSet = $oStorageRepo->cipherPassGen();
+    }
+
     # If backup label is not defined then create the label and path.
     if (!defined($strBackupLabel))
     {
@@ -642,9 +664,13 @@ sub process
         $strBackupPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     }
 
-    # Declare the backup manifest
-    my $oBackupManifest = new pgBackRest::Manifest(
-        "$strBackupPath/" . FILE_MANIFEST, {bLoad => false, strDbVersion => $strDbVersion});
+    # Declare the backup manifest. Since the manifest could be an aborted backup, don't load it from the file here.
+    # Instead just instantiate it. Pass the passphrases to open the manifest and one to encrypt the backup files if the repo is
+    # encrypted (undefined if not).
+    my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
+        {bLoad => false, strDbVersion => $strDbVersion,
+        strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef,
+        strCipherPassSub => defined($strCipherPassManifest) ? $strCipherPassBackupSet : undef});
 
     # Backup settings
     $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef, $strType);
@@ -850,9 +876,12 @@ sub process
                     push(@{$rhyFilter}, {strClass => STORAGE_FILTER_GZIP});
                 }
 
+                # If the backups are encrypted, then the passphrase for the backup set from the manifest file is required to access
+                # the file in the repo
                 my $oDestinationFileIo = $oStorageRepo->openWrite(
                     STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFile}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
-                    {rhyFilter => $rhyFilter});
+                    {rhyFilter => $rhyFilter,
+                    strCipherPass => defined($strCipherPassBackupSet) ? $strCipherPassBackupSet : undef});
 
                 # Write content out to a file
                 $oStorageRepo->put($oDestinationFileIo, $oFileHash->{$strFile});
@@ -885,7 +914,9 @@ sub process
 
         # After the backup has been stopped, need to make a copy of the archive logs to make the db consistent
         logDebugMisc($strOperation, "retrieve archive logs ${strArchiveStart}:${strArchiveStop}");
-        my $strArchiveId = new pgBackRest::Archive::Get::Get()->getArchiveId();
+
+        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
+        my $strArchiveId = $oArchiveInfo->archiveId();
         my @stryArchive = lsnFileRange($strLsnStart, $strLsnStop, $strDbVersion);
 
         foreach my $strArchive (@stryArchive)
@@ -903,9 +934,12 @@ sub process
                 my $bArchiveCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '\$');
 
                 $oStorageRepo->copy(
-                    STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
-                    STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath() .
-                        "/${strArchive}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''));
+                    $oStorageRepo->openRead(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}",
+                        {strCipherPass => $oArchiveInfo->cipherPassSub()}),
+                    $oStorageRepo->openWrite(STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . MANIFEST_TARGET_PGDATA . qw{/} .
+                        $oBackupManifest->walPath() . "/${strArchive}" . ($bCompress ? qw{.} . COMPRESS_EXT : ''),
+                        {strCipherPass => $strCipherPassBackupSet})
+                    );
 
                 # Add the archive file to the manifest so it can be part of the restore and checked in validation
                 my $strPathLog = MANIFEST_TARGET_PGDATA . qw{/} . $oBackupManifest->walPath();
@@ -931,13 +965,16 @@ sub process
 
     &log(INFO, "new backup label = ${strBackupLabel}");
 
-    # Copy a compressed version of the manifest to history
+    # Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest is
+    # required.
     $oStorageRepo->copy(
-        STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST,
+        $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/" . FILE_MANIFEST,
+            {'strCipherPass' => $strCipherPassManifest}),
         $oStorageRepo->openWrite(
             STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY . qw{/} . substr($strBackupLabel, 0, 4) .
-                "/${strBackupLabel}.manifest." . COMPRESS_EXT,
-            {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}], bPathCreate => true, bAtomic => true}));
+                "/${strBackupLabel}.manifest." . COMPRESS_EXT, {rhyFilter => [{strClass => STORAGE_FILTER_GZIP}],
+                bPathCreate => true, bAtomic => true,
+                strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef}));
 
     # Sync history path
     $oStorageRepo->pathSync(STORAGE_REPO_BACKUP . qw{/} . PATH_BACKUP_HISTORY);

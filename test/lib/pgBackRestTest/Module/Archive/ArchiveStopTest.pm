@@ -46,12 +46,16 @@ sub run
     {
     foreach my $iError ($bS3 ? (1) : ($bRemote ? (0, 1) : (0)))
     {
+        my $bRepoEncrypt = ($bCompress && !$bS3) ? true : false;
+
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version') . ", s3 ${bS3}")) {next}
+        if (!$self->begin("rmt ${bRemote}, cmp ${bCompress}, error " . ($iError ? 'connect' : 'version') . ", s3 ${bS3}, " .
+            "enc ${bRepoEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true, bS3 => $bS3});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => $bCompress, bArchiveAsync => true, bS3 => $bS3,
+            bRepoEncrypt => $bRepoEncrypt});
 
         my $oStorage = storageRepo();
 

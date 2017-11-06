@@ -50,6 +50,7 @@ sub restoreFile
         $bDelta,                                    # Is restore a delta?
         $strBackupPath,                             # Backup path
         $bSourceCompressed,                         # Is the source compressed?
+        $strCipherPass,                             # Passphrase to decrypt the repo file (undefined if repo not encrypted)
     ) =
         logDebugParam
         (
@@ -69,6 +70,7 @@ sub restoreFile
             {name => 'bDelta', trace => true},
             {name => 'strBackupPath', trace => true},
             {name => 'bSourceCompressed', trace => true},
+            {name => 'strCipherPass', required => false, trace => true},
         );
 
     # Does the file need to be copied?
@@ -145,7 +147,7 @@ sub restoreFile
             storageRepo()->openRead(
                 STORAGE_REPO_BACKUP . qw(/) . (defined($strReference) ? $strReference : $strBackupPath) .
                     "/${strRepoFile}" . ($bSourceCompressed ? qw{.} . COMPRESS_EXT : ''),
-                {bProtocolCompress => !$bSourceCompressed && $lSize != 0}),
+                {bProtocolCompress => !$bSourceCompressed && $lSize != 0, strCipherPass => $strCipherPass}),
             $oDestinationFileIo);
 
         # Validate checksum

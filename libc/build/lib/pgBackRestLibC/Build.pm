@@ -232,8 +232,7 @@ sub buildXsAll
         "# Configuration option value constants\n" .
         "sub libcAutoConstant\n" .
         "{\n" .
-        "    return \n" .
-        # "        use constant\n" .
+        "    return\n" .
         "    {\n" .
         "        " . trim($strConstantBlock) . "\n" .
         "    }\n" .
