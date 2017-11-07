@@ -38,6 +38,7 @@ use pgBackRestTest::Env::Host::HostBackupTest;
 # Constants
 ####################################################################################################################################
 use constant MODE_0750                                  => '0750';
+use constant MODE_0700                                  => '0700';
 use constant MODE_0644                                  => '0644';
 use constant MODE_0600                                  => '0600';
 use constant TEST_USER                                  => 'ubuntu';
@@ -73,13 +74,8 @@ sub initTest
     # Create backup info path
     storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
 
-    # Create pg_control path
+    # Create pg_control global path
     storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-
-    # # Copy a pg_control file into the pg_control path
-    # executeTest(
-    #     'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
-    #     DB_FILE_PGCONTROL);
 }
 
 ####################################################################################################################################
@@ -131,6 +127,7 @@ sub run
     my $iDbCatalogVersion = 201409291;
 
     my $lTime = time() - 10000;
+    my $strTest = 'test';
 
     my $oManifestExpected = new pgBackRest::Common::Ini($self->{strExpectedManifest}, {bLoad => false});
 
@@ -209,18 +206,18 @@ sub run
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGVERSION,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), PG_VERSION_94);
 
-# CSHANG !!! This is here only to stop test from flapping - need to resolve and remove
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/test',
-            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), 'test');
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/test',
-            MANIFEST_SUBKEY_SIZE, length('test'));
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/test',
+# CSHANG !!! creating test file here only to stop target:file:default mode from flapping between 600 and 644 - need to resolve and remove
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_SIZE, length($strTest));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
         # Create base path with different mode than default
-        storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_BASE, {strMode => MODE_0600});
+        storageDb()->pathCreate(DB_PATH_BASE, {strMode => MODE_0700});
 
-        # Update the expected manifest
+        # Update expected manifest
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
@@ -235,11 +232,107 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' .DB_FILE_PGVERSION,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0600);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
 
         $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
 
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
+
+# CSHANG Why does base/test file result in "master":false here? This means we will not be copying it? I tried the same test in the doc container where base path mode=700 and base/test mode = 600 and ran a full backup and that results in pg_data/base/test={"checksum":"4e1243bd22c66e76c2ba9eddc1f91394e57f9f83","repo-size":25,"size":5,"timestamp":1510071781} with pg_data/base/test.gz.  I also tried changint the time to be - 100 but that still resulted here in master=false
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_BASE . '/' . $strTest,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
+
+        # Update expected manifest
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strTest,
+            MANIFEST_SUBKEY_MASTER, undef, false);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strTest,
+            MANIFEST_SUBKEY_SIZE, length($strTest));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strTest,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'master false');
+
+        # Create a pg_config path and file link
+        my $strConfFile = '/pg_config/postgresql.conf';
+        my $strConfContent = "listen_addresses = *\n";
+        storageDb()->pathCreate('pg_config', {strMode => MODE_0700});
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . $strConfFile,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strConfContent);
+        testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
+
+        # Update expected manifest
+# CSHANG !!! creating pg_stat here only to stop target:path:default mode from flapping between 750 and 700 - need to resolve and remove. At this point we have global/ 750, base/ 700 and pg_config/ 700 so the target:path:defaul mode flaps between 750 and 700 maybe because target:path contains 4 because of pg_data - which doesn't actually exist unless it is taking the db/ path itself into account for that?
+        storageTest()->pathCreate($self->{strDbPath} . '/pg_stat', {strMode => MODE_0750});
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_stat', undef, $hDefault);
+        # $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0700);
+        # $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_MODE, MODE_0750);
+        # $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_GLOBAL, MANIFEST_SUBKEY_MODE, MODE_0750);
+
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_config',
+            MANIFEST_SUBKEY_MODE, MODE_0700);
+        # Section backup:target
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
+            MANIFEST_SUBKEY_FILE, 'postgresql.conf');
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
+            MANIFEST_SUBKEY_PATH, '.');
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
+            MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_LINK);
+        # Section target:file
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strConfFile,
+            MANIFEST_SUBKEY_SIZE, length($strConfContent));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . $strConfFile,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        # Section target:link
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
+            MANIFEST_SUBKEY_DESTINATION, './postgresql.conf');
+        # Section target:link:default
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+
+        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'link');
+
+        # Create files to skip
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP ), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_BACKUPLABELOLD), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTMASTEROPTS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTMASTERPID), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYCONF), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYDONE), '');
+
+        # Create directories to skip. Add a bogus file to them for test coverage.
+        storageDb()->pathCreate(DB_FILE_PREFIX_TMP);
+        storageDb()->pathCreate('pg_xlog');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/pg_xlog/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGDYNSHMEM);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGDYNSHMEM . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGNOTIFY);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGNOTIFY . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGREPLSLOT);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGREPLSLOT . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGSERIAL);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSERIAL . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGSNAPSHOTS);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSNAPSHOTS . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGSTATTMP);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSTATTMP . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_PATH_PGSUBTRANS);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSUBTRANS . '/' . BOGUS), '');
+        storageDb()->pathCreate(DB_FILE_PGINTERNALINIT);
+
+        # Update expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_xlog', undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGDYNSHMEM, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGNOTIFY, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGREPLSLOT, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSERIAL, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSNAPSHOTS, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSTATTMP, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSUBTRANS, undef, $hDefault);
+
+        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'skip directories/files');
 
 # CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating?
         # $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
