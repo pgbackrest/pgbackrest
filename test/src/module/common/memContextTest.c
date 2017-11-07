@@ -53,7 +53,7 @@ void testRun()
         unsigned char *buffer2 = memAllocInternal(sizeof(size_t), true);
         int expectedTotal = 0;
 
-        for (int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
+        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
             if (buffer2[charIdx] == 0)
                 expectedTotal++;
 
@@ -66,7 +66,7 @@ void testRun()
 
         expectedTotal = 0;
 
-        for (int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
+        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
             if (buffer2[charIdx] == 0xC7)
                 expectedTotal++;
 
@@ -74,7 +74,7 @@ void testRun()
 
         expectedTotal = 0;
 
-        for (int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
+        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
             if ((buffer2 + sizeof(size_t))[charIdx] == 0)
                 expectedTotal++;
 
@@ -172,7 +172,7 @@ void testRun()
             // Check that the buffer is zeroed
             int expectedTotal = 0;
 
-            for (int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
+            for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
                 if (buffer[charIdx] == 0)
                     expectedTotal++;
 
@@ -243,7 +243,7 @@ void testRun()
     {
         // ------------------------------------------------------------------------------------------------------------------------
         // Successful context new block
-        char *memContextTestName = "test-new-block";
+        const char *memContextTestName = "test-new-block";
         MemContext *memContext;
 
         MEM_CONTEXT_NEW_BEGIN(memContextTestName)

@@ -39,6 +39,10 @@
                     <release-item>
                         <p>Add <id>eof</id> to S3 file driver (required for encryption support).</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Enable additional warnings for C builds.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

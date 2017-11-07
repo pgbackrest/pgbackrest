@@ -81,7 +81,7 @@ static void *memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew,
 
     // Zero the new memory when requested - old memory is left untouched else why bother with a realloc?
     if (zeroNew)
-        memset(bufferNew + sizeOld, 0, sizeNew - sizeOld);
+        memset((unsigned char *)bufferNew + sizeOld, 0, sizeNew - sizeOld);
 
     // Return the buffer
     return bufferNew;

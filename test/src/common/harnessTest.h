@@ -64,7 +64,7 @@ TEST_TYPE_FORMAT - format the test type into the given buffer -- or return verba
     char *value##Str = value##StrBuffer;                                                                                           \
                                                                                                                                    \
     if (TEST_TYPE_PTR(type) && *(void **)&value == NULL)                                                                           \
-        value##Str = "NULL";                                                                                                       \
+        value##Str = (char *)"NULL";                                                                                                       \
     else if (strcmp(#type, "char *") == 0)                                                                                         \
         value##Str = *(char **)&value;                                                                                             \
     else                                                                                                                           \
@@ -85,7 +85,7 @@ parameters.
 #define TEST_RESULT(statement, resultExpectedValue, type, format, typeOp, ...)                                                     \
 {                                                                                                                                  \
     /* Assign expected result to a local variable so the value can be manipulated as a pointer */                                  \
-    type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                                 \
+    const type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                                 \
                                                                                                                                    \
     /* Output test info */                                                                                                         \
     printf("    l%04d - ", __LINE__);                                                                                              \

@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Command and Option Configuration Definition
 ***********************************************************************************************************************************/
+#include <limits.h>
 #include <string.h>
 
 #include "common/error.h"
@@ -11,7 +12,7 @@ Map command names to ids and vice versa.
 ***********************************************************************************************************************************/
 typedef struct ConfigDefineCommandData
 {
-    char *name;                                                     // Command name
+    const char *name;                                               // Command name
 } ConfigDefineCommandData;
 
 // Command macros are intended to make the command definitions easy to read and to produce good diffs.
@@ -30,15 +31,15 @@ Define how an option is parsed and interacts with other options.
 ***********************************************************************************************************************************/
 typedef struct ConfigDefineOptionData
 {
-    char *name;                                                     // Option name
+    const char *name;                                               // Option name
     unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
     unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. db1-*)
-    ConfigDefSection section:2;                                     // Config section (e.g. global, stanza, cmd-line)
+    unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool negate:1;                                                  // Can the option be negated?
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
     unsigned int commandValid:15;                                   // Bitmap for commands that is option is valid for
-    void **data;                                                    // Optional data and command overrides
+    const void **data;                                              // Optional data and command overrides
 } ConfigDefineOptionData;
 
 // Option macros are intended to make the command definitions easy to read and to produce good diffs.
@@ -82,10 +83,10 @@ typedef enum
 } ConfigDefineDataType;
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                   \
-    (void *)((uint32)type << 24 | (uint32)size << 16 | (uint32)data), __VA_ARGS__
+    (const void *)((uint32)type << 24 | (uint32)size << 16 | (uint32)data), __VA_ARGS__
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH(type, size, data)                                                                             \
-    (void *)((uint32)type << 24 | (uint32)size << 16 | (uint32)data)
+    (const void *)((uint32)type << 24 | (uint32)size << 16 | (uint32)data)
 
 #define CFGDEFDATA_OPTION_COMMAND_LIST(...)                                                                                        \
     .commandValid = 0 __VA_ARGS__,
@@ -94,19 +95,19 @@ typedef enum
     | (1 << commandParam)
 
 #define CFGDEFDATA_OPTION_OPTIONAL_LIST(...)                                                                                       \
-    .data = (void *[]){__VA_ARGS__ NULL},
+    .data = (const void *[]){__VA_ARGS__ NULL},
 
 #define CFGDEFDATA_OPTION_OPTIONAL_DEFAULT(defaultValue)                                                                           \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeDefault, 1, 0, defaultValue),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST(...)                                                                                 \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeAllowList, sizeof((char *[]){__VA_ARGS__}) / sizeof(char *), 0, __VA_ARGS__),
+        configDefDataTypeAllowList, sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *), 0, __VA_ARGS__),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(rangeMinParam, rangeMaxParam)                                                       \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeAllowRange, 2, 0, (void *)(intptr_t)(int32)(rangeMinParam * 100),                                         \
-        (void *)(intptr_t)(int32)(rangeMaxParam * 100)),
+        configDefDataTypeAllowRange, 2, 0, (const void *)(intptr_t)(int32)(rangeMinParam * 100),                                         \
+        (const void *)(intptr_t)(int32)(rangeMaxParam * 100)),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_NAME_ALT(nameAltParam)                                                                          \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeNameAlt, 1, 0, nameAltParam),
@@ -119,7 +120,7 @@ typedef enum
 
 #define CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST(optionDepend, ...)                                                                  \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeDepend, sizeof((char *[]){__VA_ARGS__}) / sizeof(char *), optionDepend, __VA_ARGS__),
+        configDefDataTypeDepend, sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *), optionDepend, __VA_ARGS__),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE(...)                                                                          \
     __VA_ARGS__
@@ -140,8 +141,8 @@ Find optional data for a command and option.
 ***********************************************************************************************************************************/
 static void
 cfgDefDataFind(
-    ConfigDefineDataType typeFind, ConfigDefineCommand commandDefId, void **dataList, bool *dataDefFound, int *dataDef,
-    void ***dataDefList, int *dataDefListSize)
+    ConfigDefineDataType typeFind, ConfigDefineCommand commandDefId, const void **dataList, bool *dataDefFound, int *dataDef,
+    const void ***dataDefList, int *dataDefListSize)
 {
     *dataDefFound = false;
 
@@ -152,7 +153,7 @@ cfgDefDataFind(
         int offset = 0;
         int size;
         int data;
-        int commandCurrent = -1;
+        unsigned int commandCurrent = UINT_MAX;
 
         // Loop through all data
         do
@@ -173,7 +174,7 @@ cfgDefDataFind(
                 commandCurrent = data;
             }
             // Only find type if not in a command block yet or in the expected command
-            else if (type == typeFind && (commandCurrent == -1 || commandCurrent == commandDefId))
+            else if (type == typeFind && (commandCurrent == UINT_MAX || commandCurrent == commandDefId))
             {
                 // Store the data found
                 *dataDefFound = true;
@@ -196,7 +197,7 @@ cfgDefDataFind(
     bool dataDefFound = false;                                                                                                     \
     int dataDef = 0;                                                                                                               \
     int dataDefListSize = 0;                                                                                                       \
-    void **dataDefList = NULL;                                                                                                     \
+    const void **dataDefList = NULL;                                                                                                     \
                                                                                                                                    \
     cfgDefDataFind(                                                                                                                \
         type, commandDefId, configDefineOptionData[optionDefId].data, &dataDefFound, &dataDef, &dataDefList, &dataDefListSize);
@@ -204,13 +205,13 @@ cfgDefDataFind(
 /***********************************************************************************************************************************
 Command and option define totals
 ***********************************************************************************************************************************/
-int
+unsigned int
 cfgDefCommandTotal()
 {
     return sizeof(configDefineCommandData) / sizeof(ConfigDefineCommandData);
 }
 
-int
+unsigned int
 cfgDefOptionTotal()
 {
     return sizeof(configDefineOptionData) / sizeof(ConfigDefineOptionData);
@@ -222,14 +223,14 @@ Check that command and option ids are valid
 void
 cfgDefCommandCheck(ConfigDefineCommand commandDefId)
 {
-    if (commandDefId < 0 || commandDefId >= cfgDefCommandTotal())
+    if (commandDefId >= cfgDefCommandTotal())
         ERROR_THROW(AssertError, "command def id %d invalid - must be >= 0 and < %d", commandDefId, cfgDefCommandTotal());
 }
 
 void
 cfgDefOptionCheck(ConfigDefineOption optionDefId)
 {
-    if (optionDefId < 0 || optionDefId >= cfgDefOptionTotal())
+    if (optionDefId >= cfgDefOptionTotal())
         ERROR_THROW(AssertError, "option def id %d invalid - must be >= 0 and < %d", optionDefId, cfgDefOptionTotal());
 }
 

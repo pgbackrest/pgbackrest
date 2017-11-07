@@ -464,19 +464,6 @@ eval
                         ($bContainerExists ? "'" : ''),
                         {bSuppressStdErr => true, bShowOutputAsync => $bLogDetail});
 
-                    # CO7 LibC.xs needs to be patched to ignore maybe-uninitialized warnings due to issue in a Perl header:
-                    #     embed.h:609:37: warning: 'iv' may be used uninitialized in this function [-Wmaybe-uninitialized]
-                    #     #define sv_setiv(a,b)  Perl_sv_setiv(aTHX_ a,b)
-                    if ($strBuildVM eq VM_CO7)
-                    {
-                        my $strLibXsFile = "${strBuildPath}/LibC.xs";
-
-                        $oStorageBackRest->put(
-                            $strLibXsFile,
-                            "#pragma GCC diagnostic ignored \"-Wmaybe-uninitialized\"\n" .
-                            ${$oStorageBackRest->get($strLibXsFile)});
-                    }
-
                     executeTest(
                         ($bContainerExists ? 'docker exec -i test-build ' : '') .
                             "make --silent --directory ${strBuildPath}",

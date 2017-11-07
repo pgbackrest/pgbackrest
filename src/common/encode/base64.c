@@ -92,7 +92,7 @@ decodeToBinBase64(const char *source, unsigned char *destination)
     int destinationIdx = 0;
 
     // Decode the binary data from four characters to three bytes
-    for (int sourceIdx = 0; sourceIdx < strlen(source); sourceIdx += 4)
+    for (unsigned int sourceIdx = 0; sourceIdx < strlen(source); sourceIdx += 4)
     {
         // Always decode the first character
         destination[destinationIdx++] =

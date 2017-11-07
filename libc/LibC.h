@@ -69,7 +69,7 @@ Core context handling macros, only intended to be called from other macros
     MemContext *MEM_CONTEXT_XS_memContextOld = memContextSwitch(memContext);                                                       \
                                                                                                                                    \
     /* Store any errors to be croaked to Perl at the end */                                                                        \
-    bool MEM_CONTEXT_XS_croak = false;                                                                                             \
+    volatile bool MEM_CONTEXT_XS_croak = false;                                                                                    \
                                                                                                                                    \
     /* Try the statement block */                                                                                                  \
     ERROR_TRY()

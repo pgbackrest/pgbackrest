@@ -25,18 +25,19 @@ void testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             cipherBlockNew(
-                cipherModeEncrypt, BOGUS_STR, TEST_PASS, TEST_PASS_SIZE, NULL), AssertError, "unable to load cipher 'BOGUS'");
+                cipherModeEncrypt, BOGUS_STR, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL), AssertError,
+                "unable to load cipher 'BOGUS'");
         TEST_ERROR(
-            cipherBlockNew(cipherModeEncrypt, NULL, TEST_PASS, TEST_PASS_SIZE, NULL), AssertError,
+            cipherBlockNew(cipherModeEncrypt, NULL, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL), AssertError,
             "unable to load cipher '(null)'");
         TEST_ERROR(
             cipherBlockNew(
-                cipherModeEncrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, BOGUS_STR), AssertError,
+                cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, BOGUS_STR), AssertError,
                 "unable to load digest 'BOGUS'");
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
-        CipherBlock *cipherBlock = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        CipherBlock *cipherBlock = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
         TEST_RESULT_STR(memContextName(cipherBlock->memContext), "cipherBlock", "mem context name is valid");
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
         TEST_RESULT_INT(cipherBlock->passSize, TEST_PASS_SIZE, "passphrase size is valid");
@@ -53,16 +54,21 @@ void testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("Encrypt and Decrypt"))
     {
-        char encryptBuffer[TEST_BUFFER_SIZE];
+        unsigned char encryptBuffer[TEST_BUFFER_SIZE];
         int encryptSize = 0;
-        char decryptBuffer[TEST_BUFFER_SIZE];
+        unsigned char decryptBuffer[TEST_BUFFER_SIZE];
         int decryptSize = 0;
 
         // Encrypt
         // -------------------------------------------------------------------------------------------------------------------------
-        CipherBlock *blockEncrypt = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        CipherBlock *blockEncrypt = cipherBlockNew(
+            cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
-        encryptSize = cipherBlockProcess(blockEncrypt, TEST_PLAINTEXT, strlen(TEST_PLAINTEXT), encryptBuffer);
+        TEST_RESULT_INT(
+            cipherBlockProcessSize(blockEncrypt, strlen(TEST_PLAINTEXT)),
+            strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH + CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN, "check process size");
+
+        encryptSize = cipherBlockProcess(blockEncrypt, (unsigned char *)TEST_PLAINTEXT, strlen(TEST_PLAINTEXT), encryptBuffer);
 
         TEST_RESULT_BOOL(blockEncrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockEncrypt->processDone, true, "process done is true");
@@ -71,9 +77,10 @@ void testRun()
 
         TEST_RESULT_INT(
             cipherBlockProcessSize(blockEncrypt, strlen(TEST_PLAINTEXT)),
-            strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH + CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN, "check process size");
+            strlen(TEST_PLAINTEXT) + EVP_MAX_BLOCK_LENGTH, "check process size");
 
-        encryptSize += cipherBlockProcess(blockEncrypt, TEST_PLAINTEXT, strlen(TEST_PLAINTEXT), encryptBuffer + encryptSize);
+        encryptSize += cipherBlockProcess(
+            blockEncrypt, (unsigned char *)TEST_PLAINTEXT, strlen(TEST_PLAINTEXT), encryptBuffer + encryptSize);
         TEST_RESULT_INT(
             encryptSize, CIPHER_BLOCK_HEADER_SIZE + EVP_CIPHER_block_size(blockEncrypt->cipher),
             "cipher size increases by one block");
@@ -87,7 +94,12 @@ void testRun()
 
         // Decrypt in one pass
         // -------------------------------------------------------------------------------------------------------------------------
-        CipherBlock *blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        CipherBlock *blockDecrypt = cipherBlockNew(
+            cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
+
+        TEST_RESULT_INT(
+            cipherBlockProcessSize(blockEncrypt, encryptSize),
+            encryptSize + EVP_MAX_BLOCK_LENGTH, "check process size");
 
         decryptSize = cipherBlockProcess(blockDecrypt, encryptBuffer, encryptSize, decryptBuffer);
         TEST_RESULT_INT(decryptSize, EVP_CIPHER_block_size(blockDecrypt->cipher), "decrypt size is one block");
@@ -100,7 +112,7 @@ void testRun()
 
         // Decrypt in small chunks to test buffering
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         decryptSize = 0;
         memset(decryptBuffer, 0, TEST_BUFFER_SIZE);
@@ -138,43 +150,51 @@ void testRun()
 
         // Encrypt zero byte file and decrypt it
         // -------------------------------------------------------------------------------------------------------------------------
-        blockEncrypt = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockEncrypt = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(cipherBlockProcess(blockEncrypt, NULL, 0, encryptBuffer), 16, "process header");
         TEST_RESULT_INT(cipherBlockFlush(blockEncrypt, encryptBuffer + 16), 16, "flush remaining bytes");
 
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, encryptBuffer, 32, decryptBuffer), 0, "0 bytes processed");
         TEST_RESULT_INT(cipherBlockFlush(blockDecrypt, decryptBuffer), 0, "0 bytes on flush");
 
         // Invalid cipher header
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
-        TEST_ERROR(cipherBlockProcess(blockDecrypt, "1234567890123456", 16, decryptBuffer), CipherError, "cipher header invalid");
+        TEST_ERROR(
+            cipherBlockProcess(
+                blockDecrypt, (unsigned char *)"1234567890123456", 16, decryptBuffer), CipherError, "cipher header invalid");
 
         // Invalid encrypted data cannot be flushed
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
-        TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, CIPHER_BLOCK_MAGIC "12345678", 16, decryptBuffer), 0, "process header");
-        TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, "1234567890123456", 16, decryptBuffer), 0, "process 0 bytes");
+        TEST_RESULT_INT(
+            cipherBlockProcess(
+                blockDecrypt, (unsigned char *)(CIPHER_BLOCK_MAGIC "12345678"), 16, decryptBuffer), 0, "process header");
+        TEST_RESULT_INT(
+            cipherBlockProcess(
+                blockDecrypt, (unsigned char *)"1234567890123456", 16, decryptBuffer), 0, "process 0 bytes");
 
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "unable to flush");
 
         // File with no header should not flush
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, NULL, 0, decryptBuffer), 0, "no header processed");
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "cipher header missing");
 
         // File with header only should error
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, TEST_PASS, TEST_PASS_SIZE, NULL);
+        blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
-        TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, CIPHER_BLOCK_MAGIC "12345678", 16, decryptBuffer), 0, "0 bytes processed");
+        TEST_RESULT_INT(
+            cipherBlockProcess(
+                blockDecrypt, (unsigned char *)(CIPHER_BLOCK_MAGIC "12345678"), 16, decryptBuffer), 0, "0 bytes processed");
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "unable to flush");
     }
 }

@@ -20,7 +20,7 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-int cfgDefCommandTotal();
+unsigned int cfgDefCommandTotal();
 void cfgDefCommandCheck(ConfigDefineCommand commandDefId);
 
 bool cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
@@ -45,7 +45,7 @@ const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 ConfigDefSection cfgDefOptionSection(ConfigDefineOption optionDefId);
 bool cfgDefOptionSecure(ConfigDefineOption optionDefId);
-int cfgDefOptionTotal();
+unsigned int cfgDefOptionTotal();
 int cfgDefOptionType(ConfigDefineOption optionDefId);
 bool cfgDefOptionValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 

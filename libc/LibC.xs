@@ -16,9 +16,25 @@ Perl includes
 
 Order is critical here so don't change it.
 ***********************************************************************************************************************************/
+#if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 8 || (__GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ >= 0)))
+    #define WARNING_MAYBE_INITIALIZED 1
+#elif __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 6 || (__GNUC_MINOR__ == 6 && __GNUC_PATCHLEVEL__ >= 0)))
+    #define WARNING_INITIALIZED 1
+#endif
+
+#if WARNING_MAYBE_INITIALIZED
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#elif WARNING_INITIALIZED
+    #pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 #include <XSUB.h>
 #include <EXTERN.h>
 #include <perl.h>
+
+#if WARNING_MAYBE_INITIALIZED || WARNING_INITIALIZED
+    #pragma GCC diagnostic pop
+#endif
 
 /***********************************************************************************************************************************
 C includes
@@ -51,7 +67,11 @@ Constant include
 
 Auto generated code that handles exporting C constants to Perl.
 ***********************************************************************************************************************************/
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #include "const-c.inc"
+
+#pragma GCC diagnostic warning "-Wunused-parameter"
 
 /***********************************************************************************************************************************
 Module definition
@@ -63,12 +83,18 @@ PROTOTYPES: DISABLE
 #
 # The XS portion of the code that handles exporting C constants to Perl.
 # ----------------------------------------------------------------------------------------------------------------------------------
+#pragma GCC diagnostic ignored "-Wuninitialized"
+
 INCLUDE: const-xs.inc
+
+#pragma GCC diagnostic warning "-Wuninitialized"
 
 # Exported functions and modules
 #
 # These modules should map 1-1 with C modules in src directory.
 # ----------------------------------------------------------------------------------------------------------------------------------
+#pragma GCC diagnostic ignored "-Wclobbered"
+
 INCLUDE: xs/cipher/block.xs
 INCLUDE: xs/cipher/random.xs
 INCLUDE: xs/common/encode.xs

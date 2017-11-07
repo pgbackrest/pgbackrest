@@ -36,20 +36,21 @@ OUTPUT:
 
 ####################################################################################################################################
 SV *
-process(self, svSource)
+process(self, source)
     pgBackRest::LibC::Cipher::Block self
-    SV *svSource
+    SV *source
 CODE:
     RETVAL = NULL;
-    STRLEN tSize;
-    const unsigned char *pvSource = (const unsigned char *)SvPV(svSource, tSize);
 
     MEM_CONTEXT_XS_BEGIN(self->memContext)
     {
+        STRLEN tSize;
+        const unsigned char *sourcePtr = (const unsigned char *)SvPV(source, tSize);
+
         RETVAL = NEWSV(0, cipherBlockProcessSize(self->pxPayload, tSize));
         SvPOK_only(RETVAL);
 
-        SvCUR_set(RETVAL, cipherBlockProcess(self->pxPayload, pvSource, tSize, (unsigned char *)SvPV_nolen(RETVAL)));
+        SvCUR_set(RETVAL, cipherBlockProcess(self->pxPayload, sourcePtr, tSize, (unsigned char *)SvPV_nolen(RETVAL)));
     }
     MEM_CONTEXT_XS_END();
 OUTPUT:

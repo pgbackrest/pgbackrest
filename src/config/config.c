@@ -31,7 +31,7 @@ typedef struct ConfigOptionData
     const char *name;
 
     unsigned int index:5;
-    ConfigDefineOption defineId:7;
+    unsigned int defineId:7;
 } ConfigOptionData;
 
 #define CONFIG_OPTION_LIST(...)                                                                                                    \
@@ -58,7 +58,7 @@ Ensure that command id is valid
 void
 cfgCommandCheck(ConfigCommand commandId)
 {
-    if (commandId < 0 || commandId >= cfgCommandTotal())
+    if (commandId >= cfgCommandTotal())
         ERROR_THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, cfgCommandTotal());
 }
 
@@ -106,7 +106,7 @@ cfgCommandName(ConfigCommand commandId)
 /***********************************************************************************************************************************
 cfgCommandTotal - total number of commands
 ***********************************************************************************************************************************/
-int
+unsigned int
 cfgCommandTotal()
 {
     return sizeof(configCommandData) / sizeof(ConfigCommandData);
@@ -118,7 +118,7 @@ Ensure that option id is valid
 void
 cfgOptionCheck(ConfigOption optionId)
 {
-    if (optionId < 0 || optionId >= cfgOptionTotal())
+    if (optionId >= cfgOptionTotal())
         ERROR_THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, cfgOptionTotal());
 }
 
@@ -199,7 +199,7 @@ cfgOptionName(ConfigOption optionId)
 /***********************************************************************************************************************************
 cfgOptionTotal - total number of configuration options
 ***********************************************************************************************************************************/
-int
+unsigned int
 cfgOptionTotal()
 {
     return sizeof(configOptionData) / sizeof(ConfigOptionData);

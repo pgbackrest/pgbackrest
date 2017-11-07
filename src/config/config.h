@@ -15,7 +15,7 @@ Functions
 int cfgCommandId(const char *commandName);
 const char *cfgCommandName(ConfigCommand commandId);
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
-int cfgCommandTotal();
+unsigned int cfgCommandTotal();
 
 int cfgOptionId(const char *optionName);
 ConfigOption cfgOptionIdFromDefId(ConfigDefineOption optionDefId, int index);
@@ -23,6 +23,6 @@ int cfgOptionIndex(ConfigOption optionId);
 int cfgOptionIndexTotal(ConfigOption optionDefId);
 const char *cfgOptionName(ConfigOption optionId);
 ConfigDefineOption cfgOptionDefIdFromId(ConfigOption optionId);
-int cfgOptionTotal();
+unsigned int cfgOptionTotal();
 
 #endif

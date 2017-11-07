@@ -100,7 +100,7 @@ WriteMakefile
     AUTHOR => 'David Steele <david@pgbackrest.org>',
 
     CCFLAGS => join(' ', qw(
-        -Wfatal-errors
+        -Wfatal-errors -Wall -Wextra -Wwrite-strings
         -o $@
         -std=c99
         -D_FILE_OFFSET_BITS=64

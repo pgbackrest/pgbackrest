@@ -69,7 +69,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
         ERROR_THROW(AssertError, "unable to load cipher '%s'", cipherName);
 
     // Lookup digest.  If not defined it will be set to sha1.
-    const EVP_MD *digest;
+    const EVP_MD *volatile digest = digest = EVP_sha1();
 
     if (digestName)
         digest = EVP_get_digestbyname(digestName);
@@ -111,7 +111,14 @@ Determine how large the destination buffer should be
 int
 cipherBlockProcessSize(CipherBlock *this, int sourceSize)
 {
-    return sourceSize + EVP_MAX_BLOCK_LENGTH + CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN;
+    // Destination size is source size plus one extra block
+    int destinationSize = sourceSize + EVP_MAX_BLOCK_LENGTH;
+
+    // On encrypt the header size must be included before the first block
+    if (this->mode == cipherModeEncrypt && !this->saltDone)
+        destinationSize += CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN;
+
+    return destinationSize;
 }
 
 /***********************************************************************************************************************************

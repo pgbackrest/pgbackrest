@@ -26,6 +26,13 @@ testAdd - add a new test
 void
 testAdd(int run, bool selected)
 {
+    if (run != testTotal + 1)
+    {
+        fprintf(stderr, "ERROR: test run %d is not in order\n", run);
+        fflush(stderr);
+        exit(255);
+    }
+
     testList[testTotal].selected = selected;
     testTotal++;
 }
@@ -41,13 +48,15 @@ testBegin(const char *name)
     if (testList[testRun - 1].selected)
     {
         if (testRun != 1)
-        {
             printf("\n");
-        }
 
         printf("run %03d - %s\n", testRun, name);
         fflush(stdout);
+
+        return true;
     }
+
+    return false;
 }
 
 /***********************************************************************************************************************************

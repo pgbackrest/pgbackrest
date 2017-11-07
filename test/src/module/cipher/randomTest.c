@@ -14,7 +14,7 @@ void testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         // Test if the buffer was overrun
         int bufferSize = 256;
-        char *buffer = memNew(bufferSize);
+        unsigned char *buffer = memNew(bufferSize);
 
         randomBytes(buffer, bufferSize);
         TEST_RESULT_BOOL(buffer[bufferSize] == 0, true, "check that buffer did not overrun (though random byte could be 0)");
