@@ -123,7 +123,6 @@ sub run
     my $strBackupLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, 1482000000);
     my $strBackupPath = storageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strBackupLabel}");
     my $strBackupManifestFile = "$strBackupPath/" . FILE_MANIFEST;
-    my $strDbMasterPath = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, 1));
     my $iDbCatalogVersion = 201409291;
 
     my $lTime = time() - 10000;
@@ -193,8 +192,9 @@ sub run
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
         # bOnline = true tests
+        #
         #---------------------------------------------------------------------------------------------------------------------------
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
 
         # Compare the base manifest
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'base manifest');
@@ -234,11 +234,11 @@ sub run
 
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
 
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
 
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
 
-# CSHANG Why does base/test file result in "master":false here? This means we will not be copying it? I tried the same test in the doc container where base path mode=700 and base/test mode = 600 and ran a full backup and that results in pg_data/base/test={"checksum":"4e1243bd22c66e76c2ba9eddc1f91394e57f9f83","repo-size":25,"size":5,"timestamp":1510071781} with pg_data/base/test.gz.  I also tried changint the time to be - 100 but that still resulted here in master=false
+# CSHANG Why does base/test file result in "master":false here? This means we will not be copying it? I tried the same test in the doc container where base path mode=700 and base/test mode = 600 and ran a full backup and that results in pg_data/base/test={"checksum":"4e1243bd22c66e76c2ba9eddc1f91394e57f9f83","repo-size":25,"size":5,"timestamp":1510071781} with pg_data/base/test.gz.  I also tried changing the time to be - 100 but that still resulted here in master=false
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_BASE . '/' . $strTest,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
 
@@ -250,7 +250,7 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strTest,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'master false');
 
         # Create a pg_config path and file link
@@ -290,7 +290,7 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
 
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'link');
 
         # Create files to skip
@@ -331,30 +331,91 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSTATTMP, undef, $hDefault);
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGSUBTRANS, undef, $hDefault);
 
-        $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'skip directories/files');
 
-# CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating?
+        # Create pg_tblspc path
+        my $strTblSpcPath = $self->{strDbPath} . '/' . MANIFEST_TARGET_PGTBLSPC;
+        storageDb()->pathCreate($strTblSpcPath, {bCreateParent => true});
+
+        # Create a directory in pg_tablespace
+        storageDb()->pathCreate("$strTblSpcPath/" . BOGUS, {strMode => '0700'});
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_EXPECTED,
+            MANIFEST_TARGET_PGTBLSPC . "/" . BOGUS . " is not a symlink - " . DB_PATH_PGTBLSPC . " should contain only symlinks");
+
+        testPathRemove("${strTblSpcPath}/path");
+
+        # Create relative links in PGDATA
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strTblspcId = '99999';
+
+        # invalid relative tablespace is ../
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../');
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+            'tablespace symlink ../ destination must not be in $PGDATA');
+        testFileRemove("${strTblSpcPath}/${strTblspcId}");
+
+        # invalid relative tablespace is ..
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", '..');
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+            'tablespace symlink .. destination must not be in $PGDATA');
+        testFileRemove("${strTblSpcPath}/${strTblspcId}");
+
+        # invalid relative tablespace is ../base
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../base');
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+            'tablespace symlink ../base destination must not be in $PGDATA');
+        testFileRemove("${strTblSpcPath}/${strTblspcId}");
+
+        # invalid relative tablespace is ../../$PGDATA - path is ../../base/ (ending slash)
+$oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
+# CSHANG Why is this giving me MANIFEST_KEY_CATALOG is required? It seems it must be getting to tablespacePathGet
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../../base/');
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
+            "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
+            "HINT: was a tablespace created or dropped during the backup?");
+        testFileRemove("${strTblSpcPath}/${strTblspcId}");
+
+        # # invalid relative tablespace is ../../$PGDATA - path is ../../base (no ending slash)
+        # testLinkCreate("${strTblSpcPath}/99999", '../../base');
+        # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
+        #     'tablespace symlink ../../$PGDATA destination must not be in $PGDATA');
+        # testFileRemove("${strTblSpcPath}/99999");
+            #
+            # # Create a link to a link
+            # testLinkCreate($oHostDbMaster->dbPath() . "/intermediate_link", $oHostDbMaster->dbPath() . '/tablespace/ts1');
+            # testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbPath() . "/intermediate_link");
+            #
+            # $oHostBackup->backup(
+            #     $strType, 'tablespace link references a link',
+            #     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION,
+            #         strOptionalParam => $strLogReduced});
+            #
+            # testFileRemove($oHostDbMaster->dbPath() . "/intermediate_link");
+            # testFileRemove("${strTblSpcPath}/99999");
+
+#        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'tablespace');
+
+# CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating? Should we force a validate before save?
         # $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
     # executeTest(
     #     'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
     #     DB_FILE_PGCONTROL);
     #     # Online tests
     #     #---------------------------------------------------------------------------------------------------------------------------
-    #     $oManifest->build(storageDb(), $strDbMasterPath, undef, true);
+    #     $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
 
-        # # Create pg_tblspc path
-        # storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
+
 
 
 
         # # Build error if offline = true and no tablespace path
         # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testException(sub {$oManifest->build(storageDb(), $strDbMasterPath, undef, false)}, ERROR_FILE_MISSING,
-        #     "unable to stat '" . $strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
+        # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_FILE_MISSING,
+        #     "unable to stat '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
         #
         # # Create pg_tblspc path
-        # storageTest()->pathCreate($strDbMasterPath . "/" . MANIFEST_TARGET_PGTBLSPC);
+        # storageTest()->pathCreate($self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC);
 # CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid?
     #  'oContent' => {
     #                  'target:file:default' => {

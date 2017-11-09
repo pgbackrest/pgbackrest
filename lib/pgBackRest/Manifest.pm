@@ -751,7 +751,7 @@ sub build
                 confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
                              ERROR_LINK_EXPECTED);
             }
-
+use Data::Dumper; print "NAME: ".Dumper($strName) . ", PATH: ".Dumper($strPath).", MANIFEST: ".Dumper($hManifest->{$strName}); # CSHANG
             # Check for tablespaces in PGDATA
             if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
                 (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
@@ -813,6 +813,7 @@ sub build
                 # directly in the path referenced by the symlink.
                 if ($self->dbVersion() >= PG_VERSION_90)
                 {
+print "CALL TBLSPGET\n"; # CSHANG
                     $strFilter = $self->tablespacePathGet();
                 }
 
