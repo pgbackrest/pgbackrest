@@ -261,6 +261,19 @@ sub run
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strConfContent);
         testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
 
+        # Even though this creates a duplicate link, this error occurs - note the pg_config/pg_config: 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
+# ubuntu@pgbackrest-test:~$ ls -l /home/ubuntu/test/test-0/db/pg_config/
+# total 4
+# -rw------- 1 ubuntu ubuntu 21 Nov  9 17:07 postgresql.conf
+# lrwxrwxrwx 1 ubuntu ubuntu 17 Nov  9 19:53 postgresql.conf.bad.link -> ./postgresql.conf
+# lrwxrwxrwx 1 ubuntu ubuntu 17 Nov  9 19:53 postgresql.conf.link -> ./postgresql.conf
+        # # This link will cause errors because it points to the same location as above
+        # testLinkCreate($self->{strDbPath} . $strConfFile . '.bad.link', './postgresql.conf');
+        #
+        # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_DESTINATION,
+        #     'tablespace symlink ../base destination must not be in $PGDATA');
+        # testFileRemove($self->{strDbPath} . $strConfFile . '.link.bad');
+
         # Update expected manifest
 # CSHANG !!! creating pg_stat here only to stop target:path:default mode from flapping between 750 and 700 - need to resolve and remove. At this point we have global/ 750, base/ 700 and pg_config/ 700 so the target:path:defaul mode flaps between 750 and 700 maybe because target:path contains 4 because of pg_data - which doesn't actually exist unless it is taking the db/ path itself into account for that?
         storageTest()->pathCreate($self->{strDbPath} . '/pg_stat', {strMode => MODE_0750});
@@ -343,56 +356,69 @@ sub run
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_EXPECTED,
             MANIFEST_TARGET_PGTBLSPC . "/" . BOGUS . " is not a symlink - " . DB_PATH_PGTBLSPC . " should contain only symlinks");
 
-        testPathRemove("${strTblSpcPath}/path");
+        testPathRemove("${strTblSpcPath}/" . BOGUS);
 
         # Create relative links in PGDATA
         #---------------------------------------------------------------------------------------------------------------------------
         my $strTblspcId = '99999';
-
+print "CREATING ${strTblSpcPath}/${strTblspcId}\n\n"; # CSHANG
         # invalid relative tablespace is ../
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../ destination must not be in $PGDATA');
+
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
+print "\nCREATING LINK .. (this does not create any additional coverage)\n\n"; # CSHANG
         # invalid relative tablespace is ..
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '..');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink .. destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-        # invalid relative tablespace is ../base
+print "\nCREATING LINK ../base (this does not create any additional coverage)\n\n"; # CSHANG#
+        # invalid relative tablespace is ../base - a subdirectory of $PGDATA
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../base');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../base destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-        # invalid relative tablespace is ../../$PGDATA - path is ../../base/ (ending slash)
-$oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
-# CSHANG Why is this giving me MANIFEST_KEY_CATALOG is required? It seems it must be getting to tablespacePathGet
-        testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../../base/');
+        # Create absolute link to PGDATA
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Create the catalog key for the tablespace construction
+        $oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
+
+        # invalid absolute tablespace is  $self->{strDbPath} . /base
+# CSHANG But this should fail because the link points to a directory in pg_data but instead it passes the index($hManifest->{$strName}{link_destination}, '/') != 0 and then fails later. It WILL fail "destination must not be in $PGDATA" if an ending slash is added - so maybe the comment in Manifest.pm "# Make sure that DB_PATH_PGTBLSPC contains only absolute links that do not point inside PGDATA" is not exactly correct?
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", $self->{strDbPath} . '/base');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
             "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
             "HINT: was a tablespace created or dropped during the backup?");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-        # # invalid relative tablespace is ../../$PGDATA - path is ../../base (no ending slash)
-        # testLinkCreate("${strTblSpcPath}/99999", '../../base');
-        # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
-        #     'tablespace symlink ../../$PGDATA destination must not be in $PGDATA');
-        # testFileRemove("${strTblSpcPath}/99999");
-            #
-            # # Create a link to a link
-            # testLinkCreate($oHostDbMaster->dbPath() . "/intermediate_link", $oHostDbMaster->dbPath() . '/tablespace/ts1');
-            # testLinkCreate("${strTblSpcPath}/99999", $oHostDbMaster->dbPath() . "/intermediate_link");
-            #
-            # $oHostBackup->backup(
-            #     $strType, 'tablespace link references a link',
-            #     {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_LINK_DESTINATION,
-            #         strOptionalParam => $strLogReduced});
-            #
-            # testFileRemove($oHostDbMaster->dbPath() . "/intermediate_link");
-            # testFileRemove("${strTblSpcPath}/99999");
+        # Create relative link to location that does not exist outside of PGDATA
+        #---------------------------------------------------------------------------------------------------------------------------
+        # invalid relative tablespace is ../../BOGUS - which is not in $PGDATA
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../../' . BOGUS);
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
+            "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
+            "HINT: was a tablespace created or dropped during the backup?");
+        testFileRemove("${strTblSpcPath}/${strTblspcId}");
+
+        # Create tablespace directory outside PGDATA
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageTest()->pathCreate('tablespace');
+
+        my $strIntermediateLink = $self->{strDbPath} . "/intermediate_link";
+        # Create a link to a link
+        testLinkCreate($strIntermediateLink, $self->testPath() . '/tablespace');
+        testLinkCreate("${strTblSpcPath}/${strTblspcId}", $strIntermediateLink);
+
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_LINK_DESTINATION,
+            "link '${strTblSpcPath}/${strTblspcId}' -> '$strIntermediateLink' cannot reference another link");
+
+        testFileRemove($self->{strDbPath} . "/intermediate_link");
+        testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
 #        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'tablespace');
 
