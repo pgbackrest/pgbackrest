@@ -131,6 +131,47 @@ sub run
     }
 
     ################################################################################################################################
+    if ($self->begin("Archive::Info::archiveIdList(), check()"))
+    {
+        my @stryArchiveId;
+        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
+            {bLoad => false, bIgnoreMissing => true});
+
+        $oArchiveInfo->create(PG_VERSION_92, WAL_VERSION_92_SYS_ID, false);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_94_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->save();
+
+        # Check gets only the latest DB and returns only that archiveId
+        push(@stryArchiveId, $oArchiveInfo->check(PG_VERSION_93, WAL_VERSION_93_SYS_ID));
+        $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_93 . "-4")}, true,
+            'check - return only newest archiveId');
+
+        $self->testResult(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_93, ullDbSysId => WAL_VERSION_93_SYS_ID})},
+            PG_VERSION_93 . "-4", 'archiveId - return only one archiveId for multiple histories');
+
+        $self->testException(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_94, ullDbSysId => BOGUS})}, ERROR_UNKNOWN,
+            'unable to retrieve the archive id');
+
+        $self->testException(sub {$oArchiveInfo->check(PG_VERSION_94, WAL_VERSION_94_SYS_ID)}, ERROR_ARCHIVE_MISMATCH,
+            "WAL segment version " . PG_VERSION_94 . " does not match archive version " . PG_VERSION_93 .
+            "\nWAL segment system-id " . WAL_VERSION_94_SYS_ID . " does not match archive system-id " . WAL_VERSION_93_SYS_ID .
+            "\nHINT: are you archiving to the correct stanza?");
+
+        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_93, WAL_VERSION_93_SYS_ID);
+        $self->testResult(sub {(@stryArchiveId == 2) && ($stryArchiveId[0] eq PG_VERSION_93 . "-4") &&
+            ($stryArchiveId[1] eq PG_VERSION_93 . "-2")}, true, 'archiveIdList - returns multiple archiveId - newest first');
+
+        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_94, WAL_VERSION_94_SYS_ID);
+        $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_94 . "-3")}, true,
+            'archiveIdList - returns older archiveId');
+
+        $self->testException(sub {$oArchiveInfo->archiveIdList(PG_VERSION_94, BOGUS)}, ERROR_UNKNOWN,
+            'unable to retrieve the archive id');
+    }
+
+    ################################################################################################################################
     if ($self->begin("encryption"))
     {
         # Create an unencrypted archive.info file

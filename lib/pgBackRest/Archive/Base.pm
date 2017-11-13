@@ -68,6 +68,7 @@ sub getCheck
         $strDbVersion,
         $ullDbSysId,
         $strWalFile,
+        $bCheck,
     ) =
         logDebugParam
     (
@@ -75,9 +76,10 @@ sub getCheck
         {name => 'strDbVersion', required => false},
         {name => 'ullDbSysId', required => false},
         {name => 'strWalFile', required => false},
+        {name => 'bCheck',  required => false, default => true},
     );
 
-    my $strArchiveId;
+    my @stryArchiveId = ();
     my $strArchiveFile;
     my $strCipherPass;
 
@@ -92,18 +94,33 @@ sub getCheck
     if (!isRepoLocal())
     {
         ($strArchiveId, $strArchiveFile, $strCipherPass) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
-            OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strWalFile], true);
+            OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strWalFile, $bCheck], true);
     }
     else
     {
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
-# CSHANG Maybe here we call a getList command if the optionalParameter "list" is passed as true - this would then call a list command instead of the check command?
-        # check that the archive info is compatible with the database
-        $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
+
+        # check that the archive info is compatible with the database if required (will not be required for archive-get)
+        if ($bCheck)
+        {
+            push(@stryArchiveId, $oArchiveInfo->check($strDbVersion, $ullDbSysId));
+        }
+        else
+        {
+            @stryArchiveId = $oArchiveInfo->archiveIdList($strDbVersion, $ullDbSysId);
+        }
 
         if (defined($strWalFile))
         {
-            $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile); # CSHANG so this will look for the wal file in the archive-id path
+            # Look for the WAL file starting in the newest matching archiveId to the oldest
+            foreach my $strArchiveId (@stryArchiveId)
+            {
+                $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile);
+                if (defined($strArchiveFile))
+                {
+                    last;
+                }
+            }
         }
 
         # Get the encryption passphrase to read/write files (undefined if the repo is not encrypted)
