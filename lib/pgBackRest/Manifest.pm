@@ -751,9 +751,9 @@ use Data::Dumper; # CSHANG
                 confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
                              ERROR_LINK_EXPECTED);
             }
-print "NAME: ".Dumper($strName) . ", PATH: ".Dumper($strPath).", MANIFEST: ".Dumper($hManifest->{$strName}). "ABSPATH: ".Dumper($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC, $hManifest->{$strName}{link_destination})).
+syswrite(*STDOUT, "NAME: ".Dumper($strName) . ", PATH: ".Dumper($strPath).", MANIFEST: ".Dumper($hManifest->{$strName}). "ABSPATH: ".Dumper($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC, $hManifest->{$strName}{link_destination})).
 "INDEX ABSPATH: ".Dumper(index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
-      $hManifest->{$strName}{link_destination}) . '/', "${strPath}/"))." INDEX LINKDEST: ".Dumper(index($hManifest->{$strName}{link_destination}, '/')); # CSHANG
+      $hManifest->{$strName}{link_destination}) . '/', "${strPath}/"))." INDEX LINKDEST: ".Dumper(index($hManifest->{$strName}{link_destination}, '/'))); # CSHANG
             # Check for tablespaces in PGDATA
             if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
                 (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
@@ -1109,7 +1109,7 @@ sub buildDefault
 
             my $strMaxValue;
             my $iMaxValueTotal = 0;
-
+# CSHANG sort the keys
             foreach my $strValue (keys(%oDefault))
             {
                 if ($oDefault{$strValue} > $iMaxValueTotal)

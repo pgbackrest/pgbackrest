@@ -366,7 +366,6 @@ print "CREATING ${strTblSpcPath}/${strTblspcId}\n\n"; # CSHANG
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../ destination must not be in $PGDATA');
-
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
 print "\nCREATING LINK .. (this does not create any additional coverage)\n\n"; # CSHANG
