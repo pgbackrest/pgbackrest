@@ -97,13 +97,13 @@ sub getCheck
     else
     {
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
-
+# CSHANG Maybe here we call a getList command if the optionalParameter "list" is passed as true - this would then call a list command instead of the check command?
         # check that the archive info is compatible with the database
         $strArchiveId = $oArchiveInfo->check($strDbVersion, $ullDbSysId);
 
         if (defined($strWalFile))
         {
-            $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile);
+            $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile); # CSHANG so this will look for the wal file in the archive-id path
         }
 
         # Get the encryption passphrase to read/write files (undefined if the repo is not encrypted)

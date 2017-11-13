@@ -269,7 +269,7 @@ sub run
             $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
                 " --stanza=db archive-get ${strArchiveFile} " . $oHostDbMaster->dbBasePath() . '/pg_xlog/RECOVERYXLOG',
             {oLogTest => $self->expect()});
-
+# CSHANG Should we try to do archive-push?
         # Copy the new pg_control back so the tests can continue with the upgraded stanza
         storageDb()->copy(
             $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
