@@ -272,7 +272,7 @@ sub archiveIdList
     # Get the version and system-id for all known databases
     my $hDbList = $self->dbHistoryList();
 
-    foreach my $iDbHistoryId (sort(keys(%$hDbList)))
+    foreach my $iDbHistoryId (sort  {$a <=> $b} keys %$hDbList)
     {
         # If the version and system-id match then construct the archive id so that the constructed array has the newest match first
         if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
@@ -285,7 +285,7 @@ sub archiveIdList
     # If the archive id has still not been found, then error
     if (@stryArchiveId == 0)
     {
-        confess &log(ERROR, 'unable to retrieve the archive id');
+        confess &log(ERROR, "unable to retrieve the archive id for database version '$strDbVersion' and system-id '$ullDbSysId'");
     }
 
     # Return from function and log return values if any

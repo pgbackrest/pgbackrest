@@ -80,6 +80,7 @@ sub getCheck
     );
 
     my @stryArchiveId = ();
+    my $strArchiveId;
     my $strArchiveFile;
     my $strCipherPass;
 
@@ -100,24 +101,30 @@ sub getCheck
     {
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), true);
 
-        # check that the archive info is compatible with the database if required (will not be required for archive-get)
+        # Check that the archive info is compatible with the database if required (not required for archive-get)
         if ($bCheck)
         {
             push(@stryArchiveId, $oArchiveInfo->check($strDbVersion, $ullDbSysId));
         }
+        # Else if the database version and system-id are in the info history list then get a list of corresponding archiveIds
         else
         {
             @stryArchiveId = $oArchiveInfo->archiveIdList($strDbVersion, $ullDbSysId);
         }
 
+        # Default the returned archiveId to the newest in the event the WAL segment is not found then the most recent archiveID will
+        # be returned
+        $strArchiveId = $stryArchiveId[0];
+
         if (defined($strWalFile))
         {
             # Look for the WAL file starting in the newest matching archiveId to the oldest
-            foreach my $strArchiveId (@stryArchiveId)
+            foreach my $strId (@stryArchiveId)
             {
                 $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile);
                 if (defined($strArchiveFile))
                 {
+                    $strArchiveId = $strId;
                     last;
                 }
             }

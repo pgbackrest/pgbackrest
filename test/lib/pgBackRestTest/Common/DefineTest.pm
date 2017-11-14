@@ -493,7 +493,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'info-unit',
-                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_TOTAL => 4,
                     &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
