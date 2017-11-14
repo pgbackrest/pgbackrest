@@ -729,7 +729,7 @@ sub run
         $oHostDbMaster->restore(
             cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
             $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-            $bTestLocal ? ' --db-include=test1' : undef);
+            ($bTestLocal ? ' --db-include=test1' : '') . ' --buffer-size=16384');
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);

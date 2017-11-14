@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.26dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.craig"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that could cause copying large manifests to fail during restore.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -3564,6 +3574,11 @@
         <contributor id="harvey.john">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="james.craig">
+            <contributor-name-display>Craig A. James</contributor-name-display>
+            <contributor-id type="github">cjames53</contributor-id>
         </contributor>
 
         <contributor id="kulkarni.nikhilchandra">

@@ -47,6 +47,9 @@ sub new
     # Set read/write
     $self->{bWrite} = false;
 
+    # Initialize EOF to false
+    $self->eofSet(false);
+
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -56,12 +59,34 @@ sub new
 }
 
 ####################################################################################################################################
+# eof - have reads reached eof?
+####################################################################################################################################
+sub eof
+{
+    return shift->{bEOF};
+}
+
+####################################################################################################################################
+# eofSet - set eof
+####################################################################################################################################
+sub eofSet
+{
+    my $self = shift;
+    my $bEOF = shift;
+
+    $self->{bEOF} = $bEOF;
+}
+
+####################################################################################################################################
 # read - read block from protocol
 ####################################################################################################################################
 sub read
 {
     my $self = shift;
     my $rtBuffer = shift;
+
+    # After EOF always return 0
+    return 0 if $self->eof();
 
     my $lBlockSize;
 
@@ -80,6 +105,10 @@ sub read
     if ($lBlockSize > 0)
     {
         $self->{oProtocol}->io()->read($rtBuffer, $lBlockSize, true);
+    }
+    else
+    {
+        $self->eofSet(true);
     }
 
     # Return the block size
