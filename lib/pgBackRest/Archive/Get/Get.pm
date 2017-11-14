@@ -102,7 +102,7 @@ sub get
     # Get the wal segment filename
     my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(
         undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef, false);
-# CSHANG Not sure if this is now correct - what is this really trying to do?
+
     if (!defined($strArchiveFile) && !walIsSegment($strSourceArchive) &&
         $oStorageRepo->exists(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSourceArchive}"))
     {
