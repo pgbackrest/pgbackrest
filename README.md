@@ -76,6 +76,10 @@ File and directory links are supported for any file or directory in the PostgreS
 
 pgBackRest repositories can be stored on Amazon S3 to allow for virtually unlimited capacity and retention.
 
+### Encryption
+
+pgBackRest can encrypt the repository to secure backups wherever they are stored.
+
 ### Compatibility with PostgreSQL >= 8.3
 
 pgBackRest includes support for versions down to 8.3, since older versions of PostgreSQL are still regularly utilized.
