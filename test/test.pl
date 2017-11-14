@@ -214,7 +214,7 @@ eval
         $bNoLint = true;
         $bSmart = true;
         $bNoPackage = true;
-        $strVm = VM_CO7;
+        $strVm = VM_EXPECT;
         $strDbVersion = '9.6';
         $bLogForce = true;
     }

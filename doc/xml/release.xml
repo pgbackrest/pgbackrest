@@ -86,6 +86,10 @@
                     <release-item>
                         <p>Full unit test coverage for gzip filter.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Only check expect logs on CentOS 7.  Variations in distros cause false negatives in tests but don't add much value.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

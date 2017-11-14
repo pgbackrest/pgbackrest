@@ -79,6 +79,10 @@ use constant VM_D8                                                  => 'd8';
 use constant VM_D9                                                  => 'd9';
     push @EXPORT, qw(VM_D9);
 
+# Defines the vm that will be used for expect testing
+use constant VM_EXPECT                                              => VM_CO7;
+    push @EXPORT, qw(VM_EXPECT);
+
 # Defines the host VM (the VM that the containers run in)
 use constant VM_HOST_DEFAULT                                        => VM_U16;
     push @EXPORT, qw(VM_HOST_DEFAULT);

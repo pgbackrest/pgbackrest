@@ -59,19 +59,19 @@ sub run
         my $bRepoEncrypt = ($bCompress && !$bS3) ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
+        my $hyVm = vmGet();
+        my $strDbVersionMostRecent = ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1];
+
         next if (!$self->begin(
             "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}, " .
                 "enc ${bRepoEncrypt}",
-            $self->pgVersion() eq PG_VERSION_96));
+            # Use the most recent db version on the expect vm for expect testing
+            $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent));
 
         # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
-        my $hyVm = vmGet();
-
-        if (($bS3 || $bHostBackup) &&
-            (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1] ne $self->pgVersion()))
+        if (($bS3 || $bHostBackup) && (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && $strDbVersionMostRecent ne $self->pgVersion()))
         {
-            &log(INFO,
-                'skipped - this test is run this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1]);
+            &log(INFO, "skipped - this test is run this OS using PG ${strDbVersionMostRecent}");
             next;
         }
 
