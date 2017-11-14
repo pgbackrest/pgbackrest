@@ -57,6 +57,10 @@
                     <release-item>
                         <p>Simplify try..catch..finally names.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Inflate performance improvement for gzip filter.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
@@ -77,6 +81,10 @@
                 <release-refactor-list>
                     <release-item>
                         <p>Update Debian/Ubuntu containers to download latest version of <file>pip</file>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Full unit test coverage for gzip filter.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>
