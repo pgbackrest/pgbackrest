@@ -43,11 +43,11 @@ Memory context management functions
 MemContext *context = memContextNew();
 MemContext *contextOld = memContextSwitch(context);
 
-ERROR_TRY()
+TRY()
 {
     <Do something with the memory context>
 }
-ERROR_CATCH_ANY()
+CATCH_ANY()
 {
     <only needed if the error renders the memory context useless - for instance in a constructor>
 
@@ -100,14 +100,14 @@ MEM_CONTEXT_END();
     MemContext *MEM_CONTEXT_memContextOld = memContextSwitch(memContext);                                                          \
                                                                                                                                    \
     /* Try the statement block */                                                                                                  \
-    ERROR_TRY()
+    TRY()
 
 #define MEM_CONTEXT_OLD()                                                                                                          \
     MEM_CONTEXT_memContextOld
 
 #define MEM_CONTEXT_END()                                                                                                          \
     /* Free the context on error */                                                                                                \
-    ERROR_FINALLY()                                                                                                                \
+    FINALLY()                                                                                                                      \
     {                                                                                                                              \
         memContextSwitch(MEM_CONTEXT_OLD());                                                                                       \
     }                                                                                                                              \
@@ -140,11 +140,11 @@ MEM_CONTEXT_NEW_END();
     MEM_CONTEXT_NEW_BEGIN_memContext
 
 #define MEM_CONTEXT_NEW_END()                                                                                                      \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         memContextSwitch(MEM_CONTEXT_OLD());                                                                                       \
         memContextFree(MEM_CONTEXT_NEW());                                                                                         \
-        ERROR_RETHROW();                                                                                                           \
+        RETHROW();                                                                                                                 \
     }                                                                                                                              \
     MEM_CONTEXT_END();                                                                                                             \
 }

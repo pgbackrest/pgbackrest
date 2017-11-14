@@ -224,14 +224,14 @@ void
 cfgDefCommandCheck(ConfigDefineCommand commandDefId)
 {
     if (commandDefId >= cfgDefCommandTotal())
-        ERROR_THROW(AssertError, "command def id %d invalid - must be >= 0 and < %d", commandDefId, cfgDefCommandTotal());
+        THROW(AssertError, "command def id %d invalid - must be >= 0 and < %d", commandDefId, cfgDefCommandTotal());
 }
 
 void
 cfgDefOptionCheck(ConfigDefineOption optionDefId)
 {
     if (optionDefId >= cfgDefOptionTotal())
-        ERROR_THROW(AssertError, "option def id %d invalid - must be >= 0 and < %d", optionDefId, cfgDefOptionTotal());
+        THROW(AssertError, "option def id %d invalid - must be >= 0 and < %d", optionDefId, cfgDefOptionTotal());
 }
 
 static void
@@ -262,7 +262,7 @@ cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
 
     if (valueId < 0 || valueId >= dataDefListSize)
-        ERROR_THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+        THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }
@@ -371,7 +371,7 @@ cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption opt
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeDepend);
 
     if (valueId < 0 || valueId >= dataDefListSize)
-        ERROR_THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+        THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
 
     return (char *)dataDefList[valueId];
 }

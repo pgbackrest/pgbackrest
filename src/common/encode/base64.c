@@ -150,7 +150,7 @@ decodeToBinValidateBase64(const char *source)
     int sourceSize = strlen(source);
 
     if (sourceSize % 4 != 0)
-        ERROR_THROW(FormatError, "base64 size %d is not evenly divisible by 4", sourceSize);
+        THROW(FormatError, "base64 size %d is not evenly divisible by 4", sourceSize);
 
     // Check all characters
     for (int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
@@ -160,17 +160,17 @@ decodeToBinValidateBase64(const char *source)
         {
             // Make sure they are only in the last two positions
             if (sourceIdx < sourceSize - 2)
-                ERROR_THROW(FormatError, "base64 '=' character may only appear in last two positions");
+                THROW(FormatError, "base64 '=' character may only appear in last two positions");
 
             // If second to last char is = then last char must also be
             if (sourceIdx == sourceSize - 2 && source[sourceSize - 1] != 0x3d)
-                ERROR_THROW(FormatError, "base64 last character must be '=' if second to last is");
+                THROW(FormatError, "base64 last character must be '=' if second to last is");
         }
         else
         {
             // Error on any invalid characters
             if (decodeBase64Lookup[(int)source[sourceIdx]] == -1)
-                ERROR_THROW(FormatError, "base64 invalid character found at position %d", sourceIdx);
+                THROW(FormatError, "base64 invalid character found at position %d", sourceIdx);
         }
     }
 }

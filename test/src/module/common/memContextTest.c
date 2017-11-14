@@ -230,7 +230,7 @@ void testRun()
             MEM_CONTEXT_BEGIN(memContext)
             {
                 TEST_RESULT_STR(memContextName(memContextCurrent()), "test-block", "context is now test-block");
-                ERROR_THROW(AssertError, "error in test block");
+                THROW(AssertError, "error in test block");
             }
             MEM_CONTEXT_END(),
             AssertError, "error in test block");
@@ -263,17 +263,17 @@ void testRun()
         memContextTestName = "test-new-failed-block";
         bool bCatch = false;
 
-        ERROR_TRY()
+        TRY()
         {
             MEM_CONTEXT_NEW_BEGIN(memContextTestName)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_STR(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
-                ERROR_THROW(AssertError, "create failed");
+                THROW(AssertError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
         }
-        ERROR_CATCH(AssertError)
+        CATCH(AssertError)
         {
             bCatch = true;
         }

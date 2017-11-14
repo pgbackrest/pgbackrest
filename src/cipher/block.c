@@ -66,7 +66,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
     const EVP_CIPHER *cipher = EVP_get_cipherbyname(cipherName);
 
     if (!cipher)
-        ERROR_THROW(AssertError, "unable to load cipher '%s'", cipherName);
+        THROW(AssertError, "unable to load cipher '%s'", cipherName);
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *volatile digest = digest = EVP_sha1();
@@ -77,7 +77,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
         digest = EVP_sha1();
 
     if (!digest)
-        ERROR_THROW(AssertError, "unable to load digest '%s'", digestName);
+        THROW(AssertError, "unable to load digest '%s'", digestName);
 
     // Allocate memory to hold process state
     CipherBlock *this = NULL;
@@ -166,7 +166,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
                 // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
                 // encrypted file, or at least not in a format we recognize.
                 if (memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
-                    ERROR_THROW(CipherError, "cipher header invalid");
+                    THROW(CipherError, "cipher header invalid");
             }
             // Else copy what was provided into the header buffer and return 0
             else
@@ -194,13 +194,13 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
 
             // Create context to track cipher
             if (!(this->cipherContext = EVP_CIPHER_CTX_new()))
-                ERROR_THROW(MemoryError, "unable to create context");               // {uncoverable - no failure path known}
+                THROW(MemoryError, "unable to create context");               // {uncoverable - no failure path known}
 
             // Initialize cipher
             if (EVP_CipherInit_ex(
                 this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt) != 1)
             {
-                ERROR_THROW(MemoryError, "unable to initialize cipher");            // {uncoverable - no failure path known}
+                THROW(MemoryError, "unable to initialize cipher");            // {uncoverable - no failure path known}
             }
 
             this->saltDone = true;
@@ -214,7 +214,7 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
         int destinationUpdateSize = 0;
 
         if (!EVP_CipherUpdate(this->cipherContext, destination, &destinationUpdateSize, source, sourceSize))
-            ERROR_THROW(CipherError, "unable to process");                           // {uncoverable - no failure path known}
+            THROW(CipherError, "unable to process");                           // {uncoverable - no failure path known}
 
         destinationSize += destinationUpdateSize;
 
@@ -237,11 +237,11 @@ cipherBlockFlush(CipherBlock *this, unsigned char *destination)
 
     // If no header was processed then error
     if (!this->saltDone)
-        ERROR_THROW(CipherError, "cipher header missing");
+        THROW(CipherError, "cipher header missing");
 
     // Only flush remaining data if some data was processed
     if (!EVP_CipherFinal(this->cipherContext, destination, &iDestinationSize))
-        ERROR_THROW(CipherError, "unable to flush");
+        THROW(CipherError, "unable to flush");
 
     // Return actual destination size
     return iDestinationSize;
