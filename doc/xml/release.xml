@@ -65,6 +65,16 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add template to improve initial information gathered for issue submissions.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <release-item-contributor-list>
