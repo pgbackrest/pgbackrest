@@ -501,6 +501,17 @@ my $oTestDef =
                         'Archive/Info' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
+                {
+                    &TESTDEF_NAME => 'get',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_CLIB => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Archive/Base' => TESTDEF_COVERAGE_PARTIAL,
+                        'Archive/Get/Get' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
             ]
         },
         # Backup tests

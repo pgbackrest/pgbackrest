@@ -102,7 +102,7 @@ sub get
     # Get the wal segment filename
     my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(
         undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef, false);
-
+use Data::Dumper; print "ID: ".Dumper($strArchiveId)."FILE: ".Dumper($strArchiveFile); #CSHANG
     if (!defined($strArchiveFile) && !walIsSegment($strSourceArchive) &&
         $oStorageRepo->exists(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSourceArchive}"))
     {

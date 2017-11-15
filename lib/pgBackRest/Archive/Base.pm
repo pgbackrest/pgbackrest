@@ -115,13 +115,13 @@ sub getCheck
         # Default the returned archiveId to the newest in the event the WAL segment is not found then the most recent archiveID will
         # be returned
         $strArchiveId = $stryArchiveId[0];
-
+# CSHANG But what is it's not a WAL file (like a history or something) do we want to try to go back and find on in the history? if so, the foreach loop will have to be outside and extra code to find IT?
         if (defined($strWalFile))
         {
             # Look for the WAL file starting in the newest matching archiveId to the oldest
             foreach my $strId (@stryArchiveId)
             {
-                $strArchiveFile = walSegmentFind(storageRepo(), ${strArchiveId}, $strWalFile);
+                $strArchiveFile = walSegmentFind(storageRepo(), $strId, $strWalFile);
                 if (defined($strArchiveFile))
                 {
                     $strArchiveId = $strId;
