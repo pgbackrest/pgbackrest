@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.26dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.craig"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that could cause copying large manifests to fail during restore.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -43,10 +53,28 @@
                     <release-item>
                         <p>Enable additional warnings for C builds.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Simplify try..catch..finally names.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Inflate performance improvement for gzip filter.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add template to improve initial information gathered for issue submissions.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-refactor-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -63,6 +91,18 @@
                 <release-refactor-list>
                     <release-item>
                         <p>Update Debian/Ubuntu containers to download latest version of <file>pip</file>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Full unit test coverage for gzip filter.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Only check expect logs on CentOS 7.  Variations in distros cause false negatives in tests but don't add much value.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Fix flapping protocol timeout test.  It only matters that the correct error code is returned, so disable logging to prevent message ordering from failing the expect test.</p>
                     </release-item>
                 </release-refactor-list>
             </release-test-list>
@@ -3560,6 +3600,11 @@
         <contributor id="harvey.john">
             <contributor-name-display>John Harvey</contributor-name-display>
             <contributor-id type="github">crunchyjohn</contributor-id>
+        </contributor>
+
+        <contributor id="james.craig">
+            <contributor-name-display>Craig A. James</contributor-name-display>
+            <contributor-id type="github">cjames53</contributor-id>
         </contributor>
 
         <contributor id="kulkarni.nikhilchandra">

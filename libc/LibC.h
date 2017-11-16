@@ -50,13 +50,13 @@ This turned out to be a dead end because Perl 5.10 does not support croak_sv(), 
 Error handling macros that throw a Perl error when a C error is caught
 ***********************************************************************************************************************************/
 #define ERROR_XS_BEGIN()                                                                                                           \
-    ERROR_TRY()
+    TRY()
 
 #define ERROR_XS()                                                                                                                 \
     croak("PGBRCLIB:%d:%s:%d:%s", errorCode(), errorFileName(), errorFileLine(), errorMessage());
 
 #define ERROR_XS_END()                                                                                                             \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         ERROR_XS();                                                                                                                \
     }
@@ -72,16 +72,16 @@ Core context handling macros, only intended to be called from other macros
     volatile bool MEM_CONTEXT_XS_croak = false;                                                                                    \
                                                                                                                                    \
     /* Try the statement block */                                                                                                  \
-    ERROR_TRY()
+    TRY()
 
 #define MEM_CONTEXT_XS_CORE_END()                                                                                                  \
     /* Set error to be croak to Perl later */                                                                                      \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         MEM_CONTEXT_XS_croak = true;                                                                                               \
     }                                                                                                                              \
     /* Free the context on error */                                                                                                \
-    ERROR_FINALLY()                                                                                                                \
+    FINALLY()                                                                                                                      \
     {                                                                                                                              \
         memContextSwitch(MEM_CONTEXT_XS_memContextOld);                                                                            \
     }
@@ -94,11 +94,11 @@ Simplifies creation of the memory context in contructors and includes error hand
     /* Attempt to create the memory context */                                                                                     \
     MemContext *MEM_CONTEXT_XS_memContext = NULL;                                                                                  \
                                                                                                                                    \
-    ERROR_TRY()                                                                                                                    \
+    TRY()                                                                                                                          \
     {                                                                                                                              \
         MEM_CONTEXT_XS_memContext = memContextNew(contextName);                                                                    \
     }                                                                                                                              \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         ERROR_XS()                                                                                                                 \
     }                                                                                                                              \

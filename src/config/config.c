@@ -59,7 +59,7 @@ void
 cfgCommandCheck(ConfigCommand commandId)
 {
     if (commandId >= cfgCommandTotal())
-        ERROR_THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, cfgCommandTotal());
+        THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, cfgCommandTotal());
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +88,7 @@ cfgCommandId(const char *commandName)
             break;
 
     if (commandId == cfgCommandTotal())
-        ERROR_THROW(AssertError, "invalid command '%s'", commandName);
+        THROW(AssertError, "invalid command '%s'", commandName);
 
     return commandId;
 }
@@ -119,7 +119,7 @@ void
 cfgOptionCheck(ConfigOption optionId)
 {
     if (optionId >= cfgOptionTotal())
-        ERROR_THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, cfgOptionTotal());
+        THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, cfgOptionTotal());
 }
 
 /***********************************************************************************************************************************

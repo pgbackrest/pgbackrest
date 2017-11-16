@@ -156,29 +156,26 @@ sub read
     else
     {
         # If the local buffer size is not large enough to satisfy the request and there is still data to decompress
-        if ($self->{lUncompressedBufferSize} < $iSize)
+        while ($self->{lUncompressedBufferSize} < $iSize && !$self->parent()->eof())
         {
-            while ($self->{lUncompressedBufferSize} < $iSize)
+            if (!defined($self->{tCompressedBuffer}) || length($self->{tCompressedBuffer}) == 0)
             {
-                if (!defined($self->{tCompressedBuffer}) || length($self->{tCompressedBuffer}) == 0)
-                {
-                    $self->parent()->read(\$self->{tCompressedBuffer}, $self->{lCompressBufferMax});
-                }
-
-                my $iZLibStatus = $self->{oZLib}->inflate($self->{tCompressedBuffer}, $self->{tUncompressedBuffer});
-                $self->{lUncompressedBufferSize} = length($self->{tUncompressedBuffer});
-
-                last if $iZLibStatus == Z_STREAM_END;
-
-                $self->errorCheck($iZLibStatus);
+                $self->parent()->read(\$self->{tCompressedBuffer}, $self->{lCompressBufferMax});
             }
+
+            my $iZLibStatus = $self->{oZLib}->inflate($self->{tCompressedBuffer}, $self->{tUncompressedBuffer});
+            $self->{lUncompressedBufferSize} = length($self->{tUncompressedBuffer});
+
+            last if $iZLibStatus == Z_STREAM_END;
+
+            $self->errorCheck($iZLibStatus);
         }
 
         # Actual size is the lesser of the local buffer size or requested size - if the local buffer is smaller than the requested
         # size it means that there was nothing more to be read
         my $iActualSize = $self->{lUncompressedBufferSize} < $iSize ? $self->{lUncompressedBufferSize} : $iSize;
 
-        # Append the to the request buffer
+        # Append to the request buffer
         $$rtBuffer .= substr($self->{tUncompressedBuffer}, 0, $iActualSize);
 
         # Truncate local buffer
@@ -206,7 +203,7 @@ sub write
         $self->errorCheck($self->{oZLib}->deflate($$rtBuffer, $self->{tCompressedBuffer}));
 
         # Only write when buffer is full
-        if (defined($self->{tCompressedBuffer}) && length($self->{tCompressedBuffer}) > $self->{lCompressBufferMax})
+        if (length($self->{tCompressedBuffer}) > $self->{lCompressBufferMax})
         {
             $self->parent()->write(\$self->{tCompressedBuffer});
             $self->{tCompressedBuffer} = undef;
@@ -260,6 +257,8 @@ sub close
         # Close io
         return $self->parent()->close();
     }
+
+    return false;
 }
 
 1;

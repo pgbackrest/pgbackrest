@@ -11,7 +11,7 @@ Binary to String Encode/Decode
 Macro to handle invalid encode type errors
 ***********************************************************************************************************************************/
 #define ENCODE_TYPE_INVALID_ERROR(encodeType)                                                                                      \
-    ERROR_THROW(AssertError, "invalid encode type %d", encodeType);
+    THROW(AssertError, "invalid encode type %d", encodeType);
 
 /***********************************************************************************************************************************
 Encode binary data to a printable string
@@ -77,11 +77,11 @@ decodeToBinValid(EncodeType encodeType, const char *source)
 {
     volatile bool valid = true;
 
-    ERROR_TRY()
+    TRY()
     {
         decodeToBinValidate(encodeType, source);
     }
-    ERROR_CATCH(FormatError)
+    CATCH(FormatError)
     {
         valid = false;
     }

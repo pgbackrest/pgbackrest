@@ -359,8 +359,9 @@ sub run
         {
             $oHostBackup->backup(
                 $strType, 'protocol timeout',
-                {oExpectedManifest => \%oManifest, strOptionalParam => '--protocol-timeout=1 --db-timeout=.1',
-                 strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
+                {oExpectedManifest => \%oManifest,
+                    strOptionalParam => '--protocol-timeout=1 --db-timeout=.1 --log-level-console=off',
+                    strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
         }
 
         # Stop operations and make sure the correct error occurs
