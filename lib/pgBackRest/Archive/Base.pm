@@ -55,7 +55,8 @@ sub new
 }
 
 ####################################################################################################################################
-# getCheck
+# getCheck - Given a specific database version and system-id, find a file in the archive. If no database info was passed, the
+# current database will be used.
 ####################################################################################################################################
 sub getCheck
 {
@@ -67,7 +68,7 @@ sub getCheck
         $strOperation,
         $strDbVersion,
         $ullDbSysId,
-        $strWalFile,
+        $strFile,
         $bCheck,
     ) =
         logDebugParam
@@ -75,7 +76,7 @@ sub getCheck
         __PACKAGE__ . '->getCheck', \@_,
         {name => 'strDbVersion', required => false},
         {name => 'ullDbSysId', required => false},
-        {name => 'strWalFile', required => false},
+        {name => 'strFile', required => false},
         {name => 'bCheck',  required => false, default => true},
     );
 
@@ -95,7 +96,7 @@ sub getCheck
     if (!isRepoLocal())
     {
         ($strArchiveId, $strArchiveFile, $strCipherPass) = protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP)->cmdExecute(
-            OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strWalFile, $bCheck], true);
+            OP_ARCHIVE_GET_CHECK, [$strDbVersion, $ullDbSysId, $strFile, $bCheck], true);
     }
     else
     {
@@ -113,15 +114,27 @@ sub getCheck
         }
 
         # Default the returned archiveId to the newest in the event the WAL segment is not found then the most recent archiveID will
-        # be returned
+        # be returned. If none were found, then the preceding calls will error.
         $strArchiveId = $stryArchiveId[0];
-# CSHANG But what is it's not a WAL file (like a history or something) do we want to try to go back and find on in the history? if so, the foreach loop will have to be outside and extra code to find IT?
-        if (defined($strWalFile))
+
+        # Look for the file starting in the newest matching archiveId to the oldest
+        foreach my $strId (@stryArchiveId)
         {
-            # Look for the WAL file starting in the newest matching archiveId to the oldest
-            foreach my $strId (@stryArchiveId)
+            # If a file was passed to look for
+            if (defined($strFile))
             {
-                $strArchiveFile = walSegmentFind(storageRepo(), $strId, $strWalFile);
+                # Then if it is a WAL segment, try to find it
+                if (walIsSegment($strFile))
+                {
+                    $strArchiveFile = walSegmentFind(storageRepo(), $strId, $strFile);
+                }
+                # Else if not a WAL segment, see if it exists in the archive dir
+                elsif (storageRepo()->exists(STORAGE_REPO_ARCHIVE . "/${strId}/${strFile}"))
+                {
+                    $strArchiveFile = $strFile;
+                }
+
+                # If the file was found, then return the archiveId where it was found
                 if (defined($strArchiveFile))
                 {
                     $strArchiveId = $strId;

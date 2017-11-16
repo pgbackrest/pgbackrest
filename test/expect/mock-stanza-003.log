@@ -532,7 +532,7 @@ P00   INFO: get WAL segment 000000010000000100000002
 P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
 P00  DEBUG:     Storage::S3::Request->new(): bVerifySsl = false, iPort = [undef], lBufferMax = 4194304, strAccessKeyId = <redacted>, strBucket = pgbackrest-dev, strCaFile = [undef], strCaPath = [undef], strEndPoint = s3.amazonaws.com, strHost = [undef], strRegion = us-east-1, strSecretAccessKey = <redacted>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strWalFile = 000000010000000100000002, ullDbSysId = [undef]
+P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strFile = 000000010000000100000002, ullDbSysId = [undef]
 P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]

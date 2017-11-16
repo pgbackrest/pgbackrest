@@ -413,7 +413,7 @@ P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote', strId = remote process on 'backup', strName = remote
 P00  DEBUG:     Protocol::Storage::Remote->new(): oProtocol = [object]
-P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strWalFile = 000000010000000100000002, ullDbSysId = [undef]
+P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strFile = 000000010000000100000002, ullDbSysId = [undef]
 P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]

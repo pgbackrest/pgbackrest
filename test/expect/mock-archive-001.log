@@ -116,7 +116,7 @@ P00   INFO: get WAL segment 000000010000000100000001
 P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000001
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = <redacted>, strCipherType = aes-256-cbc, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
-P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strWalFile = 000000010000000100000001, ullDbSysId = [undef]
+P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strFile = 000000010000000100000001, ullDbSysId = [undef]
 P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
