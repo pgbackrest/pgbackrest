@@ -233,24 +233,8 @@ sub archiveId
     # If both the optional version and system-id are passed
     elsif (defined($strDbVersion) && defined($ullDbSysId))
     {
-        # Get the version and system-id for all known databases
-        my $hDbList = $self->dbHistoryList();
-
-        foreach my $iDbHistoryId (sort(keys(%$hDbList)))
-        {
-            # If the version and system-id match then construct the archive id
-            if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
-                ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
-            {
-                $strArchiveId = $strDbVersion . "-" . $iDbHistoryId;
-            }
-        }
-    }
-
-    # If the archive id has still not been found, then error
-    if (!defined($strArchiveId))
-    {
-        confess &log(ERROR, 'unable to retrieve the archive id');
+        # Get the newest archiveId for the version/system-id passed
+        $strArchiveId = ($self->archiveIdList($strDbVersion, $ullDbSysId))[0];
     }
 
     # Return from function and log return values if any
@@ -258,6 +242,57 @@ sub archiveId
     (
         $strOperation,
         {name => 'strArchiveId', value => $strArchiveId}
+    );
+}
+
+####################################################################################################################################
+# archiveIdList
+#
+# Get a sorted list of the archive ids for the db-version and db-system-id passed.
+####################################################################################################################################
+sub archiveIdList
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->archiveIdList', \@_,
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'},
+        );
+
+    my @stryArchiveId;
+
+    # Get the version and system-id for all known databases
+    my $hDbList = $self->dbHistoryList();
+
+    foreach my $iDbHistoryId (sort  {$a <=> $b} keys %$hDbList)
+    {
+        # If the version and system-id match then construct the archive id so that the constructed array has the newest match first
+        if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
+            ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
+        {
+            unshift(@stryArchiveId, $strDbVersion . "-" . $iDbHistoryId);
+        }
+    }
+
+    # If the archive id has still not been found, then error
+    if (@stryArchiveId == 0)
+    {
+        confess &log(ERROR, "unable to retrieve the archive id for database version '$strDbVersion' and system-id '$ullDbSysId'");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryArchiveId', value => \@stryArchiveId}
     );
 }
 

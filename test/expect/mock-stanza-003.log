@@ -436,6 +436,49 @@ db-version="9.3"
 [db:history]
 1={"db-id":6395542721432104958,"db-version":"9.3"}
 
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-push command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000002, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
+P00  DEBUG:     Storage::S3::Request->new(): bVerifySsl = false, iPort = [undef], lBufferMax = 4194304, strAccessKeyId = <redacted>, strBucket = pgbackrest-dev, strCaFile = [undef], strCaPath = [undef], strEndPoint = s3.amazonaws.com, strHost = [undef], strRegion = us-east-1, strSecretAccessKey = <redacted>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = /archive/db, strCipherPassSub = [undef]
+P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = /archive/db/archive.info
+P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = /archive/db/archive.info
+P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
+P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
+P00  DEBUG:     Archive::Info->archiveId=>: strArchiveId = 9.3-1
+P00  DEBUG:     Archive::Info->check=>: strArchiveId = 9.3-1
+P00  DEBUG:     Archive::Common::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
+P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.3-1/0000000100000001, strSortOrder = <forward>
+P00  DEBUG:     Storage::Local->list=>: stryFileList = ()
+P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = [undef]
+P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strCipherPass = [undef], strWarning = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = f5035e2c3b83a9c32660f959b23451e78f7438f7
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
+P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
+P00   INFO: pushed WAL segment 000000010000000100000002
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: archive-push command end: completed successfully
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [044]: WAL segment version 9.4 does not match archive version 9.3
@@ -482,6 +525,47 @@ db-version="9.4"
 1={"db-id":6395542721432104958,"db-version":"9.3"}
 2={"db-id":6353949018581704918,"db-version":"9.4"}
 
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: archive-get command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: get WAL segment 000000010000000100000002
+P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
+P00  DEBUG:     Storage::S3::Request->new(): bVerifySsl = false, iPort = [undef], lBufferMax = 4194304, strAccessKeyId = <redacted>, strBucket = pgbackrest-dev, strCaFile = [undef], strCaPath = [undef], strEndPoint = s3.amazonaws.com, strHost = [undef], strRegion = us-east-1, strSecretAccessKey = <redacted>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Archive::Base->getCheck(): bCheck = false, strDbVersion = [undef], strFile = 000000010000000100000002, ullDbSysId = [undef]
+P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
+P00  DEBUG:     Db->new(): iRemoteIdx = 1
+P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
+P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
+P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201306121, iDbControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = true, strArchiveClusterPath = /archive/db, strCipherPassSub = [undef]
+P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = /archive/db/archive.info
+P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
+P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = /archive/db/archive.info
+P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
+P00  DEBUG:     Archive::Info->archiveIdList(): strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->dbHistoryList=>: hDbHash = [hash]
+P00  DEBUG:     Archive::Info->archiveIdList=>: stryArchiveId = (9.3-1)
+P00  DEBUG:     Archive::Common::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
+P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.3-1/0000000100000001, strSortOrder = <forward>
+P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz)
+P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = 000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz, strArchiveId = 9.3-1, strCipherPass = [undef]
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = ({rxyParam => ({strCompressType => decompress}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
+P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
+P00  DEBUG:     Archive::Get::Get->get=>: iResult = 0
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: archive-get command end: completed successfully
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -522,6 +606,7 @@ db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
+1={"db-id":6395542721432104958,"db-version":"9.3"}
 2={"db-id":6353949018581704918,"db-version":"9.4"}
 
 stanza-create db - use force to recreate the stanza producing mismatched db-id (db-master host)
@@ -560,19 +645,23 @@ db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
+1={"db-id":6395542721432104958,"db-version":"9.3"}
 2={"db-id":6353949018581704918,"db-version":"9.4"}
 
 full backup - create first full backup  (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-full=2 --stanza=db --start-fast --type=full
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
-P00   INFO: full backup size = 16MB
+P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-archive=2 --retention-full=2 --stanza=db
+P00   INFO: remove archive path: /archive/db/9.3-1
 P00   INFO: full backup total < 2 - using oldest full backup for 9.4-2 archive retention
 P00   INFO: expire command end: completed successfully
 
@@ -625,6 +714,7 @@ db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
+1={"db-id":6395542721432104958,"db-version":"9.3"}
 2={"db-id":6353949018581704918,"db-version":"9.4"}
 
 stanza-create db - use force to recreate the stanza from backups (db-master host)
@@ -666,6 +756,7 @@ db-system-id=6353949018581704918
 db-version="9.4"
 
 [db:history]
+1={"db-id":6395542721432104958,"db-version":"9.3"}
 2={"db-id":6353949018581704918,"db-version":"9.4"}
 
 stanza-upgrade db - successfully upgrade with XX.Y-Z (db-master host)
@@ -708,6 +799,7 @@ db-system-id=6392579261579036436
 db-version="9.5"
 
 [db:history]
+1={"db-id":6395542721432104958,"db-version":"9.3"}
 2={"db-id":6353949018581704918,"db-version":"9.4"}
 3={"db-id":35184388866048,"db-version":"10.0"}
 4={"db-id":6392579261579036436,"db-version":"9.5"}
@@ -720,10 +812,12 @@ diff backup - diff changed to full backup (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 15b1a1a35c26b17570aca7920980f0ad11c6d858
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum e28bf39d0a56bf9fabd4049b329fcae8878bfec6
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
-P00   INFO: full backup size = 16MB
+P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-archive=2 --retention-full=2 --stanza=db

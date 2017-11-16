@@ -227,8 +227,6 @@ sub run
                 {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
 
-        # Fail on archive push due to mismatch of DB since stanza not upgraded
-        #--------------------------------------------------------------------------------------------------------------------------
         # Encrypted info files could not be reconstructed above so just copy them back
         if ($bRepoEncrypt)
         {
@@ -236,6 +234,13 @@ sub run
             forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoCopyFile, {bRecurse => false});
         }
 
+        # Just before upgrading push one last WAL on the old version to ensure it can be retrieved later
+        #--------------------------------------------------------------------------------------------------------------------------
+        ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strWalPath, 1, 2, WAL_VERSION_93);
+        $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
+
+        # Fail on archive push due to mismatch of DB since stanza not upgraded
+        #--------------------------------------------------------------------------------------------------------------------------
         my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
 
         # Upgrade the DB by copying new pg_control
@@ -251,6 +256,25 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-' .
             cfgOptionName(CFGOPT_ONLINE)});
+
+        # Make sure that WAL from the old version can still be retrieved
+        #--------------------------------------------------------------------------------------------------------------------------
+        # Copy the old pg_control back so it looks like the original db has been restored
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+
+        # Attempt to get the last archive log that was pushed to this repo
+        $oHostDbMaster->executeSimple(
+            $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
+                " --stanza=db archive-get ${strArchiveFile} " . $oHostDbMaster->dbBasePath() . '/pg_xlog/RECOVERYXLOG',
+            {oLogTest => $self->expect()});
+
+        # Copy the new pg_control back so the tests can continue with the upgraded stanza
+        storageDb()->copy(
+            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
+            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------

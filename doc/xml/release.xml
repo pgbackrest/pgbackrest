@@ -26,7 +26,16 @@
                             <release-item-contributor id="wilson.javier"/>
                         </release-item-contributor-list>
 
-                        <p>Fix incorrect WAL offset for 32-bit architectures.</p>
+                        <p>Fixed incorrect WAL offset for 32-bit architectures.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adams.clinton"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue retrieving WAL for old database versions.  After a <cmd>stanza-upgrade</cmd> it should still be possible to restore backups from the previous version and perform recovery with <cmd>archive-get</cmd>.  However, archive-get only checked the most recent db version/id and failed.  Also clean up some issues when the same db version/id appears multiple times in the history.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -3530,6 +3539,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="adams.clinton">
+            <contributor-name-display>Clinton Adams</contributor-name-display>
+            <contributor-id type="github">clad</contributor-id>
+        </contributor>
+
         <contributor id="avellar.leonardo">
             <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
