@@ -117,11 +117,10 @@ sub getCheck
         # be returned. If none were found, then the preceding calls will error.
         $strArchiveId = $stryArchiveId[0];
 
-        # Look for the file starting in the newest matching archiveId to the oldest
-        foreach my $strId (@stryArchiveId)
+        # If a file was passed to look for, then look for the file starting in the newest matching archiveId to the oldest
+        if (defined($strFile))
         {
-            # If a file was passed to look for
-            if (defined($strFile))
+            foreach my $strId (@stryArchiveId)
             {
                 # Then if it is a WAL segment, try to find it
                 if (walIsSegment($strFile))
