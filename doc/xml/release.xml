@@ -20,6 +20,14 @@
 
                         <p>Fixed an issue that could cause copying large manifests to fail during restore.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="wilson.javier"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect WAL offset for 32-bit architectures.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -3704,6 +3712,11 @@
 
         <contributor id="wilke.jens">
             <contributor-name-display>Jens Wilke</contributor-name-display>
+        </contributor>
+
+        <contributor id="wilson.javier">
+            <contributor-name-display>Javier Wilson</contributor-name-display>
+            <contributor-id type="github">javierwilson</contributor-id>
         </contributor>
     </contributor-list>
 </doc>
