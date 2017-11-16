@@ -245,9 +245,39 @@ sub run
         $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegmentName, $strDestinationFile)}, 0,
             "WAL segment copied");
 
-        # Using the returned values, confirm the correct file is copied
+        # Confirm the correct file is copied
         $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strFileHash,
             '    check correct WAL copied when in multiple locations');
+
+        # get files from an older DB version to simulate restoring from an old backup set to a database that is of that same version
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Create same WAL name in older DB archive but with different data to ensure it is copied
+        $strArchivePath = $self->{strArchivePath} . "/" . PG_VERSION_93 . "-2/";
+        $strWalMajorPath = "${strArchivePath}/" . substr($strWalSegment, 0, 16);
+        $strWalSegmentName = "${strWalSegment}-${strFileHash}";
+
+        my $strWalContent = 'WALTESTDATA';
+        my $strWalHash = sha1_hex($strWalContent);
+
+        # Store with actual data that will match the hash check
+        storageRepo()->pathCreate($strWalMajorPath, {bCreateParent => true});
+        storageRepo()->put("${strWalMajorPath}/${strWalSegmentName}", $strWalContent);
+
+        # Remove the destination file to ensure it is copied
+        storageTest()->remove($strDestinationFile);
+
+        # Remove the current pg_control file and copy the older db pg_control file into the pg_control path
+        storageTest()->remove($self->{strDbPath} . '/' . DB_FILE_PGCONTROL);
+        executeTest(
+            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $self->{strDbPath} . '/' .
+            DB_FILE_PGCONTROL);
+
+        $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegmentName, $strDestinationFile)}, 0,
+            "WAL segment copied from older db backupset to same version older db");
+
+        # Confirm the correct file is copied
+        $self->testResult(sub {sha1_hex(${storageRepo()->get($strDestinationFile)})}, $strWalHash,
+            '    check correct WAL copied from older db');
     }
 }
 
