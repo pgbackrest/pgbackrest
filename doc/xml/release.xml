@@ -20,6 +20,14 @@
 
                         <p>Fixed an issue that could cause copying large manifests to fail during restore.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where backup sets from an older version of the database could not be restored to another database of the same version.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>

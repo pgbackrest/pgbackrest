@@ -100,14 +100,7 @@ sub get
     $strDestinationFile = walPath($strDestinationFile, cfgOption(CFGOPT_DB_PATH, false), cfgCommandName(cfgCommandGet()));
 
     # Get the wal segment filename
-    my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(
-        undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef);
-
-    if (!defined($strArchiveFile) && !walIsSegment($strSourceArchive) &&
-        $oStorageRepo->exists(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSourceArchive}"))
-    {
-        $strArchiveFile = $strSourceArchive;
-    }
+    my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(undef, undef, $strSourceArchive, false);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned

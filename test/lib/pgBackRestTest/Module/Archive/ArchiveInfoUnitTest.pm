@@ -75,6 +75,16 @@ sub run
     my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
 
     ################################################################################################################################
+    if ($self->begin("Archive::Info::new()"))
+    {
+        $self->testException(sub {new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, ERROR_FILE_MISSING,
+            ARCHIVE_INFO_FILE . " does not exist but is required to push/get WAL segments\n" .
+            "HINT: is archive_command configured in postgresql.conf?\n" .
+            "HINT: has a stanza-create been performed?\n" .
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+    }
+
+    ################################################################################################################################
     if ($self->begin("Archive::Info::reconstruct()"))
     {
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
@@ -128,6 +138,48 @@ sub run
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/'
             . ARCHIVE_INFO_FILE) && ($oArchiveInfo->cipherPassSub() eq $strCipherPassSub)}, true,
             '    new archive info encrypted');
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Archive::Info::archiveIdList(), check(), archiveId()"))
+    {
+        my @stryArchiveId;
+        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
+            {bLoad => false, bIgnoreMissing => true});
+
+        $oArchiveInfo->create(PG_VERSION_92, WAL_VERSION_92_SYS_ID, false);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_94_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 10);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->save();
+
+        # Check gets only the latest DB and returns only that archiveId
+        push(@stryArchiveId, $oArchiveInfo->check(PG_VERSION_93, WAL_VERSION_93_SYS_ID));
+        $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_93 . "-13")}, true,
+            'check - return only newest archiveId');
+
+        $self->testResult(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_93, ullDbSysId => WAL_VERSION_93_SYS_ID})},
+            PG_VERSION_93 . "-13", 'archiveId - return only newest archiveId for multiple histories');
+
+        $self->testException(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_94, ullDbSysId => BOGUS})}, ERROR_UNKNOWN,
+            "unable to retrieve the archive id for database version '" . PG_VERSION_94 . "' and system-id '" . BOGUS . "'");
+
+        $self->testException(sub {$oArchiveInfo->check(PG_VERSION_94, WAL_VERSION_94_SYS_ID)}, ERROR_ARCHIVE_MISMATCH,
+            "WAL segment version " . PG_VERSION_94 . " does not match archive version " . PG_VERSION_93 .
+            "\nWAL segment system-id " . WAL_VERSION_94_SYS_ID . " does not match archive system-id " . WAL_VERSION_93_SYS_ID .
+            "\nHINT: are you archiving to the correct stanza?");
+
+        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_93, WAL_VERSION_93_SYS_ID);
+        $self->testResult(sub {(@stryArchiveId == 2) && ($stryArchiveId[0] eq PG_VERSION_93 . "-13") &&
+            ($stryArchiveId[1] eq PG_VERSION_93 . "-2")}, true, 'archiveIdList - returns multiple archiveId - newest first');
+
+        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_94, WAL_VERSION_94_SYS_ID);
+        $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_94 . "-12")}, true,
+            'archiveIdList - returns older archiveId');
+
+        $self->testException(sub {$oArchiveInfo->archiveIdList(PG_VERSION_95, WAL_VERSION_94_SYS_ID)}, ERROR_UNKNOWN,
+            "unable to retrieve the archive id for database version '" . PG_VERSION_95 . "' and system-id '" .
+            WAL_VERSION_94_SYS_ID . "'");
     }
 
     ################################################################################################################################
