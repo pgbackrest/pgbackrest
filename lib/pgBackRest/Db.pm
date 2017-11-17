@@ -89,7 +89,7 @@ sub new
 
     if (defined($self->{iRemoteIdx}))
     {
-        $self->{strDbPath} = cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $self->{iRemoteIdx}));
+        $self->{strDbPath} = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $self->{iRemoteIdx}));
 
         if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
@@ -161,7 +161,7 @@ sub connect
             # Connect to the db
             my $strDbName = 'postgres';
             my $strDbUser = getpwuid($<);
-            my $strDbSocketPath = cfgOption(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $self->{iRemoteIdx}), false);
+            my $strDbSocketPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $self->{iRemoteIdx}), false);
 
             # Make sure the socket path is absolute
             if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
@@ -171,8 +171,9 @@ sub connect
             }
 
             # Construct the URI
-            my $strDbUri = "dbi:Pg:dbname=${strDbName};port=" . cfgOption(cfgOptionIndex(CFGOPT_DB_PORT, $self->{iRemoteIdx})) .
-                           (defined($strDbSocketPath) ? ";host=${strDbSocketPath}" : '');
+            my $strDbUri =
+                "dbi:Pg:dbname=${strDbName};port=" . cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $self->{iRemoteIdx})) .
+                (defined($strDbSocketPath) ? ";host=${strDbSocketPath}" : '');
 
             logDebugMisc
             (
@@ -1032,8 +1033,8 @@ sub dbObjectGet
         for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
             # Make sure a db is defined for this index
-            if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
-                cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
+            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
+                cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
                 # Create the db object
                 my $oDb;
@@ -1157,7 +1158,7 @@ sub multipleDb
     for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_DB_PATH); $iDbPathIdx++)
     {
         # If an index exists above 1 then return true
-        if (cfgOptionTest(cfgOptionIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
+        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
         {
             return true;
         }

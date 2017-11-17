@@ -179,7 +179,8 @@ sub run
                         "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
                         "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
                         "mkdir -p -m 755 ${strPerlModulePath} && " .
-                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath}'");
+                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
+                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}'");
                 }
             }
         }
@@ -315,9 +316,11 @@ sub run
 
                 my $strGccCommand =
                     'gcc -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
+                    '-Wfatal-errors -Wall -Wextra -Wwrite-strings ' .
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? '-Wpedantic ' : '') .
                     "-I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c " .
                     "/$self->{strBackRestBase}/test/src/common/harnessTest.c " .
-                    join(' ', @stryCFile) . ' -o test';
+                    join(' ', @stryCFile) . " -l crypto -o test";
 
                 executeTest(
                     'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .

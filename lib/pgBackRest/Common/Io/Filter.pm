@@ -51,6 +51,7 @@ sub bufferMax {shift->{oParent}->bufferMax()};
 sub className {shift->{oParent}->className()};
 sub close {shift->{oParent}->close()};
 sub eof {shift->{oParent}->eof()};
+sub eofSet {shift->{oParent}->eofSet(@_)};
 sub error {shift->{oParent}->error(@_)};
 sub id {shift->{oParent}->id()};
 sub handleRead {shift->{oParent}->handleRead()};

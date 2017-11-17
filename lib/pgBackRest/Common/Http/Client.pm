@@ -266,7 +266,15 @@ sub read
     $iRequestSize = $iRequestSize < $self->{iContentRemaining} ? $iRequestSize : $self->{iContentRemaining};
     $self->{iContentRemaining} -= $iRequestSize;
 
-    return $self->SUPER::read($rtBuffer, $iRequestSize, true);
+    my $iActualSize = $self->SUPER::read($rtBuffer, $iRequestSize, true);
+
+    # Set eof if there is nothing left to read
+    if ($self->{iContentRemaining} == 0)
+    {
+        $self->SUPER::eofSet(true);
+    }
+
+    return $iActualSize;
 }
 
 ####################################################################################################################################

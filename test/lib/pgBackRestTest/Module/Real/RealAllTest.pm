@@ -56,20 +56,22 @@ sub run
         $bS3 || $bHostBackup ? (HOST_BACKUP) : $bHostStandby ? (HOST_DB_MASTER, HOST_DB_STANDBY) : (HOST_DB_MASTER))
     {
         my $bCompress = $bHostBackup && !$bHostStandby;
+        my $bRepoEncrypt = ($bCompress && !$bS3) ? true : false;
 
         # Increment the run, log, and decide whether this unit test should be run
+        my $hyVm = vmGet();
+        my $strDbVersionMostRecent = ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1];
+
         next if (!$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}",
-            $self->pgVersion() eq PG_VERSION_96));
+            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${bCompress}, s3 ${bS3}, " .
+                "enc ${bRepoEncrypt}",
+            # Use the most recent db version on the expect vm for expect testing
+            $self->vm() eq VM_EXPECT && $self->pgVersion() eq $strDbVersionMostRecent));
 
         # Skip when s3 and host backup tests when there is more than one version of pg being tested and this is not the last one
-        my $hyVm = vmGet();
-
-        if (($bS3 || $bHostBackup) &&
-            (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1] ne $self->pgVersion()))
+        if (($bS3 || $bHostBackup) && (@{$hyVm->{$self->vm()}{&VM_DB_TEST}} > 1 && $strDbVersionMostRecent ne $self->pgVersion()))
         {
-            &log(INFO,
-                'skipped - this test is run this OS using PG ' . ${$hyVm->{$self->vm()}{&VM_DB_TEST}}[-1]);
+            &log(INFO, "skipped - this test is run this OS using PG ${strDbVersionMostRecent}");
             next;
         }
 
@@ -91,10 +93,7 @@ sub run
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
-             bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3});
-
-        # Create a manifest with the pg version to get version-specific paths
-        my $oManifest = new pgBackRest::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion()});
+             bCompress => $bCompress, bArchiveAsync => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Only perform extra tests on certain runs to save time
         my $bTestLocal = $self->runCurrent() == 1;
@@ -113,6 +112,14 @@ sub run
 
         # Create the stanza
         $oHostBackup->stanzaCreate('main create stanza info files');
+
+        # Get passphrase to access the Manifest file from backup.info - returns undefined if repo not encrypted
+        my $strCipherPass =
+            (new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP)))->cipherPassSub();
+
+        # Create a manifest with the pg version to get version-specific paths
+        my $oManifest = new pgBackRest::Manifest(BOGUS, {bLoad => false, strDbVersion => $self->pgVersion(),
+            strCipherPass => $strCipherPass, strCipherPassSub => $bRepoEncrypt ? ENCRYPTION_KEY_BACKUPSET : undef});
 
         # Static backup parameters
         my $fTestDelay = 1;
@@ -295,12 +302,15 @@ sub run
                     {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
             }
 
-            # Force the backup.info file to be recreated
-            $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
+            if (!$bRepoEncrypt)
+            {
+                # Force the backup.info file to be recreated
+                $oHostBackup->stanzaCreate('verify success with force', {strOptionalParam => ' --' . cfgOptionName(CFGOPT_FORCE)});
 
-            # Remove the backup info file
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-            forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+                # Remove the backup info file
+                forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
+                forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+            }
 
             # Change the database version by copying a new pg_control file to a new db-path to use for db mismatch test
             storageDb()->pathCreate(
@@ -319,10 +329,19 @@ sub run
                     $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
             }
 
-            # Run stanza-create online to confirm proper handling of configValidation error against new db-path
-            $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                {strOptionalParam => ' --' . $oHostBackup->optionIndexName(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
-                '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
+            if (!$bRepoEncrypt)
+            {
+                # Run stanza-create online to confirm proper handling of configValidation error against new db-path
+                $oHostBackup->stanzaCreate('fail on database mismatch with directory',
+                    {strOptionalParam => ' --' . $oHostBackup->optionIndexName(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
+                    '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
+            }
+            # If encrypted, need to clean out repo and recreate
+            else
+            {
+                forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP, {bRecurse => true});
+                forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
+            }
 
             # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
             #-----------------------------------------------------------------------------------------------------------------------
@@ -446,7 +465,7 @@ sub run
             }
 
             $oHostDbStandby->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
                 ' --recovery-option=standby_mode=on' .
                     ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
@@ -678,7 +697,7 @@ sub run
             $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
         }
 
@@ -691,7 +710,7 @@ sub run
             $iExpectedExitStatus = ERROR_PATH_NOT_EMPTY;
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
         }
 
@@ -708,9 +727,9 @@ sub run
         $iExpectedExitStatus = undef;
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
             $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-            $bTestLocal ? ' --db-include=test1' : undef);
+            ($bTestLocal ? ' --db-include=test1' : '') . ' --buffer-size=16384');
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
@@ -868,7 +887,7 @@ sub run
             storageDb()->move($self->testPath . '/recovery.conf', $oHostDbMaster->dbBasePath() . '/recovery.conf');
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
             $oHostDbMaster->clusterStart();
@@ -949,7 +968,7 @@ sub run
             $oHostDbMaster->clusterStop();
 
             $oHostDbMaster->restore(
-                cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
+                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
                 $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
 
             $oHostDbMaster->clusterStart();

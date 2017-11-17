@@ -7,6 +7,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Config;
 use Exporter qw(import);
     our @EXPORT = qw();
 use Fcntl qw(SEEK_CUR O_RDONLY);
@@ -32,7 +33,7 @@ use constant REGEX_ARCHIVE_DIR_WAL                                  => '^[0-F]{1
 ####################################################################################################################################
 # PostgreSQL WAL system id offset
 ####################################################################################################################################
-use constant PG_WAL_SYSTEM_ID_OFFSET_GTE_93                         => 20;
+use constant PG_WAL_SYSTEM_ID_OFFSET_GTE_93                         => 12 + $Config{ptrsize};
     push @EXPORT, qw(PG_WAL_SYSTEM_ID_OFFSET_GTE_93);
 use constant PG_WAL_SYSTEM_ID_OFFSET_LT_93                          => 12;
     push @EXPORT, qw(PG_WAL_SYSTEM_ID_OFFSET_LT_93);

@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# Configuration Rule Interface
+# Configuration Definition Interface
 ####################################################################################################################################
-package pgBackRest::Config::Rule;
+package pgBackRest::Config::Define;
 
 use strict;
 use warnings FATAL => qw(all);
@@ -9,16 +9,71 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
+use Storable qw(dclone);
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Data;
 
 ####################################################################################################################################
-# Copy indexed rules locally
+# Generate indexed defines
 ####################################################################################################################################
-my $rhOptionRuleIndex = cfgdefRuleIndex();
-my $iOptionTotal = scalar(keys(%{$rhOptionRuleIndex}));
+my $rhConfigDefineIndex = cfgDefine();
+
+foreach my $strKey (sort(keys(%{$rhConfigDefineIndex})))
+{
+    # Build options for all possible db configurations
+    if (defined($rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX}) &&
+        $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_DB)
+    {
+        my $strPrefix = $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX};
+
+        for (my $iIndex = 1; $iIndex <= CFGDEF_INDEX_DB; $iIndex++)
+        {
+            my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
+
+            $rhConfigDefineIndex->{$strKeyNew} = dclone($rhConfigDefineIndex->{$strKey});
+
+            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_DB;
+            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX} = $iIndex - 1;
+
+            # Create the alternate name for option index 1
+            if ($iIndex == 1)
+            {
+                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_ALT_NAME} = $strKey;
+            }
+            else
+            {
+                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_REQUIRED} = false;
+            }
+
+            if (defined($rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}) &&
+                defined($rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION}))
+            {
+                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION} =
+                    "${strPrefix}${iIndex}" .
+                    substr(
+                        $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION},
+                        length($strPrefix));
+            }
+        }
+
+        delete($rhConfigDefineIndex->{$strKey});
+    }
+    else
+    {
+        $rhConfigDefineIndex->{$strKey}{&CFGDEF_INDEX} = 0;
+    }
+}
+
+my $iOptionTotal = scalar(keys(%{$rhConfigDefineIndex}));
+
+sub cfgDefineIndex
+{
+    return dclone($rhConfigDefineIndex);
+}
+
+push @EXPORT, qw(cfgDefineIndex);
 
 ####################################################################################################################################
 # Create maps to convert option ids to names and vice versa
@@ -30,16 +85,16 @@ my $rhOptionNameAlt;
 {
     my $iIndex = 0;
 
-    foreach my $strOption (sort(keys(%{$rhOptionRuleIndex})))
+    foreach my $strOption (sort(keys(%{$rhConfigDefineIndex})))
     {
         $rhOptionNameId->{$strOption} = $iIndex;
         $rhOptionNameAlt->{$strOption} = $strOption;
         $rhOptionIdName->{$iIndex} = $strOption;
 
-        if (defined(cfgRuleOptionNameAlt($strOption)))
+        if (defined(cfgDefOptionNameAlt($strOption)))
         {
-            $rhOptionNameId->{cfgRuleOptionNameAlt($strOption)} = $iIndex;
-            $rhOptionNameAlt->{cfgRuleOptionNameAlt($strOption)} = $strOption;
+            $rhOptionNameId->{cfgDefOptionNameAlt($strOption)} = $iIndex;
+            $rhOptionNameAlt->{cfgDefOptionNameAlt($strOption)} = $strOption;
         }
 
         $iIndex++;
@@ -47,18 +102,19 @@ my $rhOptionNameAlt;
 }
 
 ####################################################################################################################################
-# cfgOptionRule - get a rule for the option from a command or default
+# Get a define for the option from a command or default
 ####################################################################################################################################
-sub cfgOptionRule
+sub cfgOptionDefine
 {
     my $strCommand = shift;
     my $strOption = shift;
-    my $strRule = shift;
+    my $strDefine = shift;
 
     return
-        defined($rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand}{$strRule}) ?
-            $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand}{$strRule} :
-            $rhOptionRuleIndex->{$strOption}{$strRule};
+        defined($rhConfigDefineIndex->{$strOption}{&CFGDEF_COMMAND}{$strCommand}) &&
+        defined($rhConfigDefineIndex->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{$strDefine}) ?
+            $rhConfigDefineIndex->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{$strDefine} :
+            $rhConfigDefineIndex->{$strOption}{$strDefine};
 }
 
 ####################################################################################################################################
@@ -104,15 +160,15 @@ sub cfgOptionTotal
 push @EXPORT, qw(cfgOptionTotal);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowList - does the option have a specific list of allowed values?
+# cfgDefOptionAllowList - does the option have a specific list of allowed values?
 ####################################################################################################################################
-sub cfgRuleOptionAllowList
+sub cfgDefOptionAllowList
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $bError = shift;
 
-    my $rhAllowList = cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_LIST);
+    my $rhAllowList = cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_LIST);
 
     if (!defined($rhAllowList) && defined($bError) && $bError)
     {
@@ -128,60 +184,60 @@ sub cfgRuleOptionAllowList
     return defined($rhAllowList) ? true : false;
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowList);
+push @EXPORT, qw(cfgDefOptionAllowList);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowListValue - get an allow list value
+# cfgDefOptionAllowListValue - get an allow list value
 ####################################################################################################################################
-sub cfgRuleOptionAllowListValue
+sub cfgDefOptionAllowListValue
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $iValueIdx = shift;
 
     # Index shouldn't be greater than the total number of values
-    if ($iValueIdx >= cfgRuleOptionAllowListValueTotal($strCommand, $strOption, $iValueIdx))
+    if ($iValueIdx >= cfgDefOptionAllowListValueTotal($strCommand, $strOption, $iValueIdx))
     {
         confess &log(ASSERT, "invalid allow list value index ${iValueIdx} for ${strCommand}, ${strOption}");
     }
 
     # Return value
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_LIST)->[$iValueIdx];
+    return cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_LIST)->[$iValueIdx];
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowListValue);
+push @EXPORT, qw(cfgDefOptionAllowListValue);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowListValueTotal - how many values are allowed for the option?
+# cfgDefOptionAllowListValueTotal - how many values are allowed for the option?
 ####################################################################################################################################
-sub cfgRuleOptionAllowListValueTotal
+sub cfgDefOptionAllowListValueTotal
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
     # Make sure the allow list exists
-    cfgRuleOptionAllowList($strCommand, $strOption, true);
+    cfgDefOptionAllowList($strCommand, $strOption, true);
 
     # Return total elements in the list
-    return scalar(@{cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_LIST)});
+    return scalar(@{cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_LIST)});
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowListValueTotal);
+push @EXPORT, qw(cfgDefOptionAllowListValueTotal);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowListValueValid - is the value valid for this option?
+# cfgDefOptionAllowListValueValid - is the value valid for this option?
 ####################################################################################################################################
-sub cfgRuleOptionAllowListValueValid
+sub cfgDefOptionAllowListValueValid
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $strValue = shift;
 
     # Make sure the allow list exists
-    cfgRuleOptionAllowList($strCommand, $strOption, true);
+    cfgDefOptionAllowList($strCommand, $strOption, true);
 
     # Check if the value is valid
-    foreach my $strValueMatch (@{cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_LIST)})
+    foreach my $strValueMatch (@{cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_LIST)})
     {
         if ($strValue eq $strValueMatch)
         {
@@ -192,18 +248,18 @@ sub cfgRuleOptionAllowListValueValid
     return false;
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowListValueValid);
+push @EXPORT, qw(cfgDefOptionAllowListValueValid);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowRange - does the option have min/max values?
+# cfgDefOptionAllowRange - does the option have min/max values?
 ####################################################################################################################################
-sub cfgRuleOptionAllowRange
+sub cfgDefOptionAllowRange
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $bError = shift;
 
-    my $rhAllowRange = cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_RANGE);
+    my $rhAllowRange = cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_RANGE);
 
     if (!defined($rhAllowRange) && defined($bError) && $bError)
     {
@@ -219,162 +275,162 @@ sub cfgRuleOptionAllowRange
     return defined($rhAllowRange) ? true : false;
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowRange);
+push @EXPORT, qw(cfgDefOptionAllowRange);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowRangeMax - get max value in allowed range
+# cfgDefOptionAllowRangeMax - get max value in allowed range
 ####################################################################################################################################
-sub cfgRuleOptionAllowRangeMax
+sub cfgDefOptionAllowRangeMax
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
     # Make sure the allow range exists
-    cfgRuleOptionAllowRange($strCommand, $strOption);
+    cfgDefOptionAllowRange($strCommand, $strOption);
 
     # Return value
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_RANGE)->[1];
+    return cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_RANGE)->[1];
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowRangeMax);
+push @EXPORT, qw(cfgDefOptionAllowRangeMax);
 
 ####################################################################################################################################
-# cfgRuleOptionAllowRangeMin - get min value in allowed range
+# cfgDefOptionAllowRangeMin - get min value in allowed range
 ####################################################################################################################################
-sub cfgRuleOptionAllowRangeMin
+sub cfgDefOptionAllowRangeMin
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
     # Make sure the allow range exists
-    cfgRuleOptionAllowRange($strCommand, $strOption);
+    cfgDefOptionAllowRange($strCommand, $strOption);
 
     # Return value
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_ALLOW_RANGE)->[0];
+    return cfgOptionDefine($strCommand, $strOption, CFGDEF_ALLOW_RANGE)->[0];
 }
 
-push @EXPORT, qw(cfgRuleOptionAllowRangeMin);
+push @EXPORT, qw(cfgDefOptionAllowRangeMin);
 
 ####################################################################################################################################
-# cfgRuleOptionDefault - option default, if any
+# cfgDefOptionDefault - option default, if any
 ####################################################################################################################################
-sub cfgRuleOptionDefault
+sub cfgDefOptionDefault
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_DEFAULT);
+    return cfgOptionDefine($strCommand, $strOption, CFGDEF_DEFAULT);
 }
 
-push @EXPORT, qw(cfgRuleOptionDefault);
+push @EXPORT, qw(cfgDefOptionDefault);
 
 ####################################################################################################################################
-# cfgRuleOptionDepend - does the option depend on another option being set or having a certain value?
+# cfgDefOptionDepend - does the option depend on another option being set or having a certain value?
 ####################################################################################################################################
-sub cfgRuleOptionDepend
+sub cfgDefOptionDepend
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $bError = shift;
 
-    my $rhDepend = cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_DEPEND);
+    my $rhDepend = cfgOptionDefine($strCommand, $strOption, CFGDEF_DEPEND);
 
     if (!defined($rhDepend) && defined($bError) && $bError)
     {
-        confess &log(ASSERT, "depend rule not set for ${strCommand}, ${strOption}");
+        confess &log(ASSERT, "depend define not set for ${strCommand}, ${strOption}");
     }
 
     return defined($rhDepend) ? true : false;
 }
 
-push @EXPORT, qw(cfgRuleOptionDepend);
+push @EXPORT, qw(cfgDefOptionDepend);
 
 ####################################################################################################################################
-# cfgRuleOptionDependOption - name of the option that this option depends on
+# cfgDefOptionDependOption - name of the option that this option depends on
 ####################################################################################################################################
-sub cfgRuleOptionDependOption
+sub cfgDefOptionDependOption
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
-    # Make sure the depend rule exists
-    cfgRuleOptionDepend($strCommand, $strOption, true);
+    # Make sure the depend define exists
+    cfgDefOptionDepend($strCommand, $strOption, true);
 
     # Error if the depend option does not exist
-    my $rhDepend = cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_DEPEND);
+    my $rhDepend = cfgOptionDefine($strCommand, $strOption, CFGDEF_DEPEND);
 
-    if (!defined($rhDepend->{&CFGBLDDEF_RULE_DEPEND_OPTION}))
+    if (!defined($rhDepend->{&CFGDEF_DEPEND_OPTION}))
     {
-        confess &log(ASSERT, "depend rule option not set for ${strCommand}, ${strOption}");
+        confess &log(ASSERT, "depend define option not set for ${strCommand}, ${strOption}");
     }
 
-    return $rhDepend->{&CFGBLDDEF_RULE_DEPEND_OPTION};
+    return $rhDepend->{&CFGDEF_DEPEND_OPTION};
 }
 
-push @EXPORT, qw(cfgRuleOptionDependOption);
+push @EXPORT, qw(cfgDefOptionDependOption);
 
 ####################################################################################################################################
-# cfgRuleOptionDependValue - get a depend option value
+# cfgDefOptionDependValue - get a depend option value
 ####################################################################################################################################
-sub cfgRuleOptionDependValue
+sub cfgDefOptionDependValue
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $iValueIdx = shift;
 
     # Index shouldn't be greater than the total number of values
-    if ($iValueIdx >= cfgRuleOptionDependValueTotal($strCommand, $strOption, $iValueIdx))
+    if ($iValueIdx >= cfgDefOptionDependValueTotal($strCommand, $strOption, $iValueIdx))
     {
         confess &log(ASSERT, "invalid depend value index ${iValueIdx} for ${strCommand}, ${strOption}");
     }
 
     # Return value
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_DEPEND)->{&CFGBLDDEF_RULE_DEPEND_LIST}->[$iValueIdx];
+    return cfgOptionDefine($strCommand, $strOption, CFGDEF_DEPEND)->{&CFGDEF_DEPEND_LIST}->[$iValueIdx];
 }
 
-push @EXPORT, qw(cfgRuleOptionDependValue);
+push @EXPORT, qw(cfgDefOptionDependValue);
 
 ####################################################################################################################################
-# cfgRuleOptionDependValueTotal - how many values are allowed for the depend option?
+# cfgDefOptionDependValueTotal - how many values are allowed for the depend option?
 #
 # 0 indicates that the value of the depend option doesn't matter, only that is is set.
 ####################################################################################################################################
-sub cfgRuleOptionDependValueTotal
+sub cfgDefOptionDependValueTotal
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
-    # Make sure the depend rule exists
-    cfgRuleOptionDepend($strCommand, $strOption, true);
+    # Make sure the depend define exists
+    cfgDefOptionDepend($strCommand, $strOption, true);
 
     # It's OK for the list not to be defined
-    my $rhDepend = cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_DEPEND);
+    my $rhDepend = cfgOptionDefine($strCommand, $strOption, CFGDEF_DEPEND);
 
-    if (!defined($rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}))
+    if (!defined($rhDepend->{&CFGDEF_DEPEND_LIST}))
     {
         return 0;
     }
 
     # Return total elements in the list
-    return scalar(@{$rhDepend->{&CFGBLDDEF_RULE_DEPEND_LIST}});
+    return scalar(@{$rhDepend->{&CFGDEF_DEPEND_LIST}});
 }
 
-push @EXPORT, qw(cfgRuleOptionDependValueTotal);
+push @EXPORT, qw(cfgDefOptionDependValueTotal);
 
 ####################################################################################################################################
-# cfgRuleOptionDependValueValid - is the depend valid valid?
+# cfgDefOptionDependValueValid - is the depend valid valid?
 ####################################################################################################################################
-sub cfgRuleOptionDependValueValid
+sub cfgDefOptionDependValueValid
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
     my $strValue = shift;
 
-    # Make sure the depend rule exists
-    cfgRuleOptionDepend($strCommand, $strOption, true);
+    # Make sure the depend define exists
+    cfgDefOptionDepend($strCommand, $strOption, true);
 
     # Check if the value is valid
-    foreach my $strValueMatch (@{cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_DEPEND)->{&CFGBLDDEF_RULE_DEPEND_LIST}})
+    foreach my $strValueMatch (@{cfgOptionDefine($strCommand, $strOption, CFGDEF_DEPEND)->{&CFGDEF_DEPEND_LIST}})
     {
         if ($strValue eq $strValueMatch)
         {
@@ -385,20 +441,19 @@ sub cfgRuleOptionDependValueValid
     return false;
 }
 
-push @EXPORT, qw(cfgRuleOptionDependValueValid);
+push @EXPORT, qw(cfgDefOptionDependValueValid);
 
 ####################################################################################################################################
-# cfgRuleOptionHint - option hint, if any
+# cfgOptionIndex - index for option
 ####################################################################################################################################
-sub cfgRuleOptionHint
+sub cfgOptionIndex
 {
-    my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
-    return cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_HINT);
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_INDEX};
 }
 
-push @EXPORT, qw(cfgRuleOptionHint);
+push @EXPORT, qw(cfgOptionIndex);
 
 ####################################################################################################################################
 # cfgOptionIndexTotal - max index for options that are indexed (e.g., db)
@@ -407,120 +462,110 @@ sub cfgOptionIndexTotal
 {
     my $strOption = cfgOptionName(shift);
 
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_INDEX};
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_INDEX_TOTAL};
 }
 
 push @EXPORT, qw(cfgOptionIndexTotal);
 
 ####################################################################################################################################
-# cfgRuleOptionNameAlt - alternative or deprecated option name
+# cfgDefOptionNameAlt - alternative or deprecated option name
 ####################################################################################################################################
-sub cfgRuleOptionNameAlt
+sub cfgDefOptionNameAlt
 {
     my $strOption = cfgOptionName(shift);
 
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_ALT_NAME};
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_ALT_NAME};
 }
 
-push @EXPORT, qw(cfgRuleOptionNameAlt);
+push @EXPORT, qw(cfgDefOptionNameAlt);
 
 ####################################################################################################################################
-# cfgRuleOptionNegate - is the boolean option negatable?
+# cfgDefOptionNegate - is the boolean option negatable?
 ####################################################################################################################################
-sub cfgRuleOptionNegate
+sub cfgDefOptionNegate
 {
     my $strOption = cfgOptionName(shift);
 
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_NEGATE};
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_NEGATE};
 }
 
-push @EXPORT, qw(cfgRuleOptionNegate);
+push @EXPORT, qw(cfgDefOptionNegate);
 
 ####################################################################################################################################
-# cfgRuleOptionPrefix - fixed prefix for indexed options
+# cfgDefOptionPrefix - fixed prefix for indexed options
 ####################################################################################################################################
-sub cfgRuleOptionPrefix
+sub cfgDefOptionPrefix
 {
     my $strOption = cfgOptionName(shift);
 
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_PREFIX};
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_PREFIX};
 }
 
-push @EXPORT, qw(cfgRuleOptionPrefix);
+push @EXPORT, qw(cfgDefOptionPrefix);
 
 ####################################################################################################################################
-# cfgRuleOptionRequired - is the option required?
+# cfgDefOptionRequired - is the option required?
 ####################################################################################################################################
-sub cfgRuleOptionRequired
-{
-    my $strCommand = shift;
-    my $strOption = cfgOptionName(shift);
-
-    my $rxRule = cfgOptionRule($strCommand, $strOption, CFGBLDDEF_RULE_REQUIRED);
-    return defined($rxRule) ? $rxRule : true;
-}
-
-push @EXPORT, qw(cfgRuleOptionRequired);
-
-####################################################################################################################################
-# cfgRuleOptionSection - section to contain optio (global or stanza), all others are command-line only
-####################################################################################################################################
-sub cfgRuleOptionSection
-{
-    my $strOption = cfgOptionName(shift);
-
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_SECTION};
-}
-
-push @EXPORT, qw(cfgRuleOptionSection);
-
-####################################################################################################################################
-# cfgRuleOptionSecure - can the option be passed on the command-line?
-####################################################################################################################################
-sub cfgRuleOptionSecure
-{
-    my $strOption = cfgOptionName(shift);
-
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_SECURE};
-}
-
-push @EXPORT, qw(cfgRuleOptionSecure);
-
-####################################################################################################################################
-# cfgRuleOptionType - data type of the option (e.g. boolean, string)
-####################################################################################################################################
-sub cfgRuleOptionType
-{
-    my $strOption = cfgOptionName(shift);
-
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_TYPE};
-}
-
-push @EXPORT, qw(cfgRuleOptionType);
-
-####################################################################################################################################
-# cfgRuleOptionValid - is the option valid for the command?
-####################################################################################################################################
-sub cfgRuleOptionValid
+sub cfgDefOptionRequired
 {
     my $strCommand = shift;
     my $strOption = cfgOptionName(shift);
 
-    return defined($rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand}) ? true : false;
+    my $rxDefine = cfgOptionDefine($strCommand, $strOption, CFGDEF_REQUIRED);
+    return defined($rxDefine) ? $rxDefine : true;
 }
 
-push @EXPORT, qw(cfgRuleOptionValid);
+push @EXPORT, qw(cfgDefOptionRequired);
 
 ####################################################################################################################################
-# cfgRuleOptionValueHash - is the option a true hash or just a list of keys?
+# cfgDefOptionSection - section to contain optio (global or stanza), all others are command-line only
 ####################################################################################################################################
-sub cfgRuleOptionValueHash
+sub cfgDefOptionSection
 {
     my $strOption = cfgOptionName(shift);
 
-    return $rhOptionRuleIndex->{$strOption}{&CFGBLDDEF_RULE_HASH_VALUE};
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_SECTION};
 }
 
-push @EXPORT, qw(cfgRuleOptionValueHash);
+push @EXPORT, qw(cfgDefOptionSection);
+
+####################################################################################################################################
+# cfgDefOptionSecure - can the option be passed on the command-line?
+####################################################################################################################################
+sub cfgDefOptionSecure
+{
+    my $strOption = cfgOptionName(shift);
+
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_SECURE};
+}
+
+push @EXPORT, qw(cfgDefOptionSecure);
+
+####################################################################################################################################
+# cfgDefOptionType - data type of the option (e.g. boolean, string)
+####################################################################################################################################
+sub cfgDefOptionType
+{
+    my $strOption = cfgOptionName(shift);
+
+    return $rhConfigDefineIndex->{$strOption}{&CFGDEF_TYPE};
+}
+
+push @EXPORT, qw(cfgDefOptionType);
+
+####################################################################################################################################
+# cfgDefOptionValid - is the option valid for the command?
+####################################################################################################################################
+sub cfgDefOptionValid
+{
+    my $strCommand = shift;
+    my $strOption = cfgOptionName(shift);
+
+    return
+        defined($rhConfigDefineIndex->{$strOption}{&CFGDEF_COMMAND}) &&
+        defined($rhConfigDefineIndex->{$strOption}{&CFGDEF_COMMAND}{$strCommand}) ? true : false;
+}
+
+push @EXPORT, qw(cfgDefOptionValid);
 
 1;

@@ -75,6 +75,7 @@ sub new
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
             bRepoLocal => $oParam->{bRepoLocal},
+            bRepoEncrypt => $oParam->{bRepoEncrypt},
         });
     bless $self, $class;
 
@@ -331,12 +332,12 @@ sub restore
     $strComment = 'restore' .
                   ($bDelta ? ' delta' : '') .
                   ($bForce ? ', force' : '') .
-                  ($strBackup ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? ", backup '${strBackup}'" : '') .
+                  ($strBackup ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? ", backup '${strBackup}'" : '') .
                   ($strType ? ", type '${strType}'" : '') .
                   ($strTarget ? ", target '${strTarget}'" : '') .
                   ($strTargetTimeline ? ", timeline '${strTargetTimeline}'" : '') .
                   (defined($bTargetExclusive) && $bTargetExclusive ? ', exclusive' : '') .
-                  (defined($strTargetAction) && $strTargetAction ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
+                  (defined($strTargetAction) && $strTargetAction ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
                       ? ', ' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
                   (defined($oRemapHashRef) ? ', remap' : '') .
                   (defined($iExpectedExitStatus) ? ", expect exit ${iExpectedExitStatus}" : '') .
@@ -357,7 +358,8 @@ sub restore
         my $oExpectedManifest = new pgBackRest::Manifest(
             storageRepo()->pathGet(
                 STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) . qw{/} .
-                    FILE_MANIFEST));
+                    FILE_MANIFEST),
+            {strCipherPass => $oHostBackup->cipherPassManifest()});
 
         $oExpectedManifestRef = $oExpectedManifest->{oContent};
 
@@ -410,13 +412,13 @@ sub restore
         $self->configRecovery($oHostBackup, $oRecoveryHashRef);
     }
 
-    # Create the restorecommand
+    # Create the restore command
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         (defined($bDelta) && $bDelta ? ' --delta' : '') .
         (defined($bForce) && $bForce ? ' --force' : '') .
-        ($strBackup ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
+        ($strBackup ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET) ? " --set=${strBackup}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam} " : '') .
         (defined($strType) && $strType ne CFGOPTVAL_RESTORE_TYPE_DEFAULT ? " --type=${strType}" : '') .
         (defined($strTarget) ? " --target=\"${strTarget}\"" : '') .
@@ -424,7 +426,7 @@ sub restore
         (defined($bTargetExclusive) && $bTargetExclusive ? ' --target-exclusive' : '') .
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
-        (defined($strTargetAction) && $strTargetAction ne cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
+        (defined($strTargetAction) && $strTargetAction ne cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_TARGET_ACTION)
             ? ' --' . cfgOptionName(CFGOPT_TARGET_ACTION) . "=${strTargetAction}" : '') .
         ' --stanza=' . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
@@ -469,13 +471,15 @@ sub restoreCompare
             new pgBackRest::Manifest(
                 storageRepo()->pathGet(
                     STORAGE_REPO_BACKUP . qw{/} . ($strBackup eq 'latest' ? $oHostBackup->backupLast() : $strBackup) .
-                        '/'. FILE_MANIFEST));
+                        '/'. FILE_MANIFEST),
+            {strCipherPass => $oHostBackup->cipherPassManifest()});
 
         $oLastManifest =
             new pgBackRest::Manifest(
                 storageRepo()->pathGet(
                     STORAGE_REPO_BACKUP . qw{/} .
-                        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST));
+                        ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR} . qw{/} . FILE_MANIFEST),
+            {strCipherPass => $oHostBackup->cipherPassManifest()});
     }
 
     # Generate the tablespace map for real backups
@@ -529,7 +533,8 @@ sub restoreCompare
 
     my $oActualManifest = new pgBackRest::Manifest(
         "${strTestPath}/" . FILE_MANIFEST,
-        {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION}});
+        {bLoad => false, strDbVersion => $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION},
+            oStorage => storageTest()});
 
     $oActualManifest->set(
         MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef,
@@ -649,6 +654,14 @@ sub restoreCompare
 
     $oActualManifest->set(INI_SECTION_BACKREST, INI_KEY_VERSION, undef,
                           ${$oExpectedManifestRef}{&INI_SECTION_BACKREST}{&INI_KEY_VERSION});
+
+    # Copy passphrase if one exists
+    if (defined($oExpectedManifestRef->{&INI_SECTION_CIPHER}) &&
+        defined($oExpectedManifestRef->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS}))
+    {
+        $oActualManifest->set(INI_SECTION_CIPHER, INI_KEY_CIPHER_PASS, undef,
+                              $oExpectedManifestRef->{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS});
+    }
 
     # This option won't be set in the actual manifest
     delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE});

@@ -497,6 +497,7 @@ sub queueJob
         $strKey,
         $strOp,
         $rParam,
+        $rParamSecure,
     ) =
         logDebugParam
         (
@@ -506,12 +507,19 @@ sub queueJob
             {name => 'strKey'},
             {name => 'strOp'},
             {name => 'rParam'},
+            {name => 'rParamSecure', optional => true, redact => true},
         );
 
     # Don't add jobs while in the middle of processing the current queue
     if ($self->processing())
     {
         confess &log(ASSERT, 'new jobs cannot be added until processing is complete');
+    }
+
+    # Copy the parameters to a new variable so we can push the secure parameters on
+    if (defined($rParamSecure))
+    {
+        push(@{$rParam}, @{$rParamSecure});
     }
 
     # Build the hash

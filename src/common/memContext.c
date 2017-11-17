@@ -57,7 +57,7 @@ static void *memAllocInternal(size_t size, bool zero)
 
     // Error when malloc fails
     if (!buffer)
-        ERROR_THROW(MemoryError, "unable to allocate %lu bytes", size);
+        THROW(MemoryError, "unable to allocate %lu bytes", size);
 
     // Zero the memory when requested
     if (zero)
@@ -77,11 +77,11 @@ static void *memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew,
 
     // Error when realloc fails
     if(!bufferNew)
-        ERROR_THROW(MemoryError, "unable to reallocate %lu bytes", sizeNew);
+        THROW(MemoryError, "unable to reallocate %lu bytes", sizeNew);
 
     // Zero the new memory when requested - old memory is left untouched else why bother with a realloc?
     if (zeroNew)
-        memset(bufferNew + sizeOld, 0, sizeNew - sizeOld);
+        memset((unsigned char *)bufferNew + sizeOld, 0, sizeNew - sizeOld);
 
     // Return the buffer
     return bufferNew;
@@ -94,7 +94,7 @@ static void memFreeInternal(void *buffer)
 {
     // Error if pointer is null
     if(!buffer)
-        ERROR_THROW(MemoryError, "unable to free null pointer");
+        THROW(MemoryError, "unable to free null pointer");
 
     // Free the buffer
     free(buffer);
@@ -108,7 +108,7 @@ memContextNew(const char *name)
 {
     // Check context name length
     if (strlen(name) == 0 || strlen(name) > MEM_CONTEXT_NAME_SIZE)
-        ERROR_THROW(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
+        THROW(AssertError, "context name length must be > 0 and <= %d", MEM_CONTEXT_NAME_SIZE);
 
     // Try to find space for the new context
     int contextIdx;
@@ -180,15 +180,15 @@ memContextCallback(MemContext *this, void (*callbackFunction)(void *), void *cal
 {
     // Error if context is not active
     if (this->state != memContextStateActive)
-        ERROR_THROW(AssertError, "cannot assign callback to inactive context");
+        THROW(AssertError, "cannot assign callback to inactive context");
 
     // Top context cannot have a callback
     if (this == memContextTop())
-        ERROR_THROW(AssertError, "top context may not have a callback");
+        THROW(AssertError, "top context may not have a callback");
 
     // Error if callback has already been set - there may be valid use cases for this but error until one is found
     if (this->callbackFunction)
-        ERROR_THROW(AssertError, "callback is already set for context '%s'", this->name);
+        THROW(AssertError, "callback is already set for context '%s'", this->name);
 
     // Set callback function and argument
     this->callbackFunction = callbackFunction;
@@ -269,7 +269,7 @@ memFree(void *buffer)
 {
     // Error if buffer is null
     if (!buffer)
-        ERROR_THROW(AssertError, "unable to free null allocation");
+        THROW(AssertError, "unable to free null allocation");
 
     // Find memory to free
     int allocIdx;
@@ -280,7 +280,7 @@ memFree(void *buffer)
 
     // Error if the buffer was not found
     if (allocIdx == memContextCurrent()->allocListSize)
-        ERROR_THROW(AssertError, "unable to find allocation");
+        THROW(AssertError, "unable to find allocation");
 
     // Free the buffer
     memFreeInternal(memContextCurrent()->allocList[allocIdx]);
@@ -295,7 +295,7 @@ memContextSwitch(MemContext *this)
 {
     // Error if context is not active
     if (this->state != memContextStateActive)
-        ERROR_THROW(AssertError, "cannot switch to inactive context");
+        THROW(AssertError, "cannot switch to inactive context");
 
     MemContext *memContextOld = memContextCurrent();
     contextCurrent = this;
@@ -329,7 +329,7 @@ memContextName(MemContext *this)
 {
     // Error if context is not active
     if (this->state != memContextStateActive)
-        ERROR_THROW(AssertError, "cannot get name for inactive context");
+        THROW(AssertError, "cannot get name for inactive context");
 
     return this->name;
 }
@@ -346,15 +346,15 @@ memContextFree(MemContext *this)
 
     // Top context cannot be freed
     if (this == memContextTop())
-        ERROR_THROW(AssertError, "cannot free top context");
+        THROW(AssertError, "cannot free top context");
 
     // Current context cannot be freed
     if (this == memContextCurrent())
-        ERROR_THROW(AssertError, "cannot free current context '%s'", this->name);
+        THROW(AssertError, "cannot free current context '%s'", this->name);
 
     // Error if context is not active
     if (this->state != memContextStateActive)
-        ERROR_THROW(AssertError, "cannot free inactive context");
+        THROW(AssertError, "cannot free inactive context");
 
     // Free child contexts
     if (this->contextChildListSize > 0)

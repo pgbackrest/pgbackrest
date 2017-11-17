@@ -11,18 +11,18 @@ bool testTryRecurseFinally = false;
 
 void testTryRecurse()
 {
-    ERROR_TRY()
+    TRY()
     {
         testTryRecurseTotal++;
         assert(errorContext.tryTotal == testTryRecurseTotal + 1);
 
         testTryRecurse();
     }
-    ERROR_CATCH(MemoryError)
+    CATCH(MemoryError)
     {
         testTryRecurseCatch = true;                                 // {uncoverable - catch should never be executed}
     }
-    ERROR_FINALLY()
+    FINALLY()
     {
         testTryRecurseFinally = true;
     }
@@ -40,22 +40,22 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("ERROR_TRY() with no errors"))
+    if (testBegin("TRY() with no errors"))
     {
         bool tryDone = false;
         bool catchDone = false;
         bool finallyDone = false;
 
-        ERROR_TRY()
+        TRY()
         {
             assert(errorContext.tryTotal == 1);
             tryDone = true;
         }
-        ERROR_CATCH_ANY()
+        CATCH_ANY()
         {
             catchDone = true;                                       // {uncoverable - catch should never be executed}
         }
-        ERROR_FINALLY()
+        FINALLY()
         {
             assert(errorContext.tryList[1].state == errorStateFinal);
             finallyDone = true;
@@ -68,52 +68,52 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("ERROR_TRY() with multiple catches"))
+    if (testBegin("TRY() with multiple catches"))
     {
         bool tryDone = false;
         bool catchDone = false;
         bool finallyDone = false;
 
-        ERROR_TRY()
+        TRY()
         {
             assert(errorContext.tryTotal == 1);
 
-            ERROR_TRY()
+            TRY()
             {
                 assert(errorContext.tryTotal == 2);
 
-                ERROR_TRY()
+                TRY()
                 {
                     assert(errorContext.tryTotal == 3);
 
-                    ERROR_TRY()
+                    TRY()
                     {
                         assert(errorContext.tryTotal == 4);
                         tryDone = true;
 
-                        ERROR_THROW(AssertError, BOGUS_STR);
+                        THROW(AssertError, BOGUS_STR);
                     }
                 }
-                ERROR_CATCH(AssertError)
+                CATCH(AssertError)
                 {
                     // Finally below should run even though this error has been rethrown
-                    ERROR_RETHROW();
+                    RETHROW();
                 }
-                ERROR_FINALLY()
+                FINALLY()
                 {
                     finallyDone = true;
                 }
             }
-            ERROR_CATCH_ANY()
+            CATCH_ANY()
             {
-                ERROR_RETHROW();
+                RETHROW();
             }
         }
-        ERROR_CATCH(MemoryError)
+        CATCH(MemoryError)
         {
             assert(false);                                              // {uncoverable - catch should never be executed}
         }
-        ERROR_CATCH(RuntimeError)
+        CATCH(RuntimeError)
         {
             assert(errorContext.tryTotal == 1);
             assert(errorContext.tryList[1].state == errorStateCatch);
@@ -134,12 +134,12 @@ void testRun()
         bool catchDone = false;
         bool finallyDone = false;
 
-        ERROR_TRY()
+        TRY()
         {
             tryDone = true;
             testTryRecurse();
         }
-        ERROR_CATCH(AssertError)
+        CATCH(AssertError)
         {
             assert(errorCode() == AssertError.code);
             assert(errorFileName() != NULL);
@@ -151,7 +151,7 @@ void testRun()
             assert(strcmp(errorTypeName(errorType()), AssertError.name) == 0);
             catchDone = true;
         }
-        ERROR_FINALLY()
+        FINALLY()
         {
             finallyDone = true;
         }

@@ -61,6 +61,7 @@ sub new
             bSynthetic => true,
             bStandby => $$oParam{bStandby},
             bRepoLocal => $oParam->{bRepoLocal},
+            bRepoEncrypt => $oParam->{bRepoEncrypt},
         });
     bless $self, $class;
 

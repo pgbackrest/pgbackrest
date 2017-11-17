@@ -50,6 +50,13 @@ use constant WAL_VERSION_95                                      => '95';
 use constant WAL_VERSION_95_SYS_ID                               => 6392579261579036436;
     push @EXPORT, qw(WAL_VERSION_95_SYS_ID);
 
+use constant ENCRYPTION_KEY_ARCHIVE                              => 'archive';
+    push @EXPORT, qw(ENCRYPTION_KEY_ARCHIVE);
+use constant ENCRYPTION_KEY_MANIFEST                             => 'manifest';
+    push @EXPORT, qw(ENCRYPTION_KEY_MANIFEST);
+use constant ENCRYPTION_KEY_BACKUPSET                            => 'backupset';
+    push @EXPORT, qw(ENCRYPTION_KEY_BACKUPSET);
+
 ####################################################################################################################################
 # setup
 ####################################################################################################################################
@@ -77,13 +84,15 @@ sub setup
     my $bHostBackup = defined($$oConfigParam{bHostBackup}) ? $$oConfigParam{bHostBackup} : false;
     my $oHostBackup = undef;
 
+    my $bRepoEncrypt = defined($$oConfigParam{bRepoEncrypt}) ? $$oConfigParam{bRepoEncrypt} : false;
+
     if ($bHostBackup)
     {
         $strBackupDestination = defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_BACKUP;
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
             {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
-                bRepoLocal => !$oConfigParam->{bS3}});
+                bRepoLocal => !$oConfigParam->{bS3}, bRepoEncrypt => $bRepoEncrypt});
         $oHostGroup->hostAdd($oHostBackup);
     }
     else
@@ -98,12 +107,14 @@ sub setup
     if ($bSynthetic)
     {
         $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3}});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3},
+                bRepoEncrypt => $bRepoEncrypt});
     }
     else
     {
         $oHostDbMaster = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3}});
+            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal => !$oConfigParam->{bS3},
+                bRepoEncrypt => $bRepoEncrypt});
     }
 
     $oHostGroup->hostAdd($oHostDbMaster);
@@ -131,6 +142,7 @@ sub setup
 
         $oHostS3->executeS3('mb s3://' . HOST_S3_BUCKET);
     }
+
     # Create db master config
     $oHostDbMaster->configCreate({
         strBackupSource => $$oConfigParam{strBackupSource},
@@ -167,6 +179,13 @@ sub setup
     $self->optionTestSet(CFGOPT_DB_PATH, $oHostDbMaster->dbBasePath());
     $self->optionTestSet(CFGOPT_REPO_PATH, $oHostBackup->repoPath());
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+
+    # Configure the repo to be encrypted if required
+    if ($bRepoEncrypt)
+    {
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+    }
 
     # Set S3 options
     if (defined($oHostS3))

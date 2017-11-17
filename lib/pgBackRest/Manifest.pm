@@ -285,6 +285,8 @@ sub new
         $bLoad,
         $oStorage,
         $strDbVersion,
+        $strCipherPass,                                             # Passphrase to open the manifest if encrypted
+        $strCipherPassSub,                                          # Passphrase to encrypt the backup files
     ) =
         logDebugParam
         (
@@ -293,10 +295,13 @@ sub new
             {name => 'bLoad', optional => true, default => true, trace => true},
             {name => 'oStorage', optional => true, default => storageRepo(), trace => true},
             {name => 'strDbVersion', optional => true, trace => true},
+            {name => 'strCipherPass', optional => true, redact => true},
+            {name => 'strCipherPassSub', optional => true, redact => true},
         );
 
     # Init object and store variables
-    my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad, oStorage => $oStorage});
+    my $self = $class->SUPER::new($strFileName, {bLoad => $bLoad, oStorage => $oStorage, strCipherPass => $strCipherPass,
+        strCipherPassSub => $strCipherPassSub});
 
     # If manifest not loaded from a file then the db version must be set
     if (!$bLoad)

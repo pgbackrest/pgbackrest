@@ -5,7 +5,7 @@ Error Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.h"
+#include "common/error.h"
 
 /***********************************************************************************************************************************
 Maximum allowed number of nested try blocks
@@ -266,4 +266,4 @@ void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fi
 
     // Propogate the error
     errorInternalPropagate();
-}                                                                   // {uncoverable - errorPropagate() does not return}
+}                                                                   // {uncoverable - errorInternalPropagate() does not return}

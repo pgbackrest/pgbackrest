@@ -16,8 +16,6 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::Data;
 use pgBackRest::Version;
 
-use pgBackRestBuild::Config::Rule;
-
 ####################################################################################################################################
 # Help types
 ####################################################################################################################################
@@ -47,6 +45,98 @@ use constant CFGDEF_GENERAL                                 => 'general';
 use constant CFGDEF_LOG                                     => 'log';
 use constant CFGDEF_EXPIRE                                  => 'expire';
 use constant CFGDEF_REPOSITORY                              => 'repository';
+
+####################################################################################################################################
+# Option define hash
+####################################################################################################################################
+my $rhConfigDefine = cfgDefine();
+
+####################################################################################################################################
+# Returns the option defines based on the command.
+####################################################################################################################################
+sub docConfigCommandDefine
+{
+    my $strOption = shift;
+    my $strCommand = shift;
+
+    if (defined($strCommand))
+    {
+        return defined($rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}) &&
+               defined($rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}) &&
+               ref($rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}) eq 'HASH' ?
+               $rhConfigDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand} : undef;
+    }
+
+    return;
+}
+
+####################################################################################################################################
+# Does the option have a default for this command?
+####################################################################################################################################
+sub docConfigOptionDefault
+{
+    my $strOption = shift;
+    my $strCommand = shift;
+
+    # Get the command define
+    my $oCommandDefine = docConfigCommandDefine($strOption, $strCommand);
+
+    # Check for default in command
+    my $strDefault = defined($oCommandDefine) ? $$oCommandDefine{&CFGDEF_DEFAULT} : undef;
+
+    # If defined return, else try to grab the global default
+    return defined($strDefault) ? $strDefault : $rhConfigDefine->{$strOption}{&CFGDEF_DEFAULT};
+}
+
+push @EXPORT, qw(docConfigOptionDefault);
+
+####################################################################################################################################
+# Get the allowed setting range for the option if it exists
+####################################################################################################################################
+sub docConfigOptionRange
+{
+    my $strOption = shift;
+    my $strCommand = shift;
+
+    # Get the command define
+    my $oCommandDefine = docConfigCommandDefine($strOption, $strCommand);
+
+    # Check for default in command
+    if (defined($oCommandDefine) && defined($$oCommandDefine{&CFGDEF_ALLOW_RANGE}))
+    {
+        return $$oCommandDefine{&CFGDEF_ALLOW_RANGE}[0], $$oCommandDefine{&CFGDEF_ALLOW_RANGE}[1];
+    }
+
+    # If defined return, else try to grab the global default
+    return $rhConfigDefine->{$strOption}{&CFGDEF_ALLOW_RANGE}[0], $rhConfigDefine->{$strOption}{&CFGDEF_ALLOW_RANGE}[1];
+}
+
+push @EXPORT, qw(docConfigOptionRange);
+
+####################################################################################################################################
+# Get the option type
+####################################################################################################################################
+sub docConfigOptionType
+{
+    my $strOption = shift;
+
+    return $rhConfigDefine->{$strOption}{&CFGDEF_TYPE};
+}
+
+push @EXPORT, qw(docConfigOptionType);
+
+####################################################################################################################################
+# Test the option type
+####################################################################################################################################
+sub docConfigOptionTypeTest
+{
+    my $strOption = shift;
+    my $strType = shift;
+
+    return docConfigOptionType($strOption) eq $strType;
+}
+
+push @EXPORT, qw(docConfigOptionTypeTest);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -98,7 +188,7 @@ sub process
     my $oDoc = $self->{oDoc};
     my $oConfigHash = {};
 
-    foreach my $strCommand (sort(keys(%{cfgbldCommandGet()})))
+    foreach my $strCommand (cfgDefineCommandList())
     {
         if ($strCommand eq CFGCMD_REMOTE || $strCommand eq CFGCMD_LOCAL)
         {
@@ -115,9 +205,9 @@ sub process
     }
 
     # Iterate through all options
-    my $oOptionRule = cfgdefRule();
+    my $oOptionDefine = cfgDefine();
 
-    foreach my $strOption (sort(keys(%{$oOptionRule})))
+    foreach my $strOption (sort(keys(%{$oOptionDefine})))
     {
         if ($strOption =~ /^test/ || $strOption eq CFGOPT_ARCHIVE_MAX_MB)
         {
@@ -125,8 +215,8 @@ sub process
         }
 
         # Iterate through all commands
-        my @stryCommandList = sort(keys(%{defined($$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND}) ?
-                              $$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
+        my @stryCommandList = sort(keys(%{defined($$oOptionDefine{$strOption}{&CFGDEF_COMMAND}) ?
+                              $$oOptionDefine{$strOption}{&CFGDEF_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
 
         foreach my $strCommand (@stryCommandList)
         {
@@ -135,8 +225,8 @@ sub process
                 next;
             }
 
-            if (ref(\$$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand}) eq 'SCALAR' &&
-                $$oOptionRule{$strOption}{&CFGBLDDEF_RULE_COMMAND}{$strCommand} == false)
+            if (ref(\$$oOptionDefine{$strOption}{&CFGDEF_COMMAND}{$strCommand}) eq 'SCALAR' &&
+                $$oOptionDefine{$strOption}{&CFGDEF_COMMAND}{$strCommand} == false)
             {
                 next;
             }
@@ -161,7 +251,7 @@ sub process
             if (!defined($oOptionDoc))
             {
                 # Next see if it's documented in the section
-                if (defined($$oOptionRule{$strOption}{&CFGBLDDEF_RULE_SECTION}))
+                if (defined($$oOptionDefine{$strOption}{&CFGDEF_SECTION}))
                 {
                     # &log(INFO, "        trying section ${strSection}");
                     foreach my $oSectionNode ($oDoc->nodeGet('config')->nodeGet('config-section-list')->nodeList())
@@ -201,10 +291,10 @@ sub process
             # if the option is documented in the command then it should be accessible from the command line only.
             if (!defined($strSection))
             {
-                if (defined($$oOptionRule{$strOption}{&CFGBLDDEF_RULE_SECTION}))
+                if (defined($$oOptionDefine{$strOption}{&CFGDEF_SECTION}))
                 {
                     &log(ERROR,
-                        "option ${strOption} defined in command ${strCommand} must not have " . CFGBLDDEF_RULE_SECTION .
+                        "option ${strOption} defined in command ${strCommand} must not have " . CFGDEF_SECTION .
                         " defined");
                 }
             }
@@ -556,7 +646,7 @@ sub manGet
     }
 
     # Build command and config hashes
-    my $hOptionRule = cfgdefRule();
+    my $hConfigDefine = cfgDefine();
     my $hConfig = $self->{oConfigHash};
     my $hCommandList = {};
     my $iCommandMaxLen = 0;
@@ -625,8 +715,8 @@ sub manGet
             my $hOption = $$hOptionList{$strSection}{$strOption};
 
             # Contruct the default
-            my $strCommand = defined(${cfgbldCommandGet()}{$strSection}) ? $strSection : undef;
-            my $strDefault = cfgbldOptionDefault($strOption, $strCommand);
+            my $strCommand = grep(/$strSection/i, cfgDefineCommandList()) ? $strSection : undef;
+            my $strDefault = docConfigOptionDefault($strOption, $strCommand);
 
             if (defined($strDefault))
             {
@@ -634,7 +724,7 @@ sub manGet
                 {
                     $strDefault = BACKREST_EXE;
                 }
-                elsif ($$hOptionRule{$strOption}{&CFGBLDDEF_RULE_TYPE} eq &CFGOPTDEF_TYPE_BOOLEAN)
+                elsif ($$hConfigDefine{$strOption}{&CFGDEF_TYPE} eq &CFGDEF_TYPE_BOOLEAN)
                 {
                     $strDefault = $strDefault ? 'y' : 'n';
                 }
@@ -660,11 +750,11 @@ sub manGet
     $strManPage .= "\n\n" .
         "FILES\n" .
         "\n" .
-        '  ' . cfgbldOptionDefault(CFGOPT_CONFIG) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGOPT_REPO_PATH) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGOPT_LOG_PATH) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGOPT_SPOOL_PATH) . "\n" .
-        '  ' . cfgbldOptionDefault(CFGOPT_LOCK_PATH) . "\n" .
+        '  ' . docConfigOptionDefault(CFGOPT_CONFIG) . "\n" .
+        '  ' . docConfigOptionDefault(CFGOPT_REPO_PATH) . "\n" .
+        '  ' . docConfigOptionDefault(CFGOPT_LOG_PATH) . "\n" .
+        '  ' . docConfigOptionDefault(CFGOPT_SPOOL_PATH) . "\n" .
+        '  ' . docConfigOptionDefault(CFGOPT_LOCK_PATH) . "\n" .
         "\n" .
         "EXAMPLES\n" .
         "\n" .
@@ -672,7 +762,7 @@ sub manGet
         "\n" .
         '    $ ' . BACKREST_EXE . ' --' . CFGOPT_STANZA . "=main backup\n" .
         "\n" .
-        '    The `main` cluster should be configured in `' . cfgbldOptionDefault(CFGOPT_CONFIG) . "`\n" .
+        '    The `main` cluster should be configured in `' . docConfigOptionDefault(CFGOPT_CONFIG) . "`\n" .
         "\n" .
         "  * Show all available backups:\n" .
         "\n" .
@@ -801,7 +891,7 @@ sub helpCommandDocGet
     # Working variables
     my $oConfigHash = $self->{oConfigHash};
     my $oOperationDoc = $self->{oDoc}->nodeGet('operation');
-    my $oOptionRule = cfgdefRule();
+    my $oOptionDefine = cfgDefine();
 
     my $oDoc = new BackRestDoc::Common::Doc();
     $oDoc->paramSet('title', $oOperationDoc->paramGet('title'));
@@ -837,7 +927,7 @@ sub helpCommandDocGet
 
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
-                my ($oOption, $strCategory) = helpCommandDocGetOptionFind($oConfigHash, $oOptionRule, $strCommand, $strOption);
+                my ($oOption, $strCategory) = helpCommandDocGetOptionFind($oConfigHash, $oOptionDefine, $strCommand, $strOption);
 
                 $$oCategory{$strCategory}{$strOption} = $oOption;
             }
@@ -873,7 +963,7 @@ sub helpCommandDocGet
 sub helpCommandDocGetOptionFind
 {
     my $oConfigHelpData = shift;
-    my $oOptionRule = shift;
+    my $oOptionDefine = shift;
     my $strCommand = shift;
     my $strOption = shift;
 
@@ -937,7 +1027,7 @@ sub helpOptionGet
     # Get the default value (or required=n if there is no default)
     my $strCodeBlock;
 
-    if (defined(cfgbldOptionDefault($strOption, $strCommand)))
+    if (defined(docConfigOptionDefault($strOption, $strCommand)))
     {
         my $strDefault;
 
@@ -947,13 +1037,13 @@ sub helpOptionGet
         }
         else
         {
-            if (cfgbldOptionTypeTest($strOption, CFGOPTDEF_TYPE_BOOLEAN))
+            if (docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
             {
-                $strDefault = cfgbldOptionDefault($strOption, $strCommand) ? 'y' : 'n';
+                $strDefault = docConfigOptionDefault($strOption, $strCommand) ? 'y' : 'n';
             }
             else
             {
-                $strDefault = cfgbldOptionDefault($strOption, $strCommand);
+                $strDefault = docConfigOptionDefault($strOption, $strCommand);
             }
         }
 
@@ -966,7 +1056,7 @@ sub helpOptionGet
     # }
 
     # Get the allowed range if it exists
-    my ($strRangeMin, $strRangeMax) = cfgbldOptionRange($strOption, $strCommand);
+    my ($strRangeMin, $strRangeMax) = docConfigOptionRange($strOption, $strCommand);
 
     if (defined($strRangeMin))
     {
@@ -978,7 +1068,7 @@ sub helpOptionGet
 
     if (defined($strCommand))
     {
-        if (cfgbldOptionTypeTest($strOption, CFGOPTDEF_TYPE_BOOLEAN))
+        if (docConfigOptionTypeTest($strOption, CFGDEF_TYPE_BOOLEAN))
         {
             if ($$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'n' && $$oOptionHash{&CONFIG_HELP_EXAMPLE} ne 'y')
             {

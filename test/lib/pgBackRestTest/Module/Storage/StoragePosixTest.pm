@@ -264,6 +264,10 @@ sub run
         my $oPosixIo = $self->testResult(
             sub {new pgBackRest::Storage::Posix::FileWrite($oPosix, $strFile)}, '[object]', 'open');
 
+        $tContent = undef;
+        $self->testException(
+            sub {$oPosixIo->write(\$tContent)}, ERROR_FILE_WRITE, "unable to write to '${strFile}': Use of uninitialized value");
+
         $tContent = substr($strFileContent, 0, $iFileLengthHalf);
         $self->testResult(
             sub {$oPosixIo->write(\$tContent)}, $iFileLengthHalf, 'write part 1');

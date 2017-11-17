@@ -154,7 +154,7 @@ sub process
         {
             &log(WARN,
                 "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .
-                "HINT: Check the archive_command to ensure that all options are correct (especialy --stanza).\n" .
+                "HINT: Check the archive_command to ensure that all options are correct (especially --stanza).\n" .
                 "HINT: Check the PostgreSQL server log for errors.");
         }
     }

@@ -30,22 +30,22 @@ Test that an expected error is actually thrown and error when it isn't.
     printf("    l%04d - expect error: %s\n", __LINE__, errorMessageExpected);                                                      \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
-    ERROR_TRY()                                                                                                                    \
+    TRY()                                                                                                                          \
     {                                                                                                                              \
         statement;                                                                                                                 \
     }                                                                                                                              \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         TEST_ERROR_catch = true;                                                                                                   \
                                                                                                                                    \
         if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
-            ERROR_THROW(                                                                                                           \
+            THROW(                                                                                                                 \
                 AssertError, "expected error %s, '%s' but got %s, '%s'", errorTypeName(&errorTypeExpected), errorMessageExpected,  \
                 errorName(), errorMessage());                                                                                      \
     }                                                                                                                              \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
-        ERROR_THROW(                                                                                                               \
+        THROW(                                                                                                                     \
             AssertError, "statement '%s' returned but error %s, '%s' was expected", #statement, errorTypeName(&errorTypeExpected), \
             errorMessageExpected);                                                                                                 \
 }
@@ -64,14 +64,14 @@ TEST_TYPE_FORMAT - format the test type into the given buffer -- or return verba
     char *value##Str = value##StrBuffer;                                                                                           \
                                                                                                                                    \
     if (TEST_TYPE_PTR(type) && *(void **)&value == NULL)                                                                           \
-        value##Str = "NULL";                                                                                                       \
+        value##Str = (char *)"NULL";                                                                                               \
     else if (strcmp(#type, "char *") == 0)                                                                                         \
         value##Str = *(char **)&value;                                                                                             \
     else                                                                                                                           \
     {                                                                                                                              \
         if (snprintf(value##Str, TEST_RESULT_FORMAT_SIZE + 1, format, value) > TEST_RESULT_FORMAT_SIZE)                            \
         {                                                                                                                          \
-            ERROR_THROW(                                                                                                           \
+            THROW(                                                                                                                 \
                 AssertError, "formatted type '" format "' needs more than the %d characters available", TEST_RESULT_FORMAT_SIZE);  \
         }                                                                                                                          \
     }
@@ -85,7 +85,7 @@ parameters.
 #define TEST_RESULT(statement, resultExpectedValue, type, format, typeOp, ...)                                                     \
 {                                                                                                                                  \
     /* Assign expected result to a local variable so the value can be manipulated as a pointer */                                  \
-    type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                                 \
+    const type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                           \
                                                                                                                                    \
     /* Output test info */                                                                                                         \
     printf("    l%04d - ", __LINE__);                                                                                              \
@@ -99,15 +99,15 @@ parameters.
     /* Try to run the statement */                                                                                                 \
     type TEST_RESULT_result;                                                                                                       \
                                                                                                                                    \
-    ERROR_TRY()                                                                                                                    \
+    TRY()                                                                                                                          \
     {                                                                                                                              \
         TEST_RESULT_result = (type)(statement);                                                                                    \
     }                                                                                                                              \
     /* Catch any errors */                                                                                                         \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         /* No errors were expected so error */                                                                                     \
-        ERROR_THROW(                                                                                                               \
+        THROW(                                                                                                                     \
             AssertError, "statement '%s' threw error %s, '%s' but result <%s> expected",                                           \
             #statement, errorName(), errorMessage(), TEST_RESULT_resultExpectedStr);                                               \
     }                                                                                                                              \
@@ -128,7 +128,7 @@ parameters.
         TEST_TYPE_FORMAT(type, format, TEST_RESULT_result);                                                                        \
                                                                                                                                    \
         /* Throw error */                                                                                                          \
-        ERROR_THROW(                                                                                                               \
+        THROW(                                                                                                                     \
             AssertError, "statement '%s' result is '%s' but '%s' expected",                                                        \
             #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
     }                                                                                                                              \

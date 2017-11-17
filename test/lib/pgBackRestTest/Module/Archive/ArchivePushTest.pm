@@ -106,7 +106,7 @@ sub run
 
         $self->testResult(sub {archivePushCheck(
             $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
-            '(9.4-1, [undef], [undef])', "${strWalSegment} WAL not found");
+            '(9.4-1, [undef], [undef], [undef])', "${strWalSegment} WAL not found");
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strWalMajorPath = "$self->{strArchivePath}/9.4-1/" . substr($strWalSegment, 0, 16);
@@ -119,7 +119,7 @@ sub run
 
         $self->testResult(sub {archivePushCheck(
             $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
-            '(9.4-1, 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27,' .
+            '(9.4-1, 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, [undef],' .
                 " WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
                 'HINT: this is valid in some recovery scenarios but may also indicate a problem.)',
             "${strWalSegment} WAL found");
@@ -145,7 +145,7 @@ sub run
 
         $self->testResult(sub {archivePushCheck(
             $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
-            '(9.4-1, 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27,' .
+            '(9.4-1, 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, [undef],' .
                 " WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
                 'HINT: this is valid in some recovery scenarios but may also indicate a problem.)',
             "${strWalSegment} WAL found");
@@ -173,7 +173,7 @@ sub run
 
         $self->testResult(sub {archivePushCheck(
             $strHistoryFile, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strHistoryFile}")},
-            '(9.4-1, [undef], [undef])', "history file ${strHistoryFile} found");
+            '(9.4-1, [undef], [undef], [undef])', "history file ${strHistoryFile} found");
     }
 
     ################################################################################################################################
@@ -724,7 +724,6 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
-
         $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed async");
         exit if ($iProcessId != $PID);
 
@@ -760,9 +759,44 @@ sub run
         exit if ($iProcessId != $PID);
 
         # Disable async archiving
+        $self->optionTestClear(CFGOPT_BACKUP_HOST);
+        $self->optionTestClear(CFGOPT_PROTOCOL_TIMEOUT);
+        $self->optionTestClear(CFGOPT_ARCHIVE_TIMEOUT);
         $self->optionTestClear(CFGOPT_ARCHIVE_ASYNC);
         $self->optionTestClear(CFGOPT_SPOOL_PATH);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+    }
+    ################################################################################################################################
+    if ($self->begin("ArchivePushFile::archivePushFile - encryption"))
+    {
+        my $iWalTimeline = 1;
+        my $iWalMajor = 1;
+        my $iWalMinor = 1;
+
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
+
+        # Remove any archive info files
+        executeTest('sudo rm ' . $self->{strArchivePath} . '/archive.info*');
+
+        # Clear the repo settings
+        storageRepoCacheClear($self->stanza());
+
+        my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
+            {bLoad => false, bIgnoreMissing => true, strCipherPassSub => 'y'});
+        $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
+
+        # Generate a normal segment
+        my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
+        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+
+        $self->testResult(
+            sub {archivePushFile($self->{strWalPath}, $strSegment, false, false)}, '[undef]',
+            "${strSegment} WAL segment to pushed");
+
+        $self->testResult(storageRepo()->encrypted($self->{strArchivePath} . "/" . $self->{strArchiveId} . "/" .
+            substr($strSegment, 0, 16) . "/$strSegment-" . $self->{strWalHash}), true, '    pushed segment is encrypted');
     }
 }
 

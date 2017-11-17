@@ -130,6 +130,12 @@
             <p><backrest/> repositories can be stored on <proper>Amazon S3</proper> to allow for virtually unlimited capacity and retention.</p>
         </section>
 
+        <section id="encryption">
+            <title>Encryption</title>
+
+            <p><backrest/> can encrypt the repository to secure backups wherever they are stored.</p>
+        </section>
+
         <section id="postgres-compatibility">
             <title>Compatibility with <postgres/> >= 8.3</title>
 

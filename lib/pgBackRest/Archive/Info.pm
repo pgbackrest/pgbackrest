@@ -75,6 +75,7 @@ sub new
         $bRequired,                                 # Is archive info required?
         $bLoad,                                     # Should the file attempt to be loaded?
         $bIgnoreMissing,                            # Don't error on missing files
+        $strCipherPassSub,                          # Passphrase to encrypt the subsequent archive files if repo is encrypted
     ) =
         logDebugParam
         (
@@ -83,6 +84,7 @@ sub new
             {name => 'bRequired', default => true},
             {name => 'bLoad', optional => true, default => true},
             {name => 'bIgnoreMissing', optional => true, default => false},
+            {name => 'strCipherPassSub', optional => true},
         );
 
     # Build the archive info path/file name
@@ -95,7 +97,8 @@ sub new
     eval
     {
         $self = $class->SUPER::new($strArchiveInfoFile, {bLoad => $bLoad, bIgnoreMissing => $bIgnoreMissing,
-            oStorage => storageRepo()});
+            oStorage => storageRepo(), strCipherPass => storageRepo()->cipherPassUser(),
+            strCipherPassSub => $strCipherPassSub});
         return true;
     }
     or do
@@ -116,9 +119,13 @@ sub new
                 confess &log(ERROR, $strArchiveInfoMissingMsg, ERROR_FILE_MISSING);
             }
         }
+        elsif ($iResult == ERROR_CIPHER && $strResultMessage =~ "^unable to flush")
+        {
+            confess &log(ERROR, "unable to parse '$strArchiveInfoFile'\nHINT: Is or was the repo encrypted?", $iResult);
+        }
         else
         {
-            confess &log(ERROR, $strResultMessage, $iResult);
+            confess $EVAL_ERROR;
         }
     }
 
@@ -226,24 +233,8 @@ sub archiveId
     # If both the optional version and system-id are passed
     elsif (defined($strDbVersion) && defined($ullDbSysId))
     {
-        # Get the version and system-id for all known databases
-        my $hDbList = $self->dbHistoryList();
-
-        foreach my $iDbHistoryId (sort(keys(%$hDbList)))
-        {
-            # If the version and system-id match then construct the archive id
-            if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
-                ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
-            {
-                $strArchiveId = $strDbVersion . "-" . $iDbHistoryId;
-            }
-        }
-    }
-
-    # If the archive id has still not been found, then error
-    if (!defined($strArchiveId))
-    {
-        confess &log(ERROR, 'unable to retrieve the archive id');
+        # Get the newest archiveId for the version/system-id passed
+        $strArchiveId = ($self->archiveIdList($strDbVersion, $ullDbSysId))[0];
     }
 
     # Return from function and log return values if any
@@ -255,9 +246,60 @@ sub archiveId
 }
 
 ####################################################################################################################################
+# archiveIdList
+#
+# Get a sorted list of the archive ids for the db-version and db-system-id passed.
+####################################################################################################################################
+sub archiveIdList
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbVersion,
+        $ullDbSysId,
+    ) = logDebugParam
+        (
+            __PACKAGE__ . '->archiveIdList', \@_,
+            {name => 'strDbVersion'},
+            {name => 'ullDbSysId'},
+        );
+
+    my @stryArchiveId;
+
+    # Get the version and system-id for all known databases
+    my $hDbList = $self->dbHistoryList();
+
+    foreach my $iDbHistoryId (sort  {$a <=> $b} keys %$hDbList)
+    {
+        # If the version and system-id match then construct the archive id so that the constructed array has the newest match first
+        if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&
+            ($hDbList->{$iDbHistoryId}{&INFO_SYSTEM_ID} eq $ullDbSysId))
+        {
+            unshift(@stryArchiveId, $strDbVersion . "-" . $iDbHistoryId);
+        }
+    }
+
+    # If the archive id has still not been found, then error
+    if (@stryArchiveId == 0)
+    {
+        confess &log(ERROR, "unable to retrieve the archive id for database version '$strDbVersion' and system-id '$ullDbSysId'");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'stryArchiveId', value => \@stryArchiveId}
+    );
+}
+
+####################################################################################################################################
 # create
 #
-# Creates the archive.info file. WARNING - this file should only be called from stanza-create.
+# Creates the archive.info file. WARNING - this function should only be called from stanza-create or tests.
 ####################################################################################################################################
 sub create
 {
@@ -368,10 +410,19 @@ sub reconstruct
         # Read first 8k of WAL segment
         my $tBlock;
 
+        # Error if the file encryption setting is not valid for the repo
+        if (!storageRepo()->encryptionValid(storageRepo()->encrypted($strArchiveFilePath)))
+        {
+            confess &log(ERROR, "encryption incompatible for '$strArchiveFilePath'" .
+                "\nHINT: Is or was the repo encrypted?", ERROR_CIPHER);
+        }
+
+        # If the file is encrypted, then the passprase from the info file is required, else getEncryptionKeySub returns undefined
         my $oFileIo = storageRepo()->openRead(
             $strArchiveFilePath,
             {rhyFilter => $strArchiveFile =~ ('\.' . COMPRESS_EXT . '$') ?
-                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef});
+                [{strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS}]}] : undef,
+            strCipherPass => $self->cipherPassSub()});
 
         $oFileIo->read(\$tBlock, 512, true);
         $oFileIo->close();

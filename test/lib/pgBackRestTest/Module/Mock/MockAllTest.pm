@@ -63,12 +63,14 @@ sub run
     {
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
+        my $bRepoEncrypt = $bS3 ? true : false;
+
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}")) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup, $oHostS3) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Reduce log level for many tests
         my $strLogReduced = '--' . cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) . '=' . lc(DETAIL);
@@ -101,6 +103,11 @@ sub run
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ONLINE} = JSON::PP::false;
+
+        if ($bRepoEncrypt)
+        {
+            $oManifest{&INI_SECTION_CIPHER}{&INI_KEY_CIPHER_PASS} = 'REPLACEME';
+        }
 
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
@@ -352,8 +359,9 @@ sub run
         {
             $oHostBackup->backup(
                 $strType, 'protocol timeout',
-                {oExpectedManifest => \%oManifest, strOptionalParam => '--protocol-timeout=1 --db-timeout=.1',
-                 strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
+                {oExpectedManifest => \%oManifest,
+                    strOptionalParam => '--protocol-timeout=1 --db-timeout=.1 --log-level-console=off',
+                    strTest => TEST_BACKUP_START, fTestDelay => 1, iExpectedExitStatus => ERROR_FILE_READ});
         }
 
         # Stop operations and make sure the correct error occurs
@@ -916,9 +924,23 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbMaster->manifestReference(\%oManifest, $strBackup);
 
-        # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
-        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+        # Delete the backup.info and make sure the backup fails - the user must then run a stanza-create --force. If backup.info is
+        # encrypted is cannot be deleted, so copy it to old instead.
+        my $strBackupInfoFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO;
+        my $strBackupInfoCopyFile = STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT;
+        my $strBackupInfoOldFile = "${strBackupInfoFile}.old";
+        my $strBackupInfoCopyOldFile = "${strBackupInfoCopyFile}.old";
+
+        if ($bRepoEncrypt)
+        {
+            forceStorageMove(storageRepo(), $strBackupInfoFile, $strBackupInfoOldFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyFile, $strBackupInfoCopyOldFile, {bRecurse => false});
+        }
+        else
+        {
+            forceStorageRemove(storageRepo(), $strBackupInfoFile);
+            forceStorageRemove(storageRepo(), $strBackupInfoCopyFile);
+        }
 
         $oHostDbMaster->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000', 'BASEUPDT', '9a53d532e27785e681766c98516a5e93f096a501',
@@ -934,15 +956,18 @@ sub run
             # Fail on attempt to create the stanza data since force was not used
             $oHostBackup->stanzaCreate('fail on backup directory missing backup.info',
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
-
-            # Use force to create the stanza
-            $oHostBackup->stanzaCreate('create required data for stanza',
-                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
-        else
+
+        # Use force to create the stanza (this is expected to fail for encrypted repos)
+        $oHostBackup->stanzaCreate('create required data for stanza',
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
+                iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
+
+        # Copy encrypted backup info files back so testing can proceed
+        if ($bRepoEncrypt)
         {
-            $oHostBackup->stanzaCreate('create required data for stanza',
-                {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
+            forceStorageMove(storageRepo(), $strBackupInfoOldFile, $strBackupInfoFile, {bRecurse => false});
+            forceStorageMove(storageRepo(), $strBackupInfoCopyOldFile, $strBackupInfoCopyFile, {bRecurse => false});
         }
 
         # Perform the backup
@@ -1082,7 +1107,7 @@ sub run
                          {&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'selective restore 16384', undef, "${strLogReduced} --db-include=16384");
 
         # Restore checksum values for next test
@@ -1099,18 +1124,18 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'selective restore 32768', undef, "${strLogReduced} --db-include=32768");
 
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'error on invalid id', ERROR_DB_MISSING, '--log-level-console=warn --db-include=7777');
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'error on system id', ERROR_DB_INVALID, '--log-level-console=warn --db-include=1');
 
         # Compact Restore
@@ -1126,14 +1151,14 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
             undef, undef, undef, 'no tablespace remap - error when tablespace dir does not exist', ERROR_PATH_MISSING,
             "${strLogReduced} --tablespace-map-all=../../tablespace", false);
 
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
 
         $oHostDbMaster->restore(
-            cfgRuleOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef,
+            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef,
             undef, undef, 'no tablespace remap', undef, "--tablespace-map-all=../../tablespace ${strLogReduced}", false);
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
@@ -1153,7 +1178,7 @@ sub run
         # because for some reason sort order is different when this command is executed via ssh (even though the content of the
         # directory is identical).
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bRemote)
+        if (!$bRemote && !$bS3)
         {
             executeTest('ls -1R ' . storageRepo()->pathGet('backup/' . $self->stanza() . '/' . PATH_BACKUP_HISTORY),
                         {oLogTest => $self->expect(), bRemote => $bRemote});

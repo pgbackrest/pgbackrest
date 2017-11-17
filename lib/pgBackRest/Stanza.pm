@@ -29,7 +29,9 @@ use pgBackRest::Protocol::Storage::Helper;
 ####################################################################################################################################
 my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data to be created.";
 my $strInfoMissing = " information missing";
-my $strStanzaCreateErrorMsg = "not empty" . $strHintForce;
+my $strStanzaCreateErrorMsg = "not empty";
+my $strRepoEncryptedMsg = " and repo is encrypted and info file(s) are missing, --force cannot be used";
+my $strHintStanzaCreate = "\nHINT: has a stanza-create been performed?";
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -109,43 +111,63 @@ sub stanzaCreate
     my $strParentPathArchive = $self->parentPathGet(STORAGE_REPO_ARCHIVE);
     my $strParentPathBackup = $self->parentPathGet(STORAGE_REPO_BACKUP);
 
-    # Get a listing of files in the directory, ignoring if any are missing
+    # Get a listing of files in the top-level repo directories, ignoring if any are missing
     my @stryFileListArchive = storageRepo()->list($strParentPathArchive, {bIgnoreMissing => true});
     my @stryFileListBackup = storageRepo()->list($strParentPathBackup, {bIgnoreMissing => true});
 
-    # If force not used, then if files exist force should be required since create must have already occurred and reissuing a create
-    # needs to be a consciuos effort to rewrite the files
-    if (!cfgOption(CFGOPT_FORCE))
+    # If files exist force should be required since create must have already occurred and reissuing a create needs to be a consciuos
+    # effort to rewrite the files.
+    # If at least one directory is not empty, then check to see if the info files exist
+    if (@stryFileListArchive || @stryFileListBackup)
     {
-        # At least one directory is not empty, then check to see if the info files exist
-        if (@stryFileListArchive || @stryFileListBackup)
+        my $strBackupInfoFile = &FILE_BACKUP_INFO;
+        my $strArchiveInfoFile = &ARCHIVE_INFO_FILE;
+
+        # If .info exists, set to true. Do not include .info.copy
+        my $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
+        my $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
+
+        # Determine if a file exists other than the info files
+        my $strExistingFile = $self->existingFileName(STORAGE_REPO_BACKUP, $strParentPathBackup, &FILE_BACKUP_INFO);
+        if (!defined($strExistingFile))
         {
-            my $strBackupInfoFile = &FILE_BACKUP_INFO;
-            my $strArchiveInfoFile = &ARCHIVE_INFO_FILE;
+            $strExistingFile = $self->existingFileName(STORAGE_REPO_ARCHIVE, $strParentPathArchive, &ARCHIVE_INFO_FILE);
+        }
 
-            my $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
-            my $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
+        # If something other than the info files exist in the repo (maybe a backup is in progress) and the user is attempting to
+        # change the repo encryption in anyway, then error
+        if (defined($strExistingFile) && (!storageRepo()->encryptionValid(storageRepo()->encrypted($strExistingFile))))
+        {
+            confess &log(ERROR, 'files exist - the encryption type or passphrase cannot be changed', ERROR_PATH_NOT_EMPTY);
+        }
 
-            # If the info file exists in one directory but is missing from the other directory then there is clearly a mismatch
-            # which requires force option
-            if (!$bArchiveInfoFileExists && $bBackupInfoFileExists)
-            {
-                confess &log(ERROR, 'archive' . $strInfoMissing . $strHintForce, ERROR_FILE_MISSING);
-            }
-            elsif (!$bBackupInfoFileExists && $bArchiveInfoFileExists)
-            {
-                confess &log(ERROR, 'backup' . $strInfoMissing . $strHintForce, ERROR_FILE_MISSING);
-            }
-            # If we get here then either both exist or neither exist so if neither file exists then something still exists in the
-            # directories since one or both of them are not empty so need to use force option
-            elsif (!$bArchiveInfoFileExists)
-            {
-                confess &log(ERROR,
-                    (@stryFileListBackup ? 'backup directory ' : '') .
-                    ((@stryFileListBackup && @stryFileListArchive) ? 'and/or ' : '') .
-                    (@stryFileListArchive ? 'archive directory ' : '') .
-                    $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
-            }
+        # If the .info file exists in one directory but is missing from the other directory then there is clearly a mismatch
+        # which requires force option so throw an error to indicate force is needed. If the repo is encrypted and something other
+        # than the info files exist, then error that force cannot be used (the info files cannot be reconstructed since we no longer
+        # have the passphrase that was in the info file to open the other files in the repo)
+        if (!$bArchiveInfoFileExists && $bBackupInfoFileExists)
+        {
+            $self->errorForce('archive' . $strInfoMissing, ERROR_FILE_MISSING, $strExistingFile, $bArchiveInfoFileExists,
+                $strParentPathArchive, $strParentPathBackup);
+        }
+        elsif (!$bBackupInfoFileExists && $bArchiveInfoFileExists)
+        {
+            $self->errorForce('backup' . $strInfoMissing, ERROR_FILE_MISSING, $strExistingFile, $bBackupInfoFileExists,
+                $strParentPathArchive, $strParentPathBackup);
+        }
+
+        # If we get here then either both exist or neither exist so if neither file exists and something else exists in the
+        # directories then need to use force option to recreate the missing info files - unless the repo is encrypted, then force
+        # cannot be used if other than the info files exist. If only the info files exist then force must be used to overwrite the
+        # files.
+        else
+        {
+            $self->errorForce(
+                (@stryFileListBackup ? 'backup directory ' : '') .
+                ((@stryFileListBackup && @stryFileListArchive) ? 'and/or ' : '') .
+                (@stryFileListArchive ? 'archive directory ' : '') .
+                $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY,
+                $strExistingFile, $bArchiveInfoFileExists, $strParentPathArchive, $strParentPathBackup);
         }
     }
 
@@ -154,14 +176,12 @@ sub stanzaCreate
     my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup, {bRequired => false, bIgnoreMissing => true});
 
     # Create the archive info object
-    my ($iResult, $strResultMessage) =
-        $self->infoFileCreate($oArchiveInfo, STORAGE_REPO_ARCHIVE, $strParentPathArchive, \@stryFileListArchive);
+    my ($iResult, $strResultMessage) = $self->infoFileCreate($oArchiveInfo);
 
     if ($iResult == 0)
     {
         # Create the backup.info file
-        ($iResult, $strResultMessage) =
-            $self->infoFileCreate($oBackupInfo, STORAGE_REPO_BACKUP, $strParentPathBackup, \@stryFileListBackup);
+        ($iResult, $strResultMessage) = $self->infoFileCreate($oBackupInfo);
     }
 
     if ($iResult != 0)
@@ -191,7 +211,7 @@ sub stanzaUpgrade
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaUpgrade');
 
-    # Get the archive info and backup info files; if either does not exist an error will be thrown
+    # Get the archive info and backup info files; if either does not exist or cannot be opened an error will be thrown
     my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, storageRepo()->pathGet(STORAGE_REPO_ARCHIVE));
     my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, storageRepo()->pathGet(STORAGE_REPO_BACKUP));
     my $bBackupUpgraded = false;
@@ -269,6 +289,124 @@ sub parentPathGet
 }
 
 ####################################################################################################################################
+# existingFileName
+#
+# Get a name of a file in the specified storage
+####################################################################################################################################
+sub existingFileName
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPathType,
+        $strParentPath,
+        $strExcludeFile,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->existingFileName', \@_,
+            {name => 'strPathType'},
+            {name => 'strParentPath'},
+            {name => 'strExcludeFile'},
+        );
+
+    my $hFullList = storageRepo()->manifest(storageRepo()->pathGet($strPathType), {bIgnoreMissing => true});
+    my $strExistingFile = undef;
+
+    foreach my $strName (keys(%{$hFullList}))
+    {
+        if (($hFullList->{$strName}{type} eq 'f') &&
+            (substr($strName, 0, length($strExcludeFile)) ne $strExcludeFile))
+        {
+            $strExistingFile = $strParentPath . "/" . $strName;
+            last;
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strExistingFile', value => $strExistingFile},
+    );
+}
+
+####################################################################################################################################
+# errorForce
+#
+# Creates the parent path if it doesn't exist and returns the path.
+####################################################################################################################################
+sub errorForce
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strMessage,
+        $iErrorCode,
+        $strFileName,
+        $bInfoFileExists,
+        $strParentPathArchive,
+        $strParentPathBackup,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->errorForce', \@_,
+            {name => 'strMessage', trace => true},
+            {name => 'iErrorCode', trace => true},
+            {name => 'strFileName', required => false, trace => true},
+            {name => 'bInfoFileExists', trace => true},
+            {name => 'strParentPathArchive', trace => true},
+            {name => 'strParentPathBackup', trace => true},
+        );
+
+    my $bRepoEncrypted = false;
+
+    # Check if the file passed is encrypted (if one exists) else check the repo setting.
+    if (defined($strFileName))
+    {
+        $bRepoEncrypted = storageRepo()->encrypted($strFileName);
+    }
+    elsif (defined(storageRepo()->cipherType()))
+    {
+        $bRepoEncrypted = true;
+    }
+
+    # If the repo is encrypted and a file other than the info files exist yet the info file is missing then the --force option
+    # cannot be used
+    if ($bRepoEncrypted && defined($strFileName) && !$bInfoFileExists)
+    {
+        confess &log(ERROR, $strMessage . $strRepoEncryptedMsg, $iErrorCode);
+    }
+    elsif (!cfgOption(CFGOPT_FORCE))
+    {
+        # If info files exist, check to see if an upgrade is required
+        if ($bInfoFileExists && !defined($strFileName) && $iErrorCode == ERROR_PATH_NOT_EMPTY)
+        {
+            if ($self->upgradeCheck(new pgBackRest::Backup::Info($strParentPathBackup), STORAGE_REPO_BACKUP,
+                ERROR_BACKUP_MISMATCH) ||
+                $self->upgradeCheck(new pgBackRest::Archive::Info($strParentPathArchive), STORAGE_REPO_ARCHIVE,
+                ERROR_ARCHIVE_MISMATCH))
+            {
+                confess &log(ERROR, "backup info file or archive info file invalid\n" .
+                    'HINT: use stanza-upgrade if the database has been upgraded or use --force', ERROR_FILE_INVALID);
+            }
+        }
+
+        # If get here just indicate force is required
+        confess &log(ERROR, $strMessage . $strHintForce, $iErrorCode);
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # infoObject
 #
 # Attempt to load an info object. Ignores missing files if directed. Throws an error and aborts if force not used and an error
@@ -308,10 +446,17 @@ sub infoObject
     eval
     {
         # Ignore missing files if directed but if the info or info.copy file exists the exists flag will still be set and data will
-        # attempt to be loaded
+        # attempt to be loaded. If the info file is missing and the repo is encrypted, we can only get to this function if nothing
+        # else existed in the repo so a passphrase is generated to store in the file. If it exists and the repo is encrypted then
+        # the generated passphrase passed will not be used - the one from the info file will be read.
+        my $oParamRef =
+            {bIgnoreMissing => $bIgnoreMissing,
+             strCipherPassSub => defined(storageRepo()->cipherType()) ?
+                storageRepo()->cipherPassGen() : undef};
+
         $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
-            new pgBackRest::Backup::Info($strParentPath, false, $bRequired, {bIgnoreMissing => $bIgnoreMissing}) :
-            new pgBackRest::Archive::Info($strParentPath, $bRequired, {bIgnoreMissing => $bIgnoreMissing}));
+            new pgBackRest::Backup::Info($strParentPath, false, $bRequired, $oParamRef) :
+            new pgBackRest::Archive::Info($strParentPath, $bRequired, $oParamRef));
 
         # Reset the console logging
         logEnable();
@@ -335,7 +480,8 @@ sub infoObject
         {
             if ($iResult == ERROR_FILE_MISSING)
             {
-                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce : $strResultMessage, $iResult);
+                confess &log(ERROR, cfgOptionValid(CFGOPT_FORCE) ? $strResultMessage . $strHintForce :
+                    $strResultMessage . $strHintStanzaCreate, $iResult);
             }
             else
             {
@@ -345,9 +491,20 @@ sub infoObject
         # Else instatiate the object without loading it so we can reconstruct and overwrite the invalid files
         else
         {
+            # Confess unhandled exception
+            if (($iResult != ERROR_FILE_MISSING) && ($iResult != ERROR_CIPHER))
+            {
+                confess &log(ERROR, $strResultMessage, $iResult);
+            }
+
+            my $oParamRef =
+                {bLoad => false,
+                strCipherPassSub => defined(storageRepo()->cipherType()) ?
+                    storageRepo()->cipherPassGen() : undef};
+
             $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
-                new pgBackRest::Backup::Info($strParentPath, false, false, {bLoad => false}) :
-                new pgBackRest::Archive::Info($strParentPath, false, {bLoad => false}));
+                new pgBackRest::Backup::Info($strParentPath, false, false, $oParamRef) :
+                new pgBackRest::Archive::Info($strParentPath, false, $oParamRef));
         }
     }
 
@@ -373,30 +530,16 @@ sub infoFileCreate
     (
         $strOperation,
         $oInfo,
-        $strPathType,
-        $strParentPath,
-        $stryFileList,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->infoFileCreate', \@_,
             {name => 'oInfo', trace => true},
-            {name => 'strPathType'},
-            {name => 'strParentPath'},
-            {name => 'stryFileList'},
         );
 
     my $iResult = 0;
     my $strResultMessage = undef;
     my $strWarningMsgArchive = undef;
-
-    # If force was not used and the info file does not exist and the directory is not empty, then error
-    # This should also be performed by the calling routine before this function is called, so this is just a safety check
-    if (!cfgOption(CFGOPT_FORCE) && !$oInfo->{bExists} && @$stryFileList)
-    {
-        confess &log(ERROR, ($strPathType eq STORAGE_REPO_BACKUP ? 'backup directory ' : 'archive directory ') .
-            $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY);
-    }
 
     # Turn off console logging to control when to display the error
     logDisable();
@@ -404,7 +547,7 @@ sub infoFileCreate
     eval
     {
         # Reconstruct the file from the data in the directory if there is any else initialize the file
-        if ($strPathType eq STORAGE_REPO_BACKUP)
+        if (defined($oInfo->{strBackupClusterPath}))
         {
             $oInfo->reconstruct(false, false, $self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId}, $self->{oDb}{iControlVersion},
                 $self->{oDb}{iCatalogVersion});
@@ -413,27 +556,6 @@ sub infoFileCreate
         else
         {
             $strWarningMsgArchive = $oInfo->reconstruct($self->{oDb}{strDbVersion}, $self->{oDb}{ullDbSysId});
-        }
-
-        # If the file exists on disk, then check if the reconstructed data is the same as what is on disk
-        if ($oInfo->exists())
-        {
-            my $oInfoOnDisk =
-                ($strPathType eq STORAGE_REPO_BACKUP ?
-                    new pgBackRest::Backup::Info($strParentPath) : new pgBackRest::Archive::Info($strParentPath));
-
-            # If the hashes are not the same
-            if ($oInfoOnDisk->hash() ne $oInfo->hash())
-            {
-                # If force was not used and the hashes are different then error
-                if (!cfgOption(CFGOPT_FORCE))
-                {
-                    $iResult = ERROR_FILE_INVALID;
-                    $strResultMessage =
-                        ($strPathType eq STORAGE_REPO_BACKUP ? 'backup info file ' : 'archive info file ') . "invalid\n" .
-                        'HINT: use stanza-upgrade if the database has been upgraded or use --force';
-                }
-            }
         }
 
         # Reset the console logging
@@ -550,7 +672,7 @@ sub upgradeCheck
 
         # Capture the result which will be the expected error, meaning an upgrade is needed
         $iResult = exceptionCode($EVAL_ERROR);
-        $strResultMessage = exceptionMessage($EVAL_ERROR->message());
+        $strResultMessage = exceptionMessage($EVAL_ERROR);
     };
 
     # Return from function and log return values if any

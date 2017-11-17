@@ -56,7 +56,7 @@ sub new
     $self->{lSize} = 0;
 
     # Initialize EOF to false
-    $self->{bEOF} = false;
+    $self->eofSet(false);
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -75,6 +75,17 @@ sub new
 sub eof
 {
     return shift->{bEOF};
+}
+
+####################################################################################################################################
+# eofSet - set eof
+####################################################################################################################################
+sub eofSet
+{
+    my $self = shift;
+    my $bEOF = shift;
+
+    $self->{bEOF} = $bEOF;
 }
 
 ####################################################################################################################################
@@ -108,7 +119,7 @@ sub read
     $self->{lSize} += $iActualSize;
 
     # Update EOF
-    $self->{bEOF} = $iActualSize == 0 ? true : false;
+    $self->eofSet($iActualSize == 0 ? true : false);
 
     return $iActualSize;
 }

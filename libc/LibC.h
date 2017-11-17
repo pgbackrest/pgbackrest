@@ -50,13 +50,95 @@ This turned out to be a dead end because Perl 5.10 does not support croak_sv(), 
 Error handling macros that throw a Perl error when a C error is caught
 ***********************************************************************************************************************************/
 #define ERROR_XS_BEGIN()                                                                                                           \
-    ERROR_TRY()
+    TRY()
 
 #define ERROR_XS()                                                                                                                 \
     croak("PGBRCLIB:%d:%s:%d:%s", errorCode(), errorFileName(), errorFileLine(), errorMessage());
 
 #define ERROR_XS_END()                                                                                                             \
-    ERROR_CATCH_ANY()                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
     {                                                                                                                              \
         ERROR_XS();                                                                                                                \
     }
+
+/***********************************************************************************************************************************
+Core context handling macros, only intended to be called from other macros
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_XS_CORE_BEGIN(memContext)                                                                                      \
+    /* Switch to the new memory context */                                                                                         \
+    MemContext *MEM_CONTEXT_XS_memContextOld = memContextSwitch(memContext);                                                       \
+                                                                                                                                   \
+    /* Store any errors to be croaked to Perl at the end */                                                                        \
+    volatile bool MEM_CONTEXT_XS_croak = false;                                                                                    \
+                                                                                                                                   \
+    /* Try the statement block */                                                                                                  \
+    TRY()
+
+#define MEM_CONTEXT_XS_CORE_END()                                                                                                  \
+    /* Set error to be croak to Perl later */                                                                                      \
+    CATCH_ANY()                                                                                                                    \
+    {                                                                                                                              \
+        MEM_CONTEXT_XS_croak = true;                                                                                               \
+    }                                                                                                                              \
+    /* Free the context on error */                                                                                                \
+    FINALLY()                                                                                                                      \
+    {                                                                                                                              \
+        memContextSwitch(MEM_CONTEXT_XS_memContextOld);                                                                            \
+    }
+
+/***********************************************************************************************************************************
+Simplifies creation of the memory context in contructors and includes error handling
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_XS_NEW_BEGIN(contextName)                                                                                      \
+{                                                                                                                                  \
+    /* Attempt to create the memory context */                                                                                     \
+    MemContext *MEM_CONTEXT_XS_memContext = NULL;                                                                                  \
+                                                                                                                                   \
+    TRY()                                                                                                                          \
+    {                                                                                                                              \
+        MEM_CONTEXT_XS_memContext = memContextNew(contextName);                                                                    \
+    }                                                                                                                              \
+    CATCH_ANY()                                                                                                                    \
+    {                                                                                                                              \
+        ERROR_XS()                                                                                                                 \
+    }                                                                                                                              \
+                                                                                                                                   \
+    MEM_CONTEXT_XS_CORE_BEGIN(MEM_CONTEXT_XS_memContext)
+
+#define MEM_CONTEXT_XS_NEW_END()                                                                                                   \
+    MEM_CONTEXT_XS_CORE_END();                                                                                                     \
+                                                                                                                                   \
+    /* Free context and croak on error */                                                                                          \
+    if (MEM_CONTEXT_XS_croak)                                                                                                      \
+    {                                                                                                                              \
+        memContextFree(MEM_CONTEXT_XS_memContext);                                                                                 \
+                                                                                                                                   \
+        ERROR_XS()                                                                                                                 \
+    }                                                                                                                              \
+}
+
+#define MEM_COMTEXT_XS()                                                                                                           \
+    MEM_CONTEXT_XS_memContext
+
+/***********************************************************************************************************************************
+Simplifies switching the memory context in functions and includes error handling
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_XS_BEGIN(memContext)                                                                                           \
+{                                                                                                                                  \
+    MEM_CONTEXT_XS_CORE_BEGIN(memContext)
+
+#define MEM_CONTEXT_XS_END()                                                                                                       \
+    MEM_CONTEXT_XS_CORE_END();                                                                                                     \
+                                                                                                                                   \
+    /* Croak on error */                                                                                                           \
+    if (MEM_CONTEXT_XS_croak)                                                                                                      \
+    {                                                                                                                              \
+        ERROR_XS()                                                                                                                 \
+    }                                                                                                                              \
+}
+
+/***********************************************************************************************************************************
+Free memory context in destructors
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_XS_DESTROY(memContext)                                                                                         \
+    memContextFree(memContext)

@@ -75,6 +75,7 @@ sub new
             oLogTest => $$oParam{oLogTest},
             bStandby => $$oParam{bStandby},
             bRepoLocal => $oParam->{bRepoLocal},
+            bRepoEncrypt => $oParam->{bRepoEncrypt},
         });
     bless $self, $class;
 

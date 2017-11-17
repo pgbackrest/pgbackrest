@@ -201,14 +201,19 @@ sub begin
     $self->end();
 
     # If bExpect is defined then it is an override of the default
-    if (defined($bExpect))
+    $self->{bExpect} = false;
+
+    if ($self->vm() eq VM_EXPECT)
     {
-        $self->{bExpect} = $bExpect;
-    }
-    # Else get the default expect setting
-    else
-    {
-        $self->{bExpect} = (testDefModuleTest($self->{strModule}, $self->{strModuleTest}))->{&TESTDEF_EXPECT};
+        if (defined($bExpect))
+        {
+            $self->{bExpect} = $bExpect;
+        }
+        # Else get the default expect setting
+        else
+        {
+            $self->{bExpect} = (testDefModuleTest($self->{strModule}, $self->{strModuleTest}))->{&TESTDEF_EXPECT};
+        }
     }
 
     # Increment the run counter;
@@ -237,8 +242,9 @@ sub begin
             $strExe, dirname($self->testPath()), $self->basePath(), $self->module(), $self->moduleTest(), $self->runCurrent(),
             true);
     }
-    # Else if the module is defined then create a ExpectTest object
-    elsif ($self->doExpect())
+
+    # Create an ExpectTest object
+    if ($self->doExpect())
     {
         $self->{oExpect} = new pgBackRestTest::Common::LogTest(
             $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription, $strExe,

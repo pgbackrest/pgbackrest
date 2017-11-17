@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Application-Defined Errors
 ***********************************************************************************************************************************/
-#include "errorType.h"
+#include "common/errorType.h"
 
 /***********************************************************************************************************************************
 Error code range -- chosen to not overlap with defined return values
@@ -32,6 +32,7 @@ ERROR_DEFINE(ERROR_CODE_MIN, AssertError, RuntimeError);
 
 ERROR_DEFINE(ERROR_CODE_MIN + 04, FormatError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 69, MemoryError, RuntimeError);
+ERROR_DEFINE(ERROR_CODE_MIN + 70, CipherError, FormatError);
 
 ERROR_DEFINE(ERROR_CODE_MAX, RuntimeError, RuntimeError);
 

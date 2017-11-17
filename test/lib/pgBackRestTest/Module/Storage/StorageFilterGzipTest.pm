@@ -63,7 +63,8 @@ sub run
     {
         #---------------------------------------------------------------------------------------------------------------------------
         my $oGzipIo = $self->testResult(
-            sub {new pgBackRest::Storage::Filter::Gzip($oDriver->openWrite($strFileGz))}, '[object]', 'new write compress');
+            sub {new pgBackRest::Storage::Filter::Gzip($oDriver->openWrite($strFileGz), {lCompressBufferMax => 4})},
+            '[object]', 'new write compress');
 
         my $tBuffer = substr($strFileContent, 0, 2);
         $self->testResult(sub {$oGzipIo->write(\$tBuffer)}, 2, '    write 2 bytes');
@@ -125,6 +126,7 @@ sub run
         $self->testResult(sub {$oGzipIo->read(\$tBuffer, 2)}, 0, '    read 0 bytes');
 
         $self->testResult(sub {$oGzipIo->close()}, true, '    close');
+        $self->testResult(sub {$oGzipIo->close()}, false, '    close again');
         $self->testResult($tBuffer, $strFileContent, '    check content');
 
         storageTest()->remove($strFileGz);

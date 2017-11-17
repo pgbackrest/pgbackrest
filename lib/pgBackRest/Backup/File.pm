@@ -57,6 +57,7 @@ sub backupFile
         $lModificationTime,                         # File modification time
         $bIgnoreMissing,                            # Is it OK if the file is missing?
         $hExtraParam,                               # Parameter to pass to the extra function
+        $strCipherPass,                             # Passphrase to access the repo file (undefined if repo not encrypted)
     ) =
         logDebugParam
         (
@@ -72,6 +73,7 @@ sub backupFile
             {name => 'lModificationTime', trace => true},
             {name => 'bIgnoreMissing', default => true, trace => true},
             {name => 'hExtraParam', required => false, trace => true},
+            {name => 'strCipherPass', required => false, trace => true},
         );
 
     my $oStorageRepo = storageRepo();               # Repo storage
@@ -89,7 +91,7 @@ sub backupFile
 
     if (defined($strChecksum))
     {
-        # Add compression
+        # Add decompression
         my $rhyFilter;
 
         if ($bCompress)
@@ -99,7 +101,8 @@ sub backupFile
 
         # Get the checksum
         ($strCopyChecksum, $lCopySize) = $oStorageRepo->hashSize(
-            $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}", {rhyFilter => $rhyFilter}));
+            $oStorageRepo->openRead(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
+            {rhyFilter => $rhyFilter, strCipherPass => $strCipherPass}));
 
         # Determine if the file needs to be recopied
         $bCopy = !($strCopyChecksum eq $strChecksum && $lCopySize == $lSizeFile);
@@ -143,7 +146,7 @@ sub backupFile
                 $oSourceFileIo,
                 $oStorageRepo->openWrite(
                     STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strFileOp}",
-                    {bPathCreate => true, bProtocolCompress => !$bCompress}));
+                    {bPathCreate => true, bProtocolCompress => !$bCompress, strCipherPass => $strCipherPass}));
 
             # Get sha checksum and size
             $strCopyChecksum = $oSourceFileIo->result(STORAGE_FILTER_SHA);

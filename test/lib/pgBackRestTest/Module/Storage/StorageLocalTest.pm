@@ -18,6 +18,7 @@ use pgBackRest::Config::Config;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Storage::Filter::Sha;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Local;
 
 use pgBackRestTest::Common::ExecuteTest;
@@ -70,6 +71,11 @@ sub initModule
     $self->{oStorageLocal} = new pgBackRest::Storage::Local(
         $self->pathLocal(), new pgBackRest::Storage::Posix::Driver(), {hRule => $hRule, bAllowTemp => false});
 
+    # Create encrypted storage
+    $self->{oStorageEncrypt} = new pgBackRest::Storage::Local(
+        $self->testPath(), new pgBackRest::Storage::Posix::Driver(),
+        {hRule => $hRule, bAllowTemp => false, strCipherType => CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC});
+
     # Remote path
     $self->{strPathRemote} = $self->testPath() . '/remote';
 
@@ -109,11 +115,11 @@ sub run
     # Define test file
     my $strFile = 'file.txt';
     my $strFileCopy = 'file.txt.copy';
-    # my $strFileHash = 'bbbcf2c59433f68f22376cd2439d6cd309378df6';
+    my $strFileHash = 'bbbcf2c59433f68f22376cd2439d6cd309378df6';
     my $strFileContent = 'TESTDATA';
     my $iFileSize = length($strFileContent);
 
-    #---------------------------------------------------------------------------------------------------------------------------
+    ################################################################################################################################
     if ($self->begin("pathGet()"))
     {
         #---------------------------------------------------------------------------------------------------------------------------
@@ -172,8 +178,11 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oFileIo = $self->testResult(sub {$self->storageLocal()->openWrite($strFile)}, '[object]', 'open write');
 
-        $self->testResult(sub {$oFileIo->write(\$strFileContent, length($strFileContent))}, $iFileSize, "write $iFileSize bytes");
+        $self->testResult(sub {$oFileIo->write(\$strFileContent)}, $iFileSize, "write $iFileSize bytes");
         $self->testResult(sub {$oFileIo->close()}, true, 'close');
+
+        # Check that it is not encrypted
+        $self->testResult(sub {$self->storageLocal()->encrypted($strFile)}, false, 'test storage not encrypted');
     }
 
     ################################################################################################################################
@@ -347,6 +356,106 @@ sub run
         $self->testResult(sub {$self->storageLocal()->pathCreate($strTestPath, {bIgnoreExists => true})}, "[undef]",
             "ignore path exists");
     }
+
+    ################################################################################################################################
+    if ($self->begin('encryption'))
+    {
+        my $strCipherPass = 'x';
+        $self->testResult(sub {sha1_hex($strFileContent)}, $strFileHash, 'hash check contents to be written');
+
+        # Error when passphrase not passed
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oFileIo = $self->testException(sub {$self->storageEncrypt()->openWrite($strFile)},
+            ERROR_ASSERT, 'tCipherPass is required in Storage::Filter::CipherBlock->new');
+
+        # Write an encrypted file
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oFileIo = $self->testResult(sub {$self->storageEncrypt()->openWrite($strFile, {strCipherPass => $strCipherPass})},
+            '[object]', 'open write');
+
+        my $iWritten = $oFileIo->write(\$strFileContent);
+        $self->testResult(sub {$oFileIo->close()}, true, '    close');
+
+        # Check that it is encrypted and valid for the repo encryption type
+        $self->testResult(sub {$self->storageEncrypt()->encryptionValid($self->storageEncrypt()->encrypted($strFile))}, true,
+            '    test storage encrypted and valid');
+
+        $self->testResult(
+            sub {sha1_hex(${storageTest()->get($strFile)}) ne $strFileHash}, true, '    check written sha1 different');
+
+        # Error when passphrase not passed
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oFileIo = $self->testException(sub {$self->storageEncrypt()->openRead($strFile)},
+            ERROR_ASSERT, 'tCipherPass is required in Storage::Filter::CipherBlock->new');
+
+        # Read it and confirm it decrypts and is same as original content
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oFileIo = $self->testResult(sub {$self->storageEncrypt()->openRead($strFile, {strCipherPass => $strCipherPass})},
+            '[object]', 'open read and decrypt');
+        my $strContent;
+        $oFileIo->read(\$strContent, $iWritten);
+        $self->testResult(sub {$oFileIo->close()}, true, '    close');
+        $self->testResult($strContent, $strFileContent, '    decrypt read equal orginal contents');
+
+        # Copy
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(
+            sub {$self->storageEncrypt()->copy(
+                $self->storageEncrypt()->openRead($strFile, {strCipherPass => $strCipherPass}),
+                $self->storageEncrypt()->openWrite($strFileCopy, {strCipherPass => $strCipherPass}))},
+            true, 'copy - decrypt/encrypt');
+
+        $self->testResult(
+            sub {sha1_hex(${$self->storageEncrypt()->get($strFileCopy, {strCipherPass => $strCipherPass})})}, $strFileHash,
+                '    check decrypted copy file sha1 same as original plaintext file');
+
+        # Write an empty encrypted file
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strFileZero = 'file-0.txt';
+        my $strZeroContent = '';
+        $oFileIo = $self->testResult(
+            sub {$self->storageEncrypt()->openWrite($strFileZero, {strCipherPass => $strCipherPass})}, '[object]',
+            'open write for zero');
+
+        $self->testResult(sub {$oFileIo->write(\$strZeroContent)}, 0, '    zero written');
+        $self->testResult(sub {$oFileIo->close()}, true, '    close');
+
+        $self->testResult(sub {$self->storageEncrypt()->encrypted($strFile)}, true, '    test empty file encrypted');
+
+        # Write an unencrypted file to the encrypted storage and check if the file is valid for that storage
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strFileTest = $self->testPath() . qw{/} . 'test.file.txt';
+
+        # Create empty file
+        executeTest("touch ${strFileTest}");
+        $self->testResult(sub {$self->storageEncrypt()->encrypted($strFileTest)}, false, 'empty file so not encrypted');
+
+        # Add unencrypted content to the file
+        executeTest("echo -n '${strFileContent}' | tee ${strFileTest}");
+        $self->testResult(sub {$self->storageEncrypt()->encryptionValid($self->storageEncrypt()->encrypted($strFileTest))}, false,
+            'storage encryption and unencrypted file format do not match');
+
+        # Unencrypted file valid in unencrypted storage
+        $self->testResult(sub {$self->storageLocal()->encryptionValid($self->storageLocal()->encrypted($strFileTest))}, true,
+            'unencrypted file valid in unencrypted storage');
+
+        # Prepend encryption Magic Signature and test encrypted file in unencrypted storage not valid
+        executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strFileTest . ')" > ' . $strFileTest);
+        $self->testResult(sub {$self->storageLocal()->encryptionValid($self->storageLocal()->encrypted($strFileTest))}, false,
+            'storage unencrypted and encrypted file format do not match');
+
+        # Test a file that does not exist
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strFileTest = $self->testPath() . qw{/} . 'testfile';
+        $self->testException(sub {$self->storageEncrypt()->encrypted($strFileTest)}, ERROR_FILE_MISSING,
+            "unable to open '" . $strFileTest . "': No such file or directory");
+
+        $self->testResult(sub {$self->storageEncrypt()->encrypted($strFileTest, {bIgnoreMissing => true})}, true,
+            'encryption for ignore missing file returns encrypted for encrypted storage');
+
+        $self->testResult(sub {$self->storageLocal()->encrypted($strFileTest, {bIgnoreMissing => true})}, false,
+            'encryption for ignore missing file returns unencrypted for unencrypted storage');
+    }
 }
 
 ####################################################################################################################################
@@ -358,6 +467,7 @@ sub pathRemote {return shift->{strPathRemote}};
 sub protocolLocal {return shift->{oProtocolLocal}};
 sub protocolRemote {return shift->{oProtocolRemote}};
 sub storageLocal {return shift->{oStorageLocal}};
+sub storageEncrypt {return shift->{oStorageEncrypt}};
 sub storageRemote {return shift->{oStorageRemote}};
 
 1;

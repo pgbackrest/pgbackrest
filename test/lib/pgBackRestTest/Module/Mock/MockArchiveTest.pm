@@ -83,12 +83,14 @@ sub run
     {
     foreach my $bRemote ($bS3 ? (true) : (false, true))
     {
+        my $bRepoEncrypt = !$bRemote && !$bS3 ? true : false;
+
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}")) {next}
+        if (!$self->begin("rmt ${bRemote}, s3 ${bS3}, enc ${bRepoEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbMaster, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3});
+            true, $self->expect(), {bHostBackup => $bRemote, bCompress => false, bS3 => $bS3, bRepoEncrypt => $bRepoEncrypt});
 
         # Reduce console logging to detail
         $oHostDbMaster->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_LOG_LEVEL_CONSOLE) => lc(DETAIL)}});
@@ -246,7 +248,7 @@ sub run
         storageTest()->remove($oHostDbMaster->spoolPath() . '/archive/' . $self->stanza() . "/out/${strSourceFile}.ok");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, '    db version mismatch error');
+        &log(INFO, '    db version mismatch in db section only - archive-push errors but archive-get succeeds');
 
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
@@ -256,16 +258,50 @@ sub run
             $strCommandPush . " ${strWalPath}/${strSourceFile}",
             {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
 
+        # Remove RECOVERYXLOG so it can be recovered
+        storageTest()->remove("${strWalPath}/RECOVERYXLOG", {bIgnoreMissing => false});
+
         $oHostDbMaster->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {oLogTest => $self->expect()});
+
+        # Check that the destination file exists
+        if (storageDb()->exists("${strWalPath}/RECOVERYXLOG"))
+        {
+            my ($strActualChecksum) = storageDb()->hashSize("${strWalPath}/RECOVERYXLOG");
+
+            if ($strActualChecksum ne $strArchiveChecksum)
+            {
+                confess "recovered file hash '${strActualChecksum}' does not match expected '${strArchiveChecksum}'";
+            }
+        }
+        else
+        {
+            confess "archive file '${strWalPath}/RECOVERYXLOG' is not in destination";
+        }
+
+        #---------------------------------------------------------------------------------------------------------------------------
+        &log(INFO, '    db version mismatch error - archive-get unable to retrieve archiveId');
+
+        # db section and corresponding history munged
+        $oHostBackup->infoMunge(
+            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
+            {&INFO_ARCHIVE_SECTION_DB_HISTORY => {'1' => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
+
+        $oHostDbMaster->executeSimple(
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
+            {iExpectedExitStatus => ERROR_UNKNOWN, oLogTest => $self->expect()});
+
+        # Restore the file to its original condition
+        $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    db system-id mismatch error');
 
         $oHostBackup->infoMunge(
             storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
-                {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000}});
+            {&INFO_ARCHIVE_SECTION_DB => {&INFO_BACKUP_KEY_SYSTEM_ID => 5000900090001855000},
+            &INFO_ARCHIVE_SECTION_DB_HISTORY => {'1' => {&INFO_ARCHIVE_KEY_DB_ID => 5000900090001855000}}});
 
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}",
@@ -273,7 +309,7 @@ sub run
 
         $oHostDbMaster->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_UNKNOWN, oLogTest => $self->expect()});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE));

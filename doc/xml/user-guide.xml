@@ -29,6 +29,8 @@
         <variable key="perl-bin-path">/usr/bin</variable>
 
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
+        <variable key="backrest-repo-cipher-type">aes-256-cbc</variable>
+        <variable key="backrest-repo-cipher-pass">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</variable>
         <variable key="br-user">backrest</variable>
         <variable key="br-group">{[br-user]}</variable>
         <variable key="br-home-path">/home/{[br-user]}</variable>
@@ -286,7 +288,7 @@
         </execute-list>
 
         <!-- LibC installation - disabled for better testing of the C/Perl failback mechanism -->
-        <!-- <p><backrest/> includes an optional companion C library that enhances performance and enables the `checksum-page` option.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
+        <p><backrest/> includes an optional companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
 
         <execute-list host="{[host-db-primary]}">
             <title>Build and Install C Library</title>
@@ -301,7 +303,7 @@
             <execute user="root">
                 <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
             </execute>
-        </execute-list> -->
+        </execute-list>
     </block-define>
 
     <block-define id="br-install-repo">
@@ -369,6 +371,15 @@
 
             <p>WAL is conceptually infinite but in practice is broken up into individual 16MB files called segments.  WAL segments follow the naming convention <id>0000000100000A1E000000FE</id> where the first 8 hexadecimal digits represent the timeline and the next 16 digits are the logical sequence number (LSN).</p>
 
+        </section>
+
+        <!-- SECTION => CONCEPTS - ENCRYPTION -->
+        <section id="encryption">
+            <title>Encryption</title>
+
+            <p>Encryption is the process of converting data into a format that is unrecognizable unless the appropriate password (also referred to as passphrase) is provided.</p>
+
+            <p><backrest/> will encrypt the repository based on a user-provided password, thereby preventing unauthorized access to data stored within the repository.</p>
         </section>
     </section>
 
@@ -555,7 +566,7 @@
                 </execute>
             </execute-list>
 
-            <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) then the <br-option>archive-timeout</br-option> option should be increased.</p>
+            <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - RETENTION -->
@@ -571,6 +582,25 @@
             </backrest-config>
 
             <p>More information about retention can be found in the <link section="/retention">Retention</link> section.</p>
+        </section>
+
+        <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
+        <!-- Since S3 and backup host require configure-archiving, this section must come after. -->
+        <section id="configure-encryption">
+            <title>Configure Repository Encryption</title>
+
+            <p>The repository will be configured with a cipher type and key to demonstrate encryption. The companion C library is required for encryption, see <link section="/installation">Installation</link>.</p>
+
+            <p>It is important to use a long, random passphrase for the cipher key.  A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
+
+            <backrest-config host="{[host-db-primary]}" file="{[backrest-config-demo]}">
+                <title>Configure <backrest/> repository encryption</title>
+
+                <backrest-config-option section="global" key="repo-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
+            </backrest-config>
+
+            <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - STANZA CREATE -->
@@ -885,7 +915,7 @@
         <section id="option-archive-timeout">
             <title>Archive Timeout</title>
 
-            <p>During an online backup, <backrest/> waits for WAL segments that are required to make the backup consistent to be archived. This wait time is governed by the <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer, then this option should be increased.</p>
+            <p>During an online backup <backrest/> waits for WAL segments that are required for backup consistency to be archived. This wait time is governed by the <backrest/> <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer then this option should be increased.</p>
         </section>
     </section>
 
@@ -1459,6 +1489,13 @@
         <title>S3 Support</title>
 
         <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.</p>
+
+        <backrest-config host="{[host-db-primary]}" show="n" file="{[backrest-config-demo]}">
+            <title>Clear the cipher settings</title>
+
+            <backrest-config-option section="global" key="repo-cipher-type">none</backrest-config-option>
+            <backrest-config-option section="global" key="repo-cipher-pass"></backrest-config-option>
+        </backrest-config>
 
         <backrest-config host="{[host-db-primary]}" file="{[backrest-config-demo]}">
             <title>Configure <proper>S3</proper></title>

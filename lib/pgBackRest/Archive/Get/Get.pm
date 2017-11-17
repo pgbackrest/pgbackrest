@@ -100,14 +100,7 @@ sub get
     $strDestinationFile = walPath($strDestinationFile, cfgOption(CFGOPT_DB_PATH, false), cfgCommandName(cfgCommandGet()));
 
     # Get the wal segment filename
-    my ($strArchiveId, $strArchiveFile) = $self->getCheck(
-        undef, undef, walIsSegment($strSourceArchive) ? $strSourceArchive : undef);
-
-    if (!defined($strArchiveFile) && !walIsSegment($strSourceArchive) &&
-        $oStorageRepo->exists(STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strSourceArchive}"))
-    {
-        $strArchiveFile = $strSourceArchive;
-    }
+    my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(undef, undef, $strSourceArchive, false);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
@@ -127,9 +120,11 @@ sub get
         my $bSourceCompressed = $strArchiveFile =~ ('^.*\.' . COMPRESS_EXT . '$') ? true : false;
 
         # Copy the archive file to the requested location
+        # If the file is encrypted, then the passphrase from the info file is required to open the archive file in the repo
         $oStorageRepo->copy(
             $oStorageRepo->openRead(
-                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}", {bProtocolCompress => !$bSourceCompressed}),
+                STORAGE_REPO_ARCHIVE . "/${strArchiveId}/${strArchiveFile}", {bProtocolCompress => !$bSourceCompressed,
+                strCipherPass => defined($strCipherPass) ? $strCipherPass : undef}),
             storageDb()->openWrite(
                 $strDestinationFile,
                 {rhyFilter => $bSourceCompressed ?

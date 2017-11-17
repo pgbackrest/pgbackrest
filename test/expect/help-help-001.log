@@ -89,6 +89,8 @@ Repository Options:
   --backup-ssh-port         backup server SSH port when backup-host is set
   --backup-user             backup host user when backup-host is set
 [default=backrest]
+  --repo-cipher-pass        repository cipher passphrase
+  --repo-cipher-type        cipher used to encrypt the repository [default=none]
   --repo-path               repository path where WAL segments and backups
 stored [default=/var/lib/pgbackrest]
   --repo-s3-bucket          s3 repository bucket
@@ -181,6 +183,8 @@ Repository Options:
   --backup-ssh-port         backup server SSH port when backup-host is set
   --backup-user             backup host user when backup-host is set
 [default=backrest]
+  --repo-cipher-pass        repository cipher passphrase
+  --repo-cipher-type        cipher used to encrypt the repository [default=none]
   --repo-path               repository path where WAL segments and backups
 stored [default=/var/lib/pgbackrest]
   --repo-s3-bucket          s3 repository bucket

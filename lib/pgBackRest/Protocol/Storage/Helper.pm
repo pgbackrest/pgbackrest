@@ -15,6 +15,7 @@ use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Remote;
+use pgBackRest::Storage::Base;
 use pgBackRest::Storage::Helper;
 use pgBackRest::Storage::Local;
 
@@ -60,7 +61,7 @@ sub storageDb
         if (isDbLocal({iRemoteIdx => $iRemoteIdx}))
         {
             $hStorage->{&STORAGE_DB}{$iRemoteIdx} = new pgBackRest::Storage::Local(
-                cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)), new pgBackRest::Storage::Posix::Driver(),
+                cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)), new pgBackRest::Storage::Posix::Driver(),
                 {strTempExtension => STORAGE_TEMP_EXT, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
         }
         else
@@ -207,10 +208,22 @@ sub storageRepo
                 $oDriver = new pgBackRest::Storage::Posix::Driver();
             }
 
+            # Set the encryption for the repo
+            my $strCipherType;
+            my $strCipherPass;
+
+            # If the encryption is not the default (none) then set the user-defined passphrase and magic based on the type
+            if (cfgOption(CFGOPT_REPO_CIPHER_TYPE) ne CFGOPTVAL_REPO_CIPHER_TYPE_NONE)
+            {
+                $strCipherType = cfgOption(CFGOPT_REPO_CIPHER_TYPE);
+                $strCipherPass = cfgOption(CFGOPT_REPO_CIPHER_PASS);
+            }
+
             # Create local storage
             $hStorage->{&STORAGE_REPO}{$strStanza} = new pgBackRest::Storage::Local(
                 cfgOption(CFGOPT_REPO_PATH), $oDriver,
-                {strTempExtension => STORAGE_TEMP_EXT, hRule => $hRule, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE)});
+                {strTempExtension => STORAGE_TEMP_EXT, hRule => $hRule, lBufferMax => cfgOption(CFGOPT_BUFFER_SIZE),
+                strCipherType => $strCipherType, strCipherPassUser => $strCipherPass});
         }
         else
         {
@@ -229,5 +242,32 @@ sub storageRepo
 }
 
 push @EXPORT, qw(storageRepo);
+
+####################################################################################################################################
+# storageRepoCacheClear - FOR TESTING ONLY!
+####################################################################################################################################
+sub storageRepoCacheClear
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strStanza,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::storageRepoCacheClear', \@_,
+            {name => 'strStanza'},
+        );
+
+    if (defined($hStorage->{&STORAGE_REPO}{$strStanza}))
+    {
+        delete($hStorage->{&STORAGE_REPO}{$strStanza});
+    }
+
+    return;
+}
+
+push @EXPORT, qw(storageRepoCacheClear);
 
 1;

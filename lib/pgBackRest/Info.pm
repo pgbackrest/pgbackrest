@@ -7,12 +7,14 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::String;
@@ -47,6 +49,8 @@ use constant INFO_STANZA_STATUS_MISSING_STANZA_CODE                 => 1;
 use constant INFO_STANZA_STATUS_MISSING_STANZA_MESSAGE              => 'missing stanza path';
 use constant INFO_STANZA_STATUS_NO_BACKUP_CODE                      => 2;
 use constant INFO_STANZA_STATUS_NO_BACKUP_MESSAGE                   => 'no valid backups';
+use constant INFO_STANZA_STATUS_MISSING_STANZA_DATA_CODE            => 3;
+use constant INFO_STANZA_STATUS_MISSING_STANZA_DATA_MESSAGE         => 'missing stanza data';
 
 use constant INFO_KEY_CODE                                          => 'code';
 use constant INFO_KEY_DELTA                                         => 'delta';
@@ -390,7 +394,7 @@ sub stanzaList
                 $self->backupList($strStanzaFound);
 
             # If there are no backups then set status to no backup
-            if (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} == 0)
+            if (defined($$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}) && @{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}} == 0)
             {
                 $$oStanzaInfo{&INFO_SECTION_STATUS} =
                 {
@@ -399,7 +403,7 @@ sub stanzaList
                 };
             }
             # Else status is OK
-            else
+            elsif (defined($$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}))
             {
                 $$oStanzaInfo{&INFO_SECTION_STATUS} =
                 {
@@ -411,31 +415,46 @@ sub stanzaList
             # Array to store tne min/max archive for each database for which there are archives
             my @oyDbArchiveList = ();
 
-            # Get the current DB info (always last element in the array)
-            my $hDbCurrent = @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}}[-1];
-            my $strDbCurrentVersion = $hDbCurrent->{&INFO_KEY_VERSION};
-            my $ullDbCurrentSystemId = $hDbCurrent->{&INFO_KEY_SYSTEM_ID};
-
-            # Loop through the DB history from oldest to newest
-            foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
+            if (!defined($$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}))
             {
-                my $strArchiveStanzaPath = "archive/" . $strStanzaFound;
-                my $strDbVersion = $hDbInfo->{&INFO_KEY_VERSION};
-                my $ullDbSysId = $hDbInfo->{&INFO_KEY_SYSTEM_ID};
-
-                # With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
-                # archive path must be built by retrieving the archive id given the db version and system id of the backup
-                my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet($strArchiveStanzaPath));
-                my $strArchiveId = $oArchiveInfo->archiveId({strDbVersion => $hDbInfo->{&INFO_KEY_VERSION},
-                    ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
-                my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
-
-                # Fill in the archive info if available
-                my $hDbArchive = $self->dbArchiveSection($hDbInfo, $strArchiveId, $strArchivePath, $strDbCurrentVersion,
-                    $ullDbCurrentSystemId);
-                if (defined($hDbArchive))
+                $$oStanzaInfo{&INFO_SECTION_STATUS} =
                 {
-                    push(@oyDbArchiveList, $hDbArchive);
+                    &INFO_KEY_CODE => INFO_STANZA_STATUS_MISSING_STANZA_DATA_CODE,
+                    &INFO_KEY_MESSAGE => INFO_STANZA_STATUS_MISSING_STANZA_DATA_MESSAGE
+                };
+
+                $$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP} = [];
+                $$oStanzaInfo{&INFO_BACKUP_SECTION_DB} = [];
+            }
+            else
+            {
+                # Get the current DB info (always last element in the array)
+                my $hDbCurrent = @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}}[-1];
+                my $strDbCurrentVersion = $hDbCurrent->{&INFO_KEY_VERSION};
+                my $ullDbCurrentSystemId = $hDbCurrent->{&INFO_KEY_SYSTEM_ID};
+
+                # Loop through the DB history from oldest to newest
+                foreach my $hDbInfo (@{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
+                {
+                    my $strArchiveStanzaPath = "archive/" . $strStanzaFound;
+                    my $strDbVersion = $hDbInfo->{&INFO_KEY_VERSION};
+                    my $ullDbSysId = $hDbInfo->{&INFO_KEY_SYSTEM_ID};
+
+                    # With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
+                    # archive path must be built by retrieving the archive id given the db version and system id of the backup
+                    my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet($strArchiveStanzaPath));
+                    my $strArchiveId = $oArchiveInfo->archiveId({strDbVersion => $hDbInfo->{&INFO_KEY_VERSION},
+                        ullDbSysId => $hDbInfo->{&INFO_KEY_SYSTEM_ID}});
+                    my $strArchivePath = "archive/${strStanzaFound}/${strArchiveId}";
+
+                    # Fill in the archive info if available
+                    my $hDbArchive = $self->dbArchiveSection($hDbInfo, $strArchiveId, $strArchivePath, $strDbCurrentVersion,
+                        $ullDbCurrentSystemId);
+
+                    if (defined($hDbArchive))
+                    {
+                        push(@oyDbArchiveList, $hDbArchive);
+                    }
                 }
             }
 
@@ -491,9 +510,39 @@ sub backupList
             {name => 'strStanza'}
         );
 
-    # Load the backup.info but do not attempt to validate it or confirm it's existence
-    my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(
-        cfgCommandName(CFGCMD_BACKUP) . "/${strStanza}"), false, false, {bIgnoreMissing => true});
+    # Load the backup.info but do not attempt to validate it
+    my $oBackupInfo = undef;
+
+    # Turn off console logging to control when to display the error
+    logDisable();
+
+    eval
+    {
+        $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(cfgCommandName(CFGCMD_BACKUP) . "/${strStanza}"), false);
+        logEnable();
+        return true;
+    }
+    or do
+    {
+        logEnable();
+
+        if (exceptionCode($EVAL_ERROR) == ERROR_FILE_MISSING)
+        {
+            return;
+        }
+        elsif (exceptionCode($EVAL_ERROR) == ERROR_CIPHER)
+        {
+            # Confess the encryption error with additional hint
+            confess &log(ERROR, exceptionMessage($EVAL_ERROR) .
+                "\nHINT: use option --stanza if encryption settings are different for the stanza than the global settings",
+                ERROR_CIPHER);
+        }
+        else
+        {
+            # Confess unhandled errors
+            confess $EVAL_ERROR;
+        }
+    };
 
     # Build the db list
     my @oyDbList;

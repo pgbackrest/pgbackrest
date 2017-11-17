@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # ConfigConfigTest.pm - Tests for mixed command line and config file options in Config.pm
 ####################################################################################################################################
-package pgBackRestTest::Module::Config::ConfigConfigTest;
+package pgBackRestTest::Module::Config::ConfigConfigPerlTest;
 use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
@@ -54,7 +54,7 @@ sub run
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
         $self->configTestLoadExpect(cfgCommandName(CFGCMD_BACKUP));
-        $self->optionTestExpect(CFGOPT_CONFIG, cfgRuleOptionDefault(CFGCMD_BACKUP, CFGOPT_CONFIG));
+        $self->optionTestExpect(CFGOPT_CONFIG, cfgDefOptionDefault(CFGCMD_BACKUP, CFGOPT_CONFIG));
     }
 
     if ($self->begin('config file is a path'))

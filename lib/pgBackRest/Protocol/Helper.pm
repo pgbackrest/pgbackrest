@@ -55,6 +55,8 @@ use constant OP_STORAGE_OPEN_READ                                   => 'storageO
     push @EXPORT, qw(OP_STORAGE_OPEN_READ);
 use constant OP_STORAGE_OPEN_WRITE                                  => 'storageOpenWrite';
     push @EXPORT, qw(OP_STORAGE_OPEN_WRITE);
+use constant OP_STORAGE_CIPHER_PASS_USER                            => 'storageCipherPassUser';
+    push @EXPORT, qw(OP_STORAGE_CIPHER_PASS_USER);
 use constant OP_STORAGE_EXISTS                                      => 'storageExists';
     push @EXPORT, qw(OP_STORAGE_EXISTS);
 use constant OP_STORAGE_LIST                                        => 'storageList';
@@ -125,7 +127,7 @@ sub isDbLocal
         confess &log(ASSERT, 'isDbLocal() not valid on ' . cfgOption(CFGOPT_TYPE) . ' remote');
     }
 
-    my $bLocal = cfgOptionTest(cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx)) ? false : true;
+    my $bLocal = cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)) ? false : true;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -172,7 +174,7 @@ sub protocolGet
 
     # If no remote requested or if the requested remote type is local then return a local protocol object
     if (!cfgOptionTest(
-            cfgOptionIndex($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB ? CFGOPT_DB_HOST : CFGOPT_BACKUP_HOST, $iRemoteIdx)))
+            cfgOptionIdFromIndex($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB ? CFGOPT_DB_HOST : CFGOPT_BACKUP_HOST, $iRemoteIdx)))
     {
         confess &log(ASSERT, 'protocol cannot be created when remote host is not specified');
     }
@@ -210,35 +212,35 @@ sub protocolGet
 
             if ($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB)
             {
-                $iOptionIdCmd = cfgOptionIndex(CFGOPT_DB_CMD, $iRemoteIdx);
-                $iOptionIdConfig = cfgOptionIndex(CFGOPT_DB_CONFIG, $iRemoteIdx);
-                $iOptionIdHost = cfgOptionIndex(CFGOPT_DB_HOST, $iRemoteIdx);
-                $iOptionIdUser = cfgOptionIndex(CFGOPT_DB_USER, $iRemoteIdx);
-                $strOptionSshPort = cfgOptionIndex(CFGOPT_DB_SSH_PORT, $iRemoteIdx);
+                $iOptionIdCmd = cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iRemoteIdx);
+                $iOptionIdConfig = cfgOptionIdFromIndex(CFGOPT_DB_CONFIG, $iRemoteIdx);
+                $iOptionIdHost = cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx);
+                $iOptionIdUser = cfgOptionIdFromIndex(CFGOPT_DB_USER, $iRemoteIdx);
+                $strOptionSshPort = cfgOptionIdFromIndex(CFGOPT_DB_SSH_PORT, $iRemoteIdx);
             }
 
             # Db path is not valid in all contexts (restore, for instance)
-            if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)))
+            if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)))
             {
                 $strOptionDbPath =
-                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption(cfgOptionIndex(CFGOPT_DB_PATH, $iRemoteIdx));
+                    cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                        undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx));
             }
 
             # Db port is not valid in all contexts (restore, for instance)
-            if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx)))
+            if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx)))
             {
                 $strOptionDbPort =
-                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption(cfgOptionIndex(CFGOPT_DB_PORT, $iRemoteIdx));
+                    cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                        undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx));
             }
 
             # Db socket is not valid in all contexts (restore, for instance)
-            if (cfgOptionValid(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)))
+            if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)))
             {
                 $strOptionDbSocketPath =
-                    cfgOptionSource(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption(cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx));
+                    cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                        undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx));
             }
 
             # Build hash to set and override command options
@@ -268,22 +270,22 @@ sub protocolGet
                 &CFGOPT_PROTOCOL_TIMEOUT =>  {value => cfgOption(CFGOPT_PROTOCOL_TIMEOUT)}
             };
 
-            # Override some per-db options that shouldn't be passed to the command. ??? This could be done better as a new rule for
-            # these options which would then be implemented in cfgCommandWrite().
+            # Override some per-db options that shouldn't be passed to the command. ??? This could be done better as a new define
+            # for these options which would then be implemented in cfgCommandWrite().
             for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
             {
                 if ($iOptionIdx != 1)
                 {
-                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_CONFIG, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_HOST, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_PATH, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_PORT, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_SOCKET_PATH, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_CONFIG, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iOptionIdx)} = {};
+                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iOptionIdx)} = {};
                 }
 
-                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_CMD, $iOptionIdx)} = {};
-                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_USER, $iOptionIdx)} = {};
-                $rhCommandOption->{cfgOptionIndex(CFGOPT_DB_SSH_PORT, $iOptionIdx)} = {};
+                $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)} = {};
+                $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_USER, $iOptionIdx)} = {};
+                $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_SSH_PORT, $iOptionIdx)} = {};
             }
 
             $oProtocol = new pgBackRest::Protocol::Remote::Master
