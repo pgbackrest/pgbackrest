@@ -128,21 +128,21 @@ sub run
     my $lTime = time() - 10000;
     my $strTest = 'test';
 
-    my $oManifestExpected = new pgBackRest::Common::Ini($self->{strExpectedManifest}, {bLoad => false});
+    my $oManifestBase = new pgBackRest::Common::Ini($self->{strExpectedManifest}, {bLoad => false});
 
     # Section: backup:db
-    $oManifestExpected->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_94);
+    $oManifestBase->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_94);
     # Section: target:path
     my $hDefault = {};
-    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, undef, $hDefault);
-    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_GLOBAL, undef, $hDefault);
+    $oManifestBase->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, undef, $hDefault);
+    $oManifestBase->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_GLOBAL, undef, $hDefault);
     # Section: target:path:default
-    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0750);
-    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
-    $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+    $oManifestBase->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0750);
+    $oManifestBase->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+    $oManifestBase->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
     # Section backup:target
-    $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_PATH);
-    $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbPath});
+    $oManifestBase->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_PATH);
+    $oManifestBase->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbPath});
 
     ################################################################################################################################
     if ($self->begin('new()'))
@@ -191,28 +191,20 @@ sub run
 # CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set?
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
-        # bOnline = true tests
-        #
+        # bOnline = true tests - Compare the base manifest
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestBase, $oManifest)}, "", 'base manifest');
 
-        # Compare the base manifest
-        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'base manifest');
+        # Create expected manifest from base
+        my $oManifestExpected = dclone($oManifestBase);
 
-        # Add global/pg_control file and PG_VERSION file and create a directory with a different mode than default
+        # Add global/pg_control file and PG_VERSION file and create a directory with a different modes than default
         storageDb()->copy($self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
             storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGCONTROL,
             {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}));
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGVERSION,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), PG_VERSION_94);
-
-# CSHANG !!! creating test file here only to stop target:file:default mode from flapping between 600 and 644 - need to resolve and remove
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest,
-            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
-            MANIFEST_SUBKEY_SIZE, length($strTest));
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest,
-            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
         # Create base path with different mode than default
         storageDb()->pathCreate(DB_PATH_BASE, {strMode => MODE_0700});
@@ -235,10 +227,10 @@ sub run
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
 
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
-
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
 
-# CSHANG Why does base/test file result in "master":false here? This means we will not be copying it? I tried the same test in the doc container where base path mode=700 and base/test mode = 600 and ran a full backup and that results in pg_data/base/test={"checksum":"4e1243bd22c66e76c2ba9eddc1f91394e57f9f83","repo-size":25,"size":5,"timestamp":1510071781} with pg_data/base/test.gz.  I also tried changing the time to be - 100 but that still resulted here in master=false
+        # Master = false
+        #---------------------------------------------------------------------------------------------------------------------------
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_BASE . '/' . $strTest,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
 
@@ -256,12 +248,12 @@ sub run
         # Create a pg_config path and file link
         my $strConfFile = '/pg_config/postgresql.conf';
         my $strConfContent = "listen_addresses = *\n";
-        storageDb()->pathCreate('pg_config', {strMode => MODE_0700});
+        storageDb()->pathCreate('pg_config');
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . $strConfFile,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strConfContent);
         testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
 
-        # Even though this creates a duplicate link, this error occurs - note the pg_config/pg_config: 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
+# CSHANG Even though this creates a duplicate link, this error occurs (note the pg_config/pg_config): 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
 # ubuntu@pgbackrest-test:~$ ls -l /home/ubuntu/test/test-0/db/pg_config/
 # total 4
 # -rw------- 1 ubuntu ubuntu 21 Nov  9 17:07 postgresql.conf
@@ -275,15 +267,9 @@ sub run
         # testFileRemove($self->{strDbPath} . $strConfFile . '.link.bad');
 
         # Update expected manifest
-# CSHANG !!! creating pg_stat here only to stop target:path:default mode from flapping between 750 and 700 - need to resolve and remove. At this point we have global/ 750, base/ 700 and pg_config/ 700 so the target:path:defaul mode flaps between 750 and 700 maybe because target:path contains 4 because of pg_data - which doesn't actually exist unless it is taking the db/ path itself into account for that?
-        storageTest()->pathCreate($self->{strDbPath} . '/pg_stat', {strMode => MODE_0750});
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_stat', undef, $hDefault);
-        # $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0700);
-        # $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_MODE, MODE_0750);
-        # $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_GLOBAL, MANIFEST_SUBKEY_MODE, MODE_0750);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_config', undef, $hDefault)
 
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_config',
-            MANIFEST_SUBKEY_MODE, MODE_0700);
         # Section backup:target
         $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
             MANIFEST_SUBKEY_FILE, 'postgresql.conf');
@@ -306,6 +292,8 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'link');
 
+        # Test skip files/directories
+        #---------------------------------------------------------------------------------------------------------------------------
         # Create files to skip
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP ), '');
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_BACKUPLABELOLD), '');
@@ -317,21 +305,28 @@ sub run
         # Create directories to skip. Add a bogus file to them for test coverage.
         storageDb()->pathCreate(DB_FILE_PREFIX_TMP);
         storageDb()->pathCreate('pg_xlog');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/pg_xlog/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/pg_xlog/' . BOGUS, {lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGDYNSHMEM);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGDYNSHMEM . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGDYNSHMEM . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGNOTIFY);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGNOTIFY . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGNOTIFY . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGREPLSLOT);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGREPLSLOT . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGREPLSLOT . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGSERIAL);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSERIAL . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSERIAL . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGSNAPSHOTS);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSNAPSHOTS . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSNAPSHOTS . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGSTATTMP);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSTATTMP . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSTATTMP . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGSUBTRANS);
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSUBTRANS . '/' . BOGUS), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGSUBTRANS . '/' . BOGUS,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_FILE_PGINTERNALINIT);
 
         # Update expected manifest
@@ -347,6 +342,87 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'skip directories/files');
 
+        # Unskip code path coverage
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oManifestExpectedUnskip = dclone($oManifestExpected);
+
+        # Change DB version to 93
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_93});
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_93);
+
+        # Update expected manifest
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+        $oManifestExpectedUnskip->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
+
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 94 directories');
+
+        # Change DB version to 91
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_91});
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_91);
+
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSNAPSHOTS . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSNAPSHOTS . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 92 directories');
+
+        # Change DB version to 90
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_90});
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_90);
+
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSERIAL . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSERIAL . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 91 directories');
+
+        # Change DB version to 84
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_84});
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
+
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGNOTIFY . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGNOTIFY . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 90 directories');
+
+        # Change DB version to 83
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_83});
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_83);
+
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSTATTMP . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpectedUnskip->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSTATTMP . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpectedUnskip, $oManifest)}, "", 'unskip 84 directories');
+
+        # Reset Manifest for next tests
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest reset');
+
+        # Tablespaces
+        #---------------------------------------------------------------------------------------------------------------------------
         # Create pg_tblspc path
         my $strTblSpcPath = $self->{strDbPath} . '/' . MANIFEST_TARGET_PGTBLSPC;
         storageDb()->pathCreate($strTblSpcPath, {bCreateParent => true});
@@ -358,36 +434,30 @@ sub run
 
         testPathRemove("${strTblSpcPath}/" . BOGUS);
 
-        # Create relative links in PGDATA
-        #---------------------------------------------------------------------------------------------------------------------------
         my $strTblspcId = '99999';
-print "CREATING ${strTblSpcPath}/${strTblspcId}\n\n"; # CSHANG
-        # invalid relative tablespace is ../
+
+        # Invalid relative tablespace is ../
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../ destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-print "\nCREATING LINK .. (this does not create any additional coverage)\n\n"; # CSHANG
-        # invalid relative tablespace is ..
+        # Invalid relative tablespace is ..
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '..');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink .. destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-print "\nCREATING LINK ../base (this does not create any additional coverage)\n\n"; # CSHANG#
-        # invalid relative tablespace is ../base - a subdirectory of $PGDATA
+        # Invalid relative tablespace is ../base - a subdirectory of $PGDATA
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../base');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_TABLESPACE_IN_PGDATA,
             'tablespace symlink ../base destination must not be in $PGDATA');
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-        # Create absolute link to PGDATA
-        #---------------------------------------------------------------------------------------------------------------------------
         # Create the catalog key for the tablespace construction
         $oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
 
-        # invalid absolute tablespace is  $self->{strDbPath} . /base
+        # Invalid absolute tablespace is  $self->{strDbPath} . /base
 # CSHANG But this should fail because the link points to a directory in pg_data but instead it passes the index($hManifest->{$strName}{link_destination}, '/') != 0 and then fails later. It WILL fail "destination must not be in $PGDATA" if an ending slash is added - so maybe the comment in Manifest.pm "# Make sure that DB_PATH_PGTBLSPC contains only absolute links that do not point inside PGDATA" is not exactly correct?
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $self->{strDbPath} . '/base');
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
@@ -395,9 +465,7 @@ print "\nCREATING LINK ../base (this does not create any additional coverage)\n\
             "HINT: was a tablespace created or dropped during the backup?");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-        # Create relative link to location that does not exist outside of PGDATA
-        #---------------------------------------------------------------------------------------------------------------------------
-        # invalid relative tablespace is ../../BOGUS - which is not in $PGDATA
+        # Invalid relative tablespace is ../../BOGUS - which is not in $PGDATA and does not exist
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", '../../' . BOGUS);
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_ASSERT,
             "tablespace with oid ${strTblspcId} not found in tablespace map\n" .
@@ -405,10 +473,10 @@ print "\nCREATING LINK ../base (this does not create any additional coverage)\n\
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Create tablespace directory outside PGDATA
-        #---------------------------------------------------------------------------------------------------------------------------
         storageTest()->pathCreate('tablespace');
 
         my $strIntermediateLink = $self->{strDbPath} . "/intermediate_link";
+
         # Create a link to a link
         testLinkCreate($strIntermediateLink, $self->testPath() . '/tablespace');
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $strIntermediateLink);

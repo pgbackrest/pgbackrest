@@ -831,7 +831,7 @@ syswrite(*STDOUT, "NAME: ".Dumper($strName) . ", PATH: ".Dumper($strPath).", MAN
             }
 
             $strPath = dirname("${strPath}/${strName}");
-print "STRPATH BEFORE BUILD: $strPath, STRLEVEL PASSED: ".Dumper($strFile)."STRFILTER: ".Dumper($strFilter); # CSHANG
+syswrite(*STDOUT, "STRPATH BEFORE BUILD: $strPath, STRLEVEL PASSED: ".Dumper($strFile)."STRFILTER: ".Dumper($strFilter)); # CSHANG
             $self->build(
                 $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $strFile, $bTablespace,
                 $strPath, $strFilter, $strLinkDestination);
@@ -1094,6 +1094,7 @@ sub buildDefault
 
             foreach my $strFile ($self->keys($strSection))
             {
+
                 # Don't count false values when subkey in (MANIFEST_SUBKEY_USER, MANIFEST_SUBKEY_GROUP)
                 next if (($strSubKey eq MANIFEST_SUBKEY_USER || $strSubKey eq MANIFEST_SUBKEY_GROUP) &&
                          $self->boolTest($strSection, $strFile, $strSubKey, false));
@@ -1114,8 +1115,8 @@ sub buildDefault
 
             my $strMaxValue;
             my $iMaxValueTotal = 0;
-# CSHANG sort the keys
-            foreach my $strValue (keys(%oDefault))
+
+            foreach my $strValue (sort(keys(%oDefault)))
             {
                 if ($oDefault{$strValue} > $iMaxValueTotal)
                 {
