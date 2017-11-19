@@ -22,11 +22,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201204301
 db-control-version=922
 db-id=1
-db-system-id=6393320793115174899
+db-system-id=1000000000000000092
 db-version="9.2"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -86,11 +86,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201204301
 db-control-version=922
 db-id=1
-db-system-id=6393320793115174899
+db-system-id=1000000000000000092
 db-version="9.2"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -150,12 +150,12 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=2
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -496,12 +496,12 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=2
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -820,13 +820,13 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1165,13 +1165,13 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1231,13 +1231,13 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1313,13 +1313,13 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1378,13 +1378,13 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1453,13 +1453,13 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":6393320793115174899,"db-version":"9.2"}
-2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201204301,"db-control-version":922,"db-system-id":1000000000000000092,"db-version":"9.2"}
+2={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 > ls [TEST_PATH]/db-master/repo/backup/db | grep -v "backup.*"
 ------------------------------------------------------------------------------------------------------------------------------------

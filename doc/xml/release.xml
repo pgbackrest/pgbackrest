@@ -125,6 +125,10 @@
                     <release-item>
                         <p>Designate a single distro (Ubuntu 16.04) for Perl coverage testing.  Running coverage testing on multiple distros takes time but doesn't add significant value.  Also ensure that the distro designated to run coverage tests is one of the default test distros.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Automate generation of WAL and <file>pg_control</file> test files.  The existing static files would not work with 32-bit or big-endian systems so create functions to generate these files dynamically rather than creating a bunch of new static files.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

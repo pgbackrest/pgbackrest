@@ -251,10 +251,12 @@ sub run
             # Mismatched version
             $oHostBackup->infoMunge(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE),
                 {&INFO_ARCHIVE_SECTION_DB =>
-                    {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93, &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => WAL_VERSION_95_SYS_ID},
+                    {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93,
+                        &INFO_ARCHIVE_KEY_DB_SYSTEM_ID => $self->dbSysId(PG_VERSION_95)},
                  &INFO_ARCHIVE_SECTION_DB_HISTORY =>
                     {'3' =>
-                        {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93, &INFO_ARCHIVE_KEY_DB_ID => WAL_VERSION_95_SYS_ID}}});
+                        {&INFO_ARCHIVE_KEY_DB_VERSION => PG_VERSION_93,
+                            &INFO_ARCHIVE_KEY_DB_ID => $self->dbSysId(PG_VERSION_95)}}});
 
             $self->testException(sub {$oExpire->process()},
                 ERROR_FILE_INVALID,

@@ -77,7 +77,7 @@ sub run
 {
     my $self = shift;
 
-    my $strArchiveChecksum = '72b9da071c13957fb4ca31f05dbd5c644297c2f7';
+    my $strArchiveChecksum = $self->walGenerateContentChecksum(PG_VERSION_94, {iSourceNo => 2});
 
     foreach my $bS3 (false, true)
     {
@@ -112,13 +112,9 @@ sub run
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
         storageTest()->pathCreate($strWalPath, {bCreateParent => true});
 
-        # Create the test path for pg_control
+        # Generate pg_control for stanza-create
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-
-        # Copy pg_control for stanza-create
-        storageTest()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            $oHostDbMaster->dbBasePath() . qw{/} . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
         # Create archive-push command
         my $strCommandPush =
@@ -133,7 +129,7 @@ sub run
         &log(INFO, '    archive.info missing');
         my $strSourceFile1 = $self->walSegment(1, 1, 1);
         storageTest()->pathCreate("${strWalPath}/archive_status");
-        my $strArchiveFile1 = $self->walGenerate($strWalPath, WAL_VERSION_94, 1, $strSourceFile1);
+        my $strArchiveFile1 = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strSourceFile1);
 
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile1}",
@@ -153,7 +149,7 @@ sub run
 
         my @stryExpectedWAL;
         my $strSourceFile = $self->walSegment(1, 1, 1);
-        my $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 2, $strSourceFile);
+        my $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
             $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " ${strLogDebug} ${strWalPath}/${strSourceFile}",
@@ -193,7 +189,7 @@ sub run
 
         # Generate second WAL segment
         $strSourceFile = $self->walSegment(1, 1, 2);
-        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 2, $strSourceFile);
+        $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, $strSourceFile);
 
         # Create a temp file to make sure it is deleted later (skip when S3 since it doesn't use temp files)
         my $strArchiveTmp;
@@ -337,7 +333,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    WAL duplicate error');
 
-        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 1, $strSourceFile);
+        $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strSourceFile);
 
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}",
@@ -371,7 +367,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    .partial WAL');
 
-        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 2, "${strSourceFile}.partial");
+        $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, "${strSourceFile}.partial");
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
             {oLogTest => $self->expect()});
@@ -390,7 +386,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    .partial WAL with different checksum');
 
-        $strArchiveFile = $self->walGenerate($strWalPath, WAL_VERSION_94, 1, "${strSourceFile}.partial");
+        $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 1, "${strSourceFile}.partial");
         $oHostDbMaster->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
             {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});

@@ -2,7 +2,7 @@
 # ExpireCommonTest.pm - Common code for expire tests
 ####################################################################################################################################
 package pgBackRestTest::Env::ExpireEnvTest;
-use parent 'pgBackRestTest::Common::RunTest';
+use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -170,10 +170,8 @@ sub stanzaCreate
     # Create the test path for pg_control
     storageTest()->pathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
 
-    # Copy pg_control for stanza-create
-    executeTest(
-        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . $strDbPath .
-        '/' . DB_FILE_PGCONTROL);
+    # Generate pg_control for stanza-create
+    $self->controlGenerate($strDbPath, $strDbVersion);
     executeTest('sudo chmod 600 ' . $strDbPath . '/' . DB_FILE_PGCONTROL);
 
     # Create the stanza and set the local stanza object
@@ -211,9 +209,7 @@ sub stanzaUpgrade
     storageTest()->remove(cfgOption(CFGOPT_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     # Copy pg_control for stanza-upgrade
-    executeTest(
-        'cp ' . $self->{oRunTest}->dataPath() . '/backup.pg_control_' . $strDbVersionTemp . '.bin ' . cfgOption(CFGOPT_DB_PATH) .
-        '/' . DB_FILE_PGCONTROL);
+    $self->controlGenerate(cfgOption(CFGOPT_DB_PATH), $strDbVersion);
     executeTest('sudo chmod 600 ' . cfgOption(CFGOPT_DB_PATH) . '/' . DB_FILE_PGCONTROL);
 
     $self->stanzaSet($strStanza, $strDbVersion, true);

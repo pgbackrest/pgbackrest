@@ -43,7 +43,7 @@ sub initModule
     $self->{strDbPath} = $self->testPath() . '/db';
     $self->{strWalPath} = "$self->{strDbPath}/pg_xlog";
     $self->{strWalStatusPath} = "$self->{strWalPath}/archive_status";
-    $self->{strWalHash} = "1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
+    $self->{strWalHash} = $self->walGenerateContentChecksum(PG_VERSION_94);
     $self->{strRepoPath} = $self->testPath() . '/repo';
     $self->{strArchivePath} = "$self->{strRepoPath}/archive/" . $self->stanza();
     $self->{strSpoolPath} = "$self->{strArchivePath}/out";
@@ -66,7 +66,7 @@ sub initTest
     $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
     my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
-    $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
+    $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), true);
 
     $self->{strArchiveId} = $oArchiveInfo->archiveId();
 }
@@ -105,21 +105,21 @@ sub run
         my $strWalSegment = '000000010000000100000001';
 
         $self->testResult(sub {archivePushCheck(
-            $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
+            $strWalSegment, PG_VERSION_94, $self->dbSysId(PG_VERSION_94), "$self->{strWalPath}/${strWalSegment}")},
             '(9.4-1, [undef], [undef], [undef])', "${strWalSegment} WAL not found");
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strWalMajorPath = "$self->{strArchivePath}/9.4-1/" . substr($strWalSegment, 0, 16);
-        my $strWalSegmentHash = "${strWalSegment}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
+        my $strWalSegmentHash = "${strWalSegment}-$self->{strWalHash}";
 
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strWalSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strWalSegment);
 
         storageTest()->pathCreate($strWalMajorPath, {bCreateParent => true});
         storageTest()->put("${strWalMajorPath}/${strWalSegmentHash}");
 
         $self->testResult(sub {archivePushCheck(
-            $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
-            '(9.4-1, 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, [undef],' .
+            $strWalSegment, PG_VERSION_94, $self->dbSysId(PG_VERSION_94), "$self->{strWalPath}/${strWalSegment}")},
+            "(9.4-1, $self->{strWalHash}, [undef]," .
                 " WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
                 'HINT: this is valid in some recovery scenarios but may also indicate a problem.)',
             "${strWalSegment} WAL found");
@@ -132,20 +132,20 @@ sub run
         storageTest()->put("${strWalMajorPath}/${strWalSegmentHash}");
 
         $self->testException(sub {archivePushCheck(
-            $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
+            $strWalSegment, PG_VERSION_94, $self->dbSysId(PG_VERSION_94), "$self->{strWalPath}/${strWalSegment}")},
             ERROR_ARCHIVE_DUPLICATE, "WAL segment ${strWalSegment} already exists in the archive");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $strWalSegment = "${strWalSegment}.partial";
-        $strWalSegmentHash = "${strWalSegment}-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
+        $strWalSegmentHash = "${strWalSegment}-$self->{strWalHash}";
 
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strWalSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strWalSegment);
 
         storageTest()->put("${strWalMajorPath}/${strWalSegmentHash}");
 
         $self->testResult(sub {archivePushCheck(
-            $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
-            '(9.4-1, 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27, [undef],' .
+            $strWalSegment, PG_VERSION_94, $self->dbSysId(PG_VERSION_94), "$self->{strWalPath}/${strWalSegment}")},
+            "(9.4-1, $self->{strWalHash}, [undef]," .
                 " WAL segment ${strWalSegment} already exists in the archive with the same checksum\n" .
                 'HINT: this is valid in some recovery scenarios but may also indicate a problem.)',
             "${strWalSegment} WAL found");
@@ -158,12 +158,12 @@ sub run
         storageTest()->put("${strWalMajorPath}/${strWalSegmentHash}");
 
         $self->testException(sub {archivePushCheck(
-            $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strWalSegment}")},
+            $strWalSegment, PG_VERSION_94, $self->dbSysId(PG_VERSION_94), "$self->{strWalPath}/${strWalSegment}")},
             ERROR_ARCHIVE_DUPLICATE, "WAL segment ${strWalSegment} already exists in the archive");
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(sub {archivePushCheck(
-            $strWalSegment, PG_VERSION_94, WAL_VERSION_94_SYS_ID)},
+            $strWalSegment, PG_VERSION_94, $self->dbSysId(PG_VERSION_94))},
             ERROR_ASSERT, "xFileExp is required in Storage::Local->hashSize");
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -172,7 +172,7 @@ sub run
         storageTest()->put("$self->{strArchivePath}/9.4-1/${strHistoryFile}");
 
         $self->testResult(sub {archivePushCheck(
-            $strHistoryFile, PG_VERSION_94, WAL_VERSION_94_SYS_ID, "$self->{strWalPath}/${strHistoryFile}")},
+            $strHistoryFile, PG_VERSION_94, $self->dbSysId(PG_VERSION_94), "$self->{strWalPath}/${strHistoryFile}")},
             '(9.4-1, [undef], [undef], [undef])', "history file ${strHistoryFile} found");
     }
 
@@ -191,7 +191,7 @@ sub run
 
         # Generate a normal segment
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         $self->testResult(
             sub {archivePushFile($self->{strWalPath}, $strSegment, false, false)}, '[undef]',
@@ -232,8 +232,8 @@ sub run
             'ignore files without .ready extension');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++));
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++));
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++));
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++));
 
         $self->testResult(
             sub {$oPushAsync->readyList()}, '(000000010000000100000002, 000000010000000100000003)',
@@ -243,7 +243,7 @@ sub run
         storageTest()->put("$self->{strSpoolPath}/000000010000000100000003.ok");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++));
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++));
 
         $self->testResult(
             sub {$oPushAsync->readyList()}, '(000000010000000100000004)',
@@ -444,7 +444,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Generate a normal segment
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         # Generate an error (.ready file withough a corresponding WAL file)
         my $strSegmentError = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
@@ -471,7 +471,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Fix errored WAL file by providing a valid segment
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegmentError);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegmentError);
 
         # Process and check results
         $self->testResult(sub {$oPushAsync->processQueue()}, '(1, 0, 1, 0)', "process ${strSegment}, ${strSegmentError}");
@@ -532,7 +532,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Generate a normal segment
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         # Process and check results
         $self->testResult(sub {$oPushAsync->processQueue()}, '(1, 0, 1, 0)', "processing ${strSegment}.gz");
@@ -549,7 +549,7 @@ sub run
         $self->testResult(sub {storageSpool()->list($self->{strSpoolPath})}, "[undef]", "${strSegment}.ok removed");
 
         # Generate the same WAL again
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         # Process and check results
         $self->testResult(sub {$oPushAsync->processQueue()}, '(1, 0, 1, 0)', "processed duplicate ${strSegment}.gz");
@@ -587,7 +587,7 @@ sub run
 
         foreach my $strSegment (@strySegment)
         {
-            $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+            $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
         }
 
         # Process and check results
@@ -649,7 +649,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         $self->testResult(sub {$oPush->process("pg_xlog/${strSegment}")}, 0, "${strSegment} WAL pushed (with relative path)");
 
@@ -665,7 +665,7 @@ sub run
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL dropped");
         $self->testResult(
@@ -723,7 +723,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
         $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed async");
         exit if ($iProcessId != $PID);
 
@@ -746,7 +746,7 @@ sub run
 
         #---------------------------------------------------------------------------------------------------------------------------
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         $self->optionTestSet(CFGOPT_BACKUP_HOST, BOGUS);
         $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 60);
@@ -785,11 +785,11 @@ sub run
 
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true, strCipherPassSub => 'y'});
-        $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
+        $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), true);
 
         # Generate a normal segment
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $self->walGenerate($self->{strWalPath}, WAL_VERSION_94, 1, $strSegment);
+        $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
         $self->testResult(
             sub {archivePushFile($self->{strWalPath}, $strSegment, false, false)}, '[undef]',

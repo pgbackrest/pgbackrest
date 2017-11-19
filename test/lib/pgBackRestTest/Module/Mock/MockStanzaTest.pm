@@ -68,13 +68,9 @@ sub run
         $oHostBackup->stanzaCreate('fail on missing control file', {iExpectedExitStatus => ERROR_FILE_OPEN,
             strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
-        # Create the test path for pg_control
+        # Generate pg_control for stanza-create
         storageDb()->pathCreate(($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL), {bCreateParent => true});
-
-        # Copy pg_control for stanza-create
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_93);
 
         # Fail stanza upgrade before stanza-create has been performed
         #--------------------------------------------------------------------------------------------------------------------------
@@ -94,19 +90,13 @@ sub run
         # Stanza Create fails when not using force - database mismatch with pg_control file
         #--------------------------------------------------------------------------------------------------------------------------
         # Change the database version by copying a new pg_control file
-        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
         $oHostBackup->stanzaCreate('fail on database mismatch without force option',
             {iExpectedExitStatus => ERROR_FILE_INVALID, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Restore pg_control
-        storageDb()->remove($oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_93);
 
         # Perform a stanza upgrade which will indicate already up to date
         #--------------------------------------------------------------------------------------------------------------------------
@@ -114,12 +104,14 @@ sub run
 
         # Create the wal path
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
-        storageDb()->pathCreate($strWalPath, {bCreateParent => true});
+        storageDb()->pathCreate("${strWalPath}/archive_status", {bCreateParent => true});
 
         # Stanza Create fails - missing archive.info from non-empty archive dir
         #--------------------------------------------------------------------------------------------------------------------------
         # Generate WAL then push to get valid archive data in the archive directory
-        my ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strWalPath, 1, 1, WAL_VERSION_93);
+        my $strArchiveFile = $self->walSegment(1, 1, 1);
+        my $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_93, 1, $strArchiveFile);
+
         my $strCommand = $oHostDbMaster->backrestExe() . ' --config=' . $oHostDbMaster->backrestConfig() .
             ' --stanza=db archive-push';
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
@@ -181,7 +173,7 @@ sub run
         # Stanza Create succeeds when using force - recreates archive.info from uncompressed archive file
         #--------------------------------------------------------------------------------------------------------------------------
         # Unzip the archive file and recreate the archive.info file from it
-        my $strArchiveTest = PG_VERSION_93 . "-1/${strArchiveFile}-f5035e2c3b83a9c32660f959b23451e78f7438f7";
+        my $strArchiveTest = PG_VERSION_93 . "-1/${strArchiveFile}-" . $self->walGenerateContentChecksum(PG_VERSION_93);
 
         if (!$bRepoEncrypt)
         {
@@ -236,21 +228,21 @@ sub run
 
         # Just before upgrading push one last WAL on the old version to ensure it can be retrieved later
         #--------------------------------------------------------------------------------------------------------------------------
-        ($strArchiveFile, $strSourceFile) = $self->archiveGenerate($strWalPath, 1, 2, WAL_VERSION_93);
+        $strArchiveFile = $self->walSegment(1, 1, 2);
+        $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_93, 1, $strArchiveFile);
         $oHostDbMaster->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
 
         # Fail on archive push due to mismatch of DB since stanza not upgraded
         #--------------------------------------------------------------------------------------------------------------------------
-        my $strArchiveTestFile = $self->dataPath() . '/backup.wal1_';
+        my $strArchiveTestFile = $self->testPath() . '/test-wal';
+        storageTest()->put($strArchiveTestFile, $self->walGenerateContent(PG_VERSION_94));
 
         # Upgrade the DB by copying new pg_control
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # Fail on attempt to push an archive
-        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1, ERROR_ARCHIVE_MISMATCH);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1, ERROR_ARCHIVE_MISMATCH);
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
@@ -259,10 +251,8 @@ sub run
 
         # Make sure that WAL from the old version can still be retrieved
         #--------------------------------------------------------------------------------------------------------------------------
-        # Copy the old pg_control back so it looks like the original db has been restored
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        # Generate the old pg_control so it looks like the original db has been restored
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_93);
 
         # Attempt to get the last archive log that was pushed to this repo
         $oHostDbMaster->executeSimple(
@@ -271,18 +261,16 @@ sub run
             {oLogTest => $self->expect()});
 
         # Copy the new pg_control back so the tests can continue with the upgraded stanza
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # After stanza upgrade, make sure archives are pushed to the new db verion-id directory (9.4-2)
         #--------------------------------------------------------------------------------------------------------------------------
         # Push a WAL segment so have a valid file in the latest DB archive dir only
-        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile . WAL_VERSION_94 . '.bin', 1);
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
         $self->testResult(
             sub {storageRepo()->list(STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-2/0000000100000001')},
-            "000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27." . COMPRESS_EXT,
+            '000000010000000100000001-' . $self->walGenerateContentChecksum(PG_VERSION_94) . '.' . COMPRESS_EXT,
             'check that WAL is in the archive at -2');
 
         # Create a DB history mismatch between the info files
@@ -350,17 +338,15 @@ sub run
         # Create the 10.0-3 directory and copy a WAL file to it (something that has a different system id)
         forceStorageMode(storageRepo(), STORAGE_REPO_ARCHIVE, '770');
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001', {bCreateParent => true});
-        storageRepo()->copy(
-            storageDb()->openRead($strArchiveTestFile . WAL_VERSION_92 . '.bin'),
+        storageRepo()->put(
             storageRepo()->openWrite(
                 STORAGE_REPO_ARCHIVE . '/10.0-3/0000000100000001/000000010000000100000001',
-                {strCipherPass => $oHostBackup->cipherPassArchive()}));
+                {strCipherPass => $oHostBackup->cipherPassArchive()}),
+            $self->walGenerateContent(PG_VERSION_94));
         forceStorageOwner(storageRepo(), STORAGE_REPO_ARCHIVE . '/10.0-3', $oHostBackup->userGet(), {bRecurse => true});
 
         # Copy pg_control for 9.5
-        storageDb()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_95);
         forceStorageMode(storageDb(), $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         $oHostBackup->stanzaUpgrade(
@@ -368,7 +354,8 @@ sub run
 
         # Push a WAL and create a backup in the new DB to confirm diff changed to full and info command displays the JSON correctly
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile . WAL_VERSION_95 . '.bin', 1);
+        storageTest()->put($strArchiveTestFile, $self->walGenerateContent(PG_VERSION_95));
+        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
 
         # Test backup is changed from type=DIFF to FULL (WARN message displayed)
         my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',

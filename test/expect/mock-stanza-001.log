@@ -36,11 +36,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -51,11 +51,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - fail on rerun of stanza-create - info files exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -76,11 +76,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -91,11 +91,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - fail on database mismatch without force option (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -116,11 +116,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -131,11 +131,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-upgrade db - already up to date (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
@@ -155,11 +155,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -170,11 +170,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -184,8 +184,8 @@ P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompr
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -193,7 +193,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Archive::Info->archiveId=>: strArchiveId = 9.3-1
 P00  DEBUG:     Archive::Info->check=>: strArchiveId = 9.3-1
@@ -206,9 +206,9 @@ P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = f5035e2c3b83a9c32660f959b23451e78f7438f7
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000001-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001
@@ -238,17 +238,17 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - gunzip fail on forced stanza-create (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [041]: unable to open '[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz': Permission denied
+P00  ERROR: [041]: unable to open '[TEST_PATH]/db-master/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz': Permission denied
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -262,11 +262,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - force create archive.info from gz file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -285,11 +285,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -300,11 +300,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - repeat create - error that files exist (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -325,11 +325,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -340,11 +340,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - force create archive.info from uncompressed file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -363,11 +363,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -378,11 +378,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - force with missing WAL archive file (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -401,11 +401,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -416,11 +416,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - force with missing WAL archive directory (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -440,11 +440,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -455,11 +455,11 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -469,8 +469,8 @@ P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompr
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -478,7 +478,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Archive::Info->archiveId=>: strArchiveId = 9.3-1
 P00  DEBUG:     Archive::Info->check=>: strArchiveId = 9.3-1
@@ -491,9 +491,9 @@ P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = f5035e2c3b83a9c32660f959b23451e78f7438f7
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000002
@@ -507,7 +507,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [044]: WAL segment version 9.4 does not match archive version 9.3
-            WAL segment system-id 6353949018581704918 does not match archive system-id 6395542721432104958
+            WAL segment system-id 1000000000000000094 does not match archive system-id 1000000000000000093
             HINT: are you archiving to the correct stanza?
 
 stanza-upgrade db - successful upgrade creates additional history (db-master host)
@@ -527,12 +527,12 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -543,12 +543,12 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -562,7 +562,7 @@ P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201306121, iDbControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201306121, iDbControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -570,15 +570,15 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->archiveIdList(): strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Info->archiveIdList(): strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->dbHistoryList=>: hDbHash = [hash]
 P00  DEBUG:     Archive::Info->archiveIdList=>: stryArchiveId = (9.3-1)
 P00  DEBUG:     Archive::Common::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.3-1, strWalSegment = 000000010000000100000002
 P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000002-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.3-1/0000000100000001, strSortOrder = <forward>
-P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz)
-P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = 000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
-P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz, strArchiveId = 9.3-1, strCipherPass = [undef]
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz)
+P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = 000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
+P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz, strArchiveId = 9.3-1, strCipherPass = [undef]
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = ({rxyParam => ({strCompressType => decompress}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
@@ -611,12 +611,12 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -627,12 +627,12 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-create db - use force to recreate the stanza producing mismatched db-id (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -651,11 +651,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -666,21 +666,22 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - create first full backup  (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=full
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum e40de8cea99dd469c3efb47f5f33a73c7390fb9c
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum b4a3adade1e81ebfc7e9a27bca0887a347d81522
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
@@ -728,12 +729,12 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-create db - use force to recreate the stanza from backups (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -755,11 +756,11 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -770,12 +771,12 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-upgrade db - successfully upgrade with XX.Y-Z (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
@@ -797,12 +798,12 @@ backrest-version="[VERSION-1]"
 db-catalog-version=201510051
 db-control-version=942
 db-id=2
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
-2={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+2={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -813,14 +814,14 @@ backrest-version="[VERSION-1]"
 
 [db]
 db-id=4
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
-3={"db-id":35184388866048,"db-version":"10.0"}
-4={"db-id":6392579261579036436,"db-version":"9.5"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
+3={"db-id":1000000000000000094,"db-version":"10.0"}
+4={"db-id":1000000000000000095,"db-version":"9.5"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -830,10 +831,11 @@ diff backup - diff changed to full backup (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 15b1a1a35c26b17570aca7920980f0ad11c6d858
-P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum e28bf39d0a56bf9fabd4049b329fcae8878bfec6
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 65b64687e7bfd1a918c6144f84a133f03e50ac57
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum b03a64b1be549a32d53d41dd40ab394ba82fa1c1
+P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01   INFO: backup file [TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
@@ -949,12 +951,12 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
         "db" : [
             {
                 "id" : 1,
-                "system-id" : 6353949018581704918,
+                "system-id" : 1000000000000000094,
                 "version" : "9.4"
             },
             {
                 "id" : 2,
-                "system-id" : 6392579261579036436,
+                "system-id" : 1000000000000000095,
                 "version" : "9.5"
             }
         ],

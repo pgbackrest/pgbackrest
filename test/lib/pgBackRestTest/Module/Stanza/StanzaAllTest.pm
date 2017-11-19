@@ -64,13 +64,9 @@ sub initTest
     # Create backup info path
     storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
 
-    # Create pg_control path
+    # Generate pg_control file
     storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-
-    # Copy a pg_control file into the pg_control path
-    executeTest(
-        'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
-        DB_FILE_PGCONTROL);
+    $self->controlGenerate($self->{strDbPath}, PG_VERSION_94);
 }
 
 ####################################################################################################################################
@@ -159,7 +155,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . "/12345", {bRecurse => true});
         (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
-             WAL_VERSION_94_SYS_ID, $iDbControl, $iDbCatalog, true);
+             $self->dbSysId(PG_VERSION_94), $iDbControl, $iDbCatalog, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "archive information missing" .
             "\nHINT: use stanza-create --force to force the stanza data to be created.");
@@ -169,7 +165,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
         (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
-            WAL_VERSION_94_SYS_ID, true);
+            $self->dbSysId(PG_VERSION_94), true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "backup information missing" .
             "\nHINT: use stanza-create --force to force the stanza data to be created.");
@@ -179,9 +175,9 @@ sub run
         forceStorageRemove(storageRepo(), $strArchiveInfoFile . "*");
         forceStorageRemove(storageRepo(), $strBackupInfoFile . "*");
         (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_93,
-            WAL_VERSION_93_SYS_ID, true);
+            $self->dbSysId(PG_VERSION_93), true);
         (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
-             WAL_VERSION_94_SYS_ID, $iDbControl, $iDbCatalog, true);
+             $self->dbSysId(PG_VERSION_94), $iDbControl, $iDbCatalog, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_INVALID,
             "backup info file or archive info file invalid\n" .
             "HINT: use stanza-upgrade if the database has been upgraded or use --force");
@@ -190,7 +186,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), $strBackupInfoFile . "*");
         (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_93,
-             WAL_VERSION_93_SYS_ID, $iDbControl, $iDbCatalog, true);
+             $self->dbSysId(PG_VERSION_93), $iDbControl, $iDbCatalog, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_INVALID,
             "backup info file or archive info file invalid\n" .
             "HINT: use stanza-upgrade if the database has been upgraded or use --force");
@@ -221,11 +217,11 @@ sub run
 
         forceStorageRemove(storageRepo(), $strBackupInfoFile . "*");
         (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
-            WAL_VERSION_93_SYS_ID, $iDbControl, $iDbCatalog, true);
+            $self->dbSysId(PG_VERSION_93), $iDbControl, $iDbCatalog, true);
 
         $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza with force and existing info files');
         $self->testResult(sub {(new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94,
-            $iDbControl, $iDbCatalog, WAL_VERSION_94_SYS_ID)}, 2, '    backup.info reconstructed');
+            $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94))}, 2, '    backup.info reconstructed');
 
         # Force on, Repo-Sync off. Archive dir empty. No archive.info file. Backup directory not empty. No backup.info file.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -234,9 +230,12 @@ sub run
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/12345");
         $oStanza = new pgBackRest::Stanza();
         $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza with force');
-        $self->testResult(sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(PG_VERSION_94,
-            WAL_VERSION_94_SYS_ID) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94, $iDbControl,
-            $iDbCatalog, WAL_VERSION_94_SYS_ID)}, 1, '    new info files correct');
+        $self->testResult(
+            sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(
+                PG_VERSION_94,
+                $self->dbSysId(PG_VERSION_94)) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94,
+                $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94))},
+            1, '    new info files correct');
         forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_BACKUP . "/12345"), {bRecurse => true});
 
         # Force on. Attempt to change encryption on the repo
@@ -309,9 +308,12 @@ sub run
             . ARCHIVE_INFO_FILE)}, true, '    new archive info encrypted');
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_BACKUP) . '/'
             . FILE_BACKUP_INFO)}, true, '    new backup info encrypted');
-        $self->testResult(sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(PG_VERSION_94,
-            WAL_VERSION_94_SYS_ID) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94, $iDbControl,
-            $iDbCatalog, WAL_VERSION_94_SYS_ID)}, 1, '    new archive.info and backup.info files correct');
+        $self->testResult(
+            sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(
+                PG_VERSION_94,
+                $self->dbSysId(PG_VERSION_94)) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94,
+                $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94))},
+            1, '    new archive.info and backup.info files correct');
 
         # Store the unencrypted backup.manifest file as encrypted and check stanza-create
         #---------------------------------------------------------------------------------------------------------------------------
@@ -342,7 +344,7 @@ sub run
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_94);
         $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CONTROL, undef, $iDbControl);
         $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalog);
-        $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, WAL_VERSION_94_SYS_ID);
+        $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_SYSTEM_ID, undef, $self->dbSysId(PG_VERSION_94));
         $oBackupManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, undef, 1);
         $oBackupManifest->save();
 
@@ -356,9 +358,12 @@ sub run
             . ARCHIVE_INFO_FILE)}, true, '    recreated archive info encrypted');
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_BACKUP) . '/'
             . FILE_BACKUP_INFO)}, true, '    recreated backup info encrypted');
-        $self->testResult(sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(PG_VERSION_94,
-            WAL_VERSION_94_SYS_ID) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94, $iDbControl,
-            $iDbCatalog, WAL_VERSION_94_SYS_ID)}, 1, '    recreated archive.info and backup.info files correct');
+        $self->testResult(
+            sub {(new pgBackRest::Archive::Info($self->{strArchivePath}))->check(
+                PG_VERSION_94,
+                $self->dbSysId(PG_VERSION_94)) && (new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94,
+                $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94))},
+            1, '    recreated archive.info and backup.info files correct');
 
         # Move the encrypted info files out of the repo so they are missing but backup exists. --force cannot be used
         #---------------------------------------------------------------------------------------------------------------------------
@@ -466,7 +471,7 @@ sub run
         $self->configTestLoad(CFGCMD_STANZA_CREATE);
 
         (new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
-             WAL_VERSION_94_SYS_ID, $iDbControl, $iDbCatalog, true);
+             $self->dbSysId(PG_VERSION_94), $iDbControl, $iDbCatalog, true);
         forceStorageRemove(storageRepo(), storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT));
         executeTest('sudo chmod 220 ' . storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
         $self->testException(sub {$oStanza->infoObject(STORAGE_REPO_BACKUP, $self->{strBackupPath})}, ERROR_FILE_OPEN,
@@ -514,11 +519,11 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true,
             strCipherPassSub => storageRepo()->cipherPassGen()});
-        $oArchiveInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, true);
+        $oArchiveInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), true);
 
         $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true,
             strCipherPassSub => storageRepo()->cipherPassGen()});
-        $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, '937', '201306121', true);
+        $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), '937', '201306121', true);
 
          # Attempt to upgrade with a different passphrase
         storageRepoCacheClear($self->stanza());
@@ -540,9 +545,9 @@ sub run
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1/0000000100000001");
         my $strArchiveIdPath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
         my $strArchivedFile = storageRepo()->pathGet($strArchiveIdPath .
-            "/0000000100000001/000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27");
-        my $tContent = ${storageTest()->get($self->dataPath() . "/backup.wal1_93.bin")};
-        storageRepo()->put($strArchivedFile, $tContent, {strCipherPass => $oArchiveInfo->cipherPassSub()});
+            "/0000000100000001/000000010000000100000001-" . $self->walGenerateContentChecksum(PG_VERSION_93));
+        storageRepo()->put(
+            $strArchivedFile, $self->walGenerateContent(PG_VERSION_93), {strCipherPass => $oArchiveInfo->cipherPassSub()});
         $self->testResult(sub {storageRepo()->encrypted($strArchivedFile)}, true, 'created encrypted archive WAL');
 
         # Upgrade
@@ -558,15 +563,15 @@ sub run
         my $hHistoryBackup = $oBackupInfo->dbHistoryList();
 
         $self->testResult(sub {($hHistoryArchive->{1}{&INFO_DB_VERSION} eq PG_VERSION_93) &&
-            ($hHistoryArchive->{1}{&INFO_SYSTEM_ID} eq WAL_VERSION_93_SYS_ID) &&
+            ($hHistoryArchive->{1}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_93)) &&
             ($hHistoryArchive->{2}{&INFO_DB_VERSION} eq PG_VERSION_94) &&
-            ($hHistoryArchive->{2}{&INFO_SYSTEM_ID} eq WAL_VERSION_94_SYS_ID) &&
+            ($hHistoryArchive->{2}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_94)) &&
             ($hHistoryBackup->{1}{&INFO_DB_VERSION} eq PG_VERSION_93) &&
-            ($hHistoryBackup->{1}{&INFO_SYSTEM_ID} eq WAL_VERSION_93_SYS_ID) &&
+            ($hHistoryBackup->{1}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_93)) &&
             ($hHistoryBackup->{2}{&INFO_DB_VERSION} eq PG_VERSION_94) &&
-            ($hHistoryBackup->{2}{&INFO_SYSTEM_ID} eq WAL_VERSION_94_SYS_ID) &&
-            ($oArchiveInfo->check(PG_VERSION_94, WAL_VERSION_94_SYS_ID) eq PG_VERSION_94 . "-2") &&
-            ($oBackupInfo->check(PG_VERSION_94, $iDbControl, $iDbCatalog, WAL_VERSION_94_SYS_ID) == 2) }, true,
+            ($hHistoryBackup->{2}{&INFO_SYSTEM_ID} eq $self->dbSysId(PG_VERSION_94)) &&
+            ($oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94)) eq PG_VERSION_94 . "-2") &&
+            ($oBackupInfo->check(PG_VERSION_94, $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94)) == 2) }, true,
             '    encrypted archive and backup info files upgraded');
 
         # Clear configuration
@@ -583,11 +588,11 @@ sub run
 
         # Create the archive file with current data
         my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true});
-        $oArchiveInfo->create('9.4', 6353949018581704918, true);
+        $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), true);
 
         # Create the backup file with outdated data
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true});
-        $oBackupInfo->create('9.3', 6999999999999999999, '937', '201306121', true);
+        $oBackupInfo->create(PG_VERSION_93, 6999999999999999999, '937', '201306121', true);
 
         # Confirm upgrade is needed for backup
         $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH)}, true,
@@ -596,7 +601,7 @@ sub run
             'archive upgrade not needed');
 
         # Change archive file to contain outdated data
-        $oArchiveInfo->create('9.3', 6999999999999999999, true);
+        $oArchiveInfo->create(PG_VERSION_93, 6999999999999999999, true);
 
         # Confirm upgrade is needed for both
         $self->testResult(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ARCHIVE_MISMATCH)}, true,
@@ -605,7 +610,7 @@ sub run
             'backup upgrade needed');
 
         # Change the backup file to contain current data
-        $oBackupInfo->create('9.4', 6353949018581704918, $iDbControl, $iDbCatalog, true);
+        $oBackupInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), $iDbControl, $iDbCatalog, true);
 
         # Confirm upgrade is needed for archive
         $self->testResult(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_BACKUP_MISMATCH)}, false,
@@ -634,11 +639,11 @@ sub run
         $self->testException(sub {$oStanza->upgradeCheck($oArchiveInfo, STORAGE_REPO_ARCHIVE, ERROR_ASSERT)},
             ERROR_ARCHIVE_MISMATCH,
             "WAL segment version 9.3 does not match archive version 9.4\n" .
-            "WAL segment system-id 6999999999999999999 does not match archive system-id 6353949018581704918\n" .
+            'WAL segment system-id 6999999999999999999 does not match archive system-id ' . $self->dbSysId(PG_VERSION_94) . "\n" .
             "HINT: are you archiving to the correct stanza?");
         $self->testException(sub {$oStanza->upgradeCheck($oBackupInfo, STORAGE_REPO_BACKUP, ERROR_ASSERT)}, ERROR_BACKUP_MISMATCH,
             "database version = 9.3, system-id 6999999999999999999 does not match backup version = 9.4, " .
-            "system-id = 6353949018581704918\nHINT: is this the correct stanza?");
+            'system-id = ' . $self->dbSysId(PG_VERSION_94) . "\nHINT: is this the correct stanza?");
     }
 
     ################################################################################################################################
