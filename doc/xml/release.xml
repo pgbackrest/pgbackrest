@@ -78,6 +78,10 @@
                     <release-item>
                         <p>Inflate performance improvement for gzip filter.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Improve base64 implementation.  Different encoded strings could be generated based on compiler optimizations. Even though decoding was still successful the encoded strings did not match the standard.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 
