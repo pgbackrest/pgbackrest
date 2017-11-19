@@ -590,6 +590,7 @@ push(@EXPORT, qw(storageTest));
 ####################################################################################################################################
 # Getters
 ####################################################################################################################################
+sub archBits {return vmArchBits(shift->{strVm})}
 sub backrestExe {return shift->{strBackRestExe}}
 sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}

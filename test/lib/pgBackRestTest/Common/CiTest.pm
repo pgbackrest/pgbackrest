@@ -113,7 +113,7 @@ sub process
         "    aws configure list\n" .
         "  - |\n" .
         "    # Install Devel::Cover\n" .
-        "    sudo dpkg -i \${TRAVIS_BUILD_DIR?}/test/package/u14-" . LIB_COVER_PACKAGE . "\n" .
+        "    sudo dpkg -i \${TRAVIS_BUILD_DIR?}/test/package/u14-" . packageDevelCover(VM_ARCH_AMD64) . "\n" .
         '    ' . LIB_COVER_EXE . " -v\n" .
         "\n" .
         "install:\n" .

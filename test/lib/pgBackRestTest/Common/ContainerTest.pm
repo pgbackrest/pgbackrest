@@ -50,8 +50,6 @@ use constant BACKREST_USER_ID                                       => getpwnam(
 ####################################################################################################################################
 use constant LIB_COVER_VERSION                                      => '1.23-2';
     push @EXPORT, qw(LIB_COVER_VERSION);
-use constant LIB_COVER_PACKAGE                                      => 'libdevel-cover-perl_' . LIB_COVER_VERSION . '_amd64.deb';
-    push @EXPORT, qw(LIB_COVER_PACKAGE);
 use constant LIB_COVER_EXE                                          => '/usr/bin/cover';
     push @EXPORT, qw(LIB_COVER_EXE);
 
@@ -70,6 +68,18 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_DEBUG                                        => false;
+
+####################################################################################################################################
+# Generate Devel::Cover package name
+####################################################################################################################################
+sub packageDevelCover
+{
+    my $strArch = shift;
+
+    return 'libdevel-cover-perl_' . LIB_COVER_VERSION . "_${strArch}.deb";
+}
+
+push @EXPORT, qw(packageDevelCover);
 
 ####################################################################################################################################
 # Container repo - defines the Docker repository where the containers will be located
@@ -538,7 +548,7 @@ sub containerBuild
         $strImage = "${strOS}-build";
         $strCopy = undef;
 
-        my $strPkgDevelCover = LIB_COVER_PACKAGE;
+        my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
         my $bPkgDevelCoverBuild = vmCoverage($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
 
         # Install Perl packages

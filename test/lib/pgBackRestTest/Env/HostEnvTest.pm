@@ -405,7 +405,7 @@ sub walGenerateContent
     $tWalContent .= pack('S', 2);
 
     # Add junk (H for header) for the bytes that won't be read by the tests
-    my $iOffset = 12 + ($strPgVersion >= PG_VERSION_93 ? 8 : 0);
+    my $iOffset = 12 + ($strPgVersion >= PG_VERSION_93 ? testRunGet()->archBits() / 8 : 0);
     $tWalContent .= ('H' x $iOffset);
 
     # Add the system identifier

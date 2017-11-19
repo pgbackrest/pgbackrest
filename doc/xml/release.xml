@@ -129,6 +129,10 @@
                     <release-item>
                         <p>Automate generation of WAL and <file>pg_control</file> test files.  The existing static files would not work with 32-bit or big-endian systems so create functions to generate these files dynamically rather than creating a bunch of new static files.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Automated tests for 32-bit i386/i686 architecture.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
