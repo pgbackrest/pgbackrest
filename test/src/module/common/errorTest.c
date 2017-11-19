@@ -5,7 +5,7 @@ Test Error Handling
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
 ***********************************************************************************************************************************/
-int testTryRecurseTotal = 0;
+volatile int testTryRecurseTotal = 0;
 bool testTryRecurseCatch = false;
 bool testTryRecurseFinally = false;
 
@@ -43,7 +43,7 @@ void testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("TRY with no errors"))
     {
-        bool tryDone = false;
+        volatile bool tryDone = false;
         bool catchDone = false;
         bool finallyDone = false;
 
@@ -72,9 +72,9 @@ void testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("TRY with multiple catches"))
     {
-        bool tryDone = false;
-        bool catchDone = false;
-        bool finallyDone = false;
+        volatile bool tryDone = false;
+        volatile bool catchDone = false;
+        volatile bool finallyDone = false;
 
         TRY_BEGIN()
         {
@@ -136,7 +136,7 @@ void testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("too deep recursive TRY_ERROR()"))
     {
-        bool tryDone = false;
+        volatile bool tryDone = false;
         bool catchDone = false;
         bool finallyDone = false;
 

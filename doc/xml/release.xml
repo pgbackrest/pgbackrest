@@ -82,6 +82,10 @@
                     <release-item>
                         <p>Improve base64 implementation.  Different encoded strings could be generated based on compiler optimizations. Even though decoding was still successful the encoded strings did not match the standard.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Disable <id>-Wclobber</id> compiler warning because it is mostly useless but keep the rest of of <id>-Wextra</id>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-core-list>
 

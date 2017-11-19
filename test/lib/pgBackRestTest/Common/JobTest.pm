@@ -316,7 +316,7 @@ sub run
 
                 my $strGccCommand =
                     'gcc -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
-                    '-Wfatal-errors -Wall -Wextra -Wwrite-strings ' .
+                    '-Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered ' .
                     ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? '-Wpedantic ' : '') .
                     "-I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c " .
                     "/$self->{strBackRestBase}/test/src/common/harnessTest.c " .

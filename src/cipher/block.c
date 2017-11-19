@@ -69,7 +69,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
         THROW(AssertError, "unable to load cipher '%s'", cipherName);
 
     // Lookup digest.  If not defined it will be set to sha1.
-    const EVP_MD *volatile digest = digest = EVP_sha1();
+    const EVP_MD *digest = digest = EVP_sha1();
 
     if (digestName)
         digest = EVP_get_digestbyname(digestName);

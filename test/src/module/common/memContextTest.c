@@ -244,7 +244,7 @@ void testRun()
         // ------------------------------------------------------------------------------------------------------------------------
         // Successful context new block
         const char *memContextTestName = "test-new-block";
-        MemContext *memContext;
+        MemContext *memContext = NULL;
 
         MEM_CONTEXT_NEW_BEGIN(memContextTestName)
         {
