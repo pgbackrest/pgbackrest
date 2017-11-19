@@ -121,6 +121,10 @@
                     <release-item>
                         <p>Fix flapping protocol timeout test.  It only matters that the correct error code is returned, so disable logging to prevent message ordering from failing the expect test.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Designate a single distro (Ubuntu 16.04) for Perl coverage testing.  Running coverage testing on multiple distros takes time but doesn't add significant value.  Also ensure that the distro designated to run coverage tests is one of the default test distros.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>

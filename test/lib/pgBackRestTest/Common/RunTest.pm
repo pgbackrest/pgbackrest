@@ -594,7 +594,7 @@ sub backrestExe {return shift->{strBackRestExe}}
 sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
-sub coverage {vmBaseTest(shift->{strVm}, VM_OS_BASE_DEBIAN)}
+sub coverage {vmCoverage(shift->{strVm})}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
 sub doExpect {return shift->{bExpect}}
