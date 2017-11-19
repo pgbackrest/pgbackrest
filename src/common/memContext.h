@@ -43,7 +43,7 @@ Memory context management functions
 MemContext *context = memContextNew();
 MemContext *contextOld = memContextSwitch(context);
 
-TRY()
+TRY_BEGIN()
 {
     <Do something with the memory context>
 }
@@ -58,6 +58,7 @@ FINALLY
 {
     memContextSwitch(context);
 }
+TRY_END();
 
 Use the MEM_CONTEXT*() macros when possible rather than implement error-handling for every memory context block.
 ***********************************************************************************************************************************/
@@ -100,7 +101,7 @@ MEM_CONTEXT_END();
     MemContext *MEM_CONTEXT_memContextOld = memContextSwitch(memContext);                                                          \
                                                                                                                                    \
     /* Try the statement block */                                                                                                  \
-    TRY()
+    TRY_BEGIN()
 
 #define MEM_CONTEXT_OLD()                                                                                                          \
     MEM_CONTEXT_memContextOld
@@ -111,6 +112,7 @@ MEM_CONTEXT_END();
     {                                                                                                                              \
         memContextSwitch(MEM_CONTEXT_OLD());                                                                                       \
     }                                                                                                                              \
+    TRY_END();                                                                                                                     \
 }
 
 /***********************************************************************************************************************************

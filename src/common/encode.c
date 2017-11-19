@@ -77,7 +77,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
 {
     volatile bool valid = true;
 
-    TRY()
+    TRY_BEGIN()
     {
         decodeToBinValidate(encodeType, source);
     }
@@ -85,6 +85,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
     {
         valid = false;
     }
+    TRY_END();
 
     return valid;
 }

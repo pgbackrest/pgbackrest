@@ -72,7 +72,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Simplify try..catch..finally names.</p>
+                        <p>Simplify try..catch..finally names.  Also wrap in a do...while loop to make sure that no random else is attached to the main if block.</p>
                     </release-item>
 
                     <release-item>

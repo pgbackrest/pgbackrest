@@ -30,7 +30,7 @@ Test that an expected error is actually thrown and error when it isn't.
     printf("    l%04d - expect error: %s\n", __LINE__, errorMessageExpected);                                                      \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
-    TRY()                                                                                                                          \
+    TRY_BEGIN()                                                                                                                    \
     {                                                                                                                              \
         statement;                                                                                                                 \
     }                                                                                                                              \
@@ -43,6 +43,7 @@ Test that an expected error is actually thrown and error when it isn't.
                 AssertError, "expected error %s, '%s' but got %s, '%s'", errorTypeName(&errorTypeExpected), errorMessageExpected,  \
                 errorName(), errorMessage());                                                                                      \
     }                                                                                                                              \
+    TRY_END();                                                                                                                     \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
         THROW(                                                                                                                     \
@@ -99,7 +100,7 @@ parameters.
     /* Try to run the statement */                                                                                                 \
     type TEST_RESULT_result;                                                                                                       \
                                                                                                                                    \
-    TRY()                                                                                                                          \
+    TRY_BEGIN()                                                                                                                    \
     {                                                                                                                              \
         TEST_RESULT_result = (type)(statement);                                                                                    \
     }                                                                                                                              \
@@ -111,6 +112,7 @@ parameters.
             AssertError, "statement '%s' threw error %s, '%s' but result <%s> expected",                                           \
             #statement, errorName(), errorMessage(), TEST_RESULT_resultExpectedStr);                                               \
     }                                                                                                                              \
+    TRY_END();                                                                                                                     \
                                                                                                                                    \
    /* Test the type operator */                                                                                                    \
     bool TEST_RESULT_resultOp = false;                                                                                             \

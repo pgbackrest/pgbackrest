@@ -3,7 +3,7 @@ Error Handler
 
 Implement a try ... catch ... finally error handler.
 
-TRY()
+TRY_BEGIN()
 {
     <Do something that might throw an error>
 }
@@ -23,11 +23,16 @@ FINALLY()
 {
     <Cleanup code that runs in all cases>
 }
+TRY_END();
 
-The CATCH() and FINALLY() blocks are optional but at least one must be specified.  There is no need for an TRY block by itself
+The CATCH() and FINALLY() blocks are optional but at least one must be specified.  There is no need for a TRY block by itself
 because errors will automatically be propagated to the nearest try block in the call stack.
 
-Never call return from within any of the error-handling blocks.
+IMPORTANT: If a local variable of the function containing a TRY block is modified in the TRY_BEGIN() block and used later in the
+function after an error is thrown, that variable must be declared "volatile" if the preserving the value is important.  Beware that
+gcc's -Wclobbered warnings are almost entirely useless for catching such issues.
+
+IMPORTANT: Never call return from within any of the error-handling blocks.
 ***********************************************************************************************************************************/
 #ifndef ERROR_H
 #define ERROR_H
@@ -51,8 +56,11 @@ bool errorInstanceOf(const ErrorType *errorTypeTest);
 /***********************************************************************************************************************************
 Begin a block where errors can be thrown
 ***********************************************************************************************************************************/
-#define TRY()                                                                                                                      \
+#define TRY_BEGIN()                                                                                                                \
+do                                                                                                                                 \
+{                                                                                                                                  \
     if (errorInternalTry(__FILE__, __LINE__) && setjmp(*errorInternalJump()) >= 0)                                                 \
+    {                                                                                                                              \
         while (errorInternalProcess(false))                                                                                        \
             if (errorInternalStateTry())
 
@@ -73,6 +81,13 @@ Code to run whether the try block was successful or not
 ***********************************************************************************************************************************/
 #define FINALLY()                                                                                                                  \
     else if (errorInternalStateFinal())
+
+/***********************************************************************************************************************************
+End the try block
+***********************************************************************************************************************************/
+#define TRY_END()                                                                                                                  \
+    }                                                                                                                              \
+} while (0)
 
 /***********************************************************************************************************************************
 Throw an error
