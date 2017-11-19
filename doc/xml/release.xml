@@ -141,6 +141,10 @@
                     <release-item>
                         <p>Automated tests for 32-bit i386/i686 architecture.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Refactor C unit test macros so they compile with <id>-Wstrict-aliasing</id>.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-test-list>
         </release>
