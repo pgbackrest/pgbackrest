@@ -87,6 +87,10 @@ sub manifestCompare
     my $oManifestExpected = shift;
     my $oManifestActual = shift;
 
+    # Remove manifest files if exist
+    storageTest()->remove($self->{strExpectedManifest}, {bIgnoreMissing => true});
+    storageTest()->remove($self->{strActualManifest}, {bIgnoreMissing => true});
+
     # Section backup. Confirm the copy-start timestamp is set for the actual manifest then copy it to the expected so files can
     # be compared
     if ($oManifestActual->test(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START))
@@ -103,9 +107,6 @@ sub manifestCompare
     storageTest()->put($self->{strExpectedManifest}, iniRender($oManifestExpected->{oContent}));
 
     return executeTest("diff " . $self->{strExpectedManifest} . " " . $self->{strActualManifest});
-    #
-    # storageTest()->remove($self->{strExpectedManifest});
-    # storageTest()->remove("${strTestPath}/actual.manifest");
 }
 
 ####################################################################################################################################
@@ -241,7 +242,6 @@ sub run
             MANIFEST_SUBKEY_SIZE, length($strTest));
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . $strTest,
             MANIFEST_SUBKEY_TIMESTAMP, $lTime);
-
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'master false');
 
@@ -251,24 +251,42 @@ sub run
         storageDb()->pathCreate('pg_config');
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . $strConfFile,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strConfContent);
+
+        # link db/pg_config/postgresql.conf.link -> ./postgresql.conf
         testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
 
-# CSHANG Even though this creates a duplicate link, this error occurs (note the pg_config/pg_config): 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
-# ubuntu@pgbackrest-test:~$ ls -l /home/ubuntu/test/test-0/db/pg_config/
-# total 4
-# -rw------- 1 ubuntu ubuntu 21 Nov  9 17:07 postgresql.conf
-# lrwxrwxrwx 1 ubuntu ubuntu 17 Nov  9 19:53 postgresql.conf.bad.link -> ./postgresql.conf
-# lrwxrwxrwx 1 ubuntu ubuntu 17 Nov  9 19:53 postgresql.conf.link -> ./postgresql.conf
+        # CSHANG on the command line, these links appear to be fine but in the code, a debug line prior to the recursive call to build():
+        # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/base, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad';
+        # STRFILTER: $VAR1 = undef;
+        # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/pg_config, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad/postgresql.conf.link';
+        # STRFILTER: $VAR1 = undef;
+        # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/base/base, STRLEVEL PASSED: $VAR1 = 'pg_data/base/postgresql.conf';
+        # STRFILTER: $VAR1 = undef;
+        # and right here throws: 'unable to stat '/home/ubuntu/test/test-0/db/base/pg_config/postgresql.conf': No such file or directory'
+        # -- note the extra "base" here - it should just be /home/ubuntu/test/test-0/db/pg_config/postgresql.conf
+        # # link db/base/pg_config_bad -> ../../db/pg_config
+        # testLinkCreate($self->{strDbPath} . '/'. DB_PATH_BASE . '/pg_config_bad', '../../db/pg_config');
+        # # link db/base/postgresql.conf -> ../pg_config/postgresql.conf
+        # testLinkCreate($self->{strDbPath} . '/'. DB_PATH_BASE . '/postgresql.conf', '..' . $strConfFile);
+        # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_DESTINATION,
+        #     'TEST THIS');
+        # CSHANG Even though the below code creates a duplicate link, this error occurs (note the pg_config/pg_config):
+        # 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
+        # ubuntu@pgbackrest-test:~$ ls -l /home/ubuntu/test/test-0/db/pg_config/
+        # total 4
+        # -rw------- 1 ubuntu ubuntu 21 Nov  9 17:07 postgresql.conf
+        # lrwxrwxrwx 1 ubuntu ubuntu 17 Nov  9 19:53 postgresql.conf.bad.link -> ./postgresql.conf
+        # lrwxrwxrwx 1 ubuntu ubuntu 17 Nov  9 19:53 postgresql.conf.link -> ./postgresql.conf
         # # This link will cause errors because it points to the same location as above
         # testLinkCreate($self->{strDbPath} . $strConfFile . '.bad.link', './postgresql.conf');
         #
         # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_DESTINATION,
-        #     'tablespace symlink ../base destination must not be in $PGDATA');
+        #     'TEST ERROR');
         # testFileRemove($self->{strDbPath} . $strConfFile . '.link.bad');
 
         # Update expected manifest
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_BASE, MANIFEST_SUBKEY_MODE, MODE_0700);
-        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_config', undef, $hDefault)
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA . '/pg_config', undef, $hDefault);
 
         # Section backup:target
         $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA . $strConfFile . '.link',
@@ -744,6 +762,128 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_SIZE, 0);
         $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated - size 0');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('future file and last manifest'))
+    {
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+
+        # Create expected manifest from base
+        my $oManifestExpected = dclone($oManifestBase);
+
+        # Future timestamp on file
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime + 20000}), $strTest);
+
+        # Update expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, true);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_SIZE,
+            length($strTest));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_TIMESTAMP,
+            $lTime + 20000);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_FUTURE, 'y');
+
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, "[undef]",
+            'future timestamp warning', {strLogExpect =>
+            "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'manifest future subkey=y');
+
+        # Future timestamp in last manifest
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oLastManifest = dclone($oManifestExpected);
+
+        # Set a backup label
+        $oLastManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, BOGUS);
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_PRIOR, undef, BOGUS);
+
+        # Remove the file and recreate it without it being in the future
+        storageTest()->remove($self->{strDbPath} . '/' . $strTest);
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTest);
+
+        # Remove the future subkey from the expected manifest and reset the timestamp
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_FUTURE);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_TIMESTAMP,
+            $lTime);
+
+        # Create a new manifest
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+
+        $self->testResult(sub {$oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true)}, "[undef]",
+            'last manifest future timestamp warning', {strLogExpect =>
+            "WARN: some files have timestamps in the future - they will be copied to prevent possible race conditions"});
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+        'last manifest future subkey=y, new manifest future subkey removed');
+
+        # File info in last manifest same as current
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oLastManifest->remove(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_FUTURE);
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_TIMESTAMP,
+            $lTime);
+
+        # Update reference in expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_REFERENCE,
+            BOGUS);
+# CSHANG build() expects the checksum & repo size in the lastManifest to exist and does nothing if they don't - shouldn't it ASSERT?
+        # Check reference
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+        'reference set to prior backup label');
+
+        # Create a new file reference
+        my $strTestNew = $strTest . 'new';
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTestNew,
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strTestNew);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_SIZE, length($strTestNew));
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_SIZE, length($strTestNew));
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        # Set a reference, checksum, repo size, master and page checksum in the last manifest
+        my $strCheckSum = '1234567890';
+        my $lRepoSize = 10000;
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_REFERENCE, BOGUS . BOGUS);
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM, $strCheckSum);
+        $oLastManifest->numericSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
+        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_MASTER, false);
+        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
+
+        # Update expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_REFERENCE, BOGUS . BOGUS);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM, $strCheckSum);
+        $oManifestExpected->numericSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_REPO_SIZE, $lRepoSize);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
+
+# CSHANG Default master is flipping because it's not something we read from disk
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, false);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest,
+            MANIFEST_SUBKEY_MASTER, true);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+        'updates from last manifest');
+
+
+# TODO: MANIFEST_SUBKEY_CHECKSUM_PAGE = false and MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR notset/set
     }
 }
 

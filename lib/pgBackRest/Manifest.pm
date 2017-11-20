@@ -586,7 +586,7 @@ sub build
             {name => 'strParentPath', required => false},
             {name => 'strFilter', required => false}
         );
-use Data::Dumper; # CSHANG
+
     if (!defined($strLevel))
     {
         $strLevel = MANIFEST_TARGET_PGDATA;
@@ -756,9 +756,7 @@ use Data::Dumper; # CSHANG
                 confess &log(ERROR, "${strName} is not a symlink - " . DB_PATH_PGTBLSPC . ' should contain only symlinks',
                              ERROR_LINK_EXPECTED);
             }
-syswrite(*STDOUT, "NAME: ".Dumper($strName) . ", PATH: ".Dumper($strPath).", MANIFEST: ".Dumper($hManifest->{$strName}). "ABSPATH: ".Dumper($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC, $hManifest->{$strName}{link_destination})).
-"INDEX ABSPATH: ".Dumper(index($oStorageDbMaster->pathAbsolute($strPath . '/' . DB_PATH_PGTBLSPC,
-      $hManifest->{$strName}{link_destination}) . '/', "${strPath}/"))." INDEX LINKDEST: ".Dumper(index($hManifest->{$strName}{link_destination}, '/'))); # CSHANG
+
             # Check for tablespaces in PGDATA
             if (index($hManifest->{$strName}{link_destination}, "${strPath}/") == 0 ||
                 (index($hManifest->{$strName}{link_destination}, '/') != 0 &&
@@ -831,7 +829,7 @@ syswrite(*STDOUT, "NAME: ".Dumper($strName) . ", PATH: ".Dumper($strPath).", MAN
             }
 
             $strPath = dirname("${strPath}/${strName}");
-syswrite(*STDOUT, "STRPATH BEFORE BUILD: $strPath, STRLEVEL PASSED: ".Dumper($strFile)."STRFILTER: ".Dumper($strFilter)); # CSHANG
+
             $self->build(
                 $oStorageDbMaster, $strLinkDestination, undef, $bOnline, $hTablespaceMap, $hDatabaseMap, $strFile, $bTablespace,
                 $strPath, $strFilter, $strLinkDestination);
