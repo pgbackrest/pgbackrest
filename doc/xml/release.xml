@@ -131,7 +131,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Designate a single distro (Ubuntu 16.04) for Perl coverage testing.  Running coverage testing on multiple distros takes time but doesn't add significant value.  Also ensure that the distro designated to run coverage tests is one of the default test distros.</p>
+                        <p>Designate a single distro (Ubuntu 16.04) for coverage testing.  Running coverage testing on multiple distros takes time but doesn't add significant value.  Also ensure that the distro designated to run coverage tests is one of the default test distros.  For C tests, enable optimizations on the distros that don't do coverage testing.</p>
                     </release-item>
 
                     <release-item>

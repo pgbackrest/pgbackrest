@@ -315,11 +315,12 @@ sub run
                 $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
 
                 my $strGccCommand =
-                    'gcc -std=c99 -fprofile-arcs -ftest-coverage -fPIC -O0 ' .
-                    '-Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered ' .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? '-Wpedantic ' : '') .
-                    "-I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c " .
-                    "/$self->{strBackRestBase}/test/src/common/harnessTest.c " .
+                    'gcc -std=c99 -fPIC' .
+                    (vmCoverage($self->{oTest}->{&TEST_VM}) ? ' -fprofile-arcs -ftest-coverage -O0' : ' -O2') .
+                    ' -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings  -Wno-clobbered' .
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic ' : '') .
+                    " -I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c" .
+                    " /$self->{strBackRestBase}/test/src/common/harnessTest.c " .
                     join(' ', @stryCFile) . " -l crypto -o test";
 
                 executeTest(
@@ -355,7 +356,6 @@ sub run
     );
 }
 
-
 ####################################################################################################################################
 # end
 ####################################################################################################################################
@@ -386,7 +386,7 @@ sub end
         }
 
         # If C library generate coverage info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C})
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverage($self->{oTest}->{&TEST_VM}))
         {
             # Generate a list of files to cover
             my $hTestCoverage =
