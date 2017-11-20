@@ -111,7 +111,7 @@ sub manifestOwnershipCheck
     }
     else
     {
-        $oOwnerTypeHash{&MANIFEST_SUBKEY_USER} = getgrgid($();
+        $oOwnerTypeHash{&MANIFEST_SUBKEY_GROUP} = getgrgid($();
     }
 
     # Loop through owner types (user, group)

@@ -37,6 +37,14 @@
 
                         <p>Fixed an issue retrieving WAL for old database versions.  After a <cmd>stanza-upgrade</cmd> it should still be possible to restore backups from the previous version and perform recovery with <cmd>archive-get</cmd>.  However, archive-get only checked the most recent db version/id and failed.  Also clean up some issues when the same db version/id appears multiple times in the history.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="mccormick.jeff"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue with invalid backup groups being set correctly on restore.  If the backup cannot map a group to a name it stores the group in the manifest as <id>false</id> then uses either the owner of $PGDATA to set the group during restore or failing that the group of the current user.  This logic was not working correctly because the selected group was overwriting the user on restore leaving the group undefined and the user incorrectly set to the group.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -3675,6 +3683,11 @@
         <contributor id="loxo.lætitia">
             <contributor-name-display>L&amp;aelig;titia</contributor-name-display>
             <contributor-id type="github">LaetitiaLoxo</contributor-id>
+        </contributor>
+
+        <contributor id="mccormick.jeff">
+            <contributor-name-display>Jeff McCormick</contributor-name-display>
+            <contributor-id type="github">jmccormick2001</contributor-id>
         </contributor>
 
         <contributor id="odonnell.jason">
