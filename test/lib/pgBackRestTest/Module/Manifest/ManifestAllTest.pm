@@ -202,68 +202,6 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestBase, $oManifest)}, "", 'base manifest');
 
-# CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid? It seems not, so shouldn't the build function check for a minimum set or at least in the validate function? This is what the build provides - so why is there no checksum for pg_control in target:file? - at this point it fails the validate? manifest subvalue 'checksum' not set for file 'pg_data/global/pg_control'
-        #  'oContent' => {
-        #                  'target:file:default' => {
-        #                                             'mode' => '0644',
-        #                                             'master' => bless( do{\(my $o = 1)}, 'JSON::PP::Boolean' ), XXXXX
-        #                                             'user' => 'ubuntu',
-        #                                             'group' => 'ubuntu'
-        #                                           },
-        #                  'backup' => {
-        #                                'backup-timestamp-copy-start' => 1509384645
-        #                              },
-        #                  'target:file' => {
-        #                                     'pg_data/global/pg_control' => {
-        #                                                                      'size' => 8192,
-        #                                                                      'timestamp' => 1509384645
-        #                                                                    }
-        #                                   },
-        #                  'target:path' => {
-        #                                     'pg_data/pg_tblspc' => {},
-        #                                     'pg_data' => {},
-        #                                     'pg_data/global' => {}
-        #                                   },
-        #                  'target:path:default' => {
-        #                                             'group' => 'ubuntu',
-        #                                             'user' => 'ubuntu',
-        #                                             'mode' => '0750'
-        #                                           },
-        #                  'backup:target' => {
-        #                                       'pg_data' => {
-        #                                                      'path' => '/home/ubuntu/test/test-0/db',
-        #                                                      'type' => 'path'
-        #                                                    }
-        #                                     },
-        #                  'backrest' => {
-        #                                  'backrest-format' => 5,
-        #                                  'backrest-version' => '1.25'
-        #                                },
-        #                  'backup:db' => {
-        #                                   'db-version' => '9.4'
-        #                                 }
-        #                },
-
-#CSHANG Also, what is the [backup:option] section - is it for the Clibrary? Do we test this anywhere - should we somehow test it here? Should these be a "minimum set"?
-        # * backup:
-        #     * backup-type
-        #     * backup-timestamp-start
-        #     * backup-archive-start
-        #     * backup-lsn-start
-        # * backup:option
-        #     * option-backup-standby
-        #     * option-compress
-        #     * option-hardlink
-        #     * option-online
-        #     * option-archive-copy
-        #     * option-archive-check
-        #     * option-checksum-page
-        # * backup:db
-        #     * db-id
-        #     * db-system-id
-        #     * db-catalog-version
-        #     * db-control-version?
-
         # Create expected manifest from base
         my $oManifestExpected = dclone($oManifestBase);
 
@@ -296,6 +234,28 @@ sub run
 
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'paths/files and different modes');
+
+# CSHANG Should the build function check for a minimum set or at least in the validate function? At this point there is no checksum for pg_control in target:file. Validate will fail on manifest subvalue 'checksum' not set for file 'pg_data/global/pg_control'
+
+#CSHANG Also, what is the [backup:option] section - is it for the Clibrary? Do we test this anywhere - should we somehow test it here? Should these be a "minimum set"?
+        # * backup:
+        #     * backup-type
+        #     * backup-timestamp-start
+        #     * backup-archive-start
+        #     * backup-lsn-start
+        # * backup:option
+        #     * option-backup-standby
+        #     * option-compress
+        #     * option-hardlink
+        #     * option-online
+        #     * option-archive-copy
+        #     * option-archive-check
+        #     * option-checksum-page
+        # * backup:db
+        #     * db-id
+        #     * db-system-id
+        #     * db-catalog-version
+        #     * db-control-version?
 
         # Master = false
         #---------------------------------------------------------------------------------------------------------------------------
@@ -574,8 +534,6 @@ sub run
         testFileRemove($self->{strDbPath} . "/intermediate_link");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-# CSHANG Need tests with valid tablespace in ofline mode and tablespace map
-
         # Reload the manifest otherwise it will contain invalid data from the above exception tests
         $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
@@ -622,6 +580,19 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline passing tablespace map');
+
+        # Invalid user/group
+        #---------------------------------------------------------------------------------------------------------------------------
+        executeTest("sudo chgrp 777 " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
+        executeTest("sudo chown 777 " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
+            MANIFEST_SUBKEY_GROUP, false);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
+            MANIFEST_SUBKEY_USER, false);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'invalid user/group');
     }
 
     ################################################################################################################################
@@ -936,6 +907,71 @@ sub run
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'checksum-page false, checksum-page-error set');
+    }
+
+    ################################################################################################################################
+    if ($self->begin('fileAdd()'))
+    {
+        my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
+        my $oManifestExpected = dclone($oManifestBase);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+
+        # Add a file after building manifest
+        my $lTimeTest = $lTime + 10;
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . $strTest,
+            {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTimeTest}), $strTest);
+
+# CSHANG The file user, group and mode are not passed in - why? the default target path is used unless there is already a targe:file:default then that is used. I'm guessing we can't get the actual stats for the file?
+        $oManifest->fileAdd($strTest, $lTimeTest, 0, 0, true);
+
+        # Update expected manifest
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MODE, MODE_0600);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_USER, TEST_USER);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_GROUP, TEST_GROUP);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_TIMESTAMP, $lTimeTest);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_CHECKSUM, 0);
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MASTER, true);
+
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'file added to manifest');
+
+        # Remove the file user, mode and group from the actual and expected manifest
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MODE);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_USER);
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_GROUP);
+
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MODE);
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_USER);
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_GROUP);
+
+        # Add a target:file:default section to the manifests with a mode other than 0600
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0750);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0750);
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_GROUP, undef, TEST_GROUP);
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_USER, undef, TEST_USER);
+
+        # Set the expected mode to 0600
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MODE, MODE_0600);
+
+        $oManifest->fileAdd($strTest, $lTimeTest, 0, 0, true);
+
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'file added to manifest - file:default values set');
+
+        # Remove the file mode from the manifests and change the default so it need not be set for the file
+        $oManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MODE);
+        $oManifest->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
+
+        $oManifestExpected->remove(MANIFEST_SECTION_TARGET_FILE, $strTest, MANIFEST_SUBKEY_MODE);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
+
+        $oManifest->fileAdd($strTest, $lTimeTest, 0, 0, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'file added to manifest - default mode set 0600');
     }
 }
 
