@@ -133,6 +133,10 @@
 
                         <p>Clarify usage of the <br-option>archive-timeout</br-option> option and describe how it is distinct from the <postgres/> <pg-option>archive_timeout</pg-option> setting.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Update <file>release.pl</file> to push data to site repository.</p>
+                    </release-item>
                 </release-refactor-list>
             </release-doc-list>
 
