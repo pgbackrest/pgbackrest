@@ -223,9 +223,9 @@ sub protocolParam
         # option will be set to 'protocol' which is not a valid value from the command line.
         &CFGOPT_LOG_LEVEL_STDERR => {},
 
-        &CFGOPT_DB_PATH => {value => $strOptionDbPath},
-        &CFGOPT_DB_PORT => {value => $strOptionDbPort},
-        &CFGOPT_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
+        cfgOptionIdFromIndex(CFGOPT_DB_PATH, 1) => {value => $strOptionDbPath},
+        cfgOptionIdFromIndex(CFGOPT_DB_PORT, 1) => {value => $strOptionDbPort},
+        cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, 1) => {value => $strOptionDbSocketPath},
 
         # Set protocol options explicitly so values are not picked up from remote config files
         &CFGOPT_BUFFER_SIZE =>  {value => cfgOption(CFGOPT_BUFFER_SIZE)},

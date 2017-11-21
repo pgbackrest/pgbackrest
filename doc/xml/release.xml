@@ -45,6 +45,14 @@
 
                         <p>Fixed an issue with invalid backup groups being set correctly on restore.  If the backup cannot map a group to a name it stores the group in the manifest as <id>false</id> then uses either the owner of $PGDATA to set the group during restore or failing that the group of the current user.  This logic was not working correctly because the selected group was overwriting the user on restore leaving the group undefined and the user incorrectly set to the group.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue passing parameters to remotes.  When more than one db was specified the path, port, and socket path would for db1 were passed no matter which db was actually being addressed.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
