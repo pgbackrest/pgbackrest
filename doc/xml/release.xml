@@ -10,7 +10,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.26dev" title="UNDER DEVELOPMENT">
+        <release date="2017-11-21" version="1.26" title="Repository Encryption">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
