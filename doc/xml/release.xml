@@ -60,6 +60,10 @@
 
                 <release-refactor-list>
                     <release-item>
+                        <p>Disable gzip filter when <br-option>--compress-level-network=0</br-option>.  The filter was used with compress level set to 0 which added overhead without any benefit.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>list</id> type for options.  The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>
                     </release-item>
 

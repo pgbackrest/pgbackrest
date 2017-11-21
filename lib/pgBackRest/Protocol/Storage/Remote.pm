@@ -163,7 +163,8 @@ sub openRead
             {name => 'rhParam', required => false},
         );
 
-    my $bProtocolCompress = defined($rhParam->{bProtocolCompress}) && $rhParam->{bProtocolCompress};
+    # Determine whether protocol compress will be used
+    my $bProtocolCompress = protocolCompress($rhParam);
 
     # Compress on the remote side
     if ($bProtocolCompress)
@@ -172,7 +173,6 @@ sub openRead
             @{$rhParam->{rhyFilter}},
             {strClass => STORAGE_FILTER_GZIP,
                 rxyParam => [{iLevel => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK), bWantGzip => false}]});
-        delete($rhParam->{bProtocolCompress});
     }
 
     my $oSourceFileIo =
@@ -215,8 +215,8 @@ sub openWrite
             {name => 'rhParam', required => false},
         );
 
-    # Is protocol compression enabled?
-    my $bProtocolCompress = defined($rhParam->{bProtocolCompress}) && $rhParam->{bProtocolCompress};
+    # Determine whether protocol compress will be used
+    my $bProtocolCompress = protocolCompress($rhParam);
 
     # Decompress on the remote side
     if ($bProtocolCompress)
@@ -224,7 +224,6 @@ sub openWrite
         push(
             @{$rhParam->{rhyFilter}},
             {strClass => STORAGE_FILTER_GZIP, rxyParam => [{strCompressType => STORAGE_DECOMPRESS, bWantGzip => false}]});
-        delete($rhParam->{bProtocolCompress});
     }
 
     # Open the remote file
@@ -334,6 +333,24 @@ sub cipherPassUser
         $strOperation,
         {name => 'strCipherPassUser', value => $strCipherPassUser, redact => true}
     );
+}
+
+####################################################################################################################################
+# Used internally to determine if protocol compression should be enabled
+####################################################################################################################################
+sub protocolCompress
+{
+    my $rhParam = shift;
+
+    my $bProtocolCompress = false;
+
+    if (defined($rhParam->{bProtocolCompress}))
+    {
+        $bProtocolCompress = $rhParam->{bProtocolCompress} && cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK) > 0 ? true : false;
+        delete($rhParam->{bProtocolCompress});
+    }
+
+    return $bProtocolCompress;
 }
 
 ####################################################################################################################################

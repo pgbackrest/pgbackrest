@@ -574,7 +574,7 @@ sub run
 
         $oHostDbMaster->restore(
             $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'fix broken symlink', undef, " --link-all ${strLogReduced} ${strLogReduced}");
+            'fix broken symlink', undef, " --link-all ${strLogReduced}" . ($bRemote ? ' --compress-level-network=0' : ''));
 
         # Additional restore tests that don't need to be performed for every permutation
         if (!$bRemote)
