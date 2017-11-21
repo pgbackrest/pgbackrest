@@ -192,10 +192,77 @@ sub run
 # CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set?
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
+        # Build error if offline = true and no tablespace path
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_FILE_MISSING,
+            "unable to stat '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
+
         # bOnline = true tests - Compare the base manifest
         #---------------------------------------------------------------------------------------------------------------------------
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
         $self->testResult(sub {$self->manifestCompare($oManifestBase, $oManifest)}, "", 'base manifest');
+
+# CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid? It seems not, so shouldn't the build function check for a minimum set or at least in the validate function? This is what the build provides - so why is there no checksum for pg_control in target:file? - at this point it fails the validate? manifest subvalue 'checksum' not set for file 'pg_data/global/pg_control'
+        #  'oContent' => {
+        #                  'target:file:default' => {
+        #                                             'mode' => '0644',
+        #                                             'master' => bless( do{\(my $o = 1)}, 'JSON::PP::Boolean' ), XXXXX
+        #                                             'user' => 'ubuntu',
+        #                                             'group' => 'ubuntu'
+        #                                           },
+        #                  'backup' => {
+        #                                'backup-timestamp-copy-start' => 1509384645
+        #                              },
+        #                  'target:file' => {
+        #                                     'pg_data/global/pg_control' => {
+        #                                                                      'size' => 8192,
+        #                                                                      'timestamp' => 1509384645
+        #                                                                    }
+        #                                   },
+        #                  'target:path' => {
+        #                                     'pg_data/pg_tblspc' => {},
+        #                                     'pg_data' => {},
+        #                                     'pg_data/global' => {}
+        #                                   },
+        #                  'target:path:default' => {
+        #                                             'group' => 'ubuntu',
+        #                                             'user' => 'ubuntu',
+        #                                             'mode' => '0750'
+        #                                           },
+        #                  'backup:target' => {
+        #                                       'pg_data' => {
+        #                                                      'path' => '/home/ubuntu/test/test-0/db',
+        #                                                      'type' => 'path'
+        #                                                    }
+        #                                     },
+        #                  'backrest' => {
+        #                                  'backrest-format' => 5,
+        #                                  'backrest-version' => '1.25'
+        #                                },
+        #                  'backup:db' => {
+        #                                   'db-version' => '9.4'
+        #                                 }
+        #                },
+
+#CSHANG Also, what is the [backup:option] section - is it for the Clibrary? Do we test this anywhere - should we somehow test it here? Should these be a "minimum set"?
+        # * backup:
+        #     * backup-type
+        #     * backup-timestamp-start
+        #     * backup-archive-start
+        #     * backup-lsn-start
+        # * backup:option
+        #     * option-backup-standby
+        #     * option-compress
+        #     * option-hardlink
+        #     * option-online
+        #     * option-archive-copy
+        #     * option-archive-check
+        #     * option-checksum-page
+        # * backup:db
+        #     * db-id
+        #     * db-system-id
+        #     * db-catalog-version
+        #     * db-control-version?
 
         # Create expected manifest from base
         my $oManifestExpected = dclone($oManifestBase);
@@ -255,7 +322,7 @@ sub run
         # link db/pg_config/postgresql.conf.link -> ./postgresql.conf
         testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
 
-        # CSHANG on the command line, these links appear to be fine but in the code, a debug line prior to the recursive call to build():
+# CSHANG on the command line, these links appear to be fine but in the code, a debug line prior to the recursive call to build():
         # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/base, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad';
         # STRFILTER: $VAR1 = undef;
         # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/pg_config, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad/postgresql.conf.link';
@@ -270,7 +337,7 @@ sub run
         # testLinkCreate($self->{strDbPath} . '/'. DB_PATH_BASE . '/postgresql.conf', '..' . $strConfFile);
         # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_DESTINATION,
         #     'TEST THIS');
-        # CSHANG Even though the below code creates a duplicate link, this error occurs (note the pg_config/pg_config):
+# CSHANG Even though the below code creates a duplicate link, this error occurs (note the pg_config/pg_config):
         # 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
         # ubuntu@pgbackrest-test:~$ ls -l /home/ubuntu/test/test-0/db/pg_config/
         # total 4
@@ -323,7 +390,8 @@ sub run
         # Create directories to skip. Add a bogus file to them for test coverage.
         storageDb()->pathCreate(DB_FILE_PREFIX_TMP);
         storageDb()->pathCreate('pg_xlog');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/pg_xlog/' . BOGUS, {lTimestamp => $lTime}), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/pg_xlog/' . BOGUS,
+            {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGDYNSHMEM);
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_PATH_PGDYNSHMEM . '/' . BOGUS,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
@@ -442,10 +510,10 @@ sub run
         # Tablespaces
         #---------------------------------------------------------------------------------------------------------------------------
         # Create pg_tblspc path
-        my $strTblSpcPath = $self->{strDbPath} . '/' . MANIFEST_TARGET_PGTBLSPC;
+        my $strTblSpcPath = $self->{strDbPath} . '/' . DB_PATH_PGTBLSPC;
         storageDb()->pathCreate($strTblSpcPath, {bCreateParent => true});
 
-        # Create a directory in pg_tablespace
+        # Create a directory in pg_tblspc
         storageDb()->pathCreate("$strTblSpcPath/" . BOGUS, {strMode => '0700'});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_EXPECTED,
             MANIFEST_TARGET_PGTBLSPC . "/" . BOGUS . " is not a symlink - " . DB_PATH_PGTBLSPC . " should contain only symlinks");
@@ -491,12 +559,13 @@ sub run
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
         # Create tablespace directory outside PGDATA
-        storageTest()->pathCreate('tablespace');
+        my $strTablespace = 'tablespace';
+        storageTest()->pathCreate($strTablespace);
 
         my $strIntermediateLink = $self->{strDbPath} . "/intermediate_link";
 
         # Create a link to a link
-        testLinkCreate($strIntermediateLink, $self->testPath() . '/tablespace');
+        testLinkCreate($strIntermediateLink, $self->testPath() . '/' . $strTablespace);
         testLinkCreate("${strTblSpcPath}/${strTblspcId}", $strIntermediateLink);
 
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_LINK_DESTINATION,
@@ -505,91 +574,54 @@ sub run
         testFileRemove($self->{strDbPath} . "/intermediate_link");
         testFileRemove("${strTblSpcPath}/${strTblspcId}");
 
-#        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'tablespace');
+# CSHANG Need tests with valid tablespace in ofline mode and tablespace map
 
-# CSHANG Why is this correct? the manifest is not really valid yet, is it? What if we saved it at this point - or any point before validating? Should we force a validate before save?
-        # $self->testResult(sub {$oManifest->validate()}, "[undef]", 'manifest validated');
-    # executeTest(
-    #     'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
-    #     DB_FILE_PGCONTROL);
-    #     # Online tests
-    #     #---------------------------------------------------------------------------------------------------------------------------
-    #     $oManifest->build(storageDb(), $self->{strDbPath}, undef, true);
+        # Reload the manifest otherwise it will contain invalid data from the above exception tests
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
+        # Set the required db catalog version for tablespaces
+        $oManifest->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
+        $oManifestExpected->numericSet(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG, undef, $iDbCatalogVersion);
 
+        # Create a valid symlink pg_tblspc/1 to tablespace/ts1/1 directory
+        my $strTablespaceOid = '1';
+        my $strTablespaceName = "ts${strTablespaceOid}";
+        storageTest()->pathCreate("${strTablespace}/${strTablespaceName}/${strTablespaceOid}", {bCreateParent => true});
+        my $strTablespacePath = storageTest()->pathGet("${strTablespace}/${strTablespaceName}/${strTablespaceOid}");
+        testLinkCreate("${strTblSpcPath}/${strTablespaceOid}", $strTablespacePath);
 
+        # Create the tablespace info in expected manifest
+        my $strMfTs = MANIFEST_TARGET_PGTBLSPC . "/" . $strTablespaceOid;
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, $strMfTs, MANIFEST_SUBKEY_PATH, $strTablespacePath);
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, $strMfTs, MANIFEST_SUBKEY_TABLESPACE_ID, $strTablespaceOid);
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, $strMfTs, MANIFEST_SUBKEY_TABLESPACE_NAME, $strTablespaceName);
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_TARGET, $strMfTs, MANIFEST_SUBKEY_TYPE, MANIFEST_VALUE_LINK);
 
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_LINK, MANIFEST_TARGET_PGDATA . "/${strMfTs}", MANIFEST_SUBKEY_DESTINATION,
+            $strTablespacePath);
 
-        # # Build error if offline = true and no tablespace path
-        # #---------------------------------------------------------------------------------------------------------------------------
-        # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, false)}, ERROR_FILE_MISSING,
-        #     "unable to stat '" . $self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC . "': No such file or directory");
-        #
-        # # Create pg_tblspc path
-        # storageTest()->pathCreate($self->{strDbPath} . "/" . MANIFEST_TARGET_PGTBLSPC);
-# CSHANG Not sure if the result of building the manifest at this point is correct behavior. It builds the following content, but are these the minimum that a manifest can have for it to be valid?
-    #  'oContent' => {
-    #                  'target:file:default' => {
-    #                                             'mode' => '0644',
-    #                                             'master' => bless( do{\(my $o = 1)}, 'JSON::PP::Boolean' ), XXXXX
-    #                                             'user' => 'ubuntu',
-    #                                             'group' => 'ubuntu'
-    #                                           },
-    #                  'backup' => {
-    #                                'backup-timestamp-copy-start' => 1509384645
-    #                              },
-    #                  'target:file' => {
-    #                                     'pg_data/global/pg_control' => {
-    #                                                                      'size' => 8192,
-    #                                                                      'timestamp' => 1509384645
-    #                                                                    }
-    #                                   },
-    #                  'target:path' => {
-    #                                     'pg_data/pg_tblspc' => {},
-    #                                     'pg_data' => {},
-    #                                     'pg_data/global' => {}
-    #                                   },
-    #                  'target:path:default' => {
-    #                                             'group' => 'ubuntu',
-    #                                             'user' => 'ubuntu',
-    #                                             'mode' => '0750'
-    #                                           },
-    #                  'backup:target' => {
-    #                                       'pg_data' => {
-    #                                                      'path' => '/home/ubuntu/test/test-0/db',
-    #                                                      'type' => 'path'
-    #                                                    }
-    #                                     },
-    #                  'backrest' => {
-    #                                  'backrest-format' => 5,
-    #                                  'backrest-version' => '1.25'
-    #                                },
-    #                  'backup:db' => {
-    #                                   'db-version' => '9.4'
-    #                                 }
-    #                },
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGTBLSPC, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_PATH_PGTBLSPC, undef, $hDefault);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_PATH, $strMfTs, undef, $hDefault);
 
-# CSHANG It seems not, so shouldn't the build function check for a minimum set:
-# * backup:
-#     * backup-type
-#     * backup-timestamp-start
-#     * backup-archive-start
-#     * backup-lsn-start
-# * backup:option
-#     * option-backup-standby
-#     * option-compress
-#     * option-hardlink
-#     * option-online
-#     * option-archive-copy
-#     * option-archive-check
-#     * option-checksum-page
-# * backup:db
-#     * db-id
-#     * db-system-id
-#     * db-catalog-version
-#     * db-control-version?
-# CSHANG At least in the validate function? This is what the build provides - so why is there no checksum for pg_control in target:file? - at this point it fails the validate? manifest subvalue 'checksum' not set for file 'pg_data/global/pg_control'
+        # In offline mode, do not skip the db WAL path
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_FILE_PGCONTROL, MANIFEST_SUBKEY_MODE, MODE_0644);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
+            MANIFEST_SUBKEY_MODE, MODE_0644);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/pg_xlog/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
 
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'offline with valid tablespace - do not skip database WAL directory');
+
+        my $hTablespaceMap = {};
+        $hTablespaceMap->{$strTablespaceOid} = $strTablespaceName;
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'offline passing tablespace map');
     }
 
     ################################################################################################################################
@@ -873,17 +905,37 @@ sub run
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
             MANIFEST_SUBKEY_CHECKSUM_PAGE, true);
 
-# CSHANG Default master is flipping because it's not something we read from disk
+        # Default "master" is flipping because it's not something we read from disk
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MASTER, undef, false);
         $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTest,
             MANIFEST_SUBKEY_MASTER, true);
 
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "", 'updates from last manifest');
+
+# CSHANG What is the [backup:option] option-checksum-page setting? Why are the checksum-page/error settings per file not dependent on this? What are these for?
+        # MANIFEST_SUBKEY_CHECKSUM_PAGE = false and MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR set/not set
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oLastManifest->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+        $oManifestExpected->boolSet(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE, false);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
-        'updates from last manifest');
+            'checksum-page false, checksum-page-error not set');
 
+        my @iyChecksumPageError = (1);
+        $oLastManifest->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, \@iyChecksumPageError);
 
-# TODO: MANIFEST_SUBKEY_CHECKSUM_PAGE = false and MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR notset/set
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE,  MANIFEST_TARGET_PGDATA . '/' . $strTestNew,
+            MANIFEST_SUBKEY_CHECKSUM_PAGE_ERROR, \@iyChecksumPageError);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'checksum-page false, checksum-page-error set');
     }
 }
 
