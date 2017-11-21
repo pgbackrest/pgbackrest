@@ -388,6 +388,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'set ownership [^\:]+:[^ ]+', '[^\:]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', TEST_USER . '\, ' . TEST_GROUP, '[^ ]+$');
 
+    $strLine = $self->regExpReplace($strLine, 'USER', 'strRemoteHostUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'strUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user=\"[^"]+', '[^"]+$');

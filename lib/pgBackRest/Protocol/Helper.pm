@@ -140,6 +140,134 @@ sub isDbLocal
 push @EXPORT, qw(isDbLocal);
 
 ####################################################################################################################################
+# Gets the parameters required to setup the protocol
+####################################################################################################################################
+sub protocolParam
+{
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strCommand,
+        $strRemoteType,
+        $iRemoteIdx,
+        $strBackRestBin,
+        $iProcessIdx,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::protocolParam', \@_,
+            {name => 'strCommand'},
+            {name => 'strRemoteType'},
+            {name => 'iRemoteIdx', default => cfgOptionValid(CFGOPT_HOST_ID) ? cfgOption(CFGOPT_HOST_ID) : 1},
+            {name => 'strBackRestBin', optional => true},
+            {name => 'iProcessIdx', optional => true},
+        );
+
+    # Return the remote when required
+    my $iOptionIdCmd = CFGOPT_BACKUP_CMD;
+    my $iOptionIdConfig = CFGOPT_BACKUP_CONFIG;
+    my $iOptionIdHost = CFGOPT_BACKUP_HOST;
+    my $iOptionIdUser = CFGOPT_BACKUP_USER;
+    my $strOptionDbPath = undef;
+    my $strOptionDbPort = undef;
+    my $strOptionDbSocketPath = undef;
+    my $strOptionSshPort = CFGOPT_BACKUP_SSH_PORT;
+
+    if ($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB)
+    {
+        $iOptionIdCmd = cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iRemoteIdx);
+        $iOptionIdConfig = cfgOptionIdFromIndex(CFGOPT_DB_CONFIG, $iRemoteIdx);
+        $iOptionIdHost = cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx);
+        $iOptionIdUser = cfgOptionIdFromIndex(CFGOPT_DB_USER, $iRemoteIdx);
+        $strOptionSshPort = cfgOptionIdFromIndex(CFGOPT_DB_SSH_PORT, $iRemoteIdx);
+    }
+
+    # Db path is not valid in all contexts (restore, for instance)
+    if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)))
+    {
+        $strOptionDbPath =
+            cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx));
+    }
+
+    # Db port is not valid in all contexts (restore, for instance)
+    if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx)))
+    {
+        $strOptionDbPort =
+            cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx));
+    }
+
+    # Db socket is not valid in all contexts (restore, for instance)
+    if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)))
+    {
+        $strOptionDbSocketPath =
+            cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
+                undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx));
+    }
+
+    # Build hash to set and override command options
+    my $rhCommandOption =
+    {
+        &CFGOPT_COMMAND => {value => $strCommand},
+        &CFGOPT_PROCESS => {value => $iProcessIdx},
+        &CFGOPT_CONFIG =>
+            {value => cfgOptionValid($iOptionIdConfig) && cfgOptionSource($iOptionIdConfig) eq CFGDEF_SOURCE_DEFAULT ?
+                undef : cfgOption($iOptionIdConfig)},
+        &CFGOPT_TYPE => {value => $strRemoteType},
+        &CFGOPT_LOG_PATH => {},
+        &CFGOPT_LOCK_PATH => {},
+
+        # Don't pass CFGOPT_LOG_LEVEL_STDERR because in the case of the local process calling the remote process the
+        # option will be set to 'protocol' which is not a valid value from the command line.
+        &CFGOPT_LOG_LEVEL_STDERR => {},
+
+        &CFGOPT_DB_PATH => {value => $strOptionDbPath},
+        &CFGOPT_DB_PORT => {value => $strOptionDbPort},
+        &CFGOPT_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
+
+        # Set protocol options explicitly so values are not picked up from remote config files
+        &CFGOPT_BUFFER_SIZE =>  {value => cfgOption(CFGOPT_BUFFER_SIZE)},
+        &CFGOPT_COMPRESS_LEVEL =>  {value => cfgOption(CFGOPT_COMPRESS_LEVEL)},
+        &CFGOPT_COMPRESS_LEVEL_NETWORK =>  {value => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK)},
+        &CFGOPT_PROTOCOL_TIMEOUT =>  {value => cfgOption(CFGOPT_PROTOCOL_TIMEOUT)}
+    };
+
+    # Override some per-db options that shouldn't be passed to the command. ??? This could be done better as a new define
+    # for these options which would then be implemented in cfgCommandWrite().
+    for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
+    {
+        if ($iOptionIdx != 1)
+        {
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_CONFIG, $iOptionIdx)} = {};
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iOptionIdx)} = {};
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iOptionIdx)} = {};
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iOptionIdx)} = {};
+            $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iOptionIdx)} = {};
+        }
+
+        $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)} = {};
+        $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_USER, $iOptionIdx)} = {};
+        $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_SSH_PORT, $iOptionIdx)} = {};
+    }
+
+    # Generate the remote command
+    my $strRemoteCommand = cfgCommandWrite(
+        CFGCMD_REMOTE, true, defined($strBackRestBin) ? $strBackRestBin : cfgOption($iOptionIdCmd), undef, $rhCommandOption);
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'strRemoteHost', value => cfgOption($iOptionIdHost)},
+        {name => 'strRemoteHostUser', value => cfgOption($iOptionIdUser)},
+        {name => 'strRemoteHostSshPort', value => cfgOption($strOptionSshPort, false)},
+        {name => 'strRemoteCommand', value => $strRemoteCommand},
+    );
+}
+
+####################################################################################################################################
 # protocolGet
 #
 # Get the protocol object or create it if does not exist.  Shared protocol objects are used because they create an SSH connection
@@ -200,106 +328,19 @@ sub protocolGet
         {
             logDebugMisc($strOperation, 'create (' . ($bCache ? '' : 'un') . 'cached) remote protocol');
 
-            # Return the remote when required
-            my $iOptionIdCmd = CFGOPT_BACKUP_CMD;
-            my $iOptionIdConfig = CFGOPT_BACKUP_CONFIG;
-            my $iOptionIdHost = CFGOPT_BACKUP_HOST;
-            my $iOptionIdUser = CFGOPT_BACKUP_USER;
-            my $strOptionDbPath = undef;
-            my $strOptionDbPort = undef;
-            my $strOptionDbSocketPath = undef;
-            my $strOptionSshPort = CFGOPT_BACKUP_SSH_PORT;
-
-            if ($strRemoteType eq CFGOPTVAL_REMOTE_TYPE_DB)
-            {
-                $iOptionIdCmd = cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iRemoteIdx);
-                $iOptionIdConfig = cfgOptionIdFromIndex(CFGOPT_DB_CONFIG, $iRemoteIdx);
-                $iOptionIdHost = cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx);
-                $iOptionIdUser = cfgOptionIdFromIndex(CFGOPT_DB_USER, $iRemoteIdx);
-                $strOptionSshPort = cfgOptionIdFromIndex(CFGOPT_DB_SSH_PORT, $iRemoteIdx);
-            }
-
-            # Db path is not valid in all contexts (restore, for instance)
-            if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)))
-            {
-                $strOptionDbPath =
-                    cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx));
-            }
-
-            # Db port is not valid in all contexts (restore, for instance)
-            if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx)))
-            {
-                $strOptionDbPort =
-                    cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iRemoteIdx));
-            }
-
-            # Db socket is not valid in all contexts (restore, for instance)
-            if (cfgOptionValid(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)))
-            {
-                $strOptionDbSocketPath =
-                    cfgOptionSource(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx)) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iRemoteIdx));
-            }
-
-            # Build hash to set and override command options
-            my $rhCommandOption =
-            {
-                &CFGOPT_COMMAND => {value => $strCommand},
-                &CFGOPT_PROCESS => {value => $iProcessIdx},
-                &CFGOPT_CONFIG =>
-                    {value => cfgOptionValid($iOptionIdConfig) && cfgOptionSource($iOptionIdConfig) eq CFGDEF_SOURCE_DEFAULT ?
-                        undef : cfgOption($iOptionIdConfig)},
-                &CFGOPT_TYPE => {value => $strRemoteType},
-                &CFGOPT_LOG_PATH => {},
-                &CFGOPT_LOCK_PATH => {},
-
-                # Don't pass CFGOPT_LOG_LEVEL_STDERR because in the case of the local process calling the remote process the
-                # option will be set to 'protocol' which is not a valid value from the command line.
-                &CFGOPT_LOG_LEVEL_STDERR => {},
-
-                &CFGOPT_DB_PATH => {value => $strOptionDbPath},
-                &CFGOPT_DB_PORT => {value => $strOptionDbPort},
-                &CFGOPT_DB_SOCKET_PATH => {value => $strOptionDbSocketPath},
-
-                # Set protocol options explicitly so values are not picked up from remote config files
-                &CFGOPT_BUFFER_SIZE =>  {value => cfgOption(CFGOPT_BUFFER_SIZE)},
-                &CFGOPT_COMPRESS_LEVEL =>  {value => cfgOption(CFGOPT_COMPRESS_LEVEL)},
-                &CFGOPT_COMPRESS_LEVEL_NETWORK =>  {value => cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK)},
-                &CFGOPT_PROTOCOL_TIMEOUT =>  {value => cfgOption(CFGOPT_PROTOCOL_TIMEOUT)}
-            };
-
-            # Override some per-db options that shouldn't be passed to the command. ??? This could be done better as a new define
-            # for these options which would then be implemented in cfgCommandWrite().
-            for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
-            {
-                if ($iOptionIdx != 1)
-                {
-                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_CONFIG, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_PORT, $iOptionIdx)} = {};
-                    $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $iOptionIdx)} = {};
-                }
-
-                $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)} = {};
-                $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_USER, $iOptionIdx)} = {};
-                $rhCommandOption->{cfgOptionIdFromIndex(CFGOPT_DB_SSH_PORT, $iOptionIdx)} = {};
-            }
+            my ($strRemoteHost, $strRemoteHostUser, $strRemoteHostSshPort, $strRemoteCommand) = protocolParam(
+                $strCommand, $strRemoteType, $iRemoteIdx, {strBackRestBin => $strBackRestBin, iProcessIdx => $iProcessIdx});
 
             $oProtocol = new pgBackRest::Protocol::Remote::Master
             (
                 cfgOption(CFGOPT_CMD_SSH),
-                cfgCommandWrite(
-                    CFGCMD_REMOTE, true, defined($strBackRestBin) ? $strBackRestBin : cfgOption($iOptionIdCmd), undef,
-                    $rhCommandOption),
+                $strRemoteCommand,
                 cfgOption(CFGOPT_BUFFER_SIZE),
                 cfgOption(CFGOPT_COMPRESS_LEVEL),
                 cfgOption(CFGOPT_COMPRESS_LEVEL_NETWORK),
-                cfgOption($iOptionIdHost),
-                cfgOption($iOptionIdUser),
-                cfgOption($strOptionSshPort, false),
+                $strRemoteHost,
+                $strRemoteHostUser,
+                $strRemoteHostSshPort,
                 cfgOption(CFGOPT_PROTOCOL_TIMEOUT)
             );
 

@@ -64,6 +64,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Refactor protocol param generation into a new function.  This allows the code to be tested more precisely and doesn't require executing a remote process.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <id>list</id> type for options.  The <id>hash</id> type was being used for lists with an additional flag (`value-hash`) to indicate that it was not really a hash.</p>
                     </release-item>
 

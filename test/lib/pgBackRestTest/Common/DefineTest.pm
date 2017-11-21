@@ -426,7 +426,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'helper',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
 
                     &TESTDEF_COVERAGE =>
                     {
