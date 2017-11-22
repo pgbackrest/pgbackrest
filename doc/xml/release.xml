@@ -10,6 +10,16 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.27dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-refactor-list>
+                    <release-item>
+                        <p>Relax permissions set by <file>release.pl</file>.</p>
+                    </release-item>
+                </release-refactor-list>
+            </release-doc-list>
+        </release>
+
         <release date="2017-11-21" version="1.26" title="Repository Encryption">
             <release-core-list>
                 <release-bug-list>
