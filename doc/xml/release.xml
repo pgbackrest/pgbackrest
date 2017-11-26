@@ -26,6 +26,10 @@
                     <release-item>
                         <p>Add <code>String</code> object to simplify string handling.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>List</code> and <code>StringList</code> objects to simplify list handling.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
