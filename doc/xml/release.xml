@@ -12,11 +12,15 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.27dev" title="UNDER DEVELOPMENT">
             <release-doc-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Relax permissions set by <file>release.pl</file>.</p>
                     </release-item>
-                </release-refactor-list>
+
+                    <release-item>
+                        <p>Split <quote>refactor</quote> sections into <quote>improvements</quote> and <quote>development</quote> in the release notes.  Many development notes are not relevant to users and simply clutter the release notes, so they are no longer shown on the website.</p>
+                    </release-item>
+                </release-development-list>
             </release-doc-list>
         </release>
 
@@ -76,11 +80,17 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Disable gzip filter when <br-option>--compress-level-network=0</br-option>.  The filter was used with compress level set to 0 which added overhead without any benefit.</p>
                     </release-item>
 
+                    <release-item>
+                        <p>Inflate performance improvement for gzip filter.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
                     <release-item>
                         <p>Refactor protocol param generation into a new function.  This allows the code to be tested more precisely and doesn't require executing a remote process.</p>
                     </release-item>
@@ -110,17 +120,13 @@
                     </release-item>
 
                     <release-item>
-                        <p>Inflate performance improvement for gzip filter.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Improve base64 implementation.  Different encoded strings could be generated based on compiler optimizations. Even though decoding was still successful the encoded strings did not match the standard.</p>
                     </release-item>
 
                     <release-item>
                         <p>Disable <id>-Wclobber</id> compiler warning because it is mostly useless but keep the rest of of <id>-Wextra</id>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -134,7 +140,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="fiske.keith"/>
@@ -143,15 +149,23 @@
 
                         <p>Clarify usage of the <br-option>archive-timeout</br-option> option and describe how it is distinct from the <postgres/> <pg-option>archive_timeout</pg-option> setting.</p>
                     </release-item>
+                </release-improvement-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Update <file>release.pl</file> to push data to site repository.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-refactor-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Automated tests for 32-bit i386/i686 architecture.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
                     <release-item>
                         <p>Update Debian/Ubuntu containers to download latest version of <file>pip</file>.</p>
                     </release-item>
@@ -177,17 +191,13 @@
                     </release-item>
 
                     <release-item>
-                        <p>Automated tests for 32-bit i386/i686 architecture.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Refactor C unit test macros so they compile with <id>-Wstrict-aliasing</id>.</p>
                     </release-item>
 
                     <release-item>
                         <p>Refactor C page checksum unit test to compile with <id>-Wstrict-aliasing</id>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -230,7 +240,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Improve protocol error handling.  In particular, <quote>stop</quote> errors are no longer reported as <quote>unexpected</quote>.</p>
                     </release-item>
@@ -282,11 +292,17 @@
                     <release-item>
                         <p>Add base64 encode/decode.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-test-list>
                 <release-feature-list>
+                    <release-item>
+                        <p>Add I/O performance tests.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
                     <release-item>
                         <p>Add C unit test infrastructure.</p>
                     </release-item>
@@ -295,12 +311,6 @@
                         <p>Add test macros for C results and errors.</p>
                     </release-item>
 
-                    <release-item>
-                        <p>Add I/O performance tests.</p>
-                    </release-item>
-                </release-feature-list>
-
-                <release-refactor-list>
                     <release-item>
                         <p>Warnings in C builds treated as errors.</p>
                     </release-item>
@@ -324,7 +334,7 @@
                     <release-item>
                         <p>Add <postgres/> versions to Debian VMs for testing.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -358,7 +368,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="wilke.jens"/>
@@ -366,7 +376,9 @@
 
                         <p>Open log file after async process is completely separated from the main process to prevent the main process from also logging to the file.</p>
                     </release-item>
+                </release-improvement-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Dynamically generate list of files for C library build.</p>
                     </release-item>
@@ -374,31 +386,35 @@
                     <release-item>
                         <p>Break up <file>LibC.xs</file> into separate module files.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-refactor-list>
-                    <release-item>
-                        <p>Rename <proper>master</proper> to <proper>primary</proper> in documentation to align with <postgres/> convention.</p>
-                    </release-item>
-
+                <release-feature-list>
                     <release-item>
                         <p>Add trusted SSH configuration.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <p>Rename <proper>master</proper> to <proper>primary</proper> in documentation to align with <postgres/> convention.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
                     <release-item>
                         <p>Add full installation where required and remove doc containers that included parts of the installation.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Improve C library smart build by ignoring changes outside of <path>/lib/pgBackRest/Config</path>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -445,11 +461,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
-                    <release-item>
-                        <p>Configuration definitions are now pulled from the C library when present.</p>
-                    </release-item>
-
+                <release-improvement-list>
                     <release-item>
                         <p>Increase HTTP timeout for S3.</p>
                     </release-item>
@@ -457,7 +469,13 @@
                     <release-item>
                         <p>Add HTTP retries to harden against transient S3 network errors.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Configuration definitions are now pulled from the C library when present.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -471,15 +489,15 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Move contributor list to the end of <file>release.xml</file> for convenience.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <p>Change log test order to ignore unimportant log errors while shutting down <postgres/>.</p>
                     </release-item>
@@ -487,9 +505,7 @@
                     <release-item>
                         <p>Drain <id>stderr</id> during test process execution as well as termination to prevent lockups if there is a lot of output.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-refactor-list>
                     <release-item>
                         <p>Update Docker build in <file>Vagrantfile</file>.</p>
                     </release-item>
@@ -501,7 +517,7 @@
                     <release-item>
                         <p>Simplify smart logic for C Library and package builds.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -553,15 +569,17 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Retry when S3 returns an internal error (500).</p>
                     </release-item>
+                </release-improvement-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Add <id>bIgnoreMissing</id> parameter to <code>Local->manifest()</code>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -577,7 +595,17 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                        </release-item-contributor-list>
+
+                        <p>Move repository options into a separate section in command/command-line help.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
                     <release-item>
                         <p>Reduce log verbosity when building documentation by only logging sections that contain an execute list directly or in a child section.</p>
                     </release-item>
@@ -587,27 +615,17 @@
                     </release-item>
 
                     <release-item>
-                        <release-item-contributor-list>
-                            <release-item-ideator id="frost.stephen"/>
-                        </release-item-contributor-list>
-
-                        <p>Move repository options into a separate section in command/command-line help.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Remove vestigial repository options from <cmd>backup</cmd> command.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <p>Fix log checking after <postgres/> shuts down to include <id>FATAL</id> messages and disallow immediate shutdowns which can throw <id>FATAL</id> errors in the log.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-refactor-list>
                     <release-item>
                         <p>Use Google DNS in test environment for consistency.</p>
                     </release-item>
@@ -627,7 +645,7 @@
 
                         <p>Consolidate <id>stanza-create</id> and <id>stanza-upgrade</id> tests into new <id>stanza</id> test.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -659,7 +677,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Harden protocol handshake to handle race conditions.</p>
                     </release-item>
@@ -687,11 +705,11 @@
                     <release-item>
                         <p>Minor optimizations to package loads and ordering for <cmd>archive-get</cmd> and <cmd>archive-push</cmd> commands.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Remove exhaustive version list from Stable Releases TOC.</p>
                     </release-item>
@@ -707,19 +725,19 @@
                     <release-item>
                         <p>Remove <id>mount</id> from host <code>cache-key</code> because it can vary by system.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
-                    <release-item>
-                        <p>Fix timeouts in <code>ExecuteTest</code> to speed multi-process testing.</p>
-                    </release-item>
-                </release-bug-list>
-
-                <release-refactor-list>
+                <release-feature-list>
                     <release-item>
                         <p>Add documentation builds to CI.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Fix timeouts in <code>ExecuteTest</code> to speed multi-process testing.</p>
                     </release-item>
 
                     <release-item>
@@ -781,7 +799,7 @@
                     <release-item>
                         <p>Add <id>performance</id> module and basic performance test for <cmd>archive-push</cmd>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -823,7 +841,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="shang.cynthia"/>
@@ -847,7 +865,7 @@
                     <release-item>
                         <p>Move backup modules into <path>Backup</path> directory.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -867,7 +885,7 @@
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <p>Fixed an undefined variable when a module had no uncoverable code exceptions.</p>
                     </release-item>
@@ -875,9 +893,7 @@
                     <release-item>
                         <p>Fixed issue with <setting>--dry-run</setting> requiring <setting>--vm-out</setting> to work properly.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-refactor-list>
                     <release-item>
                         <p>Moved test and env modules to new directories to avoid namespace conflicts with common tests.</p>
                     </release-item>
@@ -889,7 +905,7 @@
                     <release-item>
                         <p>Remove flapping protocol timeout test that will be replaced in the upcoming storage patch.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -923,13 +939,9 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Simplify locking scheme.  Now, only the master process will hold write locks (for <cmd>archive-push</cmd> and <cmd>backup</cmd> commands) and not all local and remote worker processes as before.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Refactor <code>Ini.pm</code> to facilitate testing.</p>
                     </release-item>
 
                     <release-item>
@@ -950,6 +962,12 @@
                         </release-item-contributor-list>
 
                         <p>Renumber return codes between 25 and 125 to avoid PostgreSQL interpreting some as fatal signal exceptions.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Refactor <code>Ini.pm</code> to facilitate testing.</p>
                     </release-item>
 
                     <release-item>
@@ -975,11 +993,11 @@
 
                         <p>Silence some perl critic warnings.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Update wording for release note sections.</p>
                     </release-item>
@@ -987,11 +1005,11 @@
                     <release-item>
                         <p>Ignore clock skew in container libc/package builds using make.  It is common for containers to have clock skew so the build process takes care of this issue independently.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Complete statement/branch coverage for <code>Ini.pm</code>.</p>
                     </release-item>
@@ -1027,7 +1045,7 @@
 
                         <p>Added ability to test warning messages.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1065,19 +1083,19 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Improved the code and tests for <code>fileManifest()</code> to prevent a possible race condition when files are removed by the database while the manifest is being built.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Container executions now load the user's environment.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
@@ -1089,7 +1107,9 @@
                     <release-item>
                         <p>Automated builds of Debian packages for all supported distributions.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Added <setting>--dev</setting> option to aggregate commonly used dev options.</p>
                     </release-item>
@@ -1105,9 +1125,7 @@
                     <release-item>
                         <p>C library and packages are built by default, added <setting>-smart</setting> option to rebuild only when file changes are detected.</p>
                     </release-item>
-                </release-feature-list>
 
-                <release-refactor-list>
                     <release-item>
                         <p>The <setting>--libc-only</setting> option has been changed to <setting>--build-only</setting> now that packages builds have been added.</p>
                     </release-item>
@@ -1131,7 +1149,7 @@
                     <release-item>
                         <p>Temporarily disable flapping keep-alive test.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1147,19 +1165,19 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Refactor <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> to be more modular to allow complete branch/statement level coverage testing.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-test-list>
-                <release-feature-list>
+                <release-development-list>
                     <release-item>
                         <p>Complete branch/statement level coverage testing for <code>FileCommon::fileManifest()</code> and <code>FileCommon::fileStat</code> functions and helper functions.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1183,7 +1201,7 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="wilke.jens"/>
@@ -1191,7 +1209,7 @@
 
                         <p>Improved performance of <id>wal archive min/max</id> provided by the <cmd>info</cmd> command.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>
@@ -1203,7 +1221,9 @@
 
                         <p>Updated async archiving documentation to more accurately describe how the new method works and how it differs from the old method.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Documentation can now be built with reusable blocks to reduce duplication.</p>
                     </release-item>
@@ -1219,7 +1239,7 @@
                     <release-item>
                         <p>Add <code>proper</code> tag to slightly emphasize proper nouns.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-doc-list>
         </release>
 
@@ -1303,9 +1323,33 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
-                        <p>Refactor <code>File</code> and <code>BackupCommon</code> modules to improve test coverage.</p>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="wilke.jens"/>
+                        </release-item-contributor-list>
+
+                        <p>Log file banner is not output until the first log entry is written.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Reduced the likelihood of torn pages causing a false positive in page checksums by filtering on start backup LSN.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="vondendriesch.adrian"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove Intel-specific optimization from C library build flags.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Remove <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging.  This is primarily used to avoid filters in the automated documentation.</p>
                     </release-item>
 
                     <release-item>
@@ -1315,13 +1359,11 @@
 
                         <p>Return proper error code when unable to convert a relative path to an absolute path.</p>
                     </release-item>
+                </release-improvement-list>
 
+                <release-development-list>
                     <release-item>
-                        <release-item-contributor-list>
-                            <release-item-ideator id="wilke.jens"/>
-                        </release-item-contributor-list>
-
-                        <p>Log file banner is not output until the first log entry is written.</p>
+                        <p>Refactor <code>File</code> and <code>BackupCommon</code> modules to improve test coverage.</p>
                     </release-item>
 
                     <release-item>
@@ -1369,29 +1411,9 @@
                     </release-item>
 
                     <release-item>
-                        <p>Reduced the likelihood of torn pages causing a false positive in page checksums by filtering on start backup LSN.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="vondendriesch.adrian"/>
-                        </release-item-contributor-list>
-
-                        <p>Remove Intel-specific optimization from C library build flags.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Removed <br-option>--lock</br-option> option.  This option was introduced before the lock directory could be located outside the repository and is now obsolete.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Added <br-option>--log-timestamp</br-option> option to allow timestamps to be suppressed in logging.  This is primarily used to avoid filters in the automated documentation.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Fixed alignment issues with multiline logging.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -1405,21 +1427,19 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Update LICENSE.txt for 2017.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <p>Fixed <br-option>--no-online</br-option> tests to suppress expected errors.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-feature-list>
                     <release-item>
                         <p>Added integration for testing coverage with <code>Devel::Cover</code>.</p>
                     </release-item>
@@ -1443,9 +1463,7 @@
                     <release-item>
                         <p><code>testException()</code> allows messages to be matched with regular expressions.</p>
                     </release-item>
-                </release-feature-list>
 
-                <release-refactor-list>
                     <release-item>
                         <p>Split test modules into separate files to make the code more maintainable.  Tests are dynamically loaded by name rather than requiring an if-else block.</p>
                     </release-item>
@@ -1461,7 +1479,7 @@
                     <release-item>
                         <p>Refactor name/locations of common modules that setup test environments.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1525,7 +1543,13 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
+                    <release-item>
+                        <p>For simplicity, the <file>pg_control</file> file is now copied with the rest of the files instead of by itself of at the end of the process.  The <cmd>backup</cmd> command does not require this behavior and the <cmd>restore</cmd> copies to a temporary file which is renamed at the end of the restore.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -1547,10 +1571,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>For simplicity, the <file>pg_control</file> file is now copied with the rest of the files instead of by itself of at the end of the process.  The <cmd>backup</cmd> command does not require this behavior and the <cmd>restore</cmd> copies to a temporary file which is renamed at the end of the restore.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Simplified the result hash of <code>File->manifest()</code>, <code>Db->tablespaceMapGet()</code>, and <code>Db->databaseMapGet()</code>.</p>
                     </release-item>
 
@@ -1569,7 +1589,7 @@
                     <release-item>
                         <p>Improved parameter/result logging in debug/trace functions.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -1587,7 +1607,9 @@
                     <release-item>
                         <p>Added Retention to QuickStart section.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Allow a source to be included as a section so large documents can be broken up.</p>
                     </release-item>
@@ -1619,9 +1641,7 @@
                     <release-item>
                         <p>Builds in <file>release.pl</file> now remove all docker containers to get consistent IP address assignments.</p>
                     </release-item>
-                </release-feature-list>
 
-                <release-refactor-list>
                     <release-item>
                         <p>Improvements to markdown rendering.</p>
                     </release-item>
@@ -1629,17 +1649,15 @@
                     <release-item>
                         <p>Remove code dependency on <id>project</id> variable, instead use <id>title</id> param.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <p>Removed erroneous <br-option>--no-config</br-option> option in <id>help</id> test module.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-refactor-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -1663,7 +1681,7 @@
                     <release-item>
                         <p>Add more realistic data files to synthetic backup and restore tests.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1707,7 +1725,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="gunduz.devrim"/>
@@ -1715,11 +1733,11 @@
 
                         <p>Removed extraneous <code>use lib</code> directives from Perl modules.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <p>Fixed missing variable replacements.</p>
                     </release-item>
@@ -1727,9 +1745,7 @@
                     <release-item>
                         <p>Removed hard-coded host names from configuration file paths.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-feature-list>
                     <release-item>
                         <p>Allow command-line length to be configured using <id>cmd-line-len</id> param.</p>
                     </release-item>
@@ -1753,7 +1769,7 @@
                     <release-item>
                         <p>VM mount points are now optional.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-doc-list>
         </release>
 
@@ -1827,7 +1843,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="wilke.jens"/>
@@ -1843,7 +1859,7 @@
                     <release-item>
                         <p>Process ID logged for local process start/stop INFO log output.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>
@@ -1855,15 +1871,21 @@
 
                         <p>Added <br-option>archive-timeout</br-option> option documentation to the user guide.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Added <setting>dev</setting> option to <file>doc.pl</file> to easily add the <id>dev</id> keyword to documentation builds.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-bug-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Update CentOS/Debian package definitions.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Fixed missing expect output for help module.</p>
                     </release-item>
@@ -1871,15 +1893,7 @@
                     <release-item>
                         <p>Fixed broken <id>vm-max</id> option in <file>test.pl</file>.</p>
                     </release-item>
-                </release-bug-list>
 
-                <release-feature-list>
-                    <release-item>
-                        <p>Update CentOS/Debian package definitions.</p>
-                    </release-item>
-                </release-feature-list>
-
-                <release-refactor-list>
                     <release-item>
                         <p>Regression tests can now be run as any properly-configured user, not just vagrant.</p>
                     </release-item>
@@ -1887,7 +1901,7 @@
                     <release-item>
                         <p>Miminize TeXLive package list to save time during VM builds.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1911,23 +1925,23 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Cache file log output until the file is created to create a more complete log.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Show Process ID in output instead of filtering it out with the timestamp.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="harvey.john"/>
@@ -1939,7 +1953,7 @@
                     <release-item>
                         <p>Show Process ID in expect logs instead of filtering it out with the timestamp.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -1997,7 +2011,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Refactor of protocol minions in preparation for the new local minion.</p>
                     </release-item>
@@ -2013,7 +2027,7 @@
                     <release-item>
                         <p>Improve ASSERT error handling, safely check eval blocks, and convert <code>$@</code> to <code>$EVAL_ERROR</code>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -2033,19 +2047,19 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Suppress TOC for unsupported versions of <backrest/>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>New vagrant base box and make uid/gid selection for containers dynamic.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -2095,19 +2109,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
-                    <release-item>
-                        <p>Simplify protocol creation and identifying which host is local/remote.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Removed all <code>OP_*</code> function constants that were used only for debugging, not in the protocol, and replaced with <code>__PACKAGE__</code>.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Improvements in <code>Db</code> module: separated out <code>connect()</code> function, allow <code>executeSql()</code> calls that do not return data, and improve error handling.</p>
-                    </release-item>
-
+                <release-improvement-list>
                     <release-item>
                         <p>Improve error message for links that reference links in manifest build.</p>
                     </release-item>
@@ -2119,19 +2121,33 @@
                     <release-item>
                         <p>Improve backup log messages to indicate which host the files are being copied from.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Simplify protocol creation and identifying which host is local/remote.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Removed all <code>OP_*</code> function constants that were used only for debugging, not in the protocol, and replaced with <code>__PACKAGE__</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improvements in <code>Db</code> module: separated out <code>connect()</code> function, allow <code>executeSql()</code> calls that do not return data, and improve error handling.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
              <release-doc-list>
-                 <release-refactor-list>
+                 <release-development-list>
                     <release-item>
                         <p>Improve host tag rendering.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
              <release-test-list>
-                 <release-refactor-list>
+                 <release-development-list>
                     <release-item>
                         <p>Refactor db version constants into a separate module.</p>
                     </release-item>
@@ -2139,7 +2155,7 @@
                     <release-item>
                         <p>Update synthetic backup tests to <postgres/> 9.4.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -2167,7 +2183,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="shang.cynthia"/>
@@ -2175,11 +2191,13 @@
 
                         <p>Moved the backlog from the <backrest/> website to the GitHub repository wiki.</p>
                     </release-item>
+                </release-improvement-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Improved rendering of spaces in code blocks.</p>
                     </release-item>
-                 </release-refactor-list>
+                 </release-development-list>
             </release-doc-list>
         </release>
 
@@ -2235,13 +2253,23 @@
                     </release-item>
                 </release-feature-list>
 
-                 <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
-                        <p>Enhancements to the protocol layer for improved reliability and error handling.</p>
+                        <p>Suppress banners on SSH protocol connections.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improved remote error messages to identify the host where the error was raised.</p>
                     </release-item>
 
                     <release-item>
                         <p>All remote types now take locks.  The exceptions date to when the test harness and <backrest/> were running in the same VM and no longer apply.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Enhancements to the protocol layer for improved reliability and error handling.</p>
                     </release-item>
 
                     <release-item>
@@ -2259,23 +2287,11 @@
                     <release-item>
                         <p>Reduce calls to <code>protocolGet()</code> in backup/restore.</p>
                     </release-item>
-
-                    <release-item>
-                        <p>Suppress banners on SSH protocol connections.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Improved remote error messages to identify the host where the error was raised.</p>
-                    </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
              <release-doc-list>
                  <release-feature-list>
-                    <release-item>
-                        <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
-                    </release-item>
-
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="vitale.michael"/>
@@ -2293,7 +2309,11 @@
                     </release-item>
                 </release-feature-list>
 
-                 <release-refactor-list>
+                 <release-development-list>
+                    <release-item>
+                        <p>Added <file>release.pl</file> to make releases reproducible.  For now this only includes building and deploying documentation.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="vondendriesch.adrian"/>
@@ -2302,11 +2322,11 @@
 
                         <p>HTML footer dates are statically created in English in order to be reproducible.</p>
                     </release-item>
-                 </release-refactor-list>
+                 </release-development-list>
             </release-doc-list>
 
              <release-test-list>
-                 <release-bug-list>
+                 <release-development-list>
                     <release-item>
                         <p>Fixed a version checking issue in <file>test.pl</file>.</p>
                     </release-item>
@@ -2314,9 +2334,7 @@
                     <release-item>
                         <p>Fixed an issue where multi-threaded tests were not being run when requested.</p>
                     </release-item>
-                </release-bug-list>
 
-                 <release-refactor-list>
                     <release-item>
                         <p>Reduce the frequency that certain tests are run to save time in regression.</p>
                     </release-item>
@@ -2324,7 +2342,7 @@
                     <release-item>
                         <p>Disable control master for older OS versions where it is less stable.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
          </release>
 
@@ -2377,27 +2395,57 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
-                    <release-item>
-                        <p>The <code>pg_xlogfile_name()</code> function is no longer used to construct WAL filenames from LSNs. While this function is convenient it is not available on a standby.  Instead, the archive is searched for the LSN in order to find the timeline.  If due to some misadventure the LSN appears on multiple timelines then an error will be thrown, whereas before this condition would have passed unnoticed.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Option handling is now far more strict.  Previously it was possible for a command to use an option that was not explicitly assigned to it.  This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
-                    </release-item>
-
+                <release-improvement-list>
                     <release-item>
                         <p>Improved handling of users/groups captured during backup that do not exist on the restore host.  Also explicitly handle the case where user/group is not mapped to a name.</p>
                     </release-item>
 
                     <release-item>
+                        <p>Option handling is now far more strict.  Previously it was possible for a command to use an option that was not explicitly assigned to it.  This was especially true for the <br-option>backup-host</br-option> and <br-option>db-host</br-option> options which are used to determine locality.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>The <code>pg_xlogfile_name()</code> function is no longer used to construct WAL filenames from LSNs. While this function is convenient it is not available on a standby.  Instead, the archive is searched for the LSN in order to find the timeline.  If due to some misadventure the LSN appears on multiple timelines then an error will be thrown, whereas before this condition would have passed unnoticed.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Changed version variable to a constant.  It had originally been designed to play nice with a specific packaging tool but that tool was never used.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
              </release-core-list>
 
              <release-doc-list>
-                 <release-bug-list>
+                 <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vondendriesch.adrian"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow a static date to be used for documentation to generate reproducible builds.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                            <release-item-reviewer id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Added documentation for asynchronous archiving to the user guide.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Recommended install location for <backrest/> modules is now <path>/usr/share/perl5</path> since <path>/usr/lib/perl5</path> has been removed from the search path in newer versions of Perl.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Added instructions for removing prior versions of <backrest/>.</p>
+                    </release-item>
+                 </release-improvement-list>
+
+                 <release-development-list>
                     <release-item>
                         <p>Fixed DTD search path that did not work properly when <setting>--doc-path</setting> was used.</p>
                     </release-item>
@@ -2413,9 +2461,7 @@
                     <release-item>
                         <p>Fixed <backrest/> config sections being blank in the output when not loaded from cache.</p>
                     </release-item>
-                </release-bug-list>
 
-                 <release-feature-list>
                     <release-item>
                         <p>Allow hidden options to be added to a command.  This allows certain commands (like <id>apt-get</id>) to be forced during the build without making that a part of the documentation.</p>
                     </release-item>
@@ -2425,35 +2471,7 @@
                     </release-item>
 
                     <release-item>
-                        <release-item-contributor-list>
-                            <release-item-ideator id="vondendriesch.adrian"/>
-                            <release-item-contributor id="steele.david"/>
-                        </release-item-contributor-list>
-
-                        <p>Allow a static date to be used for documentation to generate reproducible builds.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Update TeX Live to 2016 version.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                            <release-item-reviewer id="steele.david"/>
-                        </release-item-contributor-list>
-
-                        <p>Added documentation for asynchronous archiving to the user guide.</p>
-                    </release-item>
-                </release-feature-list>
-
-                 <release-refactor-list>
-                    <release-item>
-                        <p>Recommended install location for <backrest/> modules is now <path>/usr/share/perl5</path> since <path>/usr/lib/perl5</path> has been removed from the search path in newer versions of Perl.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Added instructions for removing prior versions of <backrest/>.</p>
                     </release-item>
 
                     <release-item>
@@ -2463,17 +2481,15 @@
                     <release-item>
                         <p><postgres/> version is now a variable to allow multi-version documentation.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
              <release-test-list>
-                 <release-feature-list>
+                 <release-development-list>
                     <release-item>
                         <p>Obsolete containers are removed by the <br-option>--vm-force</br-option> option.</p>
                     </release-item>
-                </release-feature-list>
 
-                 <release-refactor-list>
                     <release-item>
                         <p>Major refactor of the test suite to make it more modular and object-oriented.  Multiple Docker containers can now be created for a single test to simulate more realistic environments.  Tests paths have been renamed for clarity.</p>
                     </release-item>
@@ -2481,7 +2497,7 @@
                     <release-item>
                         <p>Greatly reduced the quantity of Docker containers built by default.  Containers are only built for <postgres/> versions specified in <id>db-minimal</id> and those required to build documentation. Additional containers can be built with <br-option>--db-version=all</br-option> or by specifying a version, e.g. <br-option>--db-version=9.4</br-option>.</p>
                     </release-item>
-                 </release-refactor-list>
+                 </release-development-list>
              </release-test-list>
          </release>
 
@@ -2498,11 +2514,11 @@
                     </release-item>
                 </release-bug-list>
 
-                 <release-refactor-list>
+                 <release-development-list>
                     <release-item>
                         <p>Log directory create and file open now using FileCommon functions which produce more detailed error messages on failure.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
              <release-doc-list>
@@ -2541,12 +2557,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>Added an execution cache so that documentation can be generated without setting up the full container environment.  This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
-                    </release-item>
-                </release-feature-list>
-
-                 <release-refactor-list>
-                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="steele.david"/>
                             <release-item-contributor id="shang.cynthia"/>
@@ -2554,6 +2564,12 @@
                         </release-item-contributor-list>
 
                         <p>The change log was the last piece of documentation to be rendered in Markdown only.  Wrote a converter so the document can be output by the standard renderers.  The change log will now be located on the website and has been renamed to <quote>Releases</quote>.</p>
+                    </release-item>
+                </release-feature-list>
+
+                 <release-development-list>
+                    <release-item>
+                        <p>Added an execution cache so that documentation can be generated without setting up the full container environment.  This is useful for packaging, keeps the documentation consistent for a release, and speeds up generation when no changes are made in the execution list.</p>
                     </release-item>
 
                     <release-item>
@@ -2563,17 +2579,15 @@
                     <release-item>
                         <p>Lists can now be used outside of <id>p</id> and <id>text</id> tags for more flexible document structuring.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
              </release-doc-list>
 
              <release-test-list>
-                 <release-bug-list>
+                 <release-development-list>
                     <release-item>
                         <p>Replaced overzealous <code>perl -cW</code> check which failed on Perl 5.22 with <code>perl -cw</code>.</p>
                     </release-item>
-                </release-bug-list>
 
-                 <release-feature-list>
                     <release-item>
                         <p>Added Ubuntu 16.04 (Xenial) and Debian 8 (Jessie) to the regression suite.</p>
                     </release-item>
@@ -2581,13 +2595,11 @@
                     <release-item>
                         <p>Upgraded doc/test VM to Ubuntu 16.04.  This will help catch Perl errors in the doc code since it is not run across multiple distributions like the core and test code. It is also to be hoped that a newer kernel will make Docker more stable.</p>
                     </release-item>
-                 </release-feature-list>
 
-                 <release-refactor-list>
                     <release-item>
                         <p>Test release version against the executable using <file>change-log.xml</file> instead of <file>CHANGELOG.md</file>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
              </release-test-list>
          </release>
 
@@ -2821,7 +2833,7 @@
             </release-core-list>
 
             <release-doc-list>
-                <release-bug-list>
+                <release-development-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="harvey.john"/>
@@ -2829,7 +2841,7 @@
 
                         <p>Fixed an issue where document generation failed because some OSs are not tolerant of having multiple installed versions of <postgres/>.  A separate VM is now created for each version.  Also added a sleep after database starts during document generation to ensure the database is running before the next command runs.</p>
                     </release-item>
-                </release-bug-list>
+                </release-development-list>
             </release-doc-list>
         </release>
 
@@ -2853,19 +2865,19 @@
             </release-core-list>
 
             <release-doc-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Minor styling changes, clarifications and rewording in the user guide.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>The dev branch has been renamed to master and for the time being the master branch has renamed to release, though it will probably be removed at some point {[dash]}- thus ends the gitflow experiment for <backrest/>.  It is recommended that any forks get re-forked and clones get re-cloned.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -2947,11 +2959,11 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>The website, markdown, and command-line help are now all generated from the same XML source.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-doc-list>
         </release>
 
@@ -2977,11 +2989,11 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Removed dependency on <code>IO::String</code> module.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
         </release>
 
@@ -3031,19 +3043,21 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Renamed <setting>recovery-setting</setting> option and section to <setting>recovery-option</setting> to be more consistent with <backrest/> naming conventions.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Code cleanup and refactoring to standardize on patterns that have evolved over time.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Added dynamic module loading to speed up commands, especially asynchronous archiving.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Code cleanup and refactoring to standardize on patterns that have evolved over time.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -3055,11 +3069,11 @@
             </release-doc-list>
 
             <release-test-list>
-                <release-feature-list>
+                <release-development-list>
                     <release-item>
                         <p>Expiration tests are now synthetic rather than based on actual backups.  This will allow development of more advanced expiration features.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -3109,19 +3123,21 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Now using Perl <code>DBI</code> and <code>DBD::Pg</code> for connections to <postgres/> rather than <cmd>psql</cmd>.  The <setting>cmd-psql</setting> and <setting>cmd-psql-option</setting> settings have been removed and replaced with <setting>db-port</setting> and <setting>db-socket-path</setting>.  Follow the instructions in the Installation Guide to install <code>DBD::Pg</code> on your operating system.</p>
                     </release-item>
+                </release-improvement-list>
 
+                <release-development-list>
                     <release-item>
                         <p>Major refactoring of the protocol layer to support future development.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
-                <release-feature-list>
+                <release-development-list>
                     <release-item>
                         <p>Split most of <file>README.md</file> out into <file>USERGUIDE.md</file> and <file>CHANGELOG.md</file> because it was becoming unwieldy.  Changed most references to <quote>database</quote> in the user guide to <quote>database cluster</quote> for clarity.</p>
                     </release-item>
@@ -3129,7 +3145,7 @@
                     <release-item>
                         <p>Changed most references to <quote>database</quote> in the user guide to <quote>database cluster</quote> for clarity.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-doc-list>
 
             <release-test-list>
@@ -3143,14 +3159,14 @@
 
         <release date="2015-07-13" version="0.78" title="Remove CPAN Dependencies, Stability Improvements">
             <release-core-list>
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Removed dependency on CPAN packages for multi-threaded operation.  While it might not be a bad idea to update the <code>threads</code> and <code>Thread::Queue</code> packages, it is no longer necessary.</p>
                     </release-item>
                     <release-item>
                         <p>Modified wait backoff to use a Fibonacci rather than geometric sequence.  This will make wait time grow less aggressively while still giving reasonable values.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
 
             <release-test-list>
@@ -3158,11 +3174,13 @@
                     <release-item>
                         <p>Added vagrant test configurations for Ubuntu 12.04 and CentOS 6.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-development-list>
                     <release-item>
                         <p>More options for regression tests and improved code to run in a variety of environments.</p>
                     </release-item>
-                </release-feature-list>
+                </release-development-list>
             </release-test-list>
         </release>
 
@@ -3194,7 +3212,7 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Removed <file>pg_backrest_remote</file> and added the functionality to <file>pg_backrest</file> as the <cmd>remote</cmd> command.</p>
                     </release-item>
@@ -3210,7 +3228,7 @@
                     <release-item>
                         <p>Replaced <code>IPC::System::Simple</code> and <code>Net::OpenSSH</code> with <code>IPC::Open3</code> to eliminate CPAN dependency for multiple operating systems.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
         </release>
 
@@ -3236,11 +3254,11 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>More efficient file ordering for <cmd>backup</cmd>.  Files are copied in descending size order so a single thread does not end up copying a large file at the end.  This had already been implemented for <cmd>restore</cmd>.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
         </release>
 
@@ -3303,11 +3321,11 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-improvement-list>
                     <release-item>
                         <p>Replaced <code>JSON</code> module with <code>JSON::PP</code> which ships with core Perl.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-improvement-list>
             </release-core-list>
 
             <release-doc-list>
@@ -3376,11 +3394,11 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Improved threading model by starting threads early and terminating them late.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-test-list>
@@ -3430,11 +3448,11 @@
                     </release-item>
                 </release-feature-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Removed dependency on <code>Moose</code>.  It wasn't being used extensively and makes for longer startup times.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-test-list>
@@ -3448,7 +3466,7 @@
 
         <release date="2014-10-05" version="0.30" title="Core Restructuring and Unit Tests">
             <release-core-list>
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Complete rewrite of <code>BackRest::File</code> module to use a custom protocol for remote operations and Perl native GZIP and SHA operations.  Compression is performed in threads rather than forked processes.</p>
                     </release-item>
@@ -3460,7 +3478,7 @@
                     <release-item>
                         <p>Numerous other changes that can only be identified with a diff.</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
@@ -3488,11 +3506,11 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-refactor-list>
+                <release-development-list>
                     <release-item>
                         <p>Worked on improving error handling in the <code>File</code> object.  This is not complete, but works well enough to find a few errors that have been causing us problems (notably, find is occasionally failing building the archive async manifest when system is under load).</p>
                     </release-item>
-                </release-refactor-list>
+                </release-development-list>
             </release-core-list>
         </release>
 
