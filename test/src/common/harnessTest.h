@@ -149,6 +149,13 @@ Macros to ease the use of common data types
 #define TEST_RESULT_BOOL(statement, resultExpected, ...)                                                                           \
     TEST_RESULT_BOOL_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 
+#define TEST_RESULT_CHAR_PARAM(statement, resultExpected, typeOp, ...)                                                             \
+    TEST_RESULT(statement, resultExpected, char, "%c", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
+#define TEST_RESULT_CHAR(statement, resultExpected, ...)                                                                           \
+    TEST_RESULT_CHAR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_CHAR_NE(statement, resultExpected, ...)                                                                        \
+    TEST_RESULT_CHAR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+
 #define TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, typeOp, ...)                                                           \
     TEST_RESULT(statement, resultExpected, double, "%f", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_DOUBLE(statement, resultExpected, ...)                                                                         \

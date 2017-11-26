@@ -22,6 +22,10 @@
                     <release-item>
                         <p>Add <code>memGrowRaw()</code> to memory context module.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>String</code> object to simplify string handling.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

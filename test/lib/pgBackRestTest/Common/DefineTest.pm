@@ -126,6 +126,16 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'type-string',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/string' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'encode',
                     &TESTDEF_TOTAL => 1,
                     &TESTDEF_C => true,
