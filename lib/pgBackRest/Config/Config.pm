@@ -20,13 +20,14 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::LoadFailback;
+use pgBackRest::LibC qw(:config :configDefine);
 use pgBackRest::Version;
 
 ####################################################################################################################################
 # Export config constants and functions
 ####################################################################################################################################
-push(@EXPORT, @pgBackRest::Config::LoadFailback::EXPORT);
+push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{config}});
+push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{configDefine}});
 
 ####################################################################################################################################
 # SOURCE Constants

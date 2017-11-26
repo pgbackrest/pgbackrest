@@ -13,6 +13,7 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
@@ -450,9 +451,7 @@ sub infoObject
         # else existed in the repo so a passphrase is generated to store in the file. If it exists and the repo is encrypted then
         # the generated passphrase passed will not be used - the one from the info file will be read.
         my $oParamRef =
-            {bIgnoreMissing => $bIgnoreMissing,
-             strCipherPassSub => defined(storageRepo()->cipherType()) ?
-                storageRepo()->cipherPassGen() : undef};
+            {bIgnoreMissing => $bIgnoreMissing, strCipherPassSub => defined(storageRepo()->cipherType()) ? cipherPassGen() : undef};
 
         $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
             new pgBackRest::Backup::Info($strParentPath, false, $bRequired, $oParamRef) :
@@ -498,9 +497,7 @@ sub infoObject
             }
 
             my $oParamRef =
-                {bLoad => false,
-                strCipherPassSub => defined(storageRepo()->cipherType()) ?
-                    storageRepo()->cipherPassGen() : undef};
+                {bLoad => false, strCipherPassSub => defined(storageRepo()->cipherType()) ? cipherPassGen() : undef};
 
             $oInfo = ($strPathType eq STORAGE_REPO_BACKUP ?
                 new pgBackRest::Backup::Info($strParentPath, false, false, $oParamRef) :

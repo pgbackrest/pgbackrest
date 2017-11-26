@@ -910,39 +910,6 @@ sub encryptionValid
 }
 
 ####################################################################################################################################
-# cipherPassGen - generate a passphrase of the specified size (in bytes)
-####################################################################################################################################
-sub cipherPassGen
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $iKeySizeInBytes,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->cipherPassGen', \@_,
-            {name => 'iKeySizeInBytes', default => 48},
-        );
-
-    require pgBackRest::LibC;
-    pgBackRest::LibC->import(qw(:random :encode));
-
-    # ??? Constant for base64 encoding can't used here because it is not loaded at parse time -- fix when the C library required
-    my $strCipherPass = encodeToStr(0, randomBytes($iKeySizeInBytes));
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'strCipherPassSub', value => $strCipherPass, redact => true}
-    );
-}
-
-####################################################################################################################################
 # Getters
 ####################################################################################################################################
 sub pathBase {shift->{strPathBase}}

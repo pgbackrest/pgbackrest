@@ -165,23 +165,20 @@ sub run
                     {bSuppressStdErr => true});
 
                 # Install Perl C Library
-                if ($self->{oTest}->{&TEST_CLIB})
-                {
-                    my $oVm = vmGet();
-                    my $strOS = $self->{oTest}->{&TEST_VM};
-                    my $strBuildPath = $self->{strBackRestBase} . "/test/.vagrant/libc/$strOS/libc/";
-                    my $strPerlAutoPath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
-                    my $strPerlModulePath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
+                my $oVm = vmGet();
+                my $strOS = $self->{oTest}->{&TEST_VM};
+                my $strBuildPath = $self->{strBackRestBase} . "/test/.vagrant/libc/$strOS/libc/";
+                my $strPerlAutoPath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
+                my $strPerlModulePath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
 
-                    executeTest(
-                        "docker exec -i -u root ${strImage} bash -c '" .
-                        "mkdir -p -m 755 ${strPerlAutoPath} && " .
-                        "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
-                        "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
-                        "mkdir -p -m 755 ${strPerlModulePath} && " .
-                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
-                        "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}'");
-                }
+                executeTest(
+                    "docker exec -i -u root ${strImage} bash -c '" .
+                    "mkdir -p -m 755 ${strPerlAutoPath} && " .
+                    "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
+                    "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
+                    "mkdir -p -m 755 ${strPerlModulePath} && " .
+                    "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
+                    "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}'");
             }
         }
 

@@ -17,6 +17,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Lock;
@@ -222,7 +223,7 @@ sub run
         storageRepoCacheClear($self->stanza());
 
         # Create an encrypted storage and generate an encyption sub passphrase to store in the file
-        my $strCipherPassSub = storageRepo()->cipherPassGen();
+        my $strCipherPassSub = cipherPassGen();
 
         # Error on encrypted repo but no passphrase passed to store in the file
         $self->testException(sub {new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,

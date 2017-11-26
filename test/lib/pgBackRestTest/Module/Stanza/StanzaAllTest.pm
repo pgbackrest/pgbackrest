@@ -18,6 +18,7 @@ use Storable qw(dclone);
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Lock;
@@ -325,7 +326,7 @@ sub run
         # Get the encryption passphrase and create the new manifest
         my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
         $oBackupManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
-            strCipherPass => $oBackupInfo->cipherPassSub(), strCipherPassSub => storageRepo()->cipherPassGen()});
+            strCipherPass => $oBackupInfo->cipherPassSub(), strCipherPassSub => cipherPassGen()});
 
         $oBackupManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef, $strBackupLabel);
         $oBackupManifest->boolSet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_CHECK, undef, true);
@@ -518,11 +519,11 @@ sub run
         # Create encrypted info files with prior passphrase then attempt to change
         #---------------------------------------------------------------------------------------------------------------------------
         $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true,
-            strCipherPassSub => storageRepo()->cipherPassGen()});
+            strCipherPassSub => cipherPassGen()});
         $oArchiveInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), true);
 
         $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath}, false, false, {bIgnoreMissing => true,
-            strCipherPassSub => storageRepo()->cipherPassGen()});
+            strCipherPassSub => cipherPassGen()});
         $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), '937', '201306121', true);
 
          # Attempt to upgrade with a different passphrase

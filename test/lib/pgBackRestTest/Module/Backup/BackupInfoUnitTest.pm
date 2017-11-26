@@ -17,6 +17,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -225,7 +226,7 @@ sub run
             {bIgnoreMissing => true})}, ERROR_ASSERT,
             'a user passphrase and sub passphrase are both required when encrypting');
 
-        my $strCipherPassSub = storageRepo()->cipherPassGen();
+        my $strCipherPassSub = cipherPassGen();
 
         # Create encrypted files
         $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP), false, false,

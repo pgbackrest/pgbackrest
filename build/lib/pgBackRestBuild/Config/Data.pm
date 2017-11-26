@@ -42,7 +42,7 @@
 # CFGDEF_ALLOW_LIST:
 #   Lists the allowable settings for the option.
 ####################################################################################################################################
-package pgBackRest::Config::Data;
+package pgBackRestBuild::Config::Data;
 
 use strict;
 use warnings FATAL => qw(all);

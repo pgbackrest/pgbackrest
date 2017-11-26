@@ -16,6 +16,7 @@ use pgBackRest::Archive::Get::Get;
 use pgBackRest::Backup::Common;
 use pgBackRest::Backup::File;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Exit;
 use pgBackRest::Common::Ini;
@@ -25,7 +26,6 @@ use pgBackRest::Common::String;
 use pgBackRest::Config::Config;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
-use pgBackRest::LibCLoad;
 use pgBackRest::Manifest;
 use pgBackRest::Protocol::Local::Process;
 use pgBackRest::Protocol::Helper;
@@ -654,7 +654,7 @@ sub process
     # Generate a passphrase for the backup set if the repo is encrypted
     if (defined($strCipherPassManifest) && !defined($strCipherPassBackupSet) && $strType eq CFGOPTVAL_BACKUP_TYPE_FULL)
     {
-        $strCipherPassBackupSet = $oStorageRepo->cipherPassGen();
+        $strCipherPassBackupSet = cipherPassGen();
     }
 
     # If backup label is not defined then create the label and path.
@@ -704,19 +704,6 @@ sub process
     my $strLsnStart = undef;
     my $hTablespaceMap = undef;
 	my $hDatabaseMap = undef;
-
-    # Only allow page checksums if the C library is available
-    if (!libC())
-    {
-        # Warn if page checksums were expicitly requested
-        if (cfgOptionTest(CFGOPT_CHECKSUM_PAGE) && cfgOption(CFGOPT_CHECKSUM_PAGE))
-        {
-            &log(WARN, "page checksums disabled - pgBackRest::LibC module is not present");
-        }
-
-        # Disable page checksums
-        cfgOptionSet(CFGOPT_CHECKSUM_PAGE, false);
-    }
 
     # If this is an offline backup
     if (!cfgOption(CFGOPT_ONLINE))

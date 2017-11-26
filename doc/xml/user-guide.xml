@@ -290,7 +290,7 @@
         <!-- LibC installation - disabled for better testing of the C/Perl failback mechanism -->
         <p><backrest/> includes an optional companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
 
-        <execute-list host="{[host-db-primary]}">
+        <execute-list host="{[br-install-host]}">
             <title>Build and Install C Library</title>
 
             <execute user="root">
