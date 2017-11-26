@@ -77,7 +77,6 @@ sub initTest
 sub run
 {
     my $self = shift;
-    my $oArchiveBase = new pgBackRest::Archive::Base();
 
     # Define test file
     my $strFileContent = 'TESTDATA';
@@ -92,6 +91,8 @@ sub run
     ################################################################################################################################
     if ($self->begin("Archive::Base::getCheck()"))
     {
+        my $oArchiveBase = new pgBackRest::Archive::Base();
+
         # Create and save archive.info file
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});

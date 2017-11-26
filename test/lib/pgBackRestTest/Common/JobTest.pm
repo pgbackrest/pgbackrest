@@ -22,6 +22,7 @@ use pgBackRest::DbVersion;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DefineTest;
@@ -164,21 +165,11 @@ sub run
                     "-test",
                     {bSuppressStdErr => true});
 
-                # Install Perl C Library
-                my $oVm = vmGet();
-                my $strOS = $self->{oTest}->{&TEST_VM};
-                my $strBuildPath = $self->{strBackRestBase} . "/test/.vagrant/libc/$strOS/libc/";
-                my $strPerlAutoPath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
-                my $strPerlModulePath = $$oVm{$strOS}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
-
-                executeTest(
-                    "docker exec -i -u root ${strImage} bash -c '" .
-                    "mkdir -p -m 755 ${strPerlAutoPath} && " .
-                    "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
-                    "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
-                    "mkdir -p -m 755 ${strPerlModulePath} && " .
-                    "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
-                    "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}'");
+                # Install bin and Perl C Library
+                if (!$self->{oTest}->{&TEST_C})
+                {
+                    jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
+                }
             }
         }
 
@@ -201,10 +192,10 @@ sub run
         {
             $strCommand =
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-                (vmCoverage($self->{oTest}->{&TEST_VM}) ? testRunExe(
-                    abs_path($0), dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
-                    $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') :
-                    abs_path($0)) .
+                testRunExe(
+                    vmCoverage($self->{oTest}->{&TEST_VM}), undef, abs_path($0),
+                    dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
+                    $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') .
                 " --test-path=${strVmTestPath}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
                 " --vm-id=$self->{iVmIdx}" .
@@ -224,13 +215,7 @@ sub run
 
         if (!$self->{bDryRun} || $self->{bVmOut})
         {
-            # Set permissions on the Docker test directory.  This can be removed once users/groups are sync'd between
-            # Docker and the host VM.
-            if ($self->{oTest}->{&TEST_CONTAINER})
-            {
-                executeTest("docker exec ${strImage} chown " . TEST_USER . ':' . TEST_GROUP . " -R ${strVmTestPath}");
-            }
-
+            # If testing C code
             if ($self->{oTest}->{&TEST_C})
             {
                 my $strCSrcPath = "$self->{strBackRestBase}/src";
@@ -243,6 +228,9 @@ sub run
                 {
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
+
+                    # !!! Skip main for now until it can be rewritten
+                    next if $strFile =~ /main\.c$/;
 
                     if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}))
                     {
@@ -293,8 +281,6 @@ sub run
                 {
                     my $bSelected = false;
 
-                    # use Data::Dumper; confess "RUN: " . Dumper($self->{oTest}->{&TEST_RUN});
-
                     if (!defined($self->{oTest}->{&TEST_RUN}) || @{$self->{oTest}->{&TEST_RUN}} == 0 ||
                         grep(/^$iTestIdx$/, @{$self->{oTest}->{&TEST_RUN}}))
                     {
@@ -336,9 +322,7 @@ sub run
             {
                 exec => $oExec,
                 test => $strTest,
-                # idx => $self->{iTestIdx},
-                # container => $self->{oTest}->{&TEST_CONTAINER},
-                start_time => $fTestStartTime
+                start_time => $fTestStartTime,
             };
 
             $bRun = true;
@@ -500,5 +484,38 @@ sub end
         {name => 'bFail', value => $bFail, trace => true}
     );
 }
+
+####################################################################################################################################
+# Install C binary and library
+####################################################################################################################################
+sub jobInstallC
+{
+    my $strBasePath = shift;
+    my $strVm = shift;
+    my $strImage = shift;
+
+    # Install Perl C Library
+    my $oVm = vmGet();
+    my $strBuildPath = "${strBasePath}/test/.vagrant";
+    my $strBuildLibCPath = "$strBuildPath/libc/${strVm}/libc";
+    my $strBuildBinPath = "$strBuildPath/bin/${strVm}/src";
+    my $strPerlAutoPath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
+    my $strPerlModulePath = $oVm->{$strVm}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
+
+    executeTest(
+        "docker exec -i -u root ${strImage} bash -c '" .
+        "mkdir -p -m 755 ${strPerlAutoPath} && " .
+        # "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.bs ${strPerlAutoPath} && " .
+        "cp ${strBuildLibCPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
+        "cp ${strBuildLibCPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
+        "mkdir -p -m 755 ${strPerlModulePath} && " .
+        "cp ${strBuildLibCPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
+        "cp ${strBuildLibCPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath} && " .
+        "cp ${strBuildBinPath}/" . BACKREST_EXE . ' /usr/bin/' . BACKREST_EXE . ' && ' .
+        'chmod 755 /usr/bin/' . BACKREST_EXE . ' && ' .
+        "ln -s ${strBasePath}/lib/pgBackRest /usr/share/perl5/pgBackRest'");
+}
+
+push(@EXPORT, qw(jobInstallC));
 
 1;

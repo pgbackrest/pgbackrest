@@ -22,6 +22,7 @@ use pgBackRest::Version;
 
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestTest::Common::JobTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 
@@ -79,21 +80,8 @@ sub new
     # Set permissions on the test path
     $self->executeSimple('chown -R ' . $self->userGet() . ':'. TEST_GROUP . ' ' . $self->testPath(), undef, 'root');
 
-    # Install Perl C Library
-    my $oVm = vmGet();
-    my $strBuildPath = testRunGet()->basePath() . "/test/.vagrant/libc/$self->{strOS}/libc";
-    my $strPerlAutoPath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/auto/pgBackRest/LibC';
-    my $strPerlModulePath = $$oVm{$self->{strOS}}{&VMDEF_PERL_ARCH_PATH} . '/pgBackRest';
-
-    $self->executeSimple(
-        "mkdir -p -m 755 ${strPerlAutoPath} && " .
-        # "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.bs ${strPerlAutoPath} && " .
-        "cp ${strBuildPath}/blib/arch/auto/pgBackRest/LibC/LibC.so ${strPerlAutoPath} && " .
-        "cp ${strBuildPath}/blib/lib/auto/pgBackRest/LibC/autosplit.ix ${strPerlAutoPath} && " .
-        "mkdir -p -m 755 ${strPerlModulePath} && " .
-        "cp ${strBuildPath}/blib/lib/pgBackRest/LibC.pm ${strPerlModulePath} && " .
-        "cp ${strBuildPath}/blib/lib/pgBackRest/LibCAuto.pm ${strPerlModulePath}",
-        undef, 'root');
+    # Install bin and Perl C Library
+    jobInstallC(testRunGet()->basePath(), $self->{strOS}, $strContainer);
 
     # Return from function and log return values if any
     return logDebugReturn

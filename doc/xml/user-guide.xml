@@ -235,9 +235,6 @@
                 <exe-cmd>mkdir /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r /backrest/bin /root/pgbackrest-release-{[version]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
                 <exe-cmd>cp -r /backrest/build /root/pgbackrest-release-{[version]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
@@ -265,12 +262,6 @@
                 <exe-cmd>find {[perl-lib-path]}/pgBackRest -type d -exec chmod 755 {} +</exe-cmd>
             </execute>
             <execute user="root">
-                <exe-cmd>cp /root/pgbackrest-release-{[version]}/bin/{[project-exe]} {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-            </execute>
-            <execute user="root">
-                <exe-cmd>chmod 755 {[perl-bin-path]}/{[project-exe]}</exe-cmd>
-            </execute>
-            <execute user="root">
                 <exe-cmd>mkdir -m 770 /var/log/pgbackrest</exe-cmd>
             </execute>
             <execute user="root">
@@ -287,8 +278,8 @@
             </execute>
         </execute-list>
 
-        <!-- LibC installation - disabled for better testing of the C/Perl failback mechanism -->
-        <p><backrest/> includes an optional companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
+        <!-- LibC installation -->
+        <p><backrest/> includes a companion C library that enhances performance and enables the `checksum-page` option and encryption.  Pre-built packages are generally a better option than building the C library manually but the steps required are given below for completeness.  Depending on the distribution a number of packages may be required which will not be enumerated here.</p>
 
         <execute-list host="{[br-install-host]}">
             <title>Build and Install C Library</title>
@@ -302,6 +293,20 @@
             </execute>
             <execute user="root">
                 <exe-cmd>make -C /root/pgbackrest-release-{[version]}/libc install</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <!-- Bin installation -->
+        <p>Although most of <backrest/> is written in Perl, the main executable is written in C.  This allows certain time-critical commands (like async <cmd>archive-push</cmd>) to run more quickly.</p>
+
+        <execute-list host="{[br-install-host]}">
+            <title>Build and Install Binary</title>
+
+            <execute user="root" err-suppress="y">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src</exe-cmd>
+            </execute>
+            <execute user="root">
+                <exe-cmd>make -C /root/pgbackrest-release-{[version]}/src install</exe-cmd>
             </execute>
         </execute-list>
     </block-define>

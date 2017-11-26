@@ -265,6 +265,25 @@ my $oTestDef =
                 },
             ]
         },
+        # Perl tests
+        {
+            &TESTDEF_NAME => 'perl',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'exec',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'perl/exec' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+            ]
+        },
         # Help tests
         {
             &TESTDEF_NAME => 'help',

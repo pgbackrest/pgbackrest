@@ -27,8 +27,12 @@ use constant BACKREST_CONF                                          => BACKREST_
 #
 # Stores the exe location.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_BIN                                           => abs_path($0);
-    push @EXPORT, qw(BACKREST_BIN);
+my $strBackRestBin;
+
+sub backrestBin {return $strBackRestBin};
+sub backrestBinSet {$strBackRestBin = shift}
+
+push @EXPORT, qw(backrestBin backrestBinSet);
 
 # BackRest Version Number
 #

@@ -21,6 +21,7 @@ use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
 use pgBackRest::Storage::Posix::Driver;
 use pgBackRest::Storage::Local;
+use pgBackRest::Version;
 
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -112,7 +113,8 @@ sub process
         $self->{iVmId},
         $self->{strBasePath},
         $self->{strTestPath},
-        $self->{strBackRestExeOriginal},
+        $self->{strBackRestExeC},
+        $self->{strBackRestExeHelper},
         $self->{strPgBinPath},
         $self->{strPgVersion},
         $self->{strModule},
@@ -133,7 +135,8 @@ sub process
             {name => 'iVmId'},
             {name => 'strBasePath'},
             {name => 'strTestPath'},
-            {name => 'strBackRestExeOriginal'},
+            {name => 'strBackRestExeC'},
+            {name => 'strBackRestExeHelper'},
             {name => 'strPgBinPath', required => false},
             {name => 'strPgVersion', required => false},
             {name => 'strModule'},
@@ -233,27 +236,23 @@ sub begin
         return false;
     }
 
-    my $strExe = $self->backrestExeOriginal();
+    # Generate backrest exe
+    $self->{strBackRestExe} = testRunExe(
+        $self->coverage(), $self->{strBackRestExeC}, $self->{strBackRestExeHelper}, dirname($self->testPath()), $self->basePath(),
+        $self->module(), $self->moduleTest(), $self->runCurrent(), true);
 
-    # If coverage is requested then prepend the coverage code
-    if ($self->coverage())
-    {
-        $strExe = testRunExe(
-            $strExe, dirname($self->testPath()), $self->basePath(), $self->module(), $self->moduleTest(), $self->runCurrent(),
-            true);
-    }
+    backrestBinSet($self->{strBackRestExe});
 
     # Create an ExpectTest object
     if ($self->doExpect())
     {
         $self->{oExpect} = new pgBackRestTest::Common::LogTest(
-            $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription, $strExe,
-            $self->pgBinPath(), $self->testPath());
+            $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription,
+            $self->{strBackRestExe}, $self->pgBinPath(), $self->testPath());
 
         &log(INFO, '          expect log: ' . $self->{oExpect}->{strFileName});
     }
 
-    $self->{strBackRestExe} = $strExe;
 
     if (!$self->{bFirstTest})
     {
@@ -537,7 +536,9 @@ push @EXPORT, qw(testRunGet);
 ####################################################################################################################################
 sub testRunExe
 {
-    my $strExe = shift;
+    my $bCoverage = shift;
+    my $strExeC = shift;
+    my $strExeHelper = shift;
     my $strCoveragePath = shift;
     my $strBackRestBasePath = shift;
     my $strModule = shift;
@@ -545,31 +546,43 @@ sub testRunExe
     my $iRun = shift;
     my $bLog = shift;
 
-    # Limit Perl modules tested to what is defined in the test coverage (if it exists)
-    my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
+    my $strExe = defined($strExeC) ? $strExeC : undef;
     my $strPerlModule;
-    my $strPerlModuleLog;
 
-    if (defined($hTestCoverage))
+    if ($bCoverage)
     {
-        foreach my $strCoverageModule (sort(keys(%{$hTestCoverage})))
+        # Limit Perl modules tested to what is defined in the test coverage (if it exists)
+        my $hTestCoverage = (testDefModuleTest($strModule, $strTest))->{&TESTDEF_COVERAGE};
+        my $strPerlModuleLog;
+
+        if (defined($hTestCoverage))
         {
-            $strPerlModule .= ',.*/' . $strCoverageModule . '\.p.$';
-            $strPerlModuleLog .= (defined($strPerlModuleLog) ? ', ' : '') . $strCoverageModule;
+            foreach my $strCoverageModule (sort(keys(%{$hTestCoverage})))
+            {
+                $strPerlModule .= ',.*/' . $strCoverageModule . '\.p.$';
+                $strPerlModuleLog .= (defined($strPerlModuleLog) ? ', ' : '') . $strCoverageModule;
+            }
+        }
+
+        # Build the exe
+        if (defined($strPerlModule))
+        {
+            $strExe .=
+                (defined($strExeC) ? ' --perl-option=' :  'perl ') .
+                "-MDevel::Cover=-silent,1,-dir,${strCoveragePath},-select${strPerlModule},+inc" .
+                ",${strBackRestBasePath},-coverage,statement,branch,condition,path,subroutine" .
+                (defined($strExeC) ? '' :  " ${strExeHelper}");
+
+            if (defined($bLog) && $bLog)
+            {
+                &log(INFO, "          coverage: ${strPerlModuleLog}");
+            }
         }
     }
 
-    # Build the exe
-    if (defined($strPerlModule))
+    if (!defined($strExeC) && !defined($strPerlModule))
     {
-        $strExe =
-            "perl -MDevel::Cover=-silent,1,-dir,${strCoveragePath},-select${strPerlModule},+inc,${strBackRestBasePath}" .
-            ",-coverage,statement,branch,condition,path,subroutine ${strExe}";
-
-        if (defined($bLog) && $bLog)
-        {
-            &log(INFO, "          coverage: ${strPerlModuleLog}");
-        }
+        $strExe = $strExeHelper;
     }
 
     return $strExe;
@@ -592,7 +605,6 @@ push(@EXPORT, qw(storageTest));
 ####################################################################################################################################
 sub archBits {return vmArchBits(shift->{strVm})}
 sub backrestExe {return shift->{strBackRestExe}}
-sub backrestExeOriginal {return shift->{strBackRestExeOriginal}}
 sub backrestUser {return shift->{strBackRestUser}}
 sub basePath {return shift->{strBasePath}}
 sub coverage {vmCoverage(shift->{strVm})}

@@ -17,6 +17,7 @@ use Cwd qw(abs_path);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::Version;
 
 use pgBackRestTest::Common::RunTest;
 
@@ -356,8 +357,9 @@ sub run
         $self->configTestLoadExpect(cfgCommandName(CFGCMD_RESTORE));
 
         my $strCommand = cfgCommandWrite(CFGCMD_ARCHIVE_GET);
-        my $strExpectedCommand = abs_path($0) . " --backup-host=db.mydomain.com \"--db1-path=/db path/main\"" .
-                                 " --repo-path=/repo --stanza=app " . cfgCommandName(CFGCMD_ARCHIVE_GET);
+        my $strExpectedCommand =
+            backrestBin() . " --backup-host=db.mydomain.com \"--db1-path=/db path/main\" --repo-path=/repo --stanza=app " .
+            cfgCommandName(CFGCMD_ARCHIVE_GET);
 
         if ($strCommand ne $strExpectedCommand)
         {
@@ -372,7 +374,7 @@ sub run
         $self->optionTestSet(CFGOPT_DB_PATH, '/db');
 
         $self->configTestLoadExpect(cfgCommandName(CFGCMD_BACKUP));
-        $self->optionTestExpect(CFGOPT_DB_CMD, abs_path($0));
+        $self->optionTestExpect(CFGOPT_DB_CMD, backrestBin());
     }
 
     if ($self->begin(cfgCommandName(CFGCMD_BACKUP) . ' missing option ' . cfgOptionName(CFGOPT_DB_PATH)))
