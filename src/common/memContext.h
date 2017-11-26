@@ -81,6 +81,7 @@ These functions always new/free within the current memory context.
 ***********************************************************************************************************************************/
 void *memNew(size_t size);
 void *memNewRaw(size_t size);
+void *memGrowRaw(const void *buffer, size_t size);
 void memFree(void *buffer);
 
 /***********************************************************************************************************************************

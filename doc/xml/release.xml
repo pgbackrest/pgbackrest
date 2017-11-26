@@ -11,6 +11,14 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="1.27dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Add <code>memGrowRaw()</code> to memory context module.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-development-list>
                     <release-item>
