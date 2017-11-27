@@ -71,10 +71,6 @@ my $bHelp = false;
 my $bVersion = false;
 my $bQuiet = false;
 my $strLogLevel = 'info';
-my $strHost = 'root@www.pgbackrest.org';
-my $strUser = 'www-data';
-my $strGroup = 'www-data';
-my $strPath = '/data/http/backrest';
 my $bBuild = false;
 my $bDeploy = false;
 
@@ -154,18 +150,20 @@ eval
 
     if ($bDeploy)
     {
+        my $strDeployPath = "${strDocPath}/site";
+
         # Generate deployment docs for the website history
         &log(INFO, 'Generate website ' . ($bDev ? 'dev' : 'history') . ' documentation');
 
         executeTest(
             $strDocExe . ($bDev ? '' : ' --deploy --cache-only') . ' --out=html --var=project-url-root=index.html' .
-            ($bDev ? ' --keyword=default --keyword=dev' :  ' --exclude=release'));
+            ($bDev ? ' --keyword=default --keyword=dev --no-exe' :  ' --exclude=release'));
 
         # Deploy to server
-        &log(INFO, '...Deploy to server');
-        executeTest("ssh ${strHost} rm -rf ${strPath}/${strVersion}");
-        executeTest("ssh ${strHost} mkdir ${strPath}/${strVersion}");
-        executeTest("scp ${strDocHtml}/* ${strHost}:${strPath}/${strVersion}");
+        &log(INFO, '...Deploy to repository');
+        executeTest("rm -rf ${strDeployPath}/${strVersion}");
+        executeTest("mkdir ${strDeployPath}/${strVersion}");
+        executeTest("cp ${strDocHtml}/* ${strDeployPath}/${strVersion}");
 
         # Generate deployment docs for the main website
         if (!$bDev)
@@ -174,16 +172,18 @@ eval
 
             executeTest("${strDocExe} --deploy --cache-only --out=html");
 
-            &log(INFO, '...Deploy to server');
-            executeTest("ssh ${strHost} rm -rf ${strPath}/dev");
-            executeTest("ssh ${strHost} find ${strPath} -maxdepth 1 -type f -exec rm {} +");
-            executeTest("scp ${strDocHtml}/* ${strHost}:${strPath}");
+            &log(INFO, '...Deploy to repository');
+            executeTest("rm -rf ${strDeployPath}/dev");
+            executeTest("find ${strDeployPath} -maxdepth 1 -type f -exec rm {} +");
+            executeTest("cp ${strDocHtml}/* ${strDeployPath}");
+            executeTest("cp ${strDocPath}/../README.md ${strDeployPath}");
+            executeTest("cp ${strDocPath}/../LICENSE ${strDeployPath}");
+            executeTest("echo 'pgbackrest.org' > ${strDeployPath}/CNAME");
         }
 
         # Update permissions
-        executeTest("ssh ${strHost} chown -R ${strUser}:${strGroup} ${strPath}");
-        executeTest("ssh ${strHost} find ${strPath} -type d -exec chmod 550 {} +");
-        executeTest("ssh ${strHost} find ${strPath} -type f -exec chmod 440 {} +");
+        executeTest("find ${strDeployPath} -type d -exec chmod 750 {} +");
+        executeTest("find ${strDeployPath} -type f -exec chmod 640 {} +");
     }
 
     # Exit with success

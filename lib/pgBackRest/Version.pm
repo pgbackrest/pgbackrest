@@ -27,15 +27,19 @@ use constant BACKREST_CONF                                          => BACKREST_
 #
 # Stores the exe location.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_BIN                                           => abs_path($0);
-    push @EXPORT, qw(BACKREST_BIN);
+my $strBackRestBin;
+
+sub backrestBin {return $strBackRestBin};
+sub backrestBinSet {$strBackRestBin = shift}
+
+push @EXPORT, qw(backrestBin backrestBinSet);
 
 # BackRest Version Number
 #
 # Defines the current version of the BackRest executable.  The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant BACKREST_VERSION                                       => '1.26dev';
+use constant BACKREST_VERSION                                       => '2.00dev';
     push @EXPORT, qw(BACKREST_VERSION);
 
 # Format Format Number

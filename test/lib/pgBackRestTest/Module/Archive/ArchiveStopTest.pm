@@ -36,7 +36,10 @@ sub run
 {
     my $self = shift;
 
-    my $strArchiveTestFile = $self->dataPath() . '/backup.wal2_' . WAL_VERSION_94 . '.bin';
+    # Generate test WAL file
+    my $strWalTestFile = $self->testPath() . '/test-wal-' . PG_VERSION_94;
+    my $strWalHash = $self->walGenerateContentChecksum(PG_VERSION_94);
+    storageTest()->put($strWalTestFile, $self->walGenerateContent(PG_VERSION_94));
 
     foreach my $bS3 (false, true)
     {
@@ -66,17 +69,15 @@ sub run
         my $strWalPath = $oHostDbMaster->dbBasePath() . '/pg_xlog';
         $oStorage->pathCreate($strWalPath, {bCreateParent => true});
 
-        # Create the test path for pg_control and copy pg_control for stanza-create
+        # Create the test path for pg_control and generate pg_control for stanza-create
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
-        storageTest()->copy(
-            $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
 
         # Create the archive info file
         $oHostBackup->stanzaCreate('create required data for stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Push a WAL segment
-        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 1);
+        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 1);
 
         # Break the database version of the archive info file
         if ($iError == 0)
@@ -88,13 +89,13 @@ sub run
 
         # Push two more segments with errors to exceed archive-max-mb
         $oHostDbMaster->archivePush(
-            $strWalPath, $strArchiveTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strWalTestFile, 2, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         $oHostDbMaster->archivePush(
-            $strWalPath, $strArchiveTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strWalTestFile, 3, $iError ? ERROR_FILE_READ : ERROR_ARCHIVE_MISMATCH);
 
         # Now this segment will get dropped
-        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 4);
+        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 4);
 
         # Fix the database version
         if ($iError == 0)
@@ -107,18 +108,18 @@ sub run
             sub {$oStorage->list(
                 STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001',
                 {strExpression => '^(?!000000010000000100000002).+'})},
-            "000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}",
+            "000000010000000100000001-${strWalHash}${strCompressExt}",
             'segment 2-4 not pushed (2 is pushed sometimes when remote but ignore)', {iWaitSeconds => 5});
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $oHostDbMaster->archivePush($strWalPath, $strArchiveTestFile, 5);
+        $oHostDbMaster->archivePush($strWalPath, $strWalTestFile, 5);
 
         $self->testResult(
             sub {$oStorage->list(
                 STORAGE_REPO_ARCHIVE . qw{/} . PG_VERSION_94 . '-1/0000000100000001',
                 {strExpression => '^(?!000000010000000100000002).+'})},
-            "(000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt}, " .
-                "000000010000000100000005-72b9da071c13957fb4ca31f05dbd5c644297c2f7${strCompressExt})",
+            "(000000010000000100000001-${strWalHash}${strCompressExt}, " .
+                "000000010000000100000005-${strWalHash}${strCompressExt})",
             'segment 5 is pushed', {iWaitSeconds => 5});
     }
     }

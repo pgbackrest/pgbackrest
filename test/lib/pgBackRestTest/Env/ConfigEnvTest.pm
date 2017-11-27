@@ -15,7 +15,7 @@ use English '-no_match_vars';
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
-use pgBackRest::Config::Data;
+use pgBackRestBuild::Config::Data;
 
 use constant CONFIGENVTEST                                          => 'ConfigEnvTest';
 

@@ -1,0 +1,22 @@
+--- pgbackrest.install
++++ pgbackrest.install
+@@ -1,3 +1,2 @@
+-bin/pgbackrest usr/bin/
+ debian/pgbackrest.conf etc/
+ lib/pgBackRest usr/share/perl5/
+--- rules
++++ rules
+@@ -22,6 +22,7 @@
+ 	  ${MANTEMPLATE} > ${CURDIR}/doc/output/man/pgbackrest.1
+ 	cd $(CURDIR)/libc; perl Makefile.PL PREFIX=/usr NO_PACKLIST=1
+ 	make -C $(CURDIR)/libc/
++	make -C $(CURDIR)/src
+ 	dh_auto_build
+ 
+ override_dh_auto_test:
+@@ -36,4 +37,5 @@
+ 
+ override_dh_auto_install:
+ 	make -C libc install DESTDIR=$(CURDIR)/debian/pgbackrest
++	make -C src install DESTDIR=$(CURDIR)/debian/pgbackrest
+ 	dh_auto_install

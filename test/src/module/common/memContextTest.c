@@ -157,7 +157,7 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("memContextAlloc(), memNew*(), and memFree()"))
+    if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
         memContextSwitch(memContextTop());
         memNew(sizeof(size_t));
@@ -185,9 +185,23 @@ void testRun()
         }
 
 
-        unsigned char *buffer= memNewRaw(sizeof(size_t));
+        unsigned char *buffer = memNewRaw(sizeof(size_t));
 
-        TEST_ERROR(memFree(NULL), AssertError, "unable to free null allocation");
+        // Grow memory
+        memset(buffer, 0xFE, sizeof(size_t));
+        buffer = memGrowRaw(buffer, sizeof(size_t) * 2);
+
+        // Check that original portion of the buffer is preserved
+        int expectedTotal = 0;
+
+        for (unsigned int charIdx = 0; charIdx < sizeof(size_t); charIdx++)
+            if (buffer[charIdx] == 0xFE)
+                expectedTotal++;
+
+        TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all bytes are 0xFE in original portion");
+
+        // Free memory
+        TEST_ERROR(memFree(NULL), AssertError, "unable to find null allocation");
         TEST_ERROR(memFree((void *)0x01), AssertError, "unable to find allocation");
         memFree(buffer);
 
@@ -244,7 +258,7 @@ void testRun()
         // ------------------------------------------------------------------------------------------------------------------------
         // Successful context new block
         const char *memContextTestName = "test-new-block";
-        MemContext *memContext;
+        MemContext *memContext = NULL;
 
         MEM_CONTEXT_NEW_BEGIN(memContextTestName)
         {
@@ -263,7 +277,7 @@ void testRun()
         memContextTestName = "test-new-failed-block";
         bool bCatch = false;
 
-        TRY()
+        TRY_BEGIN()
         {
             MEM_CONTEXT_NEW_BEGIN(memContextTestName)
             {
@@ -277,6 +291,7 @@ void testRun()
         {
             bCatch = true;
         }
+        TRY_END();
 
         TEST_RESULT_BOOL(bCatch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");

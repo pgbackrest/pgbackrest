@@ -93,8 +93,6 @@ INCLUDE: const-xs.inc
 #
 # These modules should map 1-1 with C modules in src directory.
 # ----------------------------------------------------------------------------------------------------------------------------------
-#pragma GCC diagnostic ignored "-Wclobbered"
-
 INCLUDE: xs/cipher/block.xs
 INCLUDE: xs/cipher/random.xs
 INCLUDE: xs/common/encode.xs

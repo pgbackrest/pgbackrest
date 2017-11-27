@@ -13,7 +13,7 @@ use File::Basename qw(dirname);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::Data;
+use pgBackRestBuild::Config::Data;
 use pgBackRest::Version;
 
 ####################################################################################################################################

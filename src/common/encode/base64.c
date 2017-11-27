@@ -19,24 +19,39 @@ encodeToStrBase64(const unsigned char *source, int sourceSize, char *destination
     // Encode the string from three bytes to four characters
     for (int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx += 3)
     {
-        // First two characters are always used
+        // First encoded character is always used completely
         destination[destinationIdx++] = encodeBase64Lookup[source[sourceIdx] >> 2];
-        destination[destinationIdx++] =
-            encodeBase64Lookup[((source[sourceIdx] & 0x03) << 4) | ((source[sourceIdx + 1] & 0xf0) >> 4)];
 
-        // Last two may be coded as = if there are less than three characters
-        if (sourceSize - sourceIdx > 1)
+        // If there is only one byte to encode then the second encoded character is only partly used and the third and fourth
+        // encoded characters are padded.
+        if (sourceSize - sourceIdx == 1)
         {
-            destination[destinationIdx++] =
-                encodeBase64Lookup[((source[sourceIdx + 1] & 0x0f) << 2) | ((source[sourceIdx + 2] & 0xc0) >> 6)];
+            destination[destinationIdx++] = encodeBase64Lookup[(source[sourceIdx] & 0x03) << 4];
+            destination[destinationIdx++] = 0x3d;
+            destination[destinationIdx++] = 0x3d;
         }
+        // Else if more than one byte to encode
         else
-            destination[destinationIdx++] = 0x3d;
+        {
+            // If there is more than one byte to encode then the second encoded character is used completely
+            destination[destinationIdx++] =
+                encodeBase64Lookup[((source[sourceIdx] & 0x03) << 4) | ((source[sourceIdx + 1] & 0xf0) >> 4)];
 
-        if (sourceSize - sourceIdx > 2)
-            destination[destinationIdx++] = encodeBase64Lookup[source[sourceIdx + 2] & 0x3f];
-        else
-            destination[destinationIdx++] = 0x3d;
+            // If there are only two bytes to encode then the third encoded character is only partly used and the fourth encoded
+            // character is padded.
+            if (sourceSize - sourceIdx == 2)
+            {
+                destination[destinationIdx++] = encodeBase64Lookup[(source[sourceIdx + 1] & 0x0f) << 2];
+                destination[destinationIdx++] = 0x3d;
+            }
+            // Else the third and fourth encoded characters are used completely
+            else
+            {
+                destination[destinationIdx++] =
+                    encodeBase64Lookup[((source[sourceIdx + 1] & 0x0f) << 2) | ((source[sourceIdx + 2] & 0xc0) >> 6)];
+                destination[destinationIdx++] = encodeBase64Lookup[source[sourceIdx + 2] & 0x3f];
+            }
+        }
     }
 
     // Zero-terminate the string

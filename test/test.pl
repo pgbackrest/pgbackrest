@@ -386,23 +386,96 @@ eval
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
         }
 
-        # Build the C Library and Packages
+        # Build the binary, library and packages
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDryRun)
         {
+            my $oVm = vmGet();
+            my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
+
+            # Build the binary
+            #---------------------------------------------------------------------------------------------------------------------------
+            my $strBinPath = "${strVagrantPath}/bin";
+            my $strBinSmart = "${strBinPath}/build.timestamp";
+            my @stryBinSrcPath = ('src');
+
+            # Find the lastest modified time for dirs that affect the bin build
+            my $lTimestampLast = $oStorageBackRest->exists($strBinSmart) ? $oStorageBackRest->info($strBinSmart)->mtime : 0;
+
+            foreach my $strBinSrcPath (@stryBinSrcPath)
+            {
+                my $hManifest = $oStorageBackRest->manifest($strBinSrcPath);
+
+                foreach my $strFile (sort(keys(%{$hManifest})))
+                {
+                    if ($hManifest->{$strFile}{type} eq 'f' && $hManifest->{$strFile}{modification_time} > $lTimestampLast)
+                    {
+                        $lTimestampLast = $hManifest->{$strFile}{modification_time};
+                    }
+                }
+            }
+
+            # Rebuild if the modification time of the smart file does equal the last changes in source paths
+            if (!$bSmart || !$oStorageBackRest->exists($strBinSmart) ||
+                $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)
+            {
+                if ($bSmart)
+                {
+                    &log(INFO, 'bin dependencies have changed, rebuilding...');
+                }
+
+                executeTest("sudo rm -rf ${strBinPath}");
+                executeTest('sudo rm -rf /usr/bin/' . BACKREST_EXE);
+            }
+
+            # Loop through VMs to do the C Library builds
+            my $bLogDetail = $strLogLevel eq 'detail';
+            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
+
+            foreach my $strBuildVM (sort(@stryBuildVm))
+            {
+                my $strBuildPath = "${strBinPath}/${strBuildVM}/src";
+
+                if (!$oStorageBackRest->pathExists($strBuildPath))
+                {
+                    &log(INFO, "build bin for ${strBuildVM} (${strBuildPath})");
+
+                    executeTest(
+                        "docker run -itd -h test-build --name=test-build" .
+                        " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-build",
+                        {bSuppressStdErr => true});
+
+                    foreach my $strBinSrcPath (@stryBinSrcPath)
+                    {
+                        $oStorageBackRest->pathCreate(
+                            "${strBinPath}/${strBuildVM}/${strBinSrcPath}", {bIgnoreExists => true, bCreateParent => true});
+                        executeTest("cp -r ${strBackRestBase}/${strBinSrcPath}/* ${strBinPath}/${strBuildVM}/${strBinSrcPath}");
+                    }
+
+                    executeTest(
+                        "docker exec -i test-build make --silent --directory ${strBuildPath}",
+                        {bShowOutputAsync => $bLogDetail});
+
+                    executeTest(
+                        "docker exec -i test-build make --silent --directory ${strBuildPath} install",
+                        {bShowOutputAsync => $bLogDetail});
+
+                    executeTest("docker rm -f test-build");
+                }
+            }
+
+            # Write files to indicate the last time a build was successful
+            $oStorageBackRest->put($strBinSmart);
+            utime($lTimestampLast, $lTimestampLast, $strBinSmart) or
+                confess "unable to set time for ${strBinSmart}" . (defined($!) ? ":$!" : '');
+
             # Build the C Library
             #---------------------------------------------------------------------------------------------------------------------------
-            my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
             my $strLibCPath = "${strVagrantPath}/libc";
             my $strLibCSmart = "${strLibCPath}/build.timestamp";
             my @stryLibCSrcPath = ('libc', 'src');
 
-            # VM Info
-            my $oVm = vmGet();
-
             # Find the lastest modified time for dirs that affect the libc build
-            my $lTimestampLast = $oStorageBackRest->exists($strLibCSmart) ? $oStorageBackRest->info($strLibCSmart)->mtime : 0;
-
             foreach my $strLibCSrcPath (@stryLibCSrcPath)
             {
                 my $hManifest = $oStorageBackRest->manifest($strLibCSrcPath);
@@ -431,8 +504,8 @@ eval
             }
 
             # Loop through VMs to do the C Library builds
-            my $bLogDetail = $strLogLevel eq 'detail';
-            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm eq $strVmHost ? ($strVm) : ($strVm, $strVmHost));
+            $bLogDetail = $strLogLevel eq 'detail';
+            @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm eq $strVmHost ? ($strVm) : ($strVm, $strVmHost));
 
             foreach my $strBuildVM (sort(@stryBuildVm))
             {
@@ -441,7 +514,7 @@ eval
 
                 if (!$oStorageBackRest->pathExists($strBuildPath))
                 {
-                    &log(INFO, "build/test C library for ${strBuildVM} (${strBuildPath})");
+                    &log(INFO, "build C library for ${strBuildVM} (${strBuildPath})");
 
                     if ($bContainerExists)
                     {
@@ -518,7 +591,7 @@ eval
             #---------------------------------------------------------------------------------------------------------------------------
             my $strPackagePath = "${strVagrantPath}/package";
             my $strPackageSmart = "${strPackagePath}/build.timestamp";
-            my @stryPackageSrcPath = ('bin', 'lib');
+            my @stryPackageSrcPath = ('lib');
 
             # Find the lastest modified time for additional dirs that affect the package build
             foreach my $strPackageSrcPath (@stryPackageSrcPath)
@@ -573,6 +646,21 @@ eval
                             "docker exec -i test-build " .
                             "bash -c 'cp -r /root/package-src/debian ${strBuildPath}' && sudo chown -R " . TEST_USER .
                             " ${strBuildPath}");
+
+                        # Patch files in debian package builds
+                        #
+                        # Use these commands to create a new patch (may need to modify first line):
+                        # BRDIR=/backrest;BRVM=u16;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
+                        # DBDIR=${BRDIR?}/test/.vagrant/package/${BRVM}/src/debian
+                        # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
+                        my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";
+
+                        if ($oStorageBackRest->exists($strDebianPackagePatch))
+                        {
+                            executeTest("cp -r ${strBuildPath}/debian ${strBuildPath}/debian.old");
+                            executeTest("patch -d ${strBuildPath}/debian < ${strDebianPackagePatch}");
+                            executeTest("cp -r ${strBuildPath}/debian ${strBuildPath}/debian.new");
+                        }
 
                         # If dev build then disable static release date used for reproducibility
                         if ($bVersionDev)
@@ -633,22 +721,12 @@ eval
             {
                 my $strBasePath = dirname(dirname(abs_path($0)));
 
-                &log(INFO, "Performing static code analysis using perl -cw");
-
-                # Check the exe for warnings
-                my $strWarning = trim(executeTest("perl -cw ${strBasePath}/bin/pgbackrest 2>&1"));
-
-                if ($strWarning ne "${strBasePath}/bin/pgbackrest syntax OK")
-                {
-                    confess &log(ERROR, "${strBasePath}/bin/pgbackrest failed syntax check:\n${strWarning}");
-                }
-
                 &log(INFO, "Performing static code analysis using perlcritic");
 
                 executeTest('perlcritic --quiet --verbose=8 --brutal --top=10' .
                             ' --verbose "[%p] %f: %m at line %l, column %c.  %e.  (Severity: %s)\n"' .
                             " \"--profile=${strBasePath}/test/lint/perlcritic.policy\"" .
-                            " ${strBasePath}/bin/pgbackrest ${strBasePath}/lib/*" .
+                            " ${strBasePath}/lib/*" .
                             " ${strBasePath}/test/test.pl ${strBasePath}/test/lib/*" .
                             " ${strBasePath}/doc/doc.pl ${strBasePath}/doc/lib/*");
             }
@@ -956,7 +1034,8 @@ eval
         $strVm, $iVmId,                                             # Vm info
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
-        "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest executable
+        '/usr/bin/' . BACKREST_EXE,                                 # Path to the backrest executable
+        "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest Perl helper
         $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
         $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info

@@ -152,13 +152,14 @@
     <!ATTLIST release version CDATA #REQUIRED>
     <!ATTLIST release title CDATA #REQUIRED>
 
-<!ELEMENT release-core-list (p?, release-bug-list?, release-feature-list?, release-refactor-list?)>
-<!ELEMENT release-test-list (p?, release-bug-list?, release-feature-list?, release-refactor-list?)>
-<!ELEMENT release-doc-list (p?, release-bug-list?, release-feature-list?, release-refactor-list?)>
+<!ELEMENT release-core-list (p?, release-bug-list?, release-feature-list?, release-improvement-list?, release-development-list?)>
+<!ELEMENT release-test-list (p?, release-feature-list?, release-improvement-list?, release-development-list?)>
+<!ELEMENT release-doc-list (p?, release-bug-list?, release-feature-list?, release-improvement-list?, release-development-list?)>
 
 <!ELEMENT release-bug-list (release-item+)>
 <!ELEMENT release-feature-list (release-item+)>
-<!ELEMENT release-refactor-list (release-item+)>
+<!ELEMENT release-improvement-list (release-item+)>
+<!ELEMENT release-development-list (release-item+)>
 
 <!ELEMENT release-item (release-item-contributor-list?, p)*>
 

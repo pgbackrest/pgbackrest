@@ -5,13 +5,13 @@ Test Error Handling
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
 ***********************************************************************************************************************************/
-int testTryRecurseTotal = 0;
+volatile int testTryRecurseTotal = 0;
 bool testTryRecurseCatch = false;
 bool testTryRecurseFinally = false;
 
 void testTryRecurse()
 {
-    TRY()
+    TRY_BEGIN()
     {
         testTryRecurseTotal++;
         assert(errorContext.tryTotal == testTryRecurseTotal + 1);
@@ -26,6 +26,7 @@ void testTryRecurse()
     {
         testTryRecurseFinally = true;
     }
+    TRY_END();
 }                                                                   // {uncoverable - function throws error, never returns}
 
 /***********************************************************************************************************************************
@@ -40,13 +41,13 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("TRY() with no errors"))
+    if (testBegin("TRY with no errors"))
     {
-        bool tryDone = false;
+        volatile bool tryDone = false;
         bool catchDone = false;
         bool finallyDone = false;
 
-        TRY()
+        TRY_BEGIN()
         {
             assert(errorContext.tryTotal == 1);
             tryDone = true;
@@ -60,6 +61,7 @@ void testRun()
             assert(errorContext.tryList[1].state == errorStateFinal);
             finallyDone = true;
         }
+        TRY_END();
 
         assert(tryDone);
         assert(!catchDone);
@@ -68,31 +70,32 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("TRY() with multiple catches"))
+    if (testBegin("TRY with multiple catches"))
     {
-        bool tryDone = false;
-        bool catchDone = false;
-        bool finallyDone = false;
+        volatile bool tryDone = false;
+        volatile bool catchDone = false;
+        volatile bool finallyDone = false;
 
-        TRY()
+        TRY_BEGIN()
         {
             assert(errorContext.tryTotal == 1);
 
-            TRY()
+            TRY_BEGIN()
             {
                 assert(errorContext.tryTotal == 2);
 
-                TRY()
+                TRY_BEGIN()
                 {
                     assert(errorContext.tryTotal == 3);
 
-                    TRY()
+                    TRY_BEGIN()
                     {
                         assert(errorContext.tryTotal == 4);
                         tryDone = true;
 
                         THROW(AssertError, BOGUS_STR);
                     }
+                    TRY_END();
                 }
                 CATCH(AssertError)
                 {
@@ -103,11 +106,13 @@ void testRun()
                 {
                     finallyDone = true;
                 }
+                TRY_END();
             }
             CATCH_ANY()
             {
                 RETHROW();
             }
+            TRY_END();
         }
         CATCH(MemoryError)
         {
@@ -120,6 +125,7 @@ void testRun()
 
             catchDone = true;
         }
+        TRY_END();
 
         assert(tryDone);
         assert(catchDone);
@@ -130,11 +136,11 @@ void testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("too deep recursive TRY_ERROR()"))
     {
-        bool tryDone = false;
+        volatile bool tryDone = false;
         bool catchDone = false;
         bool finallyDone = false;
 
-        TRY()
+        TRY_BEGIN()
         {
             tryDone = true;
             testTryRecurse();
@@ -155,6 +161,7 @@ void testRun()
         {
             finallyDone = true;
         }
+        TRY_END();
 
         assert(tryDone);
         assert(catchDone);

@@ -43,9 +43,6 @@ use constant TESTDEF_EXPECT                                         => 'expect';
 # Is this a C test (instead of Perl)?
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
-# Is the C library required?  This only applies to unit tests, the C library is always supplied for integration tests.
-use constant TESTDEF_CLIB                                           => 'clib';
-    push @EXPORT, qw(TESTDEF_CLIB);
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
@@ -129,6 +126,27 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'type-list',
+                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/list' => TESTDEF_COVERAGE_FULL,
+                        'common/type/stringList' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'type-string',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/string' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'encode',
                     &TESTDEF_TOTAL => 1,
                     &TESTDEF_C => true,
@@ -142,7 +160,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'encode-perl',
                     &TESTDEF_TOTAL => 1,
-                    &TESTDEF_CLIB => true,
                 },
                 {
                     &TESTDEF_NAME => 'http-client',
@@ -156,7 +173,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'ini',
                     &TESTDEF_TOTAL => 10,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -249,6 +265,25 @@ my $oTestDef =
                 },
             ]
         },
+        # Perl tests
+        {
+            &TESTDEF_NAME => 'perl',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'exec',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'perl/exec' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+            ]
+        },
         # Help tests
         {
             &TESTDEF_NAME => 'help',
@@ -316,7 +351,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'filter-cipher-block',
                     &TESTDEF_TOTAL => 2,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -389,7 +423,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'local',
                     &TESTDEF_TOTAL => 10,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -399,7 +432,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'helper',
                     &TESTDEF_TOTAL => 5,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -426,7 +458,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'helper',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -445,7 +477,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'unit',
                     &TESTDEF_TOTAL => 2,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -473,7 +504,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'push',
                     &TESTDEF_TOTAL => 8,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -494,7 +524,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'info-unit',
                     &TESTDEF_TOTAL => 4,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -504,7 +533,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'get',
                     &TESTDEF_TOTAL => 2,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -533,7 +561,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'info-unit',
                     &TESTDEF_TOTAL => 3,
-                    &TESTDEF_CLIB => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -588,7 +615,6 @@ my $oTestDef =
                 {
                     &TESTDEF_NAME => 'all',
                     &TESTDEF_TOTAL => 8,
-                    &TESTDEF_CLIB => true,
                     &TESTDEF_CONTAINER => true,
 
                     &TESTDEF_COVERAGE =>
@@ -682,7 +708,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_C, TESTDEF_CLIB, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_C, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

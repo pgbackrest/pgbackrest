@@ -19,6 +19,8 @@ use pgBackRest::DbVersion;
 ####################################################################################################################################
 # VM hash keywords
 ####################################################################################################################################
+use constant VM_ARCH                                                => 'arch';
+    push @EXPORT, qw(VM_ARCH);
 use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
 use constant VM_DB_TEST                                             => 'db-test';
@@ -59,6 +61,14 @@ use constant VM_OS_UBUNTU                                           => 'ubuntu';
     push @EXPORT, qw(VM_OS_DEBIAN);
 
 ####################################################################################################################################
+# Valid architecture list
+####################################################################################################################################
+use constant VM_ARCH_I386                                           => 'i386';
+    push @EXPORT, qw(VM_ARCH_I386);
+use constant VM_ARCH_AMD64                                          => 'amd64';
+    push @EXPORT, qw(VM_ARCH_AMD64);
+
+####################################################################################################################################
 # Valid VM list
 ####################################################################################################################################
 use constant VM_ALL                                                 => 'all';
@@ -87,6 +97,9 @@ use constant VM_EXPECT                                              => VM_CO7;
 use constant VM_HOST_DEFAULT                                        => VM_U16;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
+# Defines the VM that will do coverage testing
+use constant VM_COVERAGE                                            => VM_U16;
+
 # Lists valid VMs
 use constant VM_LIST                                                => (VM_CO6, VM_U16, VM_CO7, VM_U12);
     push @EXPORT, qw(VM_LIST);
@@ -99,6 +112,7 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:6',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
@@ -124,6 +138,7 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib64/perl5',
 
@@ -140,6 +155,7 @@ my $oyVm =
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'jessie',
         &VM_IMAGE => 'debian:8',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.20.2',
 
@@ -156,8 +172,9 @@ my $oyVm =
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'stretch',
         &VM_IMAGE => 'debian:9',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.24.1',
+        &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/i386-linux-gnu/perl/5.24.1',
 
         &VM_DB =>
         [
@@ -171,7 +188,8 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'precise',
-        &VM_IMAGE => 'ubuntu:12.04',
+        &VM_IMAGE => 'i386/ubuntu:12.04',
+        &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.14.2',
 
@@ -191,6 +209,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'trusty',
         &VM_IMAGE => 'ubuntu:14.04',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/perl/5.18.2',
 
@@ -207,6 +226,7 @@ my $oyVm =
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'xenial',
         &VM_IMAGE => 'ubuntu:16.04',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
         &VMDEF_PERL_ARCH_PATH => '/usr/local/lib/x86_64-linux-gnu/perl/5.22.1',
 
@@ -242,9 +262,15 @@ foreach my $strVm (sort(keys(%{$oyVm})))
 foreach my $strPgVersion (versionSupport())
 {
     my $strVmPgVersionRun;
+    my $strVmCoverage;
 
     foreach my $strVm (VM_LIST)
     {
+        if ($strVm eq VM_COVERAGE)
+        {
+            $strVmCoverage = $strVm;
+        }
+
         foreach my $strVmPgVersion (@{$oyVm->{$strVm}{&VM_DB_TEST}})
         {
             if ($strPgVersion eq $strVmPgVersion)
@@ -259,9 +285,16 @@ foreach my $strPgVersion (versionSupport())
         }
     }
 
+    my $strErrorSuffix = 'is not configured to run on a default vm';
+
+    if (!defined($strVmCoverage))
+    {
+        confess &log(ASSERT, 'vm designated for coverage testing (' . VM_COVERAGE . ") ${strErrorSuffix}");
+    }
+
     if (!defined($strVmPgVersionRun))
     {
-        confess &log(ASSERT, "PostgreSQL ${strPgVersion} is not configured to run on a default vm");
+        confess &log(ASSERT, "PostgreSQL ${strPgVersion} ${strErrorSuffix}");
     }
 }
 
@@ -295,9 +328,21 @@ sub vmCoverage
 {
     my $strVm = shift;
 
-    return $strVm eq VM_ALL ? false : vmBaseTest($strVm, VM_OS_BASE_DEBIAN);
+    return ($strVm eq VM_COVERAGE ? true : false)
 }
 
 push @EXPORT, qw(vmCoverage);
+
+####################################################################################################################################
+# Get vm architecture bits
+####################################################################################################################################
+sub vmArchBits
+{
+    my $strVm = shift;
+
+    return ($oyVm->{$strVm}{&VM_ARCH} eq VM_ARCH_AMD64 ? 64 : 32);
+}
+
+push @EXPORT, qw(vmArchBits);
 
 1;

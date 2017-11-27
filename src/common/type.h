@@ -29,4 +29,11 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 
+/***********************************************************************************************************************************
+Include all header files in type directory for convenience
+***********************************************************************************************************************************/
+#include "common/type/list.h"
+#include "common/type/string.h"
+#include "common/type/stringList.h"
+
 #endif

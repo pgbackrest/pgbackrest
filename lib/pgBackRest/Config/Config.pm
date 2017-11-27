@@ -20,13 +20,14 @@ use pgBackRest::Common::Io::Base;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Common::Wait;
-use pgBackRest::Config::LoadFailback;
+use pgBackRest::LibC qw(:config :configDefine);
 use pgBackRest::Version;
 
 ####################################################################################################################################
 # Export config constants and functions
 ####################################################################################################################################
-push(@EXPORT, @pgBackRest::Config::LoadFailback::EXPORT);
+push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{config}});
+push(@EXPORT, @{$pgBackRest::LibC::EXPORT_TAGS{configDefine}});
 
 ####################################################################################################################################
 # SOURCE Constants
@@ -186,7 +187,7 @@ sub configLoad
     # calculated correctly in the C Library -- perhaps in the future this value will be passed in or set some other way
     if (cfgOptionValid(CFGOPT_BACKUP_CMD) && cfgOptionTest(CFGOPT_BACKUP_HOST) && !cfgOptionTest(CFGOPT_BACKUP_CMD))
     {
-        cfgOptionSet(CFGOPT_BACKUP_CMD, BACKREST_BIN);
+        cfgOptionSet(CFGOPT_BACKUP_CMD, backrestBin());
         $oOption{cfgOptionName(CFGOPT_BACKUP_CMD)}{source} = CFGDEF_SOURCE_DEFAULT;
     }
 
@@ -197,7 +198,7 @@ sub configLoad
             if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iOptionIdx)) &&
                 !cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)))
             {
-                cfgOptionSet(cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx), BACKREST_BIN);
+                cfgOptionSet(cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx), backrestBin());
                 $oOption{cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)}{source} = CFGDEF_SOURCE_DEFAULT;
             }
         }
@@ -1152,7 +1153,7 @@ sub cfgCommandWrite
     my $bDisplayOnly = shift;
 
     # Set defaults
-    $strExeString = defined($strExeString) ? $strExeString : BACKREST_BIN;
+    $strExeString = defined($strExeString) ? $strExeString : backrestBin();
     $bIncludeConfig = defined($bIncludeConfig) ? $bIncludeConfig : false;
     $bIncludeCommand = defined($bIncludeCommand) ? $bIncludeCommand : true;
 

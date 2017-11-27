@@ -31,11 +31,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: /archive/db/archive.info
 ---------------------------------------------
@@ -49,11 +49,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - error on identical link destinations (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
@@ -154,7 +154,7 @@ backup-type="full"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -184,7 +184,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
@@ -235,11 +235,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - resume (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --force --checksum-page --type=full --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
@@ -328,7 +328,7 @@ backup-type="full"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -358,7 +358,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
@@ -409,11 +409,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - invalid repo (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --repo-path=/bogus_path  --log-level-console=warn --type=full --stanza=db backup
@@ -433,12 +433,12 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 restore_command = '[BACKREST-BIN] --cmd-ssh=/usr/bin/ssh --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=warn --log-level-console=warn  --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=warn --compress-level-network=0  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
 ----------------------------------------------------------------
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --compress-level-network=0 --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db archive-get %f "%p"'
 
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
@@ -465,7 +465,7 @@ incr backup - invalid database version (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [051]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 8.0, system-id = 6353949018581704918
+P00  ERROR: [051]: database version = 9.4, system-id 1000000000000000094 does not match backup version = 8.0, system-id = 1000000000000000094
             HINT: is this the correct stanza?
 
 incr backup - invalid system id (backup host)
@@ -473,7 +473,7 @@ incr backup - invalid system id (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
-P00  ERROR: [051]: database version = 9.4, system-id 6353949018581704918 does not match backup version = 9.4, system-id = 6999999999999999999
+P00  ERROR: [051]: database version = 9.4, system-id 1000000000000000094 does not match backup version = 9.4, system-id = 6999999999999999999
             HINT: is this the correct stanza?
 
 incr backup - invalid control version (backup host)
@@ -602,7 +602,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -632,7 +632,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -688,11 +688,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 incr backup - resume and add tablespace 2 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --process-max=1 --stanza=db backup --test --test-delay=0.2 --test-point=backup-resume=y
@@ -784,7 +784,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -816,7 +816,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -880,11 +880,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - cannot resume - new diff (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
@@ -976,7 +976,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -1007,7 +1007,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1068,11 +1068,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - cannot resume - disabled / no repo link (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --no-resume --log-level-console=warn --process-max=1 --type=diff --stanza=db backup --test --test-delay=0.2 --test-point=backup-noresume=y
@@ -1164,7 +1164,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -1195,7 +1195,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1256,11 +1256,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 restore, backup '[BACKUP-DIFF-2]', expect exit 40 - fail on used path (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --set=[BACKUP-DIFF-2] --log-level-console=warn  --stanza=db restore
@@ -1374,7 +1374,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -1405,7 +1405,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1463,11 +1463,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -1488,11 +1488,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000094,"db-version":"9.4"}
 
 incr backup - update files (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup
@@ -1584,7 +1584,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -1615,7 +1615,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-INCR-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1674,11 +1674,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - updates since last full (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --type=diff --stanza=db backup
@@ -1773,7 +1773,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -1804,7 +1804,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1864,11 +1864,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 incr backup - remove files - but won't affect manifest (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
@@ -1961,7 +1961,7 @@ backup-type="incr"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -1992,7 +1992,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","checksum-page":false,"reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2053,11 +2053,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - remove files during backup (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --process-max=1 --type=diff --stanza=db backup --test --test-delay=1 --test-point=manifest-build=y
@@ -2152,7 +2152,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -2181,7 +2181,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","checksum-page":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-2]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2243,11 +2243,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - update file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
@@ -2336,7 +2336,7 @@ backup-type="full"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -2366,7 +2366,7 @@ pg_data/base/32768/33000={"checksum":"4a383e4fb8b5cd2a4e8fab91ef63dce48e532a2f",
 pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c2ec5","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2429,11 +2429,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 info db stanza - normal output (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --stanza=db info
@@ -2496,7 +2496,7 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 144KB
-            repository size: 2.3KB, repository backup size: 2.3KB
+            repository size: 2.2KB, repository backup size: 2.2KB
 
 info db stanza - normal output (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=warn --stanza=db --output=json info
@@ -2766,7 +2766,7 @@ info db stanza - normal output (backup host)
         "db" : [
             {
                 "id" : 1,
-                "system-id" : 6353949018581704918,
+                "system-id" : 1000000000000000094,
                 "version" : "9.4"
             }
         ],
@@ -2879,7 +2879,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -2910,7 +2910,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2967,11 +2967,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 restore delta, remap - selective restore 16384 (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --log-level-console=warn --db-include=16384  --stanza=db restore
@@ -3025,13 +3025,13 @@ stanza: db
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 144KB
-            repository size: 2.3KB, repository backup size: 2.3KB
+            repository size: 2.2KB, repository backup size: 2.2KB
 
         diff backup: [BACKUP-DIFF-5]
             timestamp start/stop: [TIMESTAMP-STR]
             wal start/stop: n/a
             database size: 144KB, backup size: 9B
-            repository size: 2.3KB, repository backup size: 48B
+            repository size: 2.2KB, repository backup size: 48B
             backup reference list: [BACKUP-FULL-3]
 
 info all stanzas - normal output (db-master host)
@@ -3114,7 +3114,7 @@ info all stanzas - normal output (db-master host)
         "db" : [
             {
                 "id" : 1,
-                "system-id" : 6353949018581704918,
+                "system-id" : 1000000000000000094,
                 "version" : "9.4"
             }
         ],
@@ -3243,7 +3243,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -3274,7 +3274,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3332,11 +3332,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
@@ -3434,7 +3434,7 @@ backup-type="diff"
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [backup:option]
@@ -3465,7 +3465,7 @@ pg_data/base/32768/33000.32767={"checksum":"21e2c7c1a326682c07053b7d6a5a40dbd49c
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"89373d9f2973502940de06bc5212489df3f8a912","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"b4a3adade1e81ebfc7e9a27bca0887a347d81522","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","master":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3524,8 +3524,8 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}

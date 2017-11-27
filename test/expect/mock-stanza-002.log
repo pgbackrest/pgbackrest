@@ -39,11 +39,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -57,11 +57,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - fail on rerun of stanza-create - info files exist (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -85,11 +85,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -103,11 +103,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - fail on database mismatch without force option (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -131,11 +131,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -149,11 +149,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-upgrade db - already up to date (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
@@ -176,11 +176,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -194,11 +194,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -207,12 +207,14 @@ P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
+P00  DEBUG:     Protocol::Helper::protocolParam(): iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = archive-push, strRemoteType = backup
+P00  DEBUG:     Protocol::Helper::protocolParam=>: strRemoteCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strRemoteHost = backup, strRemoteHostSshPort = [undef], strRemoteHostUser = [USER-2]
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote', strId = remote process on 'backup', strName = remote
 P00  DEBUG:     Protocol::Storage::Remote->new(): oProtocol = [object]
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strCipherPass = <redacted>, strWarning = [undef]
@@ -220,9 +222,9 @@ P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = f5035e2c3b83a9c32660f959b23451e78f7438f7
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000001-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001
@@ -239,7 +241,7 @@ stanza-create db - gunzip fail on forced stanza-create (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --db1-user=[USER-1] --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --no-online --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/backup/repo --stanza=db
-P00  ERROR: [041]: unable to open '[TEST_PATH]/backup/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz': Permission denied
+P00  ERROR: [041]: unable to open '[TEST_PATH]/backup/repo/archive/db/9.3-1/0000000100000001/000000010000000100000001-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz': Permission denied
 P00   INFO: stanza-create command end: aborted with exception [041]
 
 + supplemental file: [TEST_PATH]/backup/repo/backup/db/backup.info
@@ -256,11 +258,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - force create archive.info from gz file (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -283,11 +285,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 stanza-create db - repeat create - error that files exist (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
@@ -310,11 +312,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201306121
 db-control-version=937
 db-id=1
-db-system-id=6395542721432104958
+db-system-id=1000000000000000093
 db-version="9.3"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -323,12 +325,14 @@ P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000002, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
+P00  DEBUG:     Protocol::Helper::protocolParam(): iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = archive-push, strRemoteType = backup
+P00  DEBUG:     Protocol::Helper::protocolParam=>: strRemoteCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strRemoteHost = backup, strRemoteHostSshPort = [undef], strRemoteHostUser = [USER-2]
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-push --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote', strId = remote process on 'backup', strName = remote
 P00  DEBUG:     Protocol::Storage::Remote->new(): oProtocol = [object]
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 6395542721432104958
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
 P00  DEBUG:     Archive::Push::File::archivePushCheck=>: strArchiveId = 9.3-1, strChecksum = [undef], strCipherPass = <redacted>, strWarning = [undef]
@@ -336,9 +340,9 @@ P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = f5035e2c3b83a9c32660f959b23451e78f7438f7
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = ({rxyParam => ({iLevel => 3}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
-P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Protocol::Storage::Remote->openWrite(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000002
@@ -354,7 +358,7 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00  ERROR: [044]: raised from remote process on 'backup': WAL segment version 9.4 does not match archive version 9.3
-            WAL segment system-id 6353949018581704918 does not match archive system-id 6395542721432104958
+            WAL segment system-id 1000000000000000094 does not match archive system-id 1000000000000000093
             HINT: are you archiving to the correct stanza?
 
 stanza-upgrade db - successful upgrade creates additional history (backup host)
@@ -377,12 +381,12 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -396,12 +400,12 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -410,6 +414,8 @@ P00   INFO: get WAL segment 000000010000000100000002
 P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
+P00  DEBUG:     Protocol::Helper::protocolParam(): iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = archive-get, strRemoteType = backup
+P00  DEBUG:     Protocol::Helper::protocolParam=>: strRemoteCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strRemoteHost = backup, strRemoteHostSshPort = [undef], strRemoteHostUser = [USER-2]
 P00  DEBUG:     Protocol::Remote::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, iSshPort = [undef], strCommand = [BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote, strCommandSSH = ssh, strHost = backup, strUser = [USER-2]
 P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 4194304, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 60, strCommand = ssh -o LogLevel=error -o Compression=no -o PasswordAuthentication=no backrest@backup '[BACKREST-BIN] --buffer-size=4194304 --command=archive-get --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --protocol-timeout=60 --stanza=db --type=backup remote', strId = remote process on 'backup', strName = remote
 P00  DEBUG:     Protocol::Storage::Remote->new(): oProtocol = [object]
@@ -418,11 +424,11 @@ P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201306121, iDbControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 6395542721432104958
+P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201306121, iDbControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: found cached protocol
-P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz, strArchiveId = 9.3-1, strCipherPass = <redacted>
-P00  DEBUG:     Protocol::Storage::Remote->openRead(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-f5035e2c3b83a9c32660f959b23451e78f7438f7.gz
+P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz, strArchiveId = 9.3-1, strCipherPass = <redacted>
+P00  DEBUG:     Protocol::Storage::Remote->openRead(): rhParam = [hash], strFileExp = <REPO:ARCHIVE>/9.3-1/000000010000000100000002-488ba4b8b98acc510bce86b8f16e3c1ed9886a29.gz
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = ({rxyParam => ({strCompressType => decompress}), strClass => pgBackRest::Storage::Filter::Gzip}), strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
@@ -444,10 +450,11 @@ full backup - create first full backup  (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/backup/repo --retention-full=2 --stanza=db --start-fast --type=full
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 1e34fa1c833090d94b9bb14f2a8d3153dca6ea27
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum 89373d9f2973502940de06bc5212489df3f8a912
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum e40de8cea99dd469c3efb47f5f33a73c7390fb9c
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum b4a3adade1e81ebfc7e9a27bca0887a347d81522
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
@@ -524,12 +531,12 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-create db - use force to recreate the stanza from backups (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
@@ -550,12 +557,12 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=2
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
 
 stanza-upgrade db - successfully upgrade with XX.Y-Z (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-upgrade
@@ -580,13 +587,13 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201510051
 db-control-version=942
 db-id=3
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":6395542721432104958,"db-version":"9.3"}
-2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
-3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":6392579261579036436,"db-version":"9.5"}
+1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
+2={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
+3={"db-catalog-version":201510051,"db-control-version":942,"db-system-id":1000000000000000095,"db-version":"9.5"}
 
 + supplemental file: [TEST_PATH]/backup/repo/archive/db/archive.info
 --------------------------------------------------------------------
@@ -600,14 +607,14 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=4
-db-system-id=6392579261579036436
+db-system-id=1000000000000000095
 db-version="9.5"
 
 [db:history]
-1={"db-id":6395542721432104958,"db-version":"9.3"}
-2={"db-id":6353949018581704918,"db-version":"9.4"}
-3={"db-id":35184388866048,"db-version":"10.0"}
-4={"db-id":6392579261579036436,"db-version":"9.5"}
+1={"db-id":1000000000000000093,"db-version":"9.3"}
+2={"db-id":1000000000000000094,"db-version":"9.4"}
+3={"db-id":1000000000000000094,"db-version":"10.0"}
+4={"db-id":1000000000000000095,"db-version":"9.5"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=warn --archive-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -617,10 +624,11 @@ diff backup - diff changed to full backup (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/backup/repo --retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum f5035e2c3b83a9c32660f959b23451e78f7438f7
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 15b1a1a35c26b17570aca7920980f0ad11c6d858
-P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum e28bf39d0a56bf9fabd4049b329fcae8878bfec6
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 65b64687e7bfd1a918c6144f84a133f03e50ac57
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/global/pg_control (8KB, 100%) checksum b03a64b1be549a32d53d41dd40ab394ba82fa1c1
+P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
@@ -763,17 +771,17 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
         "db" : [
             {
                 "id" : 1,
-                "system-id" : 6395542721432104958,
+                "system-id" : 1000000000000000093,
                 "version" : "9.3"
             },
             {
                 "id" : 2,
-                "system-id" : 6353949018581704918,
+                "system-id" : 1000000000000000094,
                 "version" : "9.4"
             },
             {
                 "id" : 3,
-                "system-id" : 6392579261579036436,
+                "system-id" : 1000000000000000095,
                 "version" : "9.5"
             }
         ],

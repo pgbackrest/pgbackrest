@@ -75,9 +75,9 @@ Check that the encoded string is valid
 bool
 decodeToBinValid(EncodeType encodeType, const char *source)
 {
-    volatile bool valid = true;
+    bool valid = true;
 
-    TRY()
+    TRY_BEGIN()
     {
         decodeToBinValidate(encodeType, source);
     }
@@ -85,6 +85,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
     {
         valid = false;
     }
+    TRY_END();
 
     return valid;
 }

@@ -2,7 +2,7 @@
 # BackupInfoUnitTest.pm - Unit tests for BackupInfo
 ####################################################################################################################################
 package pgBackRestTest::Module::Backup::BackupInfoUnitTest;
-use parent 'pgBackRestTest::Env::ConfigEnvTest';
+use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -17,6 +17,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
@@ -78,39 +79,40 @@ sub run
     {
         my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP), false, false,
             {bIgnoreMissing => true});
-        $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $i93ControlVersion, $i93CatalogVersion, true);
+        $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $i93ControlVersion, $i93CatalogVersion, true);
 
         # All DB section matches
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oBackupInfo->check(PG_VERSION_93, $i93ControlVersion, $i93CatalogVersion, WAL_VERSION_93_SYS_ID,
-            false)}, 1, 'db section matches');
+        $self->testResult(sub {$oBackupInfo->check(
+            PG_VERSION_93, $i93ControlVersion, $i93CatalogVersion, $self->dbSysId(PG_VERSION_93), false)}, 1, 'db section matches');
 
         # DB section version mismatch
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testException(sub {$oBackupInfo->check(PG_VERSION_94, $i93ControlVersion, $i93CatalogVersion,
-            WAL_VERSION_93_SYS_ID)}, ERROR_BACKUP_MISMATCH,
-            "database version = " . &PG_VERSION_94 . ", system-id " . &WAL_VERSION_93_SYS_ID .
-            " does not match backup version = " . &PG_VERSION_93 . ", " . "system-id = " . &WAL_VERSION_93_SYS_ID .
+            $self->dbSysId(PG_VERSION_93))}, ERROR_BACKUP_MISMATCH,
+            "database version = " . &PG_VERSION_94 . ", system-id " . $self->dbSysId(PG_VERSION_93) .
+            " does not match backup version = " . &PG_VERSION_93 . ", " . "system-id = " . $self->dbSysId(PG_VERSION_93) .
             "\nHINT: is this the correct stanza?");
 
         # DB section system-id mismatch
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oBackupInfo->check(PG_VERSION_93, $i93ControlVersion, $i93CatalogVersion,
-            WAL_VERSION_94_SYS_ID)}, ERROR_BACKUP_MISMATCH,
-            "database version = " . &PG_VERSION_93 . ", system-id " . &WAL_VERSION_94_SYS_ID .
-            " does not match backup version = " . &PG_VERSION_93 . ", " . "system-id = " . &WAL_VERSION_93_SYS_ID .
+        $self->testException(
+            sub {$oBackupInfo->check(PG_VERSION_93, $i93ControlVersion, $i93CatalogVersion, $self->dbSysId(PG_VERSION_94))},
+            ERROR_BACKUP_MISMATCH,
+            "database version = " . &PG_VERSION_93 . ", system-id " . $self->dbSysId(PG_VERSION_94) .
+            " does not match backup version = " . &PG_VERSION_93 . ", " . "system-id = " . $self->dbSysId(PG_VERSION_93) .
             "\nHINT: is this the correct stanza?");
 
         # DB section control version mismatch
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oBackupInfo->check(PG_VERSION_93, 123, $i93CatalogVersion, WAL_VERSION_93_SYS_ID)},
+        $self->testException(sub {$oBackupInfo->check(PG_VERSION_93, 123, $i93CatalogVersion, $self->dbSysId(PG_VERSION_93))},
             ERROR_BACKUP_MISMATCH, "database control-version = 123, catalog-version $i93CatalogVersion " .
             "does not match backup control-version = $i93ControlVersion, catalog-version = $i93CatalogVersion" .
             "\nHINT: this may be a symptom of database or repository corruption!");
 
         # DB section catalog version mismatch
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oBackupInfo->check(PG_VERSION_93, $i93ControlVersion, 123456789, WAL_VERSION_93_SYS_ID)},
+        $self->testException(sub {$oBackupInfo->check(PG_VERSION_93, $i93ControlVersion, 123456789, $self->dbSysId(PG_VERSION_93))},
             ERROR_BACKUP_MISMATCH, "database control-version = $i93ControlVersion, catalog-version 123456789 " .
             "does not match backup control-version = $i93ControlVersion, catalog-version = $i93CatalogVersion" .
             "\nHINT: this may be a symptom of database or repository corruption!");
@@ -121,15 +123,15 @@ sub run
             $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_HISTORY_ID));
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oBackupInfo->confirmDb($strBackupLabel, PG_VERSION_93, WAL_VERSION_93_SYS_ID)}, true,
+        $self->testResult(sub {$oBackupInfo->confirmDb($strBackupLabel, PG_VERSION_93, $self->dbSysId(PG_VERSION_93))}, true,
             'backup db matches');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oBackupInfo->confirmDb($strBackupLabel, PG_VERSION_94, WAL_VERSION_93_SYS_ID)}, false,
+        $self->testResult(sub {$oBackupInfo->confirmDb($strBackupLabel, PG_VERSION_94, $self->dbSysId(PG_VERSION_93))}, false,
             'backup db wrong version');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testResult(sub {$oBackupInfo->confirmDb($strBackupLabel, PG_VERSION_93, WAL_VERSION_94_SYS_ID)}, false,
+        $self->testResult(sub {$oBackupInfo->confirmDb($strBackupLabel, PG_VERSION_93, $self->dbSysId(PG_VERSION_94))}, false,
             'backup db wrong system-id');
     }
 
@@ -138,15 +140,15 @@ sub run
     {
         my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP), false, false,
             {bIgnoreMissing => true});
-        $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $i93ControlVersion, $i93CatalogVersion, true);
+        $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $i93ControlVersion, $i93CatalogVersion, true);
 
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
-        $oArchiveInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, true);
+        $oArchiveInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), true);
 
         # Map archiveId to Backup history id
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strArchiveId = $oArchiveInfo->archiveId({strDbVersion => PG_VERSION_93, ullDbSysId => WAL_VERSION_93_SYS_ID});
+        my $strArchiveId = $oArchiveInfo->archiveId({strDbVersion => PG_VERSION_93, ullDbSysId => $self->dbSysId(PG_VERSION_93)});
         $self->testResult(sub {$oBackupInfo->backupArchiveDbHistoryId($strArchiveId,
             storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, 1, 'backupArchiveDbHistoryId found');
 
@@ -160,8 +162,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Update db section and db history sections
         my $iHistoryId = $oBackupInfo->dbHistoryIdGet(true)+1;
-        $oBackupInfo->dbSectionSet(PG_VERSION_94, $i94ControlVersion, $i94CatalogVersion, WAL_VERSION_93_SYS_ID, $iHistoryId);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_93_SYS_ID, $iHistoryId);
+        $oBackupInfo->dbSectionSet(
+            PG_VERSION_94, $i94ControlVersion, $i94CatalogVersion, $self->dbSysId(PG_VERSION_93), $iHistoryId);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, $self->dbSysId(PG_VERSION_93), $iHistoryId);
 
         $oBackupInfo->save();
         $oArchiveInfo->save();
@@ -173,8 +176,9 @@ sub run
         # Different version but same ullsystemid
         #---------------------------------------------------------------------------------------------------------------------------
         $iHistoryId = $oBackupInfo->dbHistoryIdGet(false)+1;
-        $oBackupInfo->dbSectionSet(PG_VERSION_94, $i93ControlVersion, $i93CatalogVersion, WAL_VERSION_94_SYS_ID, $iHistoryId);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_94_SYS_ID, $iHistoryId);
+        $oBackupInfo->dbSectionSet(
+            PG_VERSION_94, $i93ControlVersion, $i93CatalogVersion, $self->dbSysId(PG_VERSION_94), $iHistoryId);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), $iHistoryId);
 
         $oBackupInfo->save();
         $oArchiveInfo->save();
@@ -190,7 +194,7 @@ sub run
         # Create a backupInfo file
         my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP), false, false,
             {bIgnoreMissing => true});
-        $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $i93ControlVersion, $i93CatalogVersion, true);
+        $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $i93ControlVersion, $i93CatalogVersion, true);
 
         my $strFile = $oBackupInfo->{strFileName};
 
@@ -222,12 +226,12 @@ sub run
             {bIgnoreMissing => true})}, ERROR_ASSERT,
             'a user passphrase and sub passphrase are both required when encrypting');
 
-        my $strCipherPassSub = storageRepo()->cipherPassGen();
+        my $strCipherPassSub = cipherPassGen();
 
         # Create encrypted files
         $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet(STORAGE_REPO_BACKUP), false, false,
             {bIgnoreMissing => true, strCipherPassSub => $strCipherPassSub});
-        $oBackupInfo->create(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $i93ControlVersion, $i93CatalogVersion, true);
+        $oBackupInfo->create(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $i93ControlVersion, $i93CatalogVersion, true);
 
         # Clear the storage repo settings and change the passphrase
         storageRepoCacheClear($self->stanza());

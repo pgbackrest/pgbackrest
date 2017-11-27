@@ -11,12 +11,15 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
 
+use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 use Storable qw(dclone);
 
+use pgBackRest::Archive::Common;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
+use pgBackRest::DbVersion;
 use pgBackRest::Protocol::Storage::Helper;
 
 use pgBackRestTest::Env::Host::HostBackupTest;
@@ -33,23 +36,6 @@ use pgBackRestTest::Common::RunTest;
 ####################################################################################################################################
 # Constants
 ####################################################################################################################################
-use constant WAL_VERSION_92                                      => '92';
-    push @EXPORT, qw(WAL_VERSION_92);
-use constant WAL_VERSION_92_SYS_ID                               => 6393320793115174899;
-    push @EXPORT, qw(WAL_VERSION_92_SYS_ID);
-use constant WAL_VERSION_93                                      => '93';
-    push @EXPORT, qw(WAL_VERSION_93);
-use constant WAL_VERSION_93_SYS_ID                               => 6395542721432104958;
-    push @EXPORT, qw(WAL_VERSION_93_SYS_ID);
-use constant WAL_VERSION_94                                      => '94';
-    push @EXPORT, qw(WAL_VERSION_94);
-use constant WAL_VERSION_94_SYS_ID                               => 6353949018581704918;
-    push @EXPORT, qw(WAL_VERSION_94_SYS_ID);
-use constant WAL_VERSION_95                                      => '95';
-    push @EXPORT, qw(WAL_VERSION_95);
-use constant WAL_VERSION_95_SYS_ID                               => 6392579261579036436;
-    push @EXPORT, qw(WAL_VERSION_95_SYS_ID);
-
 use constant ENCRYPTION_KEY_ARCHIVE                              => 'archive';
     push @EXPORT, qw(ENCRYPTION_KEY_ARCHIVE);
 use constant ENCRYPTION_KEY_MANIFEST                             => 'manifest';
@@ -206,28 +192,160 @@ sub setup
 }
 
 ####################################################################################################################################
-# archiveGenerate
-#
-# Generate an WAL segment for testing.
+# Generate database system id for the db version
 ####################################################################################################################################
-sub archiveGenerate
+sub dbSysId
 {
     my $self = shift;
-    my $strWalPath = shift;
-    my $iSourceNo = shift;
-    my $iArchiveNo = shift;
-    my $strWalVersion = shift;
-    my $bPartial = shift;
 
-    my $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo)) .
-                         (defined($bPartial) && $bPartial ? '.partial' : '');
-    my $strArchiveTestFile = $self->dataPath() . "/backup.wal${iSourceNo}_${strWalVersion}.bin";
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPgVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->dbSysId', \@_,
+            {name => 'strPgVersion', trace => true},
+        );
 
-    my $strSourceFile = "${strWalPath}/${strArchiveFile}";
+    return (1000000000000000000 + ($strPgVersion * 10));
+}
 
-    storageTest()->copy($strArchiveTestFile, $strSourceFile);
+####################################################################################################################################
+# Get database catalog version for the db version
+####################################################################################################################################
+sub dbCatalogVersion
+{
+    my $self = shift;
 
-    return $strArchiveFile, $strSourceFile;
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPgVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->sysId', \@_,
+            {name => 'strPgVersion', trace => true},
+        );
+
+    my $hCatalogVersion =
+    {
+        &PG_VERSION_83 => 200711281,
+        &PG_VERSION_84 => 200904091,
+        &PG_VERSION_90 => 201008051,
+        &PG_VERSION_91 => 201105231,
+        &PG_VERSION_92 => 201204301,
+        &PG_VERSION_93 => 201306121,
+        &PG_VERSION_94 => 201409291,
+        &PG_VERSION_95 => 201510051,
+        &PG_VERSION_96 => 201608131,
+        &PG_VERSION_10 => 201707211,
+    };
+
+    if (!defined($hCatalogVersion->{$strPgVersion}))
+    {
+        confess &log(ASSERT, "no catalog version defined for pg version ${strPgVersion}");
+    }
+
+    return $hCatalogVersion->{$strPgVersion};
+}
+
+####################################################################################################################################
+# Get database control version for the db version
+####################################################################################################################################
+sub dbControlVersion
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPgVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->dbControlVersion', \@_,
+            {name => 'strPgVersion', trace => true},
+        );
+
+    my $hControlVersion =
+    {
+        &PG_VERSION_83 => 833,
+        &PG_VERSION_84 => 843,
+        &PG_VERSION_90 => 903,
+        &PG_VERSION_91 => 903,
+        &PG_VERSION_92 => 922,
+        &PG_VERSION_93 => 937,
+        &PG_VERSION_94 => 942,
+        &PG_VERSION_95 => 942,
+        &PG_VERSION_96 => 960,
+        &PG_VERSION_10 => 1002,
+    };
+
+    if (!defined($hControlVersion->{$strPgVersion}))
+    {
+        confess &log(ASSERT, "no control version defined for pg version ${strPgVersion}");
+    }
+
+    return $hControlVersion->{$strPgVersion};
+}
+
+####################################################################################################################################
+# Generate control file content
+####################################################################################################################################
+sub controlGenerateContent
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPgVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->controlGenerateContent', \@_,
+            {name => 'strPgVersion', trace => true},
+        );
+
+    my $tControlContent = pack('Q', $self->dbSysId($strPgVersion));
+    $tControlContent .= pack('L', $self->dbControlVersion($strPgVersion));
+    $tControlContent .= pack('L', $self->dbCatalogVersion($strPgVersion));
+
+    # Pad bytes
+    $tControlContent .= ('C' x (8192 - length($tControlContent)));
+
+    return \$tControlContent;
+}
+
+####################################################################################################################################
+# Generate control file and write to disk
+####################################################################################################################################
+sub controlGenerate
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strDbPath,
+        $strPgVersion,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->controlGenerate', \@_,
+            {name => 'strDbPath', trace => true},
+            {name => 'strPgVersion', trace => true},
+        );
+
+    storageTest()->put("${strDbPath}/global/pg_control", $self->controlGenerateContent($strPgVersion));
 }
 
 ####################################################################################################################################
@@ -246,6 +364,87 @@ sub walSegment
 }
 
 ####################################################################################################################################
+# Generate WAL file content
+####################################################################################################################################
+sub walGenerateContent
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPgVersion,
+        $iSourceNo,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->walGenerateContent', \@_,
+            {name => 'strPgVersion', trace => true},
+            {name => 'iSourceNo', optional => true, default => 1, trace => true},
+        );
+
+    # Get WAL magic for the PG version
+    my $hWalMagic =
+    {
+        &PG_VERSION_83 => hex('0xD062'),
+        &PG_VERSION_84 => hex('0xD063'),
+        &PG_VERSION_90 => hex('0xD064'),
+        &PG_VERSION_91 => hex('0xD066'),
+        &PG_VERSION_92 => hex('0xD071'),
+        &PG_VERSION_93 => hex('0xD075'),
+        &PG_VERSION_94 => hex('0xD07E'),
+        &PG_VERSION_95 => hex('0xD087'),
+        &PG_VERSION_96 => hex('0xD093'),
+        &PG_VERSION_10 => hex('0xD097'),
+    };
+
+    my $tWalContent = pack('S', $hWalMagic->{$strPgVersion});
+
+    # Indicate that the long header is present
+    $tWalContent .= pack('S', 2);
+
+    # Add junk (H for header) for the bytes that won't be read by the tests
+    my $iOffset = 12 + ($strPgVersion >= PG_VERSION_93 ? testRunGet()->archBits() / 8 : 0);
+    $tWalContent .= ('H' x $iOffset);
+
+    # Add the system identifier
+    $tWalContent .= pack('Q', $self->dbSysId($strPgVersion));
+
+    # Add the source number to produce WAL segments with different checksums
+    $tWalContent .= pack('S', $iSourceNo);
+
+    # Pad out to the required size (B for body)
+    $tWalContent .= ('B' x (PG_WAL_SEGMENT_SIZE - length($tWalContent)));
+
+    return \$tWalContent;
+}
+
+####################################################################################################################################
+# Generate WAL file content checksum
+####################################################################################################################################
+sub walGenerateContentChecksum
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strPgVersion,
+        $hParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->walGenerateContent', \@_,
+            {name => 'strPgVersion', trace => true},
+            {name => 'hParam', required => false, trace => true},
+        );
+
+    return sha1_hex(${$self->walGenerateContent($strPgVersion, $hParam)});
+}
+
+####################################################################################################################################
 # walGenerate
 #
 # Generate a WAL segment and ready file for testing.
@@ -260,10 +459,10 @@ sub walGenerate
     my $bPartial = shift;
 
     my $strWalFile = "${strWalPath}/${strWalSegment}" . (defined($bPartial) && $bPartial ? '.partial' : '');
-    my $strArchiveTestFile = $self->dataPath() . "/backup.wal${iSourceNo}_${strPgVersion}.bin";
+    my $rtWalContent = $self->walGenerateContent($strPgVersion, {iSourceNo => $iSourceNo});
 
-    storageTest()->copy($strArchiveTestFile, $strWalFile);
-
+    # Put the WAL segment and the ready file
+    storageTest()->put($strWalFile, $rtWalContent);
     storageTest()->put("${strWalPath}/archive_status/${strWalSegment}.ready");
 
     return $strWalFile;

@@ -316,18 +316,8 @@ sub run
             storageDb()->pathCreate(
                 $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
-
-            if ($self->pgVersion() eq PG_VERSION_94)
-            {
-                storageDb()->copy(
-                    $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_95 . '.bin',
-                    $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
-            } else
-            {
-                storageDb()->copy(
-                    $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-                    $oHostDbMaster->dbPath() . '/testbase/' . DB_FILE_PGCONTROL);
-            }
+            $self->controlGenerate(
+                $oHostDbMaster->dbPath() . '/testbase', $self->pgVersion() eq PG_VERSION_94 ? PG_VERSION_95 : PG_VERSION_94);
 
             if (!$bRepoEncrypt)
             {

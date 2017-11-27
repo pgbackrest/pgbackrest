@@ -228,8 +228,8 @@ memContextAlloc(size_t size, bool zero)
 
             // ReAllocate memory before modifying anything else in case there is an error
             memContextCurrent()->allocList = memReAllocInternal(
-                memContextCurrent()->allocList, sizeof(void *) * memContextCurrent()->contextChildListSize,
-                sizeof(MemContext *) * allocListSizeNew, true);
+                memContextCurrent()->allocList, sizeof(void *) * memContextCurrent()->allocListSize,
+                sizeof(void *) * allocListSizeNew, true);
 
             // Set new size
             memContextCurrent()->allocListSize = allocListSizeNew;
@@ -244,12 +244,51 @@ memContextAlloc(size_t size, bool zero)
 }
 
 /***********************************************************************************************************************************
+Find a memory allocation
+***********************************************************************************************************************************/
+static int
+memFind(const void *buffer)
+{
+    // Error if buffer is null
+    if (!buffer)
+        THROW(AssertError, "unable to find null allocation");
+
+    // Find memory allocation
+    int allocIdx;
+
+    for (allocIdx = 0; allocIdx < memContextCurrent()->allocListSize; allocIdx++)
+        if (memContextCurrent()->allocList[allocIdx] == buffer)
+            break;
+
+    // Error if the buffer was not found
+    if (allocIdx == memContextCurrent()->allocListSize)
+        THROW(AssertError, "unable to find allocation");
+
+    return allocIdx;
+}
+
+/***********************************************************************************************************************************
 Allocate zeroed memory in the memory context
 ***********************************************************************************************************************************/
 void *
 memNew(size_t size)
 {
     return memContextAlloc(size, true);
+}
+
+/***********************************************************************************************************************************
+Grow allocated memory without initializing the new portion
+***********************************************************************************************************************************/
+void *
+memGrowRaw(const void *buffer, size_t size)
+{
+    // Find the buffer
+    int allocIdx = memFind(buffer);
+
+    // Grow the buffer
+    memContextCurrent()->allocList[allocIdx] = memReAllocInternal(memContextCurrent()->allocList[allocIdx], 0, size, false);
+
+    return memContextCurrent()->allocList[allocIdx];
 }
 
 /***********************************************************************************************************************************
@@ -267,20 +306,8 @@ Free a memory allocation in the context
 void
 memFree(void *buffer)
 {
-    // Error if buffer is null
-    if (!buffer)
-        THROW(AssertError, "unable to free null allocation");
-
-    // Find memory to free
-    int allocIdx;
-
-    for (allocIdx = 0; allocIdx < memContextCurrent()->allocListSize; allocIdx++)
-        if (memContextCurrent()->allocList[allocIdx] == buffer)
-            break;
-
-    // Error if the buffer was not found
-    if (allocIdx == memContextCurrent()->allocListSize)
-        THROW(AssertError, "unable to find allocation");
+    // Find the buffer
+    int allocIdx = memFind(buffer);
 
     // Free the buffer
     memFreeInternal(memContextCurrent()->allocList[allocIdx]);

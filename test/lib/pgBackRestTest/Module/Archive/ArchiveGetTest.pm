@@ -2,7 +2,7 @@
 # Archive Get and Base Tests
 ####################################################################################################################################
 package pgBackRestTest::Module::Archive::ArchiveGetTest;
-use parent 'pgBackRestTest::Env::ConfigEnvTest';
+use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -67,10 +67,8 @@ sub initTest
     # Create pg_control path
     storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
 
-    # Copy a pg_control file into the pg_control path
-    executeTest(
-        'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' . $self->{strDbPath} . '/' .
-        DB_FILE_PGCONTROL);
+    # Generate pg_control file
+    $self->controlGenerate($self->{strDbPath}, PG_VERSION_94);
 }
 
 ####################################################################################################################################
@@ -79,7 +77,6 @@ sub initTest
 sub run
 {
     my $self = shift;
-    my $oArchiveBase = new pgBackRest::Archive::Base();
 
     # Define test file
     my $strFileContent = 'TESTDATA';
@@ -94,20 +91,23 @@ sub run
     ################################################################################################################################
     if ($self->begin("Archive::Base::getCheck()"))
     {
+        my $oArchiveBase = new pgBackRest::Archive::Base();
+
         # Create and save archive.info file
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
-        $oArchiveInfo->create(PG_VERSION_92, WAL_VERSION_92_SYS_ID, false);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_92, WAL_VERSION_92_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_94_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 10);
+        $oArchiveInfo->create(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), false);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), $oArchiveInfo->dbHistoryIdGet(false) + 10);
         $oArchiveInfo->save();
 
         # db-version, db-sys-id passed but combination doesn't exist in archive.info history
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oArchiveBase->getCheck(PG_VERSION_95, WAL_VERSION_94_SYS_ID, undef, false)}, ERROR_UNKNOWN,
+        $self->testException(sub {$oArchiveBase->getCheck(
+            PG_VERSION_95, $self->dbSysId(PG_VERSION_94), undef, false)}, ERROR_UNKNOWN,
             "unable to retrieve the archive id for database version '" . PG_VERSION_95 . "' and system-id '" .
-            WAL_VERSION_94_SYS_ID . "'");
+            $self->dbSysId(PG_VERSION_94) . "'");
 
         # db-version, db-sys-id and wal passed all undefined
         #---------------------------------------------------------------------------------------------------------------------------
@@ -123,7 +123,8 @@ sub run
 
         # db-version undefined, db-sys-id defined and wal undefined
         #---------------------------------------------------------------------------------------------------------------------------
-        ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(undef, WAL_VERSION_93_SYS_ID, undef, false);
+        ($strArchiveId, $strArchiveFile, $strCipherPass) = $oArchiveBase->getCheck(
+            undef, $self->dbSysId(PG_VERSION_93), undef, false);
         $self->testResult(sub {($strArchiveId eq PG_VERSION_94 . '-13') && !defined($strArchiveFile) && !defined($strCipherPass)},
             true, 'undef db-version, old db-sys-id and wal undef returns only current db archive-id');
 
@@ -135,10 +136,11 @@ sub run
 
         # old db-version, old db-sys-id and wal undefined, check = true (default)
         #---------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oArchiveBase->getCheck(PG_VERSION_93, WAL_VERSION_93_SYS_ID, undef)}, ERROR_ARCHIVE_MISMATCH,
+        $self->testException(sub {$oArchiveBase->getCheck(
+            PG_VERSION_93, $self->dbSysId(PG_VERSION_93), undef)}, ERROR_ARCHIVE_MISMATCH,
             "WAL segment version " . PG_VERSION_93 . " does not match archive version " . PG_VERSION_94 . "\n" .
-            "WAL segment system-id " . WAL_VERSION_93_SYS_ID . " does not match archive system-id " . WAL_VERSION_94_SYS_ID .
-            "\nHINT: are you archiving to the correct stanza?");
+            "WAL segment system-id " . $self->dbSysId(PG_VERSION_93) . " does not match archive system-id " .
+            $self->dbSysId(PG_VERSION_94) . "\nHINT: are you archiving to the correct stanza?");
 
         # db-version, db-sys-id undefined, wal requested is stored in old archive
         #---------------------------------------------------------------------------------------------------------------------------
@@ -157,9 +159,10 @@ sub run
         # Pass db-version and db-sys-id where WAL is actually located
         #---------------------------------------------------------------------------------------------------------------------------
         ($strArchiveId, $strArchiveFile, $strCipherPass) =
-            $oArchiveBase->getCheck(PG_VERSION_92, WAL_VERSION_92_SYS_ID, $strWalSegment, false);
+            $oArchiveBase->getCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
 
-        $self->testResult(sub {($strArchiveId eq PG_VERSION_92 . '-1') && ($strArchiveFile eq $strWalSegmentName) && !defined($strCipherPass)},
+        $self->testResult(
+            sub {($strArchiveId eq PG_VERSION_92 . '-1') && ($strArchiveFile eq $strWalSegmentName) && !defined($strCipherPass)},
             true, 'db-version, db-sys-id with a requested wal in requested db archive');
 
         # Put same WAL segment in more recent archive for same DB
@@ -173,7 +176,7 @@ sub run
         storageRepo()->put("${strWalMajorPath}/${strWalSegmentName}", $strFileContent);
 
         ($strArchiveId, $strArchiveFile, $strCipherPass) =
-            $oArchiveBase->getCheck(PG_VERSION_92, WAL_VERSION_92_SYS_ID, $strWalSegment, false);
+            $oArchiveBase->getCheck(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), $strWalSegment, false);
 
         # Using the returned values, confirm the correct file is read
         $self->testResult(sub {sha1_hex(${storageRepo()->get($self->{strArchivePath} . "/" . $strArchiveId . "/" .
@@ -196,9 +199,9 @@ sub run
         # Create and save archive.info file
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
-        $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, false);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_94_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 10);
+        $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), false);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), $oArchiveInfo->dbHistoryIdGet(false) + 10);
         $oArchiveInfo->save();
 
         # file not found
@@ -266,11 +269,8 @@ sub run
         # Remove the destination file to ensure it is copied
         storageTest()->remove($strDestinationFile);
 
-        # Remove the current pg_control file and copy the older db pg_control file into the pg_control path
-        storageTest()->remove($self->{strDbPath} . '/' . DB_FILE_PGCONTROL);
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_93 . '.bin ' . $self->{strDbPath} . '/' .
-            DB_FILE_PGCONTROL);
+        # Overwrite current pg_control file with older version
+        $self->controlGenerate($self->{strDbPath}, PG_VERSION_93);
 
         $self->testResult(sub {new pgBackRest::Archive::Get::Get()->get($strWalSegmentName, $strDestinationFile)}, 0,
             "WAL segment copied from older db backupset to same version older db");

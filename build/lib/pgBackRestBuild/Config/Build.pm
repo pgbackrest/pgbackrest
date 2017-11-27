@@ -16,8 +16,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::Data;
-use pgBackRest::Config::Define;
+use pgBackRestBuild::Config::Data;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build::Common;

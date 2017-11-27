@@ -2,7 +2,7 @@
 # BackupInfoUnitTest.pm - Unit tests for BackupInfo
 ####################################################################################################################################
 package pgBackRestTest::Module::Archive::ArchiveInfoUnitTest;
-use parent 'pgBackRestTest::Env::ConfigEnvTest';
+use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -17,6 +17,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Info;
 use pgBackRest::Backup::Info;
+use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
 use pgBackRest::Common::Lock;
@@ -87,16 +88,19 @@ sub run
     ################################################################################################################################
     if ($self->begin("Archive::Info::reconstruct()"))
     {
+        my $tWalContent = $self->walGenerateContent(PG_VERSION_94);
+        my $strWalChecksum = $self->walGenerateContentChecksum(PG_VERSION_94);
+
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
 
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_94 . "-1/0000000100000001", {bCreateParent => true});
         my $strArchiveFile = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_94 . "-1/0000000100000001/") .
-            "000000010000000100000001-1e34fa1c833090d94b9bb14f2a8d3153dca6ea27";
-        executeTest('cp ' . $strArchiveTestFile . WAL_VERSION_94 . '.bin ' . $strArchiveFile);
+            "000000010000000100000001-${strWalChecksum}";
+        storageTest()->put($strArchiveFile, $tWalContent);
 
-        $self->testResult(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, WAL_VERSION_94_SYS_ID)}, "[undef]", 'reconstruct');
-        $self->testResult(sub {$oArchiveInfo->check(PG_VERSION_94, WAL_VERSION_94_SYS_ID, false)}, PG_VERSION_94 . "-1",
+        $self->testResult(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, "[undef]", 'reconstruct');
+        $self->testResult(sub {$oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), false)}, PG_VERSION_94 . "-1",
             '    check reconstruct');
 
         # Attempt to reconstruct from an encypted archived WAL for an unencrypted repo
@@ -104,7 +108,7 @@ sub run
         # Prepend encryption Magic signature to simulate encryption
         executeTest('echo "' . CIPHER_MAGIC . '$(cat ' . $strArchiveFile . ')" > ' . $strArchiveFile);
 
-        $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, WAL_VERSION_94_SYS_ID)}, ERROR_CIPHER,
+        $self->testException(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_CIPHER,
             "encryption incompatible for '$strArchiveFile'" .
             "\nHINT: Is or was the repo encrypted?");
 
@@ -117,19 +121,16 @@ sub run
         $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        # Get the unencrypted contents
-        my $tContent = ${storageTest()->get($strArchiveTestFile . WAL_VERSION_94 . '.bin')};
-
         # Instantiate an archive.info object with a sub passphrase for the archived WAL
         my $strCipherPassSub = 'y';
         $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true, strCipherPassSub => $strCipherPassSub});
 
         # Create an encrypted archived WAL
-        storageRepo()->put($strArchiveFile, $tContent, {strCipherPass => $strCipherPassSub});
+        storageRepo()->put($strArchiveFile, $tWalContent, {strCipherPass => $strCipherPassSub});
 
-        $self->testResult(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, WAL_VERSION_94_SYS_ID)}, "[undef]", 'reconstruct');
-        $self->testResult(sub {$oArchiveInfo->check(PG_VERSION_94, WAL_VERSION_94_SYS_ID, false)}, PG_VERSION_94 . "-1",
+        $self->testResult(sub {$oArchiveInfo->reconstruct(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, "[undef]", 'reconstruct');
+        $self->testResult(sub {$oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), false)}, PG_VERSION_94 . "-1",
             '    check reconstruction from encrypted archive');
 
         $oArchiveInfo->save();
@@ -147,39 +148,40 @@ sub run
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
 
-        $oArchiveInfo->create(PG_VERSION_92, WAL_VERSION_92_SYS_ID, false);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_94, WAL_VERSION_94_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 10);
-        $oArchiveInfo->dbSectionSet(PG_VERSION_93, WAL_VERSION_93_SYS_ID, $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->create(PG_VERSION_92, $self->dbSysId(PG_VERSION_92), false);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $oArchiveInfo->dbHistoryIdGet(false) + 1);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), $oArchiveInfo->dbHistoryIdGet(false) + 10);
+        $oArchiveInfo->dbSectionSet(PG_VERSION_93, $self->dbSysId(PG_VERSION_93), $oArchiveInfo->dbHistoryIdGet(false) + 1);
         $oArchiveInfo->save();
 
         # Check gets only the latest DB and returns only that archiveId
-        push(@stryArchiveId, $oArchiveInfo->check(PG_VERSION_93, WAL_VERSION_93_SYS_ID));
+        push(@stryArchiveId, $oArchiveInfo->check(PG_VERSION_93, $self->dbSysId(PG_VERSION_93)));
         $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_93 . "-13")}, true,
             'check - return only newest archiveId');
 
-        $self->testResult(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_93, ullDbSysId => WAL_VERSION_93_SYS_ID})},
+        $self->testResult(sub {$oArchiveInfo->archiveId(
+            {strDbVersion => PG_VERSION_93, ullDbSysId => $self->dbSysId(PG_VERSION_93)})},
             PG_VERSION_93 . "-13", 'archiveId - return only newest archiveId for multiple histories');
 
         $self->testException(sub {$oArchiveInfo->archiveId({strDbVersion => PG_VERSION_94, ullDbSysId => BOGUS})}, ERROR_UNKNOWN,
             "unable to retrieve the archive id for database version '" . PG_VERSION_94 . "' and system-id '" . BOGUS . "'");
 
-        $self->testException(sub {$oArchiveInfo->check(PG_VERSION_94, WAL_VERSION_94_SYS_ID)}, ERROR_ARCHIVE_MISMATCH,
+        $self->testException(sub {$oArchiveInfo->check(PG_VERSION_94, $self->dbSysId(PG_VERSION_94))}, ERROR_ARCHIVE_MISMATCH,
             "WAL segment version " . PG_VERSION_94 . " does not match archive version " . PG_VERSION_93 .
-            "\nWAL segment system-id " . WAL_VERSION_94_SYS_ID . " does not match archive system-id " . WAL_VERSION_93_SYS_ID .
-            "\nHINT: are you archiving to the correct stanza?");
+            "\nWAL segment system-id " . $self->dbSysId(PG_VERSION_94) . " does not match archive system-id " .
+            $self->dbSysId(PG_VERSION_93) . "\nHINT: are you archiving to the correct stanza?");
 
-        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_93, WAL_VERSION_93_SYS_ID);
+        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_93, $self->dbSysId(PG_VERSION_93));
         $self->testResult(sub {(@stryArchiveId == 2) && ($stryArchiveId[0] eq PG_VERSION_93 . "-13") &&
             ($stryArchiveId[1] eq PG_VERSION_93 . "-2")}, true, 'archiveIdList - returns multiple archiveId - newest first');
 
-        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_94, WAL_VERSION_94_SYS_ID);
+        @stryArchiveId = $oArchiveInfo->archiveIdList(PG_VERSION_94, $self->dbSysId(PG_VERSION_94));
         $self->testResult(sub {(@stryArchiveId == 1) && ($stryArchiveId[0] eq PG_VERSION_94 . "-12")}, true,
             'archiveIdList - returns older archiveId');
 
-        $self->testException(sub {$oArchiveInfo->archiveIdList(PG_VERSION_95, WAL_VERSION_94_SYS_ID)}, ERROR_UNKNOWN,
+        $self->testException(sub {$oArchiveInfo->archiveIdList(PG_VERSION_95, $self->dbSysId(PG_VERSION_94))}, ERROR_UNKNOWN,
             "unable to retrieve the archive id for database version '" . PG_VERSION_95 . "' and system-id '" .
-            WAL_VERSION_94_SYS_ID . "'");
+            $self->dbSysId(PG_VERSION_94) . "'");
     }
 
     ################################################################################################################################
@@ -189,7 +191,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true});
-        $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
+        $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), true);
 
         # Confirm unencrypted
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/'
@@ -221,7 +223,7 @@ sub run
         storageRepoCacheClear($self->stanza());
 
         # Create an encrypted storage and generate an encyption sub passphrase to store in the file
-        my $strCipherPassSub = storageRepo()->cipherPassGen();
+        my $strCipherPassSub = cipherPassGen();
 
         # Error on encrypted repo but no passphrase passed to store in the file
         $self->testException(sub {new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
@@ -231,7 +233,7 @@ sub run
         # Create an encrypted archiveInfo file
         $oArchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE), false,
             {bLoad => false, bIgnoreMissing => true, strCipherPassSub => $strCipherPassSub});
-        $oArchiveInfo->create(PG_VERSION_94, WAL_VERSION_94_SYS_ID, true);
+        $oArchiveInfo->create(PG_VERSION_94, $self->dbSysId(PG_VERSION_94), true);
 
         # Confirm encrypted
         $self->testResult(sub {storageRepo()->encrypted(storageRepo()->pathGet(STORAGE_REPO_ARCHIVE) . '/'

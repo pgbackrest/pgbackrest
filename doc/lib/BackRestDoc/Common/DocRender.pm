@@ -218,7 +218,8 @@ sub new
             BackRestDoc::Custom::DocCustomRelease->import();
 
             $self->{oDoc} =
-                (new BackRestDoc::Custom::DocCustomRelease(${$self->{oManifest}->sourceGet('release')}{doc}, $self))->docGet();
+                (new BackRestDoc::Custom::DocCustomRelease(
+                    ${$self->{oManifest}->sourceGet('release')}{doc}, $self->{oManifest}->keywordMatch('dev')))->docGet();
         }
         else
         {

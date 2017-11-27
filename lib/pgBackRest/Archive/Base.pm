@@ -43,7 +43,7 @@ sub new
         logDebugParam
     (
         __PACKAGE__ . '->new', \@_,
-        {name => 'strBackRestBin', default => BACKREST_BIN, trace => true},
+        {name => 'strBackRestBin', default => backrestBin(), trace => true},
     );
 
     # Return from function and log return values if any

@@ -50,8 +50,6 @@ use constant BACKREST_USER_ID                                       => getpwnam(
 ####################################################################################################################################
 use constant LIB_COVER_VERSION                                      => '1.23-2';
     push @EXPORT, qw(LIB_COVER_VERSION);
-use constant LIB_COVER_PACKAGE                                      => 'libdevel-cover-perl_' . LIB_COVER_VERSION . '_amd64.deb';
-    push @EXPORT, qw(LIB_COVER_PACKAGE);
 use constant LIB_COVER_EXE                                          => '/usr/bin/cover';
     push @EXPORT, qw(LIB_COVER_EXE);
 
@@ -70,6 +68,18 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_DEBUG                                        => false;
+
+####################################################################################################################################
+# Generate Devel::Cover package name
+####################################################################################################################################
+sub packageDevelCover
+{
+    my $strArch = shift;
+
+    return 'libdevel-cover-perl_' . LIB_COVER_VERSION . "_${strArch}.deb";
+}
+
+push @EXPORT, qw(packageDevelCover);
 
 ####################################################################################################################################
 # Container repo - defines the Docker repository where the containers will be located
@@ -424,7 +434,7 @@ sub containerBuild
         if (!$bDeprecated)
         {
             $strScript .=  sectionHeader() .
-                "# Create PostgreSQL user/group with a known ids for testing\n" .
+                "# Create PostgreSQL user/group with known ids for testing\n" .
                 '    ' . groupCreate($strOS, POSTGRES_GROUP, POSTGRES_GROUP_ID) . " && \\\n" .
                 '    ' . userCreate($strOS, POSTGRES_USER, POSTGRES_USER_ID, POSTGRES_GROUP);
 
@@ -538,6 +548,9 @@ sub containerBuild
         $strImage = "${strOS}-build";
         $strCopy = undef;
 
+        my $strPkgDevelCover = packageDevelCover($oVm->{$strOS}{&VM_ARCH});
+        my $bPkgDevelCoverBuild = vmCoverage($strOS) && !$oStorageDocker->exists("test/package/${strOS}-${strPkgDevelCover}");
+
         # Install Perl packages
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
@@ -551,7 +564,7 @@ sub containerBuild
                 "    git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src";
 
             # Build only when a new version has been specified
-            if (!$bDeprecated && !$oStorageDocker->exists("test/package/${strOS}-" . LIB_COVER_PACKAGE))
+            if ($bPkgDevelCoverBuild)
             {
                 $strScript .=  sectionHeader() .
                     "# Install Devel::Cover package source & build\n" .
@@ -570,8 +583,7 @@ sub containerBuild
         containerWrite($oStorageDocker, $strTempPath, $strOS, 'Build', $strImageParent, $strImage, $strCopy,$strScript, $bVmForce);
 
         # Copy Devel::Cover to host so it can be installed in other containers (if it doesn't already exist)
-        if (!$bDeprecated && !$oStorageDocker->exists("test/package/${strOS}-" . LIB_COVER_PACKAGE) &&
-            $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+        if ($bPkgDevelCoverBuild)
         {
             executeTest('docker rm -f test-build', {bSuppressError => true});
             executeTest(
@@ -580,11 +592,11 @@ sub containerBuild
                 {bSuppressStdErr => true});
             executeTest(
                 "docker exec -i test-build " .
-                "bash -c 'cp /root/" . LIB_COVER_PACKAGE . " ${strTempPath}/${strOS}-" . LIB_COVER_PACKAGE . "'");
+                "bash -c 'cp /root/${strPkgDevelCover} ${strTempPath}/${strOS}-${strPkgDevelCover}'");
             executeTest('docker rm -f test-build');
 
             $oStorageDocker->move(
-                "test/.vagrant/docker/${strOS}-" . LIB_COVER_PACKAGE, "test/package/${strOS}-" . LIB_COVER_PACKAGE);
+                "test/.vagrant/docker/${strOS}-${strPkgDevelCover}", "test/package/${strOS}-${strPkgDevelCover}");
         }
 
         # S3 image
@@ -629,18 +641,18 @@ sub containerBuild
             $strImageParent = containerRepo() . ":${strOS}-base";
             $strImage = "${strOS}-test";
 
-            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            if (vmCoverage($strOS))
             {
                 $oStorageDocker->copy(
-                    "test/package/${strOS}-" . LIB_COVER_PACKAGE, "test/.vagrant/docker/${strOS}-" . LIB_COVER_PACKAGE);
+                    "test/package/${strOS}-${strPkgDevelCover}", "test/.vagrant/docker/${strOS}-${strPkgDevelCover}");
 
                 $strCopy =
                     "# Copy Devel::Cover\n" .
-                    "COPY ${strOS}-" . LIB_COVER_PACKAGE . ' /tmp/' . LIB_COVER_PACKAGE;
+                    "COPY ${strOS}-${strPkgDevelCover} /tmp/${strPkgDevelCover}";
 
                 $strScript = sectionHeader() .
                     "# Install Devel::Cover\n" .
-                    '    dpkg -i /tmp/' . LIB_COVER_PACKAGE;
+                    "    dpkg -i /tmp/${strPkgDevelCover}";
             }
             else
             {

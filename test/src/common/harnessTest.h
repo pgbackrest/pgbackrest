@@ -19,9 +19,7 @@ to the formatting of bools, ints, floats, etc.  This should be plenty of room fo
 #define TEST_RESULT_FORMAT_SIZE                                     128
 
 /***********************************************************************************************************************************
-TEST_ERROR macro
-
-Test that an expected error is actually thrown and error when it isn't.
+Test that an expected error is actually thrown and error when it isn't
 ***********************************************************************************************************************************/
 #define TEST_ERROR(statement, errorTypeExpected, errorMessageExpected)                                                             \
 {                                                                                                                                  \
@@ -30,7 +28,7 @@ Test that an expected error is actually thrown and error when it isn't.
     printf("    l%04d - expect error: %s\n", __LINE__, errorMessageExpected);                                                      \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
-    TRY()                                                                                                                          \
+    TRY_BEGIN()                                                                                                                    \
     {                                                                                                                              \
         statement;                                                                                                                 \
     }                                                                                                                              \
@@ -43,6 +41,7 @@ Test that an expected error is actually thrown and error when it isn't.
                 AssertError, "expected error %s, '%s' but got %s, '%s'", errorTypeName(&errorTypeExpected), errorMessageExpected,  \
                 errorName(), errorMessage());                                                                                      \
     }                                                                                                                              \
+    TRY_END();                                                                                                                     \
                                                                                                                                    \
     if (!TEST_ERROR_catch)                                                                                                         \
         THROW(                                                                                                                     \
@@ -51,40 +50,52 @@ Test that an expected error is actually thrown and error when it isn't.
 }
 
 /***********************************************************************************************************************************
-TEST_TYPE_PTR - is the type a pointer?
+Format the test type into the given buffer -- or return verbatim if char *
 ***********************************************************************************************************************************/
-#define TEST_TYPE_PTR(type)                                                                                                        \
-    (#type[strlen(#type) - 1] == '*')
-
-/***********************************************************************************************************************************
-TEST_TYPE_FORMAT - format the test type into the given buffer -- or return verbatim if char *
-***********************************************************************************************************************************/
-#define TEST_TYPE_FORMAT(type, format, value)                                                                                      \
+#define TEST_TYPE_FORMAT_VAR(value)                                                                                                \
     char value##StrBuffer[TEST_RESULT_FORMAT_SIZE + 1];                                                                            \
-    char *value##Str = value##StrBuffer;                                                                                           \
-                                                                                                                                   \
-    if (TEST_TYPE_PTR(type) && *(void **)&value == NULL)                                                                           \
-        value##Str = (char *)"NULL";                                                                                               \
-    else if (strcmp(#type, "char *") == 0)                                                                                         \
-        value##Str = *(char **)&value;                                                                                             \
-    else                                                                                                                           \
+    char *value##Str = value##StrBuffer;
+
+#define TEST_TYPE_FORMAT_SPRINTF(format, value)                                                                                    \
+    if (snprintf((char *)value##Str, TEST_RESULT_FORMAT_SIZE + 1, format, value) > TEST_RESULT_FORMAT_SIZE)                        \
     {                                                                                                                              \
-        if (snprintf(value##Str, TEST_RESULT_FORMAT_SIZE + 1, format, value) > TEST_RESULT_FORMAT_SIZE)                            \
-        {                                                                                                                          \
-            THROW(                                                                                                                 \
-                AssertError, "formatted type '" format "' needs more than the %d characters available", TEST_RESULT_FORMAT_SIZE);  \
-        }                                                                                                                          \
+        THROW(                                                                                                                     \
+            AssertError, "formatted type '" format "' needs more than the %d characters available", TEST_RESULT_FORMAT_SIZE);      \
     }
 
-/***********************************************************************************************************************************
-TEST_RESULT macro
+#define TEST_TYPE_FORMAT(type, format, value)                                                                                      \
+    TEST_TYPE_FORMAT_VAR(value);                                                                                                   \
+    TEST_TYPE_FORMAT_SPRINTF(format, value);
 
+#define TEST_TYPE_FORMAT_PTR(type, format, value)                                                                                  \
+    TEST_TYPE_FORMAT_VAR(value);                                                                                                   \
+                                                                                                                                   \
+    if (value == NULL)                                                                                                             \
+        value##Str = (char *)"NULL";                                                                                               \
+    else if (strcmp(#type, "char *") == 0)                                                                                         \
+        value##Str = (char *)value;                                                                                                \
+    else                                                                                                                           \
+        TEST_TYPE_FORMAT_SPRINTF(format, value);
+
+/***********************************************************************************************************************************
+Compare types
+***********************************************************************************************************************************/
+#define TEST_TYPE_COMPARE_STR(result, value, typeOp, valueExpected)                                                                \
+    if (value != NULL && valueExpected != NULL)                                                                                    \
+        result = strcmp((char *)value, (char *)valueExpected) typeOp 0;                                                            \
+    else                                                                                                                           \
+        result = value typeOp valueExpected;
+
+#define TEST_TYPE_COMPARE(result, value, typeOp, valueExpected)                                                                    \
+    result = value typeOp valueExpected;
+
+/***********************************************************************************************************************************
 Test the result of a statement and make sure it matches the expected value.  This macro can test any C type given the correct
 parameters.
 ***********************************************************************************************************************************/
-#define TEST_RESULT(statement, resultExpectedValue, type, format, typeOp, ...)                                                     \
+#define TEST_RESULT(statement, resultExpectedValue, type, format, formatMacro, typeOp, compareMacro, ...)                          \
 {                                                                                                                                  \
-    /* Assign expected result to a local variable so the value can be manipulated as a pointer */                                  \
+    /* Assign expected result to a local variable */                                                                               \
     const type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                           \
                                                                                                                                    \
     /* Output test info */                                                                                                         \
@@ -94,12 +105,12 @@ parameters.
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
     /* Format the expected result */                                                                                               \
-    TEST_TYPE_FORMAT(type, format, TEST_RESULT_resultExpected);                                                                    \
+    formatMacro(type, format, TEST_RESULT_resultExpected);                                                                         \
                                                                                                                                    \
-    /* Try to run the statement */                                                                                                 \
-    type TEST_RESULT_result;                                                                                                       \
+    /* Try to run the statement.  Assign expected to result to silence compiler warning about unitialized var. */                  \
+    type TEST_RESULT_result = (type)TEST_RESULT_resultExpected;                                                                    \
                                                                                                                                    \
-    TRY()                                                                                                                          \
+    TRY_BEGIN()                                                                                                                    \
     {                                                                                                                              \
         TEST_RESULT_result = (type)(statement);                                                                                    \
     }                                                                                                                              \
@@ -111,21 +122,17 @@ parameters.
             AssertError, "statement '%s' threw error %s, '%s' but result <%s> expected",                                           \
             #statement, errorName(), errorMessage(), TEST_RESULT_resultExpectedStr);                                               \
     }                                                                                                                              \
+    TRY_END();                                                                                                                     \
                                                                                                                                    \
    /* Test the type operator */                                                                                                    \
     bool TEST_RESULT_resultOp = false;                                                                                             \
-                                                                                                                                   \
-    if (strcmp(#type, "char *") == 0                                                                                               \
-        && *(void **)&TEST_RESULT_result != NULL && *(void **)&TEST_RESULT_resultExpected != NULL)                                 \
-        TEST_RESULT_resultOp = strcmp(*(char **)&TEST_RESULT_result, *(char **)&TEST_RESULT_resultExpected) typeOp 0;              \
-    else                                                                                                                           \
-        TEST_RESULT_resultOp = TEST_RESULT_result typeOp TEST_RESULT_resultExpected;                                               \
+    compareMacro(TEST_RESULT_resultOp, TEST_RESULT_result, typeOp, TEST_RESULT_resultExpected);                                    \
                                                                                                                                    \
     /* If type operator test was not successful */                                                                                 \
     if (!TEST_RESULT_resultOp)                                                                                                     \
     {                                                                                                                              \
         /* Format the actual result */                                                                                             \
-        TEST_TYPE_FORMAT(type, format, TEST_RESULT_result);                                                                        \
+        formatMacro(type, format, TEST_RESULT_result);                                                                             \
                                                                                                                                    \
         /* Throw error */                                                                                                          \
         THROW(                                                                                                                     \
@@ -135,40 +142,45 @@ parameters.
 }
 
 /***********************************************************************************************************************************
-TEST_RESULT* macros
-
-Macros to ease use of common data types.
+Macros to ease the use of common data types
 ***********************************************************************************************************************************/
 #define TEST_RESULT_BOOL_PARAM(statement, resultExpected, typeOp, ...)                                                             \
-    TEST_RESULT(statement, resultExpected, bool, "%d", typeOp, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, bool, "%d", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_BOOL(statement, resultExpected, ...)                                                                           \
     TEST_RESULT_BOOL_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 
+#define TEST_RESULT_CHAR_PARAM(statement, resultExpected, typeOp, ...)                                                             \
+    TEST_RESULT(statement, resultExpected, char, "%c", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
+#define TEST_RESULT_CHAR(statement, resultExpected, ...)                                                                           \
+    TEST_RESULT_CHAR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
+#define TEST_RESULT_CHAR_NE(statement, resultExpected, ...)                                                                        \
+    TEST_RESULT_CHAR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
+
 #define TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, typeOp, ...)                                                           \
-    TEST_RESULT(statement, resultExpected, double, "%f", typeOp, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, double, "%f", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_DOUBLE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 
 #define TEST_RESULT_INT_PARAM(statement, resultExpected, typeOp, ...)                                                              \
-    TEST_RESULT(statement, resultExpected, int, "%d", typeOp, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, int, "%d", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_INT(statement, resultExpected, ...)                                                                            \
     TEST_RESULT_INT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_INT_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_INT_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 #define TEST_RESULT_PTR_PARAM(statement, resultExpected, typeOp, ...)                                                              \
-    TEST_RESULT(statement, resultExpected, void *, "%p", typeOp, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, void *, "%p", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_PTR(statement, resultExpected, ...)                                                                            \
     TEST_RESULT_PTR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_PTR_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_PTR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 #define TEST_RESULT_STR_PARAM(statement, resultExpected, typeOp, ...)                                                              \
-    TEST_RESULT(statement, resultExpected, char *, "%s", typeOp, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, char *, "%s", TEST_TYPE_FORMAT_PTR, typeOp, TEST_TYPE_COMPARE_STR, __VA_ARGS__);
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
     TEST_RESULT_STR_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_STR_NE(statement, resultExpected, ...)                                                                         \
     TEST_RESULT_STR_PARAM(statement, resultExpected, !=, __VA_ARGS__);
 
 #define TEST_RESULT_U16_HEX(statement, resultExpected, ...)                                                                        \
-    TEST_RESULT(statement, resultExpected, uint16, "0x%04X", ==, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, uint16, "0x%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);

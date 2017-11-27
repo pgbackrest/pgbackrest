@@ -12,7 +12,7 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRest::Config::Data;
+use pgBackRestBuild::Config::Data;
 
 use BackRestDoc::Common::DocRender;
 
@@ -30,8 +30,9 @@ use constant XML_RELEASE_DOC_LIST                                   => 'release-
 use constant XML_RELEASE_TEST_LIST                                  => 'release-test-list';
 
 use constant XML_RELEASE_BUG_LIST                                   => 'release-bug-list';
+use constant XML_RELEASE_DEVELOPMENT_LIST                           => 'release-development-list';
 use constant XML_RELEASE_FEATURE_LIST                               => 'release-feature-list';
-use constant XML_RELEASE_REFACTOR_LIST                              => 'release-refactor-list';
+use constant XML_RELEASE_IMPROVEMENT_LIST                           => 'release-improvement-list';
 
 use constant XML_RELEASE_ITEM_CONTRIBUTOR_LIST                      => 'release-item-contributor-list';
 
@@ -62,12 +63,14 @@ sub new
     # Assign function parameters, defaults, and log debug info
     (
         my $strOperation,
-        $self->{oDoc}
+        $self->{oDoc},
+        $self->{bDev},
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->new', \@_,
-            {name => 'oDoc'}
+            {name => 'oDoc'},
+            {name => 'bDev', required => false, default => false},
         );
 
     # Get contributor list
@@ -358,6 +361,7 @@ sub docGet
 
         # Add release sections
         my $bAdditionalNotes = false;
+        my $bReleaseNote = false;
 
         my $hSectionType =
         {
@@ -370,42 +374,44 @@ sub docGet
         {
             if ($oRelease->nodeTest($strSectionType))
             {
-                # Create subsections for any release section other than core.  This breaks up the release items.
-                my $oSubSection = $oReleaseSection;
-
-                if ($strSectionType ne XML_RELEASE_CORE_LIST && !$bAdditionalNotes)
-                {
-                    $oReleaseSection->nodeAdd('subtitle')->textSet("Additional Notes");
-                    $bAdditionalNotes = true;
-                }
-
-                # Add release note if present
-                if ($oRelease->nodeGet($strSectionType)->nodeTest('p'))
-                {
-                    $oSubSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->nodeGet('p')->textGet());
-                }
-
                 # Add release item types
                 my $hItemType =
                 {
                     &XML_RELEASE_BUG_LIST => {title => 'Bug Fixes', type => 'bug'},
-                    &XML_RELEASE_FEATURE_LIST => {title => 'Features', type=> 'feature'},
-                    &XML_RELEASE_REFACTOR_LIST => {title => 'Refactoring', type=> 'refactor'},
+                    &XML_RELEASE_FEATURE_LIST => {title => 'Features', type => 'feature'},
+                    &XML_RELEASE_IMPROVEMENT_LIST => {title => 'Improvements', type => 'improvement'},
+                    &XML_RELEASE_DEVELOPMENT_LIST => {title => 'Development', type => 'development'},
                 };
 
-                foreach my $strItemType (XML_RELEASE_BUG_LIST, XML_RELEASE_FEATURE_LIST, XML_RELEASE_REFACTOR_LIST)
+                foreach my $strItemType (
+                    XML_RELEASE_BUG_LIST, XML_RELEASE_FEATURE_LIST, XML_RELEASE_IMPROVEMENT_LIST, XML_RELEASE_DEVELOPMENT_LIST)
                 {
+                    next if (!$self->{bDev} && $strItemType eq XML_RELEASE_DEVELOPMENT_LIST);
+
                     if ($oRelease->nodeGet($strSectionType)->nodeTest($strItemType))
                     {
+                        if ($strSectionType ne XML_RELEASE_CORE_LIST && !$bAdditionalNotes)
+                        {
+                            $oReleaseSection->nodeAdd('subtitle')->textSet('Additional Notes');
+                            $bAdditionalNotes = true;
+                        }
+
+                        # Add release note if present
+                        if (!$bReleaseNote && $oRelease->nodeGet($strSectionType)->nodeTest('p'))
+                        {
+                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->nodeGet('p')->textGet());
+                            $bReleaseNote = true;
+                        }
+
                         my $strTypeText =
                             ($strSectionType eq XML_RELEASE_CORE_LIST ? '' : $$hSectionType{$strSectionType}{title}) . ' ' .
                             $$hItemType{$strItemType}{title} . ':';
 
-                        $oSubSection->
+                        $oReleaseSection->
                             nodeAdd('p')->textSet(
                                 {name => 'text', children=> [{name => 'b', value => $strTypeText}]});
 
-                        my $oList = $oSubSection->nodeAdd('list');
+                        my $oList = $oReleaseSection->nodeAdd('list');
 
                         # Add release items
                         foreach my $oReleaseFeature ($oRelease->nodeGet($strSectionType)->

@@ -41,7 +41,7 @@ sub new
             __PACKAGE__ . '->new', \@_,
             {name => 'strHostType'},
             {name => 'iSelectTimeout', default => int(cfgOption(CFGOPT_PROTOCOL_TIMEOUT) / 2)},
-            {name => 'strBackRestBin', default => BACKREST_BIN},
+            {name => 'strBackRestBin', default => backrestBin()},
             {name => 'bConfessError', default => true},
         );
 

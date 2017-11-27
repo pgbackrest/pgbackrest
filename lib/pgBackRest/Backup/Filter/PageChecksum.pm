@@ -15,23 +15,13 @@ use Exporter qw(import);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::DbVersion qw(PG_PAGE_SIZE);
-use pgBackRest::LibCLoad;
+use pgBackRest::LibC qw(:checksum);
 
 ####################################################################################################################################
 # Package name constant
 ####################################################################################################################################
 use constant BACKUP_FILTER_PAGECHECKSUM                             => __PACKAGE__;
     push @EXPORT, qw(BACKUP_FILTER_PAGECHECKSUM);
-
-####################################################################################################################################
-# Load the C library if present
-####################################################################################################################################
-if (libC())
-{
-    # Load the C library only if page checksums are required
-    require pgBackRest::LibC;
-    pgBackRest::LibC->import(qw(:checksum));
-};
 
 ####################################################################################################################################
 # CONSTRUCTOR

@@ -42,11 +42,11 @@ cipher-pass=[CIPHER-PASS-1]
 db-catalog-version=201409291
 db-control-version=942
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":6353949018581704918,"db-version":"9.4"}
+1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
 -----------------------------------------------------------------------
@@ -60,11 +60,11 @@ cipher-pass=[CIPHER-PASS-2]
 
 [db]
 db-id=1
-db-system-id=6353949018581704918
+db-system-id=1000000000000000094
 db-version="9.4"
 
 [db:history]
-1={"db-id":6353949018581704918,"db-version":"9.4"}
+1={"db-id":1000000000000000094,"db-version":"9.4"}
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push --log-level-console=debug [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -74,8 +74,8 @@ P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = false, iComp
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = <redacted>, strCipherType = aes-256-cbc, strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/repo, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.4, ullDbSysId = 6353949018581704918
-P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.4, ullDbSysId = 1000000000000000094
+P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.4, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 1000000000000000094
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = true
@@ -83,7 +83,7 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = true
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = <redacted>, xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive::Info->check(): bRequired = <true>, strDbVersion = 9.4, ullDbSysId = 1000000000000000094
 P00  DEBUG:     Archive::Info->archiveId(): strDbVersion = [undef], ullDbSysId = [undef]
 P00  DEBUG:     Archive::Info->archiveId=>: strArchiveId = 9.4-1
 P00  DEBUG:     Archive::Info->check=>: strArchiveId = 9.4-1
@@ -96,9 +96,9 @@ P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->hashSize(): xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = 72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Local->hashSize=>: lSize = 16777216, strHash = ceb021d9bb41f220511e413b095d2b0d89fec113
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
-P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = <redacted>, strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Local->openWrite(): bAtomic = true, bPathCreate = true, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = <redacted>, strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113
 P00  DEBUG:     Storage::Base->copy(): xDestinationFile = [object], xSourceFile = [object]
 P00  DEBUG:     Archive::Push::File::archivePushFile=>: strWarning = [undef]
 P00   INFO: pushed WAL segment 000000010000000100000001
@@ -121,7 +121,7 @@ P00  DEBUG:     Db::dbObjectGet(): bMasterOnly = true
 P00  DEBUG:     Db->new(): iRemoteIdx = 1
 P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oDbMaster = [object], oDbStandby = [undef]
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
-P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201409291, iDbControlVersion = 942, strDbVersion = 9.4, ullDbSysId = 1000000000000000094
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = true
@@ -129,15 +129,15 @@ P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = true
 P00  DEBUG:     Storage::Local->encryptionValid=>: bValid = true
 P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = true, rhyFilter = [undef], strCipherPass = <redacted>, xFileExp = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Base->get(): strCipherPass = [undef], xFile = [object]
-P00  DEBUG:     Archive::Info->archiveIdList(): strDbVersion = 9.4, ullDbSysId = 6353949018581704918
+P00  DEBUG:     Archive::Info->archiveIdList(): strDbVersion = 9.4, ullDbSysId = 1000000000000000094
 P00  DEBUG:     Archive::Info->dbHistoryList=>: hDbHash = [hash]
 P00  DEBUG:     Archive::Info->archiveIdList=>: stryArchiveId = (9.4-1)
 P00  DEBUG:     Archive::Common::walSegmentFind(): iWaitSeconds = [undef], oStorageRepo = [object], strArchiveId = 9.4-1, strWalSegment = 000000010000000100000001
 P00  DEBUG:     Storage::Local->list(): bIgnoreMissing = true, strExpression = ^000000010000000100000001-[0-f]{40}(\.gz){0,1}$, strPathExp = <REPO:ARCHIVE>/9.4-1/0000000100000001, strSortOrder = <forward>
-P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7)
-P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
-P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7, strArchiveId = 9.4-1, strCipherPass = <redacted>
-P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = <redacted>, xFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-72b9da071c13957fb4ca31f05dbd5c644297c2f7
+P00  DEBUG:     Storage::Local->list=>: stryFileList = (000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113)
+P00  DEBUG:     Archive::Common::walSegmentFind=>: strWalFileName = 000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113
+P00  DEBUG:     Archive::Base->getCheck=>: strArchiveFile = 000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113, strArchiveId = 9.4-1, strCipherPass = <redacted>
+P00  DEBUG:     Storage::Local->openRead(): bIgnoreMissing = <false>, rhyFilter = [undef], strCipherPass = <redacted>, xFileExp = <REPO:ARCHIVE>/9.4-1/000000010000000100000001-ceb021d9bb41f220511e413b095d2b0d89fec113
 P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
 P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = [TEST_PATH]/db-master/db/base, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <false>, lTimestamp = [undef], rhyFilter = [undef], strCipherPass = [undef], strGroup = [undef], strMode = <0640>, strUser = [undef], xFileExp = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
@@ -173,13 +173,13 @@ P00   INFO: archive-get command end: completed successfully
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000001
-P00  ERROR: [125]: unable to retrieve the archive id for database version '9.4' and system-id '6353949018581704918'
+P00  ERROR: [125]: unable to retrieve the archive id for database version '9.4' and system-id '1000000000000000094'
 P00   INFO: archive-get command end: aborted with exception [125]
 
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [044]: WAL segment system-id 6353949018581704918 does not match archive system-id 5000900090001855000
+P00  ERROR: [044]: WAL segment system-id 1000000000000000094 does not match archive system-id 5000900090001855000
             HINT: are you archiving to the correct stanza?
 P00   INFO: archive-push command end: aborted with exception [044]
 
@@ -187,7 +187,7 @@ P00   INFO: archive-push command end: aborted with exception [044]
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: get WAL segment 000000010000000100000001
-P00  ERROR: [125]: unable to retrieve the archive id for database version '9.4' and system-id '6353949018581704918'
+P00  ERROR: [125]: unable to retrieve the archive id for database version '9.4' and system-id '1000000000000000094'
 P00   INFO: archive-get command end: aborted with exception [125]
 
 stop db stanza (db-master host)

@@ -111,7 +111,7 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG} = 201409291;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CONTROL} = 942;
-        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 6353949018581704918;
+        $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_SYSTEM_ID} = 1000000000000000094;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} = PG_VERSION_94;
         $oManifest{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_ID} = 1;
 
@@ -206,12 +206,10 @@ sub run
         $oHostDbMaster->manifestPathCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global');
 
         $oHostDbMaster->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGCONTROL, '[replaceme]',
-                                              '89373d9f2973502940de06bc5212489df3f8a912', $lTime - 100, undef, true);
+                                              'b4a3adade1e81ebfc7e9a27bca0887a347d81522', $lTime - 100, undef, true);
 
         # Copy pg_control
-        executeTest(
-            'cp ' . $self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin ' .  $oHostDbMaster->dbBasePath() . '/' .
-            DB_FILE_PGCONTROL);
+        $self->controlGenerate($oHostDbMaster->dbBasePath(), PG_VERSION_94);
         utime($lTime - 100, $lTime - 100, $oHostDbMaster->dbBasePath() . '/' . DB_FILE_PGCONTROL)
             or confess &log(ERROR, "unable to set time");
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL}
@@ -452,6 +450,16 @@ sub run
         forceStorageRemove(storageRepo(), $strResumePath, {bRecurse => true});
         forceStorageMove(storageRepo(), 'backup/' . $self->stanza() . "/${strFullBackup}", $strResumePath);
 
+        # Set ownership on base directory to bogus values
+        if (!$bRemote)
+        {
+            executeTest('sudo chown 7777:7777 ' . $oHostDbMaster->dbBasePath());
+            executeTest('sudo chmod 777 ' . $oHostDbMaster->dbBasePath());
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = INI_FALSE;
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = INI_FALSE;
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
+        }
+
         $oHostBackup->manifestMunge(
             basename($strResumePath),
             {&MANIFEST_SECTION_TARGET_FILE =>
@@ -514,13 +522,13 @@ sub run
         # Remove a file
         $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/16384/17000');
 
-        # Restore will reset invalid user and group so do the same in the manifest
+        # Restore will set invalid user and group to root since the base path user/group are also invalid
         if (!$bRemote)
         {
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
-                   {&MANIFEST_SUBKEY_USER});
-            delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
-                   {&MANIFEST_SUBKEY_GROUP});
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_USER} = 'root';
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_GROUP} = 'root';
         }
 
         $oHostDbMaster->restore(
@@ -528,9 +536,34 @@ sub run
             'add and delete files', undef,  ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
             undef, !$bRemote ? 'root' : undef);
 
-        # Fix permissions on the restore log & remove lock files
+        # Run again to fix permissions
         if (!$bRemote)
         {
+            # Reset the base path user and group for the next restore so files will be reset to the base path user/group
+            executeTest('sudo chown ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostDbMaster->dbBasePath());
+
+            $oHostBackup->manifestMunge(
+                $strFullBackup,
+                {&MANIFEST_SECTION_TARGET_PATH =>
+                    {&MANIFEST_TARGET_PGDATA =>
+                        {&MANIFEST_SUBKEY_USER => undef, &MANIFEST_SUBKEY_GROUP => undef, &MANIFEST_SUBKEY_MODE => undef}}},
+                false);
+
+            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER});
+            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP});
+
+            delete(
+                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
+                  {&MANIFEST_SUBKEY_USER});
+            delete(
+                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_GROUP});
+
+            $oHostDbMaster->restore(
+                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
+                'fix permissions', undef,  ' --link-all --log-level-console=detail', undef, 'root');
+
+            # Fix and remove files that are now owned by root
             executeTest('sudo chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath());
             executeTest('sudo rm -rf ' . $oHostDbMaster->lockPath() . '/*');
         }
@@ -541,7 +574,7 @@ sub run
 
         $oHostDbMaster->restore(
             $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'fix broken symlink', undef, " --link-all ${strLogReduced} ${strLogReduced}");
+            'fix broken symlink', undef, " --link-all ${strLogReduced}" . ($bRemote ? ' --compress-level-network=0' : ''));
 
         # Additional restore tests that don't need to be performed for every permutation
         if (!$bRemote)
@@ -879,6 +912,12 @@ sub run
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(2), {strMode => '0700', bCreateParent => true});
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbMaster->tablespacePath(1, 2);
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbMaster->tablespacePath(2, 2);
+
+        # At this point the $PG_DATA permissions have been reset to 0600
+        if (!$bRemote)
+        {
+            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE});
+        }
 
         $oHostDbMaster->restore(
             $strBackup, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
