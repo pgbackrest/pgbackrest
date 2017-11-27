@@ -69,12 +69,18 @@ sub initTest
 
     # Create archive info path
     storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
+    executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strArchivePath});
+    executeTest("sudo chown " . TEST_USER . " " . $self->{strArchivePath});
 
     # Create backup info path
     storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
+    executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strBackupPath});
+    executeTest("sudo chown " . TEST_USER . " " . $self->{strBackupPath});
 
     # Create pg_control global path
     storageTest()->pathCreate($self->{strDbPath} . '/' . DB_PATH_GLOBAL, {bCreateParent => true});
+    executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strDbPath} . '/' . DB_PATH_GLOBAL);
+    executeTest("sudo chown " . TEST_USER . " " . $self->{strDbPath} . '/' . DB_PATH_GLOBAL);
 }
 
 ####################################################################################################################################
@@ -107,6 +113,7 @@ sub manifestCompare
 
     return executeTest("diff " . $self->{strExpectedManifest} . " " . $self->{strActualManifest});
 }
+
 
 ####################################################################################################################################
 # run
@@ -214,6 +221,8 @@ sub run
 
         # Create base path with different mode than default
         storageDb()->pathCreate(DB_PATH_BASE, {strMode => MODE_0700});
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strDbPath} . '/' . DB_PATH_BASE);
+        executeTest("sudo chown " . TEST_USER . " " . $self->{strDbPath} . '/' . DB_PATH_BASE);
 
         # Update expected manifest
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE . ":default", MANIFEST_SUBKEY_MODE, undef, MODE_0600);
@@ -276,6 +285,8 @@ sub run
         my $strConfFile = '/pg_config/postgresql.conf';
         my $strConfContent = "listen_addresses = *\n";
         storageDb()->pathCreate('pg_config');
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strDbPath} . '/pg_config');
+        executeTest("sudo chown " . TEST_USER . " " . $self->{strDbPath} . '/pg_config');
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . $strConfFile,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), $strConfContent);
 
@@ -342,16 +353,27 @@ sub run
         # Test skip files/directories
         #---------------------------------------------------------------------------------------------------------------------------
         # Create files to skip
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP ), '');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_BACKUPLABELOLD), '');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTMASTEROPTS), '');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTMASTERPID), '');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYCONF), '');
-        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYDONE), '');
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP ), '',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime});
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_BACKUPLABELOLD), '',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime});
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTMASTEROPTS), '',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime});
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_POSTMASTERPID), '',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime});
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYCONF), '',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime});
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_RECOVERYDONE), '',
+            {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime});
 
         # Create directories to skip. Add a bogus file to them for test coverage.
         storageDb()->pathCreate(DB_FILE_PREFIX_TMP);
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strDbPath} . '/' . DB_FILE_PREFIX_TMP);
+        executeTest("sudo chown " . TEST_USER . " " . $self->{strDbPath} . '/' . DB_FILE_PREFIX_TMP);
         storageDb()->pathCreate('pg_xlog');
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strDbPath} . '/pg_xlog');
+        executeTest("sudo chown " . TEST_USER . " " . $self->{strDbPath} . '/pg_xlog');
+
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/pg_xlog/' . BOGUS,
             {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), '');
         storageDb()->pathCreate(DB_PATH_PGDYNSHMEM);
@@ -474,9 +496,11 @@ sub run
         # Create pg_tblspc path
         my $strTblSpcPath = $self->{strDbPath} . '/' . DB_PATH_PGTBLSPC;
         storageDb()->pathCreate($strTblSpcPath, {bCreateParent => true});
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $strTblSpcPath);
+        executeTest("sudo chown " . TEST_USER . " " . $strTblSpcPath);
 
         # Create a directory in pg_tblspc
-        storageDb()->pathCreate("$strTblSpcPath/" . BOGUS, {strMode => '0700'});
+        storageDb()->pathCreate("${strTblSpcPath}/" . BOGUS, {strMode => '0700'});
         $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_EXPECTED,
             MANIFEST_TARGET_PGTBLSPC . "/" . BOGUS . " is not a symlink - " . DB_PATH_PGTBLSPC . " should contain only symlinks");
 
@@ -547,6 +571,11 @@ sub run
         my $strTablespaceOid = '1';
         my $strTablespaceName = "ts${strTablespaceOid}";
         storageTest()->pathCreate("${strTablespace}/${strTablespaceName}/${strTablespaceOid}", {bCreateParent => true});
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $self->testPath() .
+            "/${strTablespace}/${strTablespaceName}/${strTablespaceOid}");
+        executeTest("sudo chown " . TEST_USER . " " . $self->testPath() .
+            "/${strTablespace}/${strTablespaceName}/${strTablespaceOid}");
+
         my $strTablespacePath = storageTest()->pathGet("${strTablespace}/${strTablespaceName}/${strTablespaceOid}");
         testLinkCreate("${strTblSpcPath}/${strTablespaceOid}", $strTablespacePath);
 
