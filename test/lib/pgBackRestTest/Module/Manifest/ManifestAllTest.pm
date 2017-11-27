@@ -2,7 +2,7 @@
 # ManifestAllTest.pm - Unit tests for Manifest module
 ####################################################################################################################################
 package pgBackRestTest::Module::Manifest::ManifestAllTest;
-use parent 'pgBackRestTest::Env::ConfigEnvTest';
+use parent 'pgBackRestTest::Env::HostEnvTest';
 
 ####################################################################################################################################
 # Perl includes
@@ -31,7 +31,6 @@ use pgBackRest::Version;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::FileTest;
 use pgBackRestTest::Common::RunTest;
-use pgBackRestTest::Env::HostEnvTest;
 use pgBackRestTest::Env::Host::HostBackupTest;
 
 ####################################################################################################################################
@@ -206,9 +205,10 @@ sub run
         my $oManifestExpected = dclone($oManifestBase);
 
         # Add global/pg_control file and PG_VERSION file and create a directory with a different modes than default
-        storageDb()->copy($self->dataPath() . '/backup.pg_control_' . WAL_VERSION_94 . '.bin',
-            storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGCONTROL,
-            {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}));
+        storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGCONTROL,
+            {strMode => MODE_0644, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}),
+            $self->controlGenerateContent(PG_VERSION_94));
+
         storageDb()->put(storageDb()->openWrite($self->{strDbPath} . '/' . DB_FILE_PGVERSION,
             {strMode => MODE_0600, strUser => TEST_USER, strGroup => TEST_GROUP, lTimestamp => $lTime}), PG_VERSION_94);
 
