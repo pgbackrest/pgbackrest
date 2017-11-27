@@ -189,7 +189,7 @@ sub run
     ################################################################################################################################
     if ($self->begin('build()'))
     {
-# CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set?
+# CSHANG On load, why does load require the db version but nothing else, esp when tablespacePathGet requires catalog to be set? Is there no catalog number prior to 9.0?
         my $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94});
 
         # Build error if offline = true and no tablespace path
@@ -282,13 +282,14 @@ sub run
         # link db/pg_config/postgresql.conf.link -> ./postgresql.conf
         testLinkCreate($self->{strDbPath} . $strConfFile . '.link', './postgresql.conf');
 
-# CSHANG on the command line, these links appear to be fine but in the code, a debug line prior to the recursive call to build():
+# CSHANG on the command line, these links appear to be fine but in the code, a debug line prior to the recursive call to build() produces:
         # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/base, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad';
         # STRFILTER: $VAR1 = undef;
         # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/pg_config, STRLEVEL PASSED: $VAR1 = 'pg_data/base/pg_config_bad/postgresql.conf.link';
         # STRFILTER: $VAR1 = undef;
         # STRPATH BEFORE BUILD: /home/ubuntu/test/test-0/db/base/base, STRLEVEL PASSED: $VAR1 = 'pg_data/base/postgresql.conf';
         # STRFILTER: $VAR1 = undef;
+        #
         # and right here throws: 'unable to stat '/home/ubuntu/test/test-0/db/base/pg_config/postgresql.conf': No such file or directory'
         # -- note the extra "base" here - it should just be /home/ubuntu/test/test-0/db/pg_config/postgresql.conf
         # # link db/base/pg_config_bad -> ../../db/pg_config
@@ -297,6 +298,7 @@ sub run
         # testLinkCreate($self->{strDbPath} . '/'. DB_PATH_BASE . '/postgresql.conf', '..' . $strConfFile);
         # $self->testException(sub {$oManifest->build(storageDb(), $self->{strDbPath}, undef, true)}, ERROR_LINK_DESTINATION,
         #     'TEST THIS');
+
 # CSHANG Even though the below code creates a duplicate link, this error occurs (note the pg_config/pg_config):
         # 'unable to stat '/home/ubuntu/test/test-0/db/pg_config/pg_config/./postgresql.conf': No such file or directory'
         # ubuntu@pgbackrest-test:~$ ls -l /home/ubuntu/test/test-0/db/pg_config/
@@ -575,13 +577,57 @@ sub run
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'offline with valid tablespace - do not skip database WAL directory');
 
+        # Create tablespace and database maps
         my $hTablespaceMap = {};
         $hTablespaceMap->{$strTablespaceOid} = $strTablespaceName;
-        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap);
-        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
-            'offline passing tablespace map');
 
-        # Invalid user/group
+        my $hDatabaseMap = {};
+        $hDatabaseMap->{&BOGUS}{&MANIFEST_KEY_DB_ID} = 12345;
+        $hDatabaseMap->{&BOGUS}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID} = 67890;
+
+        $oManifestExpected->numericSet(MANIFEST_SECTION_DB, BOGUS, MANIFEST_KEY_DB_ID, $hDatabaseMap->{&BOGUS}{&MANIFEST_KEY_DB_ID});
+        $oManifestExpected->numericSet(MANIFEST_SECTION_DB, BOGUS, MANIFEST_KEY_DB_LAST_SYSTEM_ID,
+            $hDatabaseMap->{&BOGUS}{&MANIFEST_KEY_DB_LAST_SYSTEM_ID});
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'offline passing tablespace map and database map');
+
+        # Reload the manifest with version < 9.0
+        #---------------------------------------------------------------------------------------------------------------------------
+        $oManifest = new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_84});
+
+        # Catalog not stored in < 9.0
+        $oManifestExpected->remove(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_CATALOG);
+        $oManifestExpected->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
+
+        # Add unskip directories
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGDYNSHMEM . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGREPLSLOT . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSNAPSHOTS . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSNAPSHOTS . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSERIAL . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGSERIAL . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGNOTIFY . '/' . BOGUS,
+            MANIFEST_SUBKEY_SIZE, 0);
+        $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_PATH_PGNOTIFY . '/' . BOGUS,
+            MANIFEST_SUBKEY_TIMESTAMP, $lTime);
+
+        $oManifest->build(storageDb(), $self->{strDbPath}, undef, false, $hTablespaceMap, $hDatabaseMap);
+        $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
+            'tablespace with version < 9.0');
+
+        # Undefined user/group
         #---------------------------------------------------------------------------------------------------------------------------
         executeTest("sudo chgrp 777 " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
         executeTest("sudo chown 777 " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
@@ -592,7 +638,11 @@ sub run
 
         $oManifest->build(storageDb(), $self->{strDbPath}, undef, false);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
-            'invalid user/group');
+            'undefined user/group');
+
+        # Reset the group / owner
+        executeTest("sudo chgrp " . TEST_GROUP . " " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
+        executeTest("sudo chown " . TEST_USER . " " . $self->{strDbPath} . '/pg_xlog/' . BOGUS);
     }
 
     ################################################################################################################################
@@ -606,7 +656,7 @@ sub run
             ERROR_ASSERT, "strSection '" . MANIFEST_SECTION_TARGET_FILE . "', strKey '" . BOGUS . "', strSubKey '" .
             MANIFEST_SUBKEY_CHECKSUM_PAGE . "' is required but not defined");
 
-        # SubKey not require and not set
+        # SubKey not required and not set
         #---------------------------------------------------------------------------------------------------------------------------
 # CSHANG Why would we allow this?
         $self->testResult(sub {$oManifest->boolGet(MANIFEST_SECTION_TARGET_FILE, BOGUS, MANIFEST_SUBKEY_CHECKSUM_PAGE, false)},
@@ -644,7 +694,7 @@ sub run
 
         # Get the correct path for the control file in the DB
         #---------------------------------------------------------------------------------------------------------------------------
-# CSHANG Should MANIFEST_SUBKEY_TYPE be required for MANIFEST_SUBKEY_PATH? And why is there a MANIFEST_SUBKEY_FILE - shouldn't there be a MANIFEST_VALUE_FILE instead? pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"} is the only time I see it in the mock expect tests and the type is link - in restore, I see it firsts tests for link and then file - is this the only way "file" is used?
+# CSHANG Should MANIFEST_SUBKEY_TYPE be required for MANIFEST_SUBKEY_PATH? And why is there a MANIFEST_SUBKEY_FILE - shouldn't there be a MANIFEST_VALUE_FILE instead? pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"} is the only time I see it in the mock expect tests and the type is link - in restore, I see it first tests for link and then file - is this the only way "file" is used?
         $oManifest->set(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_PATH, $self->{strDbPath});
         $self->testResult(sub {$oManifest->dbPathGet($oManifest->get(MANIFEST_SECTION_BACKUP_TARGET, MANIFEST_TARGET_PGDATA,
             MANIFEST_SUBKEY_PATH), MANIFEST_FILE_PGCONTROL)},
@@ -832,7 +882,7 @@ sub run
         # Update reference in expected manifest
         $oManifestExpected->set(MANIFEST_SECTION_TARGET_FILE, MANIFEST_TARGET_PGDATA . '/' . $strTest, MANIFEST_SUBKEY_REFERENCE,
             BOGUS);
-# CSHANG build() expects the checksum & repo size in the lastManifest to exist and does nothing if they don't - shouldn't it ASSERT?
+# CSHANG build() expects the checksum & repo size in the lastManifest to exist and does nothing if they don't - should it ASSERT?
         # Check reference
         $oManifest->build(storageDb(), $self->{strDbPath}, $oLastManifest, true);
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
@@ -973,6 +1023,67 @@ sub run
         $self->testResult(sub {$self->manifestCompare($oManifestExpected, $oManifest)}, "",
             'file added to manifest - default mode set 0600');
     }
+
+    ################################################################################################################################
+    if ($self->begin('isChecksumPage()'))
+    {
+        my $strFile = BOGUS;
+
+        $self->testResult(sub {isChecksumPage($strFile)}, false, "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . DB_FILE_PGVERSION;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . DB_FILE_PGINTERNALINIT;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE. '/' . DB_FILE_PGFILENODEMAP;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGTBLSPC . '/' . DB_FILE_PGFILENODEMAP;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGTBLSPC . '/' . DB_FILE_PGINTERNALINIT;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGTBLSPC . '/' . DB_FILE_PGVERSION;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL. '/' . DB_FILE_PGFILENODEMAP;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL. '/' . DB_FILE_PGINTERNALINIT;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL. '/' . DB_FILE_PGVERSION;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL. '/' . DB_FILE_PGCONTROL;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_FILE_PGCONTROL;
+        $self->testResult(sub {isChecksumPage($strFile)}, false,
+            "file '${strFile}' isChecksumPage=false");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_BASE . '/' . BOGUS;
+        $self->testResult(sub {isChecksumPage($strFile)}, true,
+            "file '${strFile}' isChecksumPage=true");
+
+        $strFile = MANIFEST_TARGET_PGDATA . '/' . DB_PATH_GLOBAL . '/' . BOGUS;
+        $self->testResult(sub {isChecksumPage($strFile)}, true,
+            "file '${strFile}' isChecksumPage=true");
+    }
+
 }
 
 1;
