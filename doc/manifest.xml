@@ -72,6 +72,7 @@
         <source key="user-guide"/>
         <source key="reference" type="custom"/>
         <source key="release" type="custom"/>
+        <source key="coding"/>
         <source key="test"/>
     </source-list>
 
@@ -90,6 +91,7 @@
 
         <render type="markdown">
             <render-source key="index" file="../../../README.md"/>
+            <render-source key="coding" file="../../../CODING.md"/>
             <render-source key="test" file="../../../test/README.md"/>
         </render>
     </render-list>
