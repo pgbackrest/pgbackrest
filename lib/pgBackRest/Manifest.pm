@@ -308,7 +308,7 @@ sub new
     {
         if (!defined($strDbVersion))
         {
-            &log(ASSERT, 'strDbVersion must be provided with bLoad = false');
+            confess &log(ASSERT, 'strDbVersion must be provided with bLoad = false');
         }
 
         $self->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, $strDbVersion);
@@ -1092,6 +1092,7 @@ sub buildDefault
 
             foreach my $strFile ($self->keys($strSection))
             {
+
                 # Don't count false values when subkey in (MANIFEST_SUBKEY_USER, MANIFEST_SUBKEY_GROUP)
                 next if (($strSubKey eq MANIFEST_SUBKEY_USER || $strSubKey eq MANIFEST_SUBKEY_GROUP) &&
                          $self->boolTest($strSection, $strFile, $strSubKey, false));
@@ -1113,7 +1114,7 @@ sub buildDefault
             my $strMaxValue;
             my $iMaxValueTotal = 0;
 
-            foreach my $strValue (keys(%oDefault))
+            foreach my $strValue (sort(keys(%oDefault)))
             {
                 if ($oDefault{$strValue} > $iMaxValueTotal)
                 {
@@ -1215,7 +1216,7 @@ sub walPath
 ####################################################################################################################################
 # isMasterFile
 #
-# Is this file required to copied from the master?
+# Is this file required to be copied from the master?
 ####################################################################################################################################
 sub isMasterFile
 {
