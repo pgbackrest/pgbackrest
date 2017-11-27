@@ -48,6 +48,18 @@
                     </release-item>
                 </release-development-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Created unit tests for the Manifest module.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2017-11-21" version="1.26" title="Repository Encryption">
