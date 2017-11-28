@@ -330,6 +330,14 @@ eval
     ################################################################################################################################
     if (!defined($iVmId))
     {
+        # Sync time to prevent build failures when running on VirtualBox.
+        my $strVBoxService = '/usr/sbin/VBoxService';
+
+        if ($oStorageTest->exists($strVBoxService))
+        {
+            executeTest("sudo ${strVBoxService} --timesync-set-start");
+        }
+
         # Build CI configuration
         if (!$bNoCiConfig)
         {

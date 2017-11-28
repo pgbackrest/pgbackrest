@@ -62,6 +62,10 @@
                     <release-item>
                         <p>Only build C binary/library for Perl unit/integration tests.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Sync time to prevent build failures when running on VirtualBox.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
