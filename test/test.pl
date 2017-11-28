@@ -386,9 +386,33 @@ eval
             $oStorageTest->pathCreate($strCoveragePath, {strMode => '0770', bIgnoreMissing => true, bCreateParent => true});
         }
 
+        # Determine which tests to run
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $oyTestRun;
+        my $bBuildRequired = false;
+
+        # Only get the test list if when they can run
+        if (!$bBuildOnly)
+        {
+            # Get the test list
+            $oyTestRun = testListGet(
+                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly, $bCOnly);
+
+            # Search for any tests that are not C unit tests to determine if the C binary and lib need to be built for testing.  If
+            # all the tests are C unit tests then no builds are required.  This saves a lot ot time.
+            foreach my $hTest (@{$oyTestRun})
+            {
+                if (!$hTest->{&TESTDEF_C})
+                {
+                    $bBuildRequired = true;
+                    last;
+                }
+            }
+        }
+
         # Build the binary, library and packages
         #---------------------------------------------------------------------------------------------------------------------------
-        if (!$bDryRun)
+        if (!$bDryRun && $bBuildRequired)
         {
             my $oVm = vmGet();
             my $strVagrantPath = "${strBackRestBase}/test/.vagrant";
@@ -734,11 +758,8 @@ eval
             logFileSet($oStorageTest, cwd() . "/test");
         }
 
-        # Determine which tests to run
+        # Run the tests
         #---------------------------------------------------------------------------------------------------------------------------
-        my $oyTestRun = testListGet(
-            $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly, $bCOnly);
-
         if (@{$oyTestRun} == 0)
         {
             confess &log(ERROR, 'no tests were selected');
@@ -746,12 +767,13 @@ eval
 
         &log(INFO, @{$oyTestRun} . ' test' . (@{$oyTestRun} > 1 ? 's': '') . " selected\n");
 
+        # Don't allow --no-cleanup when more than one test will run.  How would the prior results be preserved?
         if ($bNoCleanup && @{$oyTestRun} > 1)
         {
             confess &log(ERROR, '--no-cleanup is not valid when more than one test will run')
         }
 
-        # Excecute tests
+        # Only use one vm for dry run so results are printed in order
         if ($bDryRun)
         {
             $iVmMax = 1;
