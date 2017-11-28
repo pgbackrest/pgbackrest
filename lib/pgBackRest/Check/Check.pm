@@ -58,6 +58,27 @@ sub process
     # Initialize the database object. This will also check the configured replicas and throw an error if at least one is not
     # able to be connected to and warnings for any that cannot be properly connected to.
     my ($oDb) = dbObjectGet();
+    # CSHANG have to get the $iMasterRemoteIdx so can get the storageDb file object
+        # # Initialize the master file object
+        # my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
+#    # Determine the database paths
+    # my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iMasterRemoteIdx));
+    # CSHANG To instantiate the manifest, we need the DBversion - I suppose we could just call $oDb->info()
+    # AND if it is encypted, we need to pass it so the INI won't blow up if storage is encrypted
+    # my $oBackupManifest = new pgBackRest::Manifest("$strBackupPath/" . FILE_MANIFEST,
+    #     {bLoad => false, strDbVersion => $strDbVersion,
+    #     strCipherPass => defined($strCipherPassManifest) ? $strCipherPassManifest : undef,
+    #     strCipherPassSub => defined($strCipherPassManifest) ? $strCipherPassBackupSet : undef});
+
+    # CSHANG and then should probably call the map functions before building - but can you call these on a standby?
+    # # Get tablespace map
+    #         $hTablespaceMap = $oDbMaster->tablespaceMapGet();
+    #
+    #         # Get database map
+    #         $hDatabaseMap = $oDbMaster->databaseMapGet();
+    #     # Build the manifest
+        # $oBackupManifest->build($oStorageDbMaster, $strDbMasterPath, $oLastManifest, cfgOption(CFGOPT_ONLINE),
+        #                         $hTablespaceMap, $hDatabaseMap);
 
     # Validate the database configuration
     $oDb->configValidate();
