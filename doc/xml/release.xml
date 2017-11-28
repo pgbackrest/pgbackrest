@@ -34,6 +34,10 @@
                     <release-item>
                         <p>Add <code>List</code> and <code>StringList</code> objects to simplify list handling.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Remove deprecated <br-option>archive-max-mb</br-option> option.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

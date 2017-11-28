@@ -117,14 +117,6 @@ ConfigOptionData configOptionData[] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("archive-max-mb")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveMaxMb)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
         CONFIG_OPTION_NAME("archive-queue-max")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveQueueMax)

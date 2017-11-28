@@ -180,24 +180,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("archive-max-mb")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
         CFGDEFDATA_OPTION_NAME("archive-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)

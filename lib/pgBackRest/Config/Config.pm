@@ -295,14 +295,6 @@ sub configLoad
         }
     }
 
-    # Warn if ARCHIVE_MAX_MB is present
-    if (cfgOptionValid(CFGOPT_ARCHIVE_MAX_MB) && cfgOptionTest(CFGOPT_ARCHIVE_MAX_MB))
-    {
-        &log(WARN,
-            "'" . cfgOptionName(CFGOPT_ARCHIVE_MAX_MB) . "' is no longer not longer valid, use '" .
-            cfgOptionName(CFGOPT_ARCHIVE_QUEUE_MAX) . "' instead");
-    }
-
     return true;
 }
 

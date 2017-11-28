@@ -209,10 +209,8 @@ sub process
 
     foreach my $strOption (sort(keys(%{$oOptionDefine})))
     {
-        if ($strOption =~ /^test/ || $strOption eq CFGOPT_ARCHIVE_MAX_MB)
-        {
-            next;
-        }
+        # Test options are not documented
+        next if ($strOption =~ /^test/);
 
         # Iterate through all commands
         my @stryCommandList = sort(keys(%{defined($$oOptionDefine{$strOption}{&CFGDEF_COMMAND}) ?

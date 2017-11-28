@@ -49,7 +49,6 @@ typedef enum
     cfgDefOptArchiveAsync,
     cfgDefOptArchiveCheck,
     cfgDefOptArchiveCopy,
-    cfgDefOptArchiveMaxMb,
     cfgDefOptArchiveQueueMax,
     cfgDefOptArchiveTimeout,
     cfgDefOptBackupCmd,

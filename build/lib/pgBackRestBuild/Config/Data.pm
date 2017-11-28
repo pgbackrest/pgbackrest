@@ -222,9 +222,6 @@ use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-time
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_ASYNC                                   => 'archive-async';
     push @EXPORT, qw(CFGOPT_ARCHIVE_ASYNC);
-# Deprecated and to be removed
-use constant CFGOPT_ARCHIVE_MAX_MB                                  => 'archive-max-mb';
-    push @EXPORT, qw(CFGOPT_ARCHIVE_MAX_MB);
 use constant CFGOPT_ARCHIVE_QUEUE_MAX                               => 'archive-queue-max';
     push @EXPORT, qw(CFGOPT_ARCHIVE_QUEUE_MAX);
 
@@ -1307,18 +1304,6 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_DEFAULT => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_PUSH => {},
-        }
-    },
-
-    # Deprecated and to be removed
-    &CFGOPT_ARCHIVE_MAX_MB =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_REQUIRED => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
