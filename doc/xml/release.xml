@@ -38,6 +38,14 @@
                     <release-item>
                         <p>Remove deprecated <br-option>archive-max-mb</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
@@ -65,6 +73,14 @@
 
                     <release-item>
                         <p>Sync time to prevent build failures when running on VirtualBox.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add unit tests for the <code>Manifest</code> module.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
