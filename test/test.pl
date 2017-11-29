@@ -41,6 +41,7 @@ use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;
 use pgBackRestBuild::Config::BuildDefine;
+use pgBackRestBuild::Config::BuildParse;
 
 use BackRestDoc::Custom::DocCustomRelease;
 
@@ -282,41 +283,6 @@ eval
         $strBackRestBase, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
 
     ################################################################################################################################
-    # Auto-generate C files
-    ################################################################################################################################
-    my $rhBuild =
-    {
-        'config' =>
-        {
-            &BLD_DATA => buildConfig(),
-            &BLD_PATH => 'config',
-        },
-
-        'configDefine' =>
-        {
-            &BLD_DATA => buildConfigDefine(),
-            &BLD_PATH => 'config',
-        },
-    };
-
-    buildAll("${strBackRestBase}/src", $rhBuild);
-
-    ################################################################################################################################
-    # Auto-generate XS files
-    #
-    # Use statements are put here so this will be easy to get ride of someday.
-    ################################################################################################################################
-    use lib dirname(dirname($0)) . '/libc/build/lib';
-    use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
-
-    buildXsAll("${strBackRestBase}/libc");
-
-    if ($bGenOnly)
-    {
-        exit 0;
-    }
-
-    ################################################################################################################################
     # Build Docker containers
     ################################################################################################################################
     if ($bVmBuild)
@@ -330,6 +296,45 @@ eval
     ################################################################################################################################
     if (!defined($iVmId))
     {
+        # Auto-generate C files
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $rhBuild =
+        {
+            'config' =>
+            {
+                &BLD_DATA => buildConfig(),
+                &BLD_PATH => 'config',
+            },
+
+            'configDefine' =>
+            {
+                &BLD_DATA => buildConfigDefine(),
+                &BLD_PATH => 'config',
+            },
+
+            'configParse' =>
+            {
+                &BLD_DATA => buildConfigParse(),
+                &BLD_PATH => 'config',
+            },
+        };
+
+        buildAll("${strBackRestBase}/src", $rhBuild);
+
+        # Auto-generate XS files
+        #
+        # Use statements are put here so this will be easy to get rid of someday.
+        #---------------------------------------------------------------------------------------------------------------------------
+        use lib dirname(dirname($0)) . '/libc/build/lib';
+        use pgBackRestLibC::Build;                                      ## no critic (Modules::ProhibitConditionalUseStatements)
+
+        buildXsAll("${strBackRestBase}/libc");
+
+        if ($bGenOnly)
+        {
+            exit 0;
+        }
+
         # Sync time to prevent build failures when running on VirtualBox.
         my $strVBoxService = '/usr/sbin/VBoxService';
 
@@ -368,6 +373,27 @@ eval
         elsif ($strVersion ne BACKREST_VERSION)
         {
             confess 'unable to find version ' . BACKREST_VERSION . " as the most recent release in ${strReleaseFile}";
+        }
+
+        # Update version for the C code based on the current Perl version
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strCVersionFile = "${strBackRestBase}/src/version.h";
+        my $strCVersionOld = ${$oStorageTest->get($strCVersionFile)};
+        my $strCVersionNew;
+
+        foreach my $strLine (split("\n", $strCVersionOld))
+        {
+            if ($strLine =~ /^#define PGBACKREST_VERSION/)
+            {
+                $strLine = '#define PGBACKREST_VERSION' . (' ' x 42) . '"' . BACKREST_VERSION . '"';
+            }
+
+            $strCVersionNew .= "${strLine}\n";
+        }
+
+        if ($strCVersionNew ne $strCVersionOld)
+        {
+            $oStorageTest->put($strCVersionFile, $strCVersionNew);
         }
 
         # Clean up

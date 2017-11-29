@@ -16,11 +16,11 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRestBuild::Config::Data;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::BuildDefine;
+use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
 # Constants
@@ -122,6 +122,9 @@ sub buildConfig
             "        CONFIG_COMMAND_NAME(\"${strCommand}\")\n" .
             "    )\n";
     }
+
+    # Add "none" command that is used to initialize the current command before anything is parsed
+    push(@{$rhEnum->{&BLD_LIST}}, buildConfigCommandEnum('none'));
 
     $strBuildSource .=
         ")\n";

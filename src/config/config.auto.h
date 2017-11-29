@@ -26,6 +26,7 @@ typedef enum
     cfgCmdStart,
     cfgCmdStop,
     cfgCmdVersion,
+    cfgCmdNone,
 } ConfigCommand;
 
 /***********************************************************************************************************************************

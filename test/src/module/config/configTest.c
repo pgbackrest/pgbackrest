@@ -67,4 +67,12 @@ void testRun()
         TEST_ERROR(cfgOptionName(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_STR(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("configuration"))
+    {
+        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command begins as none");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "command set to backup");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
+    }
 }

@@ -44,6 +44,9 @@ StringList *perlCommand(int argListSize, char *argList[])
     // Reset optind to 1 in case getopt_long has been called before
     optind = 1;
 
+    // Don't error on unknown options -- they are expected since we are passing options through to Perl
+    opterr = false;
+
     // Struct with all valid options
     static struct option optionList[] =
     {
@@ -54,7 +57,6 @@ StringList *perlCommand(int argListSize, char *argList[])
     // Parse options
     int option;
     int optionIdx;
-    opterr = false;
 
     while ((option = getopt_long(argListSize, argList, "-", optionList, &optionIdx)) != -1)
     {

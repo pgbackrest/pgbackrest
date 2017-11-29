@@ -38,6 +38,6 @@ main(void)
     // End test run an make sure all tests ran
     testComplete();
 
-    printf("\nTESTS COMPLETED SUCCESSFULLY (DESPITE ANY ERROR MESSAGES YOU SAW)\n");
+    printf("\nTESTS COMPLETED SUCCESSFULLY\n");
     fflush(stdout);
 }

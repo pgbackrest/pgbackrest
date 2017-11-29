@@ -9,4 +9,9 @@ Official name of the software, also used for Perl package name
 ***********************************************************************************************************************************/
 #define PGBACKREST_NAME                                             "pgBackRest"
 
+/***********************************************************************************************************************************
+Version of the software.  Currently this value is maintained in Version.pm and updated by test.pl.
+***********************************************************************************************************************************/
+#define PGBACKREST_VERSION                                          "2.00dev"
+
 #endif

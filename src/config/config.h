@@ -12,9 +12,11 @@ Command and Option Configuration
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+ConfigCommand cfgCommand();
 int cfgCommandId(const char *commandName);
 const char *cfgCommandName(ConfigCommand commandId);
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
+void cfgCommandSet(ConfigCommand commandParam);
 unsigned int cfgCommandTotal();
 
 int cfgOptionId(const char *optionName);
