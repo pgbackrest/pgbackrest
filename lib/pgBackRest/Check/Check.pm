@@ -127,36 +127,46 @@ sub process
         };
     }
 
-    # Get the databse version to pass to the manifest constructor
-    my ($strDbVersion) = $oDb->info();
-
-    # Define a cipher pass in order to instatiate the manifest in case the storage is encrypted
-    my $strCipher = 'x';
-
-    # Loop through all defined databases and attempt to build a manifest
-    for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
+    if ($iResult == 0)
     {
-        # Make sure a db is defined for this index
-        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
-            cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
+        # Get the databse version to pass to the manifest constructor
+        my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
+
+        # Define a cipher pass in order to instatiate the manifest in case the storage is encrypted
+        my $strCipher = 'x';
+
+        # Loop through all defined databases and attempt to build a manifest
+        for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
         {
-            # Create the db object
-            my $oDb;
-
-            eval
+            # Make sure a db is defined for this index
+            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
+                cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
             {
-                # Pass file location like dev/null instead of actual location so that the save will fail. Pass junk for encryption key.
-                my $oBackupManifest = new pgBackRest::Manifest("/dev/null/" . FILE_MANIFEST,
-                    {bLoad => false, strDbVersion => $strDbVersion,
-                    strCipherPass => $strCipher,
-                    strCipherPassSub => $strCipher);
+                # Create the db object
+                my $oDb;
 
-                $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
-                    cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx), undef, cfgOption(CFGOPT_ONLINE));
+                eval
+                {
+                    # Passing file location dev/null so that the save will fail if it is ever attempted. Pass a miscellaneus value for
+                    # encryption key since the file will not be saved.
+                    my $oBackupManifest = new pgBackRest::Manifest("/dev/null/manifest.chk",
+                        {bLoad => false, strDbVersion => $strDbVersion,
+                        strCipherPass => $strCipher,
+                        strCipherPassSub => $strCipher});
 
-                return true;
+                    $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
+                        cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE));
+
+                    return true;
+                }
+                or do
+                {
+                    # Capture error information
+                    $strResultMessage .= (defined($strResultMessage) ? "\n[$iResult] : " : ""). "Database: ${strDbVersion} ${ullDbSysId} " .
+                        exceptionMessage($EVAL_ERROR);
+                    $iResult = exceptionCode($EVAL_ERROR);
+                };
             }
-            or do { trap the error };
         }
     }
 
@@ -183,7 +193,7 @@ sub process
         &log(ERROR, $strResultMessage, $iResult);
 
         # If a WAL switch was attempted, then alert the user that the WAL that did not reach the archive
-        if (defined($strWalSegment))
+        if (defined($strWalSegment) && !defined($strArchiveFile))
         {
             &log(WARN,
                 "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .

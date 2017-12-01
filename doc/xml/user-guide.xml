@@ -2496,7 +2496,7 @@
             </execute>
         </execute-list>
 
-        <p>Test configuration using the <cmd>check</cmd> command. The warning on the <host>backup</host> host regarding the standby being down is expected and can be ignored.</p>
+        <p>Test configuration using the <cmd>check</cmd> command.</p>
 
         <execute-list host="{[host-db-primary]}">
             <title>Check configuration</title>
@@ -2506,14 +2506,6 @@
             </execute>
 
             <execute output="y" filter="n" >
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-backup]}">
-            <title>Check configuration</title>
-
-            <execute user="backrest" output="y" filter="n" >
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
             </execute>
         </execute-list>
@@ -2529,16 +2521,6 @@
 
             <execute keyword="co6" user="root">
                 <exe-cmd>rm -rf {[db-path]}</exe-cmd>
-            </execute>
-        </execute-list>
-
-        <p>Run a full backup on the new cluster and then restore the standby from the backup. The backup type will automatically be changed to <id>full</id> if <id>incr</id> or <id>diff</id> is requested.</p>
-
-        <execute-list host="{[host-backup]}">
-            <title>Run a full backup</title>
-
-            <execute user="backrest">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
             </execute>
         </execute-list>
 
@@ -2566,6 +2548,26 @@
             </execute>
         </execute-list>
 
+        <p>Run the <cmd>check</cmd> on the backup host. The warning regarding the standby being down is expected since the standby cluster is down. Running this command demostrates that the backup server is aware of the standby and is confirgured properly for the primary server.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Check configuration</title>
+
+            <execute user="backrest" output="y" filter="n" >
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Run a full backup on the new cluster and then restore the standby from the backup. The backup type will automatically be changed to <id>full</id> if <id>incr</id> or <id>diff</id> is requested.</p>
+
+        <execute-list host="{[host-backup]}">
+            <title>Run a full backup</title>
+
+            <execute user="backrest">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=full backup</exe-cmd>
+            </execute>
+        </execute-list>
+
         <execute-list host="{[host-db-standby]}">
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
@@ -2581,7 +2583,7 @@
         </postgres-config>
 
         <execute-list host="{[host-db-standby]}">
-            <title>Start <postgres/></title>
+            <title>Start <postgres/> and check the <backrest/> configuration</title>
 
             <execute user="root">
                 <exe-cmd>{[db-cluster-start-upgrade]}</exe-cmd>
@@ -2589,6 +2591,10 @@
 
             <execute show="n">
                 <exe-cmd>{[db-cluster-wait]}</exe-cmd>
+            </execute>
+
+            <execute user="postgres" output="y" filter="n" >
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} check</exe-cmd>
             </execute>
         </execute-list>
 

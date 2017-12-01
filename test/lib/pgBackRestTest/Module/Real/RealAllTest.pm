@@ -273,6 +273,16 @@ sub run
             # Restore the file to its original condition
             $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
 
+            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+            my $strDir = $oHostDbMaster->dbBasePath() . '/rootreaddir';
+            executeTest('sudo mkdir ' . $strDir);
+            executeTest("sudo chown root:root ${strDir}");
+            executeTest("sudo chmod 400 ${strDir}");
+
+            $strComment = 'confirm manifest->build executed';
+            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
+            executeTest("sudo rmdir ${strDir}");
+
             # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
             # archive.info and backup.info files
             $strComment = 'verify success after backup';
@@ -507,6 +517,26 @@ sub run
             {
                 $strFullBackup = $strStandbyBackup;
             }
+
+            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+            my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
+            executeTest('sudo mkdir ' . $strDir);
+            executeTest("sudo chown root:root ${strDir}");
+            executeTest("sudo chmod 400 ${strDir}");
+
+            $strComment = 'confirm manifest->build executed';
+
+# CSHANG Run 3 & 5 are $bHostStandby but they return different errors - need to investigate further and also maybe create unit tests
+            if ($bHostStandby)
+            {
+                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+            }
+            else
+            {
+                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
+            }
+
+            executeTest("sudo rmdir ${strDir}");
 
             # Confirm the check command runs without error on a standby
             $oHostDbStandby->check('verify check command on standby');
