@@ -499,9 +499,6 @@ sub run
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
-        my $bDelta = true;
-        my $bForce = false;
-
         # Munge permissions/modes on files that will be fixed by the restore
         if (!$bRemote)
         {
@@ -532,9 +529,9 @@ sub run
         }
 
         $oHostDbMaster->restore(
-            $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'add and delete files', undef,  ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : ''),
-            undef, !$bRemote ? 'root' : undef);
+            'add and delete files', $strFullBackup,
+            {rhExpectedManifest => \%oManifest, bDelta => true, strUser => !$bRemote ? 'root' : undef,
+                strOptionalParam => ' --link-all' . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '')});
 
         # Run again to fix permissions
         if (!$bRemote)
@@ -560,8 +557,9 @@ sub run
                 {&MANIFEST_SUBKEY_GROUP});
 
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'fix permissions', undef,  ' --link-all --log-level-console=detail', undef, 'root');
+                'fix permissions', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, bDelta => true, strUser => 'root',
+                    strOptionalParam => ' --link-all --log-level-console=detail'});
 
             # Fix and remove files that are now owned by root
             executeTest('sudo chown -R ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostBackup->logPath());
@@ -573,69 +571,70 @@ sub run
         $oHostDbMaster->dbLinkCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'pg_stat', '../wrong');
 
         $oHostDbMaster->restore(
-            $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'fix broken symlink', undef, " --link-all ${strLogReduced}" . ($bRemote ? ' --compress-level-network=0' : ''));
+            'fix broken symlink', $strFullBackup,
+            {rhExpectedManifest => \%oManifest, bDelta => true,
+                strOptionalParam => " --link-all ${strLogReduced}" . ($bRemote ? ' --compress-level-network=0' : '')});
 
         # Additional restore tests that don't need to be performed for every permutation
         if (!$bRemote)
         {
             # This time manually restore all links
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'restore all links by mapping', undef, $strLogReduced .
-                ' --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf');
+                'restore all links by mapping', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, bDelta => true,
+                    strOptionalParam =>
+                        $strLogReduced . ' --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_config/postgresql.conf'});
 
             # Error when links overlap
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'restore all links by mapping', ERROR_LINK_DESTINATION, '--log-level-console=warn' .
-                ' --link-map=pg_stat=../pg_stat --link-map=postgresql.conf=../pg_stat/postgresql.conf');
+                'restore all links by mapping', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, bDelta => true, iExpectedExitStatus => ERROR_LINK_DESTINATION,
+                    strOptionalParam =>
+                        '--log-level-console=warn --link-map=pg_stat=../pg_stat ' .
+                        '--link-map=postgresql.conf=../pg_stat/postgresql.conf'});
 
             # Error when links still exist on non-delta restore
-            $bDelta = false;
-
             executeTest('rm -rf ' . $oHostDbMaster->dbBasePath() . "/*");
 
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'error on existing linked path', ERROR_PATH_NOT_EMPTY, '--log-level-console=warn --link-all');
+                'error on existing linked path', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                    strOptionalParam => '--log-level-console=warn --link-all'});
 
             executeTest('rm -rf ' . $oHostDbMaster->dbPath() . "/pg_stat/*");
 
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'error on existing linked file', ERROR_PATH_NOT_EMPTY, '--log-level-console=warn --link-all');
+                'error on existing linked file', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                    strOptionalParam => '--log-level-console=warn --link-all'});
 
             # Error when postmaster.pid is present
             executeTest('touch ' . $oHostDbMaster->dbBasePath() . qw(/) . DB_FILE_POSTMASTERPID);
 
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'error on postmaster.pid exists', ERROR_POSTMASTER_RUNNING, '--log-level-console=warn');
+                'error on postmaster.pid exists', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_POSTMASTER_RUNNING,
+                    strOptionalParam => '--log-level-console=warn'});
 
             executeTest('rm ' . $oHostDbMaster->dbBasePath() . qw(/) . DB_FILE_POSTMASTERPID);
 
             # Now a combination of remapping
-            $bDelta = true;
-
             $oHostDbMaster->restore(
-                $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-                'restore all links --link-all and mapping', undef,
-                "${strLogReduced} --link-map=pg_stat=../pg_stat  --link-all");
+                'restore all links --link-all and mapping', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, bDelta => true,
+                    strOptionalParam => "${strLogReduced} --link-map=pg_stat=../pg_stat  --link-all"});
         }
 
         # Restore - test errors when $PGDATA cannot be verified
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = true;
-        $bForce = true;
-
         # Remove PG_VERSION
         $oHostDbMaster->dbFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_PGVERSION);
 
         # Attempt the restore
         $oHostDbMaster->restore(
-            $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'fail on missing ' . DB_FILE_PGVERSION, ERROR_PATH_NOT_EMPTY, $strLogReduced);
+            'fail on missing ' . DB_FILE_PGVERSION, $strFullBackup,
+            {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                strOptionalParam => $strLogReduced});
 
         # Write a backup.manifest file to make $PGDATA valid
         testFileCreate($oHostDbMaster->dbBasePath() . '/backup.manifest', 'BOGUS');
@@ -652,8 +651,9 @@ sub run
         $oHostDbMaster->manifestLinkMap(\%oManifest, MANIFEST_TARGET_PGDATA . '/postgresql.conf');
 
         $oHostDbMaster->restore(
-            $strFullBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'restore succeeds with backup.manifest file', undef, $strLogReduced);
+            'restore succeeds with backup.manifest file', $strFullBackup,
+            {rhExpectedManifest => \%oManifest, bDelta => true, bForce => true,
+                strOptionalParam => $strLogReduced});
 
         # Various broken info tests
         #---------------------------------------------------------------------------------------------------------------------------
@@ -898,13 +898,11 @@ sub run
 
         # Restore
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = false;
-        $bForce = false;
-
         # Fail on used path
         $oHostDbMaster->restore(
-            $strBackup, \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'fail on used path', ERROR_PATH_NOT_EMPTY, $strLogReduced);
+            'fail on used path', $strBackup,
+            {rhExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_PATH_NOT_EMPTY,
+                strOptionalParam => $strLogReduced});
 
         # Remap the base and tablespace paths
         my %oRemapHash;
@@ -920,16 +918,15 @@ sub run
         }
 
         $oHostDbMaster->restore(
-            $strBackup, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'remap all paths', undef, $strLogReduced);
+            'remap all paths', $strBackup,
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, strOptionalParam => $strLogReduced});
 
         # Restore (make sure file in root tablespace path is not deleted by --delta)
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = true;
-
         $oHostDbMaster->restore(
-            $strBackup, \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef, undef, undef, undef,
-            'ensure file in tblspc root remains after --delta', undef, $strLogReduced);
+            'ensure file in tblspc root remains after --delta', $strBackup,
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
+                strOptionalParam => $strLogReduced});
 
         if (!-e $strDoNotDeleteFile)
         {
@@ -1132,8 +1129,6 @@ sub run
 
         # Selective Restore
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = true;
-
         # Remove mapping for tablespace 1
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'});
 
@@ -1146,8 +1141,9 @@ sub run
                          {&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
-            undef, undef, undef, 'selective restore 16384', undef, "${strLogReduced} --db-include=16384");
+            'selective restore 16384', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
+                strOptionalParam => "${strLogReduced} --db-include=16384"});
 
         # Restore checksum values for next test
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
@@ -1163,24 +1159,25 @@ sub run
         delete($oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM});
 
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
-            undef, undef, undef, 'selective restore 32768', undef, "${strLogReduced} --db-include=32768");
+            'selective restore 32768', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
+                strOptionalParam => "${strLogReduced} --db-include=32768"});
 
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/16384/17000'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '7579ada0808d7f98087a0a586d0df9de009cdc33';
 
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
-            undef, undef, undef, 'error on invalid id', ERROR_DB_MISSING, '--log-level-console=warn --db-include=7777');
+            'error on invalid id', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
+                iExpectedExitStatus => ERROR_DB_MISSING, strOptionalParam => '--log-level-console=warn --db-include=7777'});
 
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
-            undef, undef, undef, 'error on system id', ERROR_DB_INVALID, '--log-level-console=warn --db-include=1');
+            'error on system id', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, bDelta => true,
+                iExpectedExitStatus => ERROR_DB_INVALID, strOptionalParam => '--log-level-console=warn --db-include=1'});
 
         # Compact Restore
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = false;
-
         executeTest('rm -rf ' . $oHostDbMaster->dbBasePath(2) . "/*");
 
         my $strDbPath = $oHostDbMaster->dbBasePath(2) . '/base';
@@ -1190,15 +1187,16 @@ sub run
         delete($oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'});
 
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, \%oRemapHash, $bDelta, $bForce, undef, undef, undef,
-            undef, undef, undef, 'no tablespace remap - error when tablespace dir does not exist', ERROR_PATH_MISSING,
-            "${strLogReduced} --tablespace-map-all=../../tablespace", false);
+            'no tablespace remap - error when tablespace dir does not exist', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash, iExpectedExitStatus => ERROR_PATH_MISSING,
+                bTablespace => false, strOptionalParam => "${strLogReduced} --tablespace-map-all=../../tablespace"});
 
         storageTest()->pathCreate($oHostDbMaster->dbBasePath(2) . '/tablespace', {strMode => '0700'});
 
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), \%oManifest, undef, $bDelta, $bForce, undef, undef, undef, undef,
-            undef, undef, 'no tablespace remap', undef, "--tablespace-map-all=../../tablespace ${strLogReduced}", false);
+            'no tablespace remap', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {rhExpectedManifest => \%oManifest, bTablespace => false,
+                strOptionalParam => "--tablespace-map-all=../../tablespace ${strLogReduced}"});
 
         $oManifest{&MANIFEST_SECTION_BACKUP_TARGET}{'pg_tblspc/2'}{&MANIFEST_SUBKEY_PATH} = '../../tablespace/ts2';
         $oManifest{&MANIFEST_SECTION_TARGET_LINK}{'pg_data/pg_tblspc/2'}{&MANIFEST_SUBKEY_DESTINATION} = '../../tablespace/ts2';
