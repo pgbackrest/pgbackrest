@@ -31,6 +31,7 @@ Define errors
 ERROR_DEFINE(ERROR_CODE_MIN, AssertError, RuntimeError);
 
 ERROR_DEFINE(ERROR_CODE_MIN + 04, FormatError, RuntimeError);
+ERROR_DEFINE(ERROR_CODE_MIN + 05, CommandRequiredError, FormatError);
 ERROR_DEFINE(ERROR_CODE_MIN + 23, CommandInvalidError, FormatError);
 ERROR_DEFINE(ERROR_CODE_MIN + 31, OptionInvalidError, FormatError);
 ERROR_DEFINE(ERROR_CODE_MIN + 69, MemoryError, RuntimeError);

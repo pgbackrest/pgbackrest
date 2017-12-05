@@ -54,6 +54,10 @@
                     <release-item>
                         <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>More config parsing in C in preparation for all config parsing in C.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

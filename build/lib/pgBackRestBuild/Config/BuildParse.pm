@@ -83,14 +83,17 @@ sub buildConfigParse
                 "${strOptionPrefix}${iOptionIdx}-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
 
             # Generate option value used for parsing (offset is added so options don't conflict with getopt_long return values)
-            my $strOptionVal = 'PARSE_OPTION_OFFSET + ' . $strOptionEnum . ($iOptionIdx > 1 ? " + " . ($iOptionIdx - 1) : '');
+            my $strOptionFlag = 'PARSE_OPTION_FLAG |';
+
+            my $strOptionVal =
+                ($iOptionIdx > 1 ? "(" : '') . $strOptionEnum . ($iOptionIdx > 1 ? " + " . ($iOptionIdx - 1) . ')' : '');
 
             # Add option
             $strBuildSource .=
                 "    {\n" .
                 "        .name = \"${strOptionName}\",\n" .
                 $strOptionArg .
-                "        .val = ${strOptionVal},\n" .
+                "        .val = ${strOptionFlag} ${strOptionVal},\n" .
                 "    },\n";
 
             # Add negation when defined
@@ -99,7 +102,7 @@ sub buildConfigParse
                 $strBuildSource .=
                     "    {\n" .
                     "        .name = \"no-${strOptionName}\",\n" .
-                    "        .val = ${strOptionVal},\n" .
+                    "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
                     "    },\n";
             }
         }

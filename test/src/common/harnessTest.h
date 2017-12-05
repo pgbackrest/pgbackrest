@@ -169,6 +169,27 @@ Test that a void statement returns and does not throw an error
 }
 
 /***********************************************************************************************************************************
+Test that a statement does not error and assign it to the specified variable if not
+***********************************************************************************************************************************/
+#define TEST_ASSIGN(lValue, statement, ...)                                                                                        \
+{                                                                                                                                  \
+    /* Output test info */                                                                                                         \
+    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
+                                                                                                                                   \
+    TRY_BEGIN()                                                                                                                    \
+    {                                                                                                                              \
+        lValue = statement;                                                                                                        \
+    }                                                                                                                              \
+    /* Catch any errors */                                                                                                         \
+    CATCH_ANY()                                                                                                                    \
+    {                                                                                                                              \
+        /* No errors were expected so error */                                                                                     \
+        THROW(AssertError, "statement '%s' threw error %s, '%s' but result expected", #statement, errorName(), errorMessage());    \
+    }                                                                                                                              \
+    TRY_END();                                                                                                                     \
+}
+
+/***********************************************************************************************************************************
 Macros to ease the use of common data types
 ***********************************************************************************************************************************/
 #define TEST_RESULT_BOOL_PARAM(statement, resultExpected, typeOp, ...)                                                             \

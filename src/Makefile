@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I. -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -std=c99 -funroll-loops -ftree-vectorize
+CFLAGS=-I. -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -std=c99 -O2 -funroll-loops -ftree-vectorize
 DESTDIR=
 
 pgbackrest: \
