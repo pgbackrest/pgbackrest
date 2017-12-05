@@ -22,6 +22,12 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-feature-list>
+                    <release-item>
+                        <p>Allow any non-boolean, non-command-line option to be negated.  This allows specific options in <file>pgbackrest.conf</file> to be ignored (and set to default) which reduces the need to write new configuration files for specific needs.  Note that boolean, non-command-line options are already negatable.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>

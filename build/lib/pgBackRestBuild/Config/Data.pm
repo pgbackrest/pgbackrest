@@ -1892,9 +1892,8 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }
 
-    # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.
-    if ($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_BOOLEAN &&
-        defined($hConfigDefine{$strKey}{&CFGDEF_SECTION}))
+    # All config options can be negated.  Boolean command-line options must be marked for negation individually.
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_SECTION}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_NEGATE} = true;
     }

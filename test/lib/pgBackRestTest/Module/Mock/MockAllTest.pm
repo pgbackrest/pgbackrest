@@ -583,6 +583,14 @@ sub run
                 {rhExpectedManifest => \%oManifest, strUser => TEST_USER, iExpectedExitStatus => ERROR_HOST_INVALID,
                     strOptionalParam => "--log-level-console=warn"});
 
+            my $strBackupHostDbPath = $oHostBackup->testPath() . '/db';
+            executeTest("mkdir -p ${strBackupHostDbPath}");
+
+            $oHostBackup->restore(
+                'on backup host', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, strUser => TEST_USER,
+                    strOptionalParam => "${strLogReduced} --no-db1-host --db-path=${strBackupHostDbPath}"});
+
             $oHostDbMaster->backup(
                 $strType, 'backup errors on db host',
                 {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_HOST_INVALID,
