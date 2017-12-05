@@ -22,28 +22,28 @@ void testRun()
         char optionIdInvalidHighError[256];
         snprintf(
             optionIdInvalidHighError, sizeof(optionIdInvalidHighError), "option id %d invalid - must be >= 0 and < %d",
-            cfgOptionTotal(), cfgOptionTotal());
+            CFG_OPTION_TOTAL, CFG_OPTION_TOTAL);
 
         char optionIdInvalidLowError[256];
         snprintf(
             optionIdInvalidLowError, sizeof(optionIdInvalidLowError), "option id -1 invalid - must be >= 0 and < %d",
-            cfgOptionTotal());
+            CFG_OPTION_TOTAL);
 
         char commandIdInvalidHighError[256];
         snprintf(
             commandIdInvalidHighError, sizeof(commandIdInvalidHighError), "command id %d invalid - must be >= 0 and < %d",
-            cfgCommandTotal(), cfgCommandTotal());
+            CFG_COMMAND_TOTAL, CFG_COMMAND_TOTAL);
 
         char commandIdInvalidLowError[256];
         snprintf(
             commandIdInvalidLowError, sizeof(commandIdInvalidLowError), "command id -1 invalid - must be >= 0 and < %d",
-            cfgCommandTotal());
+            CFG_COMMAND_TOTAL);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(cfgCommandId(BOGUS_STR), AssertError, "invalid command 'BOGUS'");
         TEST_RESULT_INT(cfgCommandId("archive-push"), cfgCmdArchivePush, "command id from name");
 
-        TEST_ERROR(cfgCommandDefIdFromId(cfgCommandTotal()), AssertError, commandIdInvalidHighError);
+        TEST_ERROR(cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, commandIdInvalidHighError);
         TEST_RESULT_INT(cfgCommandDefIdFromId(cfgCmdBackup), cfgDefCmdBackup, "command id to def id");
 
         TEST_ERROR(cfgCommandName(-1), AssertError, commandIdInvalidLowError);
@@ -57,7 +57,7 @@ void testRun()
         TEST_ERROR(cfgOptionIdFromDefId(cfgDefOptionTotal(), 6), AssertError, optionDefIdInvalidHighError);
         TEST_RESULT_INT(cfgOptionIdFromDefId(cfgDefOptDbHost, 6), cfgOptDbHost + 6, "option def id to id");
 
-        TEST_ERROR(cfgOptionIndex(cfgOptionTotal()), AssertError, optionIdInvalidHighError);
+        TEST_ERROR(cfgOptionIndex(CFG_OPTION_TOTAL), AssertError, optionIdInvalidHighError);
         TEST_RESULT_INT(cfgOptionIndex(cfgOptDbCmd + 6), 6, "option index");
         TEST_RESULT_INT(cfgOptionIndex(cfgOptCompressLevel), 0, "option index");
 

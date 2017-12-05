@@ -17,7 +17,6 @@ int cfgCommandId(const char *commandName);
 const char *cfgCommandName(ConfigCommand commandId);
 ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
 void cfgCommandSet(ConfigCommand commandParam);
-unsigned int cfgCommandTotal();
 
 int cfgOptionId(const char *optionName);
 ConfigOption cfgOptionIdFromDefId(ConfigDefineOption optionDefId, int index);
@@ -25,6 +24,5 @@ int cfgOptionIndex(ConfigOption optionId);
 int cfgOptionIndexTotal(ConfigOption optionDefId);
 const char *cfgOptionName(ConfigOption optionId);
 ConfigDefineOption cfgOptionDefIdFromId(ConfigOption optionId);
-unsigned int cfgOptionTotal();
 
 #endif

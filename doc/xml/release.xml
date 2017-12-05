@@ -50,6 +50,10 @@
 
                         <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

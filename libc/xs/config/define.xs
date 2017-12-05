@@ -368,3 +368,7 @@ OUTPUT:
 
 U32
 cfgOptionTotal()
+CODE:
+    RETVAL = CFG_OPTION_TOTAL;
+OUTPUT:
+    RETVAL

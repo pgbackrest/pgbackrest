@@ -67,6 +67,25 @@ sub buildAll
                     "#ifndef ${strHeaderDefine}\n" .
                     "#define ${strHeaderDefine}\n";
 
+                # Iterate constant groups
+                foreach my $strConstantGroup (sort(keys(%{$rhFileConstant})))
+                {
+                    my $rhConstantGroup = $rhFileConstant->{$strConstantGroup};
+
+                    $strHeader .= "\n" . bldBanner($rhConstantGroup->{&BLD_SUMMARY} . ' constants');
+
+                    # Iterate constants
+                    foreach my $strConstant (sort(keys(%{$rhConstantGroup->{&BLD_CONSTANT}})))
+                    {
+                        my $rhConstant = $rhConstantGroup->{&BLD_CONSTANT}{$strConstant};
+
+                        $strHeader .=
+                            "#define ${strConstant} " . (' ' x (69 - length($strConstant) - 10)) .
+                                $rhConstant->{&BLD_CONSTANT_VALUE} . "\n";
+                    }
+                }
+
+                # Iterate enum groups
                 foreach my $strEnum (sort(keys(%{$rhFileEnum})))
                 {
                     my $rhEnum = $rhFileEnum->{$strEnum};
@@ -98,24 +117,6 @@ sub buildAll
 
                     $strHeader .=
                         "} " . $rhEnum->{&BLD_NAME} . ";\n";
-                }
-
-                # Iterate constant groups
-                foreach my $strConstantGroup (sort(keys(%{$rhFileConstant})))
-                {
-                    my $rhConstantGroup = $rhFileConstant->{$strConstantGroup};
-
-                    $strHeader .= "\n" . bldBanner($rhConstantGroup->{&BLD_SUMMARY} . ' constants');
-
-                    # Iterate constants
-                    foreach my $strConstant (sort(keys(%{$rhConstantGroup->{&BLD_CONSTANT}})))
-                    {
-                        my $rhConstant = $rhConstantGroup->{&BLD_CONSTANT}{$strConstant};
-
-                        $strHeader .=
-                            "#define ${strConstant} " . (' ' x (69 - length($strConstant) - 10)) .
-                                $rhConstant->{&BLD_CONSTANT_VALUE} . "\n";
-                    }
                 }
 
                 $strHeader .=
