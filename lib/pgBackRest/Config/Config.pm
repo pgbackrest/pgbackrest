@@ -218,7 +218,8 @@ sub configLoad
             confess &log(ERROR,
                 "'" . cfgOption(CFGOPT_PROTOCOL_TIMEOUT) . "' is not valid for '" .
                     cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT) . "' option\n" .
-                    "HINT: 'protocol-timeout' option should be greater than 'db-timeout' option.",
+                    "HINT: 'protocol-timeout' option (" . cfgOption(CFGOPT_PROTOCOL_TIMEOUT) .
+                    ") should be greater than 'db-timeout' option (" . cfgOption(CFGOPT_DB_TIMEOUT) . ").",
                 ERROR_OPTION_INVALID_VALUE);
         }
     }

@@ -1532,6 +1532,18 @@ P00   INFO: restore command end: completed successfully
 ----------------------------------------------------------------
 restore_command = '[BACKREST-BIN] --compress-level-network=0 --config=[TEST_PATH]/db-master/pgbackrest.conf --log-level-console=detail --stanza=db archive-get %f "%p"'
 
+restore, backup '[BACKUP-FULL-2]', expect exit 72 - restore errors on backup host (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=warn  --stanza=db restore
+------------------------------------------------------------------------------------------------------------------------------------
+P00  ERROR: [072]: restore command must be run on the db host
+
+full backup - backup errors on db host (db-master host)
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --log-level-console=warn --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+P00   WARN: option retention-full is not set, the repository may run out of space
+            HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
+P00  ERROR: [072]: backup and expire commands must be run on the backup host
+
 restore delta, force, backup '[BACKUP-FULL-2]', expect exit 40 - fail on missing PG_VERSION (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --log-level-console=detail  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------

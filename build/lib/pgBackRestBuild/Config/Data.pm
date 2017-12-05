@@ -1400,6 +1400,10 @@ my %hConfigDefine =
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_CHECK => {},
             &CFGCMD_INFO => {},
             &CFGCMD_LOCAL => {},
@@ -1715,6 +1719,10 @@ my %hConfigDefine =
             &CFGCMD_CHECK => {},
             &CFGCMD_EXPIRE => {},
             &CFGCMD_LOCAL => {},
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},

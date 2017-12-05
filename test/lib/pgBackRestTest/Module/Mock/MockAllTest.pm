@@ -575,6 +575,20 @@ sub run
             {rhExpectedManifest => \%oManifest, bDelta => true,
                 strOptionalParam => " --link-all ${strLogReduced}" . ($bRemote ? ' --compress-level-network=0' : '')});
 
+        # Test operations not running on their usual host
+        if ($bRemote && !$bS3)
+        {
+            $oHostBackup->restore(
+                'restore errors on backup host', $strFullBackup,
+                {rhExpectedManifest => \%oManifest, strUser => TEST_USER, iExpectedExitStatus => ERROR_HOST_INVALID,
+                    strOptionalParam => "--log-level-console=warn"});
+
+            $oHostDbMaster->backup(
+                $strType, 'backup errors on db host',
+                {oExpectedManifest => \%oManifest, iExpectedExitStatus => ERROR_HOST_INVALID,
+                    strOptionalParam => "--log-level-console=warn"});
+        }
+
         # Additional restore tests that don't need to be performed for every permutation
         if (!$bRemote)
         {
