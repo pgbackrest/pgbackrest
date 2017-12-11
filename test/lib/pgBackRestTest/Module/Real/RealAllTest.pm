@@ -279,7 +279,7 @@ sub run
             executeTest("sudo chown root:root ${strDir}");
             executeTest("sudo chmod 400 ${strDir}");
 
-            $strComment = 'confirm manifest->build executed';
+            $strComment = 'confirm master manifest->build executed';
             $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
             executeTest("sudo rmdir ${strDir}");
 
@@ -524,22 +524,41 @@ sub run
             executeTest("sudo chown root:root ${strDir}");
             executeTest("sudo chmod 400 ${strDir}");
 
-            $strComment = 'confirm manifest->build executed';
+            $strComment = 'confirm standby manifest->build executed';
 
-# CSHANG Run 3 & 5 are $bHostStandby but they return different errors - need to investigate further and also maybe create unit tests
-            if ($bHostStandby)
+            # Determine if there is an invalid db-host from the config file
+            my $rhConfig = iniParse(${storageTest()->get($oHostDbStandby->backrestConfig())}, {bRelaxed => true});
+            my $bBogusHost = false;
+
+            for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
             {
-                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+                if (defined($rhConfig->{$self->stanza()}{$oHostDbStandby->optionIndexName(CFGOPT_DB_HOST, $iRemoteIdx)}) &&
+                    ($rhConfig->{$self->stanza()}{$oHostDbStandby->optionIndexName(CFGOPT_DB_HOST, $iRemoteIdx)} eq BOGUS))
+                {
+                    $bBogusHost = true;
+                    last;
+                }
             }
-            else
+
+            # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
+            # a read error instead of an open error
+            if (!$bBogusHost)
             {
                 $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
             }
+            else
+            {
+                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+            }
 
+            # Remove the directory in pg_data location that is only readable by root
             executeTest("sudo rmdir ${strDir}");
 
-            # Confirm the check command runs without error on a standby
-            $oHostDbStandby->check('verify check command on standby');
+            # Confirm the check command runs without error on a standby (when a bogus host is not configured)
+            if (!$bBogusHost)
+            {
+                $oHostDbStandby->check('verify check command on standby');
+            }
 
             # Shutdown the stanby before creating tablespaces (this will error since paths are different)
             $oHostDbStandby->clusterStop({bIgnoreLogError => true});
