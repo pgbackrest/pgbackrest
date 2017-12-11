@@ -397,7 +397,9 @@
                     <config-key id="archive-check" name="Check Archive">
                         <summary>Check that WAL segments are present in the archive before backup completes.</summary>
 
-                        <text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.</text>
+                        <text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.
+
+                        This option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>n</example>
                     </config-key>
@@ -408,7 +410,9 @@
 
                         <text>This slightly paranoid option protects against corruption in the WAL segment archive by storing the WAL segments required for consistency directly in the backup.  WAL segments are still stored in the archive so this option will use additional space.
 
-                        On restore, the WAL segments will be present in <path>pg_xlog/pg_wal</path> and <postgres/> will use them in preference to calling the <code>restore_command</code>.</text>
+                        On restore, the WAL segments will be present in <path>pg_xlog/pg_wal</path> and <postgres/> will use them in preference to calling the <code>restore_command</code>.
+
+                        The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>y</example>
                     </config-key>

@@ -80,6 +80,14 @@
             <release-doc-list>
                 <release-feature-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="nullmeier.markus"/>
+                        </release-item-contributor-list>
+
+                        <p>Document the relationship between the <br-option>archive-copy</br-option> and <br-option>archive-check</br-option> options.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Improve <br-option>archive-copy</br-option> reference documentation.</p>
                     </release-item>
                 </release-feature-list>
@@ -3840,6 +3848,11 @@
         <contributor id="mccormick.jeff">
             <contributor-name-display>Jeff McCormick</contributor-name-display>
             <contributor-id type="github">jmccormick2001</contributor-id>
+        </contributor>
+
+        <contributor id="nullmeier.markus">
+            <contributor-name-display>Markus Nullmeier</contributor-name-display>
+            <contributor-id type="github">mnullmei</contributor-id>
         </contributor>
 
         <contributor id="odonnell.jason">
