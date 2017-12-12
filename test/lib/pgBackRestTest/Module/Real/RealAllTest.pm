@@ -499,8 +499,6 @@ sub run
             executeTest("sudo chown root:root ${strDir}");
             executeTest("sudo chmod 400 ${strDir}");
 
-            $strComment = 'confirm standby manifest->build executed';
-
             # Determine if there is an invalid db-host from the config file
             my $rhConfig = iniParse(${storageTest()->get($oHostDbStandby->backrestConfig())}, {bRelaxed => true});
             my $bBogusHost = false;
@@ -514,6 +512,8 @@ sub run
                     last;
                 }
             }
+
+            my $strComment = 'confirm standby manifest->build executed';
 
             # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
             # a read error instead of an open error
