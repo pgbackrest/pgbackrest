@@ -12,6 +12,22 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.00dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lardiere.sebastien"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <p>Allow any non-boolean, non-command-line option to be negated.  This allows specific options in <file>pgbackrest.conf</file> to be ignored (and set to default) which reduces the need to write new configuration files for specific needs.  Note that boolean, non-command-line options are already negatable.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
@@ -23,6 +39,10 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <p>Implement <cmd>version</cmd> command in C.</p>
+                    </release-item>
+
                     <release-item>
                         <p>Add <code>memGrowRaw()</code> to memory context module.</p>
                     </release-item>
@@ -46,10 +66,32 @@
 
                         <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>More config parsing in C in preparation for all config parsing in C.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
             <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="nullmeier.markus"/>
+                        </release-item-contributor-list>
+
+                        <p>Document the relationship between the <br-option>archive-copy</br-option> and <br-option>archive-check</br-option> options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Improve <br-option>archive-copy</br-option> reference documentation.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Relax permissions set by <file>release.pl</file>.</p>
@@ -61,6 +103,10 @@
 
                     <release-item>
                         <p>Add coding standards document.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Allow internal options that do not show up in the documentation.  Used for test options initially but other use cases are on the horizon.</p>
                     </release-item>
                 </release-development-list>
             </release-doc-list>
@@ -81,6 +127,10 @@
                         </release-item-contributor-list>
 
                         <p>Add unit tests for the <code>Manifest</code> module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Move restore test infrastructure to <code>HostBackup.pm</code>.  Required to test restores on the backup server, a fairly common scenario.  Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -3798,6 +3848,11 @@
         <contributor id="mccormick.jeff">
             <contributor-name-display>Jeff McCormick</contributor-name-display>
             <contributor-id type="github">jmccormick2001</contributor-id>
+        </contributor>
+
+        <contributor id="nullmeier.markus">
+            <contributor-name-display>Markus Nullmeier</contributor-name-display>
+            <contributor-id type="github">mnullmei</contributor-id>
         </contributor>
 
         <contributor id="odonnell.jason">

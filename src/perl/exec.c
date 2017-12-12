@@ -2,7 +2,6 @@
 Execute Perl for Legacy Functionality
 ***********************************************************************************************************************************/
 #include <errno.h>
-#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +11,7 @@ Execute Perl for Legacy Functionality
 #include "common/error.h"
 #include "common/memContext.h"
 #include "common/type.h"
+#include "config/parse.h"
 
 /***********************************************************************************************************************************
 Constants used to build perl options
@@ -20,7 +20,6 @@ Constants used to build perl options
 #define ENV_EXE                                                     "/usr/bin/env"
 
 #define PARAM_PERL_OPTION                                           "perl-option"
-#define PARAM_PERL_OPTION_ID                                        1000
 
 #define PGBACKREST_MODULE                                           PGBACKREST_NAME "::Main"
 #define PGBACKREST_MAIN                                             PGBACKREST_MODULE "::main"
@@ -28,63 +27,71 @@ Constants used to build perl options
 /***********************************************************************************************************************************
 Build list of perl options to use for exec
 ***********************************************************************************************************************************/
-StringList *perlCommand(int argListSize, char *argList[])
+StringList *perlCommand(int argListSize, const char *argList[])
 {
-    // Setup arg list for perl exec
+    ParseData *parseData = configParseArg(argListSize, argList);
+
+    // Begin arg list for perl exec
     StringList *perlArgList = strLstNew();
     strLstAdd(perlArgList, strNew(ENV_EXE));
     strLstAdd(perlArgList, strNew(PERL_EXE));
 
-    // Setup Perl main call
-    String *mainParamBuffer = strNew("");
+    // Construct option list to pass to main
+    String *mainCallParam = strNew("");
 
-    // Setup pgbackrest bin
-    String *binParamBuffer = strNew("");
-
-    // Reset optind to 1 in case getopt_long has been called before
-    optind = 1;
-
-    // Struct with all valid options
-    static struct option optionList[] =
+    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        {PARAM_PERL_OPTION, required_argument, NULL, PARAM_PERL_OPTION_ID},
-        {0, 0, NULL, 0},
-    };
+        ParseOption *option = &parseData->parseOptionList[optionId];
 
-    // Parse options
-    int option;
-    int optionIdx;
-    opterr = false;
-
-    while ((option = getopt_long(argListSize, argList, "-", optionList, &optionIdx)) != -1)
-    {
-        switch (option)
+        // If option was found
+        if (option->found)
         {
-            case 1:
-            case '?':
-                strCat(mainParamBuffer, ", ");
-                strCatFmt(mainParamBuffer, "'%s'", argList[optind - 1]);
-                break;
-
-            case PARAM_PERL_OPTION_ID:
-                strLstAdd(perlArgList, strNew(optarg));
-
-                strCatFmt(binParamBuffer, " --" PARAM_PERL_OPTION "=\"%s\"", optarg);
-                break;
+            // If option was negated
+            if (option->negate)
+                strCatFmt(mainCallParam, ", '--no-%s\'", cfgOptionName(optionId));
+            // Else option with no arguments
+            else if (option->valueList == NULL)
+                strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
+            // Else options with arguments
+            else
+            {
+                for (unsigned int argIdx = 0; argIdx < strLstSize(option->valueList); argIdx++)
+                {
+                    strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
+                    strCatFmt(mainCallParam, ", '%s'", strPtr(strLstGet(option->valueList, argIdx)));
+                }
+            }
         }
     }
 
-    // Finish Perl main call
-    String *mainBuffer = strNewFmt(
-        PGBACKREST_MAIN "('%s%s'%s)", argList[0], strPtr(binParamBuffer), strPtr(mainParamBuffer));
+    // Add command to pass to main
+    strCatFmt(mainCallParam, ", '%s'", cfgCommandName(parseData->command));
 
-    strFree(binParamBuffer);
-    strFree(mainParamBuffer);
+    // Add command arguments to pass to main
+    if (parseData->commandArgList != NULL)
+        for (unsigned int argIdx = 0; argIdx < strLstSize(parseData->commandArgList); argIdx++)
+            strCatFmt(mainCallParam, ", '%s'", strPtr(strLstGet(parseData->commandArgList, argIdx)));
 
-    // Finish arg list for perl exec
+    // Construct perl option list to add to bin
+    String *binPerlOption = strNew("");
+
+    if (parseData->perlOptionList != NULL)
+        for (unsigned int argIdx = 0; argIdx < strLstSize(parseData->perlOptionList); argIdx++)
+        {
+            // Add to bin option list
+            strCatFmt(binPerlOption, " --" PARAM_PERL_OPTION "=\"%s\"", strPtr(strLstGet(parseData->perlOptionList, argIdx)));
+
+            // Add to list that will be passed to exec
+            strLstAdd(perlArgList, strLstGet(parseData->perlOptionList, argIdx));
+        }
+
+    // Construct Perl main call
+    String *mainCall = strNewFmt(PGBACKREST_MAIN "('%s%s'%s)", argList[0], strPtr(binPerlOption), strPtr(mainCallParam));
+
+    // End arg list for perl exec
     strLstAdd(perlArgList, strNew("-M" PGBACKREST_MODULE));
     strLstAdd(perlArgList, strNew("-e"));
-    strLstAdd(perlArgList, mainBuffer);
+    strLstAdd(perlArgList, mainCall);
     strLstAdd(perlArgList, NULL);
 
     return perlArgList;

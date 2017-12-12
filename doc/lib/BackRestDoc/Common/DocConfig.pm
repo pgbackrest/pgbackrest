@@ -209,8 +209,8 @@ sub process
 
     foreach my $strOption (sort(keys(%{$oOptionDefine})))
     {
-        # Test options are not documented
-        next if ($strOption =~ /^test/);
+        # Skip options that are internal only for all commands (test options)
+        next if $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
 
         # Iterate through all commands
         my @stryCommandList = sort(keys(%{defined($$oOptionDefine{$strOption}{&CFGDEF_COMMAND}) ?
@@ -228,6 +228,9 @@ sub process
             {
                 next;
             }
+
+            # Skip options that are internal only for the current command
+            next if $oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL};
 
             my $oCommandDoc = $oDoc->nodeGet('operation')->nodeGet('command-list')->nodeGetById('command', $strCommand);
 

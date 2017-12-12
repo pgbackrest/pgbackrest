@@ -124,18 +124,6 @@ sub run
         # Static backup parameters
         my $fTestDelay = 1;
 
-        # Variable backup parameters
-        my $bDelta = true;
-        my $bForce = false;
-        my $strType = undef;
-        my $strTarget = undef;
-        my $bTargetExclusive = false;
-        my $strTargetAction;
-        my $strTargetTimeline = undef;
-        my $oRecoveryHashRef = undef;
-        my $strComment = undef;
-        my $iExpectedExitStatus = undef;
-
         # Restore test string
         my $strDefaultMessage = 'default';
         my $strFullMessage = 'full';
@@ -157,7 +145,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestExtra)
         {
-            $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
+            # In this section the same comment can be used multiple times so make it a variable that can be set once and reused
+            my $strComment = undef;
 
             # Remove the files in the archive directory
             forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE, {bRecurse => true});
@@ -173,7 +162,7 @@ sub run
             $strComment = 'fail on archive_mode=off';
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchiveEnabled => false});
 
-            $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
+            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
             $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_DISABLED});
 
             # If running the remote tests then also need to run check locally
@@ -186,7 +175,7 @@ sub run
             $strComment = 'fail on invalid archive_command';
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true, bArchive => false});
 
-            $oHostBackup->backup($strType, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
+            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, $strComment, {iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
             $oHostDbMaster->check($strComment, {iTimeout => 0.1, iExpectedExitStatus => ERROR_ARCHIVE_COMMAND_INVALID});
 
             # If running the remote tests then also need to run check locally
@@ -383,8 +372,6 @@ sub run
 
         # Full backup
         #---------------------------------------------------------------------------------------------------------------------------
-        $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
-
         # Create the table where test messages will be stored
         $oHostDbMaster->sqlExecute("create table test (message text not null)");
         $oHostDbMaster->sqlWalRotate();
@@ -398,7 +385,8 @@ sub run
                 confess 'unable to acquire advisory lock for testing';
             }
 
-            $oHostBackup->backup($strType, 'fail on backup lock exists', {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
+            $oHostBackup->backup(
+                CFGOPTVAL_BACKUP_TYPE_FULL, 'fail on backup lock exists', {iExpectedExitStatus => ERROR_LOCK_ACQUIRE});
 
             # Release the backup advisory lock so the next backup will succeed
             if (!$oHostDbMaster->sqlSelectOne('select pg_advisory_unlock(' . DB_BACKUP_ADVISORY_LOCK . ')'))
@@ -408,7 +396,7 @@ sub run
         }
 
         my $oExecuteBackup = $oHostBackup->backupBegin(
-            $strType, 'update during backup',
+            CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                 strOptionalParam => ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384'});
 
@@ -417,7 +405,7 @@ sub run
         # Required to set hint bits to be sent to the standby to make the heap match on both sides
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strFullMessage);
 
-        my $strFullBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
+        my $strFullBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_FULL, $oExecuteBackup);
 
         # Enabled async archiving
         $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_ARCHIVE_ASYNC) => 'y'}});
@@ -443,19 +431,6 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bHostStandby)
         {
-            $bDelta = false;
-            $bForce = false;
-            $strType = CFGOPTVAL_RESTORE_TYPE_DEFAULT;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            $strComment = 'restore backup on replica';
-
             my %oRemapHash;
             $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
 
@@ -465,11 +440,11 @@ sub run
             }
 
             $oHostDbStandby->restore(
-                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, \%oRemapHash, $bDelta, $bForce, $strType, $strTarget,
-                $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-                ' --recovery-option=standby_mode=on' .
-                    ' --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
-                    ' port=' . $oHostDbMaster->pgPort() . ' user=replicator"');
+                'restore backup on replica', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+                {rhRemapHash => \%oRemapHash,
+                    strOptionalParam =>
+                        ' --recovery-option=standby_mode=on --recovery-option="primary_conninfo=host=' . HOST_DB_MASTER .
+                        ' port=' . $oHostDbMaster->pgPort() . ' user=replicator"'});
 
             $oHostDbStandby->clusterStart({bHotStandby => true});
 
@@ -570,13 +545,11 @@ sub run
         # the logs will to be deleted to avoid causing issues further down the line.
         if ($bTestExtra && !$bS3)
         {
-            $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-
             $oHostDbMaster->clusterRestart();
 
             $oHostDbMaster->stop();
 
-            $oHostBackup->backup($strType, 'attempt backup when stopped', {iExpectedExitStatus => ERROR_STOP});
+            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_INCR, 'attempt backup when stopped', {iExpectedExitStatus => ERROR_STOP});
 
             $oHostDbMaster->start();
         }
@@ -592,12 +565,11 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_95)
         {
-            $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-
             # Set archive_mode=always
             $oHostDbMaster->clusterRestart({bArchiveAlways => true});
 
-            $oHostBackup->backup($strType, 'fail on archive_mode=always', {iExpectedExitStatus => ERROR_FEATURE_NOT_SUPPORTED});
+            $oHostBackup->backup(
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on archive_mode=always', {iExpectedExitStatus => ERROR_FEATURE_NOT_SUPPORTED});
 
             # Reset the cluster to a normal state so the next test will work
             $oHostDbMaster->clusterRestart();
@@ -605,8 +577,6 @@ sub run
 
         # Incr backup
         #---------------------------------------------------------------------------------------------------------------------------
-        $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-
         # Create a tablespace directory
         storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700', bCreateParent => true});
 
@@ -636,7 +606,8 @@ sub run
             $oHostDbMaster->sqlSelectOne("select pg_start_backup('test backup that will cause an error', true)");
 
             # Verify that an error is returned if the backup is already running
-            $oHostBackup->backup($strType, 'fail on backup already running', {iExpectedExitStatus => ERROR_DB_QUERY});
+            $oHostBackup->backup(
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on backup already running', {iExpectedExitStatus => ERROR_DB_QUERY});
 
             # Restart the cluster ignoring any errors in the postgresql log
             $oHostDbMaster->clusterRestart({bIgnoreLogError => true});
@@ -646,7 +617,7 @@ sub run
         }
 
         $oExecuteBackup = $oHostBackup->backupBegin(
-            $strType, 'update during backup',
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup',
             {strTest => TEST_MANIFEST_BUILD, fTestDelay => $fTestDelay,
                 strOptionalParam => '--' . cfgOptionName(CFGOPT_STOP_AUTO) .  ' --no-' . cfgOptionName(CFGOPT_ARCHIVE_CHECK) .
                 ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=32768'});
@@ -671,7 +642,7 @@ sub run
             }
         }
 
-        my $strIncrBackup = $oHostBackup->backupEnd($strType, $oExecuteBackup);
+        my $strIncrBackup = $oHostBackup->backupEnd(CFGOPTVAL_BACKUP_TYPE_INCR, $oExecuteBackup);
 
         # Setup the xid target
         #---------------------------------------------------------------------------------------------------------------------------
@@ -718,26 +689,12 @@ sub run
 
         # Restore (type = default)
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = false;
-        $bForce = false;
-        $strType = CFGOPTVAL_RESTORE_TYPE_DEFAULT;
-        $strTarget = undef;
-        $bTargetExclusive = undef;
-        $strTargetAction = undef;
-        $strTargetTimeline = undef;
-        $oRecoveryHashRef = undef;
-        $strComment = undef;
-        $iExpectedExitStatus = undef;
-
         if ($bTestLocal)
         {
             # Expect failure because postmaster.pid exists
-            $strComment = 'postmaster running';
-            $iExpectedExitStatus = ERROR_POSTMASTER_RUNNING;
-
             $oHostDbMaster->restore(
-                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
-                $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                'postmaster running', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+                {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING});
         }
 
         $oHostDbMaster->clusterStop();
@@ -745,12 +702,8 @@ sub run
         if ($bTestLocal)
         {
             # Expect failure because db path is not empty
-            $strComment = 'path not empty';
-            $iExpectedExitStatus = ERROR_PATH_NOT_EMPTY;
-
             $oHostDbMaster->restore(
-                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
-                $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                'path not empty', cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY});
         }
 
         # Drop and recreate db path
@@ -762,13 +715,9 @@ sub run
         storageTest()->pathCreate($oHostDbMaster->tablespacePath(1), {strMode => '0700'});
 
         # Now the restore should work
-        $strComment = undef;
-        $iExpectedExitStatus = undef;
-
         $oHostDbMaster->restore(
-            cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
-            $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-            ($bTestLocal ? ' --db-include=test1' : '') . ' --buffer-size=16384');
+            undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+            {strOptionalParam => ($bTestLocal ? ' --db-include=test1' : '') . ' --buffer-size=16384'});
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
@@ -838,24 +787,11 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (($bTestLocal || $bHostStandby) && $oHostDbMaster->pgVersion() >= PG_VERSION_94)
         {
-            $bDelta = false;
-            $bForce = true;
-            $strType = CFGOPTVAL_RESTORE_TYPE_IMMEDIATE;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            &log(INFO, "    testing recovery type = ${strType}");
+            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_IMMEDIATE);
 
             $oHostDbMaster->clusterStop();
 
-            $oHostDbMaster->restore(
-                $strFullBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-                $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus, undef);
+            $oHostDbMaster->restore(undef, $strFullBackup, {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_IMMEDIATE});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest(
@@ -866,18 +802,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal)
         {
-            $bDelta = false;
-            $bForce = true;
-            $strType = CFGOPTVAL_RESTORE_TYPE_XID;
-            $strTarget = $strXidTarget;
-            $bTargetExclusive = undef;
-            $strTargetAction = $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            &log(INFO, "    testing recovery type = ${strType}");
+            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
 
             $oHostDbMaster->clusterStop();
 
@@ -885,9 +810,10 @@ sub run
             executeTest('rm -rf ' . $oHostDbMaster->dbPath() . qw{/} . $oManifest->walPath() . '/*');
 
             $oHostDbMaster->restore(
-                $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-                $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus,
-                '--tablespace-map-all=../../tablespace', false);
+                undef, $strIncrBackup,
+                {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget,
+                    strTargetAction => $oHostDbMaster->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
+                    strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false});
 
             # Save recovery file to test so we can use it in the next test
             storageDb()->copy(
@@ -903,18 +829,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal)
         {
-            $bDelta = false;
-            $bForce = false;
-            $strType = CFGOPTVAL_RESTORE_TYPE_PRESERVE;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            &log(INFO, "    testing recovery type = ${strType}");
+            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_PRESERVE);
 
             $oHostDbMaster->clusterStop();
 
@@ -926,8 +841,7 @@ sub run
             storageDb()->move($self->testPath . '/recovery.conf', $oHostDbMaster->dbBasePath() . '/recovery.conf');
 
             $oHostDbMaster->restore(
-                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
-                $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), {strType => CFGOPTVAL_RESTORE_TYPE_PRESERVE});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strXidMessage);
@@ -938,24 +852,12 @@ sub run
         # Restore (restore type = time, inclusive) - there is no exclusive time test because I can't find a way to find the
         # exact commit time of a transaction.
         #---------------------------------------------------------------------------------------------------------------------------
-        $bDelta = true;
-        $bForce = false;
-        $strType = CFGOPTVAL_RESTORE_TYPE_TIME;
-        $strTarget = $strTimeTarget;
-        $bTargetExclusive = undef;
-        $strTargetAction = undef;
-        $strTargetTimeline = undef;
-        $oRecoveryHashRef = undef;
-        $strComment = undef;
-        $iExpectedExitStatus = undef;
-
-        &log(INFO, "    testing recovery type = ${strType}");
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_TIME);
 
         $oHostDbMaster->clusterStop();
 
         $oHostDbMaster->restore(
-            $strFullBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-            $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+            undef, $strFullBackup, {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_TIME, strTarget => $strTimeTarget});
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimeMessage);
@@ -964,24 +866,13 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal)
         {
-            $bDelta = true;
-            $bForce = false;
-            $strType = CFGOPTVAL_RESTORE_TYPE_XID;
-            $strTarget = $strXidTarget;
-            $bTargetExclusive = true;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            &log(INFO, "    testing recovery type = ${strType}");
+            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_XID);
 
             $oHostDbMaster->clusterStop();
 
             $oHostDbMaster->restore(
-                $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-                $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                undef, $strIncrBackup,
+                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strIncrMessage);
@@ -991,24 +882,13 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_91)
         {
-            $bDelta = true;
-            $bForce = true;
-            $strType = CFGOPTVAL_RESTORE_TYPE_NAME;
-            $strTarget = $strNameTarget;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = undef;
-            $oRecoveryHashRef = undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            &log(INFO, "    testing recovery type = ${strType}");
+            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_NAME);
 
             $oHostDbMaster->clusterStop();
 
             $oHostDbMaster->restore(
-                cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET), undef, undef, $bDelta, $bForce, $strType, $strTarget,
-                $bTargetExclusive, $strTargetAction, $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
+                {bDelta => true, bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_NAME, strTarget => $strNameTarget});
 
             $oHostDbMaster->clusterStart();
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strNameMessage);
@@ -1018,24 +898,14 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_84)
         {
-            $bDelta = true;
-            $bForce = false;
-            $strType = CFGOPTVAL_RESTORE_TYPE_DEFAULT;
-            $strTarget = undef;
-            $bTargetExclusive = undef;
-            $strTargetAction = undef;
-            $strTargetTimeline = 4;
-            $oRecoveryHashRef = $oHostDbMaster->pgVersion() >= PG_VERSION_90 ? {'standby-mode' => 'on'} : undef;
-            $strComment = undef;
-            $iExpectedExitStatus = undef;
-
-            &log(INFO, "    testing recovery type = ${strType}");
+            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_DEFAULT);
 
             $oHostDbMaster->clusterStop();
 
             $oHostDbMaster->restore(
-                $strIncrBackup, undef, undef, $bDelta, $bForce, $strType, $strTarget, $bTargetExclusive, $strTargetAction,
-                $strTargetTimeline, $oRecoveryHashRef, $strComment, $iExpectedExitStatus);
+                undef, $strIncrBackup,
+                {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_DEFAULT, strTargetTimeline => 4,
+                    rhRecoveryHash => $oHostDbMaster->pgVersion() >= PG_VERSION_90 ? {'standby-mode' => 'on'} : undef});
 
             $oHostDbMaster->clusterStart({bHotStandby => true});
             $oHostDbMaster->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
@@ -1054,18 +924,15 @@ sub run
 
             # Incr backup - make sure a --no-online backup fails
             #-----------------------------------------------------------------------------------------------------------------------
-            $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-
             $oHostBackup->backup(
-                $strType, 'fail on --no-' . cfgOptionName(CFGOPT_ONLINE),
+                CFGOPTVAL_BACKUP_TYPE_INCR, 'fail on --no-' . cfgOptionName(CFGOPT_ONLINE),
                 {iExpectedExitStatus => ERROR_POSTMASTER_RUNNING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
             # Incr backup - allow --no-online backup to succeed with --force
             #-----------------------------------------------------------------------------------------------------------------------
-            $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
-
             $oHostBackup->backup(
-                $strType, 'succeed on --no-' . cfgOptionName(CFGOPT_ONLINE) . ' with --' . cfgOptionName(CFGOPT_FORCE),
+                CFGOPTVAL_BACKUP_TYPE_INCR,
+                'succeed on --no-' . cfgOptionName(CFGOPT_ONLINE) . ' with --' . cfgOptionName(CFGOPT_FORCE),
                 {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
         }
     }

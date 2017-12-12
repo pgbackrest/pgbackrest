@@ -16,22 +16,28 @@ use Storable qw(dclone);
 
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
-use pgBackRestBuild::Config::Data;
 use pgBackRest::Version;
 
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::BuildDefine;
+use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
 # Constants
 ####################################################################################################################################
 use constant BLDLCL_FILE_CONFIG                                     => 'config';
 
+use constant BLDLCL_CONSTANT_COMMAND                                => '01-constantCommand';
+use constant BLDLCL_CONSTANT_COMMAND_TOTAL                          => 'CFG_COMMAND_TOTAL';
+use constant BLDLCL_CONSTANT_OPTION                                 => '02-constantOption';
+use constant BLDLCL_CONSTANT_OPTION_TOTAL                           => 'CFG_OPTION_TOTAL';
+
 use constant BLDLCL_DATA_COMMAND                                    => '01-command';
 use constant BLDLCL_DATA_OPTION                                     => '02-option';
 
 use constant BLDLCL_ENUM_COMMAND                                    => '01-enumCommand';
 use constant BLDLCL_ENUM_OPTION                                     => '02-enumOption';
+
 
 ####################################################################################################################################
 # Definitions for constants and data to build
@@ -44,6 +50,18 @@ my $rhBuild =
         &BLDLCL_FILE_CONFIG =>
         {
             &BLD_SUMMARY => 'Command and Option Configuration',
+
+            &BLD_CONSTANT_GROUP =>
+            {
+                &BLDLCL_CONSTANT_COMMAND =>
+                {
+                    &BLD_SUMMARY => 'Command',
+                },
+                &BLDLCL_CONSTANT_OPTION =>
+                {
+                    &BLD_SUMMARY => 'Option',
+                },
+            },
 
             &BLD_ENUM =>
             {
@@ -103,9 +121,10 @@ sub buildConfig
     # Build command constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_ENUM}{&BLDLCL_ENUM_COMMAND};
+    my $iCommandTotal = 0;
 
     my $strBuildSource =
-        "ConfigCommandData configCommandData[] = CONFIG_COMMAND_LIST\n" .
+        'ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
         "(";
 
     foreach my $strCommand (cfgDefineCommandList())
@@ -121,12 +140,21 @@ sub buildConfig
             "    (\n" .
             "        CONFIG_COMMAND_NAME(\"${strCommand}\")\n" .
             "    )\n";
+
+        $iCommandTotal++;
     }
+
+    # Add "none" command that is used to initialize the current command before anything is parsed
+    push(@{$rhEnum->{&BLD_LIST}}, buildConfigCommandEnum('none'));
 
     $strBuildSource .=
         ")\n";
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
+
+    # Set option total constant
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_COMMAND}{&BLD_CONSTANT}
+        {&BLDLCL_CONSTANT_COMMAND_TOTAL}{&BLD_CONSTANT_VALUE} = $iCommandTotal;
 
     # Build option constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
@@ -135,7 +163,7 @@ sub buildConfig
     my $iOptionTotal = 0;
 
     $strBuildSource =
-        "ConfigOptionData configOptionData[] = CONFIG_OPTION_LIST\n" .
+        'ConfigOptionData configOptionData[' . BLDLCL_CONSTANT_OPTION_TOTAL . "] = CONFIG_OPTION_LIST\n" .
         "(";
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))
@@ -174,6 +202,10 @@ sub buildConfig
         ")\n";
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+
+    # Set option total constant
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
+        {&BLDLCL_CONSTANT_OPTION_TOTAL}{&BLD_CONSTANT_VALUE} = $iOptionTotal;
 
     return $rhBuild;
 }

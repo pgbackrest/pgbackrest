@@ -397,7 +397,9 @@
                     <config-key id="archive-check" name="Check Archive">
                         <summary>Check that WAL segments are present in the archive before backup completes.</summary>
 
-                        <text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.</text>
+                        <text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.
+
+                        This option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>n</example>
                     </config-key>
@@ -406,9 +408,11 @@
                     <config-key id="archive-copy" name="Copy Archive">
                         <summary>Copy WAL segments needed for consistency to the backup.</summary>
 
-                        <text>This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive by storing the WAL segments directly in the backup.  PITR won't be possible without the WAL segment archive and this option also consumes more space.
+                        <text>This slightly paranoid option protects against corruption in the WAL segment archive by storing the WAL segments required for consistency directly in the backup.  WAL segments are still stored in the archive so this option will use additional space.
 
-                        Even though WAL segments will be restored with the backup, <postgres/> will ignore them if a <file>recovery.conf</file> file exists and instead use <setting>archive_command</setting> to fetch WAL segments.  Specifying <setting>type=none</setting> when restoring will not create <file>recovery.conf</file> and force <postgres/> to use the WAL segments in <path>pg_xlog</path>/<path>pg_wal</path>.  This will get the database cluster to a consistent state.</text>
+                        On restore, the WAL segments will be present in <path>pg_xlog/pg_wal</path> and <postgres/> will use them in preference to calling the <code>restore_command</code>.
+
+                        The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>y</example>
                     </config-key>

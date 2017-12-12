@@ -186,7 +186,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -204,7 +204,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -230,13 +230,14 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
@@ -262,13 +263,14 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
@@ -295,13 +297,14 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
@@ -322,13 +325,14 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
@@ -380,13 +384,14 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
@@ -413,7 +418,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -479,7 +484,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -558,7 +563,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -591,7 +596,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -659,7 +664,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -690,7 +695,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -722,7 +727,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -732,6 +737,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
@@ -753,7 +759,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeList)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -771,7 +777,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -830,7 +836,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -858,7 +864,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -886,7 +892,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -896,6 +902,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
@@ -918,7 +925,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -949,7 +956,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1128,7 +1135,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1146,7 +1153,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1180,7 +1187,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1224,7 +1231,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1268,7 +1275,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1312,7 +1319,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1380,7 +1387,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1533,7 +1540,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1560,7 +1567,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1593,7 +1600,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1623,7 +1630,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1662,7 +1669,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1703,7 +1710,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1738,7 +1745,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1777,7 +1784,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1816,7 +1823,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1855,7 +1862,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1894,7 +1901,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1933,7 +1940,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1972,7 +1979,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2011,7 +2018,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2091,7 +2098,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2156,7 +2163,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2180,7 +2187,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2211,7 +2218,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2235,7 +2242,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2287,7 +2294,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2423,7 +2430,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2441,7 +2448,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(false)
+        CFGDEFDATA_OPTION_NEGATE(true)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST

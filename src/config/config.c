@@ -53,13 +53,38 @@ Include the automatically generated configuration data
 #include "config.auto.c"
 
 /***********************************************************************************************************************************
+Store the current command
+
+This is generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire.
+***********************************************************************************************************************************/
+ConfigCommand command = cfgCmdNone;
+
+/***********************************************************************************************************************************
+Get the current command
+***********************************************************************************************************************************/
+ConfigCommand
+cfgCommand()
+{
+    return command;
+}
+
+/***********************************************************************************************************************************
+Set the current command
+***********************************************************************************************************************************/
+void
+cfgCommandSet(ConfigCommand commandParam)
+{
+    command = commandParam;
+}
+
+/***********************************************************************************************************************************
 Ensure that command id is valid
 ***********************************************************************************************************************************/
 void
 cfgCommandCheck(ConfigCommand commandId)
 {
-    if (commandId >= cfgCommandTotal())
-        THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, cfgCommandTotal());
+    if (commandId >= CFG_COMMAND_TOTAL)
+        THROW(AssertError, "command id %d invalid - must be >= 0 and < %d", commandId, CFG_COMMAND_TOTAL);
 }
 
 /***********************************************************************************************************************************
@@ -83,11 +108,11 @@ cfgCommandId(const char *commandName)
 {
     ConfigCommand commandId;
 
-    for (commandId = 0; commandId < cfgCommandTotal(); commandId++)
+    for (commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
         if (strcmp(commandName, configCommandData[commandId].name) == 0)
             break;
 
-    if (commandId == cfgCommandTotal())
+    if (commandId == CFG_COMMAND_TOTAL)
         THROW(AssertError, "invalid command '%s'", commandName);
 
     return commandId;
@@ -104,22 +129,13 @@ cfgCommandName(ConfigCommand commandId)
 }
 
 /***********************************************************************************************************************************
-cfgCommandTotal - total number of commands
-***********************************************************************************************************************************/
-unsigned int
-cfgCommandTotal()
-{
-    return sizeof(configCommandData) / sizeof(ConfigCommandData);
-}
-
-/***********************************************************************************************************************************
 Ensure that option id is valid
 ***********************************************************************************************************************************/
 void
 cfgOptionCheck(ConfigOption optionId)
 {
-    if (optionId >= cfgOptionTotal())
-        THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, cfgOptionTotal());
+    if (optionId >= CFG_OPTION_TOTAL)
+        THROW(AssertError, "option id %d invalid - must be >= 0 and < %d", optionId, CFG_OPTION_TOTAL);
 }
 
 /***********************************************************************************************************************************
@@ -148,7 +164,7 @@ Get option id by name
 int
 cfgOptionId(const char *optionName)
 {
-    for (ConfigOption optionId = 0; optionId < cfgOptionTotal(); optionId++)
+    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         if (strcmp(optionName, configOptionData[optionId].name) == 0)
             return optionId;
 
@@ -174,12 +190,12 @@ cfgOptionIdFromDefId(ConfigDefineOption optionDefId, int index)
     // Search for the option
     ConfigOption optionId;
 
-    for (optionId = 0; optionId < cfgOptionTotal(); optionId++)
+    for (optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         if (configOptionData[optionId].defineId == optionDefId)
             break;
 
     // Error when not found
-    if (optionId == cfgOptionTotal())
+    if (optionId == CFG_OPTION_TOTAL)
         cfgDefOptionCheck(optionDefId);
 
     // Return with original index
@@ -194,13 +210,4 @@ cfgOptionName(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
     return configOptionData[optionId].name;
-}
-
-/***********************************************************************************************************************************
-cfgOptionTotal - total number of configuration options
-***********************************************************************************************************************************/
-unsigned int
-cfgOptionTotal()
-{
-    return sizeof(configOptionData) / sizeof(ConfigOptionData);
 }

@@ -25,7 +25,7 @@ Test that an expected error is actually thrown and error when it isn't
 {                                                                                                                                  \
     bool TEST_ERROR_catch = false;                                                                                                 \
                                                                                                                                    \
-    printf("    l%04d - expect error: %s\n", __LINE__, errorMessageExpected);                                                      \
+    printf("    l%04d - expect %s: %s\n", __LINE__, errorTypeName(&errorTypeExpected), errorMessageExpected);                      \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
     TRY_BEGIN()                                                                                                                    \
@@ -90,6 +90,15 @@ Compare types
     result = value typeOp valueExpected;
 
 /***********************************************************************************************************************************
+Output information about the test
+***********************************************************************************************************************************/
+#define TEST_RESULT_INFO(...)                                                                                                      \
+    printf("    l%04d - ", __LINE__);                                                                                              \
+    printf(__VA_ARGS__);                                                                                                           \
+    printf("\n");                                                                                                                  \
+    fflush(stdout);
+
+/***********************************************************************************************************************************
 Test the result of a statement and make sure it matches the expected value.  This macro can test any C type given the correct
 parameters.
 ***********************************************************************************************************************************/
@@ -99,10 +108,7 @@ parameters.
     const type TEST_RESULT_resultExpected = (type)(resultExpectedValue);                                                           \
                                                                                                                                    \
     /* Output test info */                                                                                                         \
-    printf("    l%04d - ", __LINE__);                                                                                              \
-    printf(__VA_ARGS__);                                                                                                           \
-    printf("\n");                                                                                                                  \
-    fflush(stdout);                                                                                                                \
+    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
                                                                                                                                    \
     /* Format the expected result */                                                                                               \
     formatMacro(type, format, TEST_RESULT_resultExpected);                                                                         \
@@ -139,6 +145,48 @@ parameters.
             AssertError, "statement '%s' result is '%s' but '%s' expected",                                                        \
             #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
     }                                                                                                                              \
+}
+
+/***********************************************************************************************************************************
+Test that a void statement returns and does not throw an error
+***********************************************************************************************************************************/
+#define TEST_RESULT_VOID(statement, ...)                                                                                           \
+{                                                                                                                                  \
+    /* Output test info */                                                                                                         \
+    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
+                                                                                                                                   \
+    TRY_BEGIN()                                                                                                                    \
+    {                                                                                                                              \
+        statement;                                                                                                                 \
+    }                                                                                                                              \
+    /* Catch any errors */                                                                                                         \
+    CATCH_ANY()                                                                                                                    \
+    {                                                                                                                              \
+        /* No errors were expected so error */                                                                                     \
+        THROW(AssertError, "statement '%s' threw error %s, '%s' but void expected", #statement, errorName(), errorMessage());      \
+    }                                                                                                                              \
+    TRY_END();                                                                                                                     \
+}
+
+/***********************************************************************************************************************************
+Test that a statement does not error and assign it to the specified variable if not
+***********************************************************************************************************************************/
+#define TEST_ASSIGN(lValue, statement, ...)                                                                                        \
+{                                                                                                                                  \
+    /* Output test info */                                                                                                         \
+    TEST_RESULT_INFO(__VA_ARGS__);                                                                                                 \
+                                                                                                                                   \
+    TRY_BEGIN()                                                                                                                    \
+    {                                                                                                                              \
+        lValue = statement;                                                                                                        \
+    }                                                                                                                              \
+    /* Catch any errors */                                                                                                         \
+    CATCH_ANY()                                                                                                                    \
+    {                                                                                                                              \
+        /* No errors were expected so error */                                                                                     \
+        THROW(AssertError, "statement '%s' threw error %s, '%s' but result expected", #statement, errorName(), errorMessage());    \
+    }                                                                                                                              \
+    TRY_END();                                                                                                                     \
 }
 
 /***********************************************************************************************************************************

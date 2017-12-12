@@ -318,13 +318,24 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'config',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
                     {
                         'config/config' => TESTDEF_COVERAGE_FULL,
                         'config/config.auto' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'parse',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'config/parse' => TESTDEF_COVERAGE_FULL,
+                        'config/parse.auto' => TESTDEF_COVERAGE_NOCODE,
                     },
                 },
                 {

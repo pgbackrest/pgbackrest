@@ -304,7 +304,7 @@ sub run
 
         $self->configTestLoadExpect(
             cfgCommandName(CFGCMD_BACKUP), ERROR_OPTION_INVALID_VALUE, 4, cfgOptionName(CFGOPT_PROTOCOL_TIMEOUT),
-            "'protocol-timeout' option should be greater than 'db-timeout' option");
+            "'protocol-timeout' option (4) should be greater than 'db-timeout' option (5)");
     }
 
     if ($self->begin(cfgCommandName(CFGCMD_RESTORE) . ' invalid value ' . cfgOptionName(CFGOPT_RECOVERY_OPTION)))
