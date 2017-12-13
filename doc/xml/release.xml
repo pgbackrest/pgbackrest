@@ -28,6 +28,10 @@
                     <release-item>
                         <p>Split <quote>refactor</quote> sections into <quote>improvements</quote> and <quote>development</quote> in the release notes.  Many development notes are not relevant to users and simply clutter the release notes, so they are no longer shown on the website.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Allow internal options that do not show up in the documentation.  Used for test options initially but other use cases are on the horizon.</p>
+                    </release-item>
                 </release-development-list>
             </release-doc-list>
 

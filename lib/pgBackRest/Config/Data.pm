@@ -41,6 +41,10 @@
 #
 # CFGDEF_ALLOW_LIST:
 #   Lists the allowable settings for the option.
+#
+# CFGDEF_INTERNAL:
+#   Option is used by the command internally but is not exposed in the documentation.  This is useful for commands that need to know
+#   where they are running by looking at other options in the config.  Also good for test options.
 ####################################################################################################################################
 package pgBackRest::Config::Data;
 
@@ -426,6 +430,8 @@ use constant CFGDEF_INDEX                                           => 'index';
     push @EXPORT, qw(CFGDEF_INDEX);
 use constant CFGDEF_INDEX_TOTAL                                     => 'indexTotal';
     push @EXPORT, qw(CFGDEF_INDEX_TOTAL);
+use constant CFGDEF_INTERNAL                                        => 'internal';
+    push @EXPORT, qw(CFGDEF_INTERNAL);
 use constant CFGDEF_NEGATE                                          => 'negate';
     push @EXPORT, qw(CFGDEF_NEGATE);
 use constant CFGDEF_PREFIX                                          => 'prefix';
@@ -801,6 +807,7 @@ my %hConfigDefine =
     &CFGOPT_TEST =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
@@ -812,6 +819,7 @@ my %hConfigDefine =
     &CFGOPT_TEST_DELAY =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_DEFAULT => 5,
         &CFGDEF_DEPEND =>
         {
@@ -824,6 +832,7 @@ my %hConfigDefine =
     &CFGOPT_TEST_POINT =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_HASH,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND => CFGOPT_TEST_DELAY,
         &CFGDEF_COMMAND => CFGOPT_TEST,
@@ -1318,6 +1327,7 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_COMMAND =>
         {
@@ -1872,8 +1882,10 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_REQUIRED} = true;
     }
 
-    if (!defined($hConfigDefine{$strKey}{&CFGDEF_INDEX}))
+    # Default internal is false
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_INTERNAL}))
     {
+        $hConfigDefine{$strKey}{&CFGDEF_INTERNAL} = false;
     }
 
     # Set index total for db-*
