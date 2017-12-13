@@ -44,6 +44,14 @@
                     <release-item>
                         <p>The <file>{[project-exe]}</file> executable is now a C binary instead of Perl. This allows certain time-critical commands (like async <cmd>archive-push</cmd>) to run more quickly.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Updated the <cmd>check</cmd> command to include verifying that the backup manifest can be built.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
