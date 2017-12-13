@@ -36,6 +36,10 @@
                     <release-item>
                         <p>Update CI branches to <path>release/1</path> and <path>release/1-integration</path>.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Move restore test infrastructure to <code>HostBackup.pm</code>.  Required to test restores on the backup server, a fairly common scenario.  Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
