@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="1.27dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lardiere.sebastien"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Add <code>memGrowRaw()</code> to memory context module.</p>
