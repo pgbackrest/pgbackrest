@@ -30,6 +30,12 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-feature-list>
+                    <release-item>
+                        <p>Improve <br-option>archive-copy</br-option> reference documentation.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-development-list>
                     <release-item>
                         <p>Relax permissions set by <file>release.pl</file>.</p>
