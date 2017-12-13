@@ -55,17 +55,9 @@ sub process
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->process');
 
-    # Initialize the database object. This will also check the configured replicas and throw an error if at least one is not
-    # able to be connected to and warnings for any that cannot be properly connected to.
-    my ($oDb) = dbObjectGet();
-
-    # Validate the database configuration
-    $oDb->configValidate();
-
-    # Get the timeout and error message to display - if it is 0 we are testing
+    # Initialize the local variables
     my $iArchiveTimeout = cfgOption(CFGOPT_ARCHIVE_TIMEOUT);
 
-    # Initialize the result variables
     my $iResult = 0;
     my $strResultMessage = undef;
 
@@ -73,62 +65,116 @@ sub process
     my $strArchiveFile = undef;
     my $strWalSegment = undef;
 
+    # Get the master database object to test to see if the manifest can be built
+    my ($oDb) = dbMasterGet();
+
+    # Get the databse version to pass to the manifest constructor and the system-id in the event of a failure
+    my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDb->info();
+
     # Turn off console logging to control when to display the error
     logLevelSet(undef, OFF);
 
-    # Check backup.info - if the archive check fails below (e.g --no-archive-check set) then at least know backup.info succeeded
-    eval
+    # Loop through all defined databases and attempt to build a manifest
+    for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
     {
-        # Check that the backup info file is written and is valid for the current database of the stanza
-        $self->backupInfoCheck();
-        return true;
-    }
-    # If there is an unhandled error then confess
-    or do
-    {
-        # Capture error information
-        $iResult = exceptionCode($EVAL_ERROR);
-        $strResultMessage = exceptionMessage($EVAL_ERROR);
-    };
-
-    # Check archive.info
-    if ($iResult == 0)
-    {
-        eval
+        # Make sure a db is defined for this index
+        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
+            cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
         {
-            # Check that the archive info file is written and is valid for the current database of the stanza
-            ($strArchiveId) = new pgBackRest::Archive::Get::Get()->getCheck();
-            return true;
+            eval
+            {
+                # Passing file location dev/null so that the save will fail if it is ever attempted. Pass a miscellaneus value for
+                # encryption key since the file will not be saved.
+                my $oBackupManifest = new pgBackRest::Manifest("/dev/null/manifest.chk",
+                    {bLoad => false, strDbVersion => $strDbVersion,
+                    strCipherPass => 'x',
+                    strCipherPassSub => 'x'});
+
+                $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
+                    cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE));
+
+                return true;
+            }
+            or do
+            {
+                # Capture error information
+                $strResultMessage = "Database: ${strDbVersion} ${ullDbSysId} " . exceptionMessage($EVAL_ERROR) .
+                    (($iResult != 0) ? "\n[$iResult] : $strResultMessage" : "");
+                $iResult = exceptionCode($EVAL_ERROR);
+            };
         }
-        or do
-        {
-            # Capture error information
-            $iResult = exceptionCode($EVAL_ERROR);
-            $strResultMessage = exceptionMessage($EVAL_ERROR);
-        };
-    }
-
-    # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
-    if ($iResult == 0 && !$oDb->isStandby())
-    {
-        $strWalSegment = $oDb->walSwitch();
-
-        eval
-        {
-            $strArchiveFile = walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, $iArchiveTimeout);
-            return true;
-        }
-        # If this is a backrest error then capture the code and message else confess
-        or do
-        {
-            # Capture error information
-            $iResult = exceptionCode($EVAL_ERROR);
-            $strResultMessage = exceptionMessage($EVAL_ERROR);
-        };
     }
 
     # Reset the console logging
     logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
+
+    # If the manifest builds are ok, then proceed with the other checks
+    if ($iResult == 0)
+    {
+        # Reinitialize the database object in order to check the configured replicas. This will throw an error if at least one is not
+        # able to be connected to and warnings for any that cannot be properly connected to.
+        ($oDb) = dbObjectGet();
+
+        # Validate the database configuration
+        $oDb->configValidate();
+
+        # Turn off console logging to control when to display the error
+        logLevelSet(undef, OFF);
+
+        # Check backup.info - if the archive check fails below (e.g --no-archive-check set) then at least know backup.info succeeded
+        eval
+        {
+            # Check that the backup info file is written and is valid for the current database of the stanza
+            $self->backupInfoCheck();
+            return true;
+        }
+        # If there is an unhandled error then confess
+        or do
+        {
+            # Capture error information
+            $iResult = exceptionCode($EVAL_ERROR);
+            $strResultMessage = exceptionMessage($EVAL_ERROR);
+        };
+
+        # Check archive.info
+        if ($iResult == 0)
+        {
+            eval
+            {
+                # Check that the archive info file is written and is valid for the current database of the stanza
+                ($strArchiveId) = new pgBackRest::Archive::Get::Get()->getCheck();
+                return true;
+            }
+            or do
+            {
+                # Capture error information
+                $iResult = exceptionCode($EVAL_ERROR);
+                $strResultMessage = exceptionMessage($EVAL_ERROR);
+            };
+        }
+
+        # If able to get the archive id then force archiving and check the arrival of the archived WAL file with the time specified
+        if ($iResult == 0 && !$oDb->isStandby())
+        {
+            $strWalSegment = $oDb->walSwitch();
+
+            eval
+            {
+                $strArchiveFile = walSegmentFind(storageRepo(), $strArchiveId, $strWalSegment, $iArchiveTimeout);
+                return true;
+            }
+            # If this is a backrest error then capture the code and message else confess
+            or do
+            {
+                # Capture error information
+                $iResult = exceptionCode($EVAL_ERROR);
+                $strResultMessage = exceptionMessage($EVAL_ERROR);
+            };
+        }
+
+        # Reset the console logging
+        logLevelSet(undef, cfgOption(CFGOPT_LOG_LEVEL_CONSOLE));
+    }
 
     # If the archiving was successful and backup.info check did not error in an unexpected way, then indicate success
     # Else, log the error.
@@ -147,10 +193,11 @@ sub process
     }
     else
     {
+        # Throw the captured error
         &log(ERROR, $strResultMessage, $iResult);
 
         # If a WAL switch was attempted, then alert the user that the WAL that did not reach the archive
-        if (defined($strWalSegment))
+        if (defined($strWalSegment) && !defined($strArchiveFile))
         {
             &log(WARN,
                 "WAL segment ${strWalSegment} did not reach the archive:" . (defined($strArchiveId) ? $strArchiveId : '') . "\n" .

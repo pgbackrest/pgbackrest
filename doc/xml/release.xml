@@ -30,6 +30,14 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>check</cmd> command to verify that the backup manifest can be built.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
                     </release-item>
 

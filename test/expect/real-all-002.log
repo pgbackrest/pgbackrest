@@ -144,6 +144,10 @@ log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
 spool-path=[TEST_PATH]/db-standby/spool
 
+check db - confirm standby manifest->build executed (db-standby host)
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --archive-timeout=5 --stanza=db check
+------------------------------------------------------------------------------------------------------------------------------------
+
 check db - verify check command on standby (db-standby host)
 > [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --log-level-console=detail --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------

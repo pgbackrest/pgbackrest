@@ -262,6 +262,16 @@ sub run
             # Restore the file to its original condition
             $oHostBackup->infoRestore(storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO));
 
+            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+            my $strDir = $oHostDbMaster->dbBasePath() . '/rootreaddir';
+            executeTest('sudo mkdir ' . $strDir);
+            executeTest("sudo chown root:root ${strDir}");
+            executeTest("sudo chmod 400 ${strDir}");
+
+            $strComment = 'confirm master manifest->build executed';
+            $oHostDbMaster->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
+            executeTest("sudo rmdir ${strDir}");
+
             # Providing a sufficient archive-timeout, verify that the check command runs successfully now with valid
             # archive.info and backup.info files
             $strComment = 'verify success after backup';
@@ -483,8 +493,47 @@ sub run
                 $strFullBackup = $strStandbyBackup;
             }
 
-            # Confirm the check command runs without error on a standby
-            $oHostDbStandby->check('verify check command on standby');
+            # Create a directory in pg_data location that is only readable by root to ensure manifest->build is called by check
+            my $strDir = $oHostDbStandby->dbBasePath() . '/rootreaddir';
+            executeTest('sudo mkdir ' . $strDir);
+            executeTest("sudo chown root:root ${strDir}");
+            executeTest("sudo chmod 400 ${strDir}");
+
+            # Determine if there is an invalid db-host from the config file
+            my $rhConfig = iniParse(${storageTest()->get($oHostDbStandby->backrestConfig())}, {bRelaxed => true});
+            my $bBogusHost = false;
+
+            for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
+            {
+                if (defined($rhConfig->{$self->stanza()}{$oHostDbStandby->optionIndexName(CFGOPT_DB_HOST, $iRemoteIdx)}) &&
+                    ($rhConfig->{$self->stanza()}{$oHostDbStandby->optionIndexName(CFGOPT_DB_HOST, $iRemoteIdx)} eq BOGUS))
+                {
+                    $bBogusHost = true;
+                    last;
+                }
+            }
+
+            my $strComment = 'confirm standby manifest->build executed';
+
+            # If there is an invalid host, the final error returned from check will be the inability to resolve the name which is
+            # a read error instead of an open error
+            if (!$bBogusHost)
+            {
+                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_OPEN});
+            }
+            else
+            {
+                $oHostDbStandby->check($strComment, {iTimeout => 5, iExpectedExitStatus => ERROR_FILE_READ});
+            }
+
+            # Remove the directory in pg_data location that is only readable by root
+            executeTest("sudo rmdir ${strDir}");
+
+            # Confirm the check command runs without error on a standby (when a bogus host is not configured)
+            if (!$bBogusHost)
+            {
+                $oHostDbStandby->check('verify check command on standby');
+            }
 
             # Shutdown the stanby before creating tablespaces (this will error since paths are different)
             $oHostDbStandby->clusterStop({bIgnoreLogError => true});
