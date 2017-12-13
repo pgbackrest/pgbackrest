@@ -1,7 +1,7 @@
 branches:
   only:
-    - master
-    - integration
+    - release/1
+    - release/1-integration
     - /-ci$/
 
 dist: trusty
