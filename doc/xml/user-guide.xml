@@ -23,6 +23,12 @@
         <variable key="pg-version-upgrade" keyword="default">9.5</variable>
         <variable key="pg-version-upgrade" keyword="co6">9.6</variable>
 
+        <variable key="pg-bin-path" keyword="default">/usr/lib/postgresql/{[pg-version]}/bin</variable>
+        <variable key="pg-bin-path" keyword="co6">/usr/pgsql-{[pg-version]}/bin</variable>
+
+        <variable key="pg-bin-upgrade-path" keyword="default">/usr/lib/postgresql/{[pg-version-upgrade]}/bin</variable>
+        <variable key="pg-bin-upgrade-path" keyword="co6">/usr/pgsql-{[pg-version-upgrade]}/bin</variable>
+
         <variable key="pg-home-path">/home/postgres</variable>
 
         <variable key="perl-lib-path">/usr/share/perl5</variable>
@@ -112,7 +118,6 @@
         <variable key="db-cluster-create" keyword="co6">service postgresql-{[pg-version]} initdb</variable>
 
         <variable key="db-cluster-create-upgrade" keyword="default">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
-        <variable key="db-cluster-create-upgrade" keyword="co6">service postgresql-{[pg-version-upgrade]} initdb</variable>
 
         <variable key="db-cluster-start" keyword="default">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
         <variable key="db-cluster-start" keyword="co6">service postgresql-{[pg-version]} start</variable>
@@ -456,12 +461,13 @@
             <execute-list host="{[host-db-primary]}">
                 <title>Create the demo cluster</title>
 
-                <execute keyword="default" user="postgres">
+                <execute user="postgres">
                     <exe-cmd>
-                        /usr/lib/postgresql/{[pg-version]}/bin/initdb
+                        {[pg-bin-path]}/initdb
                             -D {[db-path]} -k -A peer</exe-cmd>
                 </execute>
-                <execute user="root" output="y" filter="n">
+
+                <execute keyword="default" user="root" output="y" filter="n">
                     <exe-cmd>{[db-cluster-create]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -1972,16 +1978,6 @@
                 <block-variable-replace key="br-install-user">postgres</block-variable-replace>
                 <block-variable-replace key="br-install-group">postgres</block-variable-replace>
             </block>
-
-            <p>The demo cluster must be created even though it will be overwritten later.</p>
-
-            <execute-list host="{[host-db-standby]}">
-                <title>Create demo cluster</title>
-
-                <execute user="root">
-                    <exe-cmd>{[db-cluster-create]}</exe-cmd>
-                </execute>
-            </execute-list>
         </section>
 
         <!-- SECTION => REPLICATION - SETUP-SSH -->
@@ -2003,13 +1999,6 @@
 
             <p>A hot standby performs replication using the WAL archive and allows read-only queries.</p>
 
-            <postgres-config host="{[host-db-standby]}" keyword="default" file="{[postgres-config-demo]}" show="n">
-                <title>Set options</title>
-
-                <postgres-config-option key="log_line_prefix">''</postgres-config-option>
-                <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
-            </postgres-config>
-
             <p><backrest/> configuration is very similar to <host>db-primary</host> except that the <pg-option>standby_mode</pg-option> setting will be enabled to keep the cluster in recovery mode when the end of the WAL stream has been reached.</p>
 
             <backrest-config host="{[host-db-standby]}" file="{[backrest-config-demo]}">
@@ -2025,13 +2014,39 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
+            <p keyword="default">The demo cluster must be created (even though it will be overwritten restore) in order to create the <postgres/> configuration files.</p>
+
+            <execute-list keyword="default" host="{[host-db-standby]}">
+                <title>Create demo cluster</title>
+
+                <execute user="root">
+                    <exe-cmd>{[db-cluster-create]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p keyword="co6">Create the path where <postgres/> will be restored.</p>
+
+            <execute-list keyword="co6" host="{[host-db-standby]}">
+                <title>Create <postgres/> path</title>
+
+                <execute user="postgres">
+                    <exe-cmd>
+                        mkdir -p -m 700 {[db-path]}
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+
             <p>Now the standby can be created with the <cmd>restore</cmd> command.</p>
 
             <execute-list host="{[host-db-standby]}">
                 <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
-                <execute>
+                <execute keyword="default">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+                </execute>
+
+                <execute keyword="co6">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
                 </execute>
 
                 <execute output="y" filter="n">
@@ -2044,9 +2059,11 @@
             <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>db-standby</host>.  Otherwise, connection attempts will be refused.</p>
 
             <postgres-config host="{[host-db-standby]}" file="{[postgres-config-demo]}">
-                <title>Enable <pg-option>hot_standby</pg-option></title>
+                <title>Enable <pg-option>hot_standby</pg-option> and configure logging</title>
 
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
+                <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
+                <postgres-config-option key="log_line_prefix">''</postgres-config-option>
             </postgres-config>
 
             <execute-list host="{[host-db-standby]}">
@@ -2179,22 +2196,6 @@
                     <exe-cmd>{[db-cluster-reload]}</exe-cmd>
                 </execute>
             </execute-list>
-
-            <!-- <p>The <pg-option>max_wal_senders</pg-option> setting must be increased (the default is 0) to allow standbys to connect to the primary.  It will be set to 3 to allow more standbys to be created later.  <postgres/> must restarted for this setting to take effect.</p>
-
-            <postgres-config host="{[host-db-primary]}" file="{[postgres-config-demo]}">
-                <title>Increase <pg-option>max_wal_senders</pg-option></title>
-
-                <postgres-config-option key="max_wal_senders">3</postgres-config-option>
-            </postgres-config>
-
-            <execute-list host="{[host-db-primary]}">
-                <title>Restart <postgres/></title>
-
-                <execute user="root">
-                    <exe-cmd>{[db-cluster-restart]}</exe-cmd>
-                </execute>
-            </execute-list> -->
 
             <p>The standby needs to know how to contact the primary so the <pg-option>primary_conninfo</pg-option> setting will be configured in <backrest/>.</p>
 
@@ -2342,41 +2343,29 @@
         <title>Upgrading <postgres/></title>
         <cmd-description key="stanza-upgrade"/>
 
-        <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they will outline the general process for upgrading a primary and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
+        <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they outline the general process for upgrading a primary and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
 
         <execute-list host="{[host-db-primary]}">
-            <title>Install new <postgres/> version</title>
+            <title>Stop old cluster and install new <postgres/> version</title>
+
+            <execute user="root">
+                <exe-cmd>{[db-cluster-stop]}</exe-cmd>
+            </execute>
 
             <execute user="root" err-suppress="y">
                 <exe-cmd>{[postgres-install-upgrade]}</exe-cmd>
                 <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
-        </execute-list>
 
-        <p>Create the new cluster. If the <postgres/> install creates a default cluster, then remove it to avoid confusion.</p>
-
-        <execute-list host="{[host-db-primary]}">
-            <title>Drop default cluster and create the new demo cluster</title>
-
-            <execute user="root" keyword="default" err-suppress="y">
+            <execute keyword="default" user="root" err-suppress="y" show="n">
                 <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
             </execute>
-
-            <execute user="postgres" keyword="default">
-                <exe-cmd>
-                    /usr/lib/postgresql/{[pg-version-upgrade]}/bin/initdb
-                        -D {[db-path-upgrade]} -k -A peer</exe-cmd>
-            </execute>
-
-            <execute user="root" output="y" filter="n">
-                <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
-            </execute>
         </execute-list>
 
-        <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster to ensure the database system id is identical on both the primary and standby.</p>
+        <p>Stop the old cluster on the standby since it will be restored from the newly upgraded cluster.</p>
 
         <execute-list host="{[host-db-standby]}">
-            <title>Stop old cluster and drop default cluster if created</title>
+            <title>Stop old cluster and install new <postgres/> version</title>
 
             <execute user="root">
                 <exe-cmd>{[db-cluster-stop]}</exe-cmd>
@@ -2387,18 +2376,25 @@
                 <exe-cmd-extra>-y</exe-cmd-extra>
             </execute>
 
-            <execute user="root" keyword="default" err-suppress="y">
+            <execute keyword="default" user="root" err-suppress="y" show="n">
                 <exe-cmd>pg_dropcluster {[pg-version-upgrade]} main</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>Stop the old cluster on the primary and perform the upgrade.</p>
+        <p>Create the new cluster and perform upgrade.</p>
 
         <execute-list host="{[host-db-primary]}">
-            <title>Stop old cluster and perform the upgrade</title>
+            <title>Create new cluster and perform the upgrade</title>
 
-            <execute user="root">
-                <exe-cmd>{[db-cluster-stop]}</exe-cmd>
+            <execute user="postgres">
+                <exe-cmd>
+                    {[pg-bin-upgrade-path]}/initdb
+                        -D {[db-path-upgrade]} -k -A peer
+                </exe-cmd>
+            </execute>
+
+            <execute user="root" keyword="default">
+                <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
             </execute>
 
             <execute user="postgres" output="y" keyword="default">
@@ -2527,7 +2523,7 @@
         <p>Install the new <postgres/> binaries on the standby and create the cluster.</p>
 
         <execute-list host="{[host-db-standby]}">
-            <title>Remove old cluster and initialize new one</title>
+            <title>Remove old cluster and create the new cluster</title>
 
             <execute keyword="default" user="root">
                 <exe-cmd>pg_dropcluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
@@ -2537,18 +2533,18 @@
                 <exe-cmd>rm -rf {[db-path]}</exe-cmd>
             </execute>
 
-            <execute user="postgres" keyword="default">
+            <execute user="postgres" keyword="co6">
                 <exe-cmd>
-                    /usr/lib/postgresql/{[pg-version-upgrade]}/bin/initdb
-                        -D {[db-path-upgrade]} -k -A peer</exe-cmd>
+                    mkdir -p -m 700 {[pg-bin-upgrade-path]}
+                </exe-cmd>
             </execute>
 
-            <execute user="root" output="y" filter="n">
+            <execute user="root" keyword="default">
                 <exe-cmd>{[db-cluster-create-upgrade]}</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>Run the <cmd>check</cmd> on the backup host. The warning regarding the standby being down is expected since the standby cluster is down. Running this command demostrates that the backup server is aware of the standby and is confirgured properly for the primary server.</p>
+        <p>Run the <cmd>check</cmd> on the backup host. The warning regarding the standby being down is expected since the standby cluster is down. Running this command demonstrates that the backup server is aware of the standby and is configured properly for the primary server.</p>
 
         <execute-list host="{[host-backup]}">
             <title>Check configuration</title>
@@ -2571,8 +2567,12 @@
         <execute-list host="{[host-db-standby]}">
             <title>Restore the {[postgres-cluster-demo]} standby cluster</title>
 
-            <execute>
+            <execute keyword="default">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
+            </execute>
+
+            <execute keyword="co6">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
             </execute>
         </execute-list>
 
