@@ -15,6 +15,7 @@ use Exporter qw(import);
 
 use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
+use pgBackRest::Common::Ini;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Archive::Info;
@@ -22,6 +23,7 @@ use pgBackRest::Backup::Info;
 use pgBackRest::Db;
 use pgBackRest::DbVersion;
 use pgBackRest::InfoCommon;
+use pgBackRest::Manifest;
 use pgBackRest::Protocol::Helper;
 use pgBackRest::Protocol::Storage::Helper;
 
@@ -48,9 +50,12 @@ sub new
     # Assign function parameters, defaults, and log debug info
     my $strOperation = logDebugParam(__PACKAGE__ . '->new');
 
-    # Initialize the database object
-    ($self->{oDb}) = dbObjectGet();
-    $self->dbInfoGet();
+    # Initialize the database object if not performing a stanza-delete
+    if (!cfgCommandTest(CFGCMD_STANZA_DELETE))
+    {
+        ($self->{oDb}) = dbObjectGet();
+        $self->dbInfoGet();
+    }
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -81,6 +86,11 @@ sub process
     elsif (cfgCommandTest(CFGCMD_STANZA_UPGRADE))
     {
         $iResult = $self->stanzaUpgrade();
+    }
+    # Process stanza delete
+    elsif (cfgCommandTest(CFGCMD_STANZA_DELETE))
+    {
+        $iResult = $self->stanzaDelete();
     }
     # Else error if any other command is found
     else
@@ -241,6 +251,67 @@ sub stanzaUpgrade
     if (!($bBackupUpgraded || $bArchiveUpgraded))
     {
         &log(INFO, "the stanza data is already up to date");
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'iResult', value => 0, trace => true}
+    );
+}
+
+####################################################################################################################################
+# stanzaDelete
+#
+# Delete a stanza. The stop file must exist and the db must be offline unless --force is used.
+####################################################################################################################################
+sub stanzaDelete
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaDelete');
+
+    my $strStanza = cfgOption(CFGOPT_STANZA);
+    my $strArchivePath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE);
+    my $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP);
+
+    # If at least one archive or backup directory exists for the stanza, then continue, else nothing to do
+    if (storageRepo()->pathExists($strArchivePath) || storageRepo()->pathExists($strBackupPath))
+    {
+        # If the stop file does not exist, then error
+        if (!lockStopTest($strStanza))
+        {
+            confess &log(ERROR, "stop file does not exist for stanza ${strStanza}" .
+                "\nHINT: has the pgbackrest stop command been run on this server?");
+        }
+
+        # Get the master database object and index
+        my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
+
+        # Initialize the master file object and path
+        my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
+        my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iMasterRemoteIdx));
+
+        # Check if Postgres is running and if so only continue when forced
+        if ($oStorageDbMaster->exists($strDbMasterPath . '/' . DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))
+        {
+            confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
+                "Shutdown the postmaster for stanza ${strStanza} and try again, or use --force.", ERROR_POSTMASTER_RUNNING);
+        }
+
+        # Delete the archive info files
+        storageRepo()->remove("${strArchivePath}/" . ARCHIVE_INFO_FILE, {bIgnoreMissing => true});
+        storageRepo()->remove("${strArchivePath}/" . ARCHIVE_INFO_FILE . INI_COPY_EXT, {bIgnoreMissing => true});
+
+        # Delete the backup info files
+        storageRepo()->remove("${strBackupPath}/" . FILE_BACKUP_INFO, {bIgnoreMissing => true});
+        storageRepo()->remove("${strBackupPath}/" . FILE_BACKUP_INFO . INI_COPY_EXT, {bIgnoreMissing => true});
+
+        # Recurse through the backups and remove the manifest files
+        # FIGURE THIS OUT $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
+
     }
 
     # Return from function and log return values if any
