@@ -239,7 +239,7 @@ sub process
         if ($iBackupTotal > 0)
         {
             my $oArchiveInfo = new pgBackRest::Archive::Info($oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE), true);
-            my @stryListArchiveDisk = $oStorageRepo->list(
+            my @stryListArchiveDisk = sort {((split('-', $a))[1] + 0) cmp ((split('-', $b))[1] + 0)} $oStorageRepo->list(
                 STORAGE_REPO_ARCHIVE, {strExpression => REGEX_ARCHIVE_DIR_DB_VERSION, bIgnoreMissing => true});
 
             # Make sure the current database versions match between the two files

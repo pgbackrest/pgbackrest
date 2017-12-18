@@ -219,7 +219,7 @@ sub run
             $strDescription = 'Upgrade the stanza, create full back - earliest db orphaned archive removed and earliest full backup ' .
                 'and archive in previous db version removed';
 
-            $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_95);
+            $oExpireTest->stanzaUpgrade($self->stanza(), PG_VERSION_10);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->process($self->stanza(), 2, undef, CFGOPTVAL_BACKUP_TYPE_FULL, undef, $strDescription);
 

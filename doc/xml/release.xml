@@ -20,6 +20,14 @@
 
                         <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brusselback.adam"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -3775,6 +3783,11 @@
         <contributor id="biberhofer.sascha">
             <contributor-name-display>Sascha Biberhofer</contributor-name-display>
             <contributor-id type="github">sbiberhofer</contributor-id>
+        </contributor>
+
+        <contributor id="brusselback.adam">
+            <contributor-name-display>Adam Brusselback</contributor-name-display>
+            <contributor-id type="github">Tostino</contributor-id>
         </contributor>
 
         <contributor id="cox.william">
