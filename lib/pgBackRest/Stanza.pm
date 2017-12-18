@@ -274,11 +274,12 @@ sub stanzaDelete
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaDelete');
 
     my $strStanza = cfgOption(CFGOPT_STANZA);
-    my $strArchivePath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE);
-    my $strBackupPath = storageRepo()->pathGet(STORAGE_REPO_BACKUP);
+    my $oStorageRepo = storageRepo();
+    my $strArchivePath = $oStorageRepo->pathGet(STORAGE_REPO_ARCHIVE);
+    my $strBackupPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
 
-    # If at least one archive or backup directory exists for the stanza, then continue, else nothing to do
-    if (storageRepo()->pathExists($strArchivePath) || storageRepo()->pathExists($strBackupPath))
+    # If at least an archive or backup directory exists for the stanza, then continue, else nothing to do
+    if ($oStorageRepo->pathExists($strArchivePath) || $oStorageRepo->pathExists($strBackupPath))
     {
         # If the stop file does not exist, then error
         if (!lockStopTest($strStanza))
@@ -298,20 +299,29 @@ sub stanzaDelete
         if ($oStorageDbMaster->exists($strDbMasterPath . '/' . DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))
         {
             confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
-                "Shutdown the postmaster for stanza ${strStanza} and try again, or use --force.", ERROR_POSTMASTER_RUNNING);
+                "To delete stanza ${strStanza}, shutdown the postmaster for stanza ${strStanza} and try again, " .
+                "or use --force.", ERROR_POSTMASTER_RUNNING);
         }
 
         # Delete the archive info files
-        storageRepo()->remove("${strArchivePath}/" . ARCHIVE_INFO_FILE, {bIgnoreMissing => true});
-        storageRepo()->remove("${strArchivePath}/" . ARCHIVE_INFO_FILE . INI_COPY_EXT, {bIgnoreMissing => true});
+        $oStorageRepo->remove("${strArchivePath}/" . ARCHIVE_INFO_FILE, {bIgnoreMissing => true});
+        $oStorageRepo->remove("${strArchivePath}/" . ARCHIVE_INFO_FILE . INI_COPY_EXT, {bIgnoreMissing => true});
 
         # Delete the backup info files
-        storageRepo()->remove("${strBackupPath}/" . FILE_BACKUP_INFO, {bIgnoreMissing => true});
-        storageRepo()->remove("${strBackupPath}/" . FILE_BACKUP_INFO . INI_COPY_EXT, {bIgnoreMissing => true});
+        $oStorageRepo->remove("${strBackupPath}/" . FILE_BACKUP_INFO, {bIgnoreMissing => true});
+        $oStorageRepo->remove("${strBackupPath}/" . FILE_BACKUP_INFO . INI_COPY_EXT, {bIgnoreMissing => true});
 
-        # Recurse through the backups and remove the manifest files
-        # FIGURE THIS OUT $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackupLabel}/${strName}", {bRecurse => true});
+        # Invalidate the backups by removing the manifest files
+        foreach my $strBackup ($oStorageRepo->list(
+            STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
+        {
+            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST, {bIgnoreMissing => true});
+            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST_COPY, {bIgnoreMissing => true});
+        }
 
+        # Recursively remove the stanza archive and backup directories
+        $oStorageRepo->remove(STORAGE_REPO_ARCHIVE, {bRecurse => true});
+        $oStorageRepo->remove(STORAGE_REPO_BACKUP, {bRecurse => true});
     }
 
     # Return from function and log return values if any
