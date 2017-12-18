@@ -43,7 +43,9 @@ my $oConfigHelpData =
                 "Check that WAL segments are present in the archive before backup completes.",
             description =>
                 "Checks that all WAL segments required to make the backup consistent are present in the WAL archive. It's a " .
-                    "good idea to leave this as the default unless you are using another method for archiving."
+                    "good idea to leave this as the default unless you are using another method for archiving.\n" .
+                "\n" .
+                "This option must be enabled if archive-copy is enabled."
         },
 
         # ARCHIVE-COPY Option Help
@@ -54,14 +56,14 @@ my $oConfigHelpData =
             summary =>
                 "Copy WAL segments needed for consistency to the backup.",
             description =>
-                "This slightly paranoid option protects against corruption or premature expiration in the WAL segment archive " .
-                    "by storing the WAL segments directly in the backup. PITR won't be possible without the WAL segment archive " .
-                    "and this option also consumes more space.\n" .
+                "This slightly paranoid option protects against corruption in the WAL segment archive by storing the WAL " .
+                    "segments required for consistency directly in the backup. WAL segments are still stored in the archive so " .
+                    "this option will use additional space.\n" .
                 "\n" .
-                "Even though WAL segments will be restored with the backup, PostgreSQL will ignore them if a recovery.conf file " .
-                    "exists and instead use archive_command to fetch WAL segments. Specifying type=none when restoring will not " .
-                    "create recovery.conf and force PostgreSQL to use the WAL segments in pg_xlog/pg_wal. This will get the " .
-                    "database cluster to a consistent state."
+                "On restore, the WAL segments will be present in pg_xlog/pg_wal and PostgreSQL will use them in preference to " .
+                    "calling the restore_command.\n" .
+                "\n" .
+                "The archive-check option must be enabled if archive-copy is enabled."
         },
 
         # ARCHIVE-QUEUE-MAX Option Help
