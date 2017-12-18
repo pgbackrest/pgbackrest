@@ -298,7 +298,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'option',
-                    &TESTDEF_TOTAL => 34,
+                    &TESTDEF_TOTAL => 35,
                 },
                 {
                     &TESTDEF_NAME => 'config-perl',

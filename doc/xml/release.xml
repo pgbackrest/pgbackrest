@@ -20,6 +20,10 @@
 
                         <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes.  This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>

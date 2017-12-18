@@ -410,18 +410,18 @@ sub optionValidate
             my $strValue = optionValueGet($strOption, $oOptionTest);
 
             # Check to see if an option can be negated.  Make sure that it is not set and negated at the same time.
-            my $bNegate = false;
+            $oOption{$strOption}{negate} = false;
 
             if (cfgDefOptionNegate($iOptionId))
             {
-                $bNegate = defined($$oOptionTest{'no-' . $strOption});
+                $oOption{$strOption}{negate} = defined($$oOptionTest{'no-' . $strOption});
 
-                if ($bNegate && defined($strValue))
+                if ($oOption{$strOption}{negate} && defined($strValue))
                 {
                     confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
                 }
 
-                if ($bNegate && cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
+                if ($oOption{$strOption}{negate} && cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
                 {
                     $strValue = false;
                 }
@@ -471,7 +471,7 @@ sub optionValidate
             }
 
             # If the option value is undefined and not negated, see if it can be loaded from the config file
-            if (!defined($strValue) && !$bNegate && $strOption ne cfgOptionName(CFGOPT_CONFIG) &&
+            if (!defined($strValue) && !$oOption{$strOption}{negate} && $strOption ne cfgOptionName(CFGOPT_CONFIG) &&
                 defined(cfgDefOptionSection($iOptionId)) && $bDependResolved)
             {
                 # If the config option has not been resolved yet then continue processing
@@ -769,7 +769,7 @@ sub optionValidate
                 if (defined($strDefault))
                 {
                     # Only set default if dependency is resolved
-                    $oOption{$strOption}{value} = $strDefault if !$bNegate;
+                    $oOption{$strOption}{value} = $strDefault if !$oOption{$strOption}{negate};
                 }
                 # Else check required
                 elsif (cfgDefOptionRequired($iCommandId, $iOptionId) && !$bHelp)
@@ -1206,6 +1206,12 @@ sub cfgCommandWrite
             }
 
             $strExeString .= cfgCommandWriteOptionFormat($strOption, $bMulti, $bSecure, $oValue);
+        }
+        # Else is negated and is not a boolean (which is handled above)
+        elsif (cfgDefOptionValid($iNewCommandId, $iOptionId) && $oOption{$strOption}{negate} &&
+               cfgDefOptionType($iOptionId) ne CFGDEF_TYPE_BOOLEAN)
+        {
+            $strExeString .= " --no-${strOption}";
         }
     }
 

@@ -63,6 +63,19 @@ sub run
             cfgCommandName(CFGCMD_BACKUP));
     }
 
+    if ($self->begin('config set to --no-config'))
+    {
+        $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
+        $self->optionTestSet(CFGOPT_DB_PATH, '/db');
+        $self->optionTestSetBool(CFGOPT_CONFIG, false);
+
+        $self->configTestLoadExpect(cfgCommandName(CFGCMD_BACKUP));
+
+        $self->testResult(
+            sub {cfgCommandWrite(CFGCMD_EXPIRE, true, 'bin', true, undef, false)}, "bin --no-config --stanza=app expire",
+            'check that --no-config is passed to child processes');
+    }
+
     if ($self->begin('backup type set to ' . CFGOPTVAL_BACKUP_TYPE_FULL))
     {
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
