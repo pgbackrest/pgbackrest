@@ -536,6 +536,11 @@ my %hConfigDefine =
                 &CFGDEF_DEFAULT => false,
             },
 
+            &CFGCMD_STANZA_DELETE =>
+            {
+                &CFGDEF_DEFAULT => false,
+            },
+
             &CFGCMD_STOP =>
             {
                 &CFGDEF_DEFAULT => false

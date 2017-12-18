@@ -16,6 +16,7 @@ use Exporter qw(import);
 use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
+use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
 use pgBackRest::Config::Config;
 use pgBackRest::Archive::Info;
@@ -282,11 +283,13 @@ sub stanzaDelete
     if ($oStorageRepo->pathExists($strArchivePath) || $oStorageRepo->pathExists($strBackupPath))
     {
         # If the stop file does not exist, then error
-        if (!lockStopTest($strStanza))
+        if (!lockStopTest({bStanzaStopRequired => true}))
         {
             confess &log(ERROR, "stop file does not exist for stanza ${strStanza}" .
                 "\nHINT: has the pgbackrest stop command been run on this server?");
         }
+
+&log(INFO, 'deleting stanza: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP)); # CSHANG
 
         # Get the master database object and index
         my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
@@ -294,6 +297,9 @@ sub stanzaDelete
         # Initialize the master file object and path
         my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
         my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iMasterRemoteIdx));
+
+&log(INFO, 'PID: ' . $strDbMasterPath . '/' . DB_FILE_POSTMASTERPID); # CSHANG
+&log(INFO, 'FORCE VALID? ' .cfgOptionValid(CFGOPT_FORCE));
 
         # Check if Postgres is running and if so only continue when forced
         if ($oStorageDbMaster->exists($strDbMasterPath . '/' . DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))

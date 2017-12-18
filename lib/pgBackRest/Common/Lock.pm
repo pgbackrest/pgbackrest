@@ -300,9 +300,10 @@ sub lockStopTest
     {
         # Generate the stop file name
         my $strStopFile = lockStopFileName(cfgOption(CFGOPT_STANZA));
-
+&log(INFO, "LOCK FILE: ". $strStopFile); # CSHANG
         if (-e $strStopFile)
         {
+            # If the stop file exists and is required then set the flag to false
             if ($bStanzaStopRequired)
             {
                 $bNoStop = false;
