@@ -32,6 +32,15 @@
                     <release-item>
                         <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes.  This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed <cmd>info</cmd> command to eliminate <code>"db (prior)"</code> output if no backups or archives exist for a prior version of the cluster.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-development-list>
