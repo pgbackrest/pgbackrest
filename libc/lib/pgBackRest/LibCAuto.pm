@@ -6,7 +6,7 @@ package pgBackRest::LibCAuto;
 # Library version (.999 indicates development version)
 sub libcAutoVersion
 {
-    return '1.27.999';
+    return '1.27';
 }
 
 # Configuration option value constants
