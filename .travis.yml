@@ -1,6 +1,5 @@
 branches:
   only:
-    - release/1
     - release/1-integration
     - /-ci$/
 

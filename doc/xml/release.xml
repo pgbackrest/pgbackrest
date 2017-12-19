@@ -78,6 +78,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>No longer run <id>release/1</id> branch through CI. The <id>release/1-integration</id> branch will be run through CI and then pushed to <id>release/1</id> with github status checks.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move restore test infrastructure to <code>HostBackup.pm</code>.  Required to test restores on the backup server, a fairly common scenario.  Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
                     </release-item>
 

@@ -74,7 +74,6 @@ sub process
     my $strConfig =
         "branches:\n" .
         "  only:\n" .
-        "    - release\/1\n" .
         "    - release\/1-integration\n" .
         "    - /-ci\$/\n" .
         "\n" .
