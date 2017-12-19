@@ -46,6 +46,14 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>info</cmd> command to eliminate outputting <code>db (prior)</code> if no backups or archives exist for a prior version of the database.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
                     </release-item>
 

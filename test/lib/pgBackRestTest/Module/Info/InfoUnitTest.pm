@@ -15,6 +15,7 @@ use English '-no_match_vars';
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
+use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
@@ -364,6 +365,36 @@ sub run
             "            database size: 0B, backup size: 0B\n" .
             "            repository size: 0B, repository backup size: 0B\n",
             "formatText() multiple DB versions");
+
+        # Remove backup from db (prior)
+        #---------------------------------------------------------------------------------------------------------------------------
+        # Load the backup.info file
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
+        my @stryPath = $oBackupInfo->list(backupRegExpGet(true));
+
+        # Remove the db prior full backup from the info file and save it
+        $oBackupInfo->delete($stryPath[0]);
+        $oBackupInfo->save();
+
+        # Remove the backup directory
+        storageTest()->remove($self->{strBackupPath} . "/" . $stryPath[0], {bRecurse => true});
+
+        $hyStanza = $oInfo->stanzaList($self->stanza());
+        $self->testResult(sub {$oInfo->formatText($hyStanza)},
+            "stanza: db\n    status: ok\n" .
+            "\n    db (current)\n" .
+            "        wal archive min/max (9.5-2): 000000010000000000000000 / 000000010000000000000003\n\n" .
+            "        full backup: 20161207-155728F\n" .
+            "            timestamp start/stop: 2016-12-07 15:57:28 / 2016-12-07 15:57:28\n" .
+            "            wal start/stop: 000000010000000000000000 / 000000010000000000000000\n" .
+            "            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B\n\n" .
+            "        diff backup: 20161207-155728F_20161208-155728D\n" .
+            "            timestamp start/stop: 2016-12-08 15:57:28 / 2016-12-08 15:57:28\n" .
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n" .
+            "            database size: 0B, backup size: 0B\n" .
+            "            repository size: 0B, repository backup size: 0B\n",
+            "db (prior) removed");
 
         # dbArchiveSection() -- with archive
         #---------------------------------------------------------------------------------------------------------------------------
