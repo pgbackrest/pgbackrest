@@ -28,6 +28,15 @@
 
                         <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed <cmd>info</cmd> command to eliminate <code>"db (prior)"</code> output if no backups or archives exist for a prior version of the cluster.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
