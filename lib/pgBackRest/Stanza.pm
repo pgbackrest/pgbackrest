@@ -299,7 +299,7 @@ sub stanzaDelete
         my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iMasterRemoteIdx));
 
 &log(INFO, 'PID: ' . $strDbMasterPath . '/' . DB_FILE_POSTMASTERPID); # CSHANG
-&log(INFO, 'FORCE VALID? ' .cfgOptionValid(CFGOPT_FORCE));
+&log(INFO, 'FORCE VALID? ' .cfgOptionValid(CFGOPT_FORCE)); # CSHANG
 
         # Check if Postgres is running and if so only continue when forced
         if ($oStorageDbMaster->exists($strDbMasterPath . '/' . DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))
@@ -425,7 +425,7 @@ sub existingFileName
 ####################################################################################################################################
 # errorForce
 #
-# Creates the parent path if it doesn't exist and returns the path.
+# Determines based on encryption or not and errors when force is required but not set.
 ####################################################################################################################################
 sub errorForce
 {

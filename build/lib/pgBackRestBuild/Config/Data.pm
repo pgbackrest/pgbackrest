@@ -557,7 +557,7 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_STANZA_CREATE => {},   # CSHANG intentionally leaving _DELETE out - would want them to use --force instead
+            &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         }
     },
