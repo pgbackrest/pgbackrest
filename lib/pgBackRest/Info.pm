@@ -201,38 +201,62 @@ sub formatText
         # Loop through the DB history array for the stanza from newest to oldest
         foreach my $hDbInfo (reverse @{$oStanzaInfo->{&INFO_BACKUP_SECTION_DB}})
         {
-            $strOutput .= $bDbCurrent ? "\n    db (current)" : "\n    db (prior)";
-            $bDbCurrent = false;
+            if ($bDbCurrent)
+            {
+                $strOutput .= "\n    db (current)";
+            }
 
             # Get the archive information for the DB
+            my $strOutputArchive;
             foreach my $hDbArchive (@{$oStanzaInfo->{&INFO_SECTION_ARCHIVE}})
             {
                 if ($hDbArchive->{&INFO_SECTION_DB}{&INFO_HISTORY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
                 {
                     # Output archive start / stop values
-                    $strOutput .= "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
+                    $strOutputArchive .= "\n        wal archive min/max (" . $hDbArchive->{&INFO_KEY_ID} . "): ";
 
                     if (defined($hDbArchive->{&INFO_KEY_MIN}))
                     {
-                        $strOutput .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
+                        $strOutputArchive .= $hDbArchive->{&INFO_KEY_MIN} . ' / ' . $hDbArchive->{&INFO_KEY_MAX};
                     }
                     else
                     {
-                        $strOutput .= 'none present';
+                        $strOutputArchive .= 'none present';
                     }
 
-                    $strOutput .= "\n";
+                    $strOutputArchive .= "\n";
                 }
             }
 
             # Get information for each stanza backup for the DB, from oldest to newest
+            my $strOutputBackup;
             foreach my $oBackupInfo (@{$$oStanzaInfo{&INFO_BACKUP_SECTION_BACKUP}})
             {
                 if ($oBackupInfo->{&INFO_SECTION_DB}{&INFO_KEY_ID} == $hDbInfo->{&INFO_HISTORY_ID})
                 {
-                    $strOutput .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
+                    $strOutputBackup .= "\n" . $self->formatTextBackup($oBackupInfo) . "\n";
                 }
             }
+
+            if (defined($strOutputArchive) || defined($strOutputBackup))
+            {
+                if (!$bDbCurrent)
+                {
+                    $strOutput .= "\n    db (prior)";
+                }
+
+                if (defined($strOutputArchive))
+                {
+                    $strOutput .= $strOutputArchive;
+                }
+
+                if (defined($strOutputBackup))
+                {
+                    $strOutput .= $strOutputBackup;
+                }
+            }
+
+            $bDbCurrent = false;
         }
     }
 

@@ -12,16 +12,6 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.00dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                <release-bug-list>
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-ideator id="lardiere.sebastien"/>
-                        </release-item-contributor-list>
-
-                        <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
-                    </release-item>
-                </release-bug-list>
-
                 <release-feature-list>
                     <release-item>
                         <p>Allow any non-boolean, non-command-line option to be negated.  This allows specific options in <file>pgbackrest.conf</file> to be ignored (and set to default) which reduces the need to write new configuration files for specific needs.  Note that boolean, non-command-line options are already negatable.</p>
@@ -60,10 +50,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>memGrowRaw()</code> to memory context module.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Add <code>String</code> object to simplify string handling.</p>
                     </release-item>
 
@@ -96,15 +82,90 @@
             <release-doc-list>
                 <release-feature-list>
                     <release-item>
+                        <p>All clusters in the documentation are initialized with checksums.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Add coding standards document.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Deploy historical documentation to <path>prior</path> rather than the root directory.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <p>Only build C binary/library for Perl unit/integration tests.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add unit tests for the <code>Manifest</code> module.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>No longer run <id>master</id> branch through CI. The <id>integration</id> branch will be run through CI and then pushed to <id>master</id> with github status checks.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
+        </release>
+
+        <release date="2017-12-19" version="1.27" title="Bug Fixes and Documentation">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lardiere.sebastien"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>.  When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
+                    </release-item>
+
+                     <release-item>
+                         <release-item-contributor-list>
+                             <release-item-ideator id="brusselback.adam"/>
+                         </release-item-contributor-list>
+
+                         <p>Fixed an issue where WAL was not expired on <postgres/> 10.  This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
+                     </release-item>
+
+                    <release-item>
+                        <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes.  This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="frost.stephen"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed <cmd>info</cmd> command to eliminate <code>"db (prior)"</code> output if no backups or archives exist for a prior version of the cluster.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-development-list>
+                    <release-item>
+                        <p>Add <code>memGrowRaw()</code> to memory context module.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-feature-list>
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="nullmeier.markus"/>
                         </release-item-contributor-list>
 
                         <p>Document the relationship between the <br-option>archive-copy</br-option> and <br-option>archive-check</br-option> options.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>All clusters in the documentation are initialized with checksums.</p>
                     </release-item>
 
                     <release-item>
@@ -122,10 +183,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add coding standards document.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>Allow internal options that do not show up in the documentation.  Used for test options initially but other use cases are on the horizon.</p>
                     </release-item>
                 </release-development-list>
@@ -134,23 +191,19 @@
             <release-test-list>
                 <release-development-list>
                     <release-item>
-                        <p>Only build C binary/library for Perl unit/integration tests.</p>
+                        <p>Update CI branches to <path>release/1</path> and <path>release/1-integration</path>.</p>
                     </release-item>
 
                     <release-item>
-                        <p>Sync time to prevent build failures when running on VirtualBox.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Add unit tests for the <code>Manifest</code> module.</p>
+                        <p>No longer run <id>release/1</id> branch through CI. The <id>release/1-integration</id> branch will be run through CI and then pushed to <id>release/1</id> with github status checks.</p>
                     </release-item>
 
                     <release-item>
                         <p>Move restore test infrastructure to <code>HostBackup.pm</code>.  Required to test restores on the backup server, a fairly common scenario.  Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Sync time to prevent build failures when running on VirtualBox.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -3783,6 +3836,11 @@
         <contributor id="biberhofer.sascha">
             <contributor-name-display>Sascha Biberhofer</contributor-name-display>
             <contributor-id type="github">sbiberhofer</contributor-id>
+        </contributor>
+
+        <contributor id="brusselback.adam">
+            <contributor-name-display>Adam Brusselback</contributor-name-display>
+            <contributor-id type="github">Tostino</contributor-id>
         </contributor>
 
         <contributor id="cox.william">
