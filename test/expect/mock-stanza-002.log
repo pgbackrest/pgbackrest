@@ -204,6 +204,8 @@ db-version="9.3"
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --stanza=db
 P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000001, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
@@ -322,6 +324,8 @@ db-version="9.3"
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --stanza=db
 P00  DEBUG:     Archive::Push::Push->process(): strWalPathFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Archive::Push::File::archivePushFile(): bCompress = true, iCompressLevel = 3, strWalFile = 000000010000000100000002, strWalPath = [TEST_PATH]/db-master/db/base/pg_xlog
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-push>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
@@ -412,6 +416,8 @@ db-version="9.4"
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --stanza=db
 P00   INFO: get WAL segment 000000010000000100000002
 P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Protocol::Helper::protocolGet(): bCache = <true>, iProcessIdx = [undef], iRemoteIdx = <1>, strBackRestBin = [undef], strCommand = <archive-get>, strRemoteType = backup
 P00  DEBUG:     Protocol::Helper::protocolGet: create (cached) remote protocol
 P00  DEBUG:     Protocol::Helper::protocolParam(): iProcessIdx = [undef], iRemoteIdx = 1, strBackRestBin = [undef], strCommand = archive-get, strRemoteType = backup
@@ -792,3 +798,47 @@ info all stanzas - db upgraded - db-1 and db-2 listed (db-master host)
         }
     }
 ]
+
+stanza-delete db - fail on missing stop file (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-delete
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/backup/repo --stanza=db
+P00  ERROR: [055]: stop file does not exist for stanza 'db'
+            HINT: has the pgbackrest stop command been run on this server?
+P00   INFO: stanza-delete command end: aborted with exception [055]
+
+db must not exist for successful delete
+> ls [TEST_PATH]/backup/repo/backup/
+------------------------------------------------------------------------------------------------------------------------------------
+db
+
+db must not exist for successful delete
+> ls [TEST_PATH]/backup/repo/archive/
+------------------------------------------------------------------------------------------------------------------------------------
+db
+
+stop db stanza (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stop
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/backup/repo --stanza=db
+P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
+P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
+P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
+P00   INFO: stop command end: completed successfully
+P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
+
+stanza-delete db - successfully delete the stanza (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail stanza-delete
+------------------------------------------------------------------------------------------------------------------------------------
+P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: stanza-delete command end: completed successfully
+
+db must not exist for successful delete
+> ls [TEST_PATH]/backup/repo/backup/
+------------------------------------------------------------------------------------------------------------------------------------
+
+db must not exist for successful delete
+> ls [TEST_PATH]/backup/repo/archive/
+------------------------------------------------------------------------------------------------------------------------------------

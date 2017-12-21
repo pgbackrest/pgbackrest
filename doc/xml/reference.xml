@@ -1206,7 +1206,7 @@
             <command id="stanza-delete" name="Stanza Delete">
                 <summary>Delete a stanza.</summary>
 
-                <text>The <cmd>stanza-delete</cmd> is provided when it is desirable to clean up a stanza associated with a decommissioned database. Use with caution as this command is completely destructive and will permanently remove all backups and archives in the <backrest/> repository for the specified stanza. To use the command, the <backrest/> <cmd>stop</cmd> command must first be run and the <postgres/> database shut down. Once the command successfully completes, it is the responsibility of the user to remove the stanza section from all <backrest/> configuration files.</text>
+                <text>The <cmd>stanza-delete</cmd> is provided for when it is desirable to clean up a stanza associated with a decommissioned database or when setting up a dedicated backup host and the repository is no longer needed on the database host. Use with caution as this command is completely destructive and will permanently remove all backups and archives in the <backrest/> repository for the specified stanza. To use the command, the <backrest/> <cmd>stop</cmd> command must first be issued on the backup host and the <postgres/> database shut down prior to running <cmd>stanza-delete</cmd> on the backup host. Once the command successfully completes, it is the responsibility of the user to remove the stanza section from all <backrest/> configuration files.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->

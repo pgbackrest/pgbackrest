@@ -325,6 +325,9 @@ sub stanzaDelete
         # Recursively remove the stanza archive and backup directories
         $oStorageRepo->remove("${strArchivePath}/", {bRecurse => true, bIgnoreMissing => true});
         $oStorageRepo->remove("${strBackupPath}/", {bRecurse => true, bIgnoreMissing => true});
+
+        # Remove the stop file so processes can run.
+        lockStart();
     }
     else
     {
