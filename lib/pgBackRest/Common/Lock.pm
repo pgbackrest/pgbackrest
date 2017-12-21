@@ -293,20 +293,20 @@ sub lockStopTest
             {name => 'bStanzaStopRequired', optional => true, default => false}
         );
 
-    my $bNoStop = true;
+    my $bStopExists = false;
 
     # Check the stanza first if it is specified
     if (cfgOptionTest(CFGOPT_STANZA))
     {
         # Generate the stop file name
         my $strStopFile = lockStopFileName(cfgOption(CFGOPT_STANZA));
-&log(INFO, "LOCK FILE: ". $strStopFile); # CSHANG
+
         if (-e $strStopFile)
         {
             # If the stop file exists and is required then set the flag to false
             if ($bStanzaStopRequired)
             {
-                $bNoStop = false;
+                $bStopExists = true;
             }
             else
             {
@@ -331,7 +331,7 @@ sub lockStopTest
     return logDebugReturn
     (
         $strOperation,
-        {name => 'bNoStop', value => $bNoStop}
+        {name => 'bStopExists', value => $bStopExists}
     );
 }
 

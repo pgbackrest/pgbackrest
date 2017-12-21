@@ -13,6 +13,7 @@ use English '-no_match_vars';
 use Exporter qw(import);
     our @EXPORT = qw();
 
+use pgBackRest::Backup::Common;
 use pgBackRest::Common::Cipher;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -285,11 +286,9 @@ sub stanzaDelete
         # If the stop file does not exist, then error
         if (!lockStopTest({bStanzaStopRequired => true}))
         {
-            confess &log(ERROR, "stop file does not exist for stanza ${strStanza}" .
-                "\nHINT: has the pgbackrest stop command been run on this server?");
+            confess &log(ERROR, "stop file does not exist for stanza '${strStanza}'" .
+                "\nHINT: has the pgbackrest stop command been run on this server?", ERROR_FILE_MISSING);
         }
-
-&log(INFO, 'deleting stanza: ' . $oStorageRepo->pathGet(STORAGE_REPO_BACKUP)); # CSHANG
 
         # Get the master database object and index
         my ($oDbMaster, $iMasterRemoteIdx) = dbObjectGet({bMasterOnly => true});
@@ -298,14 +297,11 @@ sub stanzaDelete
         my $oStorageDbMaster = storageDb({iRemoteIdx => $iMasterRemoteIdx});
         my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iMasterRemoteIdx));
 
-&log(INFO, 'PID: ' . $strDbMasterPath . '/' . DB_FILE_POSTMASTERPID); # CSHANG
-&log(INFO, 'FORCE VALID? ' .cfgOptionValid(CFGOPT_FORCE)); # CSHANG
-
         # Check if Postgres is running and if so only continue when forced
         if ($oStorageDbMaster->exists($strDbMasterPath . '/' . DB_FILE_POSTMASTERPID) && !cfgOption(CFGOPT_FORCE))
         {
             confess &log(ERROR, DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
-                "To delete stanza ${strStanza}, shutdown the postmaster for stanza ${strStanza} and try again, " .
+                "To delete stanza '${strStanza}', shutdown the postmaster for stanza '${strStanza}' and try again, " .
                 "or use --force.", ERROR_POSTMASTER_RUNNING);
         }
 
@@ -319,15 +315,20 @@ sub stanzaDelete
 
         # Invalidate the backups by removing the manifest files
         foreach my $strBackup ($oStorageRepo->list(
-            STORAGE_REPO_BACKUP, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse'}))
+            $strBackupPath, {strExpression => backupRegExpGet(true, true, true), strSortOrder => 'reverse',
+            bIgnoreMissing => true}))
         {
-            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST, {bIgnoreMissing => true});
-            $oStorageRepo->remove(STORAGE_REPO_BACKUP . "/${strBackup}/" . FILE_MANIFEST_COPY, {bIgnoreMissing => true});
+            $oStorageRepo->remove("${strBackupPath}/${strBackup}/" . FILE_MANIFEST, {bIgnoreMissing => true});
+            $oStorageRepo->remove("${strBackupPath}/${strBackup}/" . FILE_MANIFEST_COPY, {bIgnoreMissing => true});
         }
 
         # Recursively remove the stanza archive and backup directories
-        $oStorageRepo->remove(STORAGE_REPO_ARCHIVE, {bRecurse => true});
-        $oStorageRepo->remove(STORAGE_REPO_BACKUP, {bRecurse => true});
+        $oStorageRepo->remove("${strArchivePath}/", {bRecurse => true, bIgnoreMissing => true});
+        $oStorageRepo->remove("${strBackupPath}/", {bRecurse => true, bIgnoreMissing => true});
+    }
+    else
+    {
+        &log(INFO, "stanza ${strStanza} already deleted");
     }
 
     # Return from function and log return values if any
