@@ -43,6 +43,9 @@ use constant TESTDEF_EXPECT                                         => 'expect';
 # Is this a C test (instead of Perl)?
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
+# #defines for C testing
+use constant TESTDEF_CDEF                                           => 'cdef';
+    push @EXPORT, qw(TESTDEF_CDEF);
 # Determines if each run in a test will be run in a new container
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
     push @EXPORT, qw(TESTDEF_INDIVIDUAL);
@@ -98,6 +101,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'type',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_ERROR',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -108,6 +112,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'error',
                     &TESTDEF_TOTAL => 4,
                     &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_ERROR',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -119,6 +124,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'mem-context',
                     &TESTDEF_TOTAL => 6,
                     &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_MEM_CONTEXT',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -719,7 +725,7 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_C, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

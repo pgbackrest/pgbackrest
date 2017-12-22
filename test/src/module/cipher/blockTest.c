@@ -3,6 +3,8 @@ Test Block Cipher
 ***********************************************************************************************************************************/
 #include <openssl/evp.h>
 
+#include "cipher/cipher.h"
+
 /***********************************************************************************************************************************
 Data for testing
 ***********************************************************************************************************************************/
@@ -98,7 +100,7 @@ void testRun()
             cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(
-            cipherBlockProcessSize(blockEncrypt, encryptSize),
+            cipherBlockProcessSize(blockDecrypt, encryptSize),
             encryptSize + EVP_MAX_BLOCK_LENGTH, "check process size");
 
         decryptSize = cipherBlockProcess(blockDecrypt, encryptBuffer, encryptSize, decryptBuffer);
@@ -109,6 +111,8 @@ void testRun()
 
         decryptBuffer[decryptSize] = 0;
         TEST_RESULT_STR(decryptBuffer, (TEST_PLAINTEXT TEST_PLAINTEXT), "check final decrypt buffer");
+
+        cipherBlockFree(blockDecrypt);
 
         // Decrypt in small chunks to test buffering
         // -------------------------------------------------------------------------------------------------------------------------
@@ -148,6 +152,8 @@ void testRun()
         decryptBuffer[decryptSize] = 0;
         TEST_RESULT_STR(decryptBuffer, (TEST_PLAINTEXT TEST_PLAINTEXT), "check final decrypt buffer");
 
+        cipherBlockFree(blockDecrypt);
+
         // Encrypt zero byte file and decrypt it
         // -------------------------------------------------------------------------------------------------------------------------
         blockEncrypt = cipherBlockNew(cipherModeEncrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
@@ -155,10 +161,14 @@ void testRun()
         TEST_RESULT_INT(cipherBlockProcess(blockEncrypt, NULL, 0, encryptBuffer), 16, "process header");
         TEST_RESULT_INT(cipherBlockFlush(blockEncrypt, encryptBuffer + 16), 16, "flush remaining bytes");
 
+        cipherBlockFree(blockEncrypt);
+
         blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, encryptBuffer, 32, decryptBuffer), 0, "0 bytes processed");
         TEST_RESULT_INT(cipherBlockFlush(blockDecrypt, decryptBuffer), 0, "0 bytes on flush");
+
+        cipherBlockFree(blockDecrypt);
 
         // Invalid cipher header
         // -------------------------------------------------------------------------------------------------------------------------
@@ -167,6 +177,8 @@ void testRun()
         TEST_ERROR(
             cipherBlockProcess(
                 blockDecrypt, (unsigned char *)"1234567890123456", 16, decryptBuffer), CipherError, "cipher header invalid");
+
+        cipherBlockFree(blockDecrypt);
 
         // Invalid encrypted data cannot be flushed
         // -------------------------------------------------------------------------------------------------------------------------
@@ -181,12 +193,16 @@ void testRun()
 
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "unable to flush");
 
+        cipherBlockFree(blockDecrypt);
+
         // File with no header should not flush
         // -------------------------------------------------------------------------------------------------------------------------
         blockDecrypt = cipherBlockNew(cipherModeDecrypt, TEST_CIPHER, (unsigned char *)TEST_PASS, TEST_PASS_SIZE, NULL);
 
         TEST_RESULT_INT(cipherBlockProcess(blockDecrypt, NULL, 0, decryptBuffer), 0, "no header processed");
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "cipher header missing");
+
+        cipherBlockFree(blockDecrypt);
 
         // File with header only should error
         // -------------------------------------------------------------------------------------------------------------------------
@@ -196,5 +212,9 @@ void testRun()
             cipherBlockProcess(
                 blockDecrypt, (unsigned char *)(CIPHER_BLOCK_MAGIC "12345678"), 16, decryptBuffer), 0, "0 bytes processed");
         TEST_ERROR(cipherBlockFlush(blockDecrypt, decryptBuffer), CipherError, "unable to flush");
+
+        cipherBlockFree(blockDecrypt);
     }
+
+    cipherFree();
 }

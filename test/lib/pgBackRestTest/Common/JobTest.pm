@@ -186,7 +186,13 @@ sub run
 
         if ($self->{oTest}->{&TEST_C})
         {
-            $strCommand = 'docker exec -i -u ' . TEST_USER . " ${strImage} $self->{strGCovPath}/test";
+            $strCommand =
+                'docker exec -i -u ' . TEST_USER . " ${strImage}" .
+                " valgrind -q --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress --leak-check=full" .
+                " --leak-resolution=high" .
+                # ($self->{oTest}->{&TEST_VM} ne VM_U12 && $self->{oTest}->{&TEST_VM} ne VM_CO6 ?
+                #     ' --show-leak-kinds=all' : ' --show-reachable=yes') .
+                " $self->{strGCovPath}/test";
         }
         else
         {
@@ -298,12 +304,13 @@ sub run
                 $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
 
                 my $strGccCommand =
-                    'gcc -std=c99 -fPIC' .
+                    'gcc -std=c99 -fPIC -g' .
                     (vmCoverage($self->{oTest}->{&TEST_VM}) ? ' -fprofile-arcs -ftest-coverage -O0' : ' -O2') .
-                    ' -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings  -Wno-clobbered' .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic ' : '') .
-                    " -I/$self->{strBackRestBase}/src -I/$self->{strBackRestBase}/test/src test.c" .
-                    " /$self->{strBackRestBase}/test/src/common/harnessTest.c " .
+                    ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
+                    ' -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered' .
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') .
+                    " -I$self->{strBackRestBase}/src -I$self->{strBackRestBase}/test/src test.c" .
+                    " $self->{strBackRestBase}/test/src/common/harnessTest.c " .
                     join(' ', @stryCFile) . " -l crypto -o test";
 
                 executeTest(

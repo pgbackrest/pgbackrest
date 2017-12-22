@@ -31,21 +31,23 @@ void testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("memAllocInternal(), memReAllocInternal(), and memFreeInternal()"))
     {
-        TEST_ERROR(
-            memAllocInternal(-1, false), MemoryError,
-            sizeof(size_t) == 8 ? "unable to allocate 18446744073709551615 bytes" : "unable to allocate 4294967295 bytes");
+        // Test too large allocation -- only test this on 64-bit systems since 32-bit systems tend to work with any value that
+        // valgrind will accept
+        if (sizeof(size_t) == 8)
+        {
+            TEST_ERROR(memAllocInternal((size_t)5629499534213120, false), MemoryError, "unable to allocate 5629499534213120 bytes");
+            TEST_ERROR(memFreeInternal(NULL), MemoryError, "unable to free null pointer");
 
-        TEST_ERROR(memFreeInternal(NULL), MemoryError, "unable to free null pointer");
-
-        // Check that bad realloc is caught
-        void *buffer = memAllocInternal(sizeof(size_t), false);
-        TEST_ERROR(
-            memReAllocInternal(buffer, sizeof(size_t), -1, false), MemoryError,
-            sizeof(size_t) == 8 ? "unable to reallocate 18446744073709551615 bytes" : "unable to reallocate 4294967295 bytes");
-        memFreeInternal(buffer);
+            // Check that bad realloc is caught
+            void *buffer = memAllocInternal(sizeof(size_t), false);
+            TEST_ERROR(
+                memReAllocInternal(buffer, sizeof(size_t), (size_t)5629499534213120, false), MemoryError,
+                "unable to reallocate 5629499534213120 bytes");
+            memFreeInternal(buffer);
+        }
 
         // Normal memory allocation
-        buffer = memAllocInternal(sizeof(size_t), false);
+        void *buffer = memAllocInternal(sizeof(size_t), false);
         buffer = memReAllocInternal(buffer, sizeof(size_t), sizeof(size_t) * 2, false);
         memFreeInternal(buffer);
 
@@ -79,6 +81,7 @@ void testRun()
                 expectedTotal++;
 
         TEST_RESULT_INT(expectedTotal, sizeof(size_t), "all new bytes are 0");
+        memFreeInternal(buffer2);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -89,7 +92,7 @@ void testRun()
         TEST_RESULT_INT(memContextTop()->contextChildListSize, 0, "top context should init with zero children");
         TEST_RESULT_PTR(memContextTop()->contextChildList, NULL, "top context child list empty");
 
-        TEST_ERROR(memContextFree(memContextTop()), AssertError, "cannot free top context");
+        // TEST_ERROR(memContextFree(memContextTop()), AssertError, "cannot free top context");
 
         // Current context should equal top context
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "top context == current context");
@@ -115,7 +118,7 @@ void testRun()
             memContextNew("test-filler");
             TEST_RESULT_BOOL(
                 memContextTop()->contextChildList[contextIdx]->state == memContextStateActive, true, "new context is active");
-            TEST_RESULT_STR(memContextName(memContextTop()->contextChildList[contextIdx]), "test-filler", "new contest name");
+            TEST_RESULT_STR(memContextName(memContextTop()->contextChildList[contextIdx]), "test-filler", "new context name");
         }
 
         // This forces the child context array to grow
@@ -297,4 +300,6 @@ void testRun()
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
         TEST_RESULT_BOOL(memContext->state == memContextStateFree, true, "new mem context is not active");
     }
+
+    memContextFree(memContextTop());
 }

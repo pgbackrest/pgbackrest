@@ -5,7 +5,6 @@ Block Cipher
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 
 #include "common/errorType.h"
 #include "common/memContext.h"
@@ -42,24 +41,14 @@ struct CipherBlock
 };
 
 /***********************************************************************************************************************************
-Flag to indicate if OpenSSL has already been initialized
-***********************************************************************************************************************************/
-bool openSslInitDone = false;
-
-/***********************************************************************************************************************************
 New block encrypt/decrypt object
 ***********************************************************************************************************************************/
 CipherBlock *
 cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pass, int passSize, const char *digestName)
 {
-    // Only need to init once.  This memory could be freed, but ciphers are used for the life of the process so don't bother.
-    if (!openSslInitDone)
-    {
-        ERR_load_crypto_strings();
-        OpenSSL_add_all_algorithms();
-
-        openSslInitDone = true;
-    }
+    // Only need to init once.
+    if (!cipherIsInit())
+        cipherInit();
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
@@ -69,7 +58,7 @@ cipherBlockNew(CipherMode mode, const char *cipherName, const unsigned char *pas
         THROW(AssertError, "unable to load cipher '%s'", cipherName);
 
     // Lookup digest.  If not defined it will be set to sha1.
-    const EVP_MD *digest = digest = EVP_sha1();
+    const EVP_MD *digest = NULL;
 
     if (digestName)
         digest = EVP_get_digestbyname(digestName);
@@ -189,12 +178,12 @@ cipherBlockProcess(CipherBlock *this, const unsigned char *source, int sourceSiz
             EVP_BytesToKey(
                 this->cipher, this->digest, salt, (unsigned char *)this->pass, this->passSize, 1, key, initVector);
 
-            // Set free callback to ensure cipher context is freed
-            memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
-
             // Create context to track cipher
             if (!(this->cipherContext = EVP_CIPHER_CTX_new()))
                 THROW(MemoryError, "unable to create context");               // {uncoverable - no failure path known}
+
+            // Set free callback to ensure cipher context is freed
+            memContextCallback(this->memContext, (MemContextCallback)cipherBlockFree, this);
 
             // Initialize cipher
             if (EVP_CipherInit_ex(

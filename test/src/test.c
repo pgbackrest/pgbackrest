@@ -7,7 +7,15 @@ This wrapper runs the the C unit tests.
 #include <stdio.h>
 #include <string.h>
 
+#ifndef NO_ERROR
+    #include "common/error.h"
+#endif
+
 #include "common/harnessTest.h"
+
+#ifndef NO_MEM_CONTEXT
+    #include "common/memContext.h"
+#endif
 
 /***********************************************************************************************************************************
 C files to be tested
@@ -32,12 +40,29 @@ main(void)
     //      run, selected
     {[C_TEST_LIST]}
 
+#ifndef NO_ERROR
+    TRY_BEGIN()
+    {
+#endif
     // Run the tests
     testRun();
 
-    // End test run an make sure all tests ran
+    // End test run and make sure all tests completed
     testComplete();
 
     printf("\nTESTS COMPLETED SUCCESSFULLY\n");
-    fflush(stdout);
+#ifndef NO_ERROR
+    }
+    CATCH_ANY()
+    {
+        fprintf(stderr, "TEST FAILED WITH %s, \"%s\" at %s:%d\n", errorName(), errorMessage(), errorFileName(), errorFileLine());
+    }
+#ifndef NO_MEM_CONTEXT
+    FINALLY()
+    {
+        memContextFree(memContextTop());
+    }
+#endif
+    TRY_END();
+#endif
 }

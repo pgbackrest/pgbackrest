@@ -371,12 +371,8 @@ memContextFree(MemContext *this)
     if (this->state == memContextStateFreeing)
         return;
 
-    // Top context cannot be freed
-    if (this == memContextTop())
-        THROW(AssertError, "cannot free top context");
-
-    // Current context cannot be freed
-    if (this == memContextCurrent())
+    // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
+    if (this == memContextCurrent() && this != memContextTop())
         THROW(AssertError, "cannot free current context '%s'", this->name);
 
     // Error if context is not active
@@ -405,6 +401,7 @@ memContextFree(MemContext *this)
                 memFreeInternal(this->contextChildList[contextIdx]);
 
         memFreeInternal(this->contextChildList);
+        this->contextChildListSize = 0;
     }
 
     // Free memory allocations
@@ -415,8 +412,13 @@ memContextFree(MemContext *this)
                 memFreeInternal(this->allocList[allocIdx]);
 
         memFreeInternal(this->allocList);
+        this->allocListSize = 0;
     }
 
-    // Reset the memory context so it can be used again
-    memset(this, 0, sizeof(MemContext));
+    // Make top context active again
+    if (this == memContextTop())
+        this->state = memContextStateActive;
+    // Else reset the memory context so it can be reused
+    else
+        memset(this, 0, sizeof(MemContext));
 }

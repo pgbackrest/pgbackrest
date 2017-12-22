@@ -52,7 +52,7 @@ lstAdd(List *this, const void *item)
         else
         {
             this->listSizeMax *= 2;
-            this->list = memGrowRaw(this->list, this->listSize * this->itemSize);
+            this->list = memGrowRaw(this->list, this->listSizeMax * this->itemSize);
         }
     }
 
