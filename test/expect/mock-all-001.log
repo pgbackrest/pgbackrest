@@ -440,7 +440,7 @@ full backup - invalid cmd line (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --no-online --type=full --stanza=bogus backup
 ------------------------------------------------------------------------------------------------------------------------------------
 STDERR:
-ERROR [037]: : backup command requires option: db1-path
+ERROR [037]: backup command requires option: db1-path
 HINT: does this stanza exist?
 
 stop all stanzas (db-master host)

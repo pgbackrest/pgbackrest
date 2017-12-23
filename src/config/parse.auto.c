@@ -958,6 +958,15 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
     },
     {
+        .name = "perl-option",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPerlOption,
+    },
+    {
+        .name = "no-perl-option",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPerlOption,
+    },
+    {
         .name = "process",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptProcess,
@@ -1239,12 +1248,6 @@ static const struct option optionList[] =
         .name = "type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptType,
-    },
-    // Perl option is ignored by normal config parsing
-    {
-        .name = "perl-option",
-        .has_arg = required_argument,
-        .val = 0,
     },
     // Terminate option list
     {

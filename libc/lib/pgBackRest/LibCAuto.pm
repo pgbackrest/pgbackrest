@@ -159,6 +159,7 @@ sub libcAutoExportTag
             'CFGOPT_NEUTRAL_UMASK',
             'CFGOPT_ONLINE',
             'CFGOPT_OUTPUT',
+            'CFGOPT_PERL_OPTION',
             'CFGOPT_PROCESS',
             'CFGOPT_PROCESS_MAX',
             'CFGOPT_PROTOCOL_TIMEOUT',

@@ -18,10 +18,12 @@ ERROR_DECLARE(AssertError);
 
 ERROR_DECLARE(FormatError);
 ERROR_DECLARE(CommandRequiredError);
-ERROR_DECLARE(CommandInvalidError);
 ERROR_DECLARE(OptionInvalidError);
+ERROR_DECLARE(OptionInvalidValueError);
+ERROR_DECLARE(OptionRequiredError);
 ERROR_DECLARE(FileOpenError);
 ERROR_DECLARE(FileReadError);
+ERROR_DECLARE(CommandInvalidError);
 ERROR_DECLARE(FileWriteError);
 ERROR_DECLARE(MemoryError);
 ERROR_DECLARE(CipherError);

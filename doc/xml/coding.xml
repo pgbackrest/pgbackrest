@@ -192,7 +192,7 @@ if (condition)
                 <p>Marks code that is not tested for one reason or another.  This should be kept to a minimum and an excuse given for each instance.</p>
 
                 <code-block>
-exit(EXIT_FAILURE); // {uncoverable - test harness does not support non-zero exit}
+exit(EXIT_FAILURE); // {uncovered - test harness does not support non-zero exit}
                 </code-block>
 
                 <p>Subsequent code that is uncovered for the same reason is marked with `// {+uncovered}`.</p>

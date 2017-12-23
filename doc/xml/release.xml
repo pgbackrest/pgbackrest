@@ -42,6 +42,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Config parsing implemented in C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Add <code>Buffer</code>, <code>Ini</code>, <code>KeyValue</code>, <code>List</code>, <code>Storage</code>, <code>String</code>, <code>StringList</code>, <code>Variant</code>, and <code>VariantList</code> objects.</p>
                     </release-item>
 
@@ -63,10 +67,6 @@
 
                     <release-item>
                         <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>More config parsing in C in preparation for all config parsing in C.</p>
                     </release-item>
 
                     <release-item>

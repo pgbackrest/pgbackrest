@@ -18,7 +18,7 @@ int main(int argListSize, const char *argList[])
         configParse(argListSize, argList);
 
         // Display version
-        if (cfgCommand() == cfgCmdVersion)
+        if (!cfgCommandHelp() && cfgCommand() == cfgCmdVersion)
         {
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
             fflush(stdout);
@@ -26,11 +26,11 @@ int main(int argListSize, const char *argList[])
         }
 
         // Execute Perl for commands not implemented in C
-        perlExec(perlCommand(argListSize, argList));
+        perlExec(perlCommand());
     }
     CATCH_ANY()
     {
-        fprintf(stderr, "ERROR: [%03d]: %s\n", errorCode(), errorMessage());
+        fprintf(stderr, "ERROR [%03d]: %s\n", errorCode(), errorMessage());
         fflush(stderr);
         exit(errorCode());
     }

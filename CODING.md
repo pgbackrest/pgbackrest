@@ -138,6 +138,6 @@ Subsequent code that is uncoverable for the same reason is marked with `// {+unc
 
 Marks code that is not tested for one reason or another. This should be kept to a minimum and an excuse given for each instance.
 ```
-exit(EXIT_FAILURE); // {uncoverable - test harness does not support non-zero exit}
+exit(EXIT_FAILURE); // {uncovered - test harness does not support non-zero exit}
 ```
 Subsequent code that is uncovered for the same reason is marked with `// {+uncovered}`.

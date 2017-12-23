@@ -4,6 +4,7 @@ Command and Option Configuration
 #include <string.h>
 
 #include "common/error.h"
+#include "common/memContext.h"
 #include "config/config.h"
 
 /***********************************************************************************************************************************
@@ -53,11 +54,77 @@ Include the automatically generated configuration data
 #include "config.auto.c"
 
 /***********************************************************************************************************************************
+Store the config memory context
+***********************************************************************************************************************************/
+MemContext *configMemContext = NULL;
+
+/***********************************************************************************************************************************
 Store the current command
 
 This is generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire.
 ***********************************************************************************************************************************/
 ConfigCommand command = cfgCmdNone;
+
+/***********************************************************************************************************************************
+Store the location of the executable
+***********************************************************************************************************************************/
+String *exe = NULL;
+
+/***********************************************************************************************************************************
+Was help requested for the command?
+***********************************************************************************************************************************/
+bool help = false;
+
+/***********************************************************************************************************************************
+Store the list of parameters passed to the command
+***********************************************************************************************************************************/
+StringList *paramList = NULL;
+
+/***********************************************************************************************************************************
+Map options names and indexes to option definitions.
+***********************************************************************************************************************************/
+typedef struct ConfigOptionValue
+{
+    bool valid:1;
+    bool negate:1;
+    unsigned int source:2;
+
+    Variant *value;
+} ConfigOptionValue;
+
+ConfigOptionValue configOptionValue[CFG_OPTION_TOTAL];
+
+/***********************************************************************************************************************************
+Initialize or reinitialize the configuration data
+***********************************************************************************************************************************/
+void
+cfgInit()
+{
+    // Reset configuration
+    command = cfgCmdNone;
+    exe = NULL;
+    help = false;
+    paramList = NULL;
+    memset(&configOptionValue, 0, sizeof(configOptionValue));
+
+    // Free the old context
+    if (configMemContext != NULL)
+    {
+        memContextFree(configMemContext);
+        configMemContext = NULL;
+    }
+
+    // Allocate configuration context as a child of the top context
+    MEM_CONTEXT_BEGIN(memContextTop())
+    {
+        MEM_CONTEXT_NEW_BEGIN("configuration")
+        {
+            configMemContext = MEM_CONTEXT_NEW();
+        }
+        MEM_CONTEXT_NEW_END();
+    }
+    MEM_CONTEXT_END();
+}
 
 /***********************************************************************************************************************************
 Get the current command
@@ -88,6 +155,21 @@ cfgCommandCheck(ConfigCommand commandId)
 }
 
 /***********************************************************************************************************************************
+Was help requested?
+***********************************************************************************************************************************/
+bool
+cfgCommandHelp()
+{
+    return help;
+}
+
+void
+cfgCommandHelpSet(bool helpParam)
+{
+    help = helpParam;
+}
+
+/***********************************************************************************************************************************
 Get the define id for this command
 
 This can be done by just casting the id to the define id.  There may be a time when they are not one to one and this function can
@@ -108,11 +190,11 @@ cfgCommandId(const char *commandName)
 {
     ConfigCommand commandId;
 
-    for (commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
+    for (commandId = 0; commandId < cfgCmdNone; commandId++)
         if (strcmp(commandName, configCommandData[commandId].name) == 0)
             break;
 
-    if (commandId == CFG_COMMAND_TOTAL)
+    if (commandId == cfgCmdNone)
         THROW(AssertError, "invalid command '%s'", commandName);
 
     return commandId;
@@ -126,6 +208,54 @@ cfgCommandName(ConfigCommand commandId)
 {
     cfgCommandCheck(commandId);
     return configCommandData[commandId].name;
+}
+
+/***********************************************************************************************************************************
+Command parameters, if any
+***********************************************************************************************************************************/
+const StringList *
+cfgCommandParam()
+{
+    if (paramList == NULL)
+    {
+        MEM_CONTEXT_BEGIN(configMemContext)
+        {
+            paramList = strLstNew();
+        }
+        MEM_CONTEXT_END();
+    }
+
+    return paramList;
+}
+
+void
+cfgCommandParamSet(const StringList *param)
+{
+    MEM_CONTEXT_BEGIN(configMemContext)
+    {
+        paramList = strLstDup(param);
+    }
+    MEM_CONTEXT_END();
+
+}
+
+/***********************************************************************************************************************************
+Command parameters, if any
+***********************************************************************************************************************************/
+const String *
+cfgExe()
+{
+    return exe;
+}
+
+void
+cfgExeSet(const String *exeParam)
+{
+    MEM_CONTEXT_BEGIN(configMemContext)
+    {
+        exe = strDup(exeParam);
+    }
+    MEM_CONTEXT_END();
 }
 
 /***********************************************************************************************************************************
@@ -210,4 +340,225 @@ cfgOptionName(ConfigOption optionId)
 {
     cfgOptionCheck(optionId);
     return configOptionData[optionId].name;
+}
+
+/***********************************************************************************************************************************
+Was the option negated?
+***********************************************************************************************************************************/
+bool
+cfgOptionNegate(ConfigOption optionId)
+{
+    cfgOptionCheck(optionId);
+    return configOptionValue[optionId].negate;
+}
+
+void
+cfgOptionNegateSet(ConfigOption optionId, bool negate)
+{
+    cfgOptionCheck(optionId);
+
+    configOptionValue[optionId].negate = negate;
+}
+
+/***********************************************************************************************************************************
+Get and set config options
+***********************************************************************************************************************************/
+const Variant *
+cfgOption(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+    return configOptionValue[optionId].value;
+}
+
+bool
+cfgOptionBool(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (varType(configOptionValue[optionId].value) != varTypeBool)
+        THROW(AssertError, "option '%s' is not type 'bool'", cfgOptionName(optionId));
+
+    return varBool(configOptionValue[optionId].value);
+}
+
+double
+cfgOptionDbl(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (varType(configOptionValue[optionId].value) != varTypeDouble)
+        THROW(AssertError, "option '%s' is not type 'double'", cfgOptionName(optionId));
+
+    return varDbl(configOptionValue[optionId].value);
+}
+
+int
+cfgOptionInt(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (varType(configOptionValue[optionId].value) != varTypeInt)
+        THROW(AssertError, "option '%s' is not type 'int'", cfgOptionName(optionId));
+
+    return varInt(configOptionValue[optionId].value);
+}
+
+const KeyValue *
+cfgOptionKv(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (varType(configOptionValue[optionId].value) != varTypeKeyValue)
+        THROW(AssertError, "option '%s' is not type 'KeyValue'", cfgOptionName(optionId));
+
+    return varKv(configOptionValue[optionId].value);
+}
+
+const VariantList *
+cfgOptionLst(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (configOptionValue[optionId].value == NULL)
+    {
+        MEM_CONTEXT_BEGIN(configMemContext)
+        {
+            configOptionValue[optionId].value = varNewVarLst(varLstNew());
+        }
+        MEM_CONTEXT_END();
+    }
+    else if (varType(configOptionValue[optionId].value) != varTypeVariantList)
+        THROW(AssertError, "option '%s' is not type 'VariantList'", cfgOptionName(optionId));
+
+    return varVarLst(configOptionValue[optionId].value);
+}
+
+const String *
+cfgOptionStr(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    const String *result = NULL;
+
+    if (configOptionValue[optionId].value != NULL)
+    {
+        if (varType(configOptionValue[optionId].value) != varTypeString)
+            THROW(AssertError, "option '%s' is not type 'String'", cfgOptionName(optionId));
+
+        result = varStr(configOptionValue[optionId].value);
+    }
+
+    return result;
+}
+
+void
+cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
+{
+    cfgOptionCheck(optionId);
+
+    MEM_CONTEXT_BEGIN(configMemContext)
+    {
+        // Set the source
+        configOptionValue[optionId].source = source;
+
+        // Store old value
+        Variant *valueOld = configOptionValue[optionId].value;
+
+        // Only set value if it is not null
+        if (value != NULL)
+        {
+            switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
+            {
+                case cfgDefOptTypeBoolean:
+                {
+                    if (varType(value) == varTypeBool)
+                        configOptionValue[optionId].value = varDup(value);
+                    else
+                        configOptionValue[optionId].value = varNewBool(varBoolForce(value));
+
+                    break;
+                }
+
+                case cfgDefOptTypeFloat:
+                {
+                    if (varType(value) == varTypeDouble)
+                        configOptionValue[optionId].value = varDup(value);
+                    else
+                        configOptionValue[optionId].value = varNewDbl(varDblForce(value));
+
+                    break;
+                }
+
+                case cfgDefOptTypeInteger:
+                {
+                    if (varType(value) == varTypeInt)
+                        configOptionValue[optionId].value = varDup(value);
+                    else
+                        configOptionValue[optionId].value = varNewInt(varIntForce(value));
+
+                    break;
+                }
+
+                case cfgDefOptTypeHash:
+                {
+                    if (varType(value) == varTypeKeyValue)
+                        configOptionValue[optionId].value = varDup(value);
+                    else
+                        THROW(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionName(optionId));
+
+                    break;
+                }
+
+                case cfgDefOptTypeList:
+                {
+                    if (varType(value) == varTypeVariantList)
+                        configOptionValue[optionId].value = varDup(value);
+                    else
+                        THROW(AssertError, "option '%s' must be set with VariantList variant", cfgOptionName(optionId));
+
+                    break;
+                }
+
+                case cfgDefOptTypeString:
+                    if (varType(value) == varTypeString)
+                        configOptionValue[optionId].value = varDup(value);
+                    else
+                        THROW(AssertError, "option '%s' must be set with String variant", cfgOptionName(optionId));
+
+                    break;
+            }
+        }
+
+        // Free old value
+        if (valueOld != NULL)
+            varFree(valueOld);
+    }
+    MEM_CONTEXT_END();
+}
+
+/***********************************************************************************************************************************
+How was the option set (default, param, config)?
+***********************************************************************************************************************************/
+ConfigSource
+cfgOptionSource(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+    return configOptionValue[optionId].source;
+}
+
+/***********************************************************************************************************************************
+Is the option valid for this command?
+***********************************************************************************************************************************/
+bool
+cfgOptionValid(ConfigOption optionId)
+{
+    cfgOptionCheck(optionId);
+    return configOptionValue[optionId].valid;
+}
+
+void
+cfgOptionValidSet(ConfigOption optionId, bool valid)
+{
+    cfgOptionCheck(optionId);
+    configOptionValue[optionId].valid = valid;
 }

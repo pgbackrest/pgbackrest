@@ -9,7 +9,7 @@ Execute Perl for Legacy Functionality
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StringList *perlCommand(int argListSize, const char *argList[]);
+StringList *perlCommand();
 void perlExec(StringList *perlArgList);
 
 #endif

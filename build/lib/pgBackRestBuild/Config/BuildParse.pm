@@ -108,15 +108,6 @@ sub buildConfigParse
         }
     }
 
-    # Perl options passed to the C binary should be ignored (unless calling Perl which is done elsewhere)
-    $strBuildSource .=
-        "    // Perl option is ignored by normal config parsing\n" .
-        "    {\n" .
-        "        .name = \"perl-option\",\n" .
-        "        .has_arg = required_argument,\n" .
-        "        .val = 0,\n" .
-        "    },\n";
-
     # The option list needs to be terminated or getopt_long will just keep on reading
     $strBuildSource .=
         "    // Terminate option list\n" .

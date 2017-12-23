@@ -182,6 +182,10 @@ use constant CFGOPT_LOG_PATH                                        => 'log-path
 use constant CFGOPT_SPOOL_PATH                                      => 'spool-path';
     push @EXPORT, qw(CFGOPT_SPOOL_PATH);
 
+# Perl
+use constant CFGOPT_PERL_OPTION                                     => 'perl-option';
+    push @EXPORT, qw(CFGOPT_PERL_OPTION);
+
 # Repository
 use constant CFGOPT_REPO_PATH                                       => 'repo-path';
     push @EXPORT, qw(CFGOPT_REPO_PATH);
@@ -1032,6 +1036,30 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => '/var/log/' . BACKREST_EXE,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_PERL_OPTION =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_LIST,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
