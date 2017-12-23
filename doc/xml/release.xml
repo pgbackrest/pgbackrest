@@ -76,6 +76,10 @@
                     <release-item>
                         <p>Improve <code>MemContext</code> module.  Add temporary context blocks and refactor allocation arrays to include allocation size.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <code>Buffer</code> object.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

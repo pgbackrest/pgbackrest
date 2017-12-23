@@ -1,32 +1,22 @@
 /***********************************************************************************************************************************
-String Handler
+Buffer Handler
 ***********************************************************************************************************************************/
-#ifndef COMMON_TYPE_STRING_H
-#define COMMON_TYPE_STRING_H
+#ifndef COMMON_TYPE_BUFFER_H
+#define COMMON_TYPE_BUFFER_H
 
 /***********************************************************************************************************************************
-String object
+Buffer object
 ***********************************************************************************************************************************/
-typedef struct String String;
+typedef struct Buffer Buffer;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-#include "common/type/buffer.h"
-
-String *strNew(const char *string);
-String *strNewBuf(const Buffer *buffer);
-String *strNewFmt(const char *format, ...);
-String *strNewSzN(const char *string, size_t size);
-
-String *strCat(String *this, const char *cat);
-String *strCatFmt(String *this, const char *format, ...);
-String *strDup(const String *this);
-bool strEq(const String *this1, const String *this2);
-const char *strPtr(const String *this);
-size_t strSize(const String *this);
-String *strTrim(String *this);
-
-void strFree(String *this);
+Buffer *bufNew(size_t size);
+Buffer *bufNewStr(const String *string);
+Buffer *bufResize(Buffer *this, size_t size);
+size_t bufSize(const Buffer *this);
+unsigned char *bufPtr(const Buffer *this);
+void bufFree(Buffer *this);
 
 #endif

@@ -38,6 +38,29 @@ strNew(const char *string)
 }
 
 /***********************************************************************************************************************************
+Create a new string from a buffer
+
+If the buffer has a NULL character this may not work as expected.  All the data will be copied but only the data before the NULL
+character will be used as a string.
+***********************************************************************************************************************************/
+String *
+strNewBuf(const Buffer *buffer)
+{
+    // Create object
+    String *this = memNew(sizeof(String));
+    this->memContext = memContextCurrent();
+    this->size = bufSize(buffer);
+
+    // Allocate and assign string
+    this->buffer = memNewRaw(this->size + 1);
+    memcpy(this->buffer, (char *)bufPtr(buffer), this->size);
+    this->buffer[this->size] = 0;
+
+    // Return buffer
+    return this;
+}
+
+/***********************************************************************************************************************************
 Create a new string from a format string with parameters (i.e. sprintf)
 ***********************************************************************************************************************************/
 String *
