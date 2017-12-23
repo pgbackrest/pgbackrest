@@ -24,21 +24,21 @@ void testRun()
         cmdLineParam[cmdLineParamSize++] = "backup";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "', 'backup')|[NULL]", "simple command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cmdLineParam[cmdLineParamSize++] = "--compress";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "', '--compress', 'backup')|[NULL]", "simple option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cmdLineParam[cmdLineParamSize++] = "--db-host=db1";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "', '--compress', '--db1-host', 'db1', 'backup')|[NULL]",
             "option with = before value");
 
@@ -47,7 +47,7 @@ void testRun()
         cmdLineParam[cmdLineParamSize++] = "postgres";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN
                 "', '--compress', '--db1-host', 'db1', '--db1-user', 'postgres', 'backup')|[NULL]",
             "option with space before value");
@@ -56,7 +56,7 @@ void testRun()
         cmdLineParam[cmdLineParamSize++] = "--perl-option=-I.";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|-I.|" TEST_PERL_MAIN
                 " --perl-option=\"-I.\"', '--compress', '--db1-host', 'db1', '--db1-user', 'postgres', 'backup')|[NULL]",
             "perl option");
@@ -65,7 +65,7 @@ void testRun()
         cmdLineParam[cmdLineParamSize++] = "--no-online";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|-I.|" TEST_PERL_MAIN
                 " --perl-option=\"-I.\"', '--compress', '--db1-host', 'db1', '--db1-user', 'postgres', '--no-online',"
                 " 'backup')|[NULL]",
@@ -75,7 +75,7 @@ void testRun()
         cmdLineParam[cmdLineParamSize++] = "cmdarg1";
 
         TEST_RESULT_STR(
-            strPtr(strLstCat(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
+            strPtr(strLstJoin(perlCommand(cmdLineParamSize, cmdLineParam), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|-I.|" TEST_PERL_MAIN
                 " --perl-option=\"-I.\"', '--compress', '--db1-host', 'db1', '--db1-user', 'postgres', '--no-online', 'backup',"
                 " 'cmdarg1')|[NULL]",

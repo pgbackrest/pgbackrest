@@ -13,18 +13,20 @@ Contains information about the string
 ***********************************************************************************************************************************/
 struct String
 {
+    MemContext *memContext;
     size_t size;
     char *buffer;
 };
 
 /***********************************************************************************************************************************
-Create a new string from another string
+Create a new string from a zero-terminated string
 ***********************************************************************************************************************************/
 String *
 strNew(const char *string)
 {
     // Create object
     String *this = memNew(sizeof(String));
+    this->memContext = memContextCurrent();
     this->size = strlen(string);
 
     // Allocate and assign string
@@ -43,6 +45,7 @@ strNewFmt(const char *format, ...)
 {
     // Create object
     String *this = memNew(sizeof(String));
+    this->memContext = memContextCurrent();
 
     // Determine how long the allocated string needs to be
     va_list argumentList;
@@ -61,6 +64,28 @@ strNewFmt(const char *format, ...)
 }
 
 /***********************************************************************************************************************************
+Create a new string from a string with a specific length
+
+The string may or may not be zero-terminated but we'll use that nomeclature since we're not concerned about the end of the string.
+***********************************************************************************************************************************/
+String *
+strNewSzN(const char *string, size_t size)
+{
+    // Create object
+    String *this = memNew(sizeof(String));
+    this->memContext = memContextCurrent();
+    this->size = size;
+
+    // Allocate and assign string
+    this->buffer = memNewRaw(this->size + 1);
+    strncpy(this->buffer, string, this->size);
+    this->buffer[this->size] = 0;
+
+    // Return buffer
+    return this;
+}
+
+/***********************************************************************************************************************************
 Append a string
 ***********************************************************************************************************************************/
 String *
@@ -70,9 +95,13 @@ strCat(String *this, const char *cat)
     int sizeGrow = strlen(cat);
 
     // Allocate and append string
-    this->buffer = memGrowRaw(this->buffer, this->size + sizeGrow + 1);
-    strcpy(this->buffer + this->size, cat);
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->buffer = memGrowRaw(this->buffer, this->size + sizeGrow + 1);
+    }
+    MEM_CONTEXT_END();
 
+    strcpy(this->buffer + this->size, cat);
     this->size += sizeGrow;
 
     return this;
@@ -91,7 +120,11 @@ strCatFmt(String *this, const char *format, ...)
     va_end(argumentList);
 
     // Allocate and append string
-    this->buffer = memGrowRaw(this->buffer, this->size + sizeGrow + 1);
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->buffer = memGrowRaw(this->buffer, this->size + sizeGrow + 1);
+    }
+    MEM_CONTEXT_END();
 
     va_start(argumentList, format);
     vsnprintf(this->buffer + this->size, sizeGrow + 1, format, argumentList);
@@ -101,6 +134,34 @@ strCatFmt(String *this, const char *format, ...)
 
     // Return buffer
     return this;
+}
+
+/***********************************************************************************************************************************
+Duplicate a string from an existing string
+***********************************************************************************************************************************/
+String *
+strDup(const String *this)
+{
+    String *result = NULL;
+
+    if (this != NULL)
+        result = strNew(strPtr(this));
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Are two strings equal?
+***********************************************************************************************************************************/
+bool
+strEq(const String *this1, const String *this2)
+{
+    bool result = false;
+
+    if (this1->size == this2->size)
+        result = strcmp(strPtr(this1), strPtr(this2)) == 0;
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -122,11 +183,63 @@ strSize(const String *this)
 }
 
 /***********************************************************************************************************************************
+Return string size
+***********************************************************************************************************************************/
+String *
+strTrim(String *this)
+{
+    // Nothing to trim if size is zero
+    if (this->size > 0)
+    {
+        // Find the beginning of the string skipping all whitespace
+        char *begin = this->buffer;
+
+        while (*begin != 0 && (*begin == ' ' || *begin == '\t' || *begin == '\r' || *begin == '\n'))
+            begin++;
+
+        // Find the end of the string skipping all whitespace
+        char *end = this->buffer + (this->size - 1);
+
+        while (end > begin && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n'))
+            end--;
+
+        // Is there anything to trim?
+        size_t newSize = (size_t)(end - begin + 1);
+
+        if (begin != this->buffer || newSize < strSize(this))
+        {
+            // Calculate new size
+            this->size = newSize;
+
+            // Move the substr to the beginning of the buffer
+            memmove(this->buffer, begin, this->size);
+            this->buffer[this->size] = 0;
+
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                // Resize the buffer
+                this->buffer = memGrowRaw(this->buffer, this->size + 1);
+            }
+            MEM_CONTEXT_END();
+        }
+    }
+
+    return this;
+}
+
+/***********************************************************************************************************************************
 Free the string
 ***********************************************************************************************************************************/
 void
 strFree(String *this)
 {
-    memFree(this->buffer);
-    memFree(this);
+    if (this != NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            memFree(this->buffer);
+            memFree(this);
+        }
+        MEM_CONTEXT_END();
+    }
 }

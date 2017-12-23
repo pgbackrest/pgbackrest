@@ -39,7 +39,7 @@ void testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNew("--perl-option=value"));
         TEST_ASSIGN(parseData, configParseArg(strLstSize(argList), strLstPtr(argList)), "perl option");
-        TEST_RESULT_STR(strPtr(strLstCat(parseData->perlOptionList, ",")), "value", "check perl option");
+        TEST_RESULT_STR(strPtr(strLstJoin(parseData->perlOptionList, ",")), "value", "check perl option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAdd(argList, strNewFmt("--%s", cfgOptionName(cfgOptDelta)));
@@ -108,7 +108,7 @@ void testRun()
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
         TEST_ASSIGN(parseData, configParseArg(strLstSize(argList), strLstPtr(argList)), "command arguments");
         TEST_RESULT_STR(
-            strPtr(strLstCat(parseData->commandArgList, "|")), "000000010000000200000003|/path/to/wal/RECOVERYWAL",
+            strPtr(strLstJoin(parseData->commandArgList, "|")), "000000010000000200000003|/path/to/wal/RECOVERYWAL",
             "    check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ void testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ASSIGN(parseData, configParseArg(strLstSize(argList), strLstPtr(argList)), "single valid option");
         TEST_RESULT_STR(
-            strPtr(strLstCat(parseData->parseOptionList[cfgOptDbHost].valueList, "|")), "db1.test.org", "    check db-host option");
+            strPtr(strLstJoin(parseData->parseOptionList[cfgOptDbHost].valueList, "|")), "db1.test.org", "    check db-host option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -128,7 +128,7 @@ void testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ASSIGN(parseData, configParseArg(strLstSize(argList), strLstPtr(argList)), "multiple valid options");
         TEST_RESULT_STR(
-            strPtr(strLstCat(parseData->parseOptionList[cfgOptLinkMap].valueList, "|")), "ts1=/path/to/ts1|ts2=/path/to/ts2",
+            strPtr(strLstJoin(parseData->parseOptionList[cfgOptLinkMap].valueList, "|")), "ts1=/path/to/ts1|ts2=/path/to/ts2",
             "    check link-map options");
     }
 

@@ -133,23 +133,32 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'type-list',
-                    &TESTDEF_TOTAL => 3,
-                    &TESTDEF_C => true,
-
-                    &TESTDEF_COVERAGE =>
-                    {
-                        'common/type/list' => TESTDEF_COVERAGE_FULL,
-                        'common/type/stringList' => TESTDEF_COVERAGE_FULL,
-                    },
-                },
-                {
-                    &TESTDEF_NAME => 'type-string',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
                     {
+                        'common/type/list' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'type-string',
+                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
                         'common/type/string' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'type-string-list',
+                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/stringList' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {
