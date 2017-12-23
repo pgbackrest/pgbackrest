@@ -54,6 +54,22 @@ strLstNewSplit(const String *string, const String *delimiter)
 }
 
 /***********************************************************************************************************************************
+New string list from a variant list -- all variants in the list must be type string
+***********************************************************************************************************************************/
+StringList *
+strLstNewVarLst(const VariantList *sourceList)
+{
+    // Create the list
+    StringList *this = strLstNew();
+
+    // Copy variants
+    for (unsigned int listIdx = 0; listIdx < varLstSize(sourceList); listIdx++)
+        strLstAdd(this, varStr(varLstGet(sourceList, listIdx)));
+
+    return this;
+}
+
+/***********************************************************************************************************************************
 Duplicate a string list
 ***********************************************************************************************************************************/
 StringList *

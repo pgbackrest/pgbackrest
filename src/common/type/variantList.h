@@ -1,32 +1,25 @@
 /***********************************************************************************************************************************
-String List Handler
+Variant List Handler
 ***********************************************************************************************************************************/
-#ifndef COMMON_TYPE_STRING_LIST_H
-#define COMMON_TYPE_STRING_LIST_H
-
-#include "common/type/string.h"
+#ifndef COMMON_TYPE_VARIANT_LIST_H
+#define COMMON_TYPE_VARIANT_LIST_H
 
 /***********************************************************************************************************************************
-String list type
+Variant list type
 ***********************************************************************************************************************************/
-typedef struct StringList StringList;
+typedef struct VariantList VariantList;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-#include "common/type/variantList.h"
+#include "common/type/variant.h"
 
-StringList *strLstNew();
-StringList *strLstNewSplit(const String *string, const String *delimiter);
-StringList *strLstNewVarLst(const VariantList *sourceList);
-StringList *strLstDup(const StringList *sourceList);
-
-StringList *strLstAdd(StringList *this, String *string);
-StringList *strLstAddZ(StringList *this, const char *string);
-String *strLstGet(const StringList *this, unsigned int listIdx);
-String *strLstJoin(const StringList *this, const char *separator);
-const char **strLstPtr(const StringList *this);
-unsigned int strLstSize(const StringList *this);
-void strLstFree(StringList *this);
+VariantList *varLstNew();
+VariantList *varLstNewStrLst(const StringList *stringList);
+VariantList *varLstDup(const VariantList *source);
+VariantList *varLstAdd(VariantList *this, Variant *data);
+Variant *varLstGet(const VariantList *this, unsigned int listIdx);
+unsigned int varLstSize(const VariantList *this);
+void varLstFree(VariantList *this);
 
 #endif

@@ -153,7 +153,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'type-string-list',
-                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_TOTAL => 5,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
@@ -169,6 +169,26 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'common/type/buffer' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'type-variant',
+                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/variant' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'type-variant-list',
+                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/variantList' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {

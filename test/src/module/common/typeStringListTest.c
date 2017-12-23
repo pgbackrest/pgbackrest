@@ -74,6 +74,19 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strLstNewVarLst()"))
+    {
+        VariantList *varList = varLstNew();
+
+        varLstAdd(varList, varNewStr(strNew("string1")));
+        varLstAdd(varList, varNewStr(strNew("string2")));
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewVarLst(varList), ", ")), "string1, string2", "string list from variant list");
+
+        varLstFree(varList);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strLstJoin()"))
     {
         StringList *list = strLstNew();
