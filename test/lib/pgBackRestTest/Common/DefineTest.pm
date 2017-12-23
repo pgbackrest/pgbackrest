@@ -504,6 +504,16 @@ my $oTestDef =
                         'Storage/Helper' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
+                {
+                    &TESTDEF_NAME => 'storage',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'storage/storage' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
             ]
         },
         # Protocol tests

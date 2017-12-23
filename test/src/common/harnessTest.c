@@ -20,6 +20,23 @@ static TestData testList[TEST_LIST_SIZE];
 static int testRun = 0;
 static int testTotal = 0;
 
+static const char *testPathData = NULL;
+
+/***********************************************************************************************************************************
+Get and set the test path, i.e., the path where this test should write its files
+***********************************************************************************************************************************/
+const char *
+testPath()
+{
+    return testPathData;
+}
+
+void
+testPathSet(const char *testPathParam)
+{
+    testPathData = testPathParam;
+}
+
 /***********************************************************************************************************************************
 testAdd - add a new test
 ***********************************************************************************************************************************/

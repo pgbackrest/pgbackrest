@@ -32,8 +32,11 @@ ERROR_DEFINE(ERROR_CODE_MIN, AssertError, RuntimeError);
 
 ERROR_DEFINE(ERROR_CODE_MIN + 04, FormatError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 05, CommandRequiredError, FormatError);
+ERROR_DEFINE(ERROR_CODE_MIN + 16, FileOpenError, RuntimeError);
+ERROR_DEFINE(ERROR_CODE_MIN + 17, FileReadError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 23, CommandInvalidError, FormatError);
 ERROR_DEFINE(ERROR_CODE_MIN + 31, OptionInvalidError, FormatError);
+ERROR_DEFINE(ERROR_CODE_MIN + 39, FileWriteError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 69, MemoryError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 70, CipherError, FormatError);
 

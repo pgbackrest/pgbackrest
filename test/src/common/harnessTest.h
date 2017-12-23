@@ -12,6 +12,9 @@ void testAdd(int run, bool selected);
 bool testBegin(const char *name);
 void testComplete();
 
+const char *testPath();
+void testPathSet(const char *testPathParam);
+
 /***********************************************************************************************************************************
 Maximum size of a formatted result in the TEST_RESULT macro.  Strings don't count as they are output directly, so this only applies
 to the formatting of bools, ints, floats, etc.  This should be plenty of room for any of those types.
@@ -142,7 +145,7 @@ parameters.
                                                                                                                                    \
         /* Throw error */                                                                                                          \
         THROW(                                                                                                                     \
-            AssertError, "statement '%s' result is '%s' but '%s' expected",                                                        \
+            AssertError, "\n\nSTATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s\n\n",                                           \
             #statement, TEST_RESULT_resultStr, TEST_RESULT_resultExpectedStr);                                                     \
     }                                                                                                                              \
 }

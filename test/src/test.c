@@ -36,6 +36,9 @@ main - run the tests
 int
 main(void)
 {
+    // Set globals
+    testPathSet("{[C_TEST_PATH]}");
+
     // Initialize tests
     //      run, selected
     {[C_TEST_LIST]}

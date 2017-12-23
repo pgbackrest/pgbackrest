@@ -280,6 +280,9 @@ sub run
                 $strTestC =~ s/\{\[C\_INCLUDE\]\}/$strCInclude/g;
                 $strTestC =~ s/\{\[C\_TEST\_INCLUDE\]\}/\#include \"$strTestFile\"/g;
 
+                # Set globals
+                $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strVmTestPath/g;
+
                 # Initialize tests
                 my $strTestInit;
 
