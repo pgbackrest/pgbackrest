@@ -27,6 +27,7 @@ typedef struct Variant Variant;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+#include "common/type/keyValue.h"
 #include "common/type/string.h"
 #include "common/type/variantList.h"
 
@@ -41,6 +42,9 @@ double varDblForce(const Variant *this);
 Variant *varNewInt(int data);
 int varInt(const Variant *this);
 int varIntForce(const Variant *this);
+
+Variant *varNewKv();
+KeyValue *varKv(const Variant *this);
 
 Variant *varNewStr(const String *data);
 Variant *varNewStrZ(const char *data);

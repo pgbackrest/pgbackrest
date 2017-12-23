@@ -15,6 +15,11 @@ Include NULL
 #include <stdio.h>
 
 /***********************************************************************************************************************************
+Include limits for data types
+***********************************************************************************************************************************/
+#include <limits.h>
+
+/***********************************************************************************************************************************
 Define standard integer types for portability
 ***********************************************************************************************************************************/
 #include <stdint.h>
@@ -35,5 +40,7 @@ Include all header files in type directory for convenience
 #include "common/type/list.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
+#include "common/type/variant.h"
+#include "common/type/variantList.h"
 
 #endif

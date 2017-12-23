@@ -173,7 +173,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'type-variant',
-                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_TOTAL => 6,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
@@ -189,6 +189,16 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'common/type/variantList' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'type-key-value',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/type/keyValue' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {

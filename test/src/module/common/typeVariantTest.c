@@ -107,6 +107,31 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("keyValue"))
+    {
+        TEST_ERROR(varKv(varNewInt(66)), AssertError, "variant type is not 'KeyValue'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        Variant *keyValue = NULL;
+
+        TEST_ASSIGN(keyValue, varNewKv(), "new");
+        TEST_RESULT_PTR(kvPut(varKv(keyValue), varNewInt(44), varNewInt(55)), varKv(keyValue), "    put int/int");
+        TEST_RESULT_INT(varInt(kvGet(varKv(keyValue), varNewInt(44))), 55, "    get int/int");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        Variant *keyValueDup = NULL;
+
+        TEST_ASSIGN(keyValueDup, varDup(keyValue), "duplicate");
+        TEST_RESULT_INT(varInt(kvGet(varKv(keyValueDup), varNewInt(44))), 55, "    get int/int");
+
+        varFree(keyValue);
+        varFree(keyValueDup);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_ERROR(varEq(varNewKv(), varNewKv()), AssertError, "unable to test equality for KeyValue");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("String"))
     {
         TEST_ERROR(varNewStr(NULL), AssertError, "string variant cannot be NULL");

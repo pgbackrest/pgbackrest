@@ -42,11 +42,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>String</code> object to simplify string handling.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Add <code>List</code> and <code>StringList</code> objects to simplify list handling.</p>
+                        <p>Add <code>Buffer</code>, <code>KeyValue</code>, <code>List</code>, <code>String</code>, <code>StringList</code>, <code>Variant</code>, and <code>VariantList</code> objects.</p>
                     </release-item>
 
                     <release-item>
@@ -62,6 +58,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve <code>MemContext</code> module.  Add temporary context blocks and refactor allocation arrays to include allocation size.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
                     </release-item>
 
@@ -71,18 +71,6 @@
 
                     <release-item>
                         <p>Refactor code to make valgrind happy.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Improve <code>MemContext</code> module.  Add temporary context blocks and refactor allocation arrays to include allocation size.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Add <code>Buffer</code> object.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Add <code>Variant</code> and <code>VariantList</code> objects.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

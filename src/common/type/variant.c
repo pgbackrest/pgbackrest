@@ -88,6 +88,13 @@ varDup(const Variant *this)
                 break;
             }
 
+            case varTypeKeyValue:
+            {
+                KeyValue *data = kvDup(varKv(this));
+                result = varNewInternal(varTypeKeyValue, (void *)&data, sizeof(data));
+                break;
+            }
+
             case varTypeString:
             {
                 result = varNewStr(varStr(this));
@@ -337,6 +344,38 @@ varInt(const Variant *this)
 }
 
 /***********************************************************************************************************************************
+New key/value variant
+***********************************************************************************************************************************/
+Variant *
+varNewKv()
+{
+    // Create the variant
+    KeyValue *data = kvNew();
+    return varNewInternal(varTypeKeyValue, (void *)&data, sizeof(data));
+}
+
+/***********************************************************************************************************************************
+Return key/value
+***********************************************************************************************************************************/
+KeyValue *
+varKv(const Variant *this)
+{
+    KeyValue *result = NULL;
+
+    if (this != NULL)
+    {
+        // Only valid for key/value
+        if (this->type != varTypeKeyValue)
+            THROW(AssertError, "variant type is not 'KeyValue'");
+
+        // Get the string
+        result = *((KeyValue **)varData(this));
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Return int regardless of variant type
 ***********************************************************************************************************************************/
 int
@@ -481,6 +520,12 @@ varFree(Variant *this)
         {
             switch (this->type)
             {
+                case varTypeKeyValue:
+                {
+                    kvFree(varKv(this));
+                    break;
+                }
+
                 case varTypeString:
                 {
                     strFree(varStr(this));
