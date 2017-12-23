@@ -227,6 +227,16 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'ini',
+                    &TESTDEF_TOTAL => 3,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/ini' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'ini-perl',
                     &TESTDEF_TOTAL => 10,
 
                     &TESTDEF_COVERAGE =>

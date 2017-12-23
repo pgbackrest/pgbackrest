@@ -5,6 +5,7 @@ DESTDIR=
 pgbackrest: \
 		common/error.o \
 		common/errorType.o \
+		common/ini.o \
 		common/memContext.o \
 		common/type/buffer.o \
 		common/type/keyValue.o \
@@ -22,6 +23,7 @@ pgbackrest: \
 	$(CC) $(CFLAGS) -o pgbackrest \
 		common/error.o \
 		common/errorType.o \
+		common/ini.o \
 		common/memContext.o \
 		common/type/buffer.o \
 		common/type/keyValue.o \

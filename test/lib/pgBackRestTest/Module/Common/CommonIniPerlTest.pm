@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# InfoIniUnitTest.pm - Unit tests for Ini module
+# Unit tests for Ini module
 ####################################################################################################################################
-package pgBackRestTest::Module::Common::CommonIniTest;
+package pgBackRestTest::Module::Common::CommonIniPerlTest;
 use parent 'pgBackRestTest::Common::RunTest';
 
 ####################################################################################################################################
