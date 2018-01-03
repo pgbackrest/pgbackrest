@@ -364,6 +364,13 @@ sub run
 
         # Confirm info command displays the JSON correctly
         $oHostDbMaster->info('db upgraded - db-1 and db-2 listed', {strOutput => CFGOPTVAL_INFO_OUTPUT_JSON});
+
+        # Delete the stanza
+        #--------------------------------------------------------------------------------------------------------------------------
+        $oHostBackup->stanzaDelete('fail on missing stop file', {iExpectedExitStatus => ERROR_FILE_MISSING});
+
+        $oHostBackup->stop({strStanza => $self->stanza()});
+        $oHostBackup->stanzaDelete('successfully delete the stanza');
     }
     }
 }

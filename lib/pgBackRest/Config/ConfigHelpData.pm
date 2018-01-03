@@ -1608,6 +1608,78 @@ my $oConfigHelpData =
             }
         },
 
+        # STANZA-DELETE Command Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'stanza-delete' =>
+        {
+            summary =>
+                "Delete a stanza.",
+            description =>
+                "The stanza-delete command removes data in the repository associated with a stanza. Use this command with " .
+                    "caution &mdash; it will permanently remove all backups and archives from the pgBackRest repository for the " .
+                    "specified stanza.\n" .
+                "\n" .
+                "To delete a stanza:\n" .
+                "\n" .
+                "* Shut down the PostgreSQL cluster associated with the stanza (or use --force to override).\n" .
+                "* Run the stop command on the backup host (the host where the repository is mounted).\n" .
+                "* Run the stanza-delete command on the backup host.\n" .
+                "\n" .
+                "Once the command successfully completes, it is the responsibility of the user to remove the stanza from all " .
+                    "pgBackRest configuration files.",
+
+            option =>
+            {
+                'buffer-size' => 'section',
+                'cmd-ssh' => 'section',
+                'compress-level' => 'section',
+                'compress-level-network' => 'section',
+                'config' => 'default',
+                'db-cmd' => 'section',
+                'db-config' => 'section',
+                'db-host' => 'section',
+                'db-path' => 'section',
+                'db-port' => 'section',
+                'db-socket-path' => 'section',
+                'db-ssh-port' => 'section',
+                'db-timeout' => 'section',
+                'db-user' => 'section',
+
+                # FORCE Option Help
+                #-------------------------------------------------------------------------------------------------------------------
+                'force' =>
+                {
+                    summary =>
+                        "Force stanza delete.",
+                    description =>
+                        "If PostgreSQL is still running for the stanza, then this option can be used to force the stanza to be " .
+                            "deleted from the repository."
+                },
+
+                'lock-path' => 'section',
+                'log-level-console' => 'section',
+                'log-level-file' => 'section',
+                'log-path' => 'section',
+                'log-timestamp' => 'section',
+                'neutral-umask' => 'section',
+                'protocol-timeout' => 'section',
+                'repo-cipher-pass' => 'section',
+                'repo-cipher-type' => 'section',
+                'repo-path' => 'section',
+                'repo-s3-bucket' => 'section',
+                'repo-s3-ca-file' => 'section',
+                'repo-s3-ca-path' => 'section',
+                'repo-s3-endpoint' => 'section',
+                'repo-s3-host' => 'section',
+                'repo-s3-key' => 'section',
+                'repo-s3-key-secret' => 'section',
+                'repo-s3-region' => 'section',
+                'repo-s3-verify-ssl' => 'section',
+                'repo-type' => 'section',
+                'stanza' => 'default'
+            }
+        },
+
         # STANZA-UPGRADE Command Help
         #---------------------------------------------------------------------------------------------------------------------------
         'stanza-upgrade' =>

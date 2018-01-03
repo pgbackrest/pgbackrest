@@ -193,6 +193,24 @@ sub main
         }
 
         ############################################################################################################################
+        # Process stanza-delete command
+        ############################################################################################################################
+        if (cfgCommandTest(CFGCMD_STANZA_DELETE))
+        {
+            if (!isRepoLocal())
+            {
+                confess &log(ERROR,
+                    cfgCommandName(cfgCommandGet()) . ' command must be run on the backup host', ERROR_HOST_INVALID);
+            }
+
+            # Load module dynamically
+            require pgBackRest::Stanza;
+            pgBackRest::Stanza->import();
+
+            exitSafe(new pgBackRest::Stanza()->process());
+        }
+
+        ############################################################################################################################
         # Acquire the command lock
         ############################################################################################################################
         lockAcquire(cfgCommandName(cfgCommandGet()));

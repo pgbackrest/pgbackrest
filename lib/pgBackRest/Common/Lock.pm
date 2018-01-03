@@ -282,7 +282,18 @@ push @EXPORT, qw(lockStop);
 sub lockStopTest
 {
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '::lockStopTest');
+    my
+    (
+        $strOperation,
+        $bStanzaStopRequired,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '::lockStopTest', \@_,
+            {name => 'bStanzaStopRequired', optional => true, default => false}
+        );
+
+    my $bStopExists = false;
 
     # Check the stanza first if it is specified
     if (cfgOptionTest(CFGOPT_STANZA))
@@ -292,20 +303,36 @@ sub lockStopTest
 
         if (-e $strStopFile)
         {
-            confess &log(ERROR, 'stop file exists for stanza ' . cfgOption(CFGOPT_STANZA), ERROR_STOP);
+            # If the stop file exists and is required then set the flag to true
+            if ($bStanzaStopRequired)
+            {
+                $bStopExists = true;
+            }
+            else
+            {
+                confess &log(ERROR, 'stop file exists for stanza ' . cfgOption(CFGOPT_STANZA), ERROR_STOP);
+            }
         }
     }
 
-    # Now check all stanzas
-    my $strStopFile = lockStopFileName();
-
-    if (-e $strStopFile)
+    # If not looking for a specific stanza stop file, then check all stanzas
+    if (!$bStanzaStopRequired)
     {
-        confess &log(ERROR, 'stop file exists for all stanzas', ERROR_STOP);
+        # Now check all stanzas
+        my $strStopFile = lockStopFileName();
+
+        if (-e $strStopFile)
+        {
+            confess &log(ERROR, 'stop file exists for all stanzas', ERROR_STOP);
+        }
     }
 
     # Return from function and log return values if any
-    logDebugReturn($strOperation);
+    return logDebugReturn
+    (
+        $strOperation,
+        {name => 'bStopExists', value => $bStopExists}
+    );
 }
 
 push @EXPORT, qw(lockStopTest);
