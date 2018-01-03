@@ -16,6 +16,14 @@
                     <release-item>
                         <p>Allow any non-boolean, non-command-line option to be negated.  This allows specific options in <file>pgbackrest.conf</file> to be ignored (and set to default) which reduces the need to write new configuration files for specific needs.  Note that boolean, non-command-line options are already negatable.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <cmd>stanza-delete</cmd> command to cleanup unused, obsolete stanzas.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>

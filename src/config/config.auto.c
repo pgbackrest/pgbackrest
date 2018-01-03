@@ -66,6 +66,11 @@ ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_LIST
 
     CONFIG_COMMAND
     (
+        CONFIG_COMMAND_NAME("stanza-delete")
+    )
+
+    CONFIG_COMMAND
+    (
         CONFIG_COMMAND_NAME("stanza-upgrade")
     )
 
