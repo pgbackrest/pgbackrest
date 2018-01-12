@@ -676,6 +676,7 @@ sub run
 
         # Create a table and data in database test2
         #---------------------------------------------------------------------------------------------------------------------------
+# CSHANG something is wrong here - if we remove this IF statement, nothing blows up when running --run=1. Why?
         if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute(
@@ -762,7 +763,7 @@ sub run
         # should not be created by any full page writes.  Once it is verified to exist it can be dropped.
         $oHostDbMaster->sqlSelectOneTest("select count(*) from test_exists", 0);
         $oHostDbMaster->sqlExecute('drop table test_exists');
-
+# CSHANG maybe before deleting test2 we should check that the id value of the test table is 1? Are we sure PITR occurred?
         # Now it should be OK to drop database test2
         if ($bTestLocal)
         {
