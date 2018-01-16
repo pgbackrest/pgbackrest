@@ -98,6 +98,15 @@ error information to stderr.
 #define THROW(errorType, ...)                                                                                                      \
     errorInternalThrow(&errorType, __FILE__, __LINE__, __VA_ARGS__)
 
+#define THROW_CODE(errorCode, ...)                                                                                                 \
+    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __LINE__, __VA_ARGS__)
+
+/***********************************************************************************************************************************
+Throw an error when a system call fails
+***********************************************************************************************************************************/
+#define THROW_ON_SYS_ERROR(result, errorType, ...)                                                                                 \
+    errorInternalThrowSys(result, &errorType, __FILE__, __LINE__, __VA_ARGS__)
+
 /***********************************************************************************************************************************
 Rethrow the current error
 ***********************************************************************************************************************************/
@@ -117,5 +126,6 @@ bool errorInternalStateFinal();
 bool errorInternalProcess(bool catch);
 void errorInternalPropagate();
 void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
+void errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...);
 
 #endif

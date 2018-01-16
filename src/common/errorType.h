@@ -32,8 +32,9 @@ ERROR_DECLARE(RuntimeError);
 
 // Functions
 int errorTypeCode(const ErrorType *errorType);
+const ErrorType *errorTypeFromCode(int code);
 const char *errorTypeName(const ErrorType *errorType);
-const ErrorType * errorTypeParent(const ErrorType *errorType);
+const ErrorType *errorTypeParent(const ErrorType *errorType);
 bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
 
 #endif

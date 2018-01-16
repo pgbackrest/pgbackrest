@@ -110,7 +110,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'error',
-                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_TOTAL => 6,
                     &TESTDEF_C => true,
                     &TESTDEF_CDEF => '-DNO_ERROR',
 

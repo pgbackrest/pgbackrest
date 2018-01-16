@@ -173,4 +173,50 @@ void testRun()
         assert(!testTryRecurseCatch);
         assert(testTryRecurseFinally);
     }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("THROW_CODE()"))
+    {
+        TRY_BEGIN()
+        {
+            THROW_CODE(25, "message");
+        }
+        CATCH_ANY()
+        {
+            assert(errorCode() == 25);
+            assert(strcmp(errorMessage(), "message") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            THROW_CODE(777, "message");
+        }
+        CATCH_ANY()
+        {
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "could not find error type for code '777'") == 0);
+        }
+        TRY_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("THROW_ON_SYS_ERROR()"))
+    {
+        THROW_ON_SYS_ERROR(0, AssertError, "message");
+
+        TRY_BEGIN()
+        {
+            errno = E2BIG;
+            THROW_ON_SYS_ERROR(1, AssertError, "message");
+        }
+        CATCH_ANY()
+        {
+            printf("%s\n", errorMessage());
+            assert(errorCode() == AssertError.code);
+            assert(strcmp(errorMessage(), "message: [7] Argument list too long") == 0);
+        }
+        TRY_END();
+    }
 }

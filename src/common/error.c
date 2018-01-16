@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Error Handler
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -259,6 +260,7 @@ void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fi
     va_list argument;
     va_start(argument, format);
     vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+    va_end(argument);
 
     // Assign message to the error
     strcpy(messageBuffer, messageBufferTemp);
@@ -267,3 +269,37 @@ void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fi
     // Propogate the error
     errorInternalPropagate();
 }                                                                   // {uncoverable - errorInternalPropagate() does not return}
+
+/***********************************************************************************************************************************
+Throw an error
+***********************************************************************************************************************************/
+void errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+{
+    // Only error if the result is not 0
+    if (result != 0)
+    {
+        // Capture the error number
+        int errNo = errno;
+
+        // Setup error data
+        errorContext.error.errorType = errorType;
+        errorContext.error.fileName = fileName;
+        errorContext.error.fileLine = fileLine;
+
+        // Create message
+        va_list argument;
+        va_start(argument, format);
+        int messageSize = vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+        va_end(argument);
+
+        // Append the system message
+        snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
+
+        // Assign message to the error
+        strcpy(messageBuffer, messageBufferTemp);
+        errorContext.error.message = (const char *)messageBuffer;
+
+        // Propogate the error
+        errorInternalPropagate();
+    }
+}

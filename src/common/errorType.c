@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Application-Defined Errors
 ***********************************************************************************************************************************/
-#include "common/errorType.h"
+#include "common/error.h"
 
 /***********************************************************************************************************************************
 Error code range -- chosen to not overlap with defined return values
@@ -45,12 +45,61 @@ ERROR_DEFINE(ERROR_CODE_MIN + 70, CipherError, FormatError);
 ERROR_DEFINE(ERROR_CODE_MAX, RuntimeError, RuntimeError);
 
 /***********************************************************************************************************************************
+Place errors in an array so they can be found by code
+***********************************************************************************************************************************/
+static const ErrorType *errorTypeList[] =
+{
+    &AssertError,
+
+    &FormatError,
+    &CommandRequiredError,
+    &OptionInvalidError,
+    &OptionInvalidValueError,
+    &OptionRequiredError,
+    &FileOpenError,
+    &FileReadError,
+    &CommandInvalidError,
+    &FileWriteError,
+    &MemoryError,
+    &CipherError,
+
+    &RuntimeError,
+
+    NULL,
+};
+
+/***********************************************************************************************************************************
 Error type code
 ***********************************************************************************************************************************/
 int
 errorTypeCode(const ErrorType *errorType)
 {
     return errorType->code;
+}
+
+/***********************************************************************************************************************************
+Get error type using a code
+***********************************************************************************************************************************/
+const ErrorType *
+errorTypeFromCode(int code)
+{
+    // Search for error type by code
+    int errorTypeIdx = 0;
+    const ErrorType *result = errorTypeList[errorTypeIdx];
+
+    while (result != NULL)
+    {
+        if (result->code == code)
+            break;
+
+        result = errorTypeList[++errorTypeIdx];
+    }
+
+    // Error if type was not found
+    if (result == NULL)
+        THROW(AssertError, "could not find error type for code '%d'", code);
+
+    return result;
 }
 
 /***********************************************************************************************************************************
