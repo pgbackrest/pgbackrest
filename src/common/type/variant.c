@@ -466,6 +466,67 @@ varStr(const Variant *this)
 }
 
 /***********************************************************************************************************************************
+Return string regardless of variant type
+***********************************************************************************************************************************/
+String *
+varStrForce(const Variant *this)
+{
+    String *result = NULL;
+
+    switch (varType(this))
+    {
+        case varTypeBool:
+        {
+            if (varBool(this))
+                result = strNew("true");
+            else
+                result = strNew("false");
+
+            break;
+        }
+
+        case varTypeDouble:
+        {
+            String *working = strNewFmt("%f", varDbl(this));
+
+            // Strip off any final 0s and the decimal point if there are no non-zero digits after it
+            const char *begin = strPtr(working);
+            const char *end = begin + strSize(working) - 1;
+
+            while (end > strPtr(working) && (*end == '0' || *end == '.'))
+            {
+                end--;
+
+                if (*(end + 1) == '.')
+                    break;
+            }
+
+            result = strNewN(begin, end - begin + 1);
+            strFree(working);
+
+            break;
+        }
+
+        case varTypeInt:
+        {
+            result = strNewFmt("%d", varInt(this));
+            break;
+        }
+
+        case varTypeString:
+        {
+            result = strDup(varStr(this));
+            break;
+        }
+
+        default:
+            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeString]);
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 New variant list variant
 ***********************************************************************************************************************************/
 Variant *

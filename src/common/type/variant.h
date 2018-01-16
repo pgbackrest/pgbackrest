@@ -49,6 +49,7 @@ KeyValue *varKv(const Variant *this);
 Variant *varNewStr(const String *data);
 Variant *varNewStrZ(const char *data);
 String *varStr(const Variant *this);
+String *varStrForce(const Variant *this);
 
 Variant *varNewVarLst(const VariantList *data);
 Variant *varNewVarLstEmpty();

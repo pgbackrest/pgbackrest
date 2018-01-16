@@ -164,6 +164,18 @@ void testRun()
         TEST_ERROR(varBoolForce(varNewStr(strNew(BOGUS_STR))), FormatError, "unable to convert str 'BOGUS' to bool");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_STR(strPtr(varStrForce(varNewStr(strNew("teststring")))), "teststring", "force string to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewInt(999))), "999", "force int to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl(999.1234))), "999.1234", "force double to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl((double)999999999.123456))), "999999999.123456", "force double to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl(999.0))), "999", "force double to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewDbl(9990.0))), "9990", "force double to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewBool(true))), "true", "force bool to string");
+        TEST_RESULT_STR(strPtr(varStrForce(varNewBool(false))), "false", "force bool to string");
+
+        TEST_ERROR(varStrForce(varNewKv()), FormatError, "unable to force KeyValue to String");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         string = varNewStr(strNew("not-an-int"));
         TEST_ERROR(varIntForce(string), FormatError, "unable to convert str 'not-an-int' to int");
         varFree(string);

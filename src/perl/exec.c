@@ -58,9 +58,10 @@ StringList *perlCommand()
                 }
 
                 case cfgDefOptTypeFloat:
+                case cfgDefOptTypeInteger:
+                case cfgDefOptTypeString:
                 {
-                    strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
-                    strCatFmt(mainCallParam, ", '%lg'", cfgOptionDbl(optionId));
+                    strCatFmt(mainCallParam, ", '--%s', '%s'", cfgOptionName(optionId), strPtr(varStrForce(cfgOption(optionId))));
                     break;
                 }
 
@@ -80,13 +81,6 @@ StringList *perlCommand()
                     break;
                 }
 
-                case cfgDefOptTypeInteger:
-                {
-                    strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
-                    strCatFmt(mainCallParam, ", '%d'", cfgOptionInt(optionId));
-                    break;
-                }
-
                 case cfgDefOptTypeList:
                 {
                     StringList *valueList = strLstNewVarLst(cfgOptionLst(optionId));
@@ -97,13 +91,6 @@ StringList *perlCommand()
                         strCatFmt(mainCallParam, ", '%s'", strPtr(strLstGet(valueList, listIdx)));
                     }
 
-                    break;
-                }
-
-                case cfgDefOptTypeString:
-                {
-                    strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
-                    strCatFmt(mainCallParam, ", '%s'", strPtr(cfgOptionStr(optionId)));
                     break;
                 }
             }
@@ -122,24 +109,15 @@ StringList *perlCommand()
     for (unsigned int paramIdx = 0; paramIdx < strLstSize(cfgCommandParam()); paramIdx++)
         strCatFmt(mainCallParam, ", '%s'", strPtr(strLstGet(cfgCommandParam(), paramIdx)));
 
-    // Construct perl option list to add to bin
+    // Add Perl options
     StringList *perlOptionList = strLstNewVarLst(cfgOptionLst(cfgOptPerlOption));
-    String *binPerlOption = strNew("");
 
     if (perlOptionList != NULL)
-    {
         for (unsigned int argIdx = 0; argIdx < strLstSize(perlOptionList); argIdx++)
-        {
-            // // Add to bin option list
-            // strCatFmt(binPerlOption, " --" PARAM_PERL_OPTION "=\"%s\"", strPtr(strLstGet(perlOptionList, argIdx)));
-
-            // Add to list that will be passed to exec
             strLstAdd(perlArgList, strLstGet(perlOptionList, argIdx));
-        }
-    }
 
     // Construct Perl main call
-    String *mainCall = strNewFmt(PGBACKREST_MAIN "('%s%s'%s)", strPtr(cfgExe()), strPtr(binPerlOption), strPtr(mainCallParam));
+    String *mainCall = strNewFmt(PGBACKREST_MAIN "('%s'%s)", strPtr(cfgExe()), strPtr(mainCallParam));
 
     // End arg list for perl exec
     strLstAdd(perlArgList, strNew("-M" PGBACKREST_MODULE));
