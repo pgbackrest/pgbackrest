@@ -21,6 +21,13 @@ void testRun()
         cfgInit();
         cfgCommandSet(cfgCmdInfo);
         cfgExeSet(strNew(TEST_BACKREST_EXE));
+        cfgOptionSet(cfgOptPerlBin, cfgSourceParam, varNewStrZ("/usr/bin/perl"));
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(perlCommand(), "|")),
+            "/usr/bin/perl|" TEST_PERL_MAIN "', 'info')|[NULL]", "custom command with no options");
+
+        cfgOptionSet(cfgOptPerlBin, cfgSourceParam, NULL);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(perlCommand(), "|")),

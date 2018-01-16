@@ -185,6 +185,8 @@ use constant CFGOPT_SPOOL_PATH                                      => 'spool-pa
     push @EXPORT, qw(CFGOPT_SPOOL_PATH);
 
 # Perl
+use constant CFGOPT_PERL_BIN                                        => 'perl-bin';
+    push @EXPORT, qw(CFGOPT_PERL_BIN);
 use constant CFGOPT_PERL_OPTION                                     => 'perl-option';
     push @EXPORT, qw(CFGOPT_PERL_OPTION);
 
@@ -1065,6 +1067,29 @@ my %hConfigDefine =
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_PERL_BIN =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_REMOTE => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},

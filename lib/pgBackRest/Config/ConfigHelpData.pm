@@ -556,6 +556,17 @@ my $oConfigHelpData =
                     "the command line."
         },
 
+        # PERL-BIN Option Help
+        #---------------------------------------------------------------------------------------------------------------------------
+        'perl-bin' =>
+        {
+            section => 'general',
+            summary =>
+                "Path of Perl binary.",
+            description =>
+                "Path of the Perl binary if /usr/bin/env perl won't work."
+        },
+
         # PROCESS-MAX Option Help
         #---------------------------------------------------------------------------------------------------------------------------
         'process-max' =>
@@ -971,6 +982,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
+                'perl-bin' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
@@ -1026,6 +1038,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
+                'perl-bin' => 'section',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
@@ -1121,6 +1134,7 @@ my $oConfigHelpData =
                             "and archive-check is automatically disabled for the backup."
                 },
 
+                'perl-bin' => 'section',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
@@ -1223,6 +1237,7 @@ my $oConfigHelpData =
                         "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL and will disable some checks."
                 },
 
+                'perl-bin' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
@@ -1268,6 +1283,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
+                'perl-bin' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
                 'repo-path' => 'section',
@@ -1349,6 +1365,7 @@ my $oConfigHelpData =
                         "* json - Exhaustive machine-readable backup information in JSON format."
                 },
 
+                'perl-bin' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
@@ -1423,6 +1440,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
+                'perl-bin' => 'section',
                 'process-max' => 'section',
                 'protocol-timeout' => 'section',
                 'recovery-option' => 'section',
@@ -1590,6 +1608,7 @@ my $oConfigHelpData =
                         "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL when creating the stanza."
                 },
 
+                'perl-bin' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
@@ -1730,6 +1749,7 @@ my $oConfigHelpData =
                         "Specifying --no-online prevents pgBackRest from connecting to PostgreSQL when upgrading the stanza."
                 },
 
+                'perl-bin' => 'section',
                 'protocol-timeout' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
@@ -1779,6 +1799,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
+                'perl-bin' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
                 'repo-path' => 'section',
@@ -1843,6 +1864,7 @@ my $oConfigHelpData =
                 'log-path' => 'section',
                 'log-timestamp' => 'section',
                 'neutral-umask' => 'section',
+                'perl-bin' => 'section',
                 'repo-cipher-pass' => 'section',
                 'repo-cipher-type' => 'section',
                 'repo-path' => 'section',

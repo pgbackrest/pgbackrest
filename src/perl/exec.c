@@ -31,8 +31,16 @@ StringList *perlCommand()
 {
     // Begin arg list for perl exec
     StringList *perlArgList = strLstNew();
-    strLstAdd(perlArgList, strNew(ENV_EXE));
-    strLstAdd(perlArgList, strNew(PERL_EXE));
+
+    // Use specific perl bin if passed
+    if (cfgOption(cfgOptPerlBin) != NULL)
+        strLstAdd(perlArgList, strDup(cfgOptionStr(cfgOptPerlBin)));
+    // Otherwise use env to find it
+    else
+    {
+        strLstAdd(perlArgList, strNew(ENV_EXE));
+        strLstAdd(perlArgList, strNew(PERL_EXE));
+    }
 
     // Construct option list to pass to main
     String *mainCallParam = strNew("");

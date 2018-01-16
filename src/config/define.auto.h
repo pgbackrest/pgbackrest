@@ -92,6 +92,7 @@ typedef enum
     cfgDefOptNeutralUmask,
     cfgDefOptOnline,
     cfgDefOptOutput,
+    cfgDefOptPerlBin,
     cfgDefOptPerlOption,
     cfgDefOptProcess,
     cfgDefOptProcessMax,

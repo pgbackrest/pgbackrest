@@ -74,6 +74,7 @@ Option constants
 #define CFGOPT_NEUTRAL_UMASK                                        cfgOptNeutralUmask
 #define CFGOPT_ONLINE                                               cfgOptOnline
 #define CFGOPT_OUTPUT                                               cfgOptOutput
+#define CFGOPT_PERL_BIN                                             cfgOptPerlBin
 #define CFGOPT_PERL_OPTION                                          cfgOptPerlOption
 #define CFGOPT_PROCESS                                              cfgOptProcess
 #define CFGOPT_PROCESS_MAX                                          cfgOptProcessMax

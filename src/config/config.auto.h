@@ -14,7 +14,7 @@ Command constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
-#define CFG_OPTION_TOTAL                                            139
+#define CFG_OPTION_TOTAL                                            140
 
 /***********************************************************************************************************************************
 Command enum
@@ -90,6 +90,7 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPerlBin,
     cfgOptPerlOption,
     cfgOptProcess,
     cfgOptProcessMax,

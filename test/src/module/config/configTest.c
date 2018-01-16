@@ -126,6 +126,9 @@ void testRun()
         TEST_RESULT_INT(cfgOptionSource(cfgOptProtocolTimeout), cfgSourceConfig, "protocol-timeout source is set");
         TEST_ERROR(cfgOptionKv(cfgOptProtocolTimeout), AssertError, "option 'protocol-timeout' is not type 'KeyValue'");
 
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceConfig, NULL), "set protocol-timeout to NULL");
+        TEST_RESULT_PTR(cfgOption(cfgOptProtocolTimeout), NULL, "protocol-timeout is not set");
+
         TEST_ERROR(
             cfgOptionSet(cfgOptRecoveryOption, cfgSourceParam, varNewDbl(1.1)), AssertError,
             "option 'recovery-option' must be set with KeyValue variant");

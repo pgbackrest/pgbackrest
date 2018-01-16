@@ -528,6 +528,8 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
                     break;
             }
         }
+        else
+            configOptionValue[optionId].value = NULL;
 
         // Free old value
         if (valueOld != NULL)

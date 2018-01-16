@@ -906,6 +906,14 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME("perl-bin")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPerlBin)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME("perl-option")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptPerlOption)

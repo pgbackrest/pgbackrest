@@ -24,6 +24,10 @@
                     <release-item>
                         <p>Allow any non-boolean, non-command-line option to be negated.  This allows specific options in <file>pgbackrest.conf</file> to be ignored (and set to default) which reduces the need to write new configuration files for specific needs.  Note that boolean, non-command-line options are already negatable.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Add <br-option>perl-bin</br-option> option to specify the Perl binary location when <file>/usr/bin/env perl</file> won't work.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>

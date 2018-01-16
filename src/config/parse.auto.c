@@ -958,6 +958,15 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
     },
     {
+        .name = "perl-bin",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPerlBin,
+    },
+    {
+        .name = "no-perl-bin",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPerlBin,
+    },
+    {
         .name = "perl-option",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptPerlOption,
