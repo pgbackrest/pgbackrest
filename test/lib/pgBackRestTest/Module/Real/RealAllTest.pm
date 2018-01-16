@@ -686,6 +686,8 @@ sub run
                 'insert into test_ts1 values (2);',
                 {strDb => 'test2', bAutoCommit => true});
             $oHostDbMaster->sqlWalRotate();
+syswrite(*STDOUT, "GOT HERE!\n"); # CSHANG
+        $oHostDbMaster->sqlSelectOneTest('select id from test', 1, {strDb => 'test2'}); # CSHANG
         }
 
         # Restore (type = default)
@@ -722,6 +724,12 @@ sub run
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
+# CSHANG
+#         if ($bTestLocal)
+#         {
+# syswrite(*STDOUT, "GOT HERE\n");
+#         $oHostDbMaster->sqlSelectOneTest('select id from test_ts1', 2, {strDb => 'test2'});
+#     }
 
         # The tablespace path should exist and have files in it
         my $strTablespacePath = $oHostDbMaster->tablespacePath(1);
