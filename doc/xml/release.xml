@@ -54,7 +54,11 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>Buffer</code>, <code>Ini</code>, <code>KeyValue</code>, <code>List</code>, <code>RegExp</code>, <code>Storage</code>, <code>String</code>, <code>StringList</code>, <code>Variant</code>, and <code>VariantList</code> objects.</p>
+                        <p>Add <code>Buffer</code>, <code>Ini</code>, <code>KeyValue</code>, <code>List</code>, <code>RegExp</code>, <code>Storage</code>, <code>String</code>, <code>StringList</code>, <code>Variant</code>, <code>VariantList</code>, and <code>Wait</code> objects.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <code>time</code> module.</p>
                     </release-item>
 
                     <release-item>

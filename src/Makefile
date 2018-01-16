@@ -8,6 +8,7 @@ pgbackrest: \
 		common/ini.o \
 		common/memContext.o \
 		common/regExp.o \
+		common/time.o \
 		common/type/buffer.o \
 		common/type/keyValue.o \
 		common/type/list.o \
@@ -15,6 +16,7 @@ pgbackrest: \
 		common/type/stringList.o \
 		common/type/variant.o \
 		common/type/variantList.o \
+		common/wait.o \
 		config/config.o \
 		config/define.o \
 		config/parse.o \
@@ -27,6 +29,7 @@ pgbackrest: \
 		common/ini.o \
 		common/memContext.o \
 		common/regExp.o \
+		common/time.o \
 		common/type/buffer.o \
 		common/type/keyValue.o \
 		common/type/list.o \
@@ -34,6 +37,7 @@ pgbackrest: \
 		common/type/stringList.o \
 		common/type/variant.o \
 		common/type/variantList.o \
+		common/wait.o \
 		config/config.o \
 		config/define.o \
 		config/parse.o \
