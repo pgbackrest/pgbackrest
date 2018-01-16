@@ -10,7 +10,7 @@ Command and Option Parse
 #include "common/ini.h"
 #include "common/memContext.h"
 #include "config/parse.h"
-#include "storage/storage.h"
+#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Parse option flags

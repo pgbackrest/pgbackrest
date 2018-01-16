@@ -8,7 +8,7 @@ Ini Handler
 #include "common/memContext.h"
 #include "common/ini.h"
 #include "common/type/keyValue.h"
-#include "storage/storage.h"
+#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Contains information about the ini

@@ -21,6 +21,7 @@ pgbackrest: \
 		config/define.o \
 		config/parse.o \
 		perl/exec.o \
+		storage/helper.o \
 		storage/storage.o \
 		main.o
 	$(CC) $(CFLAGS) -o pgbackrest \
@@ -42,6 +43,7 @@ pgbackrest: \
 		config/define.o \
 		config/parse.o \
 		perl/exec.o \
+		storage/helper.o \
 		storage/storage.o \
 		main.o
 

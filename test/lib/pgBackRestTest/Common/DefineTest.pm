@@ -546,12 +546,22 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'storage',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 4,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
                     {
                         'storage/storage' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'helper',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'storage/helper' => TESTDEF_COVERAGE_FULL,
                     },
                 },
             ]

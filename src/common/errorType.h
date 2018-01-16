@@ -24,6 +24,7 @@ ERROR_DECLARE(OptionRequiredError);
 ERROR_DECLARE(FileOpenError);
 ERROR_DECLARE(FileReadError);
 ERROR_DECLARE(CommandInvalidError);
+ERROR_DECLARE(PathOpenError);
 ERROR_DECLARE(FileWriteError);
 ERROR_DECLARE(MemoryError);
 ERROR_DECLARE(CipherError);
