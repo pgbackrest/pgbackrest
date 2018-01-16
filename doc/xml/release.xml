@@ -122,6 +122,10 @@
                     <release-item>
                         <p>No longer run <id>master</id> branch through CI. The <id>integration</id> branch will be run through CI and then pushed to <id>master</id> with github status checks.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Rename Perl tests so they don't conflict with their C counterparts.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>

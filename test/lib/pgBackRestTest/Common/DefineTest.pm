@@ -272,7 +272,7 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'log',
+                    &TESTDEF_NAME => 'log-perl',
                     &TESTDEF_TOTAL => 1,
 
                     &TESTDEF_COVERAGE =>
@@ -506,7 +506,7 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'helper',
+                    &TESTDEF_NAME => 'helper-perl',
                     &TESTDEF_TOTAL => 5,
 
                     &TESTDEF_COVERAGE =>
@@ -588,7 +588,7 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'push',
+                    &TESTDEF_NAME => 'push-perl',
                     &TESTDEF_TOTAL => 8,
 
                     &TESTDEF_COVERAGE =>

@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # StorageHelperTest.pm - Tests for Storage::Helper module.
 ####################################################################################################################################
-package pgBackRestTest::Module::Storage::StorageHelperTest;
+package pgBackRestTest::Module::Storage::StorageHelperPerlTest;
 use parent 'pgBackRestTest::Env::ConfigEnvTest';
 
 ####################################################################################################################################
