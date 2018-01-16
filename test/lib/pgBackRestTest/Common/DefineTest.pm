@@ -101,7 +101,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'type',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_ERROR',
+                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -109,10 +109,20 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'time',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/time' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'error',
                     &TESTDEF_TOTAL => 6,
                     &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_ERROR',
+                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -124,7 +134,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'mem-context',
                     &TESTDEF_TOTAL => 6,
                     &TESTDEF_C => true,
-                    &TESTDEF_CDEF => '-DNO_MEM_CONTEXT',
+                    &TESTDEF_CDEF => '-DNO_MEM_CONTEXT -DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -132,13 +142,14 @@ my $oTestDef =
                     },
                 },
                 {
-                    &TESTDEF_NAME => 'time',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_NAME => 'log',
+                    &TESTDEF_TOTAL => 3,
                     &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_LOG',
 
                     &TESTDEF_COVERAGE =>
                     {
-                        'common/time' => TESTDEF_COVERAGE_FULL,
+                        'common/log' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {
@@ -431,6 +442,17 @@ my $oTestDef =
                     {
                         'config/parse' => TESTDEF_COVERAGE_FULL,
                         'config/parse.auto' => TESTDEF_COVERAGE_NOCODE,
+                    },
+                },
+                {
+                    &TESTDEF_NAME => 'load',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+                    &TESTDEF_CDEF => '-DNO_ERROR -DNO_LOG',
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'config/load' => TESTDEF_COVERAGE_FULL,
                     },
                 },
                 {

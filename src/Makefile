@@ -6,6 +6,7 @@ pgbackrest: \
 		common/error.o \
 		common/errorType.o \
 		common/ini.o \
+		common/log.o \
 		common/memContext.o \
 		common/regExp.o \
 		common/time.o \
@@ -19,6 +20,7 @@ pgbackrest: \
 		common/wait.o \
 		config/config.o \
 		config/define.o \
+		config/load.o \
 		config/parse.o \
 		perl/exec.o \
 		storage/helper.o \
@@ -28,6 +30,7 @@ pgbackrest: \
 		common/error.o \
 		common/errorType.o \
 		common/ini.o \
+		common/log.o \
 		common/memContext.o \
 		common/regExp.o \
 		common/time.o \
@@ -41,6 +44,7 @@ pgbackrest: \
 		common/wait.o \
 		config/config.o \
 		config/define.o \
+		config/load.o \
 		config/parse.o \
 		perl/exec.o \
 		storage/helper.o \

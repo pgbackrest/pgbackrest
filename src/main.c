@@ -5,8 +5,9 @@ Main
 #include <stdlib.h>
 
 #include "common/error.h"
+#include "common/log.h"
 #include "config/config.h"
-#include "config/parse.h"
+#include "config/load.h"
 #include "perl/exec.h"
 #include "version.h"
 
@@ -14,10 +15,12 @@ int main(int argListSize, const char *argList[])
 {
     TRY_BEGIN()
     {
-        // Parse command line
-        configParse(argListSize, argList);
+        // Load the configuration
+        // -------------------------------------------------------------------------------------------------------------------------
+        cfgLoad(argListSize, argList);
 
         // Display version
+        // -------------------------------------------------------------------------------------------------------------------------
         if (!cfgCommandHelp() && cfgCommand() == cfgCmdVersion)
         {
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
@@ -30,8 +33,7 @@ int main(int argListSize, const char *argList[])
     }
     CATCH_ANY()
     {
-        fprintf(stderr, "ERROR [%03d]: %s\n", errorCode(), errorMessage());
-        fflush(stderr);
+        LOG_ERROR(errorCode(), errorMessage());
         exit(errorCode());
     }
     TRY_END();

@@ -313,8 +313,9 @@ sub run
                     ' -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered' .
                     ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') .
                     " -I$self->{strBackRestBase}/src -I$self->{strBackRestBase}/test/src test.c" .
-                    " $self->{strBackRestBase}/test/src/common/harnessTest.c " .
-                    join(' ', @stryCFile) . " -l crypto -o test";
+                    " $self->{strBackRestBase}/test/src/common/harnessTest.c" .
+                    " $self->{strBackRestBase}/test/src/common/logTest.c" .
+                    ' ' . join(' ', @stryCFile) . " -l crypto -o test";
 
                 executeTest(
                     'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .

@@ -301,6 +301,8 @@ void testRun()
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), true, "    compress is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceDefault, "    compress is source default");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 4194304, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

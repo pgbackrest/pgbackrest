@@ -5,13 +5,19 @@ This wrapper runs the the C unit tests.
 ***********************************************************************************************************************************/
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #ifndef NO_ERROR
     #include "common/error.h"
 #endif
 
 #include "common/harnessTest.h"
+
+#ifndef NO_LOG
+    #include "common/logTest.h"
+#endif
 
 #ifndef NO_MEM_CONTEXT
     #include "common/memContext.h"
@@ -36,8 +42,16 @@ main - run the tests
 int
 main(void)
 {
+    // Set neutral umask for testing
+    umask(0000);
+
     // Set globals
     testPathSet("{[C_TEST_PATH]}");
+
+#ifndef NO_LOG
+    // Initialize logging
+    testLogInit();
+#endif
 
     // Initialize tests
     //      run, selected
@@ -47,18 +61,26 @@ main(void)
     TRY_BEGIN()
     {
 #endif
-    // Run the tests
-    testRun();
+        // Run the tests
+        testRun();
 
-    // End test run and make sure all tests completed
-    testComplete();
+#ifndef NO_LOG
+        // Make sure there is nothing untested left in the log
+        testLogFinal();
+#endif
 
-    printf("\nTESTS COMPLETED SUCCESSFULLY\n");
+        // End test run and make sure all tests completed
+        testComplete();
+
+        printf("\nTESTS COMPLETED SUCCESSFULLY\n");
+        fflush(stdout);
 #ifndef NO_ERROR
     }
     CATCH_ANY()
     {
         fprintf(stderr, "TEST FAILED WITH %s, \"%s\" at %s:%d\n", errorName(), errorMessage(), errorFileName(), errorFileLine());
+        fflush(stderr);
+        exit(errorCode());
     }
 #ifndef NO_MEM_CONTEXT
     FINALLY()
