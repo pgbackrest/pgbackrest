@@ -165,7 +165,7 @@ iniParse(Ini *this, const String *content)
                                 THROW(FormatError, "ini section should end with ] at line %d: %s", lineIdx + 1, linePtr);
 
                             // Assign section
-                            section = strNewSzN(linePtr + 1, strSize(line) - 2);
+                            section = strNewN(linePtr + 1, strSize(line) - 2);
                         }
                         // Else it should be a key/value
                         else
@@ -180,7 +180,7 @@ iniParse(Ini *this, const String *content)
                                 THROW(FormatError, "missing '=' in key/value at line %d: %s", lineIdx + 1, linePtr);
 
                             // Extract the key
-                            String *key = strTrim(strNewSzN(linePtr, lineEqual - linePtr));
+                            String *key = strTrim(strNewN(linePtr, lineEqual - linePtr));
 
                             if (strSize(key) == 0)
                                 THROW(FormatError, "key is zero-length at line %d: %s", lineIdx++, linePtr);

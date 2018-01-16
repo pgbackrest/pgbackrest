@@ -9,7 +9,7 @@ Test Run
 void testRun()
 {
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewSzN(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewN(), and strFree()"))
     {
         String *string = strNew("static string");
         TEST_RESULT_STR(strPtr(string), "static string", "new with static string");
@@ -20,7 +20,7 @@ void testRun()
         TEST_RESULT_VOID(strFree(string), "free string");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(strPtr(strNewSzN("testmorestring", 4)), "test", "new string with size limit");
+        TEST_RESULT_STR(strPtr(strNewN("testmorestring", 4)), "test", "new string with size limit");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(8);
@@ -36,7 +36,16 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strCat and strCatFmt()"))
+    if (testBegin("strBase()"))
+    {
+        TEST_RESULT_STR(strPtr(strBase(strNew(""))), "", "empty string");
+        TEST_RESULT_STR(strPtr(strBase(strNew("/"))), "", "/ only");
+        TEST_RESULT_STR(strPtr(strBase(strNew("/file"))), "file", "root file");
+        TEST_RESULT_STR(strPtr(strBase(strNew("/dir1/dir2/file"))), "file", "subdirectory file");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strCat() and strCatFmt()"))
     {
         String *string = strNew("XXXX");
         String *string2 = strNew("ZZZZ");
@@ -62,11 +71,33 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strEq()"))
+    if (testBegin("strBeginsWith() and strBeginsWithZ()"))
+    {
+        TEST_RESULT_BOOL(strBeginsWith(strNew(""), strNew("aaa")), false, "empty string");
+        TEST_RESULT_BOOL(strBeginsWith(strNew("astring"), strNew("")), true, "empty begins with");
+        TEST_RESULT_BOOL(strBeginsWithZ(strNew("astring"), "astr"), true, "partial begins with");
+        TEST_RESULT_BOOL(strBeginsWithZ(strNew("astring"), "astring"), true, "equal strings");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strEndsWith() and strEndsWithZ()"))
+    {
+        TEST_RESULT_BOOL(strEndsWith(strNew(""), strNew(".doc")), false, "empty string");
+        TEST_RESULT_BOOL(strEndsWith(strNew("astring"), strNew("")), true, "empty ends with");
+        TEST_RESULT_BOOL(strEndsWithZ(strNew("astring"), "ing"), true, "partial ends with");
+        TEST_RESULT_BOOL(strEndsWithZ(strNew("astring"), "astring"), true, "equal strings");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strEq() and strEqZ()"))
     {
         TEST_RESULT_BOOL(strEq(strNew("equalstring"), strNew("equalstring")), true, "strings equal");
         TEST_RESULT_BOOL(strEq(strNew("astring"), strNew("anotherstring")), false, "strings not equal");
         TEST_RESULT_BOOL(strEq(strNew("astring"), strNew("bstring")), false, "equal length strings not equal");
+
+        TEST_RESULT_BOOL(strEqZ(strNew("equalstring"), "equalstring"), true, "strings equal");
+        TEST_RESULT_BOOL(strEqZ(strNew("astring"), "anotherstring"), false, "strings not equal");
+        TEST_RESULT_BOOL(strEqZ(strNew("astring"), "bstring"), false, "equal length strings not equal");
     }
 
     // *****************************************************************************************************************************

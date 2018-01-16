@@ -92,7 +92,7 @@ Create a new string from a string with a specific length
 The string may or may not be zero-terminated but we'll use that nomeclature since we're not concerned about the end of the string.
 ***********************************************************************************************************************************/
 String *
-strNewSzN(const char *string, size_t size)
+strNewN(const char *string, size_t size)
 {
     // Create object
     String *this = memNew(sizeof(String));
@@ -106,6 +106,41 @@ strNewSzN(const char *string, size_t size)
 
     // Return buffer
     return this;
+}
+
+/***********************************************************************************************************************************
+Return the file part of a string (i.e. everthing after the last / or the entire string if there is no /)
+***********************************************************************************************************************************/
+String *
+strBase(const String *this)
+{
+    const char *end = this->buffer + this->size;
+
+    while (end > this->buffer && *(end - 1) != '/')
+        end--;
+
+    return strNew(end);
+}
+
+/***********************************************************************************************************************************
+Does the string begin with the specified string?
+***********************************************************************************************************************************/
+bool
+strBeginsWith(const String *this, const String *beginsWith)
+{
+    return strBeginsWithZ(this, strPtr(beginsWith));
+}
+
+bool
+strBeginsWithZ(const String *this, const char *beginsWith)
+{
+    bool result = false;
+    unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
+
+    if (this->size >= beginsWithSize)
+        result = strncmp(strPtr(this), beginsWith, beginsWithSize) == 0;
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -174,17 +209,47 @@ strDup(const String *this)
 }
 
 /***********************************************************************************************************************************
-Are two strings equal?
+Does the string end with the specified string?
 ***********************************************************************************************************************************/
 bool
-strEq(const String *this1, const String *this2)
+strEndsWith(const String *this, const String *endsWith)
+{
+    return strEndsWithZ(this, strPtr(endsWith));
+}
+
+bool
+strEndsWithZ(const String *this, const char *endsWith)
+{
+    bool result = false;
+    unsigned int endsWithSize = (unsigned int)strlen(endsWith);
+
+    if (this->size >= endsWithSize)
+        result = strcmp(strPtr(this) + (this->size - endsWithSize), endsWith) == 0;
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Are two strings equal?
+
+There are two separate implementations because string objects can get the size very efficiently whereas the zero-terminated strings
+would need a call to strlen().
+***********************************************************************************************************************************/
+bool
+strEq(const String *this, const String *compare)
 {
     bool result = false;
 
-    if (this1->size == this2->size)
-        result = strcmp(strPtr(this1), strPtr(this2)) == 0;
+    if (this->size == compare->size)
+        result = strcmp(strPtr(this), strPtr(compare)) == 0;
 
     return result;
+}
+
+bool
+strEqZ(const String *this, const char *compare)
+{
+    return strcmp(strPtr(this), compare) == 0;
 }
 
 /***********************************************************************************************************************************
@@ -193,7 +258,12 @@ Return string ptr
 const char *
 strPtr(const String *this)
 {
-    return (const char *)this->buffer;
+    const char *result = NULL;
+
+    if (this != NULL)
+        result = (const char *)this->buffer;
+
+    return result;
 }
 
 /***********************************************************************************************************************************

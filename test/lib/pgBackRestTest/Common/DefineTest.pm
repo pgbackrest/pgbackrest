@@ -143,7 +143,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'type-string',
-                    &TESTDEF_TOTAL => 5,
+                    &TESTDEF_TOTAL => 8,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>

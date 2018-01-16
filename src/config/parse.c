@@ -513,7 +513,7 @@ configParse(int argListSize, const char *argList[])
                                         strPtr(strLstGet(parseOption->valueList, listIdx)), cfgOptionName(optionId));
                                 }
 
-                                kvPut(keyValue, varNewStr(strNewSzN(pair, equal - pair)), varNewStr(strNew(equal + 1)));
+                                kvPut(keyValue, varNewStr(strNewN(pair, equal - pair)), varNewStr(strNew(equal + 1)));
                             }
 
                             cfgOptionSet(optionId, parseOption->source, value);

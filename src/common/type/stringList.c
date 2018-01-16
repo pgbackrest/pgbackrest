@@ -41,7 +41,7 @@ strLstNewSplit(const String *string, const String *delimiter)
         // If a match was found then add the string
         if (stringMatch != NULL)
         {
-            strLstAdd(this, strNewSzN(stringBase, stringMatch - stringBase));
+            strLstAdd(this, strNewN(stringBase, stringMatch - stringBase));
             stringBase = stringMatch + strSize(delimiter);
         }
         // Else make whatever is left the last string
@@ -169,5 +169,6 @@ Wrapper for lstFree()
 ***********************************************************************************************************************************/
 void strLstFree(StringList *this)
 {
-    lstFree((List *)this);
+    if (this != NULL)
+        lstFree((List *)this);
 }
