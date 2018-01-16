@@ -7,6 +7,7 @@ pgbackrest: \
 		common/errorType.o \
 		common/ini.o \
 		common/memContext.o \
+		common/regExp.o \
 		common/type/buffer.o \
 		common/type/keyValue.o \
 		common/type/list.o \
@@ -25,6 +26,7 @@ pgbackrest: \
 		common/errorType.o \
 		common/ini.o \
 		common/memContext.o \
+		common/regExp.o \
 		common/type/buffer.o \
 		common/type/keyValue.o \
 		common/type/list.o \

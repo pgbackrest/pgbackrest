@@ -226,6 +226,16 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'reg-exp',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/regExp' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'ini',
                     &TESTDEF_TOTAL => 3,
                     &TESTDEF_C => true,
