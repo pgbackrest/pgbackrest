@@ -286,8 +286,8 @@ sub processQueue
             my $iCode = exceptionCode($EVAL_ERROR);
             my $strMessage = exceptionMessage($EVAL_ERROR);
 
-            # Error all ready jobs
-            foreach my $strWalFile (@{$self->readyList()})
+            # Error all queued jobs
+            foreach my $strWalFile (@{$stryWalFile})
             {
                 $self->walStatusWrite(
                     WAL_STATUS_ERROR, $strWalFile, $iCode, $strMessage);

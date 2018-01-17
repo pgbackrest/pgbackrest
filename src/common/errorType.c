@@ -37,9 +37,12 @@ ERROR_DEFINE(ERROR_CODE_MIN + 07, OptionInvalidValueError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 12, OptionRequiredError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 16, FileOpenError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 17, FileReadError, RuntimeError);
+ERROR_DEFINE(ERROR_CODE_MIN + 18, ParamRequiredError, RuntimeError);
+ERROR_DEFINE(ERROR_CODE_MIN + 19, ArchiveMismatchError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 23, CommandInvalidError, FormatError);
 ERROR_DEFINE(ERROR_CODE_MIN + 28, PathOpenError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 39, FileWriteError, RuntimeError);
+ERROR_DEFINE(ERROR_CODE_MIN + 57, ArchiveTimeoutError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 69, MemoryError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 70, CipherError, FormatError);
 
@@ -59,9 +62,12 @@ static const ErrorType *errorTypeList[] =
     &OptionRequiredError,
     &FileOpenError,
     &FileReadError,
+    &ParamRequiredError,
+    &ArchiveMismatchError,
     &CommandInvalidError,
     &PathOpenError,
     &FileWriteError,
+    &ArchiveTimeoutError,
     &MemoryError,
     &CipherError,
 

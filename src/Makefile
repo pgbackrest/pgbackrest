@@ -3,6 +3,7 @@ CFLAGS=-I. -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -std=c99 
 DESTDIR=
 
 pgbackrest: \
+		command/archive/push/push.o \
 		command/command.o \
 		common/error.o \
 		common/errorType.o \
@@ -29,6 +30,7 @@ pgbackrest: \
 		storage/storage.o \
 		main.o
 	$(CC) $(CFLAGS) -o pgbackrest \
+		command/archive/push/push.o \
 		command/command.o \
 		common/error.o \
 		common/errorType.o \

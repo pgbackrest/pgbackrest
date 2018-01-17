@@ -22,6 +22,7 @@ use pgBackRest::Archive::Push::File;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Lock;
 use pgBackRest::Common::Log;
+use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::DbVersion;
 use pgBackRest::Protocol::Helper;
@@ -323,7 +324,7 @@ sub run
     }
 
     ################################################################################################################################
-    if ($self->begin("ArchivePushAsync->walStatusWrite() & ArchivePush->walStatus()"))
+    if ($self->begin("ArchivePushAsync->walStatusWrite()"))
     {
         my $oPush = new pgBackRest::Archive::Push::Push();
 
@@ -338,31 +339,12 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         my $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
 
-        $self->testResult(sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment)}, 0, "${strSegment} WAL no status");
-
-        #---------------------------------------------------------------------------------------------------------------------------
         # Generate a normal ok
         $oPushAsync->walStatusWrite(WAL_STATUS_OK, $strSegment);
-
-        # Check status
-        $self->testResult(sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment)}, 1, "${strSegment} WAL ok");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate a bogus warning ok (if content is present there must be two lines)
-        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        storageTest()->put("$self->{strSpoolPath}/${strSegment}.ok", "Test Warning");
-
-        # Check status
-        $self->testException(
-            sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment)}, ERROR_ASSERT,
-            "${strSegment}.ok content must have at least two lines:\nTest Warning");
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Generate a valid warning ok
         $oPushAsync->walStatusWrite(WAL_STATUS_OK, $strSegment, 0, 'Test Warning');
-
-        # Check status
-        $self->testResult(sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment)}, 1, "${strSegment} WAL warning ok");
 
         #---------------------------------------------------------------------------------------------------------------------------
         # Generate an invalid error
@@ -377,52 +359,9 @@ sub run
             "strMessage must be set when iCode is set");
 
         #---------------------------------------------------------------------------------------------------------------------------
-        # Generate an invalid error
-        storageTest()->put("$self->{strSpoolPath}/${strSegment}.error");
-
-        # Check status (will error because there are now two status files)
-        $self->testException(
-            sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment);}, ERROR_ASSERT,
-            "multiple status files found in " . $self->testPath() . "/repo/archive/db/out for ${strSegment}:" .
-            " ${strSegment}.error, ${strSegment}.ok");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Remove the ok file
-        storageTest()->remove("$self->{strSpoolPath}/${strSegment}.ok");
-
-        # Check status
-        $self->testException(
-            sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment);}, ERROR_ASSERT, "${strSegment}.error has no content");
-
-        #---------------------------------------------------------------------------------------------------------------------------
         # Generate a valid error
         $oPushAsync->walStatusWrite(
             WAL_STATUS_ERROR, $strSegment, ERROR_ARCHIVE_DUPLICATE, "WAL segment ${strSegment} already exists in the archive");
-
-        # Check status
-        $self->testException(sub {
-            $oPush->walStatus($self->{strSpoolPath}, $strSegment)}, ERROR_ARCHIVE_DUPLICATE,
-            "WAL segment ${strSegment} already exists in the archive");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Change the error file to an ok file
-        storageTest()->move("$self->{strSpoolPath}/${strSegment}.error", "$self->{strSpoolPath}/${strSegment}.ok");
-
-        # Check status
-        $self->testResult(
-            sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment);}, 1,
-            "${strSegment} WAL warning ok (converted from .error)");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Generate a normal ok
-        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        $oPushAsync->walStatusWrite(WAL_STATUS_OK, $strSegment);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-
-        # Check status
-        $self->testResult(sub {$oPush->walStatus($self->{strSpoolPath}, $strSegment)}, 0, "${strSegment} WAL no status");
     }
 
     ################################################################################################################################
@@ -693,56 +632,26 @@ sub run
         $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->{strRepoPath});
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        # Write an error file and verify that it doesn't error the first time around
-        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        storageTest()->pathCreate($self->{strSpoolPath}, {bCreateParent => true});
-        storageTest()->put("$self->{strSpoolPath}/${strSegment}.error", ERROR_ARCHIVE_TIMEOUT . "\ntest error");
-
-        $self->testException(
-            sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_ARCHIVE_TIMEOUT,
-            "test error");
-
-        $self->testResult($oPush->{bConfessOnError}, true, "went through error loop");
-
-        $self->testResult(
-            sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, '[undef]',
-            "${strSegment} WAL not in archive");
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        # Write an OK file so the async process is not actually started
-        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-        storageTest()->put("$self->{strSpoolPath}/${strSegment}.ok");
-
-        $self->testResult(
-            sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0,
-            "${strSegment} WAL pushed async from synthetic ok file");
-
-        $self->testResult(
-            sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, '[undef]',
-            "${strSegment} WAL not in archive");
-
-        #---------------------------------------------------------------------------------------------------------------------------
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
         $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "${strSegment} WAL pushed async");
-        exit if ($iProcessId != $PID);
+        $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, "hit lock - already running");
+
+        # Wait for child process to exit
+        if ($iProcessId == $PID)
+        {
+            waitpid(-1, 0);
+        }
+        else
+        {
+            exit 0;
+        }
 
         $self->testResult(
-            sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment)}, "${strSegment}-$self->{strWalHash}",
+            sub {walSegmentFind(storageRepo(), $self->{strArchiveId}, $strSegment, 5)}, "${strSegment}-$self->{strWalHash}",
             "${strSegment} WAL in archive");
 
         $self->walRemove($self->{strWalPath}, $strSegment);
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
-
-        $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 1);
-        $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
-
-        $self->testException(
-            sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_ARCHIVE_TIMEOUT,
-            "unable to push WAL ${strSegment} asynchronously after 1 second(s)");
-        exit if ($iProcessId != $PID);
 
         #---------------------------------------------------------------------------------------------------------------------------
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
@@ -753,10 +662,32 @@ sub run
         $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
-        $self->testException(
-            sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, ERROR_FILE_READ,
-            "remote process on '" . BOGUS . "' terminated.*");
-        exit if ($iProcessId != $PID);
+
+        # Wait for error file to appear
+        my $oWait = waitInit(10);
+        my $strErrorFile = STORAGE_SPOOL_ARCHIVE_OUT . "/${strSegment}.error";
+
+        do
+        {
+            $self->testResult(sub {$oPush->process("$self->{strWalPath}/${strSegment}")}, 0, 'process connect error');
+
+            # Wait for child process to exit
+            if ($iProcessId == $PID)
+            {
+                waitpid(-1, 0);
+            }
+            else
+            {
+                exit 0;
+            }
+        }
+        while (!storageSpool()->exists($strErrorFile) && waitMore($oWait));
+
+        # Check contents of error file
+        my $strErrorFileContents = ${storageSpool()->get($strErrorFile)};
+
+        $self->testResult(
+            $strErrorFileContents =~ ("42\nremote process on '" . BOGUS . "' terminated.*"), true, "check error file contents");
 
         # Disable async archiving
         $self->optionTestClear(CFGOPT_BACKUP_HOST);

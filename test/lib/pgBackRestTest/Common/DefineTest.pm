@@ -692,6 +692,16 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'push',
+                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'command/archive/push/push' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'stop',
                     &TESTDEF_TOTAL => 7,
                     &TESTDEF_INDIVIDUAL => true,

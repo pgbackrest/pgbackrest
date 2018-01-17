@@ -4,6 +4,8 @@ Main
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "command/archive/push/push.h"
+#include "command/command.h"
 #include "common/error.h"
 #include "common/exit.h"
 #include "config/config.h"
@@ -26,6 +28,15 @@ int main(int argListSize, const char *argList[])
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
             fflush(stdout);
             exit(0);
+        }
+
+        // Archive push command.  Currently only implements to local operations of async archive push.
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (cfgCommand() == cfgCmdArchivePush && cfgOptionBool(cfgOptArchiveAsync))
+        {
+            cmdBegin();
+            cmdArchivePush();
+            exit(exitSafe(false));
         }
 
         // Execute Perl for commands not implemented in C
