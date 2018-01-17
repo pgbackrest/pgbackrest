@@ -86,6 +86,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Move lock release later in exitSafe() to reduce the chance of a new process starting and acquiring a lock before the old process has exited.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
                     </release-item>
 

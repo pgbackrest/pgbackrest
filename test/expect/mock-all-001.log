@@ -306,8 +306,8 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -454,8 +454,8 @@ P00   INFO: sent term signal to process [PROCESS-ID]
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 full backup - abort backup - local (db-master host)
@@ -534,9 +534,9 @@ P00   TEST:         PgBaCkReStTeSt-BACKUP-START-PgBaCkReStTeSt
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 63, oException = [undef], strSignal = TERM
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  ERROR: [063]: terminated on signal [SIGTERM]
 P00   INFO: backup command end: terminated on signal [SIGTERM]
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 63
 
 full backup - global stop (db-master host)
@@ -555,8 +555,8 @@ P00  ERROR: [062]: stop file exists for all stanzas
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 62
 
 stop db stanza (db-master host)
@@ -567,8 +567,8 @@ P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExist
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 stop db stanza (db-master host)
@@ -580,8 +580,8 @@ P00   WARN: stop file already exists for stanza db
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: stop command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 full backup - stanza stop (db-master host)
@@ -600,8 +600,8 @@ P00  ERROR: [062]: stop file exists for stanza db
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: backup command end: aborted with exception [062]
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 62
 
 start db stanza (db-master host)
@@ -611,8 +611,8 @@ P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-mast
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 start all stanzas (db-master host)
@@ -622,8 +622,8 @@ P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-mast
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 start all stanzas (db-master host)
@@ -634,8 +634,8 @@ P00   WARN: stop file does not exist
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: start command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 full backup - resume (db-master host)
@@ -857,8 +857,8 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -1267,8 +1267,8 @@ P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TE
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: restore command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf
@@ -1813,8 +1813,8 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
@@ -2163,8 +2163,8 @@ P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = <true>
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy=>: iExitStatus = 0
-P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00   INFO: expire command end: completed successfully
+P00  DEBUG:     Common::Lock::lockRelease(): bFailOnNoLock = false
 P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

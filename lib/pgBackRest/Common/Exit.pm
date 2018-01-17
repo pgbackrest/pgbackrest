@@ -61,14 +61,6 @@ sub exitSafe
     # Close the remote
     protocolDestroy(undef, undef, defined($iExitCode) && ($iExitCode == 0 || $iExitCode == 1));
 
-    # Don't fail if the lock can't be released
-    eval
-    {
-        lockRelease(false);
-    }
-    # uncoverable branch false - this eval exists only to suppress lock errors so original error will not be lost
-    or do {};
-
     # If exit code is not defined then try to get it from the exception
     if (!defined($iExitCode))
     {
@@ -96,6 +88,15 @@ sub exitSafe
 
     # Log command end
     commandEnd(defined($oException) || $iExitCode == ERROR_TERM ? $iExitCode : undef, $strSignal);
+
+    # Release the lock as late as possible
+    eval
+    {
+        # Don't fail if the lock can't be released (it will be freed by the system though the file will remain)
+        lockRelease(false);
+    }
+    # uncoverable branch false - this eval exists only to suppress lock errors so original error will not be lost
+    or do {};
 
     # Log return values if any
     logDebugReturn
