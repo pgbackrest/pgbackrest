@@ -90,6 +90,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Add 30 second wait loop to lockAcquire() when fail on no lock enabled.  This should help prevent processes that are shutting down from interfering with processes that are starting up.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Replace <code>cfgCommandTotal()</code>/<code>cfgOptionTotal()</code> functions with constants.  The constants are applicable in more cases and allow the compiler to optimize certain loops more efficiently.</p>
                     </release-item>
 

@@ -15,6 +15,7 @@ use File::Basename qw(dirname);
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
+use pgBackRest::Common::Wait;
 use pgBackRest::Config::Config;
 use pgBackRest::Storage::Helper;
 
@@ -91,17 +92,28 @@ sub lockAcquire
         # Create the lock path
         lockPathCreate();
 
-        # Attempt to open the lock file
+        # Loop until the lock can be acquired or timeout.  This is to prevent race conditions where another process is shutting down
+        # but has not yet released its lock.
         $strCurrentLockFile = lockFileName($strLockType, cfgOption(CFGOPT_STANZA, false), $bRemote);
+        my $oWait = waitInit(!defined($bFailOnNoLock) || $bFailOnNoLock ? 30 : 0);
 
-        sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640))
-            or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}", ERROR_FILE_OPEN);
+        do
+        {
+            # Attempt to open the lock file
+            next if !sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT, oct(640));
+
+            # Attempt to lock the lock file
+            if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
+            {
+                close($hCurrentLockHandle);
+                undef($hCurrentLockHandle);
+            }
+        }
+        while (!defined($hCurrentLockHandle) && defined($oWait) && waitMore($oWait));
 
         # Attempt to lock the lock file
-        if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
+        if (!defined($hCurrentLockHandle))
         {
-            close($hCurrentLockHandle);
-
             if (!defined($bFailOnNoLock) || $bFailOnNoLock)
             {
                 confess &log(ERROR, "unable to acquire ${strLockType} lock on file ${strCurrentLockFile}", ERROR_LOCK_ACQUIRE);
