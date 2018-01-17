@@ -5,7 +5,7 @@ Main
 #include <stdlib.h>
 
 #include "common/error.h"
-#include "common/log.h"
+#include "common/exit.h"
 #include "config/config.h"
 #include "config/load.h"
 #include "perl/exec.h"
@@ -29,12 +29,14 @@ int main(int argListSize, const char *argList[])
         }
 
         // Execute Perl for commands not implemented in C
+        // -------------------------------------------------------------------------------------------------------------------------
         perlExec(perlCommand());
     }
     CATCH_ANY()
     {
-        LOG_ERROR(errorCode(), errorMessage());
-        exit(errorCode());
+        exit(exitSafe(true));
     }
     TRY_END();
+
+    exit(exitSafe(false));
 }

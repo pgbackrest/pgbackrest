@@ -62,7 +62,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <code>log</code> and <code>time</code> modules.</p>
+                        <p>Add <code>command</code>, <code>exit</code>, <code>log</code>, and <code>time</code> modules.</p>
                     </release-item>
 
                     <release-item>

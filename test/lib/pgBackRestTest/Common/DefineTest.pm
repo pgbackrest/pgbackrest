@@ -153,6 +153,16 @@ my $oTestDef =
                     },
                 },
                 {
+                    &TESTDEF_NAME => 'exit',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'common/exit' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+                {
                     &TESTDEF_NAME => 'wait',
                     &TESTDEF_TOTAL => 1,
                     &TESTDEF_C => true,
@@ -629,6 +639,25 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         &TESTDEF_MODULE_INFO => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+            ]
+        },
+        # Command tests
+        {
+            &TESTDEF_NAME => 'command',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'command',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'command/command' => TESTDEF_COVERAGE_FULL,
                     },
                 },
             ]
