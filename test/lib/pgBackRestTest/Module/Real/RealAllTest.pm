@@ -677,10 +677,9 @@ sub run
         # Create a table and data in database test2
         #---------------------------------------------------------------------------------------------------------------------------
 
-        # Get the SHA1 for the pg_filenode.map for the database that will not be restored
-        my $strOidDb1 = $oHostDbMaster->sqlSelectOne("select oid from pg_database where datname='test1'");
-        my $strFileMapPathDb1 = $oHostDbMaster->dbBasePath(). "/base/" . $strOidDb1 . "/" . DB_FILE_PGFILENODEMAP;
-        my ($strSha1Db1FileMap, $lSizeDb1FileMap) = storageTest()->hashSize($strFileMapPathDb1);
+        # Initialize variables for SHA1 and path of the pg_filenode.map for the database that will not be restored
+        my $strDb1FileMapPath;
+        my $strSha1Db1FileMap;
 
         if ($bTestLocal)
         {
@@ -692,6 +691,11 @@ sub run
                 {strDb => 'test2', bAutoCommit => true});
 
             $oHostDbMaster->sqlWalRotate();
+
+            # Get the SHA1 and path of the pg_filenode.map for the database that will not be restored
+            $strDb1FileMapPath = $oHostDbMaster->dbBasePath(). "/base/" .
+                ($oHostDbMaster->sqlSelectOne("select oid from pg_database where datname='test1'")) . "/" . DB_FILE_PGFILENODEMAP;
+            $strSha1Db1FileMap = storageTest()->hashSize($strDb1FileMapPath);
         }
 
         # Restore (type = default)
@@ -729,7 +733,7 @@ sub run
         # Test that the first database has not been restored since --db-include did not include test1
         if ($bTestLocal)
         {
-            my ($strSHA1, $lSize) = storageTest()->hashSize($strFileMapPathDb1);
+            my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1FileMapPath);
 
             # Create a zeroed sparse file in the test directory that is the same size as the filenode.map
             my $strTestFileMap = $self->testPath() . "/testfilemap";
@@ -796,7 +800,7 @@ sub run
         # should not be created by any full page writes.  Once it is verified to exist it can be dropped.
         $oHostDbMaster->sqlSelectOneTest("select count(*) from test_exists", 0);
         $oHostDbMaster->sqlExecute('drop table test_exists');
-# CSHANG maybe before deleting test2 we should check that the id value of the test table is 1? Are we sure PITR occurred?
+
         # Now it should be OK to drop database test2
         if ($bTestLocal)
         {
