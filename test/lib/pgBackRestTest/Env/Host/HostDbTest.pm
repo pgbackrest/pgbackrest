@@ -148,7 +148,7 @@ sub sqlConnect
     # Set defaults
     my $iTimeout = defined($$hParam{iTimeout}) ? $$hParam{iTimeout} : HOST_DB_TIMEOUT;
     my $strDb = defined($$hParam{strDb}) ? $$hParam{strDb} : HOST_DB_DEFAULT;
-syswrite(*STDOUT, "DB:".$strDb."\n");
+
     # If not connected
     if (!defined($self->{db}{$strDb}{hDb}))
     {
@@ -257,7 +257,7 @@ sub sqlSelect
     my $hDb = $self->sqlConnect({strDb => $$hParam{strDb}});
 
     # Log and execute the statement
-    &log(DEBUG, "SQL: ${strSql}");
+    &log(DEBUG, (defined($$hParam{strDb}) ? "DB: $$hParam{strDb}, " : "") . "SQL: ${strSql}");
     my $hStatement = $hDb->prepare($strSql);
 
     $hStatement = $hDb->prepare($strSql);
@@ -277,7 +277,11 @@ sub sqlSelect
 ####################################################################################################################################
 sub sqlSelectOne
 {
-    return (shift->sqlSelect(shift))[0]; # CSHANG Need to ba able to pass the DB to sqlSelect
+    my $self = shift;
+    my $strSql = shift;
+    my $hParam = shift;
+
+    return ($self->sqlSelect($strSql, $hParam))[0];
 }
 
 ####################################################################################################################################
@@ -299,7 +303,7 @@ sub sqlSelectOneTest
     do
     {
         $self->sqlConnect($hParam);
-        $strActualValue = $self->sqlSelectOne($strSql); # CSHANG This is the problem b/c sqlSelectOne is not passed the DB
+        $strActualValue = $self->sqlSelectOne($strSql, $hParam);
 
         if (defined($strActualValue) && $strActualValue eq $strExpectedValue)
         {

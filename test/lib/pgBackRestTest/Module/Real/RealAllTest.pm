@@ -676,7 +676,12 @@ sub run
 
         # Create a table and data in database test2
         #---------------------------------------------------------------------------------------------------------------------------
-# CSHANG something is wrong here - if we remove this IF statement, nothing blows up when running --run=1. Why?
+
+        # Get the SHA1 for the pg_filenode.map for the database that will not be restored
+        my $strOidDb1 = $oHostDbMaster->sqlSelectOne("select oid from pg_database where datname='test1'");
+        my $strFileMapPathDb1 = $oHostDbMaster->dbBasePath(). "/base/" . $strOidDb1 . "/" . DB_FILE_PGFILENODEMAP;
+        my ($strSha1Db1FileMap, $lSizeDb1FileMap) = storageTest()->hashSize($strFileMapPathDb1);
+
         if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute(
@@ -685,9 +690,8 @@ sub run
                 'create table test_ts1 (id int) tablespace ts1;' .
                 'insert into test_ts1 values (2);',
                 {strDb => 'test2', bAutoCommit => true});
+
             $oHostDbMaster->sqlWalRotate();
-syswrite(*STDOUT, "GOT HERE!\n"); # CSHANG
-        $oHostDbMaster->sqlSelectOneTest('select id from test', 1, {strDb => 'test2'}); # CSHANG
         }
 
         # Restore (type = default)
@@ -720,16 +724,37 @@ syswrite(*STDOUT, "GOT HERE!\n"); # CSHANG
         # Now the restore should work
         $oHostDbMaster->restore(
             undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {strOptionalParam => ($bTestLocal ? ' --db-include=test1' : '') . ' --buffer-size=16384'});
+            {strOptionalParam => ($bTestLocal ? ' --db-include=test2' : '') . ' --buffer-size=16384'});
+
+        # Test that the first database has not been restored since --db-include did not include test1
+        if ($bTestLocal)
+        {
+            my ($strSHA1, $lSize) = storageTest()->hashSize($strFileMapPathDb1);
+
+            # Create a zeroed sparse file in the test directory that is the same size as the filenode.map
+            my $strTestFileMap = $self->testPath() . "/testfilemap";
+            my $oDestinationFileIo = storageTest()->openWrite($strTestFileMap);
+            $oDestinationFileIo->open();
+
+            # Truncate to the original size which will create a sparse file.
+            truncate($oDestinationFileIo->handle(), $lSize);
+            $oDestinationFileIo->close();
+
+            # Confirm the test filenode.map and the database test1 filenode.map aer zeroed
+            my ($strSHA1Test, $lSizeTest) = storageTest()->hashSize($strTestFileMap);
+            $self->testResult(sub {($strSHA1Test eq $strSHA1) && ($lSizeTest == $lSize) && ($strSHA1 ne $strSha1Db1FileMap)},
+                true, 'database test1 not restored');
+        }
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
-# CSHANG
-#         if ($bTestLocal)
-#         {
-# syswrite(*STDOUT, "GOT HERE\n");
-#         $oHostDbMaster->sqlSelectOneTest('select id from test_ts1', 2, {strDb => 'test2'});
-#     }
+
+        # Once the cluster is back online, make sure the table in the tablespace exists properly
+        if ($bTestLocal)
+        {
+            $oHostDbMaster->sqlSelectOneTest('select id from test_ts1', 2, {strDb => 'test2'});
+            $oHostDbMaster->sqlDisconnect({strDb => 'test2'});
+        }
 
         # The tablespace path should exist and have files in it
         my $strTablespacePath = $oHostDbMaster->tablespacePath(1);

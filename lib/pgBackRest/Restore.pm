@@ -1128,7 +1128,7 @@ sub process
 
         foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
         {
-            # Check for both DBs no in a tablespace and those that were created in a tablespace
+            # Check for DBs not in a tablespace and those that were created in a tablespace
             if ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/base\/[0-9]+\/PG\_VERSION') ||
                 $strFile =~ ('^' . MANIFEST_TARGET_PGTBLSPC .
                     '\/[0-9]+\/'.$oManifest->tablespacePathGet().'\/[0-9]+\/PG\_VERSION'))
