@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.00dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed the inability to restore a single database contained in a tablespace using --db-include.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
