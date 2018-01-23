@@ -340,6 +340,7 @@ eval
 
         if ($oStorageTest->exists($strVBoxService))
         {
+            executeTest("sudo killall VBoxService");
             executeTest("sudo ${strVBoxService} --timesync-set-start");
         }
 

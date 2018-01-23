@@ -400,20 +400,6 @@ my $oTestDef =
                 },
             ]
         },
-        # Help tests
-        {
-            &TESTDEF_NAME => 'help',
-            &TESTDEF_CONTAINER => true,
-            &TESTDEF_EXPECT => true,
-
-            &TESTDEF_TEST =>
-            [
-                {
-                    &TESTDEF_NAME => 'help',
-                    &TESTDEF_TOTAL => 1,
-                }
-            ]
-        },
         # Config tests
         {
             &TESTDEF_NAME => 'config',
@@ -837,12 +823,18 @@ my $oTestDef =
         {
             &TESTDEF_NAME => 'real',
             &TESTDEF_EXPECT => true,
-            &TESTDEF_INDIVIDUAL => true,
 
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'help',
+                    &TESTDEF_CONTAINER => true,
+                    &TESTDEF_TOTAL => 1,
+                },
+
+                {
                     &TESTDEF_NAME => 'all',
+                    &TESTDEF_INDIVIDUAL => true,
                     &TESTDEF_TOTAL => 6,
                     &TESTDEF_DB => true,
                 }
