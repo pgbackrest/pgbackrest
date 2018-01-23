@@ -27,6 +27,8 @@ Functions
 ***********************************************************************************************************************************/
 unsigned int cfgDefCommandTotal();
 void cfgDefCommandCheck(ConfigDefineCommand commandDefId);
+const char *cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId);
+const char *cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId);
 
 bool cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 int cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
@@ -42,6 +44,9 @@ ConfigDefineOption cfgDefOptionDependOption(ConfigDefineCommand commandDefId, Co
 int cfgDefOptionDependValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 bool cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
 const char *cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, int valueId);
+const char *cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+const char *cfgDefOptionHelpSection(ConfigDefineOption optionDefId);
+const char *cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 int cfgDefOptionIndexTotal(ConfigDefineOption optionDefId);
 bool cfgDefOptionInternal(ConfigDefineOption optionDefId);
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);

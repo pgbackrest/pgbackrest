@@ -160,6 +160,8 @@ use constant ERROR_MEMORY                                           => ERROR_MIN
     push @EXPORT, qw(ERROR_MEMORY);
 use constant ERROR_CIPHER                                           => ERROR_MINIMUM + 70;
     push @EXPORT, qw(ERROR_CIPHER);
+use constant ERROR_PARAM_INVALID                                    => ERROR_MINIMUM + 71;
+    push @EXPORT, qw(ERROR_PARAM_INVALID);
 
 use constant ERROR_INVALID_VALUE                                    => ERROR_MAXIMUM - 2;
     push @EXPORT, qw(ERROR_INVALID_VALUE);

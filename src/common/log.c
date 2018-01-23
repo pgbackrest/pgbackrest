@@ -171,6 +171,6 @@ logInternal(LogLevel logLevel, const char *fileName, const char *functionName, i
             stream = logHandleStdErr;
 
         THROW_ON_SYS_ERROR(
-            write(stream, logBuffer, bufferPos) != bufferPos, FileWriteError, "unable to write log to stdout");
+            write(stream, logBuffer, bufferPos) != bufferPos, FileWriteError, "unable to write log to console");
     }
 }

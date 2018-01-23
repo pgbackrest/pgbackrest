@@ -52,7 +52,6 @@ use constant CFGDEF_SECTION_STANZA                                  => 'stanza';
 ####################################################################################################################################
 my %oOption;                # Option hash
 my $strCommand;             # Command (backup, archive-get, ...)
-my $strCommandHelp;         # The command that help is being generate for
 my $bInitLog = false;       # Has logging been initialized yet?
 
 ####################################################################################################################################
@@ -133,38 +132,13 @@ sub configLoad
     # Get command-line options
     my %oOptionTest;
 
-    # If nothing was passed on the command line then display help
-    if (@ARGV == 0)
+    # Parse command line options
+    if (!GetOptions(\%oOptionTest, @stryOptionAllow))
     {
-        cfgCommandSet(CFGCMD_HELP);
+        confess &log(ASSERT, "error parsing command line");
     }
-    # Else process command line options
-    else
-    {
-        # Parse command line options
-        if (!GetOptions(\%oOptionTest, @stryOptionAllow))
-        {
-            $strCommand = cfgCommandName(CFGCMD_HELP);
-            return false;
-        }
 
-        # Validate and store options
-        my $bHelp = false;
-
-        if (defined($ARGV[0]) && $ARGV[0] eq cfgCommandName(CFGCMD_HELP) && defined($ARGV[1]))
-        {
-            $bHelp = true;
-            $strCommandHelp = $ARGV[1];
-            $ARGV[0] = $ARGV[1];
-        }
-
-        optionValidate(\%oOptionTest, $bHelp);
-
-        if ($bHelp)
-        {
-            cfgCommandSet(CFGCMD_HELP);
-        }
-    }
+    optionValidate(\%oOptionTest);
 
     # If this is not the remote and logging is allowed (to not overwrite log levels for tests) then set the log level so that
     # INFO/WARN messages can be displayed (the user may still disable them).  This should be run before any WARN logging is
@@ -348,7 +322,6 @@ sub optionValueGet
 sub optionValidate
 {
     my $oOptionTest = shift;
-    my $bHelp = shift;
 
     # Check that the command is present and valid
     $strCommand = $ARGV[0];
@@ -765,7 +738,7 @@ sub optionValidate
                     $oOption{$strOption}{value} = $strDefault if !$oOption{$strOption}{negate};
                 }
                 # Else check required
-                elsif (cfgDefOptionRequired($iCommandId, $iOptionId) && !$bHelp)
+                elsif (cfgDefOptionRequired($iCommandId, $iOptionId))
                 {
                     confess &log(ERROR,
                         "${strCommand} command requires option: ${strOption}" .
@@ -943,12 +916,7 @@ sub cfgOptionValid
     # If defined then this is the command help is being generated for so all valid checks should be against that command
     my $iCommandId;
 
-    if (defined($strCommandHelp))
-    {
-        $iCommandId = cfgCommandId($strCommandHelp);
-    }
-    # Else try to use the normal command
-    elsif (defined($strCommand))
+    if (defined($strCommand))
     {
         $iCommandId = cfgCommandId($strCommand);
     }

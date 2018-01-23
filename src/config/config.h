@@ -40,6 +40,8 @@ void cfgExeSet(const String *exeParam);
 
 const Variant *cfgOption(ConfigSource optionId);
 bool cfgOptionBool(ConfigSource optionId);
+const Variant *cfgOptionDefault(ConfigOption optionId);
+void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 ConfigDefineOption cfgOptionDefIdFromId(ConfigOption optionId);
 double cfgOptionDbl(ConfigSource optionId);
 int cfgOptionId(const char *optionName);

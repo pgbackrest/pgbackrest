@@ -41,19 +41,7 @@ sub main
         # Load command line parameters and config
         ############################################################################################################################
         backrestBinSet($strBackRestBin);
-        my $bConfigResult = configLoad();
-
-        # Display help and version
-        if (cfgCommandTest(CFGCMD_HELP) || cfgCommandTest(CFGCMD_VERSION))
-        {
-            # Load module dynamically
-            require pgBackRest::Config::ConfigHelp;
-            pgBackRest::Config::ConfigHelp->import();
-
-            # Generate help and exit
-            configHelp($ARGV[1], $ARGV[2], cfgCommandTest(CFGCMD_VERSION), $bConfigResult);
-            exitSafe(0);
-        }
+        configLoad();
 
         # Set test options
         if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))

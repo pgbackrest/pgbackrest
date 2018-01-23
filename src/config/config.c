@@ -90,6 +90,7 @@ typedef struct ConfigOptionValue
     unsigned int source:2;
 
     Variant *value;
+    Variant *defaultValue;
 } ConfigOptionValue;
 
 ConfigOptionValue configOptionValue[CFG_OPTION_TOTAL];
@@ -279,7 +280,86 @@ cfgOptionDefIdFromId(ConfigOption optionId)
 }
 
 /***********************************************************************************************************************************
-Get total indexed values for option
+Get/set option default
+***********************************************************************************************************************************/
+const Variant *
+cfgOptionDefault(ConfigOption optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (configOptionValue[optionId].defaultValue == NULL)
+    {
+        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
+
+        if (cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId) != NULL)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId));
+
+                MEM_CONTEXT_BEGIN(configMemContext)
+                {
+                    switch (cfgDefOptionType(optionDefId))
+                    {
+                        case cfgDefOptTypeBoolean:
+                        {
+                            configOptionValue[optionId].defaultValue = varNewBool(varBoolForce(defaultValue));
+                            break;
+                        }
+
+                        case cfgDefOptTypeFloat:
+                        {
+                            configOptionValue[optionId].defaultValue = varNewDbl(varDblForce(defaultValue));
+                            break;
+                        }
+
+                        case cfgDefOptTypeInteger:
+                        {
+                            configOptionValue[optionId].defaultValue = varNewInt(varIntForce(defaultValue));
+                            break;
+                        }
+
+                        case cfgDefOptTypeString:
+                            configOptionValue[optionId].defaultValue = varDup(defaultValue);
+                            break;
+
+                        default:
+                            THROW(                                  // {uncoverable - others types do not have defaults yet}
+                                AssertError, "type for option '%s' does not support defaults", cfgOptionName(optionId));
+                    }
+                }
+                MEM_CONTEXT_END();
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+    }
+
+    return configOptionValue[optionId].defaultValue;
+}
+
+void
+cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
+{
+    MEM_CONTEXT_BEGIN(configMemContext)
+    {
+        if (configOptionValue[optionId].defaultValue != NULL)
+            varFree(configOptionValue[optionId].defaultValue);
+
+        configOptionValue[optionId].defaultValue = varDup(defaultValue);
+
+        if (configOptionValue[optionId].source == cfgSourceDefault)
+        {
+            if (configOptionValue[optionId].value != NULL)
+                varFree(configOptionValue[optionId].value);
+
+            configOptionValue[optionId].value = varDup(defaultValue);
+        }
+    }
+    MEM_CONTEXT_END();
+}
+
+/***********************************************************************************************************************************
+Get index for option
 ***********************************************************************************************************************************/
 int
 cfgOptionIndex(ConfigOption optionId)

@@ -13,6 +13,9 @@ Map command names to ids and vice versa.
 typedef struct ConfigDefineCommandData
 {
     const char *name;                                               // Command name
+
+    const char *helpSummary;                                        // Brief summary of the command
+    const char *helpDescription;                                    // Full description of the command
 } ConfigDefineCommandData;
 
 // Command macros are intended to make the command definitions easy to read and to produce good diffs.
@@ -25,6 +28,11 @@ typedef struct ConfigDefineCommandData
 
 #define CFGDEFDATA_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam,
+
+#define CFGDEFDATA_COMMAND_HELP_SUMMARY(helpSummaryParam)                                                                          \
+    .helpSummary = helpSummaryParam,
+#define CFGDEFDATA_COMMAND_HELP_DESCRIPTION(helpDescriptionParam)                                                                  \
+    .helpDescription = helpDescriptionParam,
 
 /***********************************************************************************************************************************
 Define how an option is parsed and interacts with other options.
@@ -39,7 +47,12 @@ typedef struct ConfigDefineOptionData
     bool negate:1;                                                  // Can the option be negated?
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
-    unsigned int commandValid:15;                                   // Bitmap for commands that is option is valid for
+    unsigned int commandValid:15;                                   // Bitmap for commands that the option is valid for
+
+    const char *helpSection;                                        // Classify the option
+    const char *helpSummary;                                        // Brief summary of the option
+    const char *helpDescription;                                    // Full description of the option
+
     const void **data;                                              // Optional data and command overrides
 } ConfigDefineOptionData;
 
@@ -68,6 +81,13 @@ typedef struct ConfigDefineOptionData
 #define CFGDEFDATA_OPTION_TYPE(typeParam)                                                                                          \
     .type = typeParam,
 
+#define CFGDEFDATA_OPTION_HELP_SECTION(helpSectionParam)                                                                           \
+    .helpSection = helpSectionParam,
+#define CFGDEFDATA_OPTION_HELP_SUMMARY(helpSummaryParam)                                                                           \
+    .helpSummary = helpSummaryParam,
+#define CFGDEFDATA_OPTION_HELP_DESCRIPTION(helpDescriptionParam)                                                                   \
+    .helpDescription = helpDescriptionParam,
+
 // Define additional types of data that can be associated with an option.  Because these types are rare they are not give dedicated
 // fields and are instead packed into an array which is read at runtime.  This may seem inefficient but they are only accessed a
 // single time during parse so space efficiency is more important than performance.
@@ -83,6 +103,8 @@ typedef enum
     configDefDataTypeNameAlt,
     configDefDataTypePrefix,
     configDefDataTypeRequired,
+    configDefDataTypeHelpSummary,
+    configDefDataTypeHelpDescription,
 } ConfigDefineDataType;
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                   \
@@ -109,7 +131,7 @@ typedef enum
 
 #define CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(rangeMinParam, rangeMaxParam)                                                       \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeAllowRange, 2, 0, (const void *)(intptr_t)(int32)(rangeMinParam * 100),                                         \
+        configDefDataTypeAllowRange, 2, 0, (const void *)(intptr_t)(int32)(rangeMinParam * 100),                                   \
         (const void *)(intptr_t)(int32)(rangeMaxParam * 100)),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_NAME_ALT(nameAltParam)                                                                          \
@@ -133,6 +155,11 @@ typedef enum
 
 #define CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(commandOptionRequired)                                                                 \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeRequired, 0, commandOptionRequired),
+
+#define CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY(helpSummaryParam)                                                                  \
+    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeHelpSummary, 1, 0, helpSummaryParam),
+#define CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION(helpDescriptionParam)                                                          \
+    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeHelpDescription, 1, 0, helpDescriptionParam),
 
 /***********************************************************************************************************************************
 Include the automatically generated configuration data.
@@ -242,6 +269,26 @@ cfgDefCommandOptionCheck(ConfigDefineCommand commandDefId, ConfigDefineOption op
 {
     cfgDefCommandCheck(commandDefId);
     cfgDefOptionCheck(optionDefId);
+}
+
+/***********************************************************************************************************************************
+Command help description
+***********************************************************************************************************************************/
+const char *
+cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId)
+{
+    cfgDefCommandCheck(commandDefId);
+    return configDefineCommandData[commandDefId].helpDescription;
+}
+
+/***********************************************************************************************************************************
+Command help summary
+***********************************************************************************************************************************/
+const char *
+cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId)
+{
+    cfgDefCommandCheck(commandDefId);
+    return configDefineCommandData[commandDefId].helpSummary;
 }
 
 /***********************************************************************************************************************************
@@ -401,6 +448,48 @@ cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOptio
     }
 
     return false;
+}
+
+/***********************************************************************************************************************************
+Option help description
+***********************************************************************************************************************************/
+const char *
+cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
+{
+    cfgDefCommandOptionCheck(commandDefId, optionDefId);
+
+    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeHelpDescription);
+
+    if (dataDefFound)
+        return (char *)dataDefList[0];
+
+    return configDefineOptionData[optionDefId].helpDescription;
+}
+
+/***********************************************************************************************************************************
+Option help section
+***********************************************************************************************************************************/
+const char *
+cfgDefOptionHelpSection(ConfigDefineOption optionDefId)
+{
+    cfgDefOptionCheck(optionDefId);
+    return configDefineOptionData[optionDefId].helpSection;
+}
+
+/***********************************************************************************************************************************
+Option help summary
+***********************************************************************************************************************************/
+const char *
+cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
+{
+    cfgDefCommandOptionCheck(commandDefId, optionDefId);
+
+    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeHelpSummary);
+
+    if (dataDefFound)
+        return (char *)dataDefList[0];
+
+    return configDefineOptionData[optionDefId].helpSummary;
 }
 
 /***********************************************************************************************************************************

@@ -240,14 +240,13 @@ eval
 
         if ($oManifest->isBackRest())
         {
-            push(@stryOutput, 'help');
             push(@stryOutput, 'man');
         }
     }
 
     for my $strOutput (@stryOutput)
     {
-        if (!(($strOutput eq 'help' || $strOutput eq 'man') && $oManifest->isBackRest()))
+        if (!($strOutput eq 'man' && $oManifest->isBackRest()))
         {
             $oManifest->renderGet($strOutput);
         }
@@ -267,7 +266,7 @@ eval
 
             $oMarkdown->process();
         }
-        elsif (($strOutput eq 'help' || $strOutput eq 'man') && $oManifest->isBackRest())
+        elsif ($strOutput eq 'man' && $oManifest->isBackRest())
         {
             # Generate the command-line help
             my $oRender = new BackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
@@ -275,16 +274,9 @@ eval
                 new BackRestDoc::Common::DocConfig(
                     new BackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
 
-            if ($strOutput eq 'help')
-            {
-                $oDocConfig->helpDataWrite($oManifest);
-            }
-            else
-            {
-                $oStorageDoc->pathCreate(
-                    "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
-                $oStorageDoc->put("${strBasePath}/output/man/" . lc(BACKREST_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
-            }
+            $oStorageDoc->pathCreate(
+                "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+            $oStorageDoc->put("${strBasePath}/output/man/" . lc(BACKREST_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
         }
         elsif ($strOutput eq 'html')
         {

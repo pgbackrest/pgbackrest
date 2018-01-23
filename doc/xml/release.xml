@@ -54,6 +54,10 @@
 
                 <release-development-list>
                     <release-item>
+                        <p>Implement <cmd>help</cmd> command in C.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Implement <cmd>version</cmd> command in C.</p>
                     </release-item>
 

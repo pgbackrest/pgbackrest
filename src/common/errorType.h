@@ -31,6 +31,7 @@ ERROR_DECLARE(FileWriteError);
 ERROR_DECLARE(ArchiveTimeoutError);
 ERROR_DECLARE(MemoryError);
 ERROR_DECLARE(CipherError);
+ERROR_DECLARE(ParamInvalidError);
 
 ERROR_DECLARE(RuntimeError);
 

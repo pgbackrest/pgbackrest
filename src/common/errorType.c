@@ -45,6 +45,7 @@ ERROR_DEFINE(ERROR_CODE_MIN + 39, FileWriteError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 57, ArchiveTimeoutError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 69, MemoryError, RuntimeError);
 ERROR_DEFINE(ERROR_CODE_MIN + 70, CipherError, FormatError);
+ERROR_DEFINE(ERROR_CODE_MIN + 71, ParamInvalidError, RuntimeError);
 
 ERROR_DEFINE(ERROR_CODE_MAX, RuntimeError, RuntimeError);
 
@@ -70,6 +71,7 @@ static const ErrorType *errorTypeList[] =
     &ArchiveTimeoutError,
     &MemoryError,
     &CipherError,
+    &ParamInvalidError,
 
     &RuntimeError,
 

@@ -5,6 +5,7 @@ Main
 #include <stdlib.h>
 
 #include "command/archive/push/push.h"
+#include "command/help/help.h"
 #include "command/command.h"
 #include "common/error.h"
 #include "common/exit.h"
@@ -21,9 +22,17 @@ int main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad(argListSize, argList);
 
+        // Display help
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (cfgCommandHelp())
+        {
+            cmdHelp();
+            exit(0);
+        }
+
         // Display version
         // -------------------------------------------------------------------------------------------------------------------------
-        if (!cfgCommandHelp() && cfgCommand() == cfgCmdVersion)
+        if (cfgCommand() == cfgCmdVersion)
         {
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
             fflush(stdout);

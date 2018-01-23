@@ -851,6 +851,12 @@ sub processText
         # $strBuffer =~ s/\_/\\_/g;
     }
 
+    if ($strType eq 'text')
+    {
+        $strBuffer =~ s/\&mdash\;/--/g;
+        $strBuffer =~ s/\&lt\;/\</g;
+    }
+
     $strBuffer = $self->variableReplace($strBuffer);
 
     # Return from function and log return values if any

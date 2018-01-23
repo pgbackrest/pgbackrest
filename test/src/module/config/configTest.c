@@ -156,4 +156,29 @@ void testRun()
         TEST_RESULT_VOID(cfgInit(), "config init resets value");
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command begins as none");
     }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cfgOptionDefault() and cfgOptionDefaultSet()"))
+    {
+        TEST_RESULT_VOID(cfgInit(), "config init");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup), "backup command");
+
+        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptType))), "incr", "backup type default");
+        TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptCompress)), "true", "backup compress default");
+        TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");
+        TEST_RESULT_INT(varInt(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
+        TEST_RESULT_PTR(cfgOptionDefault(cfgOptDbInclude), NULL, "backup db-include default is null");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptDbHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbHost, varNewStrZ("backup-default")), "backup host default");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbHost, varNewStrZ("backup-default2")), "reset backup host default");
+        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptDbHost))), "backup", "backup host value");
+        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptDbHost))), "backup-default2", "backup host default");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptDbSocketPath, cfgSourceDefault, NULL), "backup db-socket-path set");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbSocketPath, varNewStrZ("/to/socket")), "backup db-socket-path default");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbSocketPath, varNewStrZ("/to/socket2")), "reset backup db-socket-path default");
+        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptDbSocketPath))), "/to/socket2", "backup db-socket-path value");
+        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptDbSocketPath))), "/to/socket2", "backup db-socket-path value default");
+    }
 }

@@ -125,4 +125,32 @@ void testRun()
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgDefCmdBackup, cfgDefOptType), true, "option valid");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptType), false, "option not valid");
     }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("cfgDefCommandHelp*() and cfgDefOptionHelp*()"))
+    {
+        TEST_RESULT_STR(cfgDefCommandHelpSummary(cfgDefCmdBackup), "Backup a database cluster.", "backup command help summary");
+        TEST_RESULT_STR(
+            cfgDefCommandHelpDescription(cfgDefCmdBackup),
+            "pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.",
+            "backup command help description");
+
+        TEST_RESULT_STR(cfgDefOptionHelpSection(cfgDefOptCompress), "general", "compress option help section");
+        TEST_RESULT_STR(
+            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptCompress), "Use gzip file compression.",
+            "backup command, compress option help summary");
+        TEST_RESULT_STR(
+            cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptCompress),
+            "Backup files are compatible with command-line gzip tools.", "backup command, compress option help description");
+        TEST_RESULT_STR(
+            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptType), "Backup type.", "backup command, type option help summary");
+        TEST_RESULT_STR(
+            cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptType),
+            "The following backup types are supported:\n"
+            "\n"
+            "* full - all database cluster files will be copied and there will be no dependencies on previous backups.\n"
+            "* incr - incremental from the last successful backup.\n"
+            "* diff - like an incremental backup but always based on the last full backup.",
+            "backup command, type option help description");
+    }
 }

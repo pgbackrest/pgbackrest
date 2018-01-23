@@ -34,6 +34,22 @@ cfgLoad(int argListSize, const char *argList[])
             logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
         logInit(logLevelConsole, logLevelStdErr, logTimestamp);
+
+        // Set default for backup-cmd
+        if (cfgOptionValid(cfgOptBackupHost) && cfgOption(cfgOptBackupHost) != NULL &&
+            cfgOptionSource(cfgOptBackupCmd) == cfgSourceDefault)
+        {
+            cfgOptionDefaultSet(cfgOptBackupCmd, varNewStr(cfgExe()));
+        }
+
+        if (cfgOptionValid(cfgOptDbCmd))
+        {
+            for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptDbHost); optionIdx++)
+            {
+                if (cfgOption(cfgOptDbHost + optionIdx) != NULL && cfgOptionSource(cfgOptDbCmd + optionIdx) == cfgSourceDefault)
+                    cfgOptionDefaultSet(cfgOptDbCmd + optionIdx, varNewStr(cfgExe()));
+            }
+        }
     }
     MEM_CONTEXT_TEMP_END();
 }

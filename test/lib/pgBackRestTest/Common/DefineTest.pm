@@ -400,6 +400,25 @@ my $oTestDef =
                 },
             ]
         },
+        # Help tests
+        {
+            &TESTDEF_NAME => 'help',
+            &TESTDEF_CONTAINER => true,
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'help',
+                    &TESTDEF_TOTAL => 4,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'command/help/help' => TESTDEF_COVERAGE_FULL,
+                    },
+                }
+            ]
+        },
         # Config tests
         {
             &TESTDEF_NAME => 'config',
@@ -409,7 +428,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'define',
-                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>
@@ -420,7 +439,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'config',
-                    &TESTDEF_TOTAL => 2,
+                    &TESTDEF_TOTAL => 3,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>

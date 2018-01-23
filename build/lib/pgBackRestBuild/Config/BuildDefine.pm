@@ -18,6 +18,8 @@ use pgBackRest::Common::Log;
 use pgBackRest::Common::String;
 use pgBackRest::Version;
 
+use BackRestDoc::Common::DocConfig;
+
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Data;
 
@@ -108,6 +110,69 @@ sub buildConfigDefineOptionEnum
 push @EXPORT, qw(buildConfigDefineOptionEnum);
 
 ####################################################################################################################################
+# Helper function to format help text
+####################################################################################################################################
+sub helpFormatText
+{
+    my $oManifest = shift;
+    my $oDocRender = shift;
+    my $oText = shift;
+    my $iIndent = shift;
+    my $iLength = shift;
+
+    # Split the string into lines for processing
+    my @stryText = split("\n", trim($oManifest->variableReplace($oDocRender->processText($oText))));
+    my $strText;
+    my $iIndex = 0;
+
+    foreach my $strLine (@stryText)
+    {
+        # Add a linefeed if this is not the first line
+        if (defined($strText))
+        {
+            $strText .= "\n";
+        }
+
+        # Escape perl special characters
+        $strLine =~ s/\"/\\"/g;
+
+        my $strPart;
+        my $bFirst = true;
+
+        # Split the line for output if it's too long
+        do
+        {
+            ($strPart, $strLine) = stringSplit($strLine, ' ', defined($strPart) ? $iLength - 4 : $iLength);
+
+            $strText .= ' ' x $iIndent;
+
+            if (!$bFirst)
+            {
+                $strText .= "    ";
+            }
+
+            $strText .= "\"${strPart}";
+
+            if (defined($strLine))
+            {
+                $strText .= "\"\n";
+            }
+            else
+            {
+                $strText .= ($iIndex + 1 < @stryText ? '\n' : '') . '"';
+            }
+
+            $bFirst = false;
+        }
+        while (defined($strLine));
+
+        $iIndex++;
+    }
+
+    return $strText;
+}
+
+####################################################################################################################################
 # Helper functions for building optional option data
 ####################################################################################################################################
 sub renderAllowList
@@ -161,6 +226,11 @@ sub renderOptional
 {
     my $rhOptional = shift;
     my $bCommand = shift;
+    my $rhOptionHelp = shift;
+    my $oManifest = shift;
+    my $oDocRender = shift;
+    my $strCommand = shift;
+    my $strOption = shift;
 
     my $strIndent = $bCommand ? '    ' : '';
     my $strBuildSourceOptional;
@@ -231,6 +301,25 @@ sub renderOptional
         $bSingleLine = true;
     }
 
+    if ($bCommand && defined($rhOptionHelp) && $rhOptionHelp->{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_COMMAND)
+    {
+        my $strSummary = helpFormatText($oManifest, $oDocRender, $rhOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
+
+        if (length($strSummary) > 74)
+        {
+            confess("summary for command '${strCommand}', option '${strOption}' may not be greater than 72 characters");
+        }
+
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) ? "\n" : '') .
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY(${strSummary})\n" .
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION\n" .
+            "${strIndent}            (\n" .
+                helpFormatText($oManifest, $oDocRender, $rhOptionHelp->{&CONFIG_HELP_DESCRIPTION}, 20, 111) . "\n" .
+            "${strIndent}            )\n";
+
+    }
+
     return $strBuildSourceOptional;
 }
 
@@ -239,6 +328,26 @@ sub renderOptional
 ####################################################################################################################################
 sub buildConfigDefine
 {
+    # Load help data
+    #-------------------------------------------------------------------------------------------------------------------------------
+    require BackRestDoc::Common::Doc;
+    require BackRestDoc::Common::DocManifest;
+
+    my $strDocPath = abs_path(dirname($0) . '/../doc');
+
+    my $oStorageDoc = new pgBackRest::Storage::Local(
+        $strDocPath, new pgBackRest::Storage::Posix::Driver({bFileSync => false, bPathSync => false}));
+
+    my @stryEmpty = [];
+    my $oManifest = new BackRestDoc::Common::DocManifest(
+        $oStorageDoc, \@stryEmpty, \@stryEmpty, \@stryEmpty, \@stryEmpty, undef, $strDocPath, false, false);
+
+    my $oDocRender = new BackRestDoc::Common::DocRender('text', $oManifest, false);
+    my $oDocConfig =
+        new BackRestDoc::Common::DocConfig(
+            new BackRestDoc::Common::Doc("${strDocPath}/xml/reference.xml"), $oDocRender);
+    my $hConfigHelp = $oDocConfig->{oConfigHash};
+
     # Build command constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_COMMAND};
@@ -249,6 +358,9 @@ sub buildConfigDefine
 
     foreach my $strCommand (cfgDefineCommandList())
     {
+        # Get command help
+        my $hCommandHelp = $hConfigHelp->{&CONFIG_HELP_COMMAND}{$strCommand};
+
         # Build C enum
         my $strCommandEnum = buildConfigDefineCommandEnum($strCommand);
         push(@{$rhEnum->{&BLD_LIST}}, $strCommandEnum);
@@ -258,7 +370,35 @@ sub buildConfigDefine
             "\n" .
             "    CFGDEFDATA_COMMAND\n" .
             "    (\n" .
-            "        CFGDEFDATA_COMMAND_NAME(\"${strCommand}\")\n" .
+            "        CFGDEFDATA_COMMAND_NAME(\"${strCommand}\")\n";
+
+
+        # Output help
+        if (defined($hCommandHelp))
+        {
+            $strBuildSource .=
+                "\n";
+
+            # Output command summary
+            my $strSummary = helpFormatText($oManifest, $oDocRender, $hCommandHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
+
+            if (length($strSummary) > 74)
+            {
+                confess("summary for command '${strCommand}' may not be greater than 72 characters");
+            }
+
+            $strBuildSource .=
+                "        CFGDEFDATA_COMMAND_HELP_SUMMARY(${strSummary})\n";
+
+            # Output description
+            $strBuildSource .=
+                "        CFGDEFDATA_COMMAND_HELP_DESCRIPTION\n" .
+                "        (\n" .
+                    helpFormatText($oManifest, $oDocRender, $hCommandHelp->{&CONFIG_HELP_DESCRIPTION}, 12, 119) . "\n" .
+                "        )\n";
+        }
+
+        $strBuildSource .=
             "    )\n";
     };
 
@@ -289,6 +429,9 @@ sub buildConfigDefine
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))
     {
+        # Get option help
+        my $hOptionHelp = $hConfigHelp->{&CONFIG_HELP_OPTION}{$strOption};
+
         # Build C enum
         my $strOptionEnum = buildConfigDefineOptionEnum($strOption);
         push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
@@ -317,7 +460,45 @@ sub buildConfigDefine
             "\n" .
             "        CFGDEFDATA_OPTION_INDEX_TOTAL(" . $rhOption->{&CFGDEF_INDEX_TOTAL} . ")\n" .
             "        CFGDEFDATA_OPTION_NEGATE(" . ($rhOption->{&CFGDEF_NEGATE} ? 'true' : 'false') . ")\n" .
-            "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n" .
+            "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
+
+        if (defined($hOptionHelp))
+        {
+            $strBuildSource .=
+                "\n";
+
+            # Output section
+            my $strSection =
+                defined($hOptionHelp->{&CONFIG_HELP_SECTION}) ? $hOptionHelp->{&CONFIG_HELP_SECTION} : 'general';
+
+            if (length($strSection) > 72)
+            {
+                confess("section for option '${strOption}' may not be greater than 72 characters");
+            }
+
+            $strBuildSource .=
+                "        CFGDEFDATA_OPTION_HELP_SECTION(\"${strSection}\")\n";
+
+            # Output summary
+            my $strSummary = helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
+
+            if (length($strSummary) > 74)
+            {
+                confess("summary for option '${strOption}' may not be greater than 72 characters");
+            }
+
+            $strBuildSource .=
+                "        CFGDEFDATA_OPTION_HELP_SUMMARY(${strSummary})\n";
+
+            # Output description
+            $strBuildSource .=
+                "        CFGDEFDATA_OPTION_HELP_DESCRIPTION\n" .
+                "        (\n" .
+                    helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_DESCRIPTION}, 12, 119) . "\n" .
+                "        )\n";
+        }
+
+        $strBuildSource .=
             "\n" .
             "        CFGDEFDATA_OPTION_COMMAND_LIST\n" .
             "        (\n";
@@ -345,7 +526,9 @@ sub buildConfigDefine
 
             if (defined($rhCommand))
             {
-                $strBuildSourceOptionalCommand = renderOptional($rhCommand, true);
+                $strBuildSourceOptionalCommand = renderOptional(
+                    $rhCommand, true, $hConfigHelp->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption},
+                    $oManifest, $oDocRender, $strCommand, $strOption);
 
                 if (defined($strBuildSourceOptionalCommand))
                 {

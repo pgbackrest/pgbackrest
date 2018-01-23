@@ -267,11 +267,11 @@
 
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
-                        <summary>Repository path where WAL segments and backups stored.</summary>
+                        <summary>Path where backups and archive are stored.</summary>
 
-                        <text>The repository is where <backrest/> stores backup and archives WAL segments.
+                        <text>The repository is where <backrest/> stores backups and archives WAL segments.
 
-                        If you are new to backup then it will be difficult to estimate in advance how much space you'll need.  The best thing to do is take some backups then record the size of different types of backups (full/incr/diff) and measure the amount of WAL generated per day.  This will give you a general idea of how much space you'll need, though of course requirements will likely change over time as your database evolves.</text>
+                        It may be difficult to estimate in advance how much space you'll need.  The best thing to do is take some backups then record the size of different types of backups (full/incr/diff) and measure the amount of WAL generated per day.  This will give you a general idea of how much space you'll need, though of course requirements will likely change over time as your database evolves.</text>
 
                         <example>/backup/db/backrest</example>
                     </config-key>
@@ -405,7 +405,7 @@
                 <config-key-list>
                     <!-- CONFIG - BACKUP SECTION - ARCHIVE-CHECK -->
                     <config-key id="archive-check" name="Check Archive">
-                        <summary>Check that WAL segments are present in the archive before backup completes.</summary>
+                        <summary>Check that WAL segments are in the archive before backup completes.</summary>
 
                         <text>Checks that all WAL segments required to make the backup consistent are present in the WAL archive.  It's a good idea to leave this as the default unless you are using another method for archiving.
 

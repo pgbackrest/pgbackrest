@@ -4,6 +4,7 @@ DESTDIR=
 
 pgbackrest: \
 		command/archive/push/push.o \
+		command/help/help.o \
 		command/command.o \
 		common/error.o \
 		common/errorType.o \
@@ -31,6 +32,7 @@ pgbackrest: \
 		main.o
 	$(CC) $(CFLAGS) -o pgbackrest \
 		command/archive/push/push.o \
+		command/help/help.o \
 		command/command.o \
 		common/error.o \
 		common/errorType.o \
