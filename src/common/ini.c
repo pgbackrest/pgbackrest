@@ -146,7 +146,7 @@ iniParse(Ini *this, const String *content)
                 String *section = NULL;
 
                 // Split the content into lines and loop
-                StringList *lines = strLstNewSplit(content, strNew("\n"));
+                StringList *lines = strLstNewSplitZ(content, "\n");
 
                 for (unsigned int lineIdx = 0; lineIdx < strLstSize(lines); lineIdx++)
                 {

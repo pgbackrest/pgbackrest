@@ -42,6 +42,45 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("strLstNewSplit()"))
+    {
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew(""), strNew(", ")), ", ")), "", "empty list");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew("item1"), strNew(", ")), ", ")), "item1", "one item");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstNewSplit(strNew("item1, item2"), strNew(", ")), ", ")), "item1, item2", "two items");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strLstNewSplitSize()"))
+    {
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSize(strNew(""), strNew(" "), 0), ", ")), "", "empty list");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def"), " ", 3), "-")), "abc-def", "two items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def"), " ", 4), "-")), "abc-def", "one items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def ghi"), " ", 4), "-")), "abc-def-ghi", "three items");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplitSizeZ(strNew("abc def ghi"), " ", 8), "-")), "abc def-ghi", "three items");
+
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(strLstNewSplitSize(strNew("this is a short sentence"), strNew(" "), 10), "\n")),
+            "this is a\n"
+            "short\n"
+            "sentence",
+            "empty list");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strLstNewVarLst()"))
+    {
+        VariantList *varList = varLstNew();
+
+        varLstAdd(varList, varNewStr(strNew("string1")));
+        varLstAdd(varList, varNewStr(strNew("string2")));
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewVarLst(varList), ", ")), "string1, string2", "string list from variant list");
+
+        varLstFree(varList);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("strLstPtr()"))
     {
         StringList *list = strLstNew();
@@ -74,19 +113,6 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strLstNewVarLst()"))
-    {
-        VariantList *varList = varLstNew();
-
-        varLstAdd(varList, varNewStr(strNew("string1")));
-        varLstAdd(varList, varNewStr(strNew("string2")));
-
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewVarLst(varList), ", ")), "string1, string2", "string list from variant list");
-
-        varLstFree(varList);
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("strLstJoin()"))
     {
         StringList *list = strLstNew();
@@ -108,10 +134,15 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strLstSplit()"))
+    if (testBegin("strLstSort()"))
     {
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew(""), strNew(", ")), ", ")), "", "empty list");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew("item1"), strNew(", ")), ", ")), "item1", "one item");
-        TEST_RESULT_STR(strPtr(strLstJoin(strLstNewSplit(strNew("item1, item2"), strNew(", ")), ", ")), "item1, item2", "two items");
+        StringList *list = strLstNew();
+
+        strLstAddZ(list, "c");
+        strLstAddZ(list, "a");
+        strLstAddZ(list, "b");
+
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderAsc), ", ")), "a, b, c", "sort ascending");
+        TEST_RESULT_STR(strPtr(strLstJoin(strLstSort(list, sortOrderDesc), ", ")), "c, b, a", "sort descending");
     }
 }

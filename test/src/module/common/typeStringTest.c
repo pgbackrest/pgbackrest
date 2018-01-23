@@ -89,15 +89,35 @@ void testRun()
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strEq() and strEqZ()"))
+    if (testBegin("strEq(), strEqZ(), strCmp(), strCmpZ()"))
     {
         TEST_RESULT_BOOL(strEq(strNew("equalstring"), strNew("equalstring")), true, "strings equal");
         TEST_RESULT_BOOL(strEq(strNew("astring"), strNew("anotherstring")), false, "strings not equal");
         TEST_RESULT_BOOL(strEq(strNew("astring"), strNew("bstring")), false, "equal length strings not equal");
 
+        TEST_RESULT_INT(strCmp(strNew("equalstring"), strNew("equalstring")), 0, "strings equal");
+        TEST_RESULT_INT(strCmp(strNew("a"), strNew("b")), -1, "a < b");
+        TEST_RESULT_INT(strCmp(strNew("b"), strNew("a")), 1, "b > a");
+
         TEST_RESULT_BOOL(strEqZ(strNew("equalstring"), "equalstring"), true, "strings equal");
         TEST_RESULT_BOOL(strEqZ(strNew("astring"), "anotherstring"), false, "strings not equal");
         TEST_RESULT_BOOL(strEqZ(strNew("astring"), "bstring"), false, "equal length strings not equal");
+
+        TEST_RESULT_INT(strCmpZ(strNew("equalstring"), "equalstring"), 0, "strings equal");
+        TEST_RESULT_INT(strCmpZ(strNew("a"), "b"), -1, "a < b");
+        TEST_RESULT_INT(strCmpZ(strNew("b"), "a"), 1, "b > a");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("strFirstUpper() and strFirstLower()"))
+    {
+        TEST_RESULT_STR(strPtr(strFirstUpper(strNew(""))), "", "empty first upper");
+        TEST_RESULT_STR(strPtr(strFirstUpper(strNew("aaa"))), "Aaa", "first upper");
+        TEST_RESULT_STR(strPtr(strFirstUpper(strNew("Aaa"))), "Aaa", "first already upper");
+
+        TEST_RESULT_STR(strPtr(strFirstLower(strNew(""))), "", "empty first lower");
+        TEST_RESULT_STR(strPtr(strFirstLower(strNew("AAA"))), "aAA", "first lower");
+        TEST_RESULT_STR(strPtr(strFirstLower(strNew("aAA"))), "aAA", "first already lower");
     }
 
     // *****************************************************************************************************************************

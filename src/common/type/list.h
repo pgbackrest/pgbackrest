@@ -23,6 +23,7 @@ List *lstNew(size_t itemSize);
 List *lstAdd(List *this, const void *item);
 void *lstGet(const List *this, unsigned int listIdx);
 unsigned int lstSize(const List *this);
+List *lstSort(List *this, int (*comparator)(const void *, const void*));
 void lstFree(List *this);
 
 #endif

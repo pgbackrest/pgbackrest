@@ -24,6 +24,12 @@ Split a string into a string list based on a delimiter
 StringList *
 strLstNewSplit(const String *string, const String *delimiter)
 {
+    return strLstNewSplitZ(string, strPtr(delimiter));
+}
+
+StringList *
+strLstNewSplitZ(const String *string, const char *delimiter)
+{
     // Create the list
     StringList *this = strLstNew();
 
@@ -36,17 +42,79 @@ strLstNewSplit(const String *string, const String *delimiter)
     do
     {
         // Find a delimiter match
-        stringMatch = strstr(stringBase, strPtr(delimiter));
+        stringMatch = strstr(stringBase, delimiter);
 
         // If a match was found then add the string
         if (stringMatch != NULL)
         {
             strLstAdd(this, strNewN(stringBase, stringMatch - stringBase));
-            stringBase = stringMatch + strSize(delimiter);
+            stringBase = stringMatch + strlen(delimiter);
         }
         // Else make whatever is left the last string
         else
             strLstAdd(this, strNew(stringBase));
+    }
+    while(stringMatch != NULL);
+
+    return this;
+}
+
+/***********************************************************************************************************************************
+Split a string into a string list based on a delimiter and max size per item
+
+In other words each item in the list will be no longer than size even if multiple delimiters are skipped.  This is useful for
+breaking up test on spaces, for example.
+***********************************************************************************************************************************/
+StringList *
+strLstNewSplitSize(const String *string, const String *delimiter, size_t size)
+{
+    return strLstNewSplitSizeZ(string, strPtr(delimiter), size);
+}
+
+StringList *
+strLstNewSplitSizeZ(const String *string, const char *delimiter, size_t size)
+{
+    // Create the list
+    StringList *this = strLstNew();
+
+    // Base points to the beginning of the string that is being searched
+    const char *stringBase = strPtr(string);
+
+    // Match points to the next delimiter match that has been found
+    const char *stringMatchLast = NULL;
+    const char *stringMatch = NULL;
+
+    do
+    {
+        // Find a delimiter match
+        stringMatch = strstr(stringMatchLast == NULL ? stringBase : stringMatchLast, delimiter);
+
+        // If a match was found then add the string
+        if (stringMatch != NULL)
+        {
+            if ((size_t)(stringMatch - stringBase) >= size)
+            {
+                if (stringMatchLast != NULL)
+                    stringMatch = stringMatchLast - strlen(delimiter);
+
+                strLstAdd(this, strNewN(stringBase, stringMatch - stringBase));
+                stringBase = stringMatch + strlen(delimiter);
+                stringMatchLast = NULL;
+            }
+            else
+                stringMatchLast = stringMatch + strlen(delimiter);
+        }
+        // Else make whatever is left the last string
+        else
+        {
+            if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
+            {
+                strLstAdd(this, strNewN(stringBase, (stringMatchLast - strlen(delimiter)) - stringBase));
+                stringBase = stringMatchLast;
+            }
+
+            strLstAdd(this, strNew(stringBase));
+        }
     }
     while(stringMatch != NULL);
 
@@ -162,6 +230,41 @@ unsigned int
 strLstSize(const StringList *this)
 {
     return lstSize((List *)this);
+}
+
+/***********************************************************************************************************************************
+Sort strings in alphabetical order
+***********************************************************************************************************************************/
+static int
+sortAscComparator(const void *item1, const void *item2)
+{
+    return strCmp(*(String **)item1, *(String **)item2);
+}
+
+static int
+sortDescComparator(const void *item1, const void *item2)
+{
+    return strCmp(*(String **)item2, *(String **)item1);
+}
+
+StringList *
+strLstSort(StringList *this, SortOrder sortOrder)
+{
+    switch (sortOrder)
+    {
+        case sortOrderAsc:
+        {
+            lstSort((List *)this, sortAscComparator);
+            break;
+        }
+
+        case sortOrderDesc:
+        {
+            lstSort((List *)this, sortDescComparator);
+            break;
+        }
+    }
+    return this;
 }
 
 /***********************************************************************************************************************************
