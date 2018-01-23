@@ -278,7 +278,7 @@ sub buildConfigDefine
         push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
     };
 
-    # Build command constants and data
+    # Build option constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
     $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION};
@@ -312,9 +312,8 @@ sub buildConfigDefine
             "        CFGDEFDATA_OPTION_SECTION(cfgDefSection" .
                 (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
                 ")\n" .
-            "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n";
-
-        $strBuildSource .=
+            "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n" .
+            "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "\n" .
             "        CFGDEFDATA_OPTION_INDEX_TOTAL(" . $rhOption->{&CFGDEF_INDEX_TOTAL} . ")\n" .
             "        CFGDEFDATA_OPTION_NEGATE(" . ($rhOption->{&CFGDEF_NEGATE} ? 'true' : 'false') . ")\n" .

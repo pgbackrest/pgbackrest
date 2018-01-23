@@ -33,6 +33,7 @@ typedef struct ConfigDefineOptionData
 {
     const char *name;                                               // Option name
     unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
+    unsigned int internal:1;                                        // Is the option only used internally?
     unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. db1-*)
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool negate:1;                                                  // Can the option be negated?
@@ -54,6 +55,8 @@ typedef struct ConfigDefineOptionData
     .name = nameParam,
 #define CFGDEFDATA_OPTION_INDEX_TOTAL(indexTotalParam)                                                                             \
     .indexTotal = indexTotalParam,
+#define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
+    .internal = internalParam,
 #define CFGDEFDATA_OPTION_NEGATE(negateParam)                                                                                      \
     .negate = negateParam,
 #define CFGDEFDATA_OPTION_REQUIRED(requiredParam)                                                                                  \
@@ -408,6 +411,16 @@ cfgDefOptionIndexTotal(ConfigDefineOption optionDefId)
 {
     cfgDefOptionCheck(optionDefId);
     return configDefineOptionData[optionDefId].indexTotal;
+}
+
+/***********************************************************************************************************************************
+Is the option for internal use only?
+***********************************************************************************************************************************/
+bool
+cfgDefOptionInternal(ConfigDefineOption optionDefId)
+{
+    cfgDefOptionCheck(optionDefId);
+    return configDefineOptionData[optionDefId].internal;
 }
 
 /***********************************************************************************************************************************

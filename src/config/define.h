@@ -14,7 +14,7 @@ typedef enum
 {
     cfgDefSectionCommandLine,                                       // command-line only
     cfgDefSectionGlobal,                                            // command-line or in any config section
-    cfgDefSectionStanza,                                            // command-line of in any config stanza section
+    cfgDefSectionStanza,                                            // command-line or in any config stanza section
 } ConfigDefSection;
 
 /***********************************************************************************************************************************
@@ -43,6 +43,7 @@ int cfgDefOptionDependValueTotal(ConfigDefineCommand commandDefId, ConfigDefineO
 bool cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
 const char *cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, int valueId);
 int cfgDefOptionIndexTotal(ConfigDefineOption optionDefId);
+bool cfgDefOptionInternal(ConfigDefineOption optionDefId);
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
 const char *cfgDefOptionNameAlt(ConfigDefineOption optionDefId);
 bool cfgDefOptionNegate(ConfigDefineOption optionDefId);

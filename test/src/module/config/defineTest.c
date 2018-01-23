@@ -92,6 +92,9 @@ void testRun()
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptDbPath), 8, "index total > 1");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptRepoPath), 1, "index total == 1");
 
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefOptSet), false, "option set is not internal");
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefOptTest), true, "option test is internal");
+
         TEST_RESULT_STR(cfgDefOptionNameAlt(cfgDefOptProcessMax), "thread-max", "alt name");
         TEST_RESULT_STR(cfgDefOptionNameAlt(cfgDefOptType), NULL, "no alt name");
 
