@@ -246,6 +246,26 @@ kvGet(const KeyValue *this, const Variant *key)
 }
 
 /***********************************************************************************************************************************
+Get a value as a list (even if there is only one value) using the key
+***********************************************************************************************************************************/
+VariantList *
+kvGetList(const KeyValue *this, const Variant *key)
+{
+    VariantList *result = NULL;
+
+    // Get the value
+    const Variant *value = kvGet(this, key);
+
+    // Convert the value to a list if it is not already one
+    if (value != NULL && varType(value) == varTypeVariantList)
+        result = varLstDup(varVarLst(value));
+    else
+        result = varLstAdd(varLstNew(), varDup(value));
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Free the string
 ***********************************************************************************************************************************/
 void

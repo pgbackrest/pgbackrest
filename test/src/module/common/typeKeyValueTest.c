@@ -21,7 +21,7 @@ void testRun()
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("kvPut(), kvAdd(), kvKeyList(), kvGet(), and kvDup()"))
+    if (testBegin("kvPut(), kvAdd(), kvKeyList(), kvGet(), kvGetList(), and kvDup()"))
     {
         KeyValue *store = NULL;
 
@@ -38,6 +38,7 @@ void testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(strPtr(varStr(kvGet(store, varNewStr(strNew("str-key"))))), "str-value", "get string/string");
         TEST_RESULT_INT(varInt(kvGet(store, varNewInt(42))), 57, "get int/int");
+        TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(42)), 0)), 57, "get int/int");
         TEST_RESULT_INT(varInt(kvGet(store, varNewStr(strNew("str-key-int")))), 99, "get string/int");
         TEST_RESULT_PTR(kvGet(store, varNewInt(78)), NULL, "get int/null");
 
@@ -61,6 +62,8 @@ void testRun()
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(kvGet(store, varNewInt(99))), 0)), 1, "get int/int");
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(kvGet(store, varNewInt(99))), 1)), 2, "get int/int");
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(kvGet(store, varNewInt(99))), 2)), 3, "get int/int");
+
+        TEST_RESULT_INT(varInt(varLstGet(kvGetList(store, varNewInt(99)), 2)), 3, "get int/int");
 
         // Check item in key list
         // -------------------------------------------------------------------------------------------------------------------------
