@@ -788,9 +788,11 @@ sub build
 
             if ($oManifest->isTargetTablespace($strTarget))
             {
+                # ??? On PG versions < 9.0 this is getting a path above what is really the tblspc if the database is in a tblspc
                 $strPath = dirname($strPath);
             }
 
+            # ??? This may be dead code as the clean function requires the top level target directories to exist
             if (!$oStorageDb->pathExists($strPath))
             {
                 $oStorageDb->pathCreate(
