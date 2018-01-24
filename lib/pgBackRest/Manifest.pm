@@ -461,7 +461,8 @@ sub repoPathGet
 
     my $strRepoFile = $strTarget;
 
-    if ($self->isTargetTablespace($strTarget))
+    if ($self->isTargetTablespace($strTarget) &&
+        ($self->dbVersion() >= PG_VERSION_90))
     {
         $strRepoFile .= '/' . $self->tablespacePathGet();
     }

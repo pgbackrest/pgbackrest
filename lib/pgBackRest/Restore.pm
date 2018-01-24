@@ -546,11 +546,12 @@ sub clean
         # Check the directory for files
         else
         {
-            # If this is a tablespace search for the special directory that Postgres puts in every tablespace directory
+            # If this is a tablespace search for the special directory that Postgres puts in versions 9.0 and above
             if ($oManifest->isTargetTablespace($strTarget))
             {
                 # Construct the special tablespace path
-                ${$self->{oTargetPath}}{$strTarget} = "${$self->{oTargetPath}}{$strTarget}/" . $oManifest->tablespacePathGet();
+                ${$self->{oTargetPath}}{$strTarget} = "${$self->{oTargetPath}}{$strTarget}" .
+                    (($oManifest->dbVersion() >= PG_VERSION_90) ? "/" . $oManifest->tablespacePathGet() : "");
 
                 # If this path does not exist then skip the rest of the checking - the path will be created later
                 if (!$oStorageDb->pathExists(${$self->{oTargetPath}}{$strTarget}))
@@ -1128,10 +1129,20 @@ sub process
 
         foreach my $strFile ($oManifest->keys(MANIFEST_SECTION_TARGET_FILE))
         {
+            my $strTblspcRegEx;
+            if ($oManifest->dbVersion() < PG_VERSION_90)
+            {
+                $strTblspcRegEx = '^' . MANIFEST_TARGET_PGTBLSPC . '\/[0-9]+\/[0-9]+\/PG\_VERSION';
+            }
+            else
+            {
+                $strTblspcRegEx = '^' . MANIFEST_TARGET_PGTBLSPC .
+                    '\/[0-9]+\/'.$oManifest->tablespacePathGet().'\/[0-9]+\/PG\_VERSION';
+            }
+
             # Check for DBs not in a tablespace and those that were created in a tablespace
             if ($strFile =~ ('^' . MANIFEST_TARGET_PGDATA . '\/base\/[0-9]+\/PG\_VERSION') ||
-                $strFile =~ ('^' . MANIFEST_TARGET_PGTBLSPC .
-                    '\/[0-9]+\/'.$oManifest->tablespacePathGet().'\/[0-9]+\/PG\_VERSION'))
+                $strFile =~ ($strTblspcRegEx))
             {
                 my $lDbId = basename(dirname($strFile));
 
@@ -1193,8 +1204,15 @@ sub process
                 {
                     if ($oManifest->isTargetTablespace($strTarget))
                     {
-                        $strDbFilter .=
-                            '|(^' . $strTarget . '\/' . $oManifest->tablespacePathGet() . '\/' . $strDbKey . '\/)';
+                        if ($oManifest->dbVersion() < PG_VERSION_90)
+                        {
+                            $strDbFilter .= '|(^' . $strTarget . '\/' . $strDbKey . '\/)';
+                        }
+                        else
+                        {
+                            $strDbFilter .=
+                                '|(^' . $strTarget . '\/' . $oManifest->tablespacePathGet() . '\/' . $strDbKey . '\/)';
+                        }
                     }
                 }
             }
