@@ -606,11 +606,14 @@ sub run
             'insert into test3_exists values (1);',
             {strDb => 'test3', bAutoCommit => true});
 
-        # Create a table in test1 to check - test1 will not be restored
-        $oHostDbMaster->sqlExecute(
-            'create table test1_zeroed (id int);' .
-            'insert into test1_zeroed values (1);',
-            {strDb => 'test1', bAutoCommit => true});
+        if ($bTestLocal)
+        {
+            # Create a table in test1 to check - test1 will not be restored
+            $oHostDbMaster->sqlExecute(
+                'create table test1_zeroed (id int);' .
+                'insert into test1_zeroed values (1);',
+                {strDb => 'test1', bAutoCommit => true});
+        }
 
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
         # are run in non-exlusive mode.
@@ -758,7 +761,7 @@ sub run
             truncate($oDestinationFileIo->handle(), $lSize);
             $oDestinationFileIo->close();
 
-            # Confirm the test filenode.map and the database test1 filenode.map aer zeroed
+            # Confirm the test filenode.map and the database test1 filenode.map are zeroed
             my ($strSHA1Test, $lSizeTest) = storageTest()->hashSize($strTestTable);
             $self->testResult(sub {($strSHA1Test eq $strSHA1) && ($lSizeTest == $lSize) && ($strSHA1 ne $strDb1TableSha1)},
                 true, 'database test1 not restored');
