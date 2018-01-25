@@ -667,7 +667,8 @@ sub backupArchiveDbHistoryId
         my $ullDbSysIdArchive = $$hDbListArchive{$iDbIdArchive}{&INFO_SYSTEM_ID};
 
         # Get the db-id from backup info history that corresponds to the archive db-version and db-system-id
-        foreach my $iDbIdBackup (keys %{$hDbListBackup})
+        # Sort from newest (highest db-id) to oldest
+        foreach my $iDbIdBackup (sort {$b <=> $a} keys %{$hDbListBackup})
         {
             if ($$hDbListBackup{$iDbIdBackup}{&INFO_SYSTEM_ID} == $ullDbSysIdArchive &&
                 $$hDbListBackup{$iDbIdBackup}{&INFO_DB_VERSION} eq $strDbVersionArchive)
