@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 C Test Harness
 ***********************************************************************************************************************************/
+#ifndef TEST_COMMON_HARNESS_H
+#define TEST_COMMON_HARNESS_H
+
 #include "common/error.h"
 #include "common/type.h"
 
@@ -235,3 +238,5 @@ Macros to ease the use of common data types
 
 #define TEST_RESULT_U16_HEX(statement, resultExpected, ...)                                                                        \
     TEST_RESULT(statement, resultExpected, uint16, "0x%04X", TEST_TYPE_FORMAT, ==, TEST_TYPE_COMPARE, __VA_ARGS__);
+
+#endif

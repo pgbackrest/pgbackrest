@@ -151,7 +151,13 @@ sub run
             $self->{oStorageTest}->pathCreate($strHostTestPath, {strMode => '0770'});
 
             # Create gcov directory
-            $self->{oStorageTest}->pathCreate($self->{strGCovPath}, {strMode => '0770'});
+            my $bGCovExists = true;
+
+            if (!$self->{oStorageTest}->pathExists($self->{strGCovPath}))
+            {
+                $self->{oStorageTest}->pathCreate($self->{strGCovPath}, {strMode => '0770'});
+                $bGCovExists = false;
+            }
 
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
@@ -165,7 +171,15 @@ sub run
                     "-test",
                     {bSuppressStdErr => true});
 
-                # Install bin and Perl C Library
+                # If testing C code copy source files to the test directory
+                if ($self->{oTest}->{&TEST_C} && !$bGCovExists)
+                {
+                    executeTest(
+                        "cp -r $self->{strBackRestBase}/src/*  $self->{strGCovPath} &&" .
+                        "cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
+                }
+
+                # If testing Perl code install bin and Perl C Library
                 if (!$self->{oTest}->{&TEST_C})
                 {
                     jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
@@ -190,8 +204,6 @@ sub run
                 'docker exec -i -u ' . TEST_USER . " ${strImage}" .
                 " valgrind -q --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress --leak-check=full" .
                 " --leak-resolution=high" .
-                # ($self->{oTest}->{&TEST_VM} ne VM_U12 && $self->{oTest}->{&TEST_VM} ne VM_CO6 ?
-                #     ' --show-leak-kinds=all' : ' --show-reachable=yes') .
                 " $self->{strGCovPath}/test";
         }
         else
@@ -224,13 +236,12 @@ sub run
             # If testing C code
             if ($self->{oTest}->{&TEST_C})
             {
-                my $strCSrcPath = "$self->{strBackRestBase}/src";
                 my $hTest = (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}));
                 my $hTestCoverage = $hTest->{&TESTDEF_COVERAGE};
 
                 my @stryCFile;
 
-                foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($strCSrcPath)})))
+                foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($self->{strGCovPath})})))
                 {
                     # Skip all files except .c files (including .auto.c)
                     next if $strFile !~ /(?<!\.auto)\.c$/;
@@ -238,9 +249,13 @@ sub run
                     # !!! Skip main for now until it can be rewritten
                     next if $strFile =~ /main\.c$/;
 
-                    if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}))
+                    # Skip test.c -- it will be added manually at the end
+                    next if $strFile =~ /test\.c$/;
+
+                    if (!defined($hTestCoverage->{substr($strFile, 0, length($strFile) - 2)}) &&
+                        $strFile !~ /^module\/[^\/]*\/.*Test\.c$/)
                     {
-                        push(@stryCFile, "${strCSrcPath}/${strFile}");
+                        push(@stryCFile, "${strFile}");
                     }
                 }
 
@@ -261,12 +276,12 @@ sub run
                     my $strCIncludeFile = "${strFile}.c";
 
                     # If the C file does not exist use the header file instead
-                    if (!$self->{oStorageTest}->exists("${strCSrcPath}/${strCIncludeFile}"))
+                    if (!$self->{oStorageTest}->exists("$self->{strGCovPath}/${strCIncludeFile}"))
                     {
                         # Error if code was expected
                         if ($hTestCoverage->{$strFile} ne TESTDEF_COVERAGE_NOCODE)
                         {
-                            confess &log(ERROR, "unable to file source file '${strCIncludeFile}'");
+                            confess &log(ERROR, "unable to find source file '$self->{strGCovPath}/${strCIncludeFile}'");
                         }
 
                         $strCIncludeFile = "${strFile}.h";
@@ -306,21 +321,36 @@ sub run
                 # Save C test file
                 $self->{oStorageTest}->put("$self->{strGCovPath}/test.c", $strTestC);
 
-                my $strGccCommand =
-                    'gcc -std=c99 -fPIC -g' .
-                    (vmCoverage($self->{oTest}->{&TEST_VM}) ? ' -fprofile-arcs -ftest-coverage -O0' : ' -O2') .
-                    ($self->{oTest}->{&TEST_CDEF} ? " $self->{oTest}->{&TEST_CDEF}" : '') .
-                    ' -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered' .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') .
-                    " -I$self->{strBackRestBase}/src -I$self->{strBackRestBase}/test/src test.c" .
-                    " $self->{strBackRestBase}/test/src/common/harnessTest.c" .
-                    " $self->{strBackRestBase}/test/src/common/logTest.c" .
-                    ' ' . join(' ', @stryCFile) . " -l crypto -o test";
+                # Build the Makefile
+                my $strMakefile =
+                    "CC=gcc\n" .
+                    "CFLAGS=-I. -std=c99 -fPIC -g \\\n" .
+                    "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered" .
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') . "\n" .
+                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') . "\n" .
+                    'TESTFLAGS=' . ($self->{oTest}->{&TEST_CDEF} ? "$self->{oTest}->{&TEST_CDEF}" : '') .
+                    "\n" .
+                    "\nSRCS=" . join(' ', @stryCFile) . "\n" .
+                    "OBJS=\$(SRCS:.c=.o)\n" .
+                    "\n" .
+                    "test: \$(OBJS) test.o\n" .
+                    "\t\$(CC) -o test \$(OBJS) test.o \$(LDFLAGS)\n" .
+                    "\n" .
+                    "test.o: test.c\n" .
+	                "\t\$(CC) \$(CFLAGS) \$(TESTFLAGS) " .
+                        (vmCoverage($self->{oTest}->{&TEST_VM}) ? '-fprofile-arcs -ftest-coverage -O0' : '-O2') .
+                        " -c test.c\n" .
+                    "\n" .
+                    ".c.o:\n" .
+	                "\t\$(CC) \$(CFLAGS) -O2 -c \$< -o \$@\n";
 
+                $self->{oStorageTest}->put($self->{strGCovPath} . "/Makefile", $strMakefile);
+
+                # Run the Makefile
                 executeTest(
                     'docker exec -i -u ' . TEST_USER . " ${strImage} bash -l -c '" .
                     "cd $self->{strGCovPath} && " .
-                    "${strGccCommand}'");
+                    "make'");
             }
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
@@ -422,11 +452,21 @@ sub end
 
                 # Go line by line and update uncovered statements
                 my $strUpdatedCoverage;
+                my $bFirst = true;
 
                 foreach my $strLine (split("\n", trim($strCoverage)))
                 {
-                    # If the statement is marked uncoverable
-                    if ($strLine =~ /\/\/ \{(uncoverable - [^\}]+|\+uncoverable|uncovered - [^\}]+|\+uncovered)\}\s*$/)
+                    # Rewrite source line to the original source path
+                    if ($bFirst)
+                    {
+                        $strLine =
+                            "        -:    0:Source:" .
+                                $self->{strBackRestBase} . ($strModule =~ /Test$/ ? '/test' : '') . "/src/" .
+                                testRunName(${strModule}, false) . ".c";
+                        $bFirst = false;
+                    }
+                    # Else if the statement is marked uncoverable
+                    elsif ($strLine =~ /\/\/ \{(uncoverable - [^\}]+|\+uncoverable|uncovered - [^\}]+|\+uncovered)\}\s*$/)
                     {
                         # Error if the statement is marked uncoverable but is in fact covered
                         if ($strLine !~ /^    \#\#\#\#\#/)
@@ -451,9 +491,7 @@ sub end
                 "cd $self->{strGCovPath} && " .
                 # Only generate coverage files for VMs that support coverage
                 (vmCoverage($self->{oTest}->{&TEST_VM}) ?
-                    "gcov2perl -db ../cover_db " . join(' ', @stryCoveredModule) . " && " : '') .
-                # If these aren't deleted then cover automagically finds them and includes them in the report
-                "rm *.gcda *.c.gcov'");
+                    "gcov2perl -db ../cover_db " . join(' ', @stryCoveredModule) : '') . "'");
         }
 
         # Record elapsed time
@@ -481,7 +519,6 @@ sub end
 
             containerRemove("test-$self->{iVmIdx}");
             executeTest("sudo rm -rf ${strHostTestPath}");
-            executeTest("sudo rm -rf $self->{strGCovPath}");
         }
 
         $bDone = true;

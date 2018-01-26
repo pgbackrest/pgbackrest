@@ -14,6 +14,8 @@ typedef struct Buffer Buffer;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+#include "common/type/string.h"
+
 Buffer *bufNew(size_t size);
 Buffer *bufNewStr(const String *string);
 Buffer *bufResize(Buffer *this, size_t size);

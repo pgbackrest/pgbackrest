@@ -37,6 +37,7 @@ typedef int64_t int64;
 /***********************************************************************************************************************************
 Include all header files in type directory for convenience
 ***********************************************************************************************************************************/
+#include "common/type/buffer.h"
 #include "common/type/list.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
