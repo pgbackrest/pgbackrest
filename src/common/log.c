@@ -16,7 +16,7 @@ Module variables
 ***********************************************************************************************************************************/
 // Log levels
 LogLevel logLevelStdOut = logLevelOff;
-LogLevel logLevelStdErr = logLevelWarn;
+LogLevel logLevelStdErr = logLevelOff;
 
 // Log file handles
 int logHandleStdOut = STDOUT_FILENO;

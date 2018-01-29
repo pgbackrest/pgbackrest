@@ -30,7 +30,9 @@ use pgBackRest::Version;
 sub main
 {
     my $strBackRestBin = shift;
-    @ARGV = @_;
+    my $strCommand = shift;
+    my $strConfigJson = shift;
+    my @stryCommandArg = @_;
 
     ################################################################################################################################
     # Run in eval block to catch errors
@@ -40,8 +42,7 @@ sub main
         ############################################################################################################################
         # Load command line parameters and config
         ############################################################################################################################
-        backrestBinSet($strBackRestBin);
-        configLoad();
+        configLoad(undef, $strBackRestBin, $strCommand, $strConfigJson);
 
         # Set test options
         if (cfgOptionTest(CFGOPT_TEST) && cfgOption(CFGOPT_TEST))
@@ -58,7 +59,7 @@ sub main
             require pgBackRest::Archive::Push::Push;
             pgBackRest::Archive::Push::Push->import();
 
-            exitSafe(new pgBackRest::Archive::Push::Push()->process($ARGV[1]));
+            exitSafe(new pgBackRest::Archive::Push::Push()->process($stryCommandArg[0]));
         }
 
         ############################################################################################################################
@@ -70,7 +71,7 @@ sub main
             require pgBackRest::Archive::Get::Get;
             pgBackRest::Archive::Get::Get->import();
 
-            exitSafe(new pgBackRest::Archive::Get::Get()->process());
+            exitSafe(new pgBackRest::Archive::Get::Get()->process($stryCommandArg[0], $stryCommandArg[1]));
         }
 
         ############################################################################################################################

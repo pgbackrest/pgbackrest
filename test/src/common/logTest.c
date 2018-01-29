@@ -14,6 +14,7 @@ Log Test Harness
 Name of file where logs are stored for testing
 ***********************************************************************************************************************************/
 String *stdoutFile = NULL;
+String *stderrFile = NULL;
 
 /***********************************************************************************************************************************
 Initialize log for testing
@@ -25,6 +26,9 @@ testLogInit()
 
     stdoutFile = strNewFmt("%s/stdout.log", testPath());
     logHandleStdOut = open(strPtr(stdoutFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
+    stderrFile = strNewFmt("%s/stderr.log", testPath());
+    logHandleStdErr = open(strPtr(stderrFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
 }
 
 /***********************************************************************************************************************************
@@ -45,6 +49,23 @@ testLogResult(const char *expected)
 }
 
 /***********************************************************************************************************************************
+Compare error log to a static string
+
+After the comparison the log is cleared so the next result can be compared.
+***********************************************************************************************************************************/
+void
+testLogErrResult(const char *expected)
+{
+    String *actual = strTrim(strNewBuf(storageGet(storageLocal(), stderrFile, false)));
+
+    if (!strEqZ(actual, expected))
+        THROW(AssertError, "\n\nexpected error log:\n\n%s\n\nbut actual error log was:\n\n%s\n\n", expected, strPtr(actual));
+
+    close(logHandleStdErr);
+    logHandleStdErr = open(strPtr(stderrFile), O_WRONLY | O_CREAT | O_TRUNC, 0640);
+}
+
+/***********************************************************************************************************************************
 Make sure nothing is left in the log after all tests have completed
 ***********************************************************************************************************************************/
 void
@@ -54,4 +75,9 @@ testLogFinal()
 
     if (!strEqZ(actual, ""))
         THROW(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", strPtr(actual));
+
+    actual = strTrim(strNewBuf(storageGet(storageLocal(), stderrFile, false)));
+
+    if (!strEqZ(actual, ""))
+        THROW(AssertError, "\n\nexpected error log to be empty but actual error log was:\n\n%s\n\n", strPtr(actual));
 }

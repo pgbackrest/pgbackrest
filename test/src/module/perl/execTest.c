@@ -25,13 +25,13 @@ void testRun()
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(perlCommand(), "|")),
-            "/usr/bin/perl|" TEST_PERL_MAIN "', 'info')|[NULL]", "custom command with no options");
+            "/usr/bin/perl|" TEST_PERL_MAIN "','info','{}')|[NULL]", "custom command with no options");
 
         cfgOptionSet(cfgOptPerlBin, cfgSourceParam, NULL);
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(perlCommand(), "|")),
-            TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "', 'info')|[NULL]", "command with no options");
+            TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "','info','{}')|[NULL]", "command with no options");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
@@ -49,16 +49,21 @@ void testRun()
         cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1));
 
         cfgOptionValidSet(cfgOptCompressLevel, true);
-        cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt(3));
+        cfgOptionSet(cfgOptCompressLevel, cfgSourceConfig, varNewInt(3));
 
         cfgOptionValidSet(cfgOptStanza, true);
-        cfgOptionSet(cfgOptStanza, cfgSourceParam, varNewStr(strNew("db")));
+        cfgOptionSet(cfgOptStanza, cfgSourceDefault, varNewStr(strNew("db")));
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(perlCommand(), "|")),
-            TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "'"
-            ", '--compress', '--compress-level', '3', '--no-online', '--protocol-timeout', '1.1', '--stanza', 'db'"
-            ", 'backup')|[NULL]", "simple options");
+            TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "','backup','{"
+            "\"compress\":{\"source\":\"param\",\"value\":true},"
+            "\"compress-level\":{\"source\":\"config\",\"value\":3},"
+            "\"online\":{\"source\":\"param\",\"negate\":true},"
+            "\"protocol-timeout\":{\"source\":\"param\",\"value\":1.1},"
+            "\"stanza\":{\"value\":\"db\"}"
+            "}')|[NULL]",
+            "simple options");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
@@ -94,11 +99,11 @@ void testRun()
 
         TEST_RESULT_STR(
             strPtr(strLstJoin(perlCommand(), "|")),
-            TEST_ENV_EXE "|" TEST_PERL_EXE "|-I.|-MDevel::Cover=-silent,1|" TEST_PERL_MAIN "'"
-            ", '--db-include', 'db1', '--db-include', 'db2'"
-            ", '--perl-option', '-I.', '--perl-option', '-MDevel::Cover=-silent,1'"
-            ", '--recovery-option', 'standby_mode=on', '--recovery-option', 'primary_conn_info=blah'"
-            ", 'help', 'restore', 'param1', 'param2')|[NULL]", "complex options");
+            TEST_ENV_EXE "|" TEST_PERL_EXE "|-I.|-MDevel::Cover=-silent,1|" TEST_PERL_MAIN "','restore','{"
+            "\"db-include\":{\"source\":\"param\",\"value\":{\"db1\":true,\"db2\":true}},"
+            "\"perl-option\":{\"source\":\"param\",\"value\":{\"-I.\":true,\"-MDevel::Cover=-silent,1\":true}},"
+            "\"recovery-option\":{\"source\":\"param\",\"value\":{\"standby_mode\":\"on\",\"primary_conn_info\":\"blah\"}}"
+            "}','param1','param2')|[NULL]", "complex options");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------

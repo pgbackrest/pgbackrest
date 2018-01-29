@@ -62,7 +62,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Config parsing implemented in C.</p>
+                        <p>Config parsing implemented in C and passed to Perl as JSON.</p>
                     </release-item>
 
                     <release-item>

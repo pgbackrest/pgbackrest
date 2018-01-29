@@ -6,13 +6,11 @@ package pgBackRest::Config::Config;
 use strict;
 use warnings FATAL => qw(all);
 use Carp qw(confess);
+use English '-no_match_vars';
 
-use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname basename);
-use Getopt::Long qw(GetOptions);
-use Storable qw(dclone);
+use JSON::PP;
 
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -83,62 +81,78 @@ push @EXPORT, qw(configLogging);
 sub configLoad
 {
     my $bInitLogging = shift;
+    my $strBackRestBin = shift;
+    my $strCommandName = shift;
+    my $strConfigJson = shift;
 
     # Clear option in case it was loaded before
     %oOption = ();
 
-    # Build hash with all valid command-line options
-    my @stryOptionAllow;
+    # Set backrest bin
+    backrestBinSet($strBackRestBin);
 
+    # Set command
+    $strCommand = $strCommandName;
+
+    # Convert options from JSON to a hash
+    my $rhOption;
+
+    eval
+    {
+      $rhOption = (JSON::PP->new()->allow_nonref())->decode($strConfigJson);
+      return true;
+    }
+    or do
+    {
+        confess &log(ASSERT, "$EVAL_ERROR" . (defined($strConfigJson) ? ":\n${strConfigJson}" : "<undef>"));
+    };
+
+    # Load options into final option hash
     for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
     {
-        my $strKey = cfgOptionName($iOptionId);
+        my $strOptionName = cfgOptionName($iOptionId);
 
-        foreach my $bAltName (false, true)
+        # If option is not defined then it is not valid
+        if (!defined($rhOption->{$strOptionName}))
         {
-            my $strOptionName = $strKey;
+            $oOption{$strOptionName}{valid} = false;
+        }
+        # Else set option
+        else
+        {
+            $oOption{$strOptionName}{valid} = true;
+            $oOption{$strOptionName}{source} =
+                defined($rhOption->{$strOptionName}{source}) ? $rhOption->{$strOptionName}{source} : CFGDEF_SOURCE_DEFAULT;
 
-            if ($bAltName)
+            # If option is negated only boolean will have a value
+            if ($rhOption->{$strOptionName}{negate})
             {
-                if (!defined(cfgDefOptionNameAlt($iOptionId)))
+                $oOption{$strOptionName}{negate} = true;
+
+                if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
                 {
-                    next;
+                    $oOption{$strOptionName}{value} = false;
                 }
-
-                $strOptionName = cfgDefOptionNameAlt($iOptionId);
             }
-
-            my $strOption = $strOptionName;
-
-            if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_HASH || cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_LIST)
+            # Else set the value
+            else
             {
-                $strOption .= '=s@';
-            }
-            elsif (cfgDefOptionType($iOptionId) ne CFGDEF_TYPE_BOOLEAN)
-            {
-                $strOption .= '=s';
-            }
+                $oOption{$strOptionName}{negate} = false;
 
-            push(@stryOptionAllow, $strOption);
-
-            # Check if the option can be negated
-            if (cfgDefOptionNegate($iOptionId))
-            {
-                push(@stryOptionAllow, 'no-' . $strOptionName);
+                if (defined($rhOption->{$strOptionName}{value}))
+                {
+                    if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
+                    {
+                        $oOption{$strOptionName}{value} = $rhOption->{$strOptionName}{value} eq INI_TRUE ? true : false;
+                    }
+                    else
+                    {
+                        $oOption{$strOptionName}{value} = $rhOption->{$strOptionName}{value};
+                    }
+                }
             }
         }
     }
-
-    # Get command-line options
-    my %oOptionTest;
-
-    # Parse command line options
-    if (!GetOptions(\%oOptionTest, @stryOptionAllow))
-    {
-        confess &log(ASSERT, "error parsing command line");
-    }
-
-    optionValidate(\%oOptionTest);
 
     # If this is not the remote and logging is allowed (to not overwrite log levels for tests) then set the log level so that
     # INFO/WARN messages can be displayed (the user may still disable them).  This should be run before any WARN logging is
@@ -274,594 +288,6 @@ sub configLoad
 }
 
 push @EXPORT, qw(configLoad);
-
-####################################################################################################################################
-# optionValueGet
-#
-# Find the value of an option using both the regular and alt values.  Error if both are defined.
-####################################################################################################################################
-sub optionValueGet
-{
-    my $strOption = shift;
-    my $hOption = shift;
-
-    my $strValue = $hOption->{$strOption};
-
-    # Some options have an alternate name so check for that as well
-    my $iOptionId = cfgOptionId($strOption);
-
-    if (defined(cfgDefOptionNameAlt($iOptionId)))
-    {
-        my $strOptionAlt = cfgDefOptionNameAlt($iOptionId);
-        my $strValueAlt = $hOption->{$strOptionAlt};
-
-        if (defined($strValueAlt))
-        {
-            if (!defined($strValue))
-            {
-                $strValue = $strValueAlt;
-
-                delete($hOption->{$strOptionAlt});
-                $hOption->{$strOption} = $strValue;
-            }
-            else
-            {
-                confess &log(ERROR, "'${strOption}' and '${strOptionAlt}' cannot both be defined", ERROR_OPTION_INVALID_VALUE);
-            }
-        }
-    }
-
-    return $strValue;
-}
-
-####################################################################################################################################
-# optionValidate
-#
-# Make sure the command-line options are valid based on the command.
-####################################################################################################################################
-sub optionValidate
-{
-    my $oOptionTest = shift;
-
-    # Check that the command is present and valid
-    $strCommand = $ARGV[0];
-
-    if (!defined($strCommand))
-    {
-        confess &log(ERROR, "command must be specified", ERROR_COMMAND_REQUIRED);
-    }
-
-    my $iCommandId = cfgCommandId($strCommand);
-
-    if ($iCommandId eq "-1")
-    {
-        confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
-    }
-
-    # Hash to store contents of the config file.  The file will be loaded once the config dependency is resolved unless all options
-    # are set on the command line or --no-config is specified.
-    my $oConfig;
-    my $bConfigExists = true;
-
-    # Keep track of unresolved dependencies
-    my $bDependUnresolved = true;
-    my %oOptionResolved;
-
-    # Loop through all possible options
-    while ($bDependUnresolved)
-    {
-        # Assume that all dependencies will be resolved in this loop
-        $bDependUnresolved = false;
-
-        for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
-        {
-            my $strOption = cfgOptionName($iOptionId);
-
-            # Skip the option if it has been resolved in a prior loop
-            if (defined($oOptionResolved{$strOption}))
-            {
-                next;
-            }
-
-            # Determine if an option is valid for a command
-            $oOption{$strOption}{valid} = cfgDefOptionValid($iCommandId, $iOptionId);
-
-            if (!$oOption{$strOption}{valid})
-            {
-                $oOptionResolved{$strOption} = true;
-                next;
-            }
-
-            # Store the option value
-            my $strValue = optionValueGet($strOption, $oOptionTest);
-
-            # Check to see if an option can be negated.  Make sure that it is not set and negated at the same time.
-            $oOption{$strOption}{negate} = false;
-
-            if (cfgDefOptionNegate($iOptionId))
-            {
-                $oOption{$strOption}{negate} = defined($$oOptionTest{'no-' . $strOption});
-
-                if ($oOption{$strOption}{negate} && defined($strValue))
-                {
-                    confess &log(ERROR, "option '${strOption}' cannot be both set and negated", ERROR_OPTION_NEGATE);
-                }
-
-                if ($oOption{$strOption}{negate} && cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
-                {
-                    $strValue = false;
-                }
-            }
-
-            # Check dependency for the command then for the option
-            my $bDependResolved = true;
-            my $strDependOption;
-            my $strDependValue;
-            my $strDependType;
-
-            if (cfgDefOptionDepend($iCommandId, $iOptionId))
-            {
-                # Check if the depend option has a value
-                my $iDependOptionId = cfgDefOptionDependOption($iCommandId, $iOptionId);
-                $strDependOption = cfgOptionName($iDependOptionId);
-                $strDependValue = $oOption{$strDependOption}{value};
-
-                # Make sure the depend option has been resolved, otherwise skip this option for now
-                if (!defined($oOptionResolved{$strDependOption}))
-                {
-                    $bDependUnresolved = true;
-                    next;
-                }
-
-                if (!defined($strDependValue))
-                {
-                    $bDependResolved = false;
-                    $strDependType = 'source';
-                }
-
-                # If a depend value exists, make sure the option value matches
-                if ($bDependResolved && cfgDefOptionDependValueTotal($iCommandId, $iOptionId) == 1 &&
-                    cfgDefOptionDependValue($iCommandId, $iOptionId, 0) ne $strDependValue)
-                {
-                    $bDependResolved = false;
-                    $strDependType = 'value';
-                }
-
-                # If a depend list exists, make sure the value is in the list
-                if ($bDependResolved && cfgDefOptionDependValueTotal($iCommandId, $iOptionId) > 1 &&
-                    !cfgDefOptionDependValueValid($iCommandId, $iOptionId, $strDependValue))
-                {
-                    $bDependResolved = false;
-                    $strDependType = 'list';
-                }
-            }
-
-            # If the option value is undefined and not negated, see if it can be loaded from the config file
-            if (!defined($strValue) && !$oOption{$strOption}{negate} && $strOption ne cfgOptionName(CFGOPT_CONFIG) &&
-                defined(cfgDefOptionSection($iOptionId)) && $bDependResolved)
-            {
-                # If the config option has not been resolved yet then continue processing
-                if (!defined($oOptionResolved{cfgOptionName(CFGOPT_CONFIG)}) ||
-                    !defined($oOptionResolved{cfgOptionName(CFGOPT_STANZA)}))
-                {
-                    $bDependUnresolved = true;
-                    next;
-                }
-
-                # If the config option is defined try to get the option from the config file
-                if ($bConfigExists && defined($oOption{cfgOptionName(CFGOPT_CONFIG)}{value}))
-                {
-                    # Attempt to load the config file if it has not been loaded
-                    if (!defined($oConfig))
-                    {
-                        my $strConfigFile = $oOption{cfgOptionName(CFGOPT_CONFIG)}{value};
-                        $bConfigExists = -e $strConfigFile;
-
-                        if ($bConfigExists)
-                        {
-                            if (!-f $strConfigFile)
-                            {
-                                confess &log(ERROR, "'${strConfigFile}' is not a file", ERROR_FILE_INVALID);
-                            }
-
-                            # Load Storage::Helper module
-                            require pgBackRest::Storage::Helper;
-                            pgBackRest::Storage::Helper->import();
-
-                            $oConfig = iniParse(${storageLocal->('/')->get($strConfigFile)}, {bRelaxed => true});
-                        }
-                    }
-
-                    # Get the section that the value should be in
-                    my $strSection = cfgDefOptionSection($iOptionId);
-
-                    # Always check for the option in the stanza section first
-                    if (cfgOptionTest(CFGOPT_STANZA))
-                    {
-                        $strValue = optionValueGet($strOption, $$oConfig{cfgOption(CFGOPT_STANZA)});
-                    }
-
-                    # Only continue searching when strSection != CFGDEF_SECTION_STANZA.  Some options (e.g. db-path) can only be
-                    # configured in the stanza section.
-                    if (!defined($strValue) && $strSection ne CFGDEF_SECTION_STANZA)
-                    {
-                        # Check the stanza command section
-                        if (cfgOptionTest(CFGOPT_STANZA))
-                        {
-                            $strValue = optionValueGet($strOption, $$oConfig{cfgOption(CFGOPT_STANZA) . ":${strCommand}"});
-                        }
-
-                        # Check the global command section
-                        if (!defined($strValue))
-                        {
-                            $strValue = optionValueGet($strOption, $$oConfig{&CFGDEF_SECTION_GLOBAL . ":${strCommand}"});
-                        }
-
-                        # Finally check the global section
-                        if (!defined($strValue))
-                        {
-                            $strValue = optionValueGet($strOption, $$oConfig{&CFGDEF_SECTION_GLOBAL});
-                        }
-                    }
-
-                    # Fix up data types
-                    if (defined($strValue))
-                    {
-                        # The empty string is undefined
-                        if ($strValue eq '')
-                        {
-                            $strValue = undef;
-                        }
-                        # Convert Y or N to boolean
-                        elsif (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
-                        {
-                            if ($strValue eq 'y')
-                            {
-                                $strValue = true;
-                            }
-                            elsif ($strValue eq 'n')
-                            {
-                                $strValue = false;
-                            }
-                            else
-                            {
-                                confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option",
-                                             ERROR_OPTION_INVALID_VALUE);
-                            }
-                        }
-                        # Convert a list of key/value pairs to a hash
-                        elsif (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_HASH ||
-                               cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_LIST)
-                        {
-                            my @oValue = ();
-
-                            # If there is only one key/value
-                            if (ref(\$strValue) eq 'SCALAR')
-                            {
-                                push(@oValue, $strValue);
-                            }
-                            # Else if there is an array of values
-                            else
-                            {
-                                @oValue = @{$strValue};
-                            }
-
-                            # Reset the value hash
-                            $strValue = {};
-
-                            # Iterate and parse each key/value pair
-                            foreach my $strHash (@oValue)
-                            {
-                                my $iEqualIdx = index($strHash, '=');
-
-                                if ($iEqualIdx < 1 || $iEqualIdx == length($strHash) - 1)
-                                {
-                                    confess &log(ERROR, "'${strHash}' is not valid for '${strOption}' option",
-                                                 ERROR_OPTION_INVALID_VALUE);
-                                }
-
-                                my $strHashKey = substr($strHash, 0, $iEqualIdx);
-                                my $strHashValue = substr($strHash, length($strHashKey) + 1);
-
-                                $$strValue{$strHashKey} = $strHashValue;
-                            }
-                        }
-                        # In all other cases the value should be scalar
-                        elsif (ref(\$strValue) ne 'SCALAR')
-                        {
-                            confess &log(
-                                ERROR, "option '${strOption}' cannot be specified multiple times", ERROR_OPTION_MULTIPLE_VALUE);
-                        }
-
-                        $oOption{$strOption}{source} = CFGDEF_SOURCE_CONFIG;
-                    }
-                }
-            }
-
-            if (cfgDefOptionDepend($iCommandId, $iOptionId) && !$bDependResolved && defined($strValue))
-            {
-                my $strError = "option '${strOption}' not valid without option ";
-                my $iDependOptionId = cfgOptionId($strDependOption);
-
-                if ($strDependType eq 'source')
-                {
-                    confess &log(ERROR, "${strError}'${strDependOption}'", ERROR_OPTION_INVALID);
-                }
-
-                # If a depend value exists, make sure the option value matches
-                if ($strDependType eq 'value')
-                {
-                    if (cfgDefOptionType($iDependOptionId) eq CFGDEF_TYPE_BOOLEAN)
-                    {
-                        $strError .=
-                            "'" . (cfgDefOptionDependValue($iCommandId, $iOptionId, 0) ? '' : 'no-') . "${strDependOption}'";
-                    }
-                    else
-                    {
-                        $strError .= "'${strDependOption}' = '" . cfgDefOptionDependValue($iCommandId, $iOptionId, 0) . "'";
-                    }
-
-                    confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
-                }
-
-                $strError .= "'${strDependOption}'";
-
-                # If a depend list exists, make sure the value is in the list
-                if ($strDependType eq 'list')
-                {
-                    my @oyValue;
-
-                    for (my $iValueId = 0; $iValueId < cfgDefOptionDependValueTotal($iCommandId, $iOptionId); $iValueId++)
-                    {
-                        push(@oyValue, "'" . cfgDefOptionDependValue($iCommandId, $iOptionId, $iValueId) . "'");
-                    }
-
-                    $strError .= @oyValue == 1 ? " = $oyValue[0]" : " in (" . join(", ", @oyValue) . ")";
-                    confess &log(ERROR, $strError, ERROR_OPTION_INVALID);
-                }
-            }
-
-            # Is the option defined?
-            if (defined($strValue))
-            {
-                # Check that floats and integers are valid
-                if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_INTEGER ||
-                    cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_FLOAT)
-                {
-                    # Test that the string is a valid float or integer by adding 1 to it.  It's pretty hokey but it works and it
-                    # beats requiring Scalar::Util::Numeric to do it properly.
-                    my $bError = false;
-
-                    eval
-                    {
-                        my $strTest = $strValue + 1;
-                        return true;
-                    }
-                    or do
-                    {
-                        $bError = true;
-                    };
-
-                    # Check that integers are really integers
-                    if (!$bError && cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_INTEGER &&
-                        (int($strValue) . 'S') ne ($strValue . 'S'))
-                    {
-                        $bError = true;
-                    }
-
-                    # Error if the value did not pass tests
-                    !$bError
-                        or confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
-                }
-
-                # Process an allow list for the command then for the option
-                if (cfgDefOptionAllowList($iCommandId, $iOptionId) &&
-                    !cfgDefOptionAllowListValueValid($iCommandId, $iOptionId, $strValue))
-                {
-                    confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_VALUE);
-                }
-
-                # Process an allow range for the command then for the option
-                if (cfgDefOptionAllowRange($iCommandId, $iOptionId) &&
-                    ($strValue < cfgDefOptionAllowRangeMin($iCommandId, $iOptionId) ||
-                     $strValue > cfgDefOptionAllowRangeMax($iCommandId, $iOptionId)))
-                {
-                    confess &log(ERROR, "'${strValue}' is not valid for '${strOption}' option", ERROR_OPTION_INVALID_RANGE);
-                }
-
-                # Set option value
-                if (ref($strValue) eq 'ARRAY' &&
-                    (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_HASH || cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_LIST))
-                {
-                    foreach my $strItem (@{$strValue})
-                    {
-                        my $strKey;
-                        my $strValue;
-
-                        # If the keys are expected to have values
-                        if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_HASH)
-                        {
-                            # Check for = and make sure there is a least one character on each side
-                            my $iEqualPos = index($strItem, '=');
-
-                            if ($iEqualPos < 1 || length($strItem) <= $iEqualPos + 1)
-                            {
-                                confess &log(ERROR, "'${strItem}' not valid key/value for '${strOption}' option",
-                                                    ERROR_OPTION_INVALID_PAIR);
-                            }
-
-                            $strKey = substr($strItem, 0, $iEqualPos);
-                            $strValue = substr($strItem, $iEqualPos + 1);
-                        }
-                        # Else no values are expected so set value to true
-                        else
-                        {
-                            $strKey = $strItem;
-                            $strValue = true;
-                        }
-
-                        # Check that the key has not already been set
-                        if (defined($oOption{$strOption}{$strKey}{value}))
-                        {
-                            confess &log(ERROR, "'${$strItem}' already defined for '${strOption}' option",
-                                                ERROR_OPTION_DUPLICATE_KEY);
-                        }
-
-                        # Set key/value
-                        $oOption{$strOption}{value}{$strKey} = $strValue;
-                    }
-                }
-                else
-                {
-                    $oOption{$strOption}{value} = $strValue;
-                }
-
-                # If not config sourced then it must be a param
-                if (!defined($oOption{$strOption}{source}))
-                {
-                    $oOption{$strOption}{source} = CFGDEF_SOURCE_PARAM;
-                }
-            }
-            # Else try to set a default
-            elsif ($bDependResolved)
-            {
-                # Source is default for this option
-                $oOption{$strOption}{source} = CFGDEF_SOURCE_DEFAULT;
-
-                # Check for default in command then option
-                my $strDefault = cfgDefOptionDefault($iCommandId, $iOptionId);
-
-                # If default is defined
-                if (defined($strDefault))
-                {
-                    # Only set default if dependency is resolved
-                    $oOption{$strOption}{value} = $strDefault if !$oOption{$strOption}{negate};
-                }
-                # Else check required
-                elsif (cfgDefOptionRequired($iCommandId, $iOptionId))
-                {
-                    confess &log(ERROR,
-                        "${strCommand} command requires option: ${strOption}" .
-                            (defined(cfgDefOptionSection($iOptionId)) &&
-                                cfgDefOptionSection($iOptionId) eq CFGDEF_SECTION_STANZA ? "\nHINT: does this stanza exist?" : ''),
-                        ERROR_OPTION_REQUIRED);
-                }
-            }
-
-            $oOptionResolved{$strOption} = true;
-        }
-    }
-
-    # Make sure all options specified on the command line are valid
-    foreach my $strOption (sort(keys(%{$oOptionTest})))
-    {
-        # Strip "no-" off the option
-        $strOption = $strOption =~ /^no\-/ ? substr($strOption, 3) : $strOption;
-
-        if (!$oOption{$strOption}{valid})
-        {
-            confess &log(ERROR, "option '${strOption}' not valid for command '${strCommand}'", ERROR_OPTION_COMMAND);
-        }
-    }
-
-    # If a config file was loaded then determine if all options are valid in the config file
-    if (defined($oConfig))
-    {
-        configFileValidate($oConfig);
-    }
-}
-
-####################################################################################################################################
-# configFileValidate
-#
-# Determine if the configuration file contains any invalid options or placements. Not valid on remote.
-####################################################################################################################################
-sub configFileValidate
-{
-    my $oConfig = shift;
-
-    my $bFileValid = true;
-
-    if (!cfgCommandTest(CFGCMD_REMOTE) && !cfgCommandTest(CFGCMD_LOCAL))
-    {
-        foreach my $strSectionKey (keys(%$oConfig))
-        {
-            my ($strSection, $strCommand) = ($strSectionKey =~ m/([^:]*):*(\w*-*\w*)/);
-
-            foreach my $strOption (keys(%{$$oConfig{$strSectionKey}}))
-            {
-                my $strOptionDisplay = $strOption;
-                my $strValue = $$oConfig{$strSectionKey}{$strOption};
-
-                # Is the option listed as an alternate name for another option? If so, replace it with the recognized option.
-                my $strOptionAltName = optionAltName($strOption);
-
-                if (defined($strOptionAltName))
-                {
-                    $strOption = $strOptionAltName;
-                }
-
-                # Is the option a valid pgbackrest option?
-                if (!(cfgOptionId($strOption) ne '-1' || defined($strOptionAltName)))
-                {
-                    &log(WARN, cfgOption(CFGOPT_CONFIG) . " file contains invalid option '${strOptionDisplay}'");
-                    $bFileValid = false;
-                }
-                else
-                {
-                    # Is the option valid for the command section in which it is located?
-                    if (defined($strCommand) && $strCommand ne '')
-                    {
-                        if (!cfgDefOptionValid(cfgCommandId($strCommand), cfgOptionId($strOption)))
-                        {
-                            &log(WARN, cfgOption(CFGOPT_CONFIG) . " valid option '${strOptionDisplay}' is not valid for command " .
-                                "'${strCommand}'");
-                            $bFileValid = false;
-                        }
-                    }
-
-                    # Is the valid option a stanza-only option and not located in a global section?
-                    if (cfgDefOptionSection(cfgOptionId($strOption)) eq CFGDEF_SECTION_STANZA &&
-                        $strSection eq CFGDEF_SECTION_GLOBAL)
-                    {
-                        &log(WARN,
-                            cfgOption(CFGOPT_CONFIG) .  " valid option '${strOptionDisplay}' is a stanza section option and is" .
-                            " not valid in section ${strSection}\n" .
-                            "HINT: global options can be specified in global or stanza sections but not visa-versa");
-                        $bFileValid = false;
-                    }
-                }
-            }
-        }
-    }
-
-    return $bFileValid;
-}
-
-####################################################################################################################################
-# optionAltName
-#
-# Returns the ALT_NAME for the option if one exists.
-####################################################################################################################################
-sub optionAltName
-{
-    my $strOption = shift;
-
-    my $strOptionAltName = undef;
-
-    # Check if the options exists as an alternate name (e.g. db-host has altname db1-host)
-    for (my $iOptionId = 0; $iOptionId < cfgOptionTotal(); $iOptionId++)
-    {
-        my $strKey = cfgOptionName($iOptionId);
-
-        if (defined(cfgDefOptionNameAlt($iOptionId)) && cfgDefOptionNameAlt($iOptionId) eq $strOption)
-        {
-            $strOptionAltName = $strKey;
-        }
-    }
-
-    return $strOptionAltName;
-}
 
 ####################################################################################################################################
 # cfgOptionIdFromIndex - return name for options that can be indexed (e.g. db1-host, db2-host).

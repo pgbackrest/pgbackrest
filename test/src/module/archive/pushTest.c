@@ -3,7 +3,7 @@ Test Archive Push Command
 ***********************************************************************************************************************************/
 #include <stdlib.h>
 
-#include "config/parse.h"
+#include "config/load.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -20,7 +20,8 @@ void testRun()
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
-        configParse(strLstSize(argList), strLstPtr(argList));
+        cfgLoad(strLstSize(argList), strLstPtr(argList));
+        logInit(logLevelInfo, logLevelOff, false);
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
@@ -90,13 +91,13 @@ void testRun()
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "archive-push");
-        configParse(strLstSize(argList), strLstPtr(argList));
+        cfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "000000010000000100000001");
-        configParse(strLstSize(argList), strLstPtr(argList));
+        cfgLoad(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR(cmdArchivePush(), AssertError, "archive-push in C does not support synchronous mode");
 
@@ -107,7 +108,8 @@ void testRun()
         strLstAdd(argList, strNewFmt("--perl-bin=%s", strPtr(perlBin)));
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
-        configParse(strLstSize(argList), strLstPtr(argList));
+        cfgLoad(strLstSize(argList), strLstPtr(argList));
+        logInit(logLevelInfo, logLevelOff, false);
 
         TRY_BEGIN()
         {

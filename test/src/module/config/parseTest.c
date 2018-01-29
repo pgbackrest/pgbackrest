@@ -335,6 +335,15 @@ void testRun()
         )));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_BACKUP " command");
+        logInit(logLevelInfo, logLevelOff, false);
+        testLogErrResult(
+            strPtr(
+                strNewFmt(
+                    "WARN: '%s' contains option 'recovery-option' invalid for section 'db:backup'\n"
+                    "WARN: '%s' contains invalid option 'bogus'\n"
+                    "WARN: '%s' contains negate option 'no-compress'\n"
+                    "WARN: '%s' contains command-line only option 'online'",
+                    strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile))));
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptDbPath)), "/path/to/db", "    db-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDbPath), cfgSourceConfig, "    db-path is source config");

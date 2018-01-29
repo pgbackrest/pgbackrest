@@ -9,6 +9,7 @@ Functions
 ***********************************************************************************************************************************/
 void testLogInit();
 void testLogResult(const char *expected);
+void testLogErrResult(const char *expected);
 void testLogFinal();
 
 #endif

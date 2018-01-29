@@ -39,7 +39,18 @@ sub process
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->process');
+    my
+    (
+        $strOperation,
+        $strSourceArchive,
+        $strDestinationFile
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->process', \@_,
+            {name => 'strSourceArchive'},
+            {name => 'strDestinationFile'}
+        );
 
     # Make sure the command happens on the db side
     if (!isDbLocal())
@@ -48,25 +59,25 @@ sub process
     }
 
     # Make sure the archive file is defined
-    if (!defined($ARGV[1]))
+    if (!defined($strSourceArchive))
     {
         confess &log(ERROR, 'WAL segment not provided', ERROR_PARAM_REQUIRED);
     }
 
     # Make sure the destination file is defined
-    if (!defined($ARGV[2]))
+    if (!defined($strDestinationFile))
     {
         confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
     }
 
     # Info for the Postgres log
-    &log(INFO, 'get WAL segment ' . $ARGV[1]);
+    &log(INFO, 'get WAL segment ' . $strSourceArchive);
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'iResult', value => $self->get($ARGV[1], $ARGV[2]), trace => true}
+        {name => 'iResult', value => $self->get($strSourceArchive, $strDestinationFile), trace => true}
     );
 }
 

@@ -153,7 +153,7 @@ sub run
             # Create gcov directory
             my $bGCovExists = true;
 
-            if (!$self->{oStorageTest}->pathExists($self->{strGCovPath}))
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strGCovPath}))
             {
                 $self->{oStorageTest}->pathCreate($self->{strGCovPath}, {strMode => '0770'});
                 $bGCovExists = false;
@@ -165,7 +165,7 @@ sub run
                     'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
                     " -v $self->{strCoveragePath}:$self->{strCoveragePath} " .
                     " -v ${strHostTestPath}:${strVmTestPath}" .
-                    " -v $self->{strGCovPath}:$self->{strGCovPath}" .
+                    ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
                     " -v $self->{strBackRestBase}:$self->{strBackRestBase} " .
                     containerRepo() . ':' . $self->{oTest}->{&TEST_VM} .
                     "-test",

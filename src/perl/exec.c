@@ -43,33 +43,57 @@ StringList *perlCommand()
     }
 
     // Construct option list to pass to main
-    String *mainCallParam = strNew("");
+    String *configJson = strNew("{");
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        // Skip the option if it is not valid or not a command line option
-        if (!cfgOptionValid(optionId) || cfgOptionSource(optionId) != cfgSourceParam)
+        // Skip the option if it is not valid
+        if (!cfgOptionValid(optionId))
             continue;
+
+        // Output option
+        if (strSize(configJson) != 1)
+            strCat(configJson, ",");
+
+        strCatFmt(configJson, "\"%s\":{", cfgOptionName(optionId));
+
+        // Output source unless it is default
+        if (cfgOptionSource(optionId) != cfgSourceDefault)
+        {
+            strCat(configJson, "\"source\":\"");
+
+            if (cfgOptionSource(optionId) == cfgSourceParam)
+                strCat(configJson, "param");
+            else
+                strCat(configJson, "config");
+
+            strCat(configJson, "\"");
+        }
 
         // If option was negated
         if (cfgOptionNegate(optionId))
-            strCatFmt(mainCallParam, ", '--no-%s'", cfgOptionName(optionId));
-        // Else not negated
-        else
+            strCatFmt(configJson, ",\"negate\":%s", strPtr(varStrForce(varNewBool(true))));
+        // Else not negated and has a value
+        else if (cfgOption(optionId) != NULL)
         {
+            if (cfgOptionSource(optionId) != cfgSourceDefault)
+                strCat(configJson, ",");
+
+            strCat(configJson, "\"value\":");
+
             switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
             {
                 case cfgDefOptTypeBoolean:
+                case cfgDefOptTypeFloat:
+                case cfgDefOptTypeInteger:
                 {
-                    strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
+                    strCat(configJson, strPtr(varStrForce(cfgOption(optionId))));
                     break;
                 }
 
-                case cfgDefOptTypeFloat:
-                case cfgDefOptTypeInteger:
                 case cfgDefOptTypeString:
                 {
-                    strCatFmt(mainCallParam, ", '--%s', '%s'", cfgOptionName(optionId), strPtr(varStrForce(cfgOption(optionId))));
+                    strCatFmt(configJson, "\"%s\"", strPtr(cfgOptionStr(optionId)));
                     break;
                 }
 
@@ -78,13 +102,19 @@ StringList *perlCommand()
                     const KeyValue *valueKv = cfgOptionKv(optionId);
                     const VariantList *keyList = kvKeyList(valueKv);
 
+                    strCat(configJson, "{");
+
                     for (unsigned int listIdx = 0; listIdx < varLstSize(keyList); listIdx++)
                     {
-                        strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
+                        if (listIdx != 0)
+                            strCat(configJson, ",");
+
                         strCatFmt(
-                            mainCallParam, ", '%s=%s'", strPtr(varStr(varLstGet(keyList, listIdx))),
+                            configJson, "\"%s\":\"%s\"", strPtr(varStr(varLstGet(keyList, listIdx))),
                             strPtr(varStr(kvGet(valueKv, varLstGet(keyList, listIdx)))));
                     }
+
+                    strCat(configJson, "}");
 
                     break;
                 }
@@ -93,29 +123,33 @@ StringList *perlCommand()
                 {
                     StringList *valueList = strLstNewVarLst(cfgOptionLst(optionId));
 
+                    strCat(configJson, "{");
+
                     for (unsigned int listIdx = 0; listIdx < strLstSize(valueList); listIdx++)
                     {
-                        strCatFmt(mainCallParam, ", '--%s'", cfgOptionName(optionId));
-                        strCatFmt(mainCallParam, ", '%s'", strPtr(strLstGet(valueList, listIdx)));
+                        if (listIdx != 0)
+                            strCat(configJson, ",");
+
+                        strCatFmt(configJson, "\"%s\":true", strPtr(strLstGet(valueList, listIdx)));
                     }
+
+                    strCat(configJson, "}");
 
                     break;
                 }
             }
         }
+
+        strCat(configJson, "}");
     }
 
-    // Add help command if it was set
-    if (cfgCommandHelp())
-        strCatFmt(mainCallParam, ", '%s'", cfgCommandName(cfgCmdHelp));
-
-    // Add command to pass to main
-    if (cfgCommand() != cfgCmdNone && cfgCommand() != cfgCmdHelp)
-        strCatFmt(mainCallParam, ", '%s'", cfgCommandName(cfgCommand()));
+    strCat(configJson, "}");
 
     // Add command arguments to pass to main
+    String *commandParam = strNew("");
+
     for (unsigned int paramIdx = 0; paramIdx < strLstSize(cfgCommandParam()); paramIdx++)
-        strCatFmt(mainCallParam, ", '%s'", strPtr(strLstGet(cfgCommandParam(), paramIdx)));
+        strCatFmt(commandParam, ",'%s'", strPtr(strLstGet(cfgCommandParam(), paramIdx)));
 
     // Add Perl options
     StringList *perlOptionList = strLstNewVarLst(cfgOptionLst(cfgOptPerlOption));
@@ -125,7 +159,9 @@ StringList *perlCommand()
             strLstAdd(perlArgList, strLstGet(perlOptionList, argIdx));
 
     // Construct Perl main call
-    String *mainCall = strNewFmt(PGBACKREST_MAIN "('%s'%s)", strPtr(cfgExe()), strPtr(mainCallParam));
+    String *mainCall = strNewFmt(
+        PGBACKREST_MAIN "('%s','%s','%s'%s)", strPtr(cfgExe()), cfgCommandName(cfgCommand()), strPtr(configJson),
+        strPtr(commandParam));
 
     // End arg list for perl exec
     strLstAdd(perlArgList, strNew("-M" PGBACKREST_MODULE));

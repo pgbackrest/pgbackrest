@@ -8,6 +8,7 @@ Command and Option Parse
 
 #include "common/error.h"
 #include "common/ini.h"
+#include "common/log.h"
 #include "common/memContext.h"
 #include "config/parse.h"
 #include "storage/helper.h"
@@ -190,7 +191,12 @@ configParse(int argListSize, const char *argList[])
         if (commandParamList != NULL)
             cfgCommandParamSet(commandParamList);
 
-        // Parse options from config file unless --no-config passed
+        // Enable logging except for local and remote commands
+        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote)
+            logInit(logLevelOff, logLevelWarn, false);
+
+        // Phase 2: parse config file unless --no-config passed
+        // ---------------------------------------------------------------------------------------------------------------------
         if (cfgCommand() != cfgCmdNone &&
             cfgCommand() != cfgCmdVersion &&
             cfgCommand() != cfgCmdHelp)
@@ -198,8 +204,6 @@ configParse(int argListSize, const char *argList[])
             // Get the command definition id
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
-            // Phase 2: parse config file
-            // ---------------------------------------------------------------------------------------------------------------------
             if (!parseOptionList[cfgOptConfig].negate)
             {
                 // Get the config file name from the command-line if it exists else default
@@ -263,13 +267,13 @@ configParse(int argListSize, const char *argList[])
                             // Warn if the option not found
                             if (optionList[optionIdx].name == NULL)
                             {
-                                /// ??? Put warning here once there is a logging system
+                                LOG_WARN("'%s' contains invalid option '%s'", strPtr(configFile), strPtr(key));
                                 continue;
                             }
                             // Warn if negate option found in config
                             else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                             {
-                                /// ??? Put warning here once there is a logging system
+                                LOG_WARN("'%s' contains negate option '%s'", strPtr(configFile), strPtr(key));
                                 continue;
                             }
 
@@ -279,7 +283,7 @@ configParse(int argListSize, const char *argList[])
                             /// Warn if this option should be command-line only
                             if (cfgDefOptionSection(optionDefId) == cfgDefSectionCommandLine)
                             {
-                                /// ??? Put warning here once there is a logging system
+                                LOG_WARN("'%s' contains command-line only option '%s'", strPtr(configFile), strPtr(key));
                                 continue;
                             }
 
@@ -293,7 +297,9 @@ configParse(int argListSize, const char *argList[])
                                 // Warn if it is in a command section
                                 if (sectionIdx % 2 == 0)
                                 {
-                                    // ??? Put warning here once there is a logging system (and remove continue and braces)
+                                    LOG_WARN(
+                                        "'%s' contains option '%s' invalid for section '%s'", strPtr(configFile), strPtr(key),
+                                        strPtr(section));
                                     continue;
                                 }
 

@@ -86,7 +86,8 @@ void testRun()
         TEST_RESULT_PTR(storageList(storage, strNew(BOGUS_STR), NULL, true), NULL, "ignore missing dir");
 
         TEST_RESULT_VOID(storagePut(storage, strNew("aaa.txt"), bufNewStr(strNew("aaa"))), "write aaa.text");
-        TEST_RESULT_STR(strPtr(strLstJoin(storageList(storage, NULL, NULL, false), ", ")), "aaa.txt, stdout.log", "dir list");
+        TEST_RESULT_STR(
+            strPtr(strLstJoin(storageList(storage, NULL, NULL, false), ", ")), "aaa.txt, stderr.log, stdout.log", "dir list");
 
         TEST_RESULT_VOID(storagePut(storage, strNew("bbb.txt"), bufNewStr(strNew("bbb"))), "write bbb.text");
         TEST_RESULT_STR(strPtr(strLstJoin(storageList(storage, NULL, strNew("^bbb"), false), ", ")), "bbb.txt", "dir list");

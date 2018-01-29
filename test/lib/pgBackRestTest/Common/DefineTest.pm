@@ -470,18 +470,6 @@ my $oTestDef =
                         'config/load' => TESTDEF_COVERAGE_FULL,
                     },
                 },
-                {
-                    &TESTDEF_NAME => 'unit',
-                    &TESTDEF_TOTAL => 1,
-                },
-                {
-                    &TESTDEF_NAME => 'option',
-                    &TESTDEF_TOTAL => 34,
-                },
-                {
-                    &TESTDEF_NAME => 'config-perl',
-                    &TESTDEF_TOTAL => 25,
-                }
             ]
         },
         # Storage tests

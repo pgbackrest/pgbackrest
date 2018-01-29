@@ -20,20 +20,23 @@ cfgLoad(int argListSize, const char *argList[])
         configParse(argListSize, argList);
 
         // Initialize logging
-        LogLevel logLevelConsole = logLevelOff;
-        LogLevel logLevelStdErr = logLevelOff;
-        bool logTimestamp = true;
+        if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote)
+        {
+            LogLevel logLevelConsole = logLevelOff;
+            LogLevel logLevelStdErr = logLevelOff;
+            bool logTimestamp = true;
 
-        if (cfgOptionValid(cfgOptLogLevelConsole))
-            logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
+            if (cfgOptionValid(cfgOptLogLevelConsole))
+                logLevelConsole = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelConsole)));
 
-        if (cfgOptionValid(cfgOptLogLevelStderr))
-            logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
+            if (cfgOptionValid(cfgOptLogLevelStderr))
+                logLevelStdErr = logLevelEnum(strPtr(cfgOptionStr(cfgOptLogLevelStderr)));
 
-        if (cfgOptionValid(cfgOptLogTimestamp))
-            logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
+            if (cfgOptionValid(cfgOptLogTimestamp))
+                logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
 
-        logInit(logLevelConsole, logLevelStdErr, logTimestamp);
+            logInit(logLevelConsole, logLevelStdErr, logTimestamp);
+        }
 
         // Set default for backup-cmd
         if (cfgOptionValid(cfgOptBackupHost) && cfgOption(cfgOptBackupHost) != NULL &&

@@ -189,6 +189,8 @@ P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/d
 P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000001, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -476,6 +478,8 @@ P00  DEBUG:     Archive::Common::walInfo(): strWalFile = [TEST_PATH]/db-master/d
 P00  DEBUG:     Archive::Common::walInfo=>: strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Push::File::archivePushCheck(): strArchiveFile = 000000010000000100000002, strDbVersion = 9.3, strWalFile = [TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -557,6 +561,7 @@ db-version="9.4"
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00  DEBUG:     Archive::Get::Get->process(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
 P00   INFO: get WAL segment 000000010000000100000002
 P00  DEBUG:     Archive::Get::Get->get(): strDestinationFile = [TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG, strSourceArchive = 000000010000000100000002
 P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
@@ -570,6 +575,8 @@ P00  DEBUG:     Db::dbObjectGet=>: iDbMasterIdx = 1, iDbStandbyIdx = [undef], oD
 P00  DEBUG:     Db->info(): strDbPath = <[TEST_PATH]/db-master/db/base>
 P00  DEBUG:     Db->info=>: iDbCatalogVersion = 201306121, iDbControlVersion = 937, strDbVersion = 9.3, ullDbSysId = 1000000000000000093
 P00  DEBUG:     Archive::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = true, strArchiveClusterPath = [TEST_PATH]/db-master/repo/archive/db, strCipherPassSub = [undef]
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = 4194304, oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/db-master/repo/archive/db/archive.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
 P00  DEBUG:     Storage::Local->encryptionValid(): bEncrypted = false
@@ -996,6 +1003,8 @@ stop db stanza (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db stop
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-master/pgbackrest.conf --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --repo-path=[TEST_PATH]/db-master/repo --stanza=db
+P00  DEBUG:     Storage::Posix::Driver->new(): bFileSync = <true>, bPathSync = <true>
+P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [undef], lBufferMax = [undef], oDriver = [object], strCipherPassUser = [undef], strCipherType = [undef], strDefaultFileMode = <0640>, strDefaultPathMode = <0750>, strPathBase = /, strTempExtension = pgbackrest.tmp
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = 0, oException = [undef], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = true, iRemoteIdx = [undef], strRemoteType = [undef]
