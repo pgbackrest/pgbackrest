@@ -163,7 +163,7 @@ restore, type 'default', expect exit 40 - path not empty (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'default' (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --db-include=test1 --buffer-size=16384  --link-all --stanza=db restore
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf  --db-include=test2 --db-include=test3 --buffer-size=16384  --link-all --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/db/base/recovery.conf

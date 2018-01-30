@@ -727,6 +727,12 @@ sub run
         $self->testResult(sub {$oManifest->repoPathGet($strTablespace, BOGUS)}, $strTablespace . "/PG_" . PG_VERSION_94 . "_" .
             $iDbCatalogVersion . "/" . BOGUS, 'repoPathGet() - tablespace valid with subpath');
 
+        # Set the DB version to < 9.0 - there is no special sudirectory in earlier PG versions
+        $oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_84);
+        $self->testResult(sub {$oManifest->repoPathGet($strTablespace, BOGUS)}, $strTablespace . "/" . BOGUS,
+            'repoPathGet() - tablespace in 8.4 valid with subpath');
+        $oManifest->set(MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION, undef, PG_VERSION_94);
+
         # isTargetLink
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(sub {$oManifest->isTargetLink(MANIFEST_TARGET_PGDATA)}, false, "isTargetLink - false");

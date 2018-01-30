@@ -257,7 +257,7 @@ sub sqlSelect
     my $hDb = $self->sqlConnect({strDb => $$hParam{strDb}});
 
     # Log and execute the statement
-    &log(DEBUG, "SQL: ${strSql}");
+    &log(DEBUG, (defined($$hParam{strDb}) ? "DB: $$hParam{strDb}, " : "") . "SQL: ${strSql}");
     my $hStatement = $hDb->prepare($strSql);
 
     $hStatement = $hDb->prepare($strSql);
@@ -277,7 +277,11 @@ sub sqlSelect
 ####################################################################################################################################
 sub sqlSelectOne
 {
-    return (shift->sqlSelect(shift))[0];
+    my $self = shift;
+    my $strSql = shift;
+    my $hParam = shift;
+
+    return ($self->sqlSelect($strSql, $hParam))[0];
 }
 
 ####################################################################################################################################
@@ -298,8 +302,8 @@ sub sqlSelectOneTest
 
     do
     {
-        $self->sqlConnect();
-        $strActualValue = $self->sqlSelectOne($strSql);
+        $self->sqlConnect($hParam);
+        $strActualValue = $self->sqlSelectOne($strSql, $hParam);
 
         if (defined($strActualValue) && $strActualValue eq $strExpectedValue)
         {
