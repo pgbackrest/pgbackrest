@@ -20,6 +20,15 @@
 
                         <p>Fixed inability to restore a single database contained in a tablespace using --db-include.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sumner.adam.k"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>.  This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -4035,6 +4044,11 @@
         <contributor id="stjohn.jesper">
             <contributor-name-display>Jesper St John</contributor-name-display>
             <contributor-id type="github">Underhunden</contributor-id>
+        </contributor>
+
+        <contributor id="sumner.adam.k">
+            <contributor-name-display>Adam K. Sumner</contributor-name-display>
+            <contributor-id type="github">Flamacue</contributor-id>
         </contributor>
 
         <contributor id="uspen">
