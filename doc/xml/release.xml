@@ -12,6 +12,16 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.00dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed inability to restore a single database contained in a tablespace using --db-include.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <p>The <cmd>archive-push</cmd> command is now partially coded in C which allows the <postgres/> <file>archive_command</file> to run significantly faster when processing status messages from the asynchronous archive process.</p>
