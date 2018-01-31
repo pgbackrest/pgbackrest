@@ -22,7 +22,29 @@
                         <p>Add <cmd>stanza-delete</cmd> command to cleanup unused stanzas.</p>
                     </release-item>
                 </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add unit tests for the <code>Manifest</code> module.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2017-12-19" version="1.27" title="Bug Fixes and Documentation">

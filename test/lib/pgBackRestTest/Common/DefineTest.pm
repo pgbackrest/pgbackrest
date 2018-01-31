@@ -561,6 +561,24 @@ my $oTestDef =
                 },
             ]
         },
+        # Manifest tests
+        {
+            &TESTDEF_NAME => 'manifest',
+
+            &TESTDEF_TEST =>
+            [
+                {
+                    &TESTDEF_NAME => 'all',
+                    &TESTDEF_TOTAL => 9,
+                    &TESTDEF_CONTAINER => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'Manifest' => TESTDEF_COVERAGE_PARTIAL,
+                    },
+                },
+            ]
+        },
         # Stanza tests
         {
             &TESTDEF_NAME => 'stanza',
