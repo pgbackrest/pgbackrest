@@ -59,6 +59,14 @@
 
                         <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix non-compliant formatting for function declarations.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

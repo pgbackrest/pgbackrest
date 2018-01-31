@@ -7,7 +7,8 @@ testFree - test callback function
 ***********************************************************************************************************************************/
 MemContext *memContextCallbackArgument = NULL;
 
-void testFree(MemContext *this)
+void
+testFree(MemContext *this)
 {
     TEST_RESULT_INT(this->state, memContextStateFreeing, "state should be freeing before memContextFree() in callback");
     memContextFree(this);
@@ -26,7 +27,8 @@ void testFree(MemContext *this)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void testRun()
+void
+testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("memAllocInternal(), memReAllocInternal(), and memFreeInternal()"))

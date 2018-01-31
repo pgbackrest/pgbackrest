@@ -66,7 +66,8 @@ errorTypeParent(const ErrorType *errorType)
 /***********************************************************************************************************************************
 Does the child error type extend the parent error type?
 ***********************************************************************************************************************************/
-bool errorTypeExtends(const ErrorType *child, const ErrorType *parent)
+bool
+errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 {
     // Search for the parent
     for (; child && errorTypeParent(child) != child; child = (ErrorType *)errorTypeParent(child))

@@ -9,7 +9,8 @@ volatile int testTryRecurseTotal = 0;
 bool testTryRecurseCatch = false;
 bool testTryRecurseFinally = false;
 
-void testTryRecurse()
+void
+testTryRecurse()
 {
     TRY_BEGIN()
     {
@@ -32,7 +33,8 @@ void testTryRecurse()
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void testRun()
+void
+testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("check that try stack is initialized correctly"))
