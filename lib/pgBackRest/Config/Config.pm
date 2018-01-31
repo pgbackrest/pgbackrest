@@ -365,12 +365,17 @@ sub optionValidate
         confess &log(ERROR, "command must be specified", ERROR_COMMAND_REQUIRED);
     }
 
-    my $iCommandId = cfgCommandId($strCommand);
+    my $iCommandId;
 
-    if ($iCommandId eq "-1")
+    eval
+    {
+        $iCommandId = cfgCommandId($strCommand);
+        return true;
+    }
+    or do
     {
         confess &log(ERROR, "invalid command ${strCommand}", ERROR_COMMAND_INVALID);
-    }
+    };
 
     # Hash to store contents of the config file.  The file will be loaded once the config dependency is resolved unless all options
     # are set on the command line or --no-config is specified.

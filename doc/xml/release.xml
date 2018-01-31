@@ -29,6 +29,15 @@
 
                         <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>.  This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed overly chatty error message when reporting an invalid command.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
