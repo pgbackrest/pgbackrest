@@ -1567,7 +1567,10 @@ my $oConfigHelpData =
                     summary =>
                         "Force stanza creation.",
                     description =>
-                        "If the required stanza information does not exist in the repository but backups or WAL segments do " .
+                        "Caution: Use --force only as a last resort, when all else fails. If data is missing from the " .
+                            "repository then the recreated .info files will likely be corrupt.\n" .
+                        "\n" .
+                        "If the required stanza .info files do not exist in the repository but backups or WAL segments do " .
                             "exist, then this option can be used to force the stanza to be created from the existing data in " .
                             "the repository. This is most likely to be useful after corruption or an incomplete restore of the " .
                             "repository from elsewhere."

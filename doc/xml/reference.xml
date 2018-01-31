@@ -1144,7 +1144,9 @@
                     <option id="force" name="Force">
                         <summary>Force stanza creation.</summary>
 
-                        <text>If the required stanza information does not exist in the repository but backups or WAL segments do exist, then this option can be used to force the stanza to be created from the existing data in the repository.  This is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere.</text>
+                        <text><b>Caution</b>: Use <br-option>--force</br-option> only as a last resort, when all else fails.  If data is missing from the repository then the recreated <file>.info</file> files will likely be corrupt.
+
+                        If the required stanza <file>.info</file> files do not exist in the repository but backups or WAL segments do exist, then this option can be used to force the stanza to be created from the existing data in the repository.  This is most likely to be useful after corruption or an incomplete restore of the repository from elsewhere.</text>
 
                         <example>n</example>
                     </option>

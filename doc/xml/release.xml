@@ -62,6 +62,18 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                        </release-item-contributor-list>
+
+                        <p>Update <cmd>stanza-create --force</cmd> documentation to urge caution when using.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-development-list>
                     <release-item>
