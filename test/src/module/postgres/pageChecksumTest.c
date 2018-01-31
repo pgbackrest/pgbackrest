@@ -10,7 +10,8 @@ Page data for testing -- use 8192 for page size since this is the most common va
 
 // GCC doesn't like this elements of this array being used as both char * and struct * so wrap it in a function to disable the
 // optimizations that cause warnings
-unsigned char *testPage(int pageIdx)
+unsigned char *
+testPage(int pageIdx)
 {
     static unsigned char testPageBuffer[TEST_PAGE_TOTAL][TEST_PAGE_SIZE];
     return testPageBuffer[pageIdx];
@@ -19,7 +20,8 @@ unsigned char *testPage(int pageIdx)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void testRun()
+void
+testRun()
 {
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("pageChecksum()"))

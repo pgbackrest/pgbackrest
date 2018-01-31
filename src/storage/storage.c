@@ -82,7 +82,8 @@ storageReadError(ssize_t actualBytes, const String *file)
 /***********************************************************************************************************************************
 Read from storage into a buffer
 ***********************************************************************************************************************************/
-Buffer *storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
+Buffer *
+storageGet(const Storage *storage, const String *fileExp, bool ignoreMissing)
 {
     Buffer volatile *result = NULL;
     volatile int fileHandle = -1;
@@ -156,7 +157,8 @@ Buffer *storageGet(const Storage *storage, const String *fileExp, bool ignoreMis
 /***********************************************************************************************************************************
 Get a list of files from a directory
 ***********************************************************************************************************************************/
-StringList *storageList(const Storage *storage, const String *pathExp, const String *expression, bool ignoreMissing)
+StringList *
+storageList(const Storage *storage, const String *pathExp, const String *expression, bool ignoreMissing)
 {
     StringList *result = NULL;
 
@@ -230,7 +232,8 @@ StringList *storageList(const Storage *storage, const String *pathExp, const Str
 /***********************************************************************************************************************************
 Get the absolute path in the storage
 ***********************************************************************************************************************************/
-String *storagePath(const Storage *storage, const String *pathExp)
+String *
+storagePath(const Storage *storage, const String *pathExp)
 {
     String *result = NULL;
 
@@ -341,7 +344,8 @@ storageWriteError(ssize_t actualBytes, size_t expectedBytes, const String *file)
 /***********************************************************************************************************************************
 Write a buffer to storage
 ***********************************************************************************************************************************/
-void storagePut(const Storage *storage, const String *fileExp, const Buffer *buffer)
+void
+storagePut(const Storage *storage, const String *fileExp, const Buffer *buffer)
 {
     volatile int fileHandle = -1;
     String *file = NULL;

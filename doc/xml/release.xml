@@ -127,6 +127,14 @@
                     <release-item>
                         <p>Refactor code to make valgrind happy.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix non-compliant formatting for function declarations.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

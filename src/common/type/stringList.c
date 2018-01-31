@@ -270,7 +270,8 @@ strLstSort(StringList *this, SortOrder sortOrder)
 /***********************************************************************************************************************************
 Wrapper for lstFree()
 ***********************************************************************************************************************************/
-void strLstFree(StringList *this)
+void
+strLstFree(StringList *this)
 {
     if (this != NULL)
         lstFree((List *)this);

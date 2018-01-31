@@ -27,7 +27,8 @@ Constants used to build perl options
 /***********************************************************************************************************************************
 Build list of perl options to use for exec
 ***********************************************************************************************************************************/
-StringList *perlCommand()
+StringList *
+perlCommand()
 {
     // Begin arg list for perl exec
     StringList *perlArgList = strLstNew();
@@ -175,7 +176,8 @@ StringList *perlCommand()
 /***********************************************************************************************************************************
 Exec supplied Perl options
 ***********************************************************************************************************************************/
-void perlExec(StringList *perlArgList)
+void
+perlExec(StringList *perlArgList)
 {
     // Exec perl with supplied arguments
     execvp(strPtr(strLstGet(perlArgList, 0)), (char **)strLstPtr(perlArgList));

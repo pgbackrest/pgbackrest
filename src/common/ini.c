@@ -68,7 +68,8 @@ iniGetInternal(const Ini *this, const String *section, const String *key)
 /***********************************************************************************************************************************
 Get an ini value -- error if it does not exist
 ***********************************************************************************************************************************/
-const Variant *iniGet(const Ini *this, const String *section, const String *key)
+const Variant *
+iniGet(const Ini *this, const String *section, const String *key)
 {
     // Get the value
     const Variant *result = iniGetInternal(this, section, key);

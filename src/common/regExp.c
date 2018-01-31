@@ -31,7 +31,8 @@ regExpError(int error)
 /***********************************************************************************************************************************
 New regular expression handler
 ***********************************************************************************************************************************/
-RegExp *regExpNew(const String *expression)
+RegExp *
+regExpNew(const String *expression)
 {
     RegExp *this = NULL;
 
@@ -60,7 +61,8 @@ RegExp *regExpNew(const String *expression)
 /***********************************************************************************************************************************
 Match on a regular expression
 ***********************************************************************************************************************************/
-bool regExpMatch(RegExp *this, const String *string)
+bool
+regExpMatch(RegExp *this, const String *string)
 {
     // Test for a match
     int result = regexec(&this->regExp, strPtr(string), 0, NULL, 0);
@@ -75,7 +77,8 @@ bool regExpMatch(RegExp *this, const String *string)
 /***********************************************************************************************************************************
 Free regular expression
 ***********************************************************************************************************************************/
-void regExpFree(RegExp *this)
+void
+regExpFree(RegExp *this)
 {
     if (this != NULL)
     {
@@ -87,7 +90,8 @@ void regExpFree(RegExp *this)
 /***********************************************************************************************************************************
 Match a regular expression in one call for brevity
 ***********************************************************************************************************************************/
-bool regExpMatchOne(const String *expression, const String *string)
+bool
+regExpMatchOne(const String *expression, const String *string)
 {
     bool result = false;
     RegExp *regExp = regExpNew(expression);

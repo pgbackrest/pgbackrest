@@ -14,7 +14,8 @@ Main
 #include "perl/exec.h"
 #include "version.h"
 
-int main(int argListSize, const char *argList[])
+int
+main(int argListSize, const char *argList[])
 {
     TRY_BEGIN()
     {

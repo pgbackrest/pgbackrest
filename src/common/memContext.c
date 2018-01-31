@@ -60,7 +60,8 @@ MemContext *contextCurrent = &contextTop;
 /***********************************************************************************************************************************
 Wrapper around malloc()
 ***********************************************************************************************************************************/
-static void *memAllocInternal(size_t size, bool zero)
+static void *
+memAllocInternal(size_t size, bool zero)
 {
     // Allocate memory
     void *buffer = malloc(size);
@@ -80,7 +81,8 @@ static void *memAllocInternal(size_t size, bool zero)
 /***********************************************************************************************************************************
 Wrapper around realloc()
 ***********************************************************************************************************************************/
-static void *memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew)
+static void *
+memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew, bool zeroNew)
 {
     // Allocate memory
     void *bufferNew = realloc(bufferOld, sizeNew);
@@ -100,7 +102,8 @@ static void *memReAllocInternal(void *bufferOld, size_t sizeOld, size_t sizeNew,
 /***********************************************************************************************************************************
 Wrapper around free()
 ***********************************************************************************************************************************/
-static void memFreeInternal(void *buffer)
+static void
+memFreeInternal(void *buffer)
 {
     // Error if pointer is null
     if(!buffer)

@@ -5,7 +5,8 @@ Test Configuration Commands and Options
 /***********************************************************************************************************************************
 Test run
 ***********************************************************************************************************************************/
-void testRun()
+void
+testRun()
 {
     // Static tests against known values -- these may break as options change so will need to be kept up to date.  The tests have
     // generally been selected to favor values that are not expected to change but adjustments are welcome as long as the type of

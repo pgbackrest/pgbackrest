@@ -170,7 +170,8 @@ errorInternalJump()
 /***********************************************************************************************************************************
 Begin the try block
 ***********************************************************************************************************************************/
-bool errorInternalTry(const char *fileName, int fileLine)
+bool
+errorInternalTry(const char *fileName, int fileLine)
 {
     // If try total has been exceeded then throw an error
     if (errorContext.tryTotal >= ERROR_TRY_MAX)
@@ -190,7 +191,8 @@ bool errorInternalTry(const char *fileName, int fileLine)
 /***********************************************************************************************************************************
 Propogate the error up so it can be caught
 ***********************************************************************************************************************************/
-void errorInternalPropagate()
+void
+errorInternalPropagate()
 {
     // Mark the error as uncaught
     errorContext.tryList[errorContext.tryTotal].uncaught = true;
@@ -212,7 +214,8 @@ void errorInternalPropagate()
 /***********************************************************************************************************************************
 Process the error through each try and state
 ***********************************************************************************************************************************/
-bool errorInternalProcess(bool catch)
+bool
+errorInternalProcess(bool catch)
 {
     // If a catch statement then return
     if (catch)
@@ -249,7 +252,8 @@ bool errorInternalProcess(bool catch)
 /***********************************************************************************************************************************
 Throw an error
 ***********************************************************************************************************************************/
-void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+void
+errorInternalThrow(const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
 {
     // Setup error data
     errorContext.error.errorType = errorType;
@@ -273,7 +277,8 @@ void errorInternalThrow(const ErrorType *errorType, const char *fileName, int fi
 /***********************************************************************************************************************************
 Throw an error
 ***********************************************************************************************************************************/
-void errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
+void
+errorInternalThrowSys(int result, const ErrorType *errorType, const char *fileName, int fileLine, const char *format, ...)
 {
     // Only error if the result is not 0
     if (result != 0)

@@ -8,7 +8,8 @@ Test Help Command
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void testRun()
+void
+testRun()
 {
     // Program name a version are used multiple times
     const char *helpVersion = PGBACKREST_NAME " " PGBACKREST_VERSION;
