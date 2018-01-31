@@ -550,6 +550,22 @@ sub run
         $oHostDbMaster->sqlExecute("update test set message = '$strDefaultMessage'");
         $oHostDbMaster->sqlWalRotate();
 
+        # Create a database in the tablespace and a table to check
+        $oHostDbMaster->sqlExecute("create database test3 with tablespace ts1", {bAutoCommit => true});
+        $oHostDbMaster->sqlExecute(
+            'create table test3_exists (id int);' .
+            'insert into test3_exists values (1);',
+            {strDb => 'test3', bAutoCommit => true});
+
+        if ($bTestLocal)
+        {
+            # Create a table in test1 to check - test1 will not be restored
+            $oHostDbMaster->sqlExecute(
+                'create table test1_zeroed (id int);' .
+                'insert into test1_zeroed values (1);',
+                {strDb => 'test1', bAutoCommit => true});
+        }
+
         # Start a backup so the next backup has to restart it.  This test is not required for PostgreSQL >= 9.6 since backups
         # are run in non-exlusive mode.
         if ($bTestLocal && $oHostDbMaster->pgVersion() >= PG_VERSION_93 && $oHostDbMaster->pgVersion() < PG_VERSION_96)
@@ -627,6 +643,11 @@ sub run
 
         # Create a table and data in database test2
         #---------------------------------------------------------------------------------------------------------------------------
+
+        # Initialize variables for SHA1 and path of the pg_filenode.map for the database that will not be restored
+        my $strDb1TablePath;
+        my $strDb1TableSha1;
+
         if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute(
@@ -635,7 +656,14 @@ sub run
                 'create table test_ts1 (id int) tablespace ts1;' .
                 'insert into test_ts1 values (2);',
                 {strDb => 'test2', bAutoCommit => true});
+
             $oHostDbMaster->sqlWalRotate();
+
+            # Get the SHA1 and path of the table for the database that will not be restored
+            $strDb1TablePath =  $oHostDbMaster->dbBasePath(). "/base/" .
+                $oHostDbMaster->sqlSelectOne("select oid from pg_database where datname='test1'") . "/" .
+                $oHostDbMaster->sqlSelectOne("select relfilenode from pg_class where relname='test1_zeroed'", {strDb => 'test1'});
+            $strDb1TableSha1 = storageTest()->hashSize($strDb1TablePath);
         }
 
         # Restore (type = default)
@@ -668,10 +696,40 @@ sub run
         # Now the restore should work
         $oHostDbMaster->restore(
             undef, cfgDefOptionDefault(CFGCMD_RESTORE, CFGOPT_SET),
-            {strOptionalParam => ($bTestLocal ? ' --db-include=test1' : '') . ' --buffer-size=16384'});
+            {strOptionalParam => ($bTestLocal ? ' --db-include=test2 --db-include=test3' : '') . ' --buffer-size=16384'});
+
+        # Test that the first database has not been restored since --db-include did not include test1
+        if ($bTestLocal)
+        {
+            my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1TablePath);
+
+            # Create a zeroed sparse file in the test directory that is the same size as the filenode.map
+            my $strTestTable = $self->testPath() . "/testtable";
+            my $oDestinationFileIo = storageTest()->openWrite($strTestTable);
+            $oDestinationFileIo->open();
+
+            # Truncate to the original size which will create a sparse file.
+            truncate($oDestinationFileIo->handle(), $lSize);
+            $oDestinationFileIo->close();
+
+            # Confirm the test filenode.map and the database test1 filenode.map are zeroed
+            my ($strSHA1Test, $lSizeTest) = storageTest()->hashSize($strTestTable);
+            $self->testResult(sub {($strSHA1Test eq $strSHA1) && ($lSizeTest == $lSize) && ($strSHA1 ne $strDb1TableSha1)},
+                true, 'database test1 not restored');
+        }
 
         $oHostDbMaster->clusterStart();
         $oHostDbMaster->sqlSelectOneTest('select message from test', $bTestLocal ? $strNameMessage : $strIncrMessage);
+
+        # Once the cluster is back online, make sure the database & table in the tablespace exists properly
+        if ($bTestLocal)
+        {
+            $oHostDbMaster->sqlSelectOneTest('select id from test_ts1', 2, {strDb => 'test2'});
+            $oHostDbMaster->sqlDisconnect({strDb => 'test2'});
+
+            $oHostDbMaster->sqlSelectOneTest('select id from test3_exists', 1, {strDb => 'test3'});
+            $oHostDbMaster->sqlDisconnect({strDb => 'test3'});
+        }
 
         # The tablespace path should exist and have files in it
         my $strTablespacePath = $oHostDbMaster->tablespacePath(1);
@@ -714,7 +772,7 @@ sub run
         $oHostDbMaster->sqlSelectOneTest("select count(*) from test_exists", 0);
         $oHostDbMaster->sqlExecute('drop table test_exists');
 
-        # Now it should be OK to drop database test2
+        # Now it should be OK to drop database test2 and test3
         if ($bTestLocal)
         {
             $oHostDbMaster->sqlExecute('drop database test2', {bAutoCommit => true});
@@ -732,6 +790,7 @@ sub run
         }
 
         # And drop the tablespace
+        $oHostDbMaster->sqlExecute('drop database test3', {bAutoCommit => true});
         $oHostDbMaster->sqlExecute("drop tablespace ts1", {bAutoCommit => true});
 
         # Restore (restore type = immediate, inclusive)
