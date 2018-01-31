@@ -569,7 +569,7 @@ my $oTestDef =
             [
                 {
                     &TESTDEF_NAME => 'all',
-                    &TESTDEF_TOTAL => 8,
+                    &TESTDEF_TOTAL => 9,
                     &TESTDEF_CLIB => true,
                     &TESTDEF_CONTAINER => true,
 

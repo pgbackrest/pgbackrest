@@ -22,6 +22,7 @@ Commands:
     info            Retrieve information about backups.
     restore         Restore a database cluster.
     stanza-create   Create the required stanza data.
+    stanza-delete   Delete a stanza.
     stanza-upgrade  Upgrade a stanza.
     start           Allow pgBackRest processes to run.
     stop            Stop pgBackRest processes from running.

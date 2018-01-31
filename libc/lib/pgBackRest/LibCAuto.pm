@@ -6,7 +6,7 @@ package pgBackRest::LibCAuto;
 # Library version (.999 indicates development version)
 sub libcAutoVersion
 {
-    return '1.27';
+    return '1.28.999';
 }
 
 # Configuration option value constants
@@ -110,6 +110,7 @@ sub libcAutoExportTag
             'CFGCMD_REMOTE',
             'CFGCMD_RESTORE',
             'CFGCMD_STANZA_CREATE',
+            'CFGCMD_STANZA_DELETE',
             'CFGCMD_STANZA_UPGRADE',
             'CFGCMD_START',
             'CFGCMD_STOP',

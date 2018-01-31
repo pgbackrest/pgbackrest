@@ -22,6 +22,7 @@ typedef enum
     cfgDefCmdRemote,
     cfgDefCmdRestore,
     cfgDefCmdStanzaCreate,
+    cfgDefCmdStanzaDelete,
     cfgDefCmdStanzaUpgrade,
     cfgDefCmdStart,
     cfgDefCmdStop,

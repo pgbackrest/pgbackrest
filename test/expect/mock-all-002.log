@@ -78,6 +78,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -488,6 +490,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -592,6 +596,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -671,6 +677,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -772,6 +780,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -875,6 +885,7 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
 P00  ERROR: [062]: stop file exists for all stanzas
 P00  DEBUG:     Common::Exit::exitSafe(): iExitCode = [undef], oException = [object], strSignal = [undef]
 P00  DEBUG:     Protocol::Helper::protocolDestroy(): bComplete = false, iRemoteIdx = [undef], strRemoteType = [undef]
@@ -905,6 +916,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -1280,6 +1293,8 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --backup-cmd=[BACKREST-BIN] --backup-config=[TEST_PATH]/backup/pgbackrest.conf --backup-host=backup --backup-user=[USER-2] --cmd-ssh=/usr/bin/ssh --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --delta --link-all --lock-path=[TEST_PATH]/db-master/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/db-master/log --protocol-timeout=60 --set=[BACKUP-FULL-2] --stanza=db
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = restore
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/db-master/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/db-master/log
@@ -1675,6 +1690,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log
@@ -2022,6 +2039,8 @@ P00  DEBUG:     Storage::Local->new(): bAllowTemp = <true>, hRule = [hash], lBuf
 P00  DEBUG:     Storage::Local->pathExists(): strPathExp = 
 P00  DEBUG:     Storage::Local->pathExists=>: bExists = true
 P00  DEBUG:     Common::Lock::lockAcquire(): bFailOnNoLock = <true>, bRemote = <false>, strLockType = backup
+P00  DEBUG:     Common::Lock::lockStopTest(): bStanzaStopRequired = <false>
+P00  DEBUG:     Common::Lock::lockStopTest=>: bStopExists = false
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 770, strPathExp = [TEST_PATH]/backup/lock
 P00  DEBUG:     Common::Lock::lockAcquire=>: bResult = true
 P00  DEBUG:     Storage::Local->pathCreate(): bCreateParent = true, bIgnoreExists = true, strMode = 0770, strPathExp = [TEST_PATH]/backup/log

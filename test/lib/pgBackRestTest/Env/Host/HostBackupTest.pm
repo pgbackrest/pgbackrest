@@ -867,6 +867,55 @@ sub stanzaUpgrade
     return logDebugReturn($strOperation);
 }
 
+####################################################################################################################################
+# stanzaDelete
+####################################################################################################################################
+sub stanzaDelete
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my
+    (
+        $strOperation,
+        $strComment,
+        $oParam,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->stanzaDelete', \@_,
+            {name => 'strComment'},
+            {name => 'oParam', required => false},
+        );
+
+    $strComment =
+        'stanza-delete ' . $self->stanza() . ' - ' . $strComment .
+        ' (' . $self->nameGet() . ' host)';
+    &log(INFO, "    $strComment");
+
+    $self->executeSimple(
+        $self->backrestExe() .
+        ' --config=' . $self->backrestConfig() .
+        ' --stanza=' . $self->stanza() .
+        ' --log-level-console=detail' .
+        (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        ' stanza-delete',
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
+         bLogOutput => $self->synthetic()});
+
+    if (defined($self->{oLogTest}) && $self->synthetic())
+    {
+        $self->{oLogTest}->logAdd(
+            'ls ' . $self->repoPath() . '/backup/', $self->stanza() . ' must not exist for successful delete',
+            join("\n", storageRepo()->list('backup/')));
+        $self->{oLogTest}->logAdd(
+            'ls ' . $self->repoPath() . '/archive/', $self->stanza() . ' must not exist for successful delete',
+            join("\n", storageRepo()->list('archive/')));
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
 
 ####################################################################################################################################
 # start

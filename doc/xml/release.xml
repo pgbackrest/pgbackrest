@@ -10,6 +10,21 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="1.28dev" title="Stanza Delete">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hagander.magnus"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <cmd>stanza-delete</cmd> command to cleanup unused stanzas.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+        </release>
+
         <release date="2017-12-19" version="1.27" title="Bug Fixes and Documentation">
             <release-core-list>
                 <release-bug-list>
@@ -3783,6 +3798,11 @@
         <contributor id="gunduz.devrim">
             <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
             <contributor-id type="github">devrimgunduz</contributor-id>
+        </contributor>
+
+        <contributor id="hagander.magnus">
+            <contributor-name-display>Magnus Hagander</contributor-name-display>
+            <contributor-id type="github">mhagander</contributor-id>
         </contributor>
 
         <contributor id="harvey.john">

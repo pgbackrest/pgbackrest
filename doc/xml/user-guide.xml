@@ -1547,6 +1547,43 @@
     </section>
 
     <!-- SECTION => BACKUP HOST -->
+    <section id="delete-stanza" depend="/quickstart/create-stanza">
+        <title>Delete a Stanza</title>
+
+        <cmd-description key="stanza-delete"/>
+
+        <execute-list host="{[host-db-primary]}">
+            <title>Stop <postgres/> cluster to be removed</title>
+
+            <execute user="root">
+                <exe-cmd>{[db-cluster-stop]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-db-primary]}">
+            <title>Stop <backrest/> for the stanza</title>
+
+            <execute output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stop</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-db-primary]}">
+            <title>Delete the stanza</title>
+
+            <execute output="y">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-delete</exe-cmd>
+                <exe-highlight>completed successfully</exe-highlight>
+            </execute>
+
+            <execute user="root" show="n">
+                <exe-cmd>{[db-cluster-start]}</exe-cmd>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- SECTION => BACKUP HOST -->
     <section id="backup-host" depend="/quickstart/configure-archiving">
         <title>Dedicated Backup Host</title>
 
@@ -1652,16 +1689,6 @@
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
-
-            <p>The repository directory will also be removed from the database host.  It will not be used anymore so leaving it around may be confusing later on.</p>
-
-            <execute-list host="{[host-db-primary]}">
-                <title>Remove repository now that it will be located on the backup host server</title>
-
-                <execute user="root">
-                    <exe-cmd>find {[backrest-repo-path]} -delete</exe-cmd>
-                </execute>
-            </execute-list>
 
             <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>backup</host> host instead of the <host>database</host> host.</p>
 

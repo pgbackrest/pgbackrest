@@ -17,6 +17,7 @@ use Storable qw(dclone);
 
 use pgBackRest::Archive::Common;
 use pgBackRest::Archive::Info;
+use pgBackRest::Backup::Common;
 use pgBackRest::Backup::Info;
 use pgBackRest::Common::Exception;
 use pgBackRest::Common::Ini;
@@ -665,6 +666,140 @@ sub run
 
         $self->testException(sub {$oStanza->errorForce($strMessage, ERROR_FILE_MISSING, $strFile, true,
             $self->{strArchivePath}, $self->{strBackupPath})}, ERROR_FILE_MISSING, $strMessage);
+    }
+
+    ################################################################################################################################
+    if ($self->begin("Stanza::stanzaDelete()"))
+    {
+        # Create the stanza
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
+        my $oStanza = new pgBackRest::Stanza();
+        $oStanza->stanzaCreate();
+
+        # Attempt to delete without running stop
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionTestClear(CFGOPT_ONLINE);
+        $self->configTestLoad(CFGCMD_STANZA_DELETE);
+
+        $self->testException(sub {$oStanza->stanzaDelete()}, ERROR_FILE_MISSING,
+            "stop file does not exist for stanza '" . $self->stanza() . "'" .
+            "\nHINT: has the pgbackrest stop command been run on this server?");
+
+        # Create a stop file and attempt to delete with postgres running
+        #---------------------------------------------------------------------------------------------------------------------------
+        lockStop();
+
+        # Simulate postgres still running
+        executeTest('touch ' . $self->{strDbPath} . qw(/) . DB_FILE_POSTMASTERPID);
+
+        $self->testException(sub {$oStanza->stanzaDelete()}, ERROR_POSTMASTER_RUNNING,
+            DB_FILE_POSTMASTERPID . " exists - looks like the postmaster is running. " .
+            "To delete stanza '" . $self->stanza() . "', shutdown the postmaster for stanza '" . $self->stanza() .
+            "' and try again, or use --force.");
+
+        # Force deletion
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->optionTestSetBool(CFGOPT_FORCE, true);
+        $self->configTestLoad(CFGCMD_STANZA_DELETE);
+
+        $self->testResult(sub {$oStanza->stanzaDelete()}, 0, 'successfully delete stanza with force');
+        $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
+            storageRepo()->pathExists($self->{strBackupPath})},
+            false, '    neither archive nor backup repo paths for the stanza exist');
+
+        # Remove postmaster.pid and clear force
+        storageTest()->remove($self->{strDbPath} . qw(/) . DB_FILE_POSTMASTERPID);
+        $self->optionTestClear(CFGOPT_FORCE);
+
+        # Rerun stanza-delete without force and with missing stanza directories
+        #---------------------------------------------------------------------------------------------------------------------------
+        $self->testResult(sub {$oStanza->stanzaDelete()}, 0, 'successful - stanza already deleted');
+
+        # Recursive dir delete with archive directory and stanza directory but missing info files
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_94 . "-1", {bCreateParent => true});
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_94 . "-1/0000000100000001");
+        executeTest('touch ' . $self->{strArchivePath} . "/" . PG_VERSION_94 . "-1/0000000100000001/" . BOGUS);
+
+        storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
+        my $strFullLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, 1482000000);
+        storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strFullLabel}", {bCreateParent => true});
+        executeTest('touch ' . $self->{strBackupPath} . "/${strFullLabel}/" . BOGUS);
+
+        # Create an inaccessible file
+        executeTest("sudo chgrp 777 " . $self->{strBackupPath} . "/${strFullLabel}/" . BOGUS);
+        executeTest("sudo chown 777 " . $self->{strBackupPath} . "/${strFullLabel}/" . BOGUS);
+
+        lockStop();
+        $self->testResult(sub {$oStanza->stanzaDelete()}, 0,
+            'successful - recursive delete with missing info files and inaccessible file');
+        $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
+            storageRepo()->pathExists($self->{strBackupPath})},
+            false, '    neither archive nor backup repo paths for the stanza exist');
+
+        # Make the archive directory inaccessible
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageTest()->pathCreate($self->{strArchivePath}, {bIgnoreExists => true, bCreateParent => true});
+
+        executeTest("sudo chgrp 7777 " . $self->{strArchivePath});
+        executeTest("sudo chown 7777 " . $self->{strArchivePath});
+
+        lockStop();
+        $self->testException(sub {$oStanza->stanzaDelete()}, ERROR_FILE_OPEN,
+            "unable to remove file '" . $self->{strArchivePath} . "/" . ARCHIVE_INFO_FILE . "': Permission denied");
+
+        # Remove the repo
+        executeTest("sudo rm -rf " . $self->{strArchivePath});
+
+        # Clear the cached repo settings and change repo settings to encrypted
+        #---------------------------------------------------------------------------------------------------------------------------
+        storageRepoCacheClear($self->stanza());
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_TYPE, CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC);
+        $self->optionTestSet(CFGOPT_REPO_CIPHER_PASS, 'x');
+        $self->configTestLoad(CFGCMD_STANZA_CREATE);
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created encrypted stanza');
+
+        # Create encrypted archived file
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
+        storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1/0000000100000001");
+        my $strArchiveIdPath = storageRepo()->pathGet(STORAGE_REPO_ARCHIVE . "/" . PG_VERSION_93 . "-1");
+        my $strArchivedFile = storageRepo()->pathGet($strArchiveIdPath .
+            "/0000000100000001/000000010000000100000001-" . $self->walGenerateContentChecksum(PG_VERSION_93));
+        my $oArchiveInfo = new pgBackRest::Archive::Info($self->{strArchivePath});
+        storageRepo()->put(
+            $strArchivedFile, $self->walGenerateContent(PG_VERSION_93), {strCipherPass => $oArchiveInfo->cipherPassSub()});
+        $self->testResult(sub {storageRepo()->encrypted($strArchivedFile)}, true, '    created encrypted archive WAL');
+
+        my $strBackupPath = storageRepo->pathGet(STORAGE_REPO_BACKUP . "/${strFullLabel}");
+        my $strBackupManifestFile = "$strBackupPath/" . FILE_MANIFEST;
+        my $iDbCatalogVersion = 201409291;
+
+        storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/${strFullLabel}", {bCreateParent => true});
+        my $oBackupInfo = new pgBackRest::Backup::Info($self->{strBackupPath});
+
+        $self->testResult(sub {(new pgBackRest::Manifest($strBackupManifestFile, {bLoad => false, strDbVersion => PG_VERSION_94,
+            strCipherPass => $oBackupInfo->cipherPassSub(), strCipherPassSub => 'x'}))->save()},
+            "[undef]", '    manifest saved');
+
+        lockStop();
+        $self->testResult(sub {$oStanza->stanzaDelete()}, 0,
+            '    successful - recursive delete on encrypted repo');
+        $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
+            storageRepo()->pathExists($self->{strBackupPath})},
+            false, '    neither archive nor backup repo paths for the stanza exist');
+
+        # For test coverage: create new stanza with delete command, call process and remove only backup path
+        #---------------------------------------------------------------------------------------------------------------------------
+        lockStop();
+        $self->configTestLoad(CFGCMD_STANZA_DELETE);
+        $oStanza = new pgBackRest::Stanza();
+        storageTest()->pathCreate($self->{strBackupPath}, {bIgnoreExists => true, bCreateParent => true});
+        $self->testResult(sub {$oStanza->process()}, 0,
+            'successfully remove backup path');
+        $self->testResult(sub {storageRepo()->pathExists($self->{strArchivePath}) ||
+            storageRepo()->pathExists($self->{strBackupPath})},
+            false, '    neither archive nor backup repo paths for the stanza exist');
     }
 }
 

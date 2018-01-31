@@ -20,6 +20,7 @@ Command constants
 #define CFGCMD_REMOTE                                               cfgCmdRemote
 #define CFGCMD_RESTORE                                              cfgCmdRestore
 #define CFGCMD_STANZA_CREATE                                        cfgCmdStanzaCreate
+#define CFGCMD_STANZA_DELETE                                        cfgCmdStanzaDelete
 #define CFGCMD_STANZA_UPGRADE                                       cfgCmdStanzaUpgrade
 #define CFGCMD_START                                                cfgCmdStart
 #define CFGCMD_STOP                                                 cfgCmdStop
