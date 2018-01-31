@@ -185,6 +185,18 @@ sub run
         $strArchiveId = &PG_VERSION_93 . "-" . $iHistoryId;
         $self->testResult(sub {$oBackupInfo->backupArchiveDbHistoryId($strArchiveId,
             storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, "[undef]", 'same db system-id but different version');
+
+        # First and last version and ullsystemid same in backup.info but only 1st in archive info - return last
+        #---------------------------------------------------------------------------------------------------------------------------
+        $iHistoryId = $oBackupInfo->dbHistoryIdGet(true)+1;
+        $oBackupInfo->dbSectionSet(
+            PG_VERSION_93, $i93ControlVersion, $i93CatalogVersion, $self->dbSysId(PG_VERSION_93), $iHistoryId);
+
+        $oBackupInfo->save();
+
+        $strArchiveId = &PG_VERSION_93 . "-1";
+        $self->testResult(sub {$oBackupInfo->backupArchiveDbHistoryId($strArchiveId,
+            storageRepo()->pathGet(STORAGE_REPO_ARCHIVE))}, $iHistoryId, 'duplicate 1st and last version/sysid - last chosen');
     }
 
     ################################################################################################################################
