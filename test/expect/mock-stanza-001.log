@@ -57,13 +57,12 @@ db-version="9.3"
 [db:history]
 1={"db-id":1000000000000000093,"db-version":"9.3"}
 
-stanza-create db - fail on rerun of stanza-create - info files exist (db-master host)
+stanza-create db - do not fail on rerun of stanza-create - info files exist and DB section ok (db-master host)
 > [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [040]: backup directory and/or archive directory not empty
-            HINT: use stanza-create --force to force the stanza data to be created.
-P00   INFO: stanza-create command end: aborted with exception [040]
+P00   INFO: stanza-create was already performed
+P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -228,7 +227,7 @@ stanza-create db - fail on archive info file missing from non-empty dir (db-mast
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: archive information missing
-            HINT: use stanza-create --force to force the stanza data to be created.
+            HINT: use stanza-create --force to force the stanza data to be recreated.
 P00   INFO: stanza-create command end: aborted with exception [055]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
@@ -277,46 +276,6 @@ stanza-create db - force create archive.info from gz file (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --force --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
-
-+ supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
----------------------------------------------------------------------
-[backrest]
-backrest-checksum="[CHECKSUM]"
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[db]
-db-catalog-version=201306121
-db-control-version=937
-db-id=1
-db-system-id=1000000000000000093
-db-version="9.3"
-
-[db:history]
-1={"db-catalog-version":201306121,"db-control-version":937,"db-system-id":1000000000000000093,"db-version":"9.3"}
-
-+ supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
------------------------------------------------------------------------
-[backrest]
-backrest-checksum="[CHECKSUM]"
-backrest-format=5
-backrest-version="[VERSION-1]"
-
-[db]
-db-id=1
-db-system-id=1000000000000000093
-db-version="9.3"
-
-[db:history]
-1={"db-id":1000000000000000093,"db-version":"9.3"}
-
-stanza-create db - repeat create - error that files exist (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
-------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
-P00  ERROR: [040]: backup directory and/or archive directory not empty
-            HINT: use stanza-create --force to force the stanza data to be created.
-P00   INFO: stanza-create command end: aborted with exception [040]
 
 + supplemental file: [TEST_PATH]/db-master/repo/backup/db/backup.info
 ---------------------------------------------------------------------
@@ -730,7 +689,7 @@ stanza-create db - fail no force to recreate the stanza from backups (db-master 
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: backup information missing
-            HINT: use stanza-create --force to force the stanza data to be created.
+            HINT: use stanza-create --force to force the stanza data to be recreated.
 P00   INFO: stanza-create command end: aborted with exception [055]
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info

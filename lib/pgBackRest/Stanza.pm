@@ -32,7 +32,7 @@ use pgBackRest::Protocol::Storage::Helper;
 ####################################################################################################################################
 # Global variables
 ####################################################################################################################################
-my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data to be created.";
+my $strHintForce = "\nHINT: use stanza-create --force to force the stanza data to be recreated.";
 my $strInfoMissing = " information missing";
 my $strStanzaCreateErrorMsg = "not empty";
 my $strRepoEncryptedMsg = " and repo is encrypted and info file(s) are missing, --force cannot be used";
@@ -120,6 +120,8 @@ sub stanzaCreate
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->stanzaCreate');
 
+    my $bContinue = true;
+
     # Get the parent paths (create if not exist)
     my $strParentPathArchive = $self->parentPathGet(STORAGE_REPO_ARCHIVE);
     my $strParentPathBackup = $self->parentPathGet(STORAGE_REPO_BACKUP);
@@ -136,9 +138,22 @@ sub stanzaCreate
         my $strBackupInfoFile = &FILE_BACKUP_INFO;
         my $strArchiveInfoFile = &ARCHIVE_INFO_FILE;
 
-        # If .info exists, set to true. Do not include .info.copy
+        # If .info exists, set to true.
         my $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
         my $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
+
+        # If .info does not exist, check for .info.copy
+        if (!$bBackupInfoFileExists)
+        {
+            $strBackupInfoFile .= &INI_COPY_EXT;
+            $bBackupInfoFileExists = grep(/^$strBackupInfoFile$/i, @stryFileListBackup);
+        }
+
+        if (!$bArchiveInfoFileExists)
+        {
+            $bArchiveInfoFileExists .= &INI_COPY_EXT;
+            $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
+        }
 
         # Determine if a file exists other than the info files
         my $strExistingFile = $self->existingFileName(STORAGE_REPO_BACKUP, $strParentPathBackup, &FILE_BACKUP_INFO);
@@ -181,26 +196,37 @@ sub stanzaCreate
                 (@stryFileListArchive ? 'archive directory ' : '') .
                 $strStanzaCreateErrorMsg, ERROR_PATH_NOT_EMPTY,
                 $strExistingFile, $bArchiveInfoFileExists, $strParentPathArchive, $strParentPathBackup);
+
+            # If no error was thrown, then do not continue without --force
+            if (!cfgOption(CFGOPT_FORCE))
+            {
+                $bContinue = false;
+            }
         }
     }
 
-    # Instantiate the info objects. Throws an error and aborts if force not used and an error occurs during instantiation.
-    my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive, {bRequired => false, bIgnoreMissing => true});
-    my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup, {bRequired => false, bIgnoreMissing => true});
+    my $iResult = 0;
 
-    # Create the archive info object
-    my ($iResult, $strResultMessage) = $self->infoFileCreate($oArchiveInfo);
-
-    if ($iResult == 0)
+    if ($bContinue)
     {
-        # Create the backup.info file
-        ($iResult, $strResultMessage) = $self->infoFileCreate($oBackupInfo);
-    }
+        # Instantiate the info objects. Throws an error and aborts if force not used and an error occurs during instantiation.
+        my $oArchiveInfo = $self->infoObject(STORAGE_REPO_ARCHIVE, $strParentPathArchive, {bRequired => false, bIgnoreMissing => true});
+        my $oBackupInfo = $self->infoObject(STORAGE_REPO_BACKUP, $strParentPathBackup, {bRequired => false, bIgnoreMissing => true});
 
-    if ($iResult != 0)
-    {
-        &log(WARN, "unable to create stanza '" . cfgOption(CFGOPT_STANZA) . "'");
-        confess &log(ERROR, $strResultMessage, $iResult);
+        # Create the archive info object
+        ($iResult, my $strResultMessage) = $self->infoFileCreate($oArchiveInfo);
+
+        if ($iResult == 0)
+        {
+            # Create the backup.info file
+            ($iResult, $strResultMessage) = $self->infoFileCreate($oBackupInfo);
+        }
+
+        if ($iResult != 0)
+        {
+            &log(WARN, "unable to create stanza '" . cfgOption(CFGOPT_STANZA) . "'");
+            confess &log(ERROR, $strResultMessage, $iResult);
+        }
     }
 
     # Return from function and log return values if any
@@ -474,8 +500,8 @@ sub errorForce
     }
     elsif (!cfgOption(CFGOPT_FORCE))
     {
-        # If info files exist, check to see if an upgrade is required
-        if ($bInfoFileExists && !defined($strFileName) && $iErrorCode == ERROR_PATH_NOT_EMPTY)
+        # If info files exist, check to see if the DB sections match the database - else an upgrade is required
+        if ($bInfoFileExists && $iErrorCode == ERROR_PATH_NOT_EMPTY)
         {
             if ($self->upgradeCheck(new pgBackRest::Backup::Info($strParentPathBackup), STORAGE_REPO_BACKUP,
                 ERROR_BACKUP_MISMATCH) ||
@@ -485,10 +511,16 @@ sub errorForce
                 confess &log(ERROR, "backup info file or archive info file invalid\n" .
                     'HINT: use stanza-upgrade if the database has been upgraded or use --force', ERROR_FILE_INVALID);
             }
+            else
+            {
+                &log(INFO, "stanza-create was already performed");
+            }
         }
-
-        # If get here just indicate force is required
-        confess &log(ERROR, $strMessage . $strHintForce, $iErrorCode);
+        else
+        {
+            # If get here something is wrong so indicate force is required
+            confess &log(ERROR, $strMessage . $strHintForce, $iErrorCode);
+        }
     }
 
     # Return from function and log return values if any
