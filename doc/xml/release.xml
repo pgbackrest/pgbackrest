@@ -10,7 +10,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="1.28dev" title="Stanza Delete">
+        <release date="2018-02-01" version="1.28" title="Stanza Delete">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
