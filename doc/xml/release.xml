@@ -51,6 +51,16 @@
                     </release-item>
                 </release-feature-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>stanza-create</cmd> command so that it does not error when the stanza already exists.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <release-item-contributor-list>

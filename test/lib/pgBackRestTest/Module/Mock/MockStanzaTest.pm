@@ -81,11 +81,11 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
-        # Rerun stanza-create and confirm failure - need use force since archive.info and backup.info exist
+        # Rerun stanza-create and confirm it does not fail
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate(
-            'fail on rerun of stanza-create - info files exist',
-            {iExpectedExitStatus => ERROR_PATH_NOT_EMPTY, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+            'do not fail on rerun of stanza-create - info files exist and DB section ok',
+            {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
 
         # Stanza Create fails when not using force - database mismatch with pg_control file
         #--------------------------------------------------------------------------------------------------------------------------
@@ -130,7 +130,6 @@ sub run
 
         if (!$bRepoEncrypt)
         {
-
             $oHostBackup->stanzaCreate('fail on archive info file missing from non-empty dir',
                 {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
         }
@@ -165,10 +164,10 @@ sub run
             {strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE),
                 iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : undef});
 
-        # Rerun without the force to ensure the files exist
-        $oHostBackup->stanzaCreate('repeat create - error that files exist',
-            {iExpectedExitStatus => $bRepoEncrypt ? ERROR_FILE_MISSING : ERROR_PATH_NOT_EMPTY,
-                strOptionalParam => '--no-' . cfgOptionName(CFGOPT_ONLINE)});
+        if (!$bRepoEncrypt)
+        {
+            $self->testResult(sub {storageRepo()->exists($strArchiveInfoFile)}, true, "    archive.info file was created");
+        }
 
         # Stanza Create succeeds when using force - recreates archive.info from uncompressed archive file
         #--------------------------------------------------------------------------------------------------------------------------

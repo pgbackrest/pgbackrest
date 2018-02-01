@@ -135,21 +135,21 @@ sub run
         storageRepo()->pathCreate(STORAGE_REPO_ARCHIVE . "/9.4-1");
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
             "archive directory not empty" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.");
 
         # No force. Archive dir not empty. No archive.info file. Backup directory not empty. No backup.info file.
         #---------------------------------------------------------------------------------------------------------------------------
         storageRepo()->pathCreate(STORAGE_REPO_BACKUP . "/12345");
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
             "backup directory and/or archive directory not empty" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.");
 
         # No force. Archive dir empty. No archive.info file. Backup directory not empty. No backup.info file.
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . "/9.4-1", {bRecurse => true});
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
             "backup directory not empty" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.");
 
         # No force. No archive.info file and no archive sub-directories or files. Backup.info exists and no backup sub-directories
         # or files
@@ -159,7 +159,7 @@ sub run
              $self->dbSysId(PG_VERSION_94), $iDbControl, $iDbCatalog, true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "archive information missing" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.");
 
         # No force. No backup.info file (backup.info.copy only) and no backup sub-directories or files. Archive.info exists and no
         # archive sub-directories or files
@@ -167,9 +167,27 @@ sub run
         forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO);
         (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
             $self->dbSysId(PG_VERSION_94), true);
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0,
+            "no error on missing backup.info since backup.info.copy exists and DB section OK");
+
+        # No force. No backup.info file (backup.info.copy only) and no backup sub-directories or files. No archive.info file
+        # (archive.info.copy only) and no archive sub-directories or files
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+        (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+            $self->dbSysId(PG_VERSION_94), true);
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0,
+            "no error on missing archive.info since archive.info.copy exists and DB section OK");
+
+        # No force. No backup.info files and no backup sub-directories or files. Archive.info exists and no
+        # archive sub-directories or files
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
+        (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+            $self->dbSysId(PG_VERSION_94), true);
         $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_FILE_MISSING,
             "backup information missing" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.");
 
         # No force. archive.info DB mismatch. backup.info correct DB.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -200,16 +218,14 @@ sub run
 
         # No force with .info and .info.copy files already existing
         #--------------------------------------------------------------------------------------------------------------------------
-        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
-            "backup directory and/or archive directory not empty" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0,
+            "info files exist and check out ok - stanza create not needed");
 
-        # No force. Remove only backup.info.copy file - confirm stanza create still throws an error since force was not used
+        # No force. Remove only backup.info.copy file - confirm stanza create does not throw an error since copy is still valid
         #---------------------------------------------------------------------------------------------------------------------------
         forceStorageRemove(storageRepo(), $strBackupInfoFileCopy);
-        $self->testException(sub {$oStanza->stanzaCreate()}, ERROR_PATH_NOT_EMPTY,
-            "backup directory and/or archive directory not empty" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0,
+            "info.copy file exists and check out ok - stanza create not needed");
 
         # Force on. Valid archive.info exists. Invalid backup.info exists.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -221,6 +237,7 @@ sub run
             $self->dbSysId(PG_VERSION_93), $iDbControl, $iDbCatalog, true);
 
         $self->testResult(sub {$oStanza->stanzaCreate()}, 0, 'successfully created stanza with force and existing info files');
+
         $self->testResult(sub {(new pgBackRest::Backup::Info($self->{strBackupPath}))->check(PG_VERSION_94,
             $iDbControl, $iDbCatalog, $self->dbSysId(PG_VERSION_94))}, 2, '    backup.info reconstructed');
 
@@ -445,7 +462,7 @@ sub run
             storageRepo()->pathGet(STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO) .
             " does not exist and is required to perform a backup." .
             "\nHINT: has a stanza-create been performed?" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.");
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.");
 
         # Force.
         #---------------------------------------------------------------------------------------------------------------------------
@@ -654,7 +671,7 @@ sub run
         my $oStanza = new pgBackRest::Stanza();
 
         my $strMessage = "archive information missing" .
-            "\nHINT: use stanza-create --force to force the stanza data to be created.";
+            "\nHINT: use stanza-create --force to force the stanza data to be recreated.";
 
         $self->testException(sub {$oStanza->errorForce($strMessage, ERROR_FILE_MISSING, undef, true,
             $self->{strArchivePath}, $self->{strBackupPath})}, ERROR_FILE_MISSING, $strMessage);

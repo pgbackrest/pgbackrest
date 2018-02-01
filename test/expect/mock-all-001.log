@@ -2894,7 +2894,7 @@ stanza-create db - fail on backup directory missing backup.info (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --config=[TEST_PATH]/db-master/pgbackrest.conf --db1-path=[TEST_PATH]/db-master/db/base-2 --db-timeout=45 --lock-path=[TEST_PATH]/db-master/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/db-master/log --no-online --protocol-timeout=60 --repo-path=[TEST_PATH]/db-master/repo --stanza=db
 P00  ERROR: [055]: backup information missing
-            HINT: use stanza-create --force to force the stanza data to be created.
+            HINT: use stanza-create --force to force the stanza data to be recreated.
 P00   INFO: stanza-create command end: aborted with exception [055]
 
 + supplemental file: [TEST_PATH]/db-master/repo/archive/db/archive.info
