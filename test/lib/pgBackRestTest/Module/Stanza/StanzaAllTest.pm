@@ -171,6 +171,15 @@ sub run
         $self->testResult(sub {$oStanza->stanzaCreate()}, 0,
             "no error on missing backup.info since backup.info.copy exists and DB section OK");
 
+        # No force. No backup.info file (backup.info.copy only) and no backup sub-directories or files. No archive.info file
+        # (archive.info.copy only) and no archive sub-directories or files
+        #---------------------------------------------------------------------------------------------------------------------------
+        forceStorageRemove(storageRepo(), STORAGE_REPO_ARCHIVE . qw{/} . ARCHIVE_INFO_FILE);
+        (new pgBackRest::Archive::Info($self->{strArchivePath}, false, {bIgnoreMissing => true}))->create(PG_VERSION_94,
+            $self->dbSysId(PG_VERSION_94), true);
+        $self->testResult(sub {$oStanza->stanzaCreate()}, 0,
+            "no error on missing archive.info since archive.info.copy exists and DB section OK");
+
         # No force. No backup.info files and no backup sub-directories or files. Archive.info exists and no
         # archive sub-directories or files
         #---------------------------------------------------------------------------------------------------------------------------
