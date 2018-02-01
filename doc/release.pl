@@ -161,9 +161,9 @@ eval
 
         # Deploy to server
         &log(INFO, '...Deploy to repository');
-        executeTest("rm -rf ${strDeployPath}/${strVersion}");
-        executeTest("mkdir ${strDeployPath}/${strVersion}");
-        executeTest("cp ${strDocHtml}/* ${strDeployPath}/${strVersion}");
+        executeTest("rm -rf ${strDeployPath}/prior/${strVersion}");
+        executeTest("mkdir ${strDeployPath}/prior/${strVersion}");
+        executeTest("cp ${strDocHtml}/* ${strDeployPath}/prior/${strVersion}");
 
         # Generate deployment docs for the main website
         if (!$bDev)
