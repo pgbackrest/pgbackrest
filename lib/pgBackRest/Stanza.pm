@@ -151,7 +151,7 @@ sub stanzaCreate
 
         if (!$bArchiveInfoFileExists)
         {
-            $bArchiveInfoFileExists .= &INI_COPY_EXT;
+            $strArchiveInfoFile .= &INI_COPY_EXT;
             $bArchiveInfoFileExists = grep(/^$strArchiveInfoFile$/i, @stryFileListArchive);
         }
 
