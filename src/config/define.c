@@ -42,7 +42,7 @@ typedef struct ConfigDefineOptionData
     const char *name;                                               // Option name
     unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
     unsigned int internal:1;                                        // Is the option only used internally?
-    unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. db1-*)
+    unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. pg1-*)
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool negate:1;                                                  // Can the option be negated?
     bool required:1;                                                // Is the option required?
@@ -100,9 +100,9 @@ typedef enum
     configDefDataTypeCommand,
     configDefDataTypeDefault,
     configDefDataTypeDepend,
-    configDefDataTypeNameAlt,
     configDefDataTypePrefix,
     configDefDataTypeRequired,
+    configDefDataTypeHelpNameAlt,
     configDefDataTypeHelpSummary,
     configDefDataTypeHelpDescription,
 } ConfigDefineDataType;
@@ -134,9 +134,6 @@ typedef enum
         configDefDataTypeAllowRange, 2, 0, (const void *)(intptr_t)(int32)(rangeMinParam * 100),                                   \
         (const void *)(intptr_t)(int32)(rangeMaxParam * 100)),
 
-#define CFGDEFDATA_OPTION_OPTIONAL_NAME_ALT(nameAltParam)                                                                          \
-    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeNameAlt, 1, 0, nameAltParam),
-
 #define CFGDEFDATA_OPTION_OPTIONAL_PREFIX(prefixParam)                                                                             \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypePrefix, 1, 0, prefixParam),
 
@@ -156,6 +153,9 @@ typedef enum
 #define CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(commandOptionRequired)                                                                 \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeRequired, 0, commandOptionRequired),
 
+#define CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT(...)                                                                              \
+    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
+        configDefDataTypeHelpNameAlt, sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *), 0, __VA_ARGS__),
 #define CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY(helpSummaryParam)                                                                  \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeHelpSummary, 1, 0, helpSummaryParam),
 #define CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION(helpDescriptionParam)                                                          \
@@ -467,6 +467,42 @@ cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption
 }
 
 /***********************************************************************************************************************************
+Option help name alt
+***********************************************************************************************************************************/
+bool
+cfgDefOptionHelpNameAlt(ConfigDefineOption optionDefId)
+{
+    cfgDefOptionCheck(optionDefId);
+
+    CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypeHelpNameAlt);
+
+    return dataDefFound;
+}
+
+const char *
+cfgDefOptionHelpNameAltValue(ConfigDefineOption optionDefId, int valueId)
+{
+    cfgDefOptionCheck(optionDefId);
+
+    CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypeHelpNameAlt);
+
+    if (valueId < 0 || valueId >= dataDefListSize)
+        THROW(AssertError, "value id %d invalid - must be >= 0 and < %d", valueId, dataDefListSize);
+
+    return (char *)dataDefList[valueId];
+}
+
+int
+cfgDefOptionHelpNameAltValueTotal(ConfigDefineOption optionDefId)
+{
+    cfgDefOptionCheck(optionDefId);
+
+    CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypeHelpNameAlt);
+
+    return dataDefListSize;
+}
+
+/***********************************************************************************************************************************
 Option help section
 ***********************************************************************************************************************************/
 const char *
@@ -490,6 +526,19 @@ cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption opt
         return (char *)dataDefList[0];
 
     return configDefineOptionData[optionDefId].helpSummary;
+}
+
+/***********************************************************************************************************************************
+Get option id by name
+***********************************************************************************************************************************/
+int
+cfgDefOptionId(const char *optionName)
+{
+    for (ConfigDefineOption optionDefId = 0; optionDefId < cfgDefOptionTotal(); optionDefId++)
+        if (strcmp(optionName, configDefineOptionData[optionDefId].name) == 0)
+            return optionDefId;
+
+    return -1;
 }
 
 /***********************************************************************************************************************************
@@ -520,22 +569,6 @@ cfgDefOptionName(ConfigDefineOption optionDefId)
 {
     cfgDefOptionCheck(optionDefId);
     return configDefineOptionData[optionDefId].name;
-}
-
-/***********************************************************************************************************************************
-Alternate name for the option -- generally used for deprecation
-***********************************************************************************************************************************/
-const char *
-cfgDefOptionNameAlt(ConfigDefineOption optionDefId)
-{
-    cfgDefOptionCheck(optionDefId);
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypeNameAlt);
-
-    if (dataDefFound)
-        return (char *)dataDefList[0];
-
-    return NULL;
 }
 
 /***********************************************************************************************************************************

@@ -14,7 +14,7 @@ info all stanzas - no stanzas exist (db-master host)
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --no-online --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: /backup/db/backup.info
@@ -70,7 +70,7 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
 P00  ERROR: [070]: link '[TEST_PATH]/db-master/db/base/postgresql.conf.bad' -> '../pg_config/postgresql.conf.link' cannot reference another link
 
 full backup - create pg_stat link, pg_clog dir (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --cmd-ssh=/usr/bin/ssh --db1-port=[PORT-1] --db1-socket-path =/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --manifest-save-threshold=3 --protocol-timeout=2 --db-timeout=1 --cmd-ssh=/usr/bin/ssh --pg1-port=9999 --pg1-socket-path =/test_socket_path --buffer-size=16384 --checksum-page --process-max=1 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
@@ -80,13 +80,9 @@ P00   WARN: invalid page checksum found in file db-master:[TEST_PATH]/db-master/
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -98,16 +94,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
@@ -121,16 +121,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -254,13 +254,9 @@ P00   TEST:         PgBaCkReStTeSt-BACKUP-RESUME-PgBaCkReStTeSt
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -272,16 +268,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
@@ -295,16 +295,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -416,7 +416,7 @@ db-version="9.4"
 1={"db-catalog-version":201409291,"db-control-version":942,"db-system-id":1000000000000000094,"db-version":"9.4"}
 
 full backup - invalid repo (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --repo-path=/bogus_path  --log-level-console=warn --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --repo1-path=/bogus_path  --log-level-console=warn --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
@@ -527,13 +527,9 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -545,16 +541,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
@@ -568,16 +568,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -709,13 +709,9 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -727,16 +723,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
@@ -750,16 +750,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -901,13 +901,9 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -919,16 +915,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
@@ -942,16 +942,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -1089,13 +1089,9 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -1107,16 +1103,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base
 
 [global]
 compress=n
@@ -1130,16 +1130,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -1295,17 +1295,13 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -1317,16 +1313,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=n
@@ -1340,16 +1340,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -1472,7 +1472,7 @@ db-version="9.4"
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base-2 --db-timeout=45 --db1-user=[USER-1] --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --no-online --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --force --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00  ERROR: [055]: backup information missing and repo is encrypted and info file(s) are missing, --force cannot be used
 P00   INFO: stanza-create command end: aborted with exception [055]
 
@@ -1505,17 +1505,13 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -1527,16 +1523,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=n
@@ -1550,16 +1550,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -1694,17 +1694,13 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -1716,16 +1712,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=n
@@ -1739,16 +1739,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -1882,17 +1882,13 @@ P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -1904,16 +1900,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=y
@@ -1927,16 +1927,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -2073,17 +2073,13 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -2095,16 +2091,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=y
@@ -2118,16 +2118,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -2258,17 +2258,13 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -2280,16 +2276,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=y
@@ -2303,16 +2303,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -2781,7 +2781,7 @@ info db stanza - normal output (backup host)
 expire full=1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --retention-full=1 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-3]
@@ -2800,17 +2800,13 @@ P00   WARN: option retention-full is not set, the repository may run out of spac
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [db:restore]
 tablespace-map=1=[TEST_PATH]/db-master/db/tablespace/ts1-2
 tablespace-map=2=[TEST_PATH]/db-master/db/tablespace/ts2-2
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -2822,16 +2818,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2
 
 [global]
 compress=y
@@ -2845,16 +2845,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -3150,7 +3150,7 @@ info bogus stanza - bogus stanza (db-master host)
 diff backup - config file not validated on remote (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base-2/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --process-max=2 --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
@@ -3158,22 +3158,18 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2/base
+pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [db:restore]
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -3185,17 +3181,21 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 bogus=bogus
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 compress=y
@@ -3209,16 +3209,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -3341,7 +3341,7 @@ db-version="9.4"
 diff backup - option backup-standby reset - backup performed from master (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --db1-path=[TEST_PATH]/db-master/db/base-2/base --db-timeout=45 --db1-user=[USER-1] --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --process-max=2 --protocol-timeout=60 --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option retention-full is not set, the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but standby is not properly configured - backups will be performed from the master
@@ -3350,22 +3350,18 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --db1-cmd=[BACKREST-BIN] --db1-config=[TEST_PATH]/db-master/pgbackrest.conf --db1-host=db-master --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --repo-cipher-pass=<redacted> --repo-cipher-type=aes-256-cbc --repo-path=/ --repo-s3-bucket=pgbackrest-dev --repo-s3-endpoint=s3.amazonaws.com --repo-s3-key=<redacted> --repo-s3-key-secret=<redacted> --repo-s3-region=us-east-1 --no-repo-s3-verify-ssl --repo-type=s3 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-s3-verify-ssl --repo1-type=s3 --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base-2/base
+pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [db:restore]
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-2]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -3377,16 +3373,20 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-2]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base-2/base
-db-user=[USER-1]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-master/db/base-2/base
 
 [global]
 compress=y
@@ -3400,16 +3400,16 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-cipher-pass=x
-repo-cipher-type=aes-256-cbc
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-cipher-pass=x
+repo1-cipher-type=aes-256-cbc
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y

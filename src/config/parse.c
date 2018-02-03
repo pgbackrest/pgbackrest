@@ -22,6 +22,9 @@ Parse option flags
 // Add a flag for negation rather than checking "-no-"
 #define PARSE_NEGATE_FLAG                                           (1 << 30)
 
+// Indicate that option name has been deprecated and will be removed in a future release
+#define PARSE_DEPRECATE_FLAG                                        (1 << 29)
+
 // Mask to exclude all flags and get at the actual option id (only 12 bits allowed for option id, the rest reserved for flags)
 #define PARSE_OPTION_MASK                                           0xFFF
 
@@ -40,6 +43,25 @@ typedef struct ParseOption
     unsigned int source:2;                                          // Where was to option found?
     StringList *valueList;                                          // List of values found
 } ParseOption;
+
+/***********************************************************************************************************************************
+Find an option by name in the option list
+***********************************************************************************************************************************/
+static unsigned int
+optionFind(const String *option)
+{
+    unsigned int optionIdx = 0;
+
+    while (optionList[optionIdx].name != NULL)
+    {
+        if (strcmp(strPtr(option), optionList[optionIdx].name) == 0)
+            break;
+
+        optionIdx++;
+    }
+
+    return optionIdx;
+}
 
 /***********************************************************************************************************************************
 Parse the command-line arguments and config file to produce final config data
@@ -254,15 +276,7 @@ configParse(int argListSize, const char *argList[])
                             String *key = strLstGet(keyList, keyIdx);
 
                             // Find the optionName in the main list
-                            unsigned int optionIdx = 0;
-
-                            while (optionList[optionIdx].name != NULL)
-                            {
-                                if (strcmp(strPtr(key), optionList[optionIdx].name) == 0)
-                                    break;
-
-                                optionIdx++;
-                            }
+                            unsigned int optionIdx = optionFind(key);
 
                             // Warn if the option not found
                             if (optionList[optionIdx].name == NULL)

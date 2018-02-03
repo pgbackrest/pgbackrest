@@ -103,7 +103,7 @@ sub initStanzaCreate
     }
 
     $self->optionTestSet(CFGOPT_STANZA, $strStanza);
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
     $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
     $self->optionTestSetBool(CFGOPT_ONLINE, false);
@@ -136,7 +136,7 @@ sub initStanzaUpgrade
     my $rhConfig = $self->configTestClear();
 
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
     $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
     $self->optionTestSetBool(CFGOPT_ONLINE, false);
@@ -233,9 +233,9 @@ sub run
 
         # Test !isRepoLocal branch
         #---------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(CFGOPT_BACKUP_HOST, false);
-        cfgOptionSet(CFGOPT_BACKUP_CONFIG, BOGUS);
-        $self->testException(sub {$oInfo->stanzaList(BOGUS)}, ERROR_ASSERT, "option backup-cmd is required");
+        cfgOptionSet(CFGOPT_REPO_HOST, false);
+        cfgOptionSet(CFGOPT_REPO_HOST_CONFIG, BOGUS);
+        $self->testException(sub {$oInfo->stanzaList(BOGUS)}, ERROR_ASSERT, "option repo1-host-cmd is required");
 
         # dbArchiveSection() -- no archive
         #---------------------------------------------------------------------------------------------------------------------------

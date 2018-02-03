@@ -171,23 +171,24 @@ sub configLoad
         umask(0000);
     }
 
-    # Set db-cmd and backup-cmd to defaults if they are not set.  The command depends on the currently running exe so can't be
-    # calculated correctly in the C Library -- perhaps in the future this value will be passed in or set some other way
-    if (cfgOptionValid(CFGOPT_BACKUP_CMD) && cfgOptionTest(CFGOPT_BACKUP_HOST) && !cfgOptionTest(CFGOPT_BACKUP_CMD))
+    # Set pg-host-cmd and repo-host-cmd to defaults if they are not set.  The command depends on the currently running exe so can't
+    # be calculated correctly in the C Library -- perhaps in the future this value will be passed in or set some other way
+    # ??? THIS IS IMPLEMENTED IN C AND SHOULD BE REMOVED FROM HERE WITHOUT DUPLICATING TEST CODE
+    if (cfgOptionValid(CFGOPT_REPO_HOST_CMD) && cfgOptionTest(CFGOPT_REPO_HOST) && !cfgOptionTest(CFGOPT_REPO_HOST_CMD))
     {
-        cfgOptionSet(CFGOPT_BACKUP_CMD, backrestBin());
-        $oOption{cfgOptionName(CFGOPT_BACKUP_CMD)}{source} = CFGDEF_SOURCE_DEFAULT;
+        cfgOptionSet(CFGOPT_REPO_HOST_CMD, backrestBin());
+        $oOption{cfgOptionName(CFGOPT_REPO_HOST_CMD)}{source} = CFGDEF_SOURCE_DEFAULT;
     }
 
-    if (cfgOptionValid(CFGOPT_DB_CMD))
+    if (cfgOptionValid(CFGOPT_PG_HOST_CMD))
     {
-        for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iOptionIdx++)
+        for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_PG_HOST); $iOptionIdx++)
         {
-            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iOptionIdx)) &&
-                !cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)))
+            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iOptionIdx)) &&
+                !cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iOptionIdx)))
             {
-                cfgOptionSet(cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx), backrestBin());
-                $oOption{cfgOptionIdFromIndex(CFGOPT_DB_CMD, $iOptionIdx)}{source} = CFGDEF_SOURCE_DEFAULT;
+                cfgOptionSet(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iOptionIdx), backrestBin());
+                $oOption{cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iOptionIdx)}{source} = CFGDEF_SOURCE_DEFAULT;
             }
         }
     }
@@ -213,7 +214,7 @@ sub configLoad
     }
 
     # Make sure that backup and db are not both remote
-    if (cfgOptionTest(CFGOPT_DB_HOST) && cfgOptionTest(CFGOPT_BACKUP_HOST))
+    if (cfgOptionTest(CFGOPT_PG_HOST) && cfgOptionTest(CFGOPT_REPO_HOST))
     {
         confess &log(ERROR, 'db and backup cannot both be configured as remote', ERROR_CONFIG);
     }
@@ -290,13 +291,12 @@ sub configLoad
 push @EXPORT, qw(configLoad);
 
 ####################################################################################################################################
-# cfgOptionIdFromIndex - return name for options that can be indexed (e.g. db1-host, db2-host).
+# cfgOptionIdFromIndex - return name for options that can be indexed (e.g. pg1-host, pg2-host).
 ####################################################################################################################################
 sub cfgOptionIdFromIndex
 {
     my $iOptionId = shift;
     my $iIndex = shift;
-    my $bForce = shift;
 
     # If the option doesn't have a prefix it can't be indexed
     $iIndex = defined($iIndex) ? $iIndex : 1;

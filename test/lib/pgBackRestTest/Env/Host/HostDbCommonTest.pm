@@ -145,7 +145,7 @@ sub archivePush
         ' --config=' . $self->backrestConfig() .
         ' --log-level-console=warn --archive-queue-max=' . int(2 * PG_WAL_SIZE) .
         ' --stanza=' . $self->stanza() .
-        (defined($iExpectedError) && $iExpectedError == ERROR_FILE_READ ? ' --backup-host=bogus' : '') .
+        (defined($iExpectedError) && $iExpectedError == ERROR_FILE_READ ? ' --repo1-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .
         " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : ''),
         {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});

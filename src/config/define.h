@@ -45,12 +45,15 @@ int cfgDefOptionDependValueTotal(ConfigDefineCommand commandDefId, ConfigDefineO
 bool cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
 const char *cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, int valueId);
 const char *cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+bool cfgDefOptionHelpNameAlt(ConfigDefineOption optionDefId);
+const char *cfgDefOptionHelpNameAltValue(ConfigDefineOption optionDefId, int valueId);
+int cfgDefOptionHelpNameAltValueTotal(ConfigDefineOption optionDefId);
 const char *cfgDefOptionHelpSection(ConfigDefineOption optionDefId);
 const char *cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+int cfgDefOptionId(const char *optionName);
 int cfgDefOptionIndexTotal(ConfigDefineOption optionDefId);
 bool cfgDefOptionInternal(ConfigDefineOption optionDefId);
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
-const char *cfgDefOptionNameAlt(ConfigDefineOption optionDefId);
 bool cfgDefOptionNegate(ConfigDefineOption optionDefId);
 const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);

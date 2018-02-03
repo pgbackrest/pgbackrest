@@ -162,7 +162,7 @@ sub setup
     }
 
     # Set options needed for storage helper
-    $self->optionTestSet(CFGOPT_DB_PATH, $oHostDbMaster->dbBasePath());
+    $self->optionTestSet(CFGOPT_PG_PATH, $oHostDbMaster->dbBasePath());
     $self->optionTestSet(CFGOPT_REPO_PATH, $oHostBackup->repoPath());
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
 

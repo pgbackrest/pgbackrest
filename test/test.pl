@@ -73,7 +73,7 @@ test.pl [options]
    --run                execute only the specified test run
    --dry-run            show only the tests that would be executed but don't execute them
    --no-cleanup         don't cleaup after the last test is complete - useful for debugging
-   --db-version         version of postgres to test (all, defaults to minimal)
+   --pg-version         version of postgres to test (all, defaults to minimal)
    --log-force          force overwrite of current test log files
    --no-lint            disable static source code analysis
    --build-only         compile the C library / packages and run tests only
@@ -121,7 +121,7 @@ my $strTestPath;
 my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
-my $strDbVersion = 'minimal';
+my $strPgVersion = 'minimal';
 my $bLogForce = false;
 my $strVm;
 my $strVmHost = VM_HOST_DEFAULT;
@@ -157,7 +157,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'vm-max=s' => \$iVmMax,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
-            'db-version=s' => \$strDbVersion,
+            'pg-version=s' => \$strPgVersion,
             'log-force' => \$bLogForce,
             'no-lint' => \$bNoLint,
             'build-only' => \$bBuildOnly,
@@ -216,7 +216,7 @@ eval
         $bSmart = true;
         $bNoPackage = true;
         $strVm = VM_EXPECT;
-        $strDbVersion = '9.6';
+        $strPgVersion = '9.6';
         $bLogForce = true;
     }
 
@@ -431,7 +431,7 @@ eval
         {
             # Get the test list
             $oyTestRun = testListGet(
-                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strDbVersion, $bCoverageOnly, $bCOnly);
+                $strVm, \@stryModule, \@stryModuleTest, \@iyModuleTestRun, $strPgVersion, $bCoverageOnly, $bCOnly);
 
             # Search for any tests that are not C unit tests to determine if the C binary and lib need to be built for testing.  If
             # all the tests are C unit tests then no builds are required.  This saves a lot ot time.
@@ -1095,8 +1095,8 @@ eval
         $strTestPath,                                               # Path where the tests will run
         '/usr/bin/' . BACKREST_EXE,                                 # Path to the backrest executable
         "${strBackRestBase}/bin/" . BACKREST_EXE,                   # Path to the backrest Perl helper
-        $strDbVersion ne 'minimal' ? $strPgSqlBin: undef,           # Db bin path
-        $strDbVersion ne 'minimal' ? $strDbVersion: undef,          # Db version
+        $strPgVersion ne 'minimal' ? $strPgSqlBin: undef,           # Pg bin path
+        $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
         $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
         TEST_USER, BACKREST_USER, TEST_GROUP);                      # User/group info

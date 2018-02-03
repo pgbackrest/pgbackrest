@@ -89,7 +89,7 @@ sub new
 
     if (defined($self->{iRemoteIdx}))
     {
-        $self->{strDbPath} = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $self->{iRemoteIdx}));
+        $self->{strDbPath} = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iRemoteIdx}));
 
         if (!isDbLocal({iRemoteIdx => $self->{iRemoteIdx}}))
         {
@@ -161,18 +161,18 @@ sub connect
             # Connect to the db
             my $strDbName = 'postgres';
             my $strDbUser = getpwuid($<);
-            my $strDbSocketPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_SOCKET_PATH, $self->{iRemoteIdx}), false);
+            my $strDbSocketPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_SOCKET_PATH, $self->{iRemoteIdx}), false);
 
             # Make sure the socket path is absolute
             if (defined($strDbSocketPath) && $strDbSocketPath !~ /^\//)
             {
-                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . cfgOptionName(CFGOPT_DB_SOCKET_PATH) . "' option:" .
+                confess &log(ERROR, "'${strDbSocketPath}' is not valid for '" . cfgOptionName(CFGOPT_PG_SOCKET_PATH) . "' option:" .
                                     " path must be absolute", ERROR_OPTION_INVALID_VALUE);
             }
 
             # Construct the URI
             my $strDbUri =
-                "dbi:Pg:dbname=${strDbName};port=" . cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PORT, $self->{iRemoteIdx})) .
+                "dbi:Pg:dbname=${strDbName};port=" . cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $self->{iRemoteIdx})) .
                 (defined($strDbSocketPath) ? ";host=${strDbSocketPath}" : '');
 
             logDebugMisc
@@ -556,7 +556,7 @@ sub versionGet
         return $self->{strDbVersion}, $self->{strDbPath};
     }
 
-    # Get version and db-path from
+    # Get version and pg-path from
     (my $strVersionNum, $self->{strDbPath}) =
         $self->executeSqlRow(
             "select (select setting from pg_settings where name = 'server_version_num'), " .
@@ -758,13 +758,15 @@ sub configValidate
     # Get version and db path from the database
     my ($fCompareDbVersion, $strCompareDbPath) = $self->versionGet();
 
-    # Error if the version from the control file and the configured db-path do not match the values obtained from the database
+    # Error if the version from the control file and the configured pg-path do not match the values obtained from the database
     if (!($strDbVersion == $fCompareDbVersion && $self->{strDbPath} eq $strCompareDbPath))
     {
         confess &log(ERROR,
-            "version '${fCompareDbVersion}' and db-path '${strCompareDbPath}' queried from cluster does not match" .
-            " version '${strDbVersion}' and db-path '$self->{strDbPath}' read from '$self->{strDbPath}/" .
-            DB_FILE_PGCONTROL . "'\n" . "HINT: the db-path and db-port settings likely reference different clusters",
+            "version '${fCompareDbVersion}' and path '${strCompareDbPath}' queried from cluster do not match version" .
+                " '${strDbVersion}' and " . cfgOptionName(CFGOPT_PG_PATH) . " '$self->{strDbPath}' read from" .
+                " '$self->{strDbPath}/" . DB_FILE_PGCONTROL . "'\n" .
+            "HINT: the " . cfgOptionName(CFGOPT_PG_PATH) . " and " . cfgOptionName(CFGOPT_PG_PORT) .
+                " settings likely reference different clusters",
             ERROR_DB_MISMATCH);
     }
 
@@ -1030,11 +1032,11 @@ sub dbObjectGet
     # this is simple and works.
     if (!$bMasterOnly && cfgOptionTest(CFGOPT_ONLINE) && cfgOption(CFGOPT_ONLINE) && multipleDb())
     {
-        for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
+        for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_PG_HOST); $iRemoteIdx++)
         {
             # Make sure a db is defined for this index
-            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
-                cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
+            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)) ||
+                cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx)))
             {
                 # Create the db object
                 my $oDb;
@@ -1155,10 +1157,10 @@ push @EXPORT, qw(dbMasterGet);
 ####################################################################################################################################
 sub multipleDb
 {
-    for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_DB_PATH); $iDbPathIdx++)
+    for (my $iDbPathIdx = 2; $iDbPathIdx <= cfgOptionIndexTotal(CFGOPT_PG_PATH); $iDbPathIdx++)
     {
         # If an index exists above 1 then return true
-        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iDbPathIdx)))
+        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iDbPathIdx)))
         {
             return true;
         }

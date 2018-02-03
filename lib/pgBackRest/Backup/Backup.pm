@@ -390,7 +390,7 @@ sub processManifest
         foreach my $hJob (@{$hyJob})
         {
             ($lSizeCurrent, $lManifestSaveCurrent) = backupManifestUpdate(
-                $oBackupManifest, cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $hJob->{iHostConfigIdx}), false),
+                $oBackupManifest, cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $hJob->{iHostConfigIdx}), false),
                 $hJob->{iProcessId}, @{$hJob->{rParam}}[0..4], @{$hJob->{rResult}}, $lSizeTotal, $lSizeCurrent, $lManifestSaveSize,
                 $lManifestSaveCurrent);
         }
@@ -432,7 +432,7 @@ sub process
     # Store local type, compress, and hardlink options since they can be modified by the process
     my $strType = cfgOption(CFGOPT_TYPE);
     my $bCompress = cfgOption(CFGOPT_COMPRESS);
-    my $bHardLink = cfgOption(CFGOPT_HARDLINK);
+    my $bHardLink = cfgOption(CFGOPT_REPO_HARDLINK);
 
     # Create the cluster backup and history path
     $oStorageRepo->pathCreate(
@@ -471,8 +471,8 @@ sub process
     my $oStorageDbMaster = storageDb({iRemoteIdx => $self->{iMasterRemoteIdx}});
 
     # Determine the database paths
-    my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $self->{iMasterRemoteIdx}));
-    my $strDbCopyPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $self->{iCopyRemoteIdx}));
+    my $strDbMasterPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iMasterRemoteIdx}));
+    my $strDbCopyPath = cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $self->{iCopyRemoteIdx}));
 
     # Database info
     my ($strDbVersion, $iControlVersion, $iCatalogVersion, $ullDbSysId) = $oDbMaster->info();
@@ -601,10 +601,10 @@ sub process
                     }
                     # Check hardlink
                     elsif ($oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK) !=
-                           cfgOption(CFGOPT_HARDLINK))
+                           cfgOption(CFGOPT_REPO_HARDLINK))
                     {
                         $strKey = MANIFEST_KEY_HARDLINK;
-                        $strValueNew = cfgOption(CFGOPT_HARDLINK);
+                        $strValueNew = cfgOption(CFGOPT_REPO_HARDLINK);
                         $strValueAborted = $oAbortedManifest->boolGet(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_HARDLINK);
                     }
 

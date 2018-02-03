@@ -87,7 +87,9 @@ sub main
                 !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) &&
                 !-e cfgOption(CFGOPT_REPO_PATH))
             {
-                confess &log(ERROR, 'repo-path \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
+                confess &log(ERROR,
+                    cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist',
+                    ERROR_PATH_MISSING);
             }
 
             # Load module dynamically
@@ -166,7 +168,8 @@ sub main
 
         if (isRepoLocal() && !cfgOptionTest(CFGOPT_REPO_TYPE, CFGOPTVAL_REPO_TYPE_S3) && !storageRepo()->pathExists(''))
         {
-            confess &log(ERROR, 'repo-path \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
+            confess &log(ERROR,
+                cfgOptionName(CFGOPT_REPO_PATH) . ' \'' . cfgOption(CFGOPT_REPO_PATH) . '\' does not exist', ERROR_PATH_MISSING);
         }
 
         ############################################################################################################################

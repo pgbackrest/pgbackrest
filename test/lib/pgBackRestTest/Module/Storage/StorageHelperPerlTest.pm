@@ -50,7 +50,7 @@ sub run
     my $iFileSize = length($strFileContent);
 
     # Setup parameters
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->testPath() . '/db');
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->testPath() . '/db');
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
     $self->optionTestSet(CFGOPT_SPOOL_PATH, $self->testPath() . '/spool');
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());

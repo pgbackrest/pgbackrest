@@ -10,6 +10,19 @@ Test Configuration Parse
 #define TEST_COMMAND_VERSION                                        "version"
 
 /***********************************************************************************************************************************
+Option find test -- this is done a lot in the deprecated tests
+***********************************************************************************************************************************/
+static void
+testOptionFind(const char *option, int value)
+{
+    // If not testing for a missing option, then add the option offset that is already added to each option in the list
+    if (value != 0)
+        value |= PARSE_OPTION_FLAG;
+
+    TEST_RESULT_INT(optionList[optionFind(strNew(option))].val, value, "check %s", option);
+}
+
+/***********************************************************************************************************************************
 Test run
 ***********************************************************************************************************************************/
 void
@@ -36,9 +49,9 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-host"));
+        strLstAdd(argList, strNew("--pg1-host"));
         TEST_ERROR(
-            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option '--db-host' requires argument");
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option '--pg1-host' requires argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -77,12 +90,12 @@ testRun()
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionRequiredError,
-            "backup command requires option: db1-path\nHINT: does this stanza exist?");
+            "backup command requires option: pg1-path\nHINT: does this stanza exist?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionRequiredError,
@@ -91,30 +104,30 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo-s3-key=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-key=xxx"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
-            "option 'repo-s3-key' not valid without option 'repo-type' = 's3'");
+            "option 'repo1-s3-key' not valid without option 'repo1-type' = 's3'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
-        strLstAdd(argList, strNew("--backup-user=xxx"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--repo1-host-user=xxx"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
-            "option 'backup-user' not valid without option 'backup-host'");
+            "option 'repo1-host-user' not valid without option 'repo1-host'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--force"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -125,7 +138,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--test-delay=1"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -136,7 +149,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--recovery-option=a=b"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -147,7 +160,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--target-exclusive"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -158,7 +171,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--type=bogus"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -169,7 +182,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--process-max=0"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -180,7 +193,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--process-max=bogus"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -191,7 +204,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--protocol-timeout=.01"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -202,7 +215,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--protocol-timeout=bogus"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -284,9 +297,9 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--backup-host=backup"));
-        strLstAdd(argList, strNew("--backup-user=pgbackrest"));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--repo1-host=backup"));
+        strLstAdd(argList, strNew("--repo1-host-user=pgbackrest"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_BACKUP " command");
@@ -296,8 +309,8 @@ testRun()
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "    stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptDbPath)), "/path/to/db", "    db-path is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptDbPath), cfgSourceParam, "    db-path is source param");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), true, "    compress is set");
@@ -311,7 +324,7 @@ testRun()
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--no-online"));
-        strLstAdd(argList, strNew("--db1-host=db"));
+        strLstAdd(argList, strNew("--pg1-host=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePut(storageLocal(), configFile, bufNewStr(strNew(
@@ -319,7 +332,7 @@ testRun()
             "compress-level=3\n"
             "\n"
             "[global:backup]\n"
-            "hardlink=y\n"
+            "repo1-hardlink=y\n"
             "bogus=bogus\n"
             "no-compress=y\n"
             "archive-copy=y\n"
@@ -330,8 +343,8 @@ testRun()
             "recovery-option=a=b\n"
             "\n"
             "[db]\n"
-            "db1-host=db\n"
-            "db1-path=/path/to/db\n"
+            "pg1-host=db\n"
+            "pg1-path=/path/to/db\n"
             "recovery-option=c=d\n"
         )));
 
@@ -346,21 +359,21 @@ testRun()
                     "WARN: '%s' contains command-line only option 'online'",
                     strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile))));
 
-        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptDbPath)), "/path/to/db", "    db-path is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptDbPath), cfgSourceConfig, "    db-path is source config");
+        TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompress), cfgSourceConfig, "    compress is source config");
         TEST_RESULT_PTR(cfgOption(cfgOptArchiveCheck), NULL, "    archive-check is not set");
         TEST_RESULT_PTR(cfgOption(cfgOptArchiveCopy), NULL, "    archive-copy is not set");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptHardlink), true, "    hardlink is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptHardlink), cfgSourceConfig, "    hardlink is source config");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "    repo-hardlink is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "    repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "    compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--recovery-option=a"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -371,7 +384,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--recovery-option=a"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
@@ -382,7 +395,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--db-include=abc"));
         strLstAdd(argList, strNew("--db-include=def"));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -397,7 +410,7 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--recovery-option=a=b"));
         strLstAdd(argList, strNew("--recovery-option=c=de=fg hi"));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -422,7 +435,7 @@ testRun()
             "recovery-option=hijk=l\n"
             "\n"
             "[db]\n"
-            "db1-path=/path/to/db\n"
+            "pg1-path=/path/to/db\n"
         )));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_RESTORE " command");
@@ -430,5 +443,64 @@ testRun()
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("f"))))), "g", "check recovery option");
         TEST_RESULT_STR(strPtr(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk"))))), "l", "check recovery option");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (testBegin("deprecated option names"))
+    {
+        // Repository options
+        // -------------------------------------------------------------------------------------------------------------------------
+        testOptionFind("hardlink", PARSE_DEPRECATE_FLAG | cfgOptRepoHardlink);
+        testOptionFind("no-hardlink", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHardlink);
+
+        testOptionFind("backup-cmd", PARSE_DEPRECATE_FLAG | cfgOptRepoHostCmd);
+        testOptionFind("backup-config", PARSE_DEPRECATE_FLAG | cfgOptRepoHostConfig);
+        testOptionFind("backup-host", PARSE_DEPRECATE_FLAG | cfgOptRepoHost);
+        testOptionFind("backup-ssh-port", PARSE_DEPRECATE_FLAG | cfgOptRepoHostPort);
+        testOptionFind("backup-user", PARSE_DEPRECATE_FLAG | cfgOptRepoHostUser);
+
+        testOptionFind("repo-cipher-pass", PARSE_DEPRECATE_FLAG | cfgOptRepoCipherPass);
+        testOptionFind("repo-cipher-type", PARSE_DEPRECATE_FLAG | cfgOptRepoCipherType);
+        testOptionFind("repo-path", PARSE_DEPRECATE_FLAG | cfgOptRepoPath);
+        testOptionFind("repo-type", PARSE_DEPRECATE_FLAG | cfgOptRepoType);
+
+        testOptionFind("repo-s3-bucket", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Bucket);
+        testOptionFind("repo-s3-ca-file", PARSE_DEPRECATE_FLAG | cfgOptRepoS3CaFile);
+        testOptionFind("repo-s3-ca-path", PARSE_DEPRECATE_FLAG | cfgOptRepoS3CaPath);
+        testOptionFind("repo-s3-endpoint", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Endpoint);
+        testOptionFind("repo-s3-host", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Host);
+        testOptionFind("repo-s3-key", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Key);
+        testOptionFind("repo-s3-key-secret", PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret);
+        testOptionFind("repo-s3-region", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Region);
+        testOptionFind("repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifySsl);
+        testOptionFind("no-repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl);
+
+        // PostreSQL options
+        // -------------------------------------------------------------------------------------------------------------------------
+        testOptionFind("db-cmd", PARSE_DEPRECATE_FLAG | cfgOptPgHostCmd);
+        testOptionFind("db-config", PARSE_DEPRECATE_FLAG | cfgOptPgHostConfig);
+        testOptionFind("db-host", PARSE_DEPRECATE_FLAG | cfgOptPgHost);
+        testOptionFind("db-path", PARSE_DEPRECATE_FLAG | cfgOptPgPath);
+        testOptionFind("db-port", PARSE_DEPRECATE_FLAG | cfgOptPgPort);
+        testOptionFind("db-socket-path", PARSE_DEPRECATE_FLAG | cfgOptPgSocketPath);
+        testOptionFind("db-ssh-port", PARSE_DEPRECATE_FLAG | cfgOptPgHostPort);
+        testOptionFind("db-user", PARSE_DEPRECATE_FLAG | cfgOptPgHostUser);
+
+        testOptionFind("no-db-user", 0);
+
+        for (int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgDefOptPgPath); optionIdx++)
+        {
+            testOptionFind(strPtr(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
+            testOptionFind(
+                strPtr(strNewFmt("db%u-config", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostConfig + optionIdx));
+            testOptionFind(strPtr(strNewFmt("db%u-host", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHost + optionIdx));
+            testOptionFind(strPtr(strNewFmt("db%u-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPath + optionIdx));
+            testOptionFind(strPtr(strNewFmt("db%u-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPort + optionIdx));
+            testOptionFind(
+                strPtr(strNewFmt("db%u-socket-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + optionIdx));
+            testOptionFind(
+                strPtr(strNewFmt("db%u-ssh-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostPort + optionIdx));
+            testOptionFind(strPtr(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
+        }
     }
 }

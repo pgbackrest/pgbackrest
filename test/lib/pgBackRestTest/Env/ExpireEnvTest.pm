@@ -165,7 +165,7 @@ sub stanzaCreate
     my $strDbVersionTemp = $strDbVersion;
     $strDbVersionTemp =~ s/\.//;
 
-    my $strDbPath = cfgOption(CFGOPT_DB_PATH);
+    my $strDbPath = cfgOption(CFGOPT_PG_PATH);
 
     # Create the test path for pg_control
     storageTest()->pathCreate(($strDbPath . '/' . DB_PATH_GLOBAL), {bIgnoreExists => true});
@@ -206,11 +206,11 @@ sub stanzaUpgrade
     $strDbVersionTemp =~ s/\.//;
 
     # Remove pg_control
-    storageTest()->remove(cfgOption(CFGOPT_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+    storageTest()->remove(cfgOption(CFGOPT_PG_PATH) . '/' . DB_FILE_PGCONTROL);
 
     # Copy pg_control for stanza-upgrade
-    $self->controlGenerate(cfgOption(CFGOPT_DB_PATH), $strDbVersion);
-    executeTest('sudo chmod 600 ' . cfgOption(CFGOPT_DB_PATH) . '/' . DB_FILE_PGCONTROL);
+    $self->controlGenerate(cfgOption(CFGOPT_PG_PATH), $strDbVersion);
+    executeTest('sudo chmod 600 ' . cfgOption(CFGOPT_PG_PATH) . '/' . DB_FILE_PGCONTROL);
 
     $self->stanzaSet($strStanza, $strDbVersion, true);
 

@@ -98,7 +98,7 @@ use constant MANIFEST_KEY_TYPE                                      => 'backup-t
 # Options that were set when the backup was made
 use constant MANIFEST_KEY_BACKUP_STANDBY                            => 'option-' . cfgOptionName(CFGOPT_BACKUP_STANDBY);
     push @EXPORT, qw(MANIFEST_KEY_BACKUP_STANDBY);
-use constant MANIFEST_KEY_HARDLINK                                  => 'option-' . cfgOptionName(CFGOPT_HARDLINK);
+use constant MANIFEST_KEY_HARDLINK                                  => 'option-hardlink';
     push @EXPORT, qw(MANIFEST_KEY_HARDLINK);
 use constant MANIFEST_KEY_ARCHIVE_CHECK                             => 'option-' . cfgOptionName(CFGOPT_ARCHIVE_CHECK);
     push @EXPORT, qw(MANIFEST_KEY_ARCHIVE_CHECK);

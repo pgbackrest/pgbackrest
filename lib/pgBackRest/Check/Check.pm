@@ -75,11 +75,11 @@ sub process
     logLevelSet(undef, OFF);
 
     # Loop through all defined databases and attempt to build a manifest
-    for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
+    for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_PG_HOST); $iRemoteIdx++)
     {
         # Make sure a db is defined for this index
-        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)) ||
-            cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_DB_HOST, $iRemoteIdx)))
+        if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)) ||
+            cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx)))
         {
             eval
             {
@@ -91,7 +91,7 @@ sub process
                     strCipherPassSub => 'x'});
 
                 $oBackupManifest->build(storageDb({iRemoteIdx => $iRemoteIdx}),
-                    cfgOption(cfgOptionIdFromIndex(CFGOPT_DB_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE));
+                    cfgOption(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iRemoteIdx)), undef, cfgOption(CFGOPT_ONLINE));
 
                 return true;
             }

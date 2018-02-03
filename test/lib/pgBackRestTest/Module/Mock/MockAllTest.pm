@@ -335,9 +335,9 @@ sub run
                     # Pass ssh path to make sure it is used
                     ($bRemote ? ' --' . cfgOptionName(CFGOPT_CMD_SSH) . '=/usr/bin/ssh' : '') .
                     # Pass bogus ssh port to make sure it is passed through the protocol layer (it won't be used)
-                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_DB_PORT) . '=9999' : '') .
+                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_PORT) . '=9999' : '') .
                     # Pass bogus socket path to make sure it is passed through the protocol layer (it won't be used)
-                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_DB_SOCKET_PATH) . ' =/test_socket_path' : '') .
+                    ($bRemote ? ' --' . cfgOptionName(CFGOPT_PG_SOCKET_PATH) . ' =/test_socket_path' : '') .
                     ' --' . cfgOptionName(CFGOPT_BUFFER_SIZE) . '=16384 --' . cfgOptionName(CFGOPT_CHECKSUM_PAGE) .
                     ' --' . cfgOptionName(CFGOPT_PROCESS_MAX) . '=1',
                 strRepoType => $bS3 ? undef : CFGOPTVAL_REPO_TYPE_CIFS, strTest => $strTestPoint, fTestDelay => 0});
@@ -589,7 +589,7 @@ sub run
             $oHostBackup->restore(
                 'on backup host', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, strUser => TEST_USER,
-                    strOptionalParam => "${strLogReduced} --no-db1-host --db-path=${strBackupHostDbPath}"});
+                    strOptionalParam => "${strLogReduced} --no-pg1-host --pg1-path=${strBackupHostDbPath}"});
 
             $oHostDbMaster->backup(
                 $strType, 'backup errors on db host',
@@ -1081,7 +1081,7 @@ sub run
         # Enable hardlinks (except for s3) to ensure a warning is raised
         if (!$bS3)
         {
-            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_HARDLINK) => 'y'}});
+            $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {cfgOptionName(CFGOPT_REPO_HARDLINK) => 'y'}});
         }
 
         $oBackupExecute = $oHostBackup->backupBegin(

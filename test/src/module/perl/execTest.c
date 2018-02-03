@@ -92,7 +92,6 @@ testRun()
         cfgCommandParamSet(commandParamList);
 
         cfgOptionValidSet(cfgOptPerlOption, true);
-        // !!! WHY DO WE STILL NEED TO CREATE THE VAR KV EMPTY?
         StringList *perlList = strLstNew();
         strLstAdd(perlList, strNew("-I."));
         strLstAdd(perlList, strNew("-MDevel::Cover=-silent,1"));

@@ -80,7 +80,7 @@ sub initOption
     my $self = shift;
 
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
     $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
     $self->optionTestSetBool(CFGOPT_COMPRESS, false);
@@ -184,8 +184,8 @@ sub run
         my $iWalMajor = 1;
         my $iWalMinor = 1;
 
-        $self->optionTestSet(CFGOPT_BACKUP_HOST, 'localhost');
-        $self->optionTestSet(CFGOPT_BACKUP_USER, $self->pgUser());
+        $self->optionTestSet(CFGOPT_REPO_HOST, 'localhost');
+        $self->optionTestSet(CFGOPT_REPO_HOST_USER, $self->pgUser());
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()});
@@ -207,8 +207,8 @@ sub run
         # Destroy protocol object
         protocolDestroy();
 
-        $self->optionTestClear(CFGOPT_BACKUP_HOST);
-        $self->optionTestClear(CFGOPT_BACKUP_USER);
+        $self->optionTestClear(CFGOPT_REPO_HOST);
+        $self->optionTestClear(CFGOPT_REPO_HOST_USER);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -573,15 +573,15 @@ sub run
         my $iProcessId = $PID;
 
         #---------------------------------------------------------------------------------------------------------------------------
-        # Set db-host to trick archive-push into thinking it is running on the backup server
-        $self->optionTestSet(CFGOPT_DB_HOST, BOGUS);
+        # Set pg-host to trick archive-push into thinking it is running on the backup server
+        $self->optionTestSet(CFGOPT_PG_HOST, BOGUS);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testException(sub {$oPush->process(undef)}, ERROR_HOST_INVALID, 'archive-push operation must run on db host');
 
         #---------------------------------------------------------------------------------------------------------------------------
-        # Reset db-host
-        $self->optionTestClear(CFGOPT_DB_HOST);
+        # Reset pg-host
+        $self->optionTestClear(CFGOPT_PG_HOST);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         $self->testException(sub {$oPush->process(undef)}, ERROR_PARAM_REQUIRED, 'WAL file to push required');
@@ -657,7 +657,7 @@ sub run
         $strSegment = $self->walSegment($iWalTimeline, $iWalMajor, $iWalMinor++);
         $self->walGenerate($self->{strWalPath}, PG_VERSION_94, 1, $strSegment);
 
-        $self->optionTestSet(CFGOPT_BACKUP_HOST, BOGUS);
+        $self->optionTestSet(CFGOPT_REPO_HOST, BOGUS);
         $self->optionTestSet(CFGOPT_PROTOCOL_TIMEOUT, 60);
         $self->optionTestSet(CFGOPT_ARCHIVE_TIMEOUT, 5);
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
@@ -690,7 +690,7 @@ sub run
             $strErrorFileContents =~ ("42\nremote process on '" . BOGUS . "' terminated.*"), true, "check error file contents");
 
         # Disable async archiving
-        $self->optionTestClear(CFGOPT_BACKUP_HOST);
+        $self->optionTestClear(CFGOPT_REPO_HOST);
         $self->optionTestClear(CFGOPT_PROTOCOL_TIMEOUT);
         $self->optionTestClear(CFGOPT_ARCHIVE_TIMEOUT);
         $self->optionTestClear(CFGOPT_ARCHIVE_ASYNC);

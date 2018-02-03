@@ -42,8 +42,8 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
-        strLstAdd(argList, strNew("--repo-path=/path/to/repo"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--repo1-path=/path/to/repo"));
         strLstAdd(argList, strNew("stanza-create"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load local config");
@@ -58,45 +58,46 @@ testRun()
         strLstAdd(argList, strNew("archive-push"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load archive-push config");
-        TEST_RESULT_PTR(cfgOptionDefault(cfgOptBackupCmd), NULL, "    command archive-push, option backup-cmd default");
+        TEST_RESULT_PTR(cfgOptionDefault(cfgOptRepoHostCmd), NULL, "    command archive-push, option repo1-host-cmd default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--backup-host=backup"));
+        strLstAdd(argList, strNew("--repo1-host=backup"));
         strLstAdd(argList, strNew("archive-push"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load archive-push config");
         TEST_RESULT_STR(
-            strPtr(varStr(cfgOptionDefault(cfgOptBackupCmd))), strPtr(cfgExe()),
-            "    command archive-push, option backup-cmd default");
+            strPtr(varStr(cfgOptionDefault(cfgOptRepoHostCmd))), strPtr(cfgExe()),
+            "    command archive-push, option repo1-host-cmd default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("backup"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load backup config");
-        TEST_RESULT_PTR(cfgOptionDefault(cfgOptDbCmd), NULL, "    command backup, option db1-cmd default");
+        TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHostCmd), NULL, "    command backup, option pg1-host-cmd default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAdd(argList, strNew("--db-host=db"));
-        strLstAdd(argList, strNew("--db-path=/path/to/db"));
-        strLstAdd(argList, strNew("--db3-host=db"));
-        strLstAdd(argList, strNew("--db3-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg1-host=db"));
+        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
+        strLstAdd(argList, strNew("--pg3-host=db"));
+        strLstAdd(argList, strNew("--pg3-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("backup"));
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load backup config");
         TEST_RESULT_STR(
-            strPtr(varStr(cfgOptionDefault(cfgOptDbCmd))), strPtr(cfgExe()), "    command backup, option db1-cmd default");
-        TEST_RESULT_PTR(cfgOptionDefault(cfgOptDbCmd + 1), NULL, "    command backup, option db2-cmd default");
+            strPtr(varStr(cfgOptionDefault(cfgOptPgHostCmd))), strPtr(cfgExe()), "    command backup, option pg1-host-cmd default");
+        TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHostCmd + 1), NULL, "    command backup, option pg2-host-cmd default");
         TEST_RESULT_STR(
-            strPtr(varStr(cfgOptionDefault(cfgOptDbCmd + 2))), strPtr(cfgExe()), "    command backup, option db3-cmd default");
+            strPtr(varStr(cfgOptionDefault(cfgOptPgHostCmd + 2))), strPtr(cfgExe()),
+            "    command backup, option pg3-host-cmd default");
     }
 }

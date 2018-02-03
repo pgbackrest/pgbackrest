@@ -182,7 +182,7 @@ sub backupBegin
         (defined($oExpectedManifest) ? " --no-online" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
-        (defined($oParam->{strRepoType}) ? " --repo-type=$oParam->{strRepoType}" : '') .
+        (defined($oParam->{strRepoType}) ? " --repo1-type=$oParam->{strRepoType}" : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup' .
         (defined($strTest) ? " --test --test-delay=${fTestDelay} --test-point=" . lc($strTest) . '=y' : ''),
@@ -983,37 +983,6 @@ sub stop
     return logDebugReturn($strOperation);
 }
 
-
-####################################################################################################################################
-# optionIndexName - return name for options that can be indexed (e.g. db1-host, db2-host)
-#
-# This differs from cfgOptionIndex because it allows the index number for index 1 to be ommitted for testing.
-####################################################################################################################################
-sub optionIndexName
-{
-    my $self = shift;
-    my $iOptionId = shift;
-    my $iIndex = shift;
-    my $bForce = shift;
-
-    # If the option doesn't have a prefix it can't be indexed
-    $iIndex = defined($iIndex) ? $iIndex : 1;
-    my $strPrefix = cfgDefOptionPrefix($iOptionId);
-
-    if (!defined($strPrefix) && $iIndex > 1)
-    {
-        confess &log(ASSERT, "'" . cfgOptionName($iOptionId) . "' option does not allow indexing");
-    }
-
-    # Index 1 is the same name as the option unless forced to include the index
-    if ($iIndex == 1 && (!defined($bForce) || !$bForce))
-    {
-        return $strPrefix . substr(cfgOptionName($iOptionId), index(cfgOptionName($iOptionId), '-'));
-    }
-
-    return "${strPrefix}${iIndex}" . substr(cfgOptionName($iOptionId), index(cfgOptionName($iOptionId), '-'));
-}
-
 ####################################################################################################################################
 # configCreate
 ####################################################################################################################################
@@ -1094,7 +1063,7 @@ sub configCreate
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
         {
             $self->{bHardLink} = true;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_HARDLINK)} = 'y';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_REPO_HARDLINK)} = 'y';
         }
 
         $oParamHash{&CFGDEF_SECTION_GLOBAL . ':' . cfgCommandName(CFGCMD_BACKUP)}{cfgOptionName(CFGOPT_ARCHIVE_COPY)} = 'y';
@@ -1107,15 +1076,10 @@ sub configCreate
     # If this is the backup host
     if ($self->isHostBackup())
     {
-        my $bForce = false;
         my $oHostDb1 = $oHostDbMaster;
         my $oHostDb2 = $oHostDbStandby;
 
-        if ($self->nameTest(HOST_BACKUP))
-        {
-            $bForce = defined($oHostDbStandby);
-        }
-        elsif ($self->nameTest(HOST_DB_STANDBY))
+        if ($self->nameTest(HOST_DB_STANDBY))
         {
             $oHostDb1 = $oHostDbStandby;
             $oHostDb2 = $oHostDbMaster;
@@ -1123,43 +1087,50 @@ sub configCreate
 
         if ($self->nameTest(HOST_BACKUP))
         {
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, 1, $bForce)} = $oHostDb1->nameGet();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, 1, $bForce)} = $oHostDb1->userGet();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, 1, $bForce)} = $oHostDb1->backrestExe();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, 1, $bForce)} = $oHostDb1->backrestConfig();
+            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST)} = $oHostDb1->nameGet();
+            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST_USER)} = $oHostDb1->userGet();
+            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST_CMD)} = $oHostDb1->backrestExe();
+            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_HOST_CONFIG)} = $oHostDb1->backrestConfig();
 
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
             {
-                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, 1, $bForce)} = $oHostDb1->pgPort();
+                $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PORT)} = $oHostDb1->pgPort();
             }
         }
 
-        $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1, $bForce)} = $oHostDb1->dbBasePath();
+        $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $oHostDb1->dbBasePath();
 
         if (defined($oHostDb2))
         {
             # Add an invalid replica to simulate more than one replica. A warning should be thrown by dbObjectGet when a stanza is
             # created and a valid replica should be chosen.
             my $iInvalidReplica = 2;
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, $iInvalidReplica)} = BOGUS;
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, $iInvalidReplica)} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, $iInvalidReplica)} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, $iInvalidReplica)} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, $iInvalidReplica)} = $oHostDb2->dbBasePath();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iInvalidReplica))} = BOGUS;
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_USER, $iInvalidReplica))} =
+                $oHostDb2->userGet();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iInvalidReplica))} =
+                $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, $iInvalidReplica))} =
+                $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iInvalidReplica))} =
+                $oHostDb2->dbBasePath();
 
             # Set a valid replica to the last possible index to ensure skipping indexes does not make a difference.
-            my $iValidReplica = cfgOptionIndexTotal(CFGOPT_DB_PATH);
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_HOST, $iValidReplica)} = $oHostDb2->nameGet();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_USER, $iValidReplica)} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CMD, $iValidReplica)} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_CONFIG, $iValidReplica)} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, $iValidReplica)} = $oHostDb2->dbBasePath();
+            my $iValidReplica = cfgOptionIndexTotal(CFGOPT_PG_PATH);
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iValidReplica))} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_USER, $iValidReplica))} =
+                $oHostDb2->userGet();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iValidReplica))} =
+                $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CONFIG, $iValidReplica))} =
+                $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PATH, $iValidReplica))} = $oHostDb2->dbBasePath();
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT, $iValidReplica)} = $oHostDb2->pgPort();
+                $oParamHash{$strStanza}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_PORT, $iValidReplica))} = $oHostDb2->pgPort();
             }
         }
     }
@@ -1167,12 +1138,12 @@ sub configCreate
     # If this is a database host
     if ($self->isHostDb())
     {
-        $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH)} = $self->dbBasePath();
+        $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $self->dbBasePath();
 
         if (!$self->synthetic())
         {
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_SOCKET_PATH)} = $self->pgSocketPath();
-            $oParamHash{$strStanza}{$self->optionIndexName(CFGOPT_DB_PORT)} = $self->pgPort();
+            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_SOCKET_PATH)} = $self->pgSocketPath();
+            $oParamHash{$strStanza}{cfgOptionName(CFGOPT_PG_PORT)} = $self->pgPort();
         }
 
         if ($bArchiveAsync)
@@ -1186,10 +1157,10 @@ sub configCreate
         # If the the backup host is remote
         if (!$self->isHostBackup())
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_HOST)} = $oHostBackup->nameGet();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_USER)} = $oHostBackup->userGet();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CMD)} = $oHostBackup->backrestExe();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_BACKUP_CONFIG)} = $oHostBackup->backrestConfig();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST)} = $oHostBackup->nameGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST_USER)} = $oHostBackup->userGet();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST_CMD)} = $oHostBackup->backrestExe();
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_REPO_HOST_CONFIG)} = $oHostBackup->backrestConfig();
 
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOG_PATH)} = $self->logPath();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{cfgOptionName(CFGOPT_LOCK_PATH)} = $self->lockPath();
@@ -1526,14 +1497,13 @@ sub configRemap
 
         if ($strRemap eq MANIFEST_TARGET_PGDATA)
         {
-            $oConfig->{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1)} = $strRemapPath;
+            $oConfig->{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $strRemapPath;
 
             ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} = $strRemapPath;
 
             if (defined($oHostBackup))
             {
-                my $bForce = $oHostBackup->nameTest(HOST_BACKUP) && defined(hostGroupGet()->hostGet(HOST_DB_STANDBY, true));
-                $oRemoteConfig->{$strStanza}{$self->optionIndexName(CFGOPT_DB_PATH, 1, $bForce)} = $strRemapPath;
+                $oRemoteConfig->{$strStanza}{cfgOptionName(CFGOPT_PG_PATH)} = $strRemapPath;
             }
         }
         else

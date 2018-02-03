@@ -41,7 +41,7 @@ use constant TEST_USER                                              => getpwuid(
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
 
-use constant BACKREST_USER                                          => 'backrest';
+use constant BACKREST_USER                                          => 'pgbackrest';
     push @EXPORT, qw(BACKREST_USER);
 use constant BACKREST_USER_ID                                       => getpwnam(BACKREST_USER) . '';
 

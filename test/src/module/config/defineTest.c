@@ -39,8 +39,11 @@ testRun()
         TEST_RESULT_STR(cfgDefOptionName(cfgDefOptConfig), "config", "option name");
         TEST_ERROR(cfgDefOptionName(-1), AssertError, optionIdInvalidLowError);
 
+        TEST_RESULT_INT(cfgDefOptionId("repo-host"), cfgDefOptRepoHost, "define id");
+        TEST_RESULT_INT(cfgDefOptionId(BOGUS_STR), -1, "invalid define id");
+
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptLogLevelConsole), true, "allow list valid");
-        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptDbHost), false, "allow list not valid");
+        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptPgHost), false, "allow list not valid");
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptType), true, "command allow list valid");
 
         TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptType), 3, "allow list total");
@@ -58,7 +61,7 @@ testRun()
             cfgDefOptionAllowListValueValid(cfgDefCmdBackup, cfgDefOptType, BOGUS_STR), false, "allow list value not valid");
 
         TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgDefCmdBackup, cfgDefOptCompressLevel), true, "range allowed");
-        TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgDefCmdBackup, cfgDefOptBackupHost), false, "range not allowed");
+        TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgDefCmdBackup, cfgDefOptRepoHost), false, "range not allowed");
 
         TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgDefCmdBackup, cfgDefOptDbTimeout), 0.1, "range min");
         TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMax(cfgDefCmdBackup, cfgDefOptCompressLevel), 9, "range max");
@@ -68,13 +71,13 @@ testRun()
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptCompressLevel), "6", "option default exists");
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
         TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdLocal, cfgDefOptType), NULL, "command default does not exist");
-        TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptBackupHost), NULL, "default does not exist");
+        TEST_RESULT_STR(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
 
         TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptRepoS3Key), true, "has depend option");
         TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptType), false, "does not have depend option");
 
-        TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptDbUser), cfgDefOptDbHost, "depend option id");
-        TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptBackupCmd), cfgDefOptBackupHost, "depend option id");
+        TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptPgHostUser), cfgDefOptPgHost, "depend option id");
+        TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptRepoHostCmd), cfgDefOptRepoHost, "depend option id");
 
         TEST_RESULT_INT(cfgDefOptionDependValueTotal(cfgDefCmdRestore, cfgDefOptTarget), 3, "depend option value total");
         TEST_RESULT_STR(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 0), "name", "depend option value 0");
@@ -90,33 +93,30 @@ testRun()
             cfgDefOptionDependValueValid(cfgDefCmdRestore, cfgDefOptTarget, BOGUS_STR), false, "depend option value not valid");
 
         TEST_ERROR(cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
-        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptDbPath), 8, "index total > 1");
+        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptPgPath), 8, "index total > 1");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptRepoPath), 1, "index total == 1");
 
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefOptSet), false, "option set is not internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefOptTest), true, "option test is internal");
 
-        TEST_RESULT_STR(cfgDefOptionNameAlt(cfgDefOptProcessMax), "thread-max", "alt name");
-        TEST_RESULT_STR(cfgDefOptionNameAlt(cfgDefOptType), NULL, "no alt name");
-
         TEST_ERROR(cfgDefOptionNegate(cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
         TEST_RESULT_BOOL(cfgDefOptionNegate(cfgDefOptOnline), true, "option can be negated");
         TEST_RESULT_BOOL(cfgDefOptionNegate(cfgDefOptType), false, "option cannot be negated");
 
-        TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptDbHost), "db", "option prefix");
+        TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptPgHost), "pg", "option prefix");
         TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptType), NULL, "option has no prefix");
 
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdBackup, cfgDefOptConfig), true, "option required");
-        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdRestore, cfgDefOptBackupHost), false, "option not required");
+        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdRestore, cfgDefOptRepoHost), false, "option not required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdInfo, cfgDefOptStanza), false, "command option not required");
 
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptRepoS3Key), cfgDefSectionGlobal, "global section");
-        TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptDbPath), cfgDefSectionStanza, "stanza section");
+        TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptPgPath), cfgDefSectionStanza, "stanza section");
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptType), cfgDefSectionCommandLine, "command line only");
 
         TEST_ERROR(cfgDefOptionSecure(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoS3Key), true, "option secure");
-        TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptBackupHost), false, "option not secure");
+        TEST_RESULT_BOOL(cfgDefOptionSecure(cfgDefOptRepoHost), false, "option not secure");
 
         TEST_ERROR(cfgDefOptionType(-1), AssertError, optionIdInvalidLowError);
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptType), cfgDefOptTypeString, "string type");
@@ -130,6 +130,13 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("cfgDefCommandHelp*() and cfgDefOptionHelp*()"))
     {
+        TEST_RESULT_BOOL(cfgDefOptionHelpNameAlt(cfgDefOptRepoHost), true, "name alt exists");
+        TEST_RESULT_BOOL(cfgDefOptionHelpNameAlt(cfgDefOptSet), false, "name alt not exists");
+        TEST_RESULT_INT(cfgDefOptionHelpNameAltValueTotal(cfgDefOptRepoHost), 1, "name alt value total");
+        TEST_RESULT_STR(cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 0), "backup-host", "name alt value 0");
+        TEST_ERROR(
+            cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 1), AssertError, "value id 1 invalid - must be >= 0 and < 1");
+
         TEST_RESULT_STR(cfgDefCommandHelpSummary(cfgDefCmdBackup), "Backup a database cluster.", "backup command help summary");
         TEST_RESULT_STR(
             cfgDefCommandHelpDescription(cfgDefCmdBackup),

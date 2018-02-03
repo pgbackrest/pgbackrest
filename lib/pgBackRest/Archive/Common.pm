@@ -357,7 +357,7 @@ sub walPath
         if (!defined($strDbPath))
         {
             confess &log(ERROR,
-                "option 'db-path' must be specified when relative wal paths are used\n" .
+                "option '" . cfgOptionName(CFGOPT_PG_PATH) . "' must be specified when relative wal paths are used\n" .
                 "HINT: Is \%f passed to ${strCommand} instead of \%p?\n" .
                 "HINT: PostgreSQL may pass relative paths even with \%p depending on the environment.",
                 ERROR_OPTION_REQUIRED);

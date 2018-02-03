@@ -68,7 +68,7 @@ sub process
     lockStopTest();
 
     # Extract WAL path and file
-    my $strWalPath = dirname(walPath($strWalPathFile, cfgOption(CFGOPT_DB_PATH, false), cfgCommandName(cfgCommandGet())));
+    my $strWalPath = dirname(walPath($strWalPathFile, cfgOption(CFGOPT_PG_PATH, false), cfgCommandName(cfgCommandGet())));
     my $strWalFile = basename($strWalPathFile);
 
     # Start the async process and wait for WAL to complete

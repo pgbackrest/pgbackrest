@@ -65,13 +65,13 @@ testRun()
             "compress=y \n"
             "\n"
             " [db]\n"
-            "db-path = /path/to/pg"
+            "pg1-path = /path/to/pg"
         );
 
         TEST_RESULT_VOID(iniParse(ini, content), "load ini");
 
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");
-        TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("db-path")))), "/path/to/pg", "get db-path");
+        TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("pg1-path")))), "/path/to/pg", "get pg1-path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(ini, iniNew(), "new ini");
@@ -84,7 +84,7 @@ testRun()
             "           \n"
             " compress= y \n"
             "[db]\t\r\n"
-            " db-path =/path/to/pg\n"
+            " pg1-path =/path/to/pg\n"
             "\n"
         );
 
@@ -92,6 +92,6 @@ testRun()
         TEST_RESULT_VOID(iniLoad(ini, fileName), "load ini from file");
 
         TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("global"), strNew("compress")))), "y", "get compress");
-        TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("db-path")))), "/path/to/pg", "get db-path");
+        TEST_RESULT_STR(strPtr(varStr(iniGet(ini, strNew("db"), strNew("pg1-path")))), "/path/to/pg", "get pg1-path");
     }
 }

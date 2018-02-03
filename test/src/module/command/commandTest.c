@@ -27,11 +27,11 @@ testRun()
         cfgOptionNegateSet(cfgOptConfig, true);
         cfgOptionSet(cfgOptConfig, cfgSourceParam, NULL);
 
-        cfgOptionValidSet(cfgOptDbHost, true);
-        cfgOptionSet(cfgOptDbHost, cfgSourceConfig, NULL);
+        cfgOptionValidSet(cfgOptPgHost, true);
+        cfgOptionSet(cfgOptPgHost, cfgSourceConfig, NULL);
 
-        cfgOptionValidSet(cfgOptBackupHost, true);
-        cfgOptionSet(cfgOptBackupHost, cfgSourceConfig, varNewStr(strNew("backup1")));
+        cfgOptionValidSet(cfgOptRepoHost, true);
+        cfgOptionSet(cfgOptRepoHost, cfgSourceConfig, varNewStr(strNew("backup1")));
 
         cfgOptionValidSet(cfgOptRepoPath, true);
         cfgOptionSet(cfgOptRepoPath, cfgSourceConfig, varNewStr(strNew("/path/to the/repo")));
@@ -41,8 +41,8 @@ testRun()
 
         cmdBegin();
         testLogResult(
-            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": --backup-host=backup1 --compress --no-config "
-                "--repo-path=\"/path/to the/repo\" --repo-s3-key=<redacted>");
+            "P00   INFO: archive-get command begin " PGBACKREST_VERSION ": --compress --no-config --repo1-host=backup1 "
+                "--repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cmdEnd(0);

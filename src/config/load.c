@@ -38,19 +38,20 @@ cfgLoad(int argListSize, const char *argList[])
             logInit(logLevelConsole, logLevelStdErr, logTimestamp);
         }
 
-        // Set default for backup-cmd
-        if (cfgOptionValid(cfgOptBackupHost) && cfgOption(cfgOptBackupHost) != NULL &&
-            cfgOptionSource(cfgOptBackupCmd) == cfgSourceDefault)
+        // Set default for repo-host-cmd
+        if (cfgOptionValid(cfgOptRepoHost) && cfgOption(cfgOptRepoHost) != NULL &&
+            cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
         {
-            cfgOptionDefaultSet(cfgOptBackupCmd, varNewStr(cfgExe()));
+            cfgOptionDefaultSet(cfgOptRepoHostCmd, varNewStr(cfgExe()));
         }
 
-        if (cfgOptionValid(cfgOptDbCmd))
+        // Set default for pg-host-cmd
+        if (cfgOptionValid(cfgOptPgHostCmd))
         {
-            for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptDbHost); optionIdx++)
+            for (int optionIdx = 0; optionIdx <= cfgOptionIndexTotal(cfgOptPgHost); optionIdx++)
             {
-                if (cfgOption(cfgOptDbHost + optionIdx) != NULL && cfgOptionSource(cfgOptDbCmd + optionIdx) == cfgSourceDefault)
-                    cfgOptionDefaultSet(cfgOptDbCmd + optionIdx, varNewStr(cfgExe()));
+                if (cfgOption(cfgOptPgHost + optionIdx) != NULL && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
+                    cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, varNewStr(cfgExe()));
             }
         }
     }

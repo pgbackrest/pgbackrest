@@ -38,7 +38,7 @@ Get version.
 
 Displays installed pgBackRest version.
 
-> [BACKREST-BIN] help --output=json --stanza=main --backup-host=backup info
+> [BACKREST-BIN] help --output=json --stanza=main --repo1-host=backup info
 ------------------------------------------------------------------------------------------------------------------------------------
 [BACKREST-NAME-VERSION] - 'info' command help
 
@@ -82,17 +82,17 @@ Log Options:
 
 Repository Options:
 
-  --backup-cmd              pgBackRest exe path on the backup host
-[default=[BACKREST-BIN]]
-  --backup-config           pgBackRest backup host configuration file
-[default=/etc/pgbackrest.conf]
-  --backup-host             backup host when operating remotely via SSH
-[current=backup]
-  --backup-ssh-port         backup server SSH port when backup-host is set
-  --backup-user             backup host user when backup-host is set
-[default=backrest]
   --repo-cipher-pass        repository cipher passphrase
   --repo-cipher-type        cipher used to encrypt the repository [default=none]
+  --repo-host               repository host when operating remotely via SSH
+[current=backup]
+  --repo-host-cmd           pgBackRest exe path on the repository host
+[default=[BACKREST-BIN]]
+  --repo-host-config        pgBackRest repository host configuration file
+[default=/etc/pgbackrest.conf]
+  --repo-host-port          repository host port when repo-host is set
+  --repo-host-user          repository host user when repo-host is set
+[default=pgbackrest]
   --repo-path               path where backups and archive are stored
 [default=/var/lib/pgbackrest]
   --repo-s3-bucket          s3 repository bucket
@@ -179,15 +179,15 @@ Log Options:
 
 Repository Options:
 
-  --backup-cmd              pgBackRest exe path on the backup host
-  --backup-config           pgBackRest backup host configuration file
-[default=/etc/pgbackrest.conf]
-  --backup-host             backup host when operating remotely via SSH
-  --backup-ssh-port         backup server SSH port when backup-host is set
-  --backup-user             backup host user when backup-host is set
-[default=backrest]
   --repo-cipher-pass        repository cipher passphrase
   --repo-cipher-type        cipher used to encrypt the repository [default=none]
+  --repo-host               repository host when operating remotely via SSH
+  --repo-host-cmd           pgBackRest exe path on the repository host
+  --repo-host-config        pgBackRest repository host configuration file
+[default=/etc/pgbackrest.conf]
+  --repo-host-port          repository host port when repo-host is set
+  --repo-host-user          repository host user when repo-host is set
+[default=pgbackrest]
   --repo-path               path where backups and archive are stored
 [default=/var/lib/pgbackrest]
   --repo-s3-bucket          s3 repository bucket
@@ -204,15 +204,15 @@ Repository Options:
 
 Stanza Options:
 
-  --db-cmd                  pgBackRest exe path on the database host
-  --db-config               pgBackRest database host configuration file
+  --pg-host                 postgreSQL host for operating remotely via SSH
+  --pg-host-cmd             pgBackRest exe path on the PostgreSQL host
+  --pg-host-config          pgBackRest database host configuration file
 [default=/etc/pgbackrest.conf]
-  --db-host                 cluster host for operating remotely via SSH
-  --db-path                 cluster data directory
-  --db-port                 cluster port [default=5432]
-  --db-socket-path          cluster unix socket path
-  --db-ssh-port             database server SSH port when db-host is set
-  --db-user                 cluster host logon user when db-host is set
+  --pg-host-port            postgreSQL host port when pg-host is set
+  --pg-host-user            postgreSQL host logon user when pg-host is set
 [default=postgres]
+  --pg-path                 postgreSQL data directory
+  --pg-port                 postgreSQL port [default=5432]
+  --pg-socket-path          postgreSQL unix socket path
 
 Use 'pgbackrest help check [option]' for more information.

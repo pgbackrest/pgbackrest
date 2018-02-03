@@ -77,6 +77,10 @@
 
                         <p>Improve <cmd>stanza-create</cmd> command so that it does not error when the stanza already exists.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Rename <id>db-*</id> options to <id>pg-*</id> and <id>backup-*</id> options to <id>repo-*</id> to improve consistency.  <id>repo-*</id> options are now indexed although only one is allowed.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -154,6 +158,10 @@
                 </release-feature-list>
 
                  <release-improvement-list>
+                     <release-item>
+                         <p>List deprecated option names in documentation and command-line help.</p>
+                     </release-item>
+
                      <release-item>
                          <release-item-contributor-list>
                              <release-item-ideator id="odonnell.jason"/>

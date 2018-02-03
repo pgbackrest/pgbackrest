@@ -32,17 +32,8 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
-# Host parameters
-####################################################################################################################################
-use constant HOST_PARAM_DB_LOG_FILE                                 => 'db-log-file';
-use constant HOST_PARAM_DB_LOG_PATH                                 => 'db-log-path';
-use constant HOST_PARAM_DB_PORT                                     => 'db-port';
-use constant HOST_PARAM_DB_SOCKET_PATH                              => 'db-socket-path';
-
-####################################################################################################################################
 # Db defaults
 ####################################################################################################################################
-use constant HOST_DB_PORT                                           => 6543;
 use constant HOST_DB_DEFAULT                                        => 'postgres';
 use constant HOST_DB_TIMEOUT                                        => 30;
 

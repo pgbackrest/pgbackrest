@@ -12,15 +12,11 @@ full backup - update during backup (backup host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -31,20 +27,20 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
 -----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-2]
-db-socket-path=[TEST_PATH]/db-standby/db
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -55,28 +51,32 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-port=[PORT-1]
-db1-user=[USER-2]
-db2-cmd=[BACKREST-BIN]
-db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=bogus
-db2-path=[TEST_PATH]/db-standby/db/base
-db2-user=[USER-2]
-db8-cmd=[BACKREST-BIN]
-db8-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db8-host=db-standby
-db8-path=[TEST_PATH]/db-standby/db/base
-db8-port=[PORT-2]
-db8-user=[USER-2]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-2]
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-2]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-2]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
 
 [global]
 compress=n
@@ -89,7 +89,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 protocol-timeout=60
-repo-path=[TEST_PATH]/backup/repo
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y
@@ -106,7 +106,7 @@ standby_mode = 'on'
 restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf --stanza=db archive-get %f "%p"'
 
 full backup - backup from standby, failure to access at least one standby (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --db8-host=bogus --backup-standby --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --pg8-host=bogus --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - backup from standby (backup host)
@@ -116,15 +116,11 @@ full backup - backup from standby (backup host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -135,22 +131,22 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
 -----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-2]
-db-socket-path=[TEST_PATH]/db-standby/db
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [db:restore]
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -161,28 +157,32 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-port=[PORT-1]
-db1-user=[USER-2]
-db2-cmd=[BACKREST-BIN]
-db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=bogus
-db2-path=[TEST_PATH]/db-standby/db/base
-db2-user=[USER-2]
-db8-cmd=[BACKREST-BIN]
-db8-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db8-host=db-standby
-db8-path=[TEST_PATH]/db-standby/db/base
-db8-port=[PORT-2]
-db8-user=[USER-2]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-2]
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-2]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-2]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
 
 [global]
 archive-async=y
@@ -196,7 +196,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 protocol-timeout=60
-repo-path=[TEST_PATH]/backup/repo
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y
@@ -217,15 +217,11 @@ incr backup - update during backup (backup host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -236,22 +232,22 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
 -----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-standby/db/base
-db-port=[PORT-2]
-db-socket-path=[TEST_PATH]/db-standby/db
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [db:restore]
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress=n
 compress-level=3
 compress-level-network=1
@@ -262,28 +258,32 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-standby/log
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db1-cmd=[BACKREST-BIN]
-db1-config=[TEST_PATH]/db-master/pgbackrest.conf
-db1-host=db-master
-db1-path=[TEST_PATH]/db-master/db/base
-db1-port=[PORT-1]
-db1-user=[USER-2]
-db2-cmd=[BACKREST-BIN]
-db2-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db2-host=bogus
-db2-path=[TEST_PATH]/db-standby/db/base
-db2-user=[USER-2]
-db8-cmd=[BACKREST-BIN]
-db8-config=[TEST_PATH]/db-standby/pgbackrest.conf
-db8-host=db-standby
-db8-path=[TEST_PATH]/db-standby/db/base
-db8-port=[PORT-2]
-db8-user=[USER-2]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-2]
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-2]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-2]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
 
 [global]
 archive-async=y
@@ -297,7 +297,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 protocol-timeout=60
-repo-path=[TEST_PATH]/backup/repo
+repo1-path=[TEST_PATH]/backup/repo
 
 [global:backup]
 archive-copy=y

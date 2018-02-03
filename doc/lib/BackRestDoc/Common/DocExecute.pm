@@ -41,25 +41,21 @@ foreach my $strKey (sort(keys(%{$rhConfigDefineIndex})))
 {
     # Build options for all possible db configurations
     if (defined($rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX}) &&
-        $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_DB)
+        $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_PG)
     {
         my $strPrefix = $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX};
 
-        for (my $iIndex = 1; $iIndex <= CFGDEF_INDEX_DB; $iIndex++)
+        for (my $iIndex = 1; $iIndex <= CFGDEF_INDEX_PG; $iIndex++)
         {
             my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
 
             $rhConfigDefineIndex->{$strKeyNew} = dclone($rhConfigDefineIndex->{$strKey});
 
-            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_DB;
+            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_PG;
             $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX} = $iIndex - 1;
 
-            # Create the alternate name for option index 1
-            if ($iIndex == 1)
-            {
-                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_ALT_NAME} = $strKey;
-            }
-            else
+            # Options indexed > 1 are never required
+            if ($iIndex != 1)
             {
                 $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_REQUIRED} = false;
             }

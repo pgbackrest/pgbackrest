@@ -136,7 +136,7 @@ sub run
 
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
     $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
     my $strBackupLabel = backupLabelFormat(CFGOPTVAL_BACKUP_TYPE_FULL, undef, 1482000000);

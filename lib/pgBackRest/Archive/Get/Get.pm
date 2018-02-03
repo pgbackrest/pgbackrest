@@ -108,7 +108,7 @@ sub get
     my $oStorageRepo = storageRepo();
 
     # Construct absolute path to the WAL file when it is relative
-    $strDestinationFile = walPath($strDestinationFile, cfgOption(CFGOPT_DB_PATH, false), cfgCommandName(cfgCommandGet()));
+    $strDestinationFile = walPath($strDestinationFile, cfgOption(CFGOPT_PG_PATH, false), cfgCommandName(cfgCommandGet()));
 
     # Get the wal segment filename
     my ($strArchiveId, $strArchiveFile, $strCipherPass) = $self->getCheck(undef, undef, $strSourceArchive, false);
@@ -153,7 +153,7 @@ sub get
 ####################################################################################################################################
 # getArchiveId
 #
-# CAUTION: Only to be used by commands where the DB Version and DB System ID are not important such that the db-path is not valid
+# CAUTION: Only to be used by commands where the DB Version and DB System ID are not important such that the pg-path is not valid
 # for the command  (i.e. expire command). Since this function will not check validity of the database version call getCheck()
 # instead.
 ####################################################################################################################################

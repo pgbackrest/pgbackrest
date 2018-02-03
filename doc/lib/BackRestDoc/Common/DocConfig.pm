@@ -27,6 +27,8 @@ use constant CONFIG_HELP_DESCRIPTION                                => 'descript
     push @EXPORT, qw(CONFIG_HELP_DESCRIPTION);
 use constant CONFIG_HELP_EXAMPLE                                    => 'example';
 use constant CONFIG_HELP_NAME                                       => 'name';
+use constant CONFIG_HELP_NAME_ALT                                   => 'name-alt';
+    push @EXPORT, qw(CONFIG_HELP_NAME_ALT);
 use constant CONFIG_HELP_OPTION                                     => 'option';
     push @EXPORT, qw(CONFIG_HELP_OPTION);
 use constant CONFIG_HELP_SECTION                                    => 'section';
@@ -316,6 +318,29 @@ sub process
 
             $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
 
+            # Generate a list of alternate names
+            if (defined($rhConfigDefine->{$strOption}{&CFGDEF_NAME_ALT}))
+            {
+                my $rhNameAlt = {};
+
+                foreach my $strNameAlt (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_NAME_ALT}})))
+                {
+                    $strNameAlt =~ s/\?//g;
+
+                    if ($strNameAlt ne $strOption)
+                    {
+                        $rhNameAlt->{$strNameAlt} = true;
+                    }
+                }
+
+                my @stryNameAlt = sort(keys(%{$rhNameAlt}));
+
+                if (@stryNameAlt > 0)
+                {
+                    $oCommandOption->{&CONFIG_HELP_NAME_ALT} = \@stryNameAlt;
+                }
+            }
+
             # If the option did not come from the command also store in global option list.  This prevents duplication of commonly
             # used options.
             if ($strOptionSource ne CONFIG_HELP_SOURCE_COMMAND)
@@ -330,6 +355,7 @@ sub process
                 }
 
                 $$oOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
+                $oOption->{&CONFIG_HELP_NAME_ALT} = $oCommandOption->{&CONFIG_HELP_NAME_ALT};
                 $$oOption{&CONFIG_HELP_DESCRIPTION} = $$oCommandOption{&CONFIG_HELP_DESCRIPTION};
                 $$oOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
             }
@@ -468,7 +494,7 @@ sub manGet
 
             if (defined($strDefault))
             {
-                if ($strOption eq CFGOPT_BACKUP_CMD || $strOption eq CFGOPT_DB_CMD)
+                if ($strOption eq CFGOPT_REPO_HOST_CMD || $strOption eq CFGOPT_PG_HOST_CMD)
                 {
                     $strDefault = BACKREST_EXE;
                 }
@@ -779,7 +805,7 @@ sub helpOptionGet
     {
         my $strDefault;
 
-        if ($strOption eq CFGOPT_BACKUP_CMD || $strOption eq CFGOPT_DB_CMD)
+        if ($strOption eq CFGOPT_REPO_HOST_CMD || $strOption eq CFGOPT_PG_HOST_CMD)
         {
             $strDefault = '[INSTALL-PATH]/' . BACKREST_EXE;
         }
@@ -840,6 +866,15 @@ sub helpOptionGet
 
     $oOptionElement->
         nodeAdd('code-block')->valueSet($strCodeBlock);
+
+    # Output deprecated names
+    if (defined($oOptionHash->{&CONFIG_HELP_NAME_ALT}))
+    {
+        my $strCaption = 'Deprecated Name' . (@{$oOptionHash->{&CONFIG_HELP_NAME_ALT}} > 1 ? 's' : '');
+
+        $oOptionElement->
+            nodeAdd('p')->textSet("${strCaption}: " . join(', ', @{$oOptionHash->{&CONFIG_HELP_NAME_ALT}}));
+    }
 }
 
 1;

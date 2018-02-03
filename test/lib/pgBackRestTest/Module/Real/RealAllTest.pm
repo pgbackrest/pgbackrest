@@ -311,7 +311,7 @@ sub run
                 forceStorageRemove(storageRepo(), STORAGE_REPO_BACKUP . qw{/} . FILE_BACKUP_INFO . INI_COPY_EXT);
             }
 
-            # Change the database version by copying a new pg_control file to a new db-path to use for db mismatch test
+            # Change the database version by copying a new pg_control file to a new pg-path to use for db mismatch test
             storageDb()->pathCreate(
                 $oHostDbMaster->dbPath() . '/testbase/' . DB_PATH_GLOBAL,
                 {strMode => '0700', bIgnoreExists => true, bCreateParent => true});
@@ -320,9 +320,9 @@ sub run
 
             if (!$bRepoEncrypt)
             {
-                # Run stanza-create online to confirm proper handling of configValidation error against new db-path
+                # Run stanza-create online to confirm proper handling of configValidation error against new pg-path
                 $oHostBackup->stanzaCreate('fail on database mismatch with directory',
-                    {strOptionalParam => ' --' . $oHostBackup->optionIndexName(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
+                    {strOptionalParam => ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
                     '/testbase/', iExpectedExitStatus => ERROR_DB_MISMATCH});
             }
             # If encrypted, need to clean out repo and recreate
@@ -334,10 +334,10 @@ sub run
 
             # Stanza Upgrade - tests configValidate code - all other tests in synthetic integration tests
             #-----------------------------------------------------------------------------------------------------------------------
-            # Run stanza-create offline with --force to create files needing to be upgraded (using new db-path)
+            # Run stanza-create offline with --force to create files needing to be upgraded (using new pg-path)
             $oHostBackup->stanzaCreate('successfully create stanza files to be upgraded',
                 {strOptionalParam =>
-                    ' --' . $oHostBackup->optionIndexName(CFGOPT_DB_PATH, 1) . '=' . $oHostDbMaster->dbPath() .
+                    ' --' . cfgOptionName(CFGOPT_PG_PATH) . '=' . $oHostDbMaster->dbPath() .
                     '/testbase/ --no-' .  cfgOptionName(CFGOPT_ONLINE) . ' --' . cfgOptionName(CFGOPT_FORCE)});
             my $oAchiveInfo = new pgBackRest::Archive::Info(storageRepo()->pathGet('archive/' . $self->stanza()));
             my $oBackupInfo = new pgBackRest::Backup::Info(storageRepo()->pathGet('backup/' . $self->stanza()));
@@ -346,19 +346,19 @@ sub run
             if ($self->pgVersion() eq PG_VERSION_94)
             {
                 $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                    PG_VERSION_95)}, true, 'archive upgrade forced with db-mismatch');
+                    PG_VERSION_95)}, true, 'archive upgrade forced with pg mismatch');
                 $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
-                    PG_VERSION_95)}, true, 'backup upgrade forced with db-mismatch');
+                    PG_VERSION_95)}, true, 'backup upgrade forced with pg mismatch');
             }
             else
             {
                 $self->testResult(sub {$oAchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,
-                    PG_VERSION_94)}, true, 'archive create forced with db-mismatch in prep for stanza-upgrade');
+                    PG_VERSION_94)}, true, 'archive create forced with pg mismatch in prep for stanza-upgrade');
                 $self->testResult(sub {$oBackupInfo->test(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_DB_VERSION, undef,
-                    PG_VERSION_94)}, true, 'backup create forced with db-mismatch in prep for stanza-upgrade');
+                    PG_VERSION_94)}, true, 'backup create forced with pg mismatch in prep for stanza-upgrade');
             }
 
-            # Run stanza-upgrade online with the default db-path to correct the info files
+            # Run stanza-upgrade online with the default pg-path to correct the info files
             $oHostBackup->stanzaUpgrade('upgrade stanza files online');
 
             # Reread the info files and confirm the result
@@ -460,7 +460,7 @@ sub run
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
             {
-                # If there is only a master and a replica and the replica is the backup destination, then if db2-host and db3-host
+                # If there is only a master and a replica and the replica is the backup destination, then if pg2-host and pg3-host
                 # are BOGUS, confirm failure to reach the master
                 if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
                 {
@@ -469,7 +469,7 @@ sub run
                         {bStandby => true,
                          iExpectedExitStatus => ERROR_DB_CONNECT,
                          strOptionalParam => '--' .
-                         $oHostBackup->optionIndexName(CFGOPT_DB_HOST, cfgOptionIndexTotal(CFGOPT_DB_PATH)) . '=' . BOGUS});
+                         cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, cfgOptionIndexTotal(CFGOPT_PG_PATH))) . '=' . BOGUS});
                 }
                 else
                 {
@@ -478,7 +478,7 @@ sub run
                         {bStandby => true,
                          iExpectedExitStatus => ERROR_HOST_CONNECT,
                          strOptionalParam => '--' .
-                         $oHostBackup->optionIndexName(CFGOPT_DB_HOST, cfgOptionIndexTotal(CFGOPT_DB_PATH)) . '=' . BOGUS});
+                         cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, cfgOptionIndexTotal(CFGOPT_PG_PATH))) . '=' . BOGUS});
                 }
             }
 
@@ -499,14 +499,14 @@ sub run
             executeTest("sudo chown root:root ${strDir}");
             executeTest("sudo chmod 400 ${strDir}");
 
-            # Determine if there is an invalid db-host from the config file
+            # Determine if there is an invalid pg-host from the config file
             my $rhConfig = iniParse(${storageTest()->get($oHostDbStandby->backrestConfig())}, {bRelaxed => true});
             my $bBogusHost = false;
 
-            for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_DB_HOST); $iRemoteIdx++)
+            for (my $iRemoteIdx = 1; $iRemoteIdx <= cfgOptionIndexTotal(CFGOPT_PG_HOST); $iRemoteIdx++)
             {
-                if (defined($rhConfig->{$self->stanza()}{$oHostDbStandby->optionIndexName(CFGOPT_DB_HOST, $iRemoteIdx)}) &&
-                    ($rhConfig->{$self->stanza()}{$oHostDbStandby->optionIndexName(CFGOPT_DB_HOST, $iRemoteIdx)} eq BOGUS))
+                if (defined($rhConfig->{$self->stanza()}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx))}) &&
+                    ($rhConfig->{$self->stanza()}{cfgOptionName(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iRemoteIdx))} eq BOGUS))
                 {
                     $bBogusHost = true;
                     last;

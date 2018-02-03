@@ -220,7 +220,7 @@ sub run
                 " --module=" . $self->{oTest}->{&TEST_MODULE} .
                 ' --test=' . $self->{oTest}->{&TEST_NAME} .
                 $strCommandRunParam .
-                (defined($self->{oTest}->{&TEST_DB}) ? ' --db-version=' . $self->{oTest}->{&TEST_DB} : '') .
+                (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                 ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
                 ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                 ($self->{bLogForce} ? ' --log-force' : '') .

@@ -273,20 +273,22 @@ sub renderOptional
         $bSingleLine = true;
     }
 
-    if (defined($rhOptional->{&CFGDEF_ALT_NAME}))
-    {
-        $strBuildSourceOptional .=
-            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_NAME_ALT(\"" . $rhOptional->{&CFGDEF_ALT_NAME} . "\")\n";
-
-        $bSingleLine = true;
-    }
-
     if (defined($rhOptional->{&CFGDEF_PREFIX}))
     {
         $strBuildSourceOptional .=
             (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
             "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_PREFIX(\"" . $rhOptional->{&CFGDEF_PREFIX} . "\")\n";
+
+        $bSingleLine = true;
+    }
+
+    # Output alternate name
+    if (!$bCommand && defined($rhOptionHelp->{&CONFIG_HELP_NAME_ALT}))
+    {
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT(" .
+                join(', ', bldQuoteList($rhOptionHelp->{&CONFIG_HELP_NAME_ALT})) . ")\n";
 
         $bSingleLine = true;
     }
@@ -301,7 +303,8 @@ sub renderOptional
         $bSingleLine = true;
     }
 
-    if ($bCommand && defined($rhOptionHelp) && $rhOptionHelp->{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_COMMAND)
+    if ($bCommand && defined($rhOptionHelp) && defined($rhOptionHelp->{&CONFIG_HELP_SOURCE}) &&
+        $rhOptionHelp->{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_COMMAND)
     {
         my $strSummary = helpFormatText($oManifest, $oDocRender, $rhOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
 
@@ -516,7 +519,7 @@ sub buildConfigDefine
             "        )\n";
 
         # Render optional data
-        my $strBuildSourceOptional = renderOptional($rhOption);
+        my $strBuildSourceOptional = renderOptional($rhOption, false, $hOptionHelp, $oManifest, $oDocRender);
 
         # Render command overrides
         foreach my $strCommand (cfgDefineCommandList())

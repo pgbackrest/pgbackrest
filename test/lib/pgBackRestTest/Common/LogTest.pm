@@ -392,7 +392,7 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'USER', 'strUser = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user=\"[^"]+', '[^"]+$');
-    $strLine = $self->regExpReplace($strLine, 'USER', '^db-user=.+$', '[^=]+$');
+    $strLine = $self->regExpReplace($strLine, 'USER', '^pg-host-user=.+$', '[^=]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'user for .* was not mapped to a name\, set to .+$', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'set ownership [^\:]+', '[^ ]+$');
     $strLine = $self->regExpReplace($strLine, 'USER', 'cannot be used for restore\, set to .+$', '[^ ]+$');

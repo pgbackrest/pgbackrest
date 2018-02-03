@@ -141,16 +141,16 @@ testRun()
             "\n"
             "Repository Options:\n"
             "\n"
-            "  --backup-cmd              pgBackRest exe path on the backup host\n"
-            "  --backup-config           pgBackRest backup host configuration file\n"
-            "                            [default=/etc/pgbackrest.conf]\n"
-            "  --backup-host             backup host when operating remotely via SSH\n"
-            "                            [current=backup.example.net]\n"
-            "  --backup-ssh-port         backup server SSH port when backup-host is set\n"
-            "  --backup-user             backup host user when backup-host is set\n"
-            "                            [default=backrest]\n"
             "  --repo-cipher-pass        repository cipher passphrase\n"
             "  --repo-cipher-type        cipher used to encrypt the repository [default=none]\n"
+            "  --repo-host               repository host when operating remotely via SSH\n"
+            "                            [current=backup.example.net]\n"
+            "  --repo-host-cmd           pgBackRest exe path on the repository host\n"
+            "  --repo-host-config        pgBackRest repository host configuration file\n"
+            "                            [default=/etc/pgbackrest.conf]\n"
+            "  --repo-host-port          repository host port when repo-host is set\n"
+            "  --repo-host-user          repository host user when repo-host is set\n"
+            "                            [default=pgbackrest]\n"
             "  --repo-path               path where backups and archive are stored\n"
             "                            [default=/var/lib/pgbackrest]\n"
             "  --repo-s3-bucket          s3 repository bucket\n"
@@ -167,9 +167,9 @@ testRun()
             "\n"
             "Stanza Options:\n"
             "\n"
-            "  --db-host                 cluster host for operating remotely via SSH\n"
-            "  --db-path                 cluster data directory\n"
-            "  --db-ssh-port             database server SSH port when db-host is set\n"
+            "  --pg-host                 postgreSQL host for operating remotely via SSH\n"
+            "  --pg-host-port            postgreSQL host port when pg-host is set\n"
+            "  --pg-path                 postgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help archive-push [option]' for more information.\n",
             helpVersion));
@@ -179,7 +179,7 @@ testRun()
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "--buffer-size=32768");
-        strLstAddZ(argList, "--backup-host=backup.example.net");
+        strLstAddZ(argList, "--repo1-host=backup.example.net");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command");
         TEST_RESULT_STR(strPtr(helpRender()), commandHelp, "    check text");
 
@@ -245,6 +245,30 @@ testRun()
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "perl-bin");
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, perl-bin option");
+        TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        optionHelp = strPtr(strNewFmt(
+            "%s - 'backup' command - 'repo-hardlink' option help\n"
+            "\n"
+            "Hardlink files between backups in the repository.\n"
+            "\n"
+            "Enable hard-linking of files in differential and incremental backups to their\n"
+            "full backups. This gives the appearance that each backup is a full backup at\n"
+            "the file-system level. Be careful, though, because modifying files that are\n"
+            "hard-linked can affect all the backups in the set.\n"
+            "\n"
+            "default: n\n"
+            "\n"
+            "deprecated name: hardlink\n",
+            helpVersion));
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, "repo-hardlink");
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for backup command, repo-hardlink option");
         TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
     }
 

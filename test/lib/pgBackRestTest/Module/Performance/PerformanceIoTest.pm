@@ -62,11 +62,11 @@ sub run
     {
         # Setup the remote for testing remote storage
         $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-        $self->optionTestSet(CFGOPT_DB_PATH, $self->testPath());
+        $self->optionTestSet(CFGOPT_PG_PATH, $self->testPath());
         $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath());
         $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
-        $self->optionTestSet(CFGOPT_BACKUP_HOST, 'localhost');
-        $self->optionTestSet(CFGOPT_BACKUP_USER, $self->backrestUser());
+        $self->optionTestSet(CFGOPT_REPO_HOST, 'localhost');
+        $self->optionTestSet(CFGOPT_REPO_HOST_USER, $self->backrestUser());
         $self->configTestLoad(CFGCMD_ARCHIVE_PUSH);
 
         protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP, undef, {strBackRestBin => $self->backrestExe()});

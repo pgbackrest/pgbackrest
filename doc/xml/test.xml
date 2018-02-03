@@ -53,10 +53,10 @@ vagrant ssh
         <p>Note that process-max is only applicable to the <id>synthetic</id> and <id>full</id> tests in the <id>backup</id> module.</p>
 
         <code-block title="Run Tests for a Specific OS, Module, Test, Process Max, and Database Version">
-/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --db-version=9.4
+/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --pg-version=9.4
         </code-block>
 
-        <p>Note that db-version is only applicable to the <id>full</id> test in the <id>backup</id> module.</p>
+        <p>Note that pg-version is only applicable to the <id>full</id> test in the <id>backup</id> module.</p>
 
         <code-block title="Iterate All Possible Test Combinations">
 /backrest/test/test.pl --dry-run

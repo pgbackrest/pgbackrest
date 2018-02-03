@@ -233,23 +233,6 @@ CODE:
 OUTPUT:
     RETVAL
 
-const char *
-cfgDefOptionNameAlt(optionId)
-    U32 optionId
-CODE:
-    RETVAL = NULL;
-
-    ERROR_XS_BEGIN()
-    {
-        if (cfgOptionIndexTotal(optionId) > 1 && cfgOptionIndex(optionId) == 0)
-            RETVAL = cfgDefOptionName(cfgOptionDefIdFromId(optionId));
-        else
-            RETVAL = cfgDefOptionNameAlt(cfgOptionDefIdFromId(optionId));
-    }
-    ERROR_XS_END();
-OUTPUT:
-    RETVAL
-
 bool cfgDefOptionNegate(optionId)
     U32 optionId
 CODE:

@@ -66,11 +66,11 @@ stanza-create db - verify success with force (db-master host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - fail on database mismatch with directory (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail  --db-path=[TEST_PATH]/db-master/db/testbase/ stanza-create
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail  --pg1-path=[TEST_PATH]/db-master/db/testbase/ stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - successfully create stanza files to be upgraded (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail  --db-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --stanza=db --log-level-console=detail  --pg1-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-upgrade db - upgrade stanza files online (db-master host)
@@ -88,9 +88,9 @@ full backup - update during backup (db-master host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 compress=n
@@ -102,7 +102,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
-repo-path=[TEST_PATH]/db-master/repo
+repo1-path=[TEST_PATH]/db-master/repo
 spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
@@ -132,9 +132,9 @@ incr backup - update during backup (db-master host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
 archive-async=y
@@ -147,7 +147,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
-repo-path=[TEST_PATH]/db-master/repo
+repo1-path=[TEST_PATH]/db-master/repo
 spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]
@@ -248,9 +248,9 @@ incr backup - succeed on --no-online with --force (db-master host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 recovery-option=standby-mode=on
 
 [global]
@@ -264,7 +264,7 @@ log-level-file=trace
 log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 protocol-timeout=60
-repo-path=[TEST_PATH]/db-master/repo
+repo1-path=[TEST_PATH]/db-master/repo
 spool-path=[TEST_PATH]/db-master/spool
 
 [global:backup]

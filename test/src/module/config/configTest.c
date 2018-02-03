@@ -50,19 +50,19 @@ testRun()
         TEST_ERROR(cfgCommandName(-1), AssertError, commandIdInvalidLowError);
         TEST_RESULT_STR(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
 
-        TEST_RESULT_INT(cfgOptionDefIdFromId(cfgOptDbHost + 6), cfgDefOptDbHost, "option id to def id");
+        TEST_RESULT_INT(cfgOptionDefIdFromId(cfgOptPgHost + 6), cfgDefOptPgHost, "option id to def id");
 
         TEST_RESULT_INT(cfgOptionId("target"), cfgOptTarget, "option id from name");
         TEST_RESULT_INT(cfgOptionId(BOGUS_STR), -1, "option id from invalid option name");
 
         TEST_ERROR(cfgOptionIdFromDefId(cfgDefOptionTotal(), 6), AssertError, optionDefIdInvalidHighError);
-        TEST_RESULT_INT(cfgOptionIdFromDefId(cfgDefOptDbHost, 6), cfgOptDbHost + 6, "option def id to id");
+        TEST_RESULT_INT(cfgOptionIdFromDefId(cfgDefOptPgHost, 6), cfgOptPgHost + 6, "option def id to id");
 
         TEST_ERROR(cfgOptionIndex(CFG_OPTION_TOTAL), AssertError, optionIdInvalidHighError);
-        TEST_RESULT_INT(cfgOptionIndex(cfgOptDbCmd + 6), 6, "option index");
+        TEST_RESULT_INT(cfgOptionIndex(cfgOptPgHostCmd + 6), 6, "option index");
         TEST_RESULT_INT(cfgOptionIndex(cfgOptCompressLevel), 0, "option index");
 
-        TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptDbPath), 8, "option index total");
+        TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptPgPath), 8, "option index total");
         TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptLogLevelConsole), 1, "option index total");
 
         TEST_ERROR(cfgOptionName(-1), AssertError, optionIdInvalidLowError);
@@ -170,16 +170,16 @@ testRun()
         TEST_RESULT_INT(varInt(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptDbInclude), NULL, "backup db-include default is null");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptDbHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");
-        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbHost, varNewStrZ("backup-default")), "backup host default");
-        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbHost, varNewStrZ("backup-default2")), "reset backup host default");
-        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptDbHost))), "backup", "backup host value");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptDbHost))), "backup-default2", "backup host default");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgHost, varNewStrZ("backup-default")), "backup host default");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgHost, varNewStrZ("backup-default2")), "reset backup host default");
+        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptPgHost))), "backup", "backup host value");
+        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptPgHost))), "backup-default2", "backup host default");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptDbSocketPath, cfgSourceDefault, NULL), "backup db-socket-path set");
-        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbSocketPath, varNewStrZ("/to/socket")), "backup db-socket-path default");
-        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptDbSocketPath, varNewStrZ("/to/socket2")), "reset backup db-socket-path default");
-        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptDbSocketPath))), "/to/socket2", "backup db-socket-path value");
-        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptDbSocketPath))), "/to/socket2", "backup db-socket-path value default");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptPgSocketPath, cfgSourceDefault, NULL), "backup pg-socket-path set");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, varNewStrZ("/to/socket")), "backup pg-socket-path default");
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, varNewStrZ("/to/socket2")), "reset backup pg-socket-path default");
+        TEST_RESULT_STR(strPtr(varStr(cfgOption(cfgOptPgSocketPath))), "/to/socket2", "backup pg-socket-path value");
+        TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptPgSocketPath))), "/to/socket2", "backup pg-socket-path value default");
     }
 }

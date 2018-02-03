@@ -166,7 +166,7 @@ ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LIST
         CFGDEFDATA_COMMAND_HELP_SUMMARY("Upgrade a stanza.")
         CFGDEFDATA_COMMAND_HELP_DESCRIPTION
         (
-            "Immediately after upgrading PostgreSQL to a newer major version, the db-path for all pgBackRest configurations must "
+            "Immediately after upgrading PostgreSQL to a newer major version, the pg-path for all pgBackRest configurations must "
                 "be set to the new database location and the stanza-upgrade run on the backup host. If the database is offline use "
                 "the --no-online option."
         )
@@ -415,174 +415,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("backup-cmd")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest exe path on the backup host.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Required only if the path to pgbackrest is different on the local and backup hosts. If not defined, the backup host "
-                "exe path will be set the same as the local exe path."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptBackupHost)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("backup-config")
-        CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest backup host configuration file.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Sets the location of the configuration file on the backup host. This is only required if the backup host "
-                "configuration file is in a different location than the local configuration file."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptBackupHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("backup-host")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Backup host when operating remotely via SSH.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Make sure that trusted SSH authentication is configured between the db host and the backup host.\n"
-            "\n"
-            "When backing up to a locally mounted network filesystem this setting is not required."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("backup-ssh-port")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Backup server SSH port when backup-host is set.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Use this option to specify a non-default SSH port for the backup server."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptBackupHost)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
         CFGDEFDATA_OPTION_NAME("backup-standby")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -612,52 +444,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("backup-user")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Backup host user when backup-host is set.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Defines the user that will be used for operations on the backup server. Preferably this is not the postgres user but "
-                "rather some other user like backrest. If PostgreSQL runs on the backup server the postgres user can be placed in "
-                "the backrest group so it has read permissions on the repository without being able to damage the contents "
-                "accidentally."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptBackupHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("backrest")
         )
     )
 
@@ -980,130 +766,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("db-cmd")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest exe path on the database host.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Required only if the path to pgbackrest is different on the local and database hosts. If not defined, the database "
-                "host exe path will be set the same as the local exe path."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptDbHost)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-config")
-        CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration file.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Sets the location of the configuration file on the database host. This is only required if the database host "
-                "configuration file is in a different location than the local configuration file."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptDbHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-host")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Cluster host for operating remotely via SSH.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Used for backups where the database cluster host is different from the backup host."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
         CFGDEFDATA_OPTION_NAME("db-include")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -1130,198 +792,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-path")
-        CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Cluster data directory.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "This should be the same as the data_directory setting in postgresql.conf. Even though this value can be read from "
-                "postgresql.conf or the database cluster it is prudent to set it in case those resources are not available during "
-                "a restore or offline backup scenario.\n"
-            "\n"
-            "The db-path option is tested against the value reported by PostgreSQL on every online backup so it should always be "
-                "current."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGet)
-
-                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePush)
-
-                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
-
-                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
-
-                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
-            )
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-port")
-        CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Cluster port.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Port that PostgreSQL is running on. This usually does not need to be specified as most database clusters run on the "
-                "default port."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("5432")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-socket-path")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Cluster unix socket path.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "The unix socket directory that was specified when PostgreSQL was started. pgBackRest will automatically look in the "
-                "standard location for your OS so there usually no need to specify this setting unless the socket directory was "
-                "explicitly modified with the unix_socket_directory setting in postgressql.conf."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-ssh-port")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Database server SSH port when db-host is set.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Use this option to specify a non-default SSH port for a database server."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptDbHost)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
         )
     )
 
@@ -1365,45 +835,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0.1, 604800)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1800")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("db-user")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Cluster host logon user when db-host is set.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL. For this to work "
-                "correctly the user should be the PostgreSQL database cluster owner which is generally postgres, the default."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptDbHost)
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("postgres")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("db")
         )
     )
 
@@ -1554,39 +985,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                         "running stop --force on the database server will shutdown the backup process on the backup server."
                 )
             )
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("hardlink")
-        CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_NEGATE(true)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("backup")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Hardlink files between backups.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Enable hard-linking of files in differential and incremental backups to their full backups. This gives the appearance "
-                "that each backup is a full backup. Be careful, though, because modifying files that are hard-linked can affect "
-                "all the backups in the set."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
         )
     )
 
@@ -2260,6 +1658,369 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("pg-host")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host for operating remotely via SSH.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Used for backups where the PostgreSQL host is different from the backup host."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-host")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-host-cmd")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest exe path on the PostgreSQL host.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Required only if the path to pgbackrest is different on the local and PostgreSQL hosts. If not defined, the database "
+                "host exe path will be set the same as the local exe path."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-cmd")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-host-config")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration file.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Sets the location of the configuration file on the PostgreSQL host. This is only required if the PostgreSQL host "
+                "configuration file is in a different location than the local configuration file."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-config")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-host-port")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host port when pg-host is set.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Use this option to specify a non-default port for the PostgreSQL host protocol. Currently only SSH is supported"
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-ssh-port")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-host-user")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host logon user when pg-host is set.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "This user will also own the remote pgBackRest process and will initiate connections to PostgreSQL. For this to work "
+                "correctly the user should be the PostgreSQL database cluster owner which is generally postgres, the default."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("postgres")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-user")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-path")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL data directory.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "This should be the same as the data_directory setting in postgresql.conf. Even though this value can be read from "
+                "postgresql.conf or PostgreSQL it is prudent to set it in case those resources are not available during a restore "
+                "or offline backup scenario.\n"
+            "\n"
+            "The pg-path option is tested against the value reported by PostgreSQL on every online backup so it should always be "
+                "current."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-path")
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchiveGet)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdArchivePush)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdRemote)
+
+                CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
+            )
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-port")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL port.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Port that PostgreSQL is running on. This usually does not need to be specified as most PostgreSQL clusters run on the "
+                "default port."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("5432")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-port")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("pg-socket-path")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL unix socket path.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "The unix socket directory that was specified when PostgreSQL was started. pgBackRest will automatically look in the "
+                "standard location for your OS so there is usually no need to specify this setting unless the socket directory was "
+                "explicitly modified with the unix_socket_directory setting in postgresql.conf."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-socket-path")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("process")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
@@ -2326,7 +2087,6 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 96)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
-            CFGDEFDATA_OPTION_OPTIONAL_NAME_ALT("thread-max")
         )
     )
 
@@ -2466,6 +2226,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoCipherType,
                 "aes-256-cbc"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2519,6 +2281,270 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("none")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-hardlink")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Hardlink files between backups in the repository.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Enable hard-linking of files in differential and incremental backups to their full backups. This gives the appearance "
+                "that each backup is a full backup at the file-system level. Be careful, though, because modifying files that are "
+                "hard-linked can affect all the backups in the set."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("hardlink")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Repository host when operating remotely via SSH.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Make sure that trusted SSH authentication is configured between the PostgreSQL host and the repository host.\n"
+            "\n"
+            "When backing up and archiving to a locally mounted filesystem this setting is not required."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-host")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host-cmd")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest exe path on the repository host.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Required only if the path to pgbackrest is different on the local and repository hosts. If not defined, the "
+                "repository host exe path will be set the same as the local exe path."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-cmd")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host-config")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest repository host configuration file.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Sets the location of the configuration file on the repository host. This is only required if the repository host "
+                "configuration file is in a different location than the local configuration file."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest.conf")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-config")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host-port")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Repository host port when repo-host is set.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Use this option to specify a non-default port for the repository host protocol. Currently only SSH is supported"
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-ssh-port")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-host-user")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_NEGATE(true)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Repository host user when repo-host is set.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Defines the user that will be used for operations on the repository host. Preferably this is not the postgres user "
+                "but rather some other user like pgbackrest. If PostgreSQL runs on the repository host the postgres user can be "
+                "placed in the pgbackrest group so it has read permissions on the repository without being able to damage the "
+                "contents accidentally."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("pgbackrest")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-user")
         )
     )
 
@@ -2568,6 +2594,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/var/lib/pgbackrest")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2619,6 +2646,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2667,6 +2696,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2715,6 +2746,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2763,6 +2796,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2811,6 +2846,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2859,6 +2896,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2907,6 +2946,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -2955,6 +2996,8 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
+
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3006,6 +3049,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3061,6 +3105,7 @@ ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("posix")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 

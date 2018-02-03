@@ -181,7 +181,7 @@ sub buildConfig
         for (my $iOptionIndex = 1; $iOptionIndex <= $iOptionIndexTotal; $iOptionIndex++)
         {
             # Create the indexed version of the option name
-            my $strOptionIndex = $iOptionIndexTotal > 1 ?
+            my $strOptionIndex = defined($strOptionPrefix) ?
                 "${strOptionPrefix}${iOptionIndex}-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
 
             # Add option data

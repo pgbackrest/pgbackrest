@@ -43,7 +43,7 @@ sub new
     $self->{oProtocol} = !isRepoLocal() ? protocolGet(CFGOPTVAL_REMOTE_TYPE_BACKUP) : undef;
 
     # Initialize variables
-    $self->{strDbClusterPath} = cfgOption(CFGOPT_DB_PATH);
+    $self->{strDbClusterPath} = cfgOption(CFGOPT_PG_PATH);
     $self->{strBackupSet} = cfgOption(CFGOPT_SET);
 
     # Return from function and log return values if any

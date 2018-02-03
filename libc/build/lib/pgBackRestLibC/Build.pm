@@ -87,7 +87,6 @@ my $rhExport =
             cfgDefOptionDependValue
             cfgDefOptionDependValueTotal
             cfgDefOptionDependValueValid
-            cfgDefOptionNameAlt
             cfgDefOptionNegate
             cfgDefOptionPrefix
             cfgDefOptionRequired

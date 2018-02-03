@@ -138,49 +138,9 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("backup-cmd")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("backup-config")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("backup-host")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("backup-ssh-port")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
         CONFIG_OPTION_NAME("backup-standby")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupStandby)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("backup-user")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupUser)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -250,198 +210,6 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("db1-cmd")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-cmd")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-cmd")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-cmd")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-cmd")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-cmd")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-cmd")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-cmd")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbCmd)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db1-config")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-config")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-config")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-config")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-config")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-config")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-config")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-config")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbConfig)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db1-host")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-host")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-host")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-host")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-host")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-host")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-host")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-host")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbHost)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
         CONFIG_OPTION_NAME("db-include")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptDbInclude)
@@ -450,329 +218,9 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("db1-path")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-path")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-path")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-path")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-path")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-path")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-path")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-path")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db1-port")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-port")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-port")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-port")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-port")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-port")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-port")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-port")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db1-socket-path")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-socket-path")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-socket-path")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-socket-path")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-socket-path")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-socket-path")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-socket-path")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-socket-path")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSocketPath)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db1-ssh-port")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-ssh-port")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-ssh-port")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-ssh-port")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-ssh-port")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-ssh-port")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-ssh-port")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-ssh-port")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbSshPort)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
         CONFIG_OPTION_NAME("db-timeout")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptDbTimeout)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db1-user")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db2-user")
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db3-user")
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db4-user")
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db5-user")
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db6-user")
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db7-user")
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db8-user")
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbUser)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -789,14 +237,6 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME("force")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptForce)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("hardlink")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptHardlink)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -922,6 +362,518 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME("pg1-host")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-host-cmd")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host-cmd")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host-cmd")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host-cmd")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host-cmd")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host-cmd")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host-cmd")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host-cmd")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-host-config")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host-config")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host-config")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host-config")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host-config")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host-config")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host-config")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host-config")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-host-port")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host-port")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host-port")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host-port")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host-port")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host-port")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host-port")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host-port")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-host-user")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-host-user")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-host-user")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-host-user")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-host-user")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-host-user")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-host-user")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-host-user")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-path")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-path")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-path")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-path")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-path")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-path")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-path")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-port")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-port")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-port")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-port")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-port")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-port")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-port")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-port")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg1-socket-path")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg2-socket-path")
+        CONFIG_OPTION_INDEX(1)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg3-socket-path")
+        CONFIG_OPTION_INDEX(2)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg4-socket-path")
+        CONFIG_OPTION_INDEX(3)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg5-socket-path")
+        CONFIG_OPTION_INDEX(4)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg6-socket-path")
+        CONFIG_OPTION_INDEX(5)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg7-socket-path")
+        CONFIG_OPTION_INDEX(6)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("pg8-socket-path")
+        CONFIG_OPTION_INDEX(7)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME("process")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptProcess)
@@ -954,7 +906,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-cipher-pass")
+        CONFIG_OPTION_NAME("repo1-cipher-pass")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoCipherPass)
     )
@@ -962,7 +914,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-cipher-type")
+        CONFIG_OPTION_NAME("repo1-cipher-type")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoCipherType)
     )
@@ -970,7 +922,55 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-path")
+        CONFIG_OPTION_NAME("repo1-hardlink")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHardlink)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHost)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host-cmd")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostCmd)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host-config")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfig)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host-port")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostPort)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-host-user")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostUser)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-path")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoPath)
     )
@@ -978,7 +978,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-bucket")
+        CONFIG_OPTION_NAME("repo1-s3-bucket")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Bucket)
     )
@@ -986,7 +986,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-ca-file")
+        CONFIG_OPTION_NAME("repo1-s3-ca-file")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3CaFile)
     )
@@ -994,7 +994,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-ca-path")
+        CONFIG_OPTION_NAME("repo1-s3-ca-path")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3CaPath)
     )
@@ -1002,7 +1002,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-endpoint")
+        CONFIG_OPTION_NAME("repo1-s3-endpoint")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Endpoint)
     )
@@ -1010,7 +1010,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-host")
+        CONFIG_OPTION_NAME("repo1-s3-host")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Host)
     )
@@ -1018,7 +1018,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-key")
+        CONFIG_OPTION_NAME("repo1-s3-key")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Key)
     )
@@ -1026,7 +1026,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-key-secret")
+        CONFIG_OPTION_NAME("repo1-s3-key-secret")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3KeySecret)
     )
@@ -1034,7 +1034,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-region")
+        CONFIG_OPTION_NAME("repo1-s3-region")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Region)
     )
@@ -1042,7 +1042,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-s3-verify-ssl")
+        CONFIG_OPTION_NAME("repo1-s3-verify-ssl")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3VerifySsl)
     )
@@ -1050,7 +1050,7 @@ ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME("repo-type")
+        CONFIG_OPTION_NAME("repo1-type")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoType)
     )

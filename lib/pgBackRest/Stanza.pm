@@ -730,7 +730,7 @@ sub dbInfoGet
     # postgres logs.
     if (cfgOption(CFGOPT_ONLINE))
     {
-        # If the db-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
+        # If the pg-path in pgbackrest.conf does not match the pg_control then this will error alert the user to fix pgbackrest.conf
         $self->{oDb}->configValidate();
     }
 

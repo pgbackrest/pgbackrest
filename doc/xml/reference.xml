@@ -214,55 +214,66 @@
 
             <!-- CONFIG - REPO -->
             <config-section id="repository" name="Repository">
-                <text>The <setting>repository</setting> section defines options used to configure the repository.</text>
+                <text>The <setting>repository</setting> section defines options used to configure the repository.
+
+                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.</text>
 
                 <config-key-list>
-                    <!-- CONFIG - REPO SECTION - BACKUP-CMD KEY -->
-                    <config-key id="backup-cmd" name="Backup Host Command">
-                        <summary><backrest/> exe path on the backup host.</summary>
+                    <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
+                    <config-key id="repo-host" name="Repository Host">
+                        <summary>Repository host when operating remotely via SSH.</summary>
 
-                        <text>Required only if the path to <exe/> is different on the local and backup hosts.  If not defined, the backup host exe path will be set the same as the local exe path.</text>
+                        <text>Make sure that trusted SSH authentication is configured between the <postgres/> host and the repository host.
+
+                        When backing up and archiving to a locally mounted filesystem this setting is not required.</text>
+
+                        <example>repo1.domain.com</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-CMD KEY -->
+                    <config-key id="repo-host-cmd" name="Repository Host Command">
+                        <summary><backrest/> exe path on the repository host.</summary>
+
+                        <text>Required only if the path to <exe/> is different on the local and repository hosts.  If not defined, the repository host exe path will be set the same as the local exe path.</text>
 
                         <default>same as local</default>
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - BACKUP-CONFIG KEY -->
-                    <config-key id="backup-config" name="Backup Host Configuration">
-                        <summary><backrest/> backup host configuration file.</summary>
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG KEY -->
+                    <config-key id="repo-host-config" name="Repository Host Configuration">
+                        <summary><backrest/> repository host configuration file.</summary>
 
-                        <text>Sets the location of the configuration file on the backup host.  This is only required if the backup host configuration file is in a different location than the local configuration file.</text>
+                        <text>Sets the location of the configuration file on the repository host.  This is only required if the repository host configuration file is in a different location than the local configuration file.</text>
 
                         <example>/etc/pgbackrest_backup.conf</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - BACKUP-HOST KEY -->
-                    <config-key id="backup-host" name="Backup Host">
-                        <summary>Backup host when operating remotely via SSH.</summary>
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-USER KEY -->
+                    <config-key id="repo-host-user" name="Repository Host User">
+                        <summary>Repository host user when <setting>repo-host</setting> is set.</summary>
 
-                        <text>Make sure that trusted SSH authentication is configured between the db host and the backup host.
+                        <text>Defines the user that will be used for operations on the repository host.  Preferably this is not the <id>postgres</id> user but rather some other user like <id>pgbackrest</id>.  If <postgres/> runs on the repository host the <id>postgres</id> user can be placed in the <id>pgbackrest</id> group so it has read permissions on the repository without being able to damage the contents accidentally.</text>
 
-                        When backing up to a locally mounted network filesystem this setting is not required.</text>
-
-                        <example>backup.domain.com</example>
+                        <example>backup-user</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - BACKUP-USER KEY -->
-                    <config-key id="backup-user" name="Backup User">
-                        <summary>Backup host user when <setting>backup-host</setting> is set.</summary>
+                    <!-- CONFIG - REPO SECTION - REPO-HOST-PORT KEY -->
+                    <config-key id="repo-host-port" name="Repository Host Port">
+                        <summary>Repository host port when <setting>repo-host</setting> is set.</summary>
 
-                        <text>Defines the user that will be used for operations on the backup server.  Preferably this is not the <id>postgres</id> user but rather some other user like <id>backrest</id>.  If <postgres/> runs on the backup server the <id>postgres</id> user can be placed in the <id>backrest</id> group so it has read permissions on the repository without being able to damage the contents accidentally.</text>
-
-                        <example>backrest</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - BACKUP-SSH-PORT KEY -->
-                    <config-key id="backup-ssh-port" name="Backup SSH Port">
-                        <summary>Backup server SSH port when <setting>backup-host</setting> is set.</summary>
-
-                        <text>Use this option to specify a non-default SSH port for the backup server.</text>
+                        <text>Use this option to specify a non-default port for the repository host protocol.  Currently only SSH is supported</text>
 
                         <example>25</example>
+                    </config-key>
+
+                    <!-- CONFIG - REPO SECTION - REPO-HARDLINK -->
+                    <config-key id="repo-hardlink" name="Repository Hardlink">
+                        <summary>Hardlink files between backups in the repository.</summary>
+
+                        <text>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup at the file-system level.  Be careful, though, because modifying files that are hard-linked can affect all the backups in the set.</text>
+
+                        <example>y</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
@@ -302,7 +313,7 @@
 
                         <backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other AWS generated content can also be stored in the bucket.</text>
 
-                        <example>db-backup</example>
+                        <example>pg-backup</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-S3-CA-FILE KEY -->
@@ -445,15 +456,6 @@
                         Failures in checksum validation will not abort a backup.  Rather, warnings will be emitted in the log (and to the console with default settings) and the list of invalid pages will be stored in the backup manifest.</text>
 
                         <example>n</example>
-                    </config-key>
-
-                    <!-- CONFIG - BACKUP SECTION - HARDLINK -->
-                    <config-key id="hardlink" name="Hardlink">
-                        <summary>Hardlink files between backups.</summary>
-
-                        <text>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup.  Be careful, though, because modifying files that are hard-linked can affect all the backups in the set.</text>
-
-                        <example>y</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - MANIFEST-SAVE-THRESHOLD -->
@@ -667,80 +669,80 @@
             <config-section id="stanza" name="Stanza">
                 <text>A stanza defines the backup configuration for a specific <postgres/> database cluster.  The stanza section must define the database cluster path and host/user if the database cluster is remote.  Also, any global configuration sections can be overridden to define stanza-specific settings.
 
-                <b>Indexing</b>: All <setting>db-</setting> options can be indexed for configuring standby replicas. For example if a single standby replica is configured then index the <setting>db-</setting> options as <setting>db2-</setting> (e.g. db2-host, db2-path, etc). If an index is not specified (e.g. db-host) it will be aliased to <setting>db1-</setting> (e.g. db1-host).</text>
+                <b>Indexing</b>: All <setting>pg-</setting> options are indexed to allow for configuring multiple <postgres/> hosts. For example, a single master is configured with the <setting>pg1-path</setting>, <setting>pg1-host</setting>, etc. options.  If a standby is configured then index the <setting>pg-</setting> options as <setting>pg2-</setting> (e.g. pg2-host, pg2-path, etc).</text>
 
                 <config-key-list>
-                    <!-- CONFIG - STANZA SECTION - DB-CMD KEY -->
-                    <config-key id="db-cmd" name="Database Host Command">
-                        <summary><backrest/> exe path on the database host.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-CMD KEY -->
+                    <config-key id="pg-host-cmd" name="PostgreSQL Host Command">
+                        <summary><backrest/> exe path on the <postgres/> host.</summary>
 
-                        <text>Required only if the path to <exe/> is different on the local and database hosts.  If not defined, the database host exe path will be set the same as the local exe path.</text>
+                        <text>Required only if the path to <exe/> is different on the local and <postgres/> hosts.  If not defined, the database host exe path will be set the same as the local exe path.</text>
 
                         <default>same as local</default>
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB_CONFIG KEY -->
-                    <config-key id="db-config" name="Database Host Configuration">
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG KEY -->
+                    <config-key id="pg-host-config" name="PostgreSQL Host Configuration">
                         <summary><backrest/> database host configuration file.</summary>
 
-                        <text>Sets the location of the configuration file on the database host.  This is only required if the database host configuration file is in a different location than the local configuration file.</text>
+                        <text>Sets the location of the configuration file on the <postgres/> host.  This is only required if the <postgres/> host configuration file is in a different location than the local configuration file.</text>
 
                         <example>/etc/pgbackrest_db.conf</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB-HOST KEY -->
-                    <config-key id="db-host" name="Database Host">
-                        <summary>Cluster host for operating remotely via SSH.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-HOST KEY -->
+                    <config-key id="pg-host" name="PostgreSQL Host">
+                        <summary><postgres/> host for operating remotely via SSH.</summary>
 
-                        <text>Used for backups where the database cluster host is different from the backup host.</text>
+                        <text>Used for backups where the <postgres/> host is different from the backup host.</text>
 
                         <example>db.domain.com</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB-USER KEY -->
-                    <config-key id="db-user" name="Database User">
-                        <summary>Cluster host logon user when <setting>db-host</setting> is set.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-USER KEY -->
+                    <config-key id="pg-host-user" name="PostgreSQL Host User">
+                        <summary><postgres/> host logon user when <setting>pg-host</setting> is set.</summary>
 
                         <text>This user will also own the remote <backrest/> process and will initiate connections to <postgres/>.  For this to work correctly the user should be the <postgres/> database cluster owner which is generally <id>postgres</id>, the default.</text>
 
                         <example>db_owner</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB-PATH KEY -->
-                    <config-key id="db-path" name="Database Path">
-                        <summary>Cluster data directory.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
+                    <config-key id="pg-path" name="PostgreSQL Path">
+                        <summary><postgres/> data directory.</summary>
 
-                        <text>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>.  Even though this value can be read from <file>postgresql.conf</file> or the database cluster it is prudent to set it in case those resources are not available during a restore or offline backup scenario.
+                        <text>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>.  Even though this value can be read from <file>postgresql.conf</file> or <postgres/> it is prudent to set it in case those resources are not available during a restore or offline backup scenario.
 
-                        The <setting>db-path</setting> option is tested against the value reported by <postgres/> on every online backup so it should always be current.</text>
+                        The <setting>pg-path</setting> option is tested against the value reported by <postgres/> on every online backup so it should always be current.</text>
 
                         <example>/data/db</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB-PORT KEY -->
-                    <config-key id="db-port" name="Database Port">
-                        <summary>Cluster port.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-PORT KEY -->
+                    <config-key id="pg-port" name="PostgreSQL Port">
+                        <summary><postgres/> port.</summary>
 
-                        <text>Port that <postgres/> is running on.  This usually does not need to be specified as most database clusters run on the default port.</text>
+                        <text>Port that <postgres/> is running on.  This usually does not need to be specified as most <postgres/> clusters run on the default port.</text>
 
                         <example>6543</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB-SOCKET-PATH KEY -->
-                    <config-key id="db-socket-path" name="Database Socket Path">
-                        <summary>Cluster unix socket path.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-SOCKET-PATH KEY -->
+                    <config-key id="pg-socket-path" name="PostgreSQL Socket Path">
+                        <summary><postgres/> unix socket path.</summary>
 
-                        <text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgressql.conf</file>.</text>
+                        <text>The unix socket directory that was specified when <postgres/> was started.  <backrest/> will automatically look in the standard location for your OS so there is usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgresql.conf</file>.</text>
 
                         <example>/var/run/postgresql</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - DB-SSH-PORT KEY -->
-                    <config-key id="db-ssh-port" name="Database SSH Port">
-                        <summary>Database server SSH port when <setting>db-host</setting> is set.</summary>
+                    <!-- CONFIG - STANZA SECTION - PG-HOST-PORT KEY -->
+                    <config-key id="pg-host-port" name="PostgreSQL Host Port">
+                        <summary><postgres/> host port when <setting>pg-host</setting> is set.</summary>
 
-                        <text>Use this option to specify a non-default SSH port for a database server.</text>
+                        <text>Use this option to specify a non-default port for the <postgres/> host protocol.  Currently only SSH is supported</text>
 
                         <example>25</example>
                     </config-key>
@@ -755,7 +757,7 @@
 
         <text>Commands are used to execute the various <backrest/> functions.  Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands.  This includes all the options that may also configured in <file>pgbackrest.conf</file>.
 
-        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>no-</id> prefix.  This feature may be used to restore a backup directly on a backup host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--no-db1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--db-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
+        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>no-</id> prefix.  This feature may be used to restore a backup directly on a backup host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--no-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--pg-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
 
         If the <id>no-</id> prefix is used with a boolean option then the option is set to false.</text>
 
@@ -1190,7 +1192,7 @@
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
-                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>db-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the backup host. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the backup host. If the database is offline use the <br-option>--no-online</br-option> option.</text>
 
                 <option-list>
                     <!-- ======================================================================================================= -->

@@ -79,7 +79,7 @@ sub run
     my $self = shift;
 
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->{strRepoPath});
     $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
 

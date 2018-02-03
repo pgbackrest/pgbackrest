@@ -64,7 +64,7 @@ sub buildConfigParse
 
     my $strBuildSource =
         "static const struct option optionList[] =\n" .
-        "{\n";
+        "{";
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))
     {
@@ -73,37 +73,79 @@ sub buildConfigParse
         my $strOptionArg = ($rhOption->{&CFGDEF_TYPE} ne CFGDEF_TYPE_BOOLEAN ? "        .has_arg = required_argument,\n" : '');
         my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_PREFIX};
 
-        for (my $iOptionIdx = 0; $iOptionIdx <= $rhOption->{&CFGDEF_INDEX_TOTAL}; $iOptionIdx++)
+        my @stryOptionName = ($strOption);
+
+        if (defined($rhOption->{&CFGDEF_NAME_ALT}))
         {
-            # Don't and option indexes if it is not indexeds
-            next if ($iOptionIdx == 1 && $rhOption->{&CFGDEF_INDEX_TOTAL} == 1);
-
-            # Generate option name
-            my $strOptionName = $iOptionIdx > 0 ?
-                "${strOptionPrefix}${iOptionIdx}-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
-
-            # Generate option value used for parsing (offset is added so options don't conflict with getopt_long return values)
-            my $strOptionFlag = 'PARSE_OPTION_FLAG |';
-
-            my $strOptionVal =
-                ($iOptionIdx > 1 ? "(" : '') . $strOptionEnum . ($iOptionIdx > 1 ? " + " . ($iOptionIdx - 1) . ')' : '');
-
-            # Add option
-            $strBuildSource .=
-                "    {\n" .
-                "        .name = \"${strOptionName}\",\n" .
-                $strOptionArg .
-                "        .val = ${strOptionFlag} ${strOptionVal},\n" .
-                "    },\n";
-
-            # Add negation when defined
-            if ($rhOption->{&CFGDEF_NEGATE})
+            foreach my $strOptionNameAlt (sort(keys(%{$rhOption->{&CFGDEF_NAME_ALT}})))
             {
+                push(@stryOptionName, $strOptionNameAlt);
+            }
+        }
+
+        $strBuildSource .=
+            "\n" .
+            "    // ${strOption} option" . (@stryOptionName > 1 ? ' and deprecations' : '') . "\n" .
+            "    // " . (qw{-} x 125) . "\n";
+
+        for (my $iOptionIdx = 1; $iOptionIdx <= $rhOption->{&CFGDEF_INDEX_TOTAL}; $iOptionIdx++)
+        {
+            for (my $iOptionNameIdx = 0; $iOptionNameIdx < @stryOptionName; $iOptionNameIdx++)
+            {
+                my $strOptionName = $stryOptionName[$iOptionNameIdx];
+                my $rhNameAlt = $rhOption->{&CFGDEF_NAME_ALT}{$strOptionName};
+
+                # Skip alt name if it is not valid for this option index
+                if ($iOptionNameIdx > 0 && defined($rhNameAlt->{&CFGDEF_INDEX}) && $rhNameAlt->{&CFGDEF_INDEX} != $iOptionIdx)
+                {
+                    next;
+                }
+
+                # Generate output name
+                my $strOptionNameOut = $strOptionName;
+
+                if (defined($strOptionPrefix))
+                {
+                    if ($iOptionNameIdx == 0)
+                    {
+                        $strOptionNameOut =
+                            "${strOptionPrefix}${iOptionIdx}-" . substr($strOptionName, length($strOptionPrefix) + 1);
+                    }
+                    else
+                    {
+                        $strOptionNameOut =~ s/\?/$iOptionIdx/g;
+                    }
+                }
+
+                # Generate option value used for parsing (offset is added so options don't conflict with getopt_long return values)
+                my $strOptionFlag = 'PARSE_OPTION_FLAG |';
+
+                if ($iOptionNameIdx > 0)
+                {
+                    $strOptionFlag .= ' PARSE_DEPRECATE_FLAG |';
+                }
+
+                my $strOptionVal =
+                    ($iOptionIdx > 1 ? "(" : '') . $strOptionEnum . ($iOptionIdx > 1 ? " + " . ($iOptionIdx - 1) . ')' : '');
+
+                # Add option
                 $strBuildSource .=
                     "    {\n" .
-                    "        .name = \"no-${strOptionName}\",\n" .
-                    "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
+                    "        .name = \"${strOptionNameOut}\",\n" .
+                    $strOptionArg .
+                    "        .val = ${strOptionFlag} ${strOptionVal},\n" .
                     "    },\n";
+
+                # Add negation when defined
+                if ($rhOption->{&CFGDEF_NEGATE} &&
+                    !($iOptionNameIdx > 0 && defined($rhNameAlt->{&CFGDEF_NEGATE}) && !$rhNameAlt->{&CFGDEF_NEGATE}))
+                {
+                    $strBuildSource .=
+                        "    {\n" .
+                        "        .name = \"no-${strOptionNameOut}\",\n" .
+                        "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
+                        "    },\n";
+                }
             }
         }
     }

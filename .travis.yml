@@ -36,7 +36,7 @@ before_install:
 install:
   - |
     # User Configuration
-    sudo adduser --ingroup=${USER?} --disabled-password --gecos "" backrest
+    sudo adduser --ingroup=${USER?} --disabled-password --gecos "" pgbackrest
     umask 0022
     cd ~ && pwd && whoami && umask && groups
     mv ${TRAVIS_BUILD_DIR?} pgbackrest

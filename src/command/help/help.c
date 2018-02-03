@@ -255,12 +255,17 @@ helpRender()
 
                 // Ensure the option is valid
                 const char *optionName = strPtr(strLstGet(cfgCommandParam(), 0));
+                ConfigOption optionId = cfgOptionId(optionName);
 
                 if (cfgOptionId(optionName) == -1)
-                    THROW(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
+                {
+                    if (cfgDefOptionId(optionName) != -1)
+                        optionId = cfgOptionIdFromDefId(cfgDefOptionId(optionName), 0);
+                    else
+                        THROW(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
+                }
 
                 // Output option summary and description
-                ConfigOption optionId = cfgOptionId(optionName);
                 ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
                 strCatFmt(
@@ -290,6 +295,27 @@ helpRender()
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strPtr(defaultValue));
+                }
+
+                // Output alternate names (call them deprecated so the user will know not to use them)
+                if (cfgDefOptionHelpNameAlt(optionDefId))
+                {
+                    strCat(result, "\ndeprecated name");
+
+                    if (cfgDefOptionHelpNameAltValueTotal(optionDefId) > 1)
+                        strCat(result, "s");                        // {uncovered - no option has more than one alt name}
+
+                    strCat(result, ": ");
+
+                    for (int nameAltIdx = 0; nameAltIdx < cfgDefOptionHelpNameAltValueTotal(optionDefId); nameAltIdx++)
+                    {
+                        if (nameAltIdx != 0)
+                            strCat(result, ", ");                   // {uncovered - no option has more than one alt name}
+
+                        strCat(result, cfgDefOptionHelpNameAltValue(optionDefId, nameAltIdx));
+                    }
+
+                    strCat(result, "\n");
                 }
             }
         }

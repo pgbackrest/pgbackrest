@@ -48,9 +48,9 @@ Note that process-max is only applicable to the `synthetic` and `full` tests in 
 
 _Run Tests for a Specific OS, Module, Test, Process Max, and Database Version_:
 ```
-/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --db-version=9.4
+/backrest/test/test.pl --vm=co6 --module=backup --test=full --process-max=4 --pg-version=9.4
 ```
-Note that db-version is only applicable to the `full` test in the `backup` module.
+Note that pg-version is only applicable to the `full` test in the `backup` module.
 
 _Iterate All Possible Test Combinations_:
 ```

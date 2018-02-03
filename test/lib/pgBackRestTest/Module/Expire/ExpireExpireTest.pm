@@ -43,7 +43,7 @@ sub initStanzaOption
     my $oHostS3 = shift;
 
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
-    $self->optionTestSet(CFGOPT_DB_PATH, $strDbBasePath);
+    $self->optionTestSet(CFGOPT_PG_PATH, $strDbBasePath);
     $self->optionTestSet(CFGOPT_REPO_PATH, $strRepoPath);
     $self->optionTestSet(CFGOPT_LOG_PATH, $self->testPath());
 
@@ -236,7 +236,7 @@ sub run
 
             #-----------------------------------------------------------------------------------------------------------------------
             $self->optionTestClear(CFGOPT_DB_TIMEOUT);
-            $self->optionTestClear(CFGOPT_DB_PATH);
+            $self->optionTestClear(CFGOPT_PG_PATH);
             $self->optionTestClear(CFGOPT_ONLINE);
             $self->optionTestClear(CFGOPT_PROTOCOL_TIMEOUT);
             $self->optionTestSet(CFGOPT_RETENTION_FULL, 1);

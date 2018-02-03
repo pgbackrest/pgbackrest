@@ -190,15 +190,50 @@ use constant CFGOPT_PERL_BIN                                        => 'perl-bin
 use constant CFGOPT_PERL_OPTION                                     => 'perl-option';
     push @EXPORT, qw(CFGOPT_PERL_OPTION);
 
-# Repository
-use constant CFGOPT_REPO_PATH                                       => 'repo-path';
-    push @EXPORT, qw(CFGOPT_REPO_PATH);
-use constant CFGOPT_REPO_TYPE                                       => 'repo-type';
-    push @EXPORT, qw(CFGOPT_REPO_TYPE);
+# Logging
+use constant CFGOPT_LOG_LEVEL_CONSOLE                               => 'log-level-console';
+    push @EXPORT, qw(CFGOPT_LOG_LEVEL_CONSOLE);
+use constant CFGOPT_LOG_LEVEL_FILE                                  => 'log-level-file';
+    push @EXPORT, qw(CFGOPT_LOG_LEVEL_FILE);
+use constant CFGOPT_LOG_LEVEL_STDERR                                => 'log-level-stderr';
+    push @EXPORT, qw(CFGOPT_LOG_LEVEL_STDERR);
+use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-timestamp';
+    push @EXPORT, qw(CFGOPT_LOG_TIMESTAMP);
+
+
+# Repository options
+#-----------------------------------------------------------------------------------------------------------------------------------
+# Determines how many repositories can be configured
+use constant CFGDEF_INDEX_REPO                                      => 1;
+    push @EXPORT, qw(CFGDEF_INDEX_PG);
+
+# Prefix that must be used by all repo options that allow multiple configurations
+use constant CFGDEF_PREFIX_REPO                                     => 'repo';
+    push @EXPORT, qw(CFGDEF_PREFIX_REPO);
+
+# Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => 'repo-cipher-type';
     push @EXPORT, qw(CFGOPT_REPO_CIPHER_TYPE);
 use constant CFGOPT_REPO_CIPHER_PASS                                => 'repo-cipher-pass';
     push @EXPORT, qw(CFGOPT_REPO_CIPHER_PASS);
+use constant CFGOPT_REPO_HARDLINK                                   => 'repo-hardlink';
+    push @EXPORT, qw(CFGOPT_REPO_HARDLINK);
+use constant CFGOPT_REPO_PATH                                       => 'repo-path';
+    push @EXPORT, qw(CFGOPT_REPO_PATH);
+use constant CFGOPT_REPO_TYPE                                       => 'repo-type';
+    push @EXPORT, qw(CFGOPT_REPO_TYPE);
+
+# Repository Host
+use constant CFGOPT_REPO_HOST                                       => 'repo-host';
+    push @EXPORT, qw(CFGOPT_REPO_HOST);
+use constant CFGOPT_REPO_HOST_CMD                                   => 'repo-host-cmd';
+    push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
+use constant CFGOPT_REPO_HOST_CONFIG                                => 'repo-host-config';
+    push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG);
+use constant CFGOPT_REPO_HOST_PORT                                  => 'repo-host-port';
+    push @EXPORT, qw(CFGOPT_REPO_HOST_PORT);
+use constant CFGOPT_REPO_HOST_USER                                  => 'repo-host-user';
+    push @EXPORT, qw(CFGOPT_REPO_HOST_USER);
 
 # Repository S3
 use constant CFGOPT_REPO_S3_KEY                                     => 'repo-s3-key';
@@ -220,16 +255,6 @@ use constant CFGOPT_REPO_S3_REGION                                  => 'repo-s3-
 use constant CFGOPT_REPO_S3_VERIFY_SSL                              => 'repo-s3-verify-ssl';
     push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_SSL);
 
-# Logging
-use constant CFGOPT_LOG_LEVEL_CONSOLE                               => 'log-level-console';
-    push @EXPORT, qw(CFGOPT_LOG_LEVEL_CONSOLE);
-use constant CFGOPT_LOG_LEVEL_FILE                                  => 'log-level-file';
-    push @EXPORT, qw(CFGOPT_LOG_LEVEL_FILE);
-use constant CFGOPT_LOG_LEVEL_STDERR                                => 'log-level-stderr';
-    push @EXPORT, qw(CFGOPT_LOG_LEVEL_STDERR);
-use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-timestamp';
-    push @EXPORT, qw(CFGOPT_LOG_TIMESTAMP);
-
 # Archive options
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_ASYNC                                   => 'archive-async';
@@ -243,22 +268,10 @@ use constant CFGOPT_ARCHIVE_CHECK                                   => 'archive-
     push @EXPORT, qw(CFGOPT_ARCHIVE_CHECK);
 use constant CFGOPT_ARCHIVE_COPY                                    => 'archive-copy';
     push @EXPORT, qw(CFGOPT_ARCHIVE_COPY);
-use constant CFGOPT_BACKUP_CMD                                      => 'backup-cmd';
-    push @EXPORT, qw(CFGOPT_BACKUP_CMD);
-use constant CFGOPT_BACKUP_CONFIG                                   => 'backup-config';
-    push @EXPORT, qw(CFGOPT_BACKUP_CONFIG);
-use constant CFGOPT_BACKUP_HOST                                     => 'backup-host';
-    push @EXPORT, qw(CFGOPT_BACKUP_HOST);
-use constant CFGOPT_BACKUP_SSH_PORT                                 => 'backup-ssh-port';
-    push @EXPORT, qw(CFGOPT_BACKUP_SSH_PORT);
 use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-standby';
     push @EXPORT, qw(CFGOPT_BACKUP_STANDBY);
-use constant CFGOPT_BACKUP_USER                                     => 'backup-user';
-    push @EXPORT, qw(CFGOPT_BACKUP_USER);
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
     push @EXPORT, qw(CFGOPT_CHECKSUM_PAGE);
-use constant CFGOPT_HARDLINK                                        => 'hardlink';
-    push @EXPORT, qw(CFGOPT_HARDLINK);
 use constant CFGOPT_MANIFEST_SAVE_THRESHOLD                         => 'manifest-save-threshold';
     push @EXPORT, qw(CFGOPT_MANIFEST_SAVE_THRESHOLD);
 use constant CFGOPT_RESUME                                          => 'resume';
@@ -297,29 +310,30 @@ use constant CFGOPT_RECOVERY_OPTION                                 => 'recovery
 # Stanza options
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many databases can be configured
-use constant CFGDEF_INDEX_DB                                        => 8;
-    push @EXPORT, qw(CFGDEF_INDEX_DB);
+use constant CFGDEF_INDEX_PG                                        => 8;
+    push @EXPORT, qw(CFGDEF_INDEX_PG);
 
 # Prefix that must be used by all db options that allow multiple configurations
-use constant CFGDEF_PREFIX_DB                                       => 'db';
-    push @EXPORT, qw(CFGDEF_PREFIX_DB);
+use constant CFGDEF_PREFIX_PG                                       => 'pg';
+    push @EXPORT, qw(CFGDEF_PREFIX_PG);
 
-use constant CFGOPT_DB_CMD                                          => CFGDEF_PREFIX_DB . '-cmd';
-    push @EXPORT, qw(CFGOPT_DB_CMD);
-use constant CFGOPT_DB_CONFIG                                       => CFGDEF_PREFIX_DB . '-config';
-    push @EXPORT, qw(CFGOPT_DB_CONFIG);
-use constant CFGOPT_DB_HOST                                         => CFGDEF_PREFIX_DB . '-host';
-    push @EXPORT, qw(CFGOPT_DB_HOST);
-use constant CFGOPT_DB_PATH                                         => CFGDEF_PREFIX_DB . '-path';
-    push @EXPORT, qw(CFGOPT_DB_PATH);
-use constant CFGOPT_DB_PORT                                         => CFGDEF_PREFIX_DB . '-port';
-    push @EXPORT, qw(CFGOPT_DB_PORT);
-use constant CFGOPT_DB_SSH_PORT                                     => CFGDEF_PREFIX_DB . '-ssh-port';
-    push @EXPORT, qw(CFGOPT_DB_SSH_PORT);
-use constant CFGOPT_DB_SOCKET_PATH                                  => CFGDEF_PREFIX_DB . '-socket-path';
-    push @EXPORT, qw(CFGOPT_DB_SOCKET_PATH);
-use constant CFGOPT_DB_USER                                         => CFGDEF_PREFIX_DB . '-user';
-    push @EXPORT, qw(CFGOPT_DB_USER);
+use constant CFGOPT_PG_HOST                                         => CFGDEF_PREFIX_PG . '-host';
+    push @EXPORT, qw(CFGOPT_PG_HOST);
+use constant CFGOPT_PG_HOST_CMD                                     => CFGOPT_PG_HOST . '-cmd';
+    push @EXPORT, qw(CFGOPT_PG_HOST_CMD);
+use constant CFGOPT_PG_HOST_CONFIG                                  => CFGOPT_PG_HOST . '-config';
+    push @EXPORT, qw(CFGOPT_PG_HOST_CONFIG);
+use constant CFGOPT_PG_HOST_PORT                                    => CFGOPT_PG_HOST . '-port';
+    push @EXPORT, qw(CFGOPT_PG_HOST_PORT);
+use constant CFGOPT_PG_HOST_USER                                    => CFGOPT_PG_HOST . '-user';
+    push @EXPORT, qw(CFGOPT_PG_HOST_USER);
+
+use constant CFGOPT_PG_PATH                                         => CFGDEF_PREFIX_PG . '-path';
+    push @EXPORT, qw(CFGOPT_PG_PATH);
+use constant CFGOPT_PG_PORT                                         => CFGDEF_PREFIX_PG . '-port';
+    push @EXPORT, qw(CFGOPT_PG_PORT);
+use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
+    push @EXPORT, qw(CFGOPT_PG_SOCKET_PATH);
 
 ####################################################################################################################################
 # Option values - for options that have a specific list of allowed values
@@ -417,8 +431,6 @@ use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 9999999;
 
 # Option defines
 #-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGDEF_ALT_NAME                                        => 'alt-name';
-    push @EXPORT, qw(CFGDEF_ALT_NAME);
 use constant CFGDEF_ALLOW_LIST                                      => 'allow-list';
     push @EXPORT, qw(CFGDEF_ALLOW_LIST);
 use constant CFGDEF_ALLOW_RANGE                                     => 'allow-range';
@@ -435,8 +447,12 @@ use constant CFGDEF_INDEX                                           => 'index';
     push @EXPORT, qw(CFGDEF_INDEX);
 use constant CFGDEF_INDEX_TOTAL                                     => 'indexTotal';
     push @EXPORT, qw(CFGDEF_INDEX_TOTAL);
+use constant CFGDEF_INHERIT                                         => 'inherit';
+    push @EXPORT, qw(CFGDEF_INHERIT);
 use constant CFGDEF_INTERNAL                                        => 'internal';
     push @EXPORT, qw(CFGDEF_INTERNAL);
+use constant CFGDEF_NAME_ALT                                        => 'name-alt';
+    push @EXPORT, qw(CFGDEF_NAME_ALT);
 use constant CFGDEF_NEGATE                                          => 'negate';
     push @EXPORT, qw(CFGDEF_NEGATE);
 use constant CFGDEF_PREFIX                                          => 'prefix';
@@ -1142,16 +1158,24 @@ my %hConfigDefine =
         }
     },
 
+    # Repository options
+    #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_REPO_CIPHER_PASS =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
         &CFGDEF_REQUIRED  => false,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION  => CFGOPT_REPO_CIPHER_TYPE,
             &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC],
+        },
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-cipher-pass' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1160,20 +1184,156 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_CIPHER_TYPE_NONE,
         &CFGDEF_ALLOW_LIST =>
         [
             &CFGOPTVAL_REPO_CIPHER_TYPE_NONE,
             &CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC,
         ],
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-cipher-type' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_HARDLINK =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_NAME_ALT =>
+        {
+            'hardlink' => {},
+        },
+        &CFGDEF_DEFAULT => false,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+        },
+    },
+
+    &CFGOPT_REPO_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
+    },
+
+    &CFGOPT_REPO_HOST_CMD =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
+        },
+    },
+
+    &CFGOPT_REPO_HOST_CONFIG =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-config' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
+        },
+    },
+
+    &CFGOPT_REPO_HOST_PORT =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
+        }
+    },
+
+    &CFGOPT_REPO_HOST_USER =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => 'pgbackrest',
+        &CFGDEF_NAME_ALT =>
+        {
+            'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
+        }
     },
 
     &CFGOPT_REPO_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => '/var/lib/' . BACKREST_EXE,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1196,22 +1356,45 @@ my %hConfigDefine =
     &CFGOPT_REPO_S3_BUCKET =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
             &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
         },
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-bucket' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_S3_CA_FILE => &CFGOPT_REPO_S3_HOST,
-    &CFGOPT_REPO_S3_CA_PATH => &CFGOPT_REPO_S3_HOST,
+    &CFGOPT_REPO_S3_CA_FILE =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-ca-file' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+    },
+
+    &CFGOPT_REPO_S3_CA_PATH =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-ca-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+    },
 
     &CFGOPT_REPO_S3_KEY =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND =>
@@ -1219,29 +1402,66 @@ my %hConfigDefine =
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
             &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_S3],
         },
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-key' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_S3_KEY_SECRET => CFGOPT_REPO_S3_KEY,
+    &CFGOPT_REPO_S3_KEY_SECRET =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-key-secret' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+    },
 
-    &CFGOPT_REPO_S3_ENDPOINT => CFGOPT_REPO_S3_BUCKET,
+    &CFGOPT_REPO_S3_ENDPOINT =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-endpoint' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+    },
 
     &CFGOPT_REPO_S3_HOST =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED  => false,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_S3_REGION => CFGOPT_REPO_S3_BUCKET,
+    &CFGOPT_REPO_S3_REGION,
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-region' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
+    },
 
     &CFGOPT_REPO_S3_VERIFY_SSL =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => true,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1},
+        },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
     },
@@ -1250,6 +1470,8 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_TYPE_POSIX,
         &CFGDEF_ALLOW_LIST =>
         [
@@ -1257,6 +1479,10 @@ my %hConfigDefine =
             &CFGOPTVAL_REPO_TYPE_POSIX,
             &CFGOPTVAL_REPO_TYPE_S3,
         ],
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo-type' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
@@ -1294,7 +1520,6 @@ my %hConfigDefine =
 
     &CFGOPT_PROCESS_MAX =>
     {
-        &CFGDEF_ALT_NAME => 'thread-max',
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_DEFAULT => 1,
@@ -1441,70 +1666,6 @@ my %hConfigDefine =
         }
     },
 
-    &CFGOPT_BACKUP_CMD =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
-        },
-    },
-
-    &CFGOPT_BACKUP_CONFIG =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
-        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
-        },
-    },
-
-    &CFGOPT_BACKUP_HOST =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP =>
-            {
-                &CFGDEF_INTERNAL => true,
-            },
-            &CFGCMD_CHECK => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE =>
-            {
-                &CFGDEF_INTERNAL => true,
-            },
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-        },
-    },
-
-    &CFGOPT_BACKUP_SSH_PORT =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
-        }
-    },
-
     &CFGOPT_BACKUP_STANDBY =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -1519,35 +1680,11 @@ my %hConfigDefine =
         },
     },
 
-    &CFGOPT_BACKUP_USER =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => 'backrest',
-        &CFGDEF_COMMAND => CFGOPT_BACKUP_HOST,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_BACKUP_HOST
-        }
-    },
-
     &CFGOPT_CHECKSUM_PAGE =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_REQUIRED => false,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-        }
-    },
-
-    &CFGOPT_HARDLINK =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1738,12 +1875,17 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_DB_CMD =>
+    &CFGOPT_PG_HOST_CMD =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-cmd' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1758,16 +1900,21 @@ my %hConfigDefine =
         },
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
         },
     },
 
-    &CFGOPT_DB_CONFIG =>
+    &CFGOPT_PG_HOST_CONFIG =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-config' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-config' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1782,16 +1929,21 @@ my %hConfigDefine =
         },
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
         },
     },
 
-    &CFGOPT_DB_HOST =>
+    &CFGOPT_PG_HOST =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-host' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},
@@ -1808,15 +1960,20 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
-        }
+        },
     },
 
-    &CFGOPT_DB_PATH =>
+    &CFGOPT_PG_PATH =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_REQUIRED => true,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-path' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET =>
@@ -1844,12 +2001,17 @@ my %hConfigDefine =
         },
     },
 
-    &CFGOPT_DB_PORT =>
+    &CFGOPT_PG_PORT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_DEFAULT => 5432,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-port' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1858,28 +2020,38 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-        }
-    },
-
-    &CFGOPT_DB_SSH_PORT =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_COMMAND => CFGOPT_DB_HOST,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
         },
     },
 
-    &CFGOPT_DB_SOCKET_PATH =>
+    &CFGOPT_PG_HOST_PORT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_COMMAND => CFGOPT_PG_HOST,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-ssh-port' => {&CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
+        },
+    },
+
+    &CFGOPT_PG_SOCKET_PATH =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-socket-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-socket-path' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1892,12 +2064,17 @@ my %hConfigDefine =
         }
     },
 
-    &CFGOPT_DB_USER =>
+    &CFGOPT_PG_HOST_USER =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_DB,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => 'postgres',
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-user' => {&CFGDEF_NEGATE => false},
+        },
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1910,7 +2087,7 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_DB_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
         },
     },
 );
@@ -1921,9 +2098,19 @@ my %hConfigDefine =
 foreach my $strKey (sort(keys(%hConfigDefine)))
 {
     # If the define is a scalar then copy the entire define from the referenced option
-    if (!ref($hConfigDefine{$strKey}))
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_INHERIT}))
     {
-        $hConfigDefine{$strKey} = dclone($hConfigDefine{$hConfigDefine{$strKey}});
+        # Make a copy in case there are overrides that need to be applied after inheriting
+        my $hConfigDefineOverride = dclone($hConfigDefine{$strKey});
+
+        # Copy the option being inherited from
+        $hConfigDefine{$strKey} = dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_INHERIT}});
+
+        # Apply overrides
+        foreach my $strOptionDef (sort(keys(%{$hConfigDefineOverride})))
+        {
+            $hConfigDefine{$strKey}{$strOptionDef} = $hConfigDefineOverride->{$strOptionDef};
+        }
     }
 
     # If the command section is a scalar then copy the section from the referenced option
@@ -1965,11 +2152,11 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_INTERNAL} = false;
     }
 
-    # Set index total for db-*
+    # Set index total for pg-*
     if (defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) &&
-        $hConfigDefine{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_DB)
+        $hConfigDefine{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_PG)
     {
-        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_DB;
+        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_PG;
     }
     # Else default index total is 1
     else

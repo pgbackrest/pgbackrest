@@ -55,7 +55,7 @@ sub initTest
     $self->configTestClear();
     $self->optionTestSet(CFGOPT_STANZA, $self->stanza());
     $self->optionTestSet(CFGOPT_REPO_PATH, $self->testPath() . '/repo');
-    $self->optionTestSet(CFGOPT_DB_PATH, $self->{strDbPath});
+    $self->optionTestSet(CFGOPT_PG_PATH, $self->{strDbPath});
     $self->configTestLoad(CFGCMD_ARCHIVE_GET);
 
     # Create archive info path

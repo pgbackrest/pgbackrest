@@ -90,11 +90,11 @@ stanza-create db - verify success with force (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - fail on database mismatch with directory (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --db-path=[TEST_PATH]/db-master/db/testbase/ stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --pg1-path=[TEST_PATH]/db-master/db/testbase/ stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-create db - successfully create stanza files to be upgraded (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --db-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --log-level-console=detail  --pg1-path=[TEST_PATH]/db-master/db/testbase/ --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-upgrade db - upgrade stanza files online (backup host)
@@ -108,15 +108,11 @@ full backup - update during backup (backup host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress-level=3
 compress-level-network=1
 db-timeout=45
@@ -127,17 +123,21 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-user=[USER-2]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-2]
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
 
 [global]
 compress-level=3
@@ -150,14 +150,14 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
@@ -170,15 +170,11 @@ incr backup - update during backup (backup host)
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf
 ----------------------------------------------------------
 [db]
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-socket-path=[TEST_PATH]/db-master/db
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-master/db
 
 [global]
-backup-cmd=[BACKREST-BIN]
-backup-config=[TEST_PATH]/backup/pgbackrest.conf
-backup-host=backup
-backup-user=[USER-1]
 compress-level=3
 compress-level-network=1
 db-timeout=45
@@ -189,17 +185,21 @@ log-level-stderr=off
 log-path=[TEST_PATH]/db-master/log
 process-max=2
 protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-master/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
 -------------------------------------------------------
 [db]
-db-cmd=[BACKREST-BIN]
-db-config=[TEST_PATH]/db-master/pgbackrest.conf
-db-host=db-master
-db-path=[TEST_PATH]/db-master/db/base
-db-port=[PORT-1]
-db-user=[USER-2]
+pg1-host=db-master
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf
+pg1-host-user=[USER-2]
+pg1-path=[TEST_PATH]/db-master/db/base
+pg1-port=6543
 
 [global]
 archive-async=y
@@ -213,14 +213,14 @@ log-level-stderr=off
 log-path=[TEST_PATH]/backup/log
 process-max=2
 protocol-timeout=60
-repo-path=/
-repo-s3-bucket=pgbackrest-dev
-repo-s3-endpoint=s3.amazonaws.com
-repo-s3-key=accessKey1
-repo-s3-key-secret=verySecretKey1
-repo-s3-region=us-east-1
-repo-s3-verify-ssl=n
-repo-type=s3
+repo1-path=/
+repo1-s3-bucket=pgbackrest-dev
+repo1-s3-endpoint=s3.amazonaws.com
+repo1-s3-key=accessKey1
+repo1-s3-key-secret=verySecretKey1
+repo1-s3-region=us-east-1
+repo1-s3-verify-ssl=n
+repo1-type=s3
 
 [global:backup]
 archive-copy=y
