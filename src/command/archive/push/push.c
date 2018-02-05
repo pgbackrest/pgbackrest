@@ -138,14 +138,14 @@ cmdArchivePush()
                 // If the WAL segment has not already been pushed then start the async process to push it
                 if (!pushed)
                 {
-                    // Only want to see warnings and errors from async process
-                    cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("warn"));
-
                     // Async process is currently implemented in Perl
                     int processId = 0;
 
                     if ((processId = fork()) == 0)
                     {
+                        // Only want to see warnings and errors from async process
+                        cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("warn"));
+
                         perlExec(perlCommand());
                     }
                     // Wait for async process to exit (this should happen quickly) and report any errors

@@ -40,7 +40,7 @@ main(int argListSize, const char *argList[])
             exit(0);
         }
 
-        // Archive push command.  Currently only implements to local operations of async archive push.
+        // Archive push command.  Currently only implements local operations of async archive push.
         // -------------------------------------------------------------------------------------------------------------------------
         if (cfgCommand() == cfgCmdArchivePush && cfgOptionBool(cfgOptArchiveAsync))
         {

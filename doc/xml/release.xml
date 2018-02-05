@@ -33,6 +33,10 @@
 
                 <release-feature-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
                         <p>The <cmd>archive-push</cmd> command is now partially coded in C which allows the <postgres/> <file>archive_command</file> to run significantly faster when processing status messages from the asynchronous archive process.</p>
                     </release-item>
 
