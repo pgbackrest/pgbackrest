@@ -50,8 +50,8 @@ testRun()
         TEST_RESULT_VOID(cfgLoadParam(strLstSize(argList), strLstPtr(argList), strNew("pgbackrest2")), "load local config");
 
         TEST_RESULT_STR(strPtr(cfgExe()), "pgbackrest2", "check exe");
-        TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is off");
-        TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
+        TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is warn");
+        TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

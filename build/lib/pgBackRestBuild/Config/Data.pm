@@ -1599,6 +1599,9 @@ my %hConfigDefine =
             &CFGCMD_LOCAL => {},
             &CFGCMD_REMOTE => {},
             &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         }
