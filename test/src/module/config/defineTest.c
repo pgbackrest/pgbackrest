@@ -96,8 +96,9 @@ testRun()
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptPgPath), 8, "index total > 1");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptRepoPath), 1, "index total == 1");
 
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefOptSet), false, "option set is not internal");
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefOptTest), true, "option test is internal");
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptSet), false, "option set is not internal");
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptPgHost), true, "option pg-host is internal");
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptTest), true, "option test is internal");
 
         TEST_ERROR(cfgDefOptionNegate(cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
         TEST_RESULT_BOOL(cfgDefOptionNegate(cfgDefOptOnline), true, "option can be negated");

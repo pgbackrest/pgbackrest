@@ -293,6 +293,17 @@ sub renderOptional
         $bSingleLine = true;
     }
 
+
+    if ($bCommand && defined($rhOptional->{&CFGDEF_INTERNAL}))
+    {
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(" . ($rhOptional->{&CFGDEF_INTERNAL} ? 'true' : 'false') .
+                ")\n";
+
+        $bSingleLine = true;
+    }
+
     if ($bCommand && defined($rhOptional->{&CFGDEF_REQUIRED}))
     {
         $strBuildSourceOptional .=

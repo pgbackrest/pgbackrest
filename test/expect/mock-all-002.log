@@ -164,8 +164,8 @@ P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/base/1/PG_VERSION, pg_data/base/1/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/base/1/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->queueJob(): iHostConfigIdx = 1, rParam = ([TEST_PATH]/db-master/db/base/PG_VERSION, pg_data/PG_VERSION, 3, [undef], 0, [BACKUP-FULL-1], 0, 3, [MODIFICATION-TIME-1], 1, [undef]), rParamSecure = [undef], strKey = pg_data/PG_VERSION, strOp = backupFile, strQueue = pg_data
 P00  DEBUG:     Protocol::Local::Process->hostConnect: start local process: iHostConfigIdx = 1, iHostIdx = 0, iHostProcessIdx = 0, iProcessId = 1, strHostType = db
-P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --buffer-size=16384 --cmd-ssh=/usr/bin/ssh --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=1 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --pg1-socket-path==/test_socket_path --process=1 --protocol-timeout=2 --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db --type=db local
-P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 16384, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 2, strCommand = [BACKREST-BIN] --buffer-size=16384 --cmd-ssh=/usr/bin/ssh --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=1 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --pg1-socket-path==/test_socket_path --process=1 --protocol-timeout=2 --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db --type=db local, strId = local-1 process, strName = local
+P00  DEBUG:     Protocol::Local::Master->new(): iProcessIdx = 1, strCommand = [BACKREST-BIN] --buffer-size=16384 --cmd-ssh=/usr/bin/ssh --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=1 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --pg1-port=9999 --pg1-socket-path==/test_socket_path --process=1 --protocol-timeout=2 --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db --type=db local
+P00  DEBUG:     Protocol::Command::Master->new(): iBufferMax = 16384, iCompressLevel = 3, iCompressLevelNetwork = 1, iProtocolTimeout = 2, strCommand = [BACKREST-BIN] --buffer-size=16384 --cmd-ssh=/usr/bin/ssh --command=backup --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=1 --host-id=1 --lock-path=[TEST_PATH]/backup/lock --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --pg1-port=9999 --pg1-socket-path==/test_socket_path --process=1 --protocol-timeout=2 --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db --type=db local, strId = local-1 process, strName = local
 P00  DEBUG:     Protocol::Local::Process->hostConnect=>: bResult = true
 P00  DEBUG:     Protocol::Local::Process->init: init local process: iDirection = 1, iHostIdx = 0, iProcessId = 1, iQueueIdx = 0, iQueueLastIdx = 0
 P00  DEBUG:     Protocol::Local::Process->init=>: bResult = true
@@ -282,7 +282,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=16384 --cmd-ssh=/usr/bin/ssh --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=16384 --cmd-ssh=/usr/bin/ssh --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --repo1-type=cifs --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -1118,7 +1118,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -1886,7 +1886,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -2268,7 +2268,7 @@ P00  DEBUG:     Storage::Local->openWrite(): bAtomic = <false>, bPathCreate = <f
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = [TEST_PATH]/backup/repo/backup/db
 P00  DEBUG:     Storage::Local->pathSync(): bRecurse = <false>, strPathExp = <REPO:BACKUP>
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=debug --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00  DEBUG:     Backup::Info->new(): bIgnoreMissing = <false>, bLoad = <true>, bRequired = <true>, bValidate = <true>, oStorage = <[object]>, strBackupClusterPath = [TEST_PATH]/backup/repo/backup/db, strCipherPassSub = [undef]
 P00  DEBUG:     Storage::Local->encrypted(): bIgnoreMissing = true, strFileName = [TEST_PATH]/backup/repo/backup/db/backup.info
 P00  DEBUG:     Storage::Local->encrypted=>: bEncrypted = false
@@ -2492,7 +2492,7 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 P00   INFO: diff backup size = 25B
 P00   INFO: new backup label = [BACKUP-DIFF-1]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2674,7 +2674,7 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base/pg
 P00   INFO: diff backup size = 25B
 P00   INFO: new backup label = [BACKUP-DIFF-2]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -2933,7 +2933,7 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 P00   INFO: incr backup size = 13B
 P00   INFO: new backup label = [BACKUP-INCR-3]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3153,7 +3153,7 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 P00   INFO: incr backup size = 8B
 P00   INFO: new backup label = [BACKUP-INCR-4]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3338,7 +3338,7 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 P00   INFO: diff backup size = 39B
 P00   INFO: new backup label = [BACKUP-DIFF-3]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3517,7 +3517,7 @@ P00   TEST:         PgBaCkReStTeSt-MANIFEST-BUILD-PgBaCkReStTeSt
 P00   INFO: incr backup size = 0B
 P00   INFO: new backup label = [BACKUP-INCR-5]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3704,7 +3704,7 @@ P00   WARN: page misalignment in file db-master:[TEST_PATH]/db-master/db/base-2/
 P00   INFO: diff backup size = 31B
 P00   INFO: new backup label = [BACKUP-DIFF-4]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -3895,7 +3895,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/pg_tblspc/2/[T
 P00   INFO: full backup size = 144KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -4409,7 +4409,7 @@ info db stanza - normal output (backup host)
 expire full=1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --log-level-console=detail --retention-full=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --retention-full=1 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-3], [BACKUP-INCR-5], [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-DIFF-4]
 P00   INFO: remove expired backup [BACKUP-INCR-5]
@@ -4446,7 +4446,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base2.txt
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -4898,7 +4898,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-6]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 
@@ -5074,7 +5074,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base-2/base/base/base
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-7]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-path=[TEST_PATH]/backup/repo --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-path=[TEST_PATH]/backup/repo --stanza=db
 P00   INFO: option 'retention-archive' is not set - archive logs will not be expired
 P00   INFO: expire command end: completed successfully
 

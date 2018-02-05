@@ -166,7 +166,7 @@ helpRender()
 
                 for (unsigned int optionDefId = 0; optionDefId < cfgDefOptionTotal(); optionDefId++)
                 {
-                    if (cfgDefOptionValid(commandDefId, optionDefId) && !cfgDefOptionInternal(optionDefId))
+                    if (cfgDefOptionValid(commandDefId, optionDefId) && !cfgDefOptionInternal(commandDefId, optionDefId))
                     {
                         String *section = NULL;
 

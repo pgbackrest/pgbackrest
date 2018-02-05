@@ -5,6 +5,9 @@
 # settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
 # section meaning the defines defined there apply to all commands listed for the option.
 #
+# CFGDEF_INHERIT:
+#     Inherit all definitions for the referenced option.  Any definitions can be overridden.
+#
 # CFGDEF_COMMAND:
 #     List of commands the option can be used with this option.  An empty hash signifies that the command does not deviate from the
 #     option defaults.  Otherwise, overrides can be specified.
@@ -1236,15 +1239,25 @@ my %hConfigDefine =
                 &CFGDEF_INTERNAL => true,
             },
             &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_INFO => {},
             &CFGCMD_LOCAL => {},
             &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_STANZA_DELETE =>
             {
                 &CFGDEF_INTERNAL => true,
             },
-            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         },
@@ -1261,7 +1274,17 @@ my %hConfigDefine =
         {
             'backup-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
@@ -1279,7 +1302,7 @@ my %hConfigDefine =
         {
             'backup-config' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
@@ -1297,7 +1320,7 @@ my %hConfigDefine =
         {
             'backup-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
@@ -1315,7 +1338,7 @@ my %hConfigDefine =
         {
             'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_HOST,
+        &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND =>
         {
@@ -1334,23 +1357,7 @@ my %hConfigDefine =
         {
             'repo-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_BUCKET =>
@@ -1875,9 +1882,46 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_PG_HOST =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-host' => {&CFGDEF_NEGATE => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_LOCAL => {},
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_START => {},
+            &CFGCMD_STOP => {},
+        },
+    },
+
     &CFGOPT_PG_HOST_CMD =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_REQUIRED => false,
@@ -1906,61 +1950,38 @@ my %hConfigDefine =
 
     &CFGOPT_PG_HOST_CONFIG =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
             'db-config' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
             'db?-config' => {&CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-        },
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
-        },
     },
 
-    &CFGOPT_PG_HOST =>
+    &CFGOPT_PG_HOST_PORT =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-host' => {&CFGDEF_NEGATE => false},
+            'db-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-ssh-port' => {&CFGDEF_NEGATE => false},
         },
-        &CFGDEF_COMMAND =>
+    },
+
+    &CFGOPT_PG_HOST_USER =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
+        &CFGDEF_DEFAULT => 'postgres',
+        &CFGDEF_NAME_ALT =>
         {
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_RESTORE =>
-            {
-                &CFGDEF_INTERNAL => true,
-            },
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
+            'db-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'db?-user' => {&CFGDEF_NEGATE => false},
         },
+        &CFGDEF_REQUIRED => false,
     },
 
     &CFGOPT_PG_PATH =>
@@ -2016,78 +2037,28 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
+            &CFGCMD_LOCAL => {},
             &CFGCMD_REMOTE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         },
-    },
-
-    &CFGOPT_PG_HOST_PORT =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_COMMAND => CFGOPT_PG_HOST,
-        &CFGDEF_NAME_ALT =>
-        {
-            'db-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-ssh-port' => {&CFGDEF_NEGATE => false},
-        },
         &CFGDEF_DEPEND =>
         {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
+            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_PATH
         },
     },
 
     &CFGOPT_PG_SOCKET_PATH =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INHERIT => CFGOPT_PG_PORT,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => undef,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
             'db-socket-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
             'db?-socket-path' => {&CFGDEF_NEGATE => false},
-        },
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_REMOTE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-        }
-    },
-
-    &CFGOPT_PG_HOST_USER =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => 'postgres',
-        &CFGDEF_NAME_ALT =>
-        {
-            'db-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-user' => {&CFGDEF_NEGATE => false},
-        },
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_LOCAL => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-        },
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_DEPEND =>
-        {
-            &CFGDEF_DEPEND_OPTION => CFGOPT_PG_HOST
         },
     },
 );

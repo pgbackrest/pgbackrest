@@ -119,7 +119,7 @@ testRun()
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--repo1-host-user=xxx"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
             "option 'repo1-host-user' not valid without option 'repo1-host'");
@@ -297,8 +297,6 @@ testRun()
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo1-host=backup"));
-        strLstAdd(argList, strNew("--repo1-host-user=pgbackrest"));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));

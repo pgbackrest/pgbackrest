@@ -167,8 +167,6 @@ testRun()
             "\n"
             "Stanza Options:\n"
             "\n"
-            "  --pg-host                 postgreSQL host for operating remotely via SSH\n"
-            "  --pg-host-port            postgreSQL host port when pg-host is set\n"
             "  --pg-path                 postgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help archive-push [option]' for more information.\n",

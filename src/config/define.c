@@ -100,6 +100,7 @@ typedef enum
     configDefDataTypeCommand,
     configDefDataTypeDefault,
     configDefDataTypeDepend,
+    configDefDataTypeInternal,
     configDefDataTypePrefix,
     configDefDataTypeRequired,
     configDefDataTypeHelpNameAlt,
@@ -149,6 +150,9 @@ typedef enum
 
 #define CFGDEFDATA_OPTION_OPTIONAL_COMMAND(command)                                                                                \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeCommand, 0, command),
+
+#define CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(commandOptionInternal)                                                                 \
+    CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeInternal, 0, commandOptionInternal),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(commandOptionRequired)                                                                 \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeRequired, 0, commandOptionRequired),
@@ -555,9 +559,15 @@ cfgDefOptionIndexTotal(ConfigDefineOption optionDefId)
 Is the option for internal use only?
 ***********************************************************************************************************************************/
 bool
-cfgDefOptionInternal(ConfigDefineOption optionDefId)
+cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
 {
-    cfgDefOptionCheck(optionDefId);
+    cfgDefCommandOptionCheck(commandDefId, optionDefId);
+
+    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeInternal);
+
+    if (dataDefFound)
+        return (bool)dataDef;
+
     return configDefineOptionData[optionDefId].internal;
 }
 

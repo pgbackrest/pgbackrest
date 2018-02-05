@@ -137,6 +137,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Cleanup usage of internal options.  Apply internal to options that need to be read to determine locality but should not appear in the help.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Refactor code to make valgrind happy.</p>
                     </release-item>
 
