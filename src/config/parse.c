@@ -65,6 +65,9 @@ optionFind(const String *option)
 
 /***********************************************************************************************************************************
 Parse the command-line arguments and config file to produce final config data
+
+??? Add validation of section names and check all sections for invalid options in the check command.  It's too expensive to add the
+logic to this critical path code.
 ***********************************************************************************************************************************/
 void
 configParse(int argListSize, const char *argList[])
@@ -213,9 +216,9 @@ configParse(int argListSize, const char *argList[])
         if (commandParamList != NULL)
             cfgCommandParamSet(commandParamList);
 
-        // Enable logging except for local and remote commands
+        // Enable logging (except for local and remote commands) so config file warnings will be output
         if (cfgCommand() != cfgCmdLocal && cfgCommand() != cfgCmdRemote)
-            logInit(logLevelOff, logLevelWarn, false);
+            logInit(logLevelWarn, logLevelWarn, false);
 
         // Phase 2: parse config file unless --no-config passed
         // ---------------------------------------------------------------------------------------------------------------------
@@ -269,6 +272,7 @@ configParse(int argListSize, const char *argList[])
                     {
                         String *section = strLstGet(sectionList, sectionIdx);
                         StringList *keyList = iniSectionKeyList(config, section);
+                        KeyValue *optionFound = kvNew();
 
                         // Loop through keys to search for options
                         for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
@@ -301,9 +305,18 @@ configParse(int argListSize, const char *argList[])
                                 continue;
                             }
 
-                            // Continue if this option has already been found
-                            if (parseOptionList[optionId].found)
-                                continue;
+                            // Make sure this option does not appear in the same section with an alternate name
+                            Variant *optionFoundKey = varNewInt(optionId);
+                            const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
+
+                            if (optionFoundName != NULL)
+                            {
+                                THROW(
+                                    OptionInvalidError, "'%s' contains duplicate options ('%s', '%s') in section '[%s]'",
+                                    strPtr(configFile), strPtr(key), strPtr(varStr(optionFoundName)), strPtr(section));
+                            }
+                            else
+                                kvPut(optionFound, optionFoundKey, varNewStr(key));
 
                             // Continue if the option is not valid for this command
                             if (!cfgDefOptionValid(commandDefId, optionDefId))
@@ -320,36 +333,47 @@ configParse(int argListSize, const char *argList[])
                                 continue;
                             }
 
-                            // Only get the option if it is valid for this section
-                            if ((stanza != NULL && sectionIdx < 2) || cfgDefOptionSection(optionDefId) == cfgDefSectionGlobal)
+                            // Continue if stanza option is in a global section
+                            if (cfgDefOptionSection(optionDefId) == cfgDefSectionStanza &&
+                                strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
                             {
-                                const Variant *value = iniGetDefault(config, section, key, NULL);
-
-                                if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
-                                    THROW(OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
-                                    strPtr(key));
-
-                                parseOptionList[optionId].found = true;
-                                parseOptionList[optionId].source = cfgSourceConfig;
-
-                                // Convert boolean to string
-                                if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
-                                {
-                                    if (strcasecmp(strPtr(varStr(value)), "n") == 0)
-                                        parseOptionList[optionId].negate = true;
-                                    else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
-                                        THROW(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
-                                }
-                                // Else add the string value
-                                else if (varType(value) == varTypeString)
-                                {
-                                    parseOptionList[optionId].valueList = strLstNew();
-                                    strLstAdd(parseOptionList[optionId].valueList, varStr(value));
-                                }
-                                // Else add the string list
-                                else
-                                    parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
+                                LOG_WARN(
+                                    "'%s' contains stanza-only option '%s' in global section '%s'", strPtr(configFile), strPtr(key),
+                                    strPtr(section));
+                                continue;
                             }
+
+                            // Continue if this option has already been found in another section
+                            if (parseOptionList[optionId].found)
+                                continue;
+
+                            // Get the option value
+                            const Variant *value = iniGetDefault(config, section, key, NULL);
+
+                            if (varType(value) == varTypeString && strSize(varStr(value)) == 0)
+                                THROW(OptionInvalidValueError, "section '%s', key '%s' must have a value", strPtr(section),
+                                strPtr(key));
+
+                            parseOptionList[optionId].found = true;
+                            parseOptionList[optionId].source = cfgSourceConfig;
+
+                            // Convert boolean to string
+                            if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                            {
+                                if (strcasecmp(strPtr(varStr(value)), "n") == 0)
+                                    parseOptionList[optionId].negate = true;
+                                else if (strcasecmp(strPtr(varStr(value)), "y") != 0)
+                                    THROW(OptionInvalidError, "boolean option '%s' must be 'y' or 'n'", strPtr(key));
+                            }
+                            // Else add the string value
+                            else if (varType(value) == varTypeString)
+                            {
+                                parseOptionList[optionId].valueList = strLstNew();
+                                strLstAdd(parseOptionList[optionId].valueList, varStr(value));
+                            }
+                            // Else add the string list
+                            else
+                                parseOptionList[optionId].valueList = strLstNewVarLst(varVarLst(value));
                         }
                     }
                 }

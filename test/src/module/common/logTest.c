@@ -30,11 +30,11 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("logInit()"))
     {
-        TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
-        TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
-        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelError, true), "init logging");
-        TEST_RESULT_INT(logLevelStdOut, logLevelInfo, "console logging is info");
+        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, true), "init logging");
+        TEST_RESULT_INT(logLevelStdOut, logLevelInfo, "console logging is info");
+        TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
     }
 
     // *****************************************************************************************************************************

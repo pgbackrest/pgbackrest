@@ -97,6 +97,10 @@
                     </release-item>
 
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
                         <p>Config parsing implemented in C and passed to Perl as JSON.</p>
                     </release-item>
 

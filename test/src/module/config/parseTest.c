@@ -257,6 +257,23 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
+        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+
+        storagePut(storageLocal(), configFile, bufNewStr(strNew(
+            "[db]\n"
+            "pg1-path=/path/to/db\n"
+            "db-path=/also/path/to/db\n"
+        )));
+
+        TEST_ERROR(configParse(
+            strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
+            strPtr(strNewFmt("'%s' contains duplicate options ('db-path', 'pg1-path') in section '[db]'", strPtr(configFile))));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "no command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
@@ -335,6 +352,7 @@ testRun()
             "no-compress=y\n"
             "archive-copy=y\n"
             "online=y\n"
+            "pg1-path=/not/path/to/db\n"
             "\n"
             "[db:backup]\n"
             "compress=n\n"
@@ -354,8 +372,9 @@ testRun()
                     "WARN: '%s' contains option 'recovery-option' invalid for section 'db:backup'\n"
                     "WARN: '%s' contains invalid option 'bogus'\n"
                     "WARN: '%s' contains negate option 'no-compress'\n"
-                    "WARN: '%s' contains command-line only option 'online'",
-                    strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile))));
+                    "WARN: '%s' contains command-line only option 'online'\n"
+                    "WARN: '%s' contains stanza-only option 'pg1-path' in global section 'global:backup'",
+                    strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile))));
 
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
