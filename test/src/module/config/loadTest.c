@@ -35,6 +35,7 @@ testRun()
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load local config");
 
+        TEST_RESULT_STR(strPtr(cfgExe()), "pgbackrest", "check exe");
         TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
         TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
 
@@ -46,8 +47,9 @@ testRun()
         strLstAdd(argList, strNew("--repo1-path=/path/to/repo"));
         strLstAdd(argList, strNew("stanza-create"));
 
-        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load local config");
+        TEST_RESULT_VOID(cfgLoadParam(strLstSize(argList), strLstPtr(argList), strNew("pgbackrest2")), "load local config");
 
+        TEST_RESULT_STR(strPtr(cfgExe()), "pgbackrest2", "check exe");
         TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is off");
         TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
 

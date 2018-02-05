@@ -211,9 +211,8 @@ sub run
             $strCommand =
                 ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                 testRunExe(
-                    vmCoverage($self->{oTest}->{&TEST_VM}), undef, abs_path($0),
-                    dirname($self->{strCoveragePath}), $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE},
-                    $self->{oTest}->{&TEST_NAME}, defined($self->{oTest}->{&TEST_RUN}) ? $self->{oTest}->{&TEST_RUN} : 'all') .
+                    vmCoverage($self->{oTest}->{&TEST_VM}), undef, abs_path($0), dirname($self->{strCoveragePath}),
+                    $self->{strBackRestBase}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}) .
                 " --test-path=${strVmTestPath}" .
                 " --vm=$self->{oTest}->{&TEST_VM}" .
                 " --vm-id=$self->{iVmIdx}" .

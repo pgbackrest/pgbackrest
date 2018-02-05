@@ -45,6 +45,8 @@ These includes are from the src directory.  There is no Perl-specific code in th
 #include "common/error.h"
 #include "config/config.h"
 #include "config/define.h"
+#include "config/load.h"
+#include "perl/exec.h"
 #include "postgres/pageChecksum.h"
 
 /***********************************************************************************************************************************
@@ -97,5 +99,6 @@ INCLUDE: xs/cipher/block.xs
 INCLUDE: xs/cipher/random.xs
 INCLUDE: xs/common/encode.xs
 INCLUDE: xs/config/config.xs
+INCLUDE: xs/config/configTest.xs
 INCLUDE: xs/config/define.xs
 INCLUDE: xs/postgres/pageChecksum.xs

@@ -74,23 +74,8 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             cfgCommandId
-            cfgDefOptionAllowList
-            cfgDefOptionAllowListValue
-            cfgDefOptionAllowListValueTotal
-            cfgDefOptionAllowListValueValid
-            cfgDefOptionAllowRange
-            cfgDefOptionAllowRangeMax
-            cfgDefOptionAllowRangeMin
             cfgDefOptionDefault
-            cfgDefOptionDepend
-            cfgDefOptionDependOption
-            cfgDefOptionDependValue
-            cfgDefOptionDependValueTotal
-            cfgDefOptionDependValueValid
-            cfgDefOptionNegate
             cfgDefOptionPrefix
-            cfgDefOptionRequired
-            cfgDefOptionSection
             cfgDefOptionSecure
             cfgDefOptionType
             cfgDefOptionValid
@@ -126,6 +111,13 @@ my $rhExport =
     {
         &BLD_EXPORTTYPE_SUB => [qw(
             randomBytes
+        )],
+    },
+
+    'test' =>
+    {
+        &BLD_EXPORTTYPE_SUB => [qw(
+            cfgParseTest
         )],
     },
 };

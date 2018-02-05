@@ -157,6 +157,13 @@ sub process
     # Initialize test storage
     $oStorage = new pgBackRest::Storage::Local($self->testPath(), new pgBackRest::Storage::Posix::Driver());
 
+    # Generate backrest exe
+    $self->{strBackRestExe} = testRunExe(
+        $self->coverage(), $self->{strBackRestExeC}, $self->{strBackRestExeHelper}, dirname($self->testPath()), $self->basePath(),
+        $self->module(), $self->moduleTest(), true);
+
+    backrestBinSet($self->{strBackRestExe});
+
     # Init, run, and end the test(s)
     $self->initModule();
     $self->run();
@@ -235,13 +242,6 @@ sub begin
     {
         return false;
     }
-
-    # Generate backrest exe
-    $self->{strBackRestExe} = testRunExe(
-        $self->coverage(), $self->{strBackRestExeC}, $self->{strBackRestExeHelper}, dirname($self->testPath()), $self->basePath(),
-        $self->module(), $self->moduleTest(), $self->runCurrent(), true);
-
-    backrestBinSet($self->{strBackRestExe});
 
     # Create an ExpectTest object
     if ($self->doExpect())
@@ -532,7 +532,7 @@ sub testRunGet
 push @EXPORT, qw(testRunGet);
 
 ####################################################################################################################################
-# testExe
+# Generate test executable
 ####################################################################################################################################
 sub testRunExe
 {
@@ -543,7 +543,6 @@ sub testRunExe
     my $strBackRestBasePath = shift;
     my $strModule = shift;
     my $strTest = shift;
-    my $iRun = shift;
     my $bLog = shift;
 
     my $strExe = defined($strExeC) ? $strExeC : undef;

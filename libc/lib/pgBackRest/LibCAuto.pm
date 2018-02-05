@@ -214,23 +214,8 @@ sub libcAutoExportTag
             'CFGDEF_TYPE_LIST',
             'CFGDEF_TYPE_STRING',
             'cfgCommandId',
-            'cfgDefOptionAllowList',
-            'cfgDefOptionAllowListValue',
-            'cfgDefOptionAllowListValueTotal',
-            'cfgDefOptionAllowListValueValid',
-            'cfgDefOptionAllowRange',
-            'cfgDefOptionAllowRangeMax',
-            'cfgDefOptionAllowRangeMin',
             'cfgDefOptionDefault',
-            'cfgDefOptionDepend',
-            'cfgDefOptionDependOption',
-            'cfgDefOptionDependValue',
-            'cfgDefOptionDependValueTotal',
-            'cfgDefOptionDependValueValid',
-            'cfgDefOptionNegate',
             'cfgDefOptionPrefix',
-            'cfgDefOptionRequired',
-            'cfgDefOptionSection',
             'cfgDefOptionSecure',
             'cfgDefOptionType',
             'cfgDefOptionValid',
@@ -254,6 +239,11 @@ sub libcAutoExportTag
         random =>
         [
             'randomBytes',
+        ],
+
+        test =>
+        [
+            'cfgParseTest',
         ],
     }
 }

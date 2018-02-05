@@ -6,6 +6,7 @@ Configuration Load
 #include "common/memContext.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "config/load.h"
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
@@ -13,6 +14,12 @@ Load the configuration
 ***********************************************************************************************************************************/
 void
 cfgLoad(int argListSize, const char *argList[])
+{
+    cfgLoadParam(argListSize, argList, NULL);
+}
+
+void
+cfgLoadParam(int argListSize, const char *argList[], String *exe)
 {
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -37,6 +44,10 @@ cfgLoad(int argListSize, const char *argList[])
 
             logInit(logLevelConsole, logLevelStdErr, logTimestamp);
         }
+
+        // If an exe was passed in the use that
+        if (exe != NULL)
+            cfgExeSet(exe);
 
         // Set default for repo-host-cmd
         if (cfgOptionValid(cfgOptRepoHost) && cfgOption(cfgOptRepoHost) != NULL &&

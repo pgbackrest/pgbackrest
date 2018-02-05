@@ -99,8 +99,11 @@ sub configLoad
 
     eval
     {
-      $rhOption = (JSON::PP->new()->allow_nonref())->decode($strConfigJson);
-      return true;
+        # Hacky fix for backslashes that need to be escaped
+        $strConfigJson =~ s/\\/\\\\/g;
+
+        $rhOption = (JSON::PP->new()->allow_nonref())->decode($strConfigJson);
+        return true;
     }
     or do
     {
@@ -169,28 +172,6 @@ sub configLoad
     if (cfgOptionValid(CFGOPT_NEUTRAL_UMASK) && cfgOption(CFGOPT_NEUTRAL_UMASK))
     {
         umask(0000);
-    }
-
-    # Set pg-host-cmd and repo-host-cmd to defaults if they are not set.  The command depends on the currently running exe so can't
-    # be calculated correctly in the C Library -- perhaps in the future this value will be passed in or set some other way
-    # ??? THIS IS IMPLEMENTED IN C AND SHOULD BE REMOVED FROM HERE WITHOUT DUPLICATING TEST CODE
-    if (cfgOptionValid(CFGOPT_REPO_HOST_CMD) && cfgOptionTest(CFGOPT_REPO_HOST) && !cfgOptionTest(CFGOPT_REPO_HOST_CMD))
-    {
-        cfgOptionSet(CFGOPT_REPO_HOST_CMD, backrestBin());
-        $oOption{cfgOptionName(CFGOPT_REPO_HOST_CMD)}{source} = CFGDEF_SOURCE_DEFAULT;
-    }
-
-    if (cfgOptionValid(CFGOPT_PG_HOST_CMD))
-    {
-        for (my $iOptionIdx = 1; $iOptionIdx <= cfgOptionIndexTotal(CFGOPT_PG_HOST); $iOptionIdx++)
-        {
-            if (cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_HOST, $iOptionIdx)) &&
-                !cfgOptionTest(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iOptionIdx)))
-            {
-                cfgOptionSet(cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iOptionIdx), backrestBin());
-                $oOption{cfgOptionIdFromIndex(CFGOPT_PG_HOST_CMD, $iOptionIdx)}{source} = CFGDEF_SOURCE_DEFAULT;
-            }
-        }
     }
 
     # Protocol timeout should be greater than db timeout

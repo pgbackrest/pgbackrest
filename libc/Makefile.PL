@@ -81,7 +81,11 @@ my @stryCFile =
     'common/encode/base64.c',
     'common/error.c',
     'common/errorType.c',
+    'common/ini.c',
+    'common/log.c',
     'common/memContext.c',
+    'common/regExp.c',
+    'common/time.c',
     'common/type/buffer.c',
     'common/type/keyValue.c',
     'common/type/list.c',
@@ -91,7 +95,12 @@ my @stryCFile =
     'common/type/variantList.c',
     'config/config.c',
     'config/define.c',
+    'config/load.c',
+    'config/parse.c',
+    'perl/exec.c',
     'postgres/pageChecksum.c',
+    'storage/helper.c',
+    'storage/storage.c',
 );
 
 # Add ../src for files that are outside libc
