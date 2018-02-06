@@ -37,6 +37,9 @@
 #   The option can be negated with "no" e.g. --no-compress.  This applies tp options that are only valid on the command line (i.e.
 #   no config section defined).  All config options are automatically negatable.
 #
+# CFGDEF_RESET:
+#   The option can be reset to default even if the default is undefined.
+#
 # CFGDEF_DEPEND:
 #   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
 #   dependent option(s).
@@ -464,6 +467,8 @@ use constant CFGDEF_COMMAND                                         => 'command'
     push @EXPORT, qw(CFGDEF_COMMAND);
 use constant CFGDEF_REQUIRED                                        => 'required';
     push @EXPORT, qw(CFGDEF_REQUIRED);
+use constant CFGDEF_RESET                                           => 'reset';
+    push @EXPORT, qw(CFGDEF_RESET);
 use constant CFGDEF_SECTION                                         => 'section';
     push @EXPORT, qw(CFGDEF_SECTION);
 use constant CFGDEF_SECURE                                          => 'secure';
@@ -1178,7 +1183,7 @@ my %hConfigDefine =
         },
         &CFGDEF_NAME_ALT =>
         {
-            'repo-cipher-pass' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-cipher-pass' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1197,7 +1202,7 @@ my %hConfigDefine =
         ],
         &CFGDEF_NAME_ALT =>
         {
-            'repo-cipher-type' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-cipher-type' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1228,7 +1233,7 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'backup-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -1272,7 +1277,7 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'backup-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'backup-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -1300,7 +1305,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
         &CFGDEF_NAME_ALT =>
         {
-            'backup-config' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'backup-config' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
         &CFGDEF_DEPEND =>
@@ -1318,7 +1323,7 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'backup-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'backup-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
         &CFGDEF_DEPEND =>
@@ -1336,7 +1341,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => 'pgbackrest',
         &CFGDEF_NAME_ALT =>
         {
-            'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
         &CFGDEF_REQUIRED => false,
@@ -1355,7 +1360,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => '/var/lib/' . BACKREST_EXE,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1373,7 +1378,7 @@ my %hConfigDefine =
         },
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-bucket' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-bucket' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1383,7 +1388,7 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-ca-file' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-ca-file' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
     },
 
@@ -1392,7 +1397,7 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-ca-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-ca-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
     },
 
@@ -1411,7 +1416,7 @@ my %hConfigDefine =
         },
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-key' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-key' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1421,7 +1426,7 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_KEY,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-key-secret' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-key-secret' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
     },
 
@@ -1430,7 +1435,7 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-endpoint' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-endpoint' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
     },
 
@@ -1444,7 +1449,7 @@ my %hConfigDefine =
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -1454,7 +1459,7 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-region' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-s3-region' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
     },
 
@@ -1488,7 +1493,7 @@ my %hConfigDefine =
         ],
         &CFGDEF_NAME_ALT =>
         {
-            'repo-type' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
+            'repo-type' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -1893,8 +1898,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-host' => {&CFGDEF_NEGATE => false},
+            'db-host' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-host' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -1930,8 +1935,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'db-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-cmd' => {&CFGDEF_NEGATE => false},
+            'db-cmd' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-cmd' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -1958,8 +1963,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
-            'db-config' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-config' => {&CFGDEF_NEGATE => false},
+            'db-config' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-config' => {&CFGDEF_RESET => false},
         },
     },
 
@@ -1970,8 +1975,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'db-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-ssh-port' => {&CFGDEF_NEGATE => false},
+            'db-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-ssh-port' => {&CFGDEF_RESET => false},
         },
     },
 
@@ -1981,8 +1986,8 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => 'postgres',
         &CFGDEF_NAME_ALT =>
         {
-            'db-user' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-user' => {&CFGDEF_NEGATE => false},
+            'db-user' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-user' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_REQUIRED => false,
     },
@@ -1995,8 +2000,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
-            'db-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-path' => {&CFGDEF_NEGATE => false},
+            'db-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-path' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -2033,8 +2038,8 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => 5432,
         &CFGDEF_NAME_ALT =>
         {
-            'db-port' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-port' => {&CFGDEF_NEGATE => false},
+            'db-port' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-port' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND =>
         {
@@ -2060,8 +2065,8 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
-            'db-socket-path' => {&CFGDEF_INDEX => 1, &CFGDEF_NEGATE => false},
-            'db?-socket-path' => {&CFGDEF_NEGATE => false},
+            'db-socket-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'db?-socket-path' => {&CFGDEF_RESET => false},
         },
     },
 );
@@ -2138,8 +2143,8 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }
 
-    # All config options can be negated.  Boolean command-line options must be marked for negation individually.
-    if (defined($hConfigDefine{$strKey}{&CFGDEF_SECTION}))
+    # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.
+    if ($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_BOOLEAN && defined($hConfigDefine{$strKey}{&CFGDEF_SECTION}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_NEGATE} = true;
     }
@@ -2148,6 +2153,16 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
     if (!defined($hConfigDefine{$strKey}{&CFGDEF_NEGATE}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_NEGATE} = false;
+    }
+
+    # All config options can be reset
+    if (defined($hConfigDefine{$strKey}{&CFGDEF_SECTION}))
+    {
+        $hConfigDefine{$strKey}{&CFGDEF_RESET} = true;
+    }
+    elsif (!$hConfigDefine{$strKey}{&CFGDEF_RESET})
+    {
+        $hConfigDefine{$strKey}{&CFGDEF_RESET} = false;
     }
 
     # By default options are not secure

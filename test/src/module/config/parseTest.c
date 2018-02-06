@@ -64,10 +64,35 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--reset-pg1-host"));
+        strLstAdd(argList, strNew("--reset-pg1-host"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option 'pg1-host' is reset multiple times");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--config=/etc/config"));
         strLstAdd(argList, strNew("--no-config"));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option 'config' cannot be set and negated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--log-path=/var/log"));
+        strLstAdd(argList, strNew("--reset-log-path"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError, "option 'log-path' cannot be set and reset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--no-compress"));
+        strLstAdd(argList, strNew("--reset-compress"));
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
+            "option 'compress' cannot be negated and reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -316,12 +341,17 @@ testRun()
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-online"));
+        strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
 
         TEST_RESULT_STR(strPtr(cfgExe()), TEST_BACKREST_EXE, "    exe is set");
 
+        TEST_RESULT_PTR(cfgOption(cfgOptConfig), NULL, "    config is not set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptConfig), cfgSourceParam, "    config is source param");
+        TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "    config is negated");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "    stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
@@ -339,7 +369,7 @@ testRun()
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--no-online"));
-        strLstAdd(argList, strNew("--pg1-host=db"));
+        strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePut(storageLocal(), configFile, bufNewStr(strNew(
@@ -350,6 +380,7 @@ testRun()
             "repo1-hardlink=y\n"
             "bogus=bogus\n"
             "no-compress=y\n"
+            "reset-compress=y\n"
             "archive-copy=y\n"
             "online=y\n"
             "pg1-path=/not/path/to/db\n"
@@ -372,10 +403,13 @@ testRun()
                     "WARN: '%s' contains option 'recovery-option' invalid for section 'db:backup'\n"
                     "WARN: '%s' contains invalid option 'bogus'\n"
                     "WARN: '%s' contains negate option 'no-compress'\n"
+                    "WARN: '%s' contains reset option 'reset-compress'\n"
                     "WARN: '%s' contains command-line only option 'online'\n"
                     "WARN: '%s' contains stanza-only option 'pg1-path' in global section 'global:backup'",
-                    strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile))));
+                    strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile), strPtr(configFile),
+                    strPtr(configFile))));
 
+        TEST_RESULT_PTR(cfgOption(cfgOptPgHost), NULL, "    pg1-path is not defined");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptPgPath)), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptCompress), false, "    compress not is set");

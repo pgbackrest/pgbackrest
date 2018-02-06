@@ -44,7 +44,6 @@ typedef struct ConfigDefineOptionData
     unsigned int internal:1;                                        // Is the option only used internally?
     unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. pg1-*)
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
-    bool negate:1;                                                  // Can the option be negated?
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
     unsigned int commandValid:15;                                   // Bitmap for commands that the option is valid for
@@ -70,8 +69,6 @@ typedef struct ConfigDefineOptionData
     .indexTotal = indexTotalParam,
 #define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
     .internal = internalParam,
-#define CFGDEFDATA_OPTION_NEGATE(negateParam)                                                                                      \
-    .negate = negateParam,
 #define CFGDEFDATA_OPTION_REQUIRED(requiredParam)                                                                                  \
     .required = requiredParam,
 #define CFGDEFDATA_OPTION_SECTION(sectionParam)                                                                                    \
@@ -579,16 +576,6 @@ cfgDefOptionName(ConfigDefineOption optionDefId)
 {
     cfgDefOptionCheck(optionDefId);
     return configDefineOptionData[optionDefId].name;
-}
-
-/***********************************************************************************************************************************
-Can the option be negated?
-***********************************************************************************************************************************/
-bool
-cfgDefOptionNegate(ConfigDefineOption optionDefId)
-{
-    cfgDefOptionCheck(optionDefId);
-    return configDefineOptionData[optionDefId].negate;
 }
 
 /***********************************************************************************************************************************

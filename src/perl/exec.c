@@ -57,17 +57,21 @@ perlOptionJson()
                     strCat(result, "config");
 
                 strCat(result, "\"");
+
+                // Add a comma if another define will be added
+                if (cfgOption(optionId) != NULL)
+                    strCat(result, ",");
             }
 
             // If option was negated
             if (cfgOptionNegate(optionId))
-                strCatFmt(result, ",\"negate\":%s", strPtr(varStrForce(varNewBool(true))));
+                strCatFmt(result, "\"negate\":%s", strPtr(varStrForce(varNewBool(true))));
+            // Else if option was reset
+            else if (cfgOptionReset(optionId))
+                strCatFmt(result, "\"reset\":%s", strPtr(varStrForce(varNewBool(true))));
             // Else not negated and has a value
             else if (cfgOption(optionId) != NULL)
             {
-                if (cfgOptionSource(optionId) != cfgSourceDefault)
-                    strCat(result, ",");
-
                 strCat(result, "\"value\":");
 
                 switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))

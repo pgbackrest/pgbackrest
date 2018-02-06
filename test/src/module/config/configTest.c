@@ -100,6 +100,11 @@ testRun()
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "negate is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_BOOL(cfgOptionReset(cfgOptConfig), false, "reset defaults to false");
+        TEST_RESULT_VOID(cfgOptionResetSet(cfgOptConfig, true), "set reset");
+        TEST_RESULT_BOOL(cfgOptionReset(cfgOptConfig), true, "reset is set");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptConfig), false, "valid defaults to false");
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptConfig, true), "set valid");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptConfig), true, "valid is set");

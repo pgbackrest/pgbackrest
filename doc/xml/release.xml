@@ -49,7 +49,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Allow any non-boolean, non-command-line option to be negated.  This allows specific options in <file>pgbackrest.conf</file> to be ignored (and set to default) which reduces the need to write new configuration files for specific needs.  Note that boolean, non-command-line options are already negatable.</p>
+                        <p>Allow any non-command-line option to be reset to default on the command-line.  This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
                     </release-item>
 
                     <release-item>

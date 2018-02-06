@@ -589,7 +589,7 @@ sub run
             $oHostBackup->restore(
                 'on backup host', $strFullBackup,
                 {rhExpectedManifest => \%oManifest, strUser => TEST_USER,
-                    strOptionalParam => "${strLogReduced} --no-pg1-host --pg1-path=${strBackupHostDbPath}"});
+                    strOptionalParam => "${strLogReduced} --reset-pg1-host --pg1-path=${strBackupHostDbPath}"});
 
             $oHostDbMaster->backup(
                 $strType, 'backup errors on db host',

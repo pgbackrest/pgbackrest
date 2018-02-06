@@ -19,11 +19,14 @@ Parse option flags
 // Offset the option values so they don't conflict with getopt_long return codes
 #define PARSE_OPTION_FLAG                                           (1 << 31)
 
-// Add a flag for negation rather than checking "-no-"
+// Add a flag for negation rather than checking "--no-"
 #define PARSE_NEGATE_FLAG                                           (1 << 30)
 
+// Add a flag for reset rather than checking "--reset-"
+#define PARSE_RESET_FLAG                                            (1 << 29)
+
 // Indicate that option name has been deprecated and will be removed in a future release
-#define PARSE_DEPRECATE_FLAG                                        (1 << 29)
+#define PARSE_DEPRECATE_FLAG                                        (1 << 28)
 
 // Mask to exclude all flags and get at the actual option id (only 12 bits allowed for option id, the rest reserved for flags)
 #define PARSE_OPTION_MASK                                           0xFFF
@@ -40,6 +43,7 @@ typedef struct ParseOption
 {
     bool found:1;                                                   // Was the option found on the command line?
     bool negate:1;                                                  // Was the option negated on the command line?
+    bool reset:1;                                                   // Was the option reset on the command line?
     unsigned int source:2;                                          // Where was to option found?
     StringList *valueList;                                          // List of values found
 } ParseOption;
@@ -86,6 +90,7 @@ configParse(int argListSize, const char *argList[])
         int optionListIdx;                                              // Index of option is list (if an option was returned)
         ConfigOption optionId;                                          // Option id extracted from option var
         bool negate;                                                    // Option is being negated
+        bool reset;                                                     // Option is being reset
         bool argFound = false;                                          // Track args found to decide on error or help at the end
         StringList *commandParamList = NULL;                            // List of command  parameters
 
@@ -157,6 +162,7 @@ configParse(int argListSize, const char *argList[])
                     // Get option id and flags from the option code
                     optionId = option & PARSE_OPTION_MASK;
                     negate = option & PARSE_NEGATE_FLAG;
+                    reset = option & PARSE_RESET_FLAG;
 
                     // Make sure the option id is valid
                     assert(optionId < CFG_OPTION_TOTAL);
@@ -166,6 +172,7 @@ configParse(int argListSize, const char *argList[])
                     {
                         parseOptionList[optionId].found = true;
                         parseOptionList[optionId].negate = negate;
+                        parseOptionList[optionId].reset = reset;
                         parseOptionList[optionId].source = cfgSourceParam;
 
                         // Only set the argument if the option requires one
@@ -179,9 +186,21 @@ configParse(int argListSize, const char *argList[])
                         if (parseOptionList[optionId].negate && negate)
                             THROW(OptionInvalidError, "option '%s' is negated multiple times", cfgOptionName(optionId));
 
+                        // Make sure option is not reset more than once.  Same justification as negate.
+                        if (parseOptionList[optionId].reset && reset)
+                            THROW(OptionInvalidError, "option '%s' is reset multiple times", cfgOptionName(optionId));
+
+                        // Don't allow an option to be both negated and reset
+                        if ((parseOptionList[optionId].reset && negate) || (parseOptionList[optionId].negate && reset))
+                            THROW(OptionInvalidError, "option '%s' cannot be negated and reset", cfgOptionName(optionId));
+
                         // Don't allow an option to be both set and negated
                         if (parseOptionList[optionId].negate != negate)
                             THROW(OptionInvalidError, "option '%s' cannot be set and negated", cfgOptionName(optionId));
+
+                        // Don't allow an option to be both set and reset
+                        if (parseOptionList[optionId].reset != reset)
+                            THROW(OptionInvalidError, "option '%s' cannot be set and reset", cfgOptionName(optionId));
 
                         // Error if this option does not allow multiple arguments
                         if (!(cfgDefOptionType(cfgOptionDefIdFromId(optionId)) == cfgDefOptTypeHash ||
@@ -229,7 +248,7 @@ configParse(int argListSize, const char *argList[])
             // Get the command definition id
             ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
 
-            if (!parseOptionList[cfgOptConfig].negate)
+            if (!parseOptionList[cfgOptConfig].negate && !parseOptionList[cfgOptConfig].reset)
             {
                 // Get the config file name from the command-line if it exists else default
                 const String *configFile = NULL;
@@ -292,6 +311,12 @@ configParse(int argListSize, const char *argList[])
                             else if (optionList[optionIdx].val & PARSE_NEGATE_FLAG)
                             {
                                 LOG_WARN("'%s' contains negate option '%s'", strPtr(configFile), strPtr(key));
+                                continue;
+                            }
+                            // Warn if reset option found in config
+                            else if (optionList[optionIdx].val & PARSE_RESET_FLAG)
+                            {
+                                LOG_WARN("'%s' contains reset option '%s'", strPtr(configFile), strPtr(key));
                                 continue;
                             }
 
@@ -422,10 +447,15 @@ configParse(int argListSize, const char *argList[])
                     }
 
                     // Is the value set for this option?
-                    bool optionSet = parseOption->found && (optionDefType == cfgDefOptTypeBoolean || !parseOption->negate);
+                    bool optionSet =
+                        parseOption->found && (optionDefType == cfgDefOptTypeBoolean || !parseOption->negate) &&
+                        !parseOption->reset;
 
                     // Set negate flag
                     cfgOptionNegateSet(optionId, parseOption->negate);
+
+                    // Set reset flag
+                    cfgOptionResetSet(optionId, parseOption->reset);
 
                     // Check option dependencies
                     bool dependResolved = true;

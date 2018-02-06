@@ -1575,9 +1575,9 @@ restore, backup '[BACKUP-FULL-2]', expect exit 72 - restore errors on backup hos
 P00  ERROR: [072]: restore command must be run on the db host
 
 restore, backup '[BACKUP-FULL-2]' - on backup host (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=detail --no-pg1-host --pg1-path=[TEST_PATH]/backup/db  --stanza=db restore
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --set=[BACKUP-FULL-2] --log-level-console=detail --reset-pg1-host --pg1-path=[TEST_PATH]/backup/db  --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-pg1-host --pg1-path=[TEST_PATH]/backup/db --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --set=[BACKUP-FULL-2] --stanza=db
+P00   INFO: restore command begin [BACKREST-VERSION]: --no-compress --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --reset-pg1-host --pg1-path=[TEST_PATH]/backup/db --protocol-timeout=60 --repo1-path=[TEST_PATH]/backup/repo --set=[BACKUP-FULL-2] --stanza=db
 P00   INFO: restore backup set [BACKUP-FULL-2]
 P00   INFO: remap $PGDATA directory to [TEST_PATH]/backup/db
 P00   WARN: contents of directory link pg_stat will be restored in a directory at the same location

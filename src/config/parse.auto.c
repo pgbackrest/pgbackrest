@@ -19,6 +19,10 @@ static const struct option optionList[] =
         .name = "no-archive-async",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveAsync,
     },
+    {
+        .name = "reset-archive-async",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveAsync,
+    },
 
     // archive-check option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -29,6 +33,10 @@ static const struct option optionList[] =
     {
         .name = "no-archive-check",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveCheck,
+    },
+    {
+        .name = "reset-archive-check",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCheck,
     },
 
     // archive-copy option
@@ -41,6 +49,10 @@ static const struct option optionList[] =
         .name = "no-archive-copy",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveCopy,
     },
+    {
+        .name = "reset-archive-copy",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCopy,
+    },
 
     // archive-queue-max option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -50,8 +62,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptArchiveQueueMax,
     },
     {
-        .name = "no-archive-queue-max",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveQueueMax,
+        .name = "reset-archive-queue-max",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveQueueMax,
     },
 
     // archive-timeout option
@@ -62,8 +74,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptArchiveTimeout,
     },
     {
-        .name = "no-archive-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveTimeout,
+        .name = "reset-archive-timeout",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveTimeout,
     },
 
     // backup-standby option
@@ -76,6 +88,10 @@ static const struct option optionList[] =
         .name = "no-backup-standby",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptBackupStandby,
     },
+    {
+        .name = "reset-backup-standby",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBackupStandby,
+    },
 
     // buffer-size option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -85,8 +101,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptBufferSize,
     },
     {
-        .name = "no-buffer-size",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptBufferSize,
+        .name = "reset-buffer-size",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBufferSize,
     },
 
     // checksum-page option
@@ -99,6 +115,10 @@ static const struct option optionList[] =
         .name = "no-checksum-page",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptChecksumPage,
     },
+    {
+        .name = "reset-checksum-page",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptChecksumPage,
+    },
 
     // cmd-ssh option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -108,8 +128,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptCmdSsh,
     },
     {
-        .name = "no-cmd-ssh",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptCmdSsh,
+        .name = "reset-cmd-ssh",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCmdSsh,
     },
 
     // command option
@@ -130,6 +150,10 @@ static const struct option optionList[] =
         .name = "no-compress",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptCompress,
     },
+    {
+        .name = "reset-compress",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompress,
+    },
 
     // compress-level option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -139,8 +163,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptCompressLevel,
     },
     {
-        .name = "no-compress-level",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptCompressLevel,
+        .name = "reset-compress-level",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevel,
     },
 
     // compress-level-network option
@@ -151,8 +175,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptCompressLevelNetwork,
     },
     {
-        .name = "no-compress-level-network",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptCompressLevelNetwork,
+        .name = "reset-compress-level-network",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevelNetwork,
     },
 
     // config option
@@ -175,8 +199,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptDbInclude,
     },
     {
-        .name = "no-db-include",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptDbInclude,
+        .name = "reset-db-include",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbInclude,
     },
 
     // db-timeout option
@@ -187,8 +211,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptDbTimeout,
     },
     {
-        .name = "no-db-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptDbTimeout,
+        .name = "reset-db-timeout",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbTimeout,
     },
 
     // delta option
@@ -223,6 +247,10 @@ static const struct option optionList[] =
         .name = "no-link-all",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLinkAll,
     },
+    {
+        .name = "reset-link-all",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLinkAll,
+    },
 
     // link-map option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -232,8 +260,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptLinkMap,
     },
     {
-        .name = "no-link-map",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLinkMap,
+        .name = "reset-link-map",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLinkMap,
     },
 
     // lock-path option
@@ -244,8 +272,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptLockPath,
     },
     {
-        .name = "no-lock-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLockPath,
+        .name = "reset-lock-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLockPath,
     },
 
     // log-level-console option
@@ -256,8 +284,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptLogLevelConsole,
     },
     {
-        .name = "no-log-level-console",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogLevelConsole,
+        .name = "reset-log-level-console",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelConsole,
     },
 
     // log-level-file option
@@ -268,8 +296,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptLogLevelFile,
     },
     {
-        .name = "no-log-level-file",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogLevelFile,
+        .name = "reset-log-level-file",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelFile,
     },
 
     // log-level-stderr option
@@ -280,8 +308,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptLogLevelStderr,
     },
     {
-        .name = "no-log-level-stderr",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogLevelStderr,
+        .name = "reset-log-level-stderr",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelStderr,
     },
 
     // log-path option
@@ -292,8 +320,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptLogPath,
     },
     {
-        .name = "no-log-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogPath,
+        .name = "reset-log-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogPath,
     },
 
     // log-timestamp option
@@ -306,6 +334,10 @@ static const struct option optionList[] =
         .name = "no-log-timestamp",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogTimestamp,
     },
+    {
+        .name = "reset-log-timestamp",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogTimestamp,
+    },
 
     // manifest-save-threshold option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -315,8 +347,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptManifestSaveThreshold,
     },
     {
-        .name = "no-manifest-save-threshold",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptManifestSaveThreshold,
+        .name = "reset-manifest-save-threshold",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptManifestSaveThreshold,
     },
 
     // neutral-umask option
@@ -328,6 +360,10 @@ static const struct option optionList[] =
     {
         .name = "no-neutral-umask",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptNeutralUmask,
+    },
+    {
+        .name = "reset-neutral-umask",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptNeutralUmask,
     },
 
     // online option
@@ -357,8 +393,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPerlBin,
     },
     {
-        .name = "no-perl-bin",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPerlBin,
+        .name = "reset-perl-bin",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPerlBin,
     },
 
     // perl-option option
@@ -369,8 +405,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPerlOption,
     },
     {
-        .name = "no-perl-option",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPerlOption,
+        .name = "reset-perl-option",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPerlOption,
     },
 
     // pg-host option and deprecations
@@ -381,8 +417,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgHost,
     },
     {
-        .name = "no-pg1-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgHost,
+        .name = "reset-pg1-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHost,
     },
     {
         .name = "db-host",
@@ -400,8 +436,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 1),
     },
     {
-        .name = "no-pg2-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 1),
+        .name = "reset-pg2-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 1),
     },
     {
         .name = "db2-host",
@@ -414,8 +450,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 2),
     },
     {
-        .name = "no-pg3-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 2),
+        .name = "reset-pg3-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 2),
     },
     {
         .name = "db3-host",
@@ -428,8 +464,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 3),
     },
     {
-        .name = "no-pg4-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 3),
+        .name = "reset-pg4-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 3),
     },
     {
         .name = "db4-host",
@@ -442,8 +478,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 4),
     },
     {
-        .name = "no-pg5-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 4),
+        .name = "reset-pg5-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 4),
     },
     {
         .name = "db5-host",
@@ -456,8 +492,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 5),
     },
     {
-        .name = "no-pg6-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 5),
+        .name = "reset-pg6-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 5),
     },
     {
         .name = "db6-host",
@@ -470,8 +506,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 6),
     },
     {
-        .name = "no-pg7-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 6),
+        .name = "reset-pg7-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 6),
     },
     {
         .name = "db7-host",
@@ -484,8 +520,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHost + 7),
     },
     {
-        .name = "no-pg8-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHost + 7),
+        .name = "reset-pg8-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHost + 7),
     },
     {
         .name = "db8-host",
@@ -501,8 +537,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgHostCmd,
     },
     {
-        .name = "no-pg1-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgHostCmd,
+        .name = "reset-pg1-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHostCmd,
     },
     {
         .name = "db-cmd",
@@ -520,8 +556,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 1),
     },
     {
-        .name = "no-pg2-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 1),
+        .name = "reset-pg2-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 1),
     },
     {
         .name = "db2-cmd",
@@ -534,8 +570,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 2),
     },
     {
-        .name = "no-pg3-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 2),
+        .name = "reset-pg3-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 2),
     },
     {
         .name = "db3-cmd",
@@ -548,8 +584,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 3),
     },
     {
-        .name = "no-pg4-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 3),
+        .name = "reset-pg4-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 3),
     },
     {
         .name = "db4-cmd",
@@ -562,8 +598,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 4),
     },
     {
-        .name = "no-pg5-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 4),
+        .name = "reset-pg5-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 4),
     },
     {
         .name = "db5-cmd",
@@ -576,8 +612,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 5),
     },
     {
-        .name = "no-pg6-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 5),
+        .name = "reset-pg6-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 5),
     },
     {
         .name = "db6-cmd",
@@ -590,8 +626,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 6),
     },
     {
-        .name = "no-pg7-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 6),
+        .name = "reset-pg7-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 6),
     },
     {
         .name = "db7-cmd",
@@ -604,8 +640,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostCmd + 7),
     },
     {
-        .name = "no-pg8-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostCmd + 7),
+        .name = "reset-pg8-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostCmd + 7),
     },
     {
         .name = "db8-cmd",
@@ -621,8 +657,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgHostConfig,
     },
     {
-        .name = "no-pg1-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgHostConfig,
+        .name = "reset-pg1-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHostConfig,
     },
     {
         .name = "db-config",
@@ -640,8 +676,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 1),
     },
     {
-        .name = "no-pg2-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 1),
+        .name = "reset-pg2-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 1),
     },
     {
         .name = "db2-config",
@@ -654,8 +690,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 2),
     },
     {
-        .name = "no-pg3-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 2),
+        .name = "reset-pg3-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 2),
     },
     {
         .name = "db3-config",
@@ -668,8 +704,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 3),
     },
     {
-        .name = "no-pg4-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 3),
+        .name = "reset-pg4-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 3),
     },
     {
         .name = "db4-config",
@@ -682,8 +718,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 4),
     },
     {
-        .name = "no-pg5-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 4),
+        .name = "reset-pg5-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 4),
     },
     {
         .name = "db5-config",
@@ -696,8 +732,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 5),
     },
     {
-        .name = "no-pg6-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 5),
+        .name = "reset-pg6-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 5),
     },
     {
         .name = "db6-config",
@@ -710,8 +746,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 6),
     },
     {
-        .name = "no-pg7-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 6),
+        .name = "reset-pg7-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 6),
     },
     {
         .name = "db7-config",
@@ -724,8 +760,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostConfig + 7),
     },
     {
-        .name = "no-pg8-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostConfig + 7),
+        .name = "reset-pg8-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostConfig + 7),
     },
     {
         .name = "db8-config",
@@ -741,8 +777,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgHostPort,
     },
     {
-        .name = "no-pg1-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgHostPort,
+        .name = "reset-pg1-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHostPort,
     },
     {
         .name = "db-ssh-port",
@@ -760,8 +796,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 1),
     },
     {
-        .name = "no-pg2-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 1),
+        .name = "reset-pg2-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 1),
     },
     {
         .name = "db2-ssh-port",
@@ -774,8 +810,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 2),
     },
     {
-        .name = "no-pg3-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 2),
+        .name = "reset-pg3-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 2),
     },
     {
         .name = "db3-ssh-port",
@@ -788,8 +824,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 3),
     },
     {
-        .name = "no-pg4-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 3),
+        .name = "reset-pg4-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 3),
     },
     {
         .name = "db4-ssh-port",
@@ -802,8 +838,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 4),
     },
     {
-        .name = "no-pg5-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 4),
+        .name = "reset-pg5-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 4),
     },
     {
         .name = "db5-ssh-port",
@@ -816,8 +852,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 5),
     },
     {
-        .name = "no-pg6-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 5),
+        .name = "reset-pg6-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 5),
     },
     {
         .name = "db6-ssh-port",
@@ -830,8 +866,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 6),
     },
     {
-        .name = "no-pg7-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 6),
+        .name = "reset-pg7-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 6),
     },
     {
         .name = "db7-ssh-port",
@@ -844,8 +880,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostPort + 7),
     },
     {
-        .name = "no-pg8-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostPort + 7),
+        .name = "reset-pg8-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostPort + 7),
     },
     {
         .name = "db8-ssh-port",
@@ -861,8 +897,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgHostUser,
     },
     {
-        .name = "no-pg1-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgHostUser,
+        .name = "reset-pg1-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgHostUser,
     },
     {
         .name = "db-user",
@@ -880,8 +916,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 1),
     },
     {
-        .name = "no-pg2-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 1),
+        .name = "reset-pg2-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 1),
     },
     {
         .name = "db2-user",
@@ -894,8 +930,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 2),
     },
     {
-        .name = "no-pg3-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 2),
+        .name = "reset-pg3-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 2),
     },
     {
         .name = "db3-user",
@@ -908,8 +944,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 3),
     },
     {
-        .name = "no-pg4-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 3),
+        .name = "reset-pg4-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 3),
     },
     {
         .name = "db4-user",
@@ -922,8 +958,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 4),
     },
     {
-        .name = "no-pg5-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 4),
+        .name = "reset-pg5-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 4),
     },
     {
         .name = "db5-user",
@@ -936,8 +972,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 5),
     },
     {
-        .name = "no-pg6-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 5),
+        .name = "reset-pg6-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 5),
     },
     {
         .name = "db6-user",
@@ -950,8 +986,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 6),
     },
     {
-        .name = "no-pg7-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 6),
+        .name = "reset-pg7-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 6),
     },
     {
         .name = "db7-user",
@@ -964,8 +1000,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgHostUser + 7),
     },
     {
-        .name = "no-pg8-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgHostUser + 7),
+        .name = "reset-pg8-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgHostUser + 7),
     },
     {
         .name = "db8-user",
@@ -981,8 +1017,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgPath,
     },
     {
-        .name = "no-pg1-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgPath,
+        .name = "reset-pg1-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgPath,
     },
     {
         .name = "db-path",
@@ -1000,8 +1036,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 1),
     },
     {
-        .name = "no-pg2-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 1),
+        .name = "reset-pg2-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 1),
     },
     {
         .name = "db2-path",
@@ -1014,8 +1050,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 2),
     },
     {
-        .name = "no-pg3-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 2),
+        .name = "reset-pg3-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 2),
     },
     {
         .name = "db3-path",
@@ -1028,8 +1064,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 3),
     },
     {
-        .name = "no-pg4-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 3),
+        .name = "reset-pg4-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 3),
     },
     {
         .name = "db4-path",
@@ -1042,8 +1078,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 4),
     },
     {
-        .name = "no-pg5-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 4),
+        .name = "reset-pg5-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 4),
     },
     {
         .name = "db5-path",
@@ -1056,8 +1092,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 5),
     },
     {
-        .name = "no-pg6-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 5),
+        .name = "reset-pg6-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 5),
     },
     {
         .name = "db6-path",
@@ -1070,8 +1106,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 6),
     },
     {
-        .name = "no-pg7-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 6),
+        .name = "reset-pg7-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 6),
     },
     {
         .name = "db7-path",
@@ -1084,8 +1120,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPath + 7),
     },
     {
-        .name = "no-pg8-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPath + 7),
+        .name = "reset-pg8-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPath + 7),
     },
     {
         .name = "db8-path",
@@ -1101,8 +1137,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgPort,
     },
     {
-        .name = "no-pg1-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgPort,
+        .name = "reset-pg1-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgPort,
     },
     {
         .name = "db-port",
@@ -1120,8 +1156,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 1),
     },
     {
-        .name = "no-pg2-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 1),
+        .name = "reset-pg2-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 1),
     },
     {
         .name = "db2-port",
@@ -1134,8 +1170,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 2),
     },
     {
-        .name = "no-pg3-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 2),
+        .name = "reset-pg3-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 2),
     },
     {
         .name = "db3-port",
@@ -1148,8 +1184,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 3),
     },
     {
-        .name = "no-pg4-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 3),
+        .name = "reset-pg4-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 3),
     },
     {
         .name = "db4-port",
@@ -1162,8 +1198,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 4),
     },
     {
-        .name = "no-pg5-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 4),
+        .name = "reset-pg5-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 4),
     },
     {
         .name = "db5-port",
@@ -1176,8 +1212,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 5),
     },
     {
-        .name = "no-pg6-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 5),
+        .name = "reset-pg6-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 5),
     },
     {
         .name = "db6-port",
@@ -1190,8 +1226,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 6),
     },
     {
-        .name = "no-pg7-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 6),
+        .name = "reset-pg7-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 6),
     },
     {
         .name = "db7-port",
@@ -1204,8 +1240,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgPort + 7),
     },
     {
-        .name = "no-pg8-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgPort + 7),
+        .name = "reset-pg8-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgPort + 7),
     },
     {
         .name = "db8-port",
@@ -1221,8 +1257,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptPgSocketPath,
     },
     {
-        .name = "no-pg1-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptPgSocketPath,
+        .name = "reset-pg1-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgSocketPath,
     },
     {
         .name = "db-socket-path",
@@ -1240,8 +1276,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 1),
     },
     {
-        .name = "no-pg2-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 1),
+        .name = "reset-pg2-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 1),
     },
     {
         .name = "db2-socket-path",
@@ -1254,8 +1290,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 2),
     },
     {
-        .name = "no-pg3-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 2),
+        .name = "reset-pg3-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 2),
     },
     {
         .name = "db3-socket-path",
@@ -1268,8 +1304,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 3),
     },
     {
-        .name = "no-pg4-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 3),
+        .name = "reset-pg4-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 3),
     },
     {
         .name = "db4-socket-path",
@@ -1282,8 +1318,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 4),
     },
     {
-        .name = "no-pg5-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 4),
+        .name = "reset-pg5-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 4),
     },
     {
         .name = "db5-socket-path",
@@ -1296,8 +1332,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 5),
     },
     {
-        .name = "no-pg6-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 5),
+        .name = "reset-pg6-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 5),
     },
     {
         .name = "db6-socket-path",
@@ -1310,8 +1346,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 6),
     },
     {
-        .name = "no-pg7-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 6),
+        .name = "reset-pg7-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 6),
     },
     {
         .name = "db7-socket-path",
@@ -1324,8 +1360,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | (cfgOptPgSocketPath + 7),
     },
     {
-        .name = "no-pg8-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (cfgOptPgSocketPath + 7),
+        .name = "reset-pg8-socket-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (cfgOptPgSocketPath + 7),
     },
     {
         .name = "db8-socket-path",
@@ -1349,8 +1385,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptProcessMax,
     },
     {
-        .name = "no-process-max",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptProcessMax,
+        .name = "reset-process-max",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProcessMax,
     },
 
     // protocol-timeout option
@@ -1361,8 +1397,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptProtocolTimeout,
     },
     {
-        .name = "no-protocol-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptProtocolTimeout,
+        .name = "reset-protocol-timeout",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProtocolTimeout,
     },
 
     // recovery-option option
@@ -1373,8 +1409,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRecoveryOption,
     },
     {
-        .name = "no-recovery-option",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRecoveryOption,
+        .name = "reset-recovery-option",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRecoveryOption,
     },
 
     // repo-cipher-pass option and deprecations
@@ -1385,8 +1421,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoCipherPass,
     },
     {
-        .name = "no-repo1-cipher-pass",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoCipherPass,
+        .name = "reset-repo1-cipher-pass",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoCipherPass,
     },
     {
         .name = "repo-cipher-pass",
@@ -1402,8 +1438,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoCipherType,
     },
     {
-        .name = "no-repo1-cipher-type",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoCipherType,
+        .name = "reset-repo1-cipher-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoCipherType,
     },
     {
         .name = "repo-cipher-type",
@@ -1422,12 +1458,20 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHardlink,
     },
     {
+        .name = "reset-repo1-hardlink",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHardlink,
+    },
+    {
         .name = "hardlink",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoHardlink,
     },
     {
         .name = "no-hardlink",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHardlink,
+    },
+    {
+        .name = "reset-hardlink",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptRepoHardlink,
     },
 
     // repo-host option and deprecations
@@ -1438,8 +1482,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoHost,
     },
     {
-        .name = "no-repo1-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHost,
+        .name = "reset-repo1-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHost,
     },
     {
         .name = "backup-host",
@@ -1455,8 +1499,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoHostCmd,
     },
     {
-        .name = "no-repo1-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHostCmd,
+        .name = "reset-repo1-host-cmd",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHostCmd,
     },
     {
         .name = "backup-cmd",
@@ -1472,8 +1516,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoHostConfig,
     },
     {
-        .name = "no-repo1-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHostConfig,
+        .name = "reset-repo1-host-config",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHostConfig,
     },
     {
         .name = "backup-config",
@@ -1489,8 +1533,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoHostPort,
     },
     {
-        .name = "no-repo1-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHostPort,
+        .name = "reset-repo1-host-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHostPort,
     },
     {
         .name = "backup-ssh-port",
@@ -1506,8 +1550,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoHostUser,
     },
     {
-        .name = "no-repo1-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHostUser,
+        .name = "reset-repo1-host-user",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoHostUser,
     },
     {
         .name = "backup-user",
@@ -1523,8 +1567,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoPath,
     },
     {
-        .name = "no-repo1-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoPath,
+        .name = "reset-repo1-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoPath,
     },
     {
         .name = "repo-path",
@@ -1540,8 +1584,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3Bucket,
     },
     {
-        .name = "no-repo1-s3-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3Bucket,
+        .name = "reset-repo1-s3-bucket",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Bucket,
     },
     {
         .name = "repo-s3-bucket",
@@ -1557,8 +1601,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3CaFile,
     },
     {
-        .name = "no-repo1-s3-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3CaFile,
+        .name = "reset-repo1-s3-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3CaFile,
     },
     {
         .name = "repo-s3-ca-file",
@@ -1574,8 +1618,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3CaPath,
     },
     {
-        .name = "no-repo1-s3-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3CaPath,
+        .name = "reset-repo1-s3-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3CaPath,
     },
     {
         .name = "repo-s3-ca-path",
@@ -1591,8 +1635,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3Endpoint,
     },
     {
-        .name = "no-repo1-s3-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3Endpoint,
+        .name = "reset-repo1-s3-endpoint",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Endpoint,
     },
     {
         .name = "repo-s3-endpoint",
@@ -1608,8 +1652,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3Host,
     },
     {
-        .name = "no-repo1-s3-host",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3Host,
+        .name = "reset-repo1-s3-host",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Host,
     },
     {
         .name = "repo-s3-host",
@@ -1625,8 +1669,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3Key,
     },
     {
-        .name = "no-repo1-s3-key",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3Key,
+        .name = "reset-repo1-s3-key",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Key,
     },
     {
         .name = "repo-s3-key",
@@ -1642,8 +1686,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3KeySecret,
     },
     {
-        .name = "no-repo1-s3-key-secret",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3KeySecret,
+        .name = "reset-repo1-s3-key-secret",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3KeySecret,
     },
     {
         .name = "repo-s3-key-secret",
@@ -1659,8 +1703,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoS3Region,
     },
     {
-        .name = "no-repo1-s3-region",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3Region,
+        .name = "reset-repo1-s3-region",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3Region,
     },
     {
         .name = "repo-s3-region",
@@ -1679,12 +1723,20 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
     },
     {
+        .name = "reset-repo1-s3-verify-ssl",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifySsl,
+    },
+    {
         .name = "repo-s3-verify-ssl",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifySsl,
     },
     {
         .name = "no-repo-s3-verify-ssl",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
+    },
+    {
+        .name = "reset-repo-s3-verify-ssl",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifySsl,
     },
 
     // repo-type option and deprecations
@@ -1695,8 +1747,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRepoType,
     },
     {
-        .name = "no-repo1-type",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoType,
+        .name = "reset-repo1-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoType,
     },
     {
         .name = "repo-type",
@@ -1714,6 +1766,10 @@ static const struct option optionList[] =
         .name = "no-resume",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptResume,
     },
+    {
+        .name = "reset-resume",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptResume,
+    },
 
     // retention-archive option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1723,8 +1779,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRetentionArchive,
     },
     {
-        .name = "no-retention-archive",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRetentionArchive,
+        .name = "reset-retention-archive",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionArchive,
     },
 
     // retention-archive-type option
@@ -1735,8 +1791,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRetentionArchiveType,
     },
     {
-        .name = "no-retention-archive-type",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRetentionArchiveType,
+        .name = "reset-retention-archive-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionArchiveType,
     },
 
     // retention-diff option
@@ -1747,8 +1803,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRetentionDiff,
     },
     {
-        .name = "no-retention-diff",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRetentionDiff,
+        .name = "reset-retention-diff",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionDiff,
     },
 
     // retention-full option
@@ -1759,8 +1815,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRetentionFull,
     },
     {
-        .name = "no-retention-full",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptRetentionFull,
+        .name = "reset-retention-full",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionFull,
     },
 
     // set option
@@ -1779,8 +1835,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptSpoolPath,
     },
     {
-        .name = "no-spool-path",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSpoolPath,
+        .name = "reset-spool-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSpoolPath,
     },
 
     // stanza option
@@ -1801,6 +1857,10 @@ static const struct option optionList[] =
         .name = "no-start-fast",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptStartFast,
     },
+    {
+        .name = "reset-start-fast",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStartFast,
+    },
 
     // stop-auto option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1812,6 +1872,10 @@ static const struct option optionList[] =
         .name = "no-stop-auto",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptStopAuto,
     },
+    {
+        .name = "reset-stop-auto",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStopAuto,
+    },
 
     // tablespace-map option
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1821,8 +1885,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptTablespaceMap,
     },
     {
-        .name = "no-tablespace-map",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptTablespaceMap,
+        .name = "reset-tablespace-map",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTablespaceMap,
     },
 
     // tablespace-map-all option
@@ -1833,8 +1897,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptTablespaceMapAll,
     },
     {
-        .name = "no-tablespace-map-all",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptTablespaceMapAll,
+        .name = "reset-tablespace-map-all",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTablespaceMapAll,
     },
 
     // target option

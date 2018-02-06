@@ -757,9 +757,9 @@
 
         <text>Commands are used to execute the various <backrest/> functions.  Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands.  This includes all the options that may also configured in <file>pgbackrest.conf</file>.
 
-        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>no-</id> prefix.  This feature may be used to restore a backup directly on a backup host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--no-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--pg-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
+        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix.  This feature may be used to restore a backup directly on a backup host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--pg-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
 
-        If the <id>no-</id> prefix is used with a boolean option then the option is set to false.</text>
+        The <id>no-</id> prefix may be used to set a boolean option to false on the command-line.</text>
 
         <operation-general title="General Options">
             <option-list>

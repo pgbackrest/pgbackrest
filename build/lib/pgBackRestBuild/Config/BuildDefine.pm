@@ -367,7 +367,7 @@ sub buildConfigDefine
     my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_COMMAND};
 
     my $strBuildSource =
-        "ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LIST\n" .
+        "static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LIST\n" .
         "(";
 
     foreach my $strCommand (cfgDefineCommandList())
@@ -438,7 +438,7 @@ sub buildConfigDefine
     $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION};
 
     $strBuildSource =
-        "ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST\n" .
+        "static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST\n" .
         "(";
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))
@@ -473,7 +473,6 @@ sub buildConfigDefine
             "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "\n" .
             "        CFGDEFDATA_OPTION_INDEX_TOTAL(" . $rhOption->{&CFGDEF_INDEX_TOTAL} . ")\n" .
-            "        CFGDEFDATA_OPTION_NEGATE(" . ($rhOption->{&CFGDEF_NEGATE} ? 'true' : 'false') . ")\n" .
             "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
 
         if (defined($hOptionHelp))

@@ -126,6 +126,8 @@ sub configLoad
             $oOption{$strOptionName}{valid} = true;
             $oOption{$strOptionName}{source} =
                 defined($rhOption->{$strOptionName}{source}) ? $rhOption->{$strOptionName}{source} : CFGDEF_SOURCE_DEFAULT;
+            $oOption{$strOptionName}{reset} = false;
+            $oOption{$strOptionName}{negate} = false;
 
             # If option is negated only boolean will have a value
             if ($rhOption->{$strOptionName}{negate})
@@ -137,11 +139,14 @@ sub configLoad
                     $oOption{$strOptionName}{value} = false;
                 }
             }
+            # Else reset the option
+            elsif ($rhOption->{$strOptionName}{reset})
+            {
+                $oOption{$strOptionName}{reset} = true;
+            }
             # Else set the value
             else
             {
-                $oOption{$strOptionName}{negate} = false;
-
                 if (defined($rhOption->{$strOptionName}{value}))
                 {
                     if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)
@@ -575,11 +580,10 @@ sub cfgCommandWrite
 
             $strExeString .= cfgCommandWriteOptionFormat($strOption, $bMulti, $bSecure, $oValue);
         }
-        # Else is negated and is not a boolean (which is handled above)
-        elsif (cfgDefOptionValid($iNewCommandId, $iOptionId) && $oOption{$strOption}{negate} &&
-               cfgDefOptionType($iOptionId) ne CFGDEF_TYPE_BOOLEAN)
+        # Else is reset
+        elsif (cfgDefOptionValid($iNewCommandId, $iOptionId) && $oOption{$strOption}{reset})
         {
-            $strExeString .= " --no-${strOption}";
+            $strExeString .= " --reset-${strOption}";
         }
     }
 

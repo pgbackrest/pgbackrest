@@ -100,10 +100,6 @@ testRun()
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptPgHost), true, "option pg-host is internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptTest), true, "option test is internal");
 
-        TEST_ERROR(cfgDefOptionNegate(cfgDefOptionTotal()), AssertError, optionIdInvalidHighError);
-        TEST_RESULT_BOOL(cfgDefOptionNegate(cfgDefOptOnline), true, "option can be negated");
-        TEST_RESULT_BOOL(cfgDefOptionNegate(cfgDefOptType), false, "option cannot be negated");
-
         TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptPgHost), "pg", "option prefix");
         TEST_RESULT_STR(cfgDefOptionPrefix(cfgDefOptType), NULL, "option has no prefix");
 

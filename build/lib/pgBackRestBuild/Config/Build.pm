@@ -124,7 +124,7 @@ sub buildConfig
     my $iCommandTotal = 0;
 
     my $strBuildSource =
-        'ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
+        'static ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
         "(";
 
     foreach my $strCommand (cfgDefineCommandList())
@@ -164,7 +164,7 @@ sub buildConfig
     my $iOptionTotal = 0;
 
     $strBuildSource =
-        'ConfigOptionData configOptionData[' . BLDLCL_CONSTANT_OPTION_TOTAL . "] = CONFIG_OPTION_LIST\n" .
+        'static ConfigOptionData configOptionData[' . BLDLCL_CONSTANT_OPTION_TOTAL . "] = CONFIG_OPTION_LIST\n" .
         "(";
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))

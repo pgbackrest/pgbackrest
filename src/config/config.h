@@ -53,6 +53,8 @@ const KeyValue *cfgOptionKv(ConfigSource optionId);
 const VariantList *cfgOptionLst(ConfigSource optionId);
 const char *cfgOptionName(ConfigOption optionId);
 bool cfgOptionNegate(ConfigOption optionId);
+bool cfgOptionReset(ConfigOption optionId);
+void cfgOptionResetSet(ConfigOption optionId, bool reset);
 ConfigSource cfgOptionSource(ConfigSource optionId);
 const String *cfgOptionStr(ConfigSource optionId);
 bool cfgOptionValid(ConfigOption optionId);

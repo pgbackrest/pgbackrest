@@ -87,13 +87,14 @@ typedef struct ConfigOptionValue
 {
     bool valid:1;
     bool negate:1;
+    bool reset:1;
     unsigned int source:2;
 
     Variant *value;
     Variant *defaultValue;
 } ConfigOptionValue;
 
-ConfigOptionValue configOptionValue[CFG_OPTION_TOTAL];
+static ConfigOptionValue configOptionValue[CFG_OPTION_TOTAL];
 
 /***********************************************************************************************************************************
 Initialize or reinitialize the configuration data
@@ -436,8 +437,24 @@ void
 cfgOptionNegateSet(ConfigOption optionId, bool negate)
 {
     cfgOptionCheck(optionId);
-
     configOptionValue[optionId].negate = negate;
+}
+
+/***********************************************************************************************************************************
+Was the option reset?
+***********************************************************************************************************************************/
+bool
+cfgOptionReset(ConfigOption optionId)
+{
+    cfgOptionCheck(optionId);
+    return configOptionValue[optionId].reset;
+}
+
+void
+cfgOptionResetSet(ConfigOption optionId, bool reset)
+{
+    cfgOptionCheck(optionId);
+    configOptionValue[optionId].reset = reset;
 }
 
 /***********************************************************************************************************************************

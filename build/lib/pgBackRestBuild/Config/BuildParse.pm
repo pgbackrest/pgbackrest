@@ -146,6 +146,17 @@ sub buildConfigParse
                         "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }
+
+                # Add reset when defined
+                if ($rhOption->{&CFGDEF_RESET} &&
+                    !($iOptionNameIdx > 0 && defined($rhNameAlt->{&CFGDEF_RESET}) && !$rhNameAlt->{&CFGDEF_RESET}))
+                {
+                    $strBuildSource .=
+                        "    {\n" .
+                        "        .name = \"reset-${strOptionNameOut}\",\n" .
+                        "        .val = ${strOptionFlag} PARSE_RESET_FLAG | ${strOptionVal},\n" .
+                        "    },\n";
+                }
             }
         }
     }

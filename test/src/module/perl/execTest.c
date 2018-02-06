@@ -46,6 +46,9 @@ testRun()
         cfgOptionNegateSet(cfgOptOnline, true);
         cfgOptionSet(cfgOptOnline, cfgSourceParam, varNewBool(false));
 
+        cfgOptionValidSet(cfgOptPgHost, true);
+        cfgOptionResetSet(cfgOptPgHost, true);
+
         cfgOptionValidSet(cfgOptProtocolTimeout, true);
         cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1));
 
@@ -61,6 +64,7 @@ testRun()
             "\"compress\":{\"source\":\"param\",\"value\":true},"
             "\"compress-level\":{\"source\":\"config\",\"value\":3},"
             "\"online\":{\"source\":\"param\",\"negate\":true},"
+            "\"pg1-host\":{\"reset\":true},"
             "\"protocol-timeout\":{\"source\":\"param\",\"value\":1.1},"
             "\"stanza\":{\"value\":\"db\"}"
             "}')|[NULL]",

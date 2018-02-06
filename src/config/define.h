@@ -54,7 +54,6 @@ int cfgDefOptionId(const char *optionName);
 int cfgDefOptionIndexTotal(ConfigDefineOption optionDefId);
 bool cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
-bool cfgDefOptionNegate(ConfigDefineOption optionDefId);
 const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 ConfigDefSection cfgDefOptionSection(ConfigDefineOption optionDefId);
