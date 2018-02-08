@@ -223,6 +223,10 @@
                     <release-item>
                         <p>Rename Perl tests so they don't conflict with their C counterparts.</p>
                     </release-item>
+
+                    <release-item>
+                        <p>Update URL for Debian package repository.</p>
+                    </release-item>
                 </release-development-list>
             </release-test-list>
         </release>
