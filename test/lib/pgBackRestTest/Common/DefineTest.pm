@@ -127,7 +127,7 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'common/error' => TESTDEF_COVERAGE_FULL,
-                        'common/errorType' => TESTDEF_COVERAGE_FULL,
+                        'common/error.auto' => TESTDEF_COVERAGE_NOCODE,
                     },
                 },
                 {

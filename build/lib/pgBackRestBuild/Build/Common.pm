@@ -42,6 +42,8 @@ use constant BLD_CONSTANT_VALUE                                     => 'constant
 
 use constant BLD_DATA                                               => 'data';
     push @EXPORT, qw(BLD_DATA);
+use constant BLD_DECLARE                                            => 'declare';
+    push @EXPORT, qw(BLD_DECLARE);
 use constant BLD_ENUM                                               => 'enum';
     push @EXPORT, qw(BLD_ENUM);
 use constant BLD_LIST                                               => 'list';

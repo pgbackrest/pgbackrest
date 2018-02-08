@@ -9,6 +9,23 @@ Error Handler
 #include "common/error.h"
 
 /***********************************************************************************************************************************
+Represents an error type
+***********************************************************************************************************************************/
+struct ErrorType
+{
+    const int code;
+    const char *name;
+    const struct ErrorType *parentType;
+};
+
+// Macro for defining new error types
+#define ERROR_DEFINE(code, name, parentType)                                                                                       \
+    const ErrorType name = {code, #name, &parentType}
+
+// Include error type definitions
+#include "common/error.auto.c"
+
+/***********************************************************************************************************************************
 Maximum allowed number of nested try blocks
 ***********************************************************************************************************************************/
 #define ERROR_TRY_MAX                                             32
@@ -58,6 +75,75 @@ The temp buffer is required because the error message being passed might be the 
 
 static char messageBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 static char messageBufferTemp[ERROR_MESSAGE_BUFFER_SIZE];
+
+/***********************************************************************************************************************************
+Error type code
+***********************************************************************************************************************************/
+int
+errorTypeCode(const ErrorType *errorType)
+{
+    return errorType->code;
+}
+
+/***********************************************************************************************************************************
+Get error type using a code
+***********************************************************************************************************************************/
+const ErrorType *
+errorTypeFromCode(int code)
+{
+    // Search for error type by code
+    int errorTypeIdx = 0;
+    const ErrorType *result = errorTypeList[errorTypeIdx];
+
+    while (result != NULL)
+    {
+        if (result->code == code)
+            break;
+
+        result = errorTypeList[++errorTypeIdx];
+    }
+
+    // Error if type was not found
+    if (result == NULL)
+        THROW(AssertError, "could not find error type for code '%d'", code);
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+Error type name
+***********************************************************************************************************************************/
+const char *
+errorTypeName(const ErrorType *errorType)
+{
+    return errorType->name;
+}
+
+/***********************************************************************************************************************************
+Error type parent
+***********************************************************************************************************************************/
+const ErrorType *
+errorTypeParent(const ErrorType *errorType)
+{
+    return errorType->parentType;
+}
+
+/***********************************************************************************************************************************
+Does the child error type extend the parent error type?
+***********************************************************************************************************************************/
+bool
+errorTypeExtends(const ErrorType *child, const ErrorType *parent)
+{
+    // Search for the parent
+    for (; child && errorTypeParent(child) != child; child = (ErrorType *)errorTypeParent(child))
+    {
+        if (errorTypeParent(child) == parent)
+            return true;
+    }
+
+    // Parent was not found
+    return false;
+}
 
 /***********************************************************************************************************************************
 Error type

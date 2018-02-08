@@ -5,7 +5,6 @@ Variant Data Type
 #include <string.h>
 #include <strings.h>
 
-#include "common/errorType.h"
 #include "common/memContext.h"
 #include "common/type/variant.h"
 

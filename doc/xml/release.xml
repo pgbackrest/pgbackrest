@@ -133,6 +133,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Create a master list of errors in <file>build/error.yaml</file>.  The C and Perl errors lists are created automatically by <code>Build.pm</code> so they stay up to date.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Move lock release later in exitSafe() to reduce the chance of a new process starting and acquiring a lock before the old process has exited.</p>
                     </release-item>
 

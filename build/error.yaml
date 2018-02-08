@@ -1,0 +1,93 @@
+# Error Definitions
+#
+# Master file for all errors in the C and Perl code.  For C, errors are written to src/common/error.auto.c/h.  For Perl, errors are
+# written to lib/pgBackRest/Common/ExceptionAuto.pm.
+
+# Errors in the code that it should not be possible for the user to encounter -- i.e., a likely bug
+assert: 25
+
+checksum: 26
+config: 27
+file-invalid: 28
+format: 29
+command-required: 30
+option-invalid: 31
+option-invalid-value: 32
+option-invalid-range: 33
+option-invalid-pair: 34
+option-duplicate-key: 35
+option-negate: 36
+option-required: 37
+postmaster-running: 38
+protocol: 39
+path-not-empty: 40
+file-open: 41
+file-read: 42
+param-required: 43
+archive-mismatch: 44
+archive-duplicate: 45
+version-not-supported: 46
+path-create: 47
+command-invalid: 48
+host-connect: 49
+lock-acquire: 50
+backup-mismatch: 51
+file-sync: 52
+path-open: 53
+path-sync: 54
+file-missing: 55
+db-connect: 56
+db-query: 57
+db-mismatch: 58
+db-timeout: 59
+file-remove: 60
+path-remove: 61
+stop: 62
+term: 63
+file-write: 64
+protocol-timeout: 66
+feature-not-supported: 67
+archive-command-invalid: 68
+link-expected: 69
+link-destination: 70
+tablespace-in-pgdata: 71
+host-invalid: 72
+path-missing: 73
+file-move: 74
+backup-set-invalid: 75
+tablespace-map: 76
+path-type: 77
+link-map: 78
+file-close: 79
+db-missing: 80
+db-invalid: 81
+archive-timeout: 82
+file-mode: 83
+option-multiple-value: 84
+protocol-output-required: 85
+link-open: 86
+archive-disabled: 87
+file-owner: 88
+user-missing: 89
+option-command: 90
+group-missing: 91
+path-exists: 92
+file-exists: 93
+
+# Memory allocation failed
+memory: 94
+
+cipher: 95
+param-invalid: 96
+
+# This error should not be thrown directly -- it serves as a parent for the C errors
+runtime: 122
+
+# Error used when an invalid error code is passed to the Perl Exception object -- this should not happen
+invalid: 123
+
+# Used when a native Perl error is not caught before exitSafe() -- this should not happen
+unhandled: 124
+
+# Used when a specific error is not provided in the Perl code.  This should be rare.
+unknown: 125

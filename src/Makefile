@@ -7,7 +7,6 @@ pgbackrest: \
 		command/help/help.o \
 		command/command.o \
 		common/error.o \
-		common/errorType.o \
 		common/exit.o \
 		common/ini.o \
 		common/log.o \
@@ -35,7 +34,6 @@ pgbackrest: \
 		command/help/help.o \
 		command/command.o \
 		common/error.o \
-		common/errorType.o \
 		common/exit.o \
 		common/ini.o \
 		common/log.o \
