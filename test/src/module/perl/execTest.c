@@ -52,6 +52,9 @@ testRun()
         cfgOptionValidSet(cfgOptProtocolTimeout, true);
         cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1));
 
+        cfgOptionValidSet(cfgOptArchiveQueueMax, true);
+        cfgOptionSet(cfgOptArchiveQueueMax, cfgSourceParam, varNewInt64(999999999999));
+
         cfgOptionValidSet(cfgOptCompressLevel, true);
         cfgOptionSet(cfgOptCompressLevel, cfgSourceConfig, varNewInt(3));
 
@@ -61,6 +64,7 @@ testRun()
         TEST_RESULT_STR(
             strPtr(strLstJoin(perlCommand(), "|")),
             TEST_ENV_EXE "|" TEST_PERL_EXE "|" TEST_PERL_MAIN "','backup','{"
+            "\"archive-queue-max\":{\"source\":\"param\",\"value\":999999999999},"
             "\"compress\":{\"source\":\"param\",\"value\":true},"
             "\"compress-level\":{\"source\":\"config\",\"value\":3},"
             "\"online\":{\"source\":\"param\",\"negate\":true},"

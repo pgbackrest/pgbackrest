@@ -316,7 +316,7 @@ cfgOptionDefault(ConfigOption optionId)
 
                         case cfgDefOptTypeInteger:
                         {
-                            configOptionValue[optionId].defaultValue = varNewInt(varIntForce(defaultValue));
+                            configOptionValue[optionId].defaultValue = varNewInt64(varInt64Force(defaultValue));
                             break;
                         }
 
@@ -494,10 +494,21 @@ cfgOptionInt(ConfigSource optionId)
 {
     cfgOptionCheck(optionId);
 
-    if (varType(configOptionValue[optionId].value) != varTypeInt)
-        THROW(AssertError, "option '%s' is not type 'int'", cfgOptionName(optionId));
+    if (varType(configOptionValue[optionId].value) != varTypeInt64)
+        THROW(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
 
-    return varInt(configOptionValue[optionId].value);
+    return varIntForce(configOptionValue[optionId].value);
+}
+
+int64
+cfgOptionInt64(ConfigSource optionId)
+{
+    cfgOptionCheck(optionId);
+
+    if (varType(configOptionValue[optionId].value) != varTypeInt64)
+        THROW(AssertError, "option '%s' is not type 'int64'", cfgOptionName(optionId));
+
+    return varInt64(configOptionValue[optionId].value);
 }
 
 const KeyValue *
@@ -588,10 +599,10 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
 
                 case cfgDefOptTypeInteger:
                 {
-                    if (varType(value) == varTypeInt)
+                    if (varType(value) == varTypeInt64)
                         configOptionValue[optionId].value = varDup(value);
                     else
-                        configOptionValue[optionId].value = varNewInt(varIntForce(value));
+                        configOptionValue[optionId].value = varNewInt64(varInt64Force(value));
 
                     break;
                 }

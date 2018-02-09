@@ -618,7 +618,7 @@ configParse(int argListSize, const char *argList[])
                                 TRY_BEGIN()
                                 {
                                     if (optionDefType == cfgDefOptTypeInteger)
-                                        valueDbl = varIntForce(varNewStr(value));
+                                        valueDbl = varInt64Force(varNewStr(value));
                                     else
                                         valueDbl = varDblForce(varNewStr(value));
                                 }

@@ -1638,6 +1638,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [0, 4 * 1024 * 1024 * 1024 * 1024 * 1024], # 0-4PiB
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_PUSH => {},

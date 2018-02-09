@@ -370,6 +370,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
         )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
+        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
