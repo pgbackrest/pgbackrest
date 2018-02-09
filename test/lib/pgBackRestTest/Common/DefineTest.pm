@@ -214,7 +214,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'type-variant',
-                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_TOTAL => 7,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>

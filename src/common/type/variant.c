@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Variant Data Type
 ***********************************************************************************************************************************/
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -25,6 +26,7 @@ static const char *variantTypeName[] =
     "bool",                                                         // varTypeBool
     "double",                                                       // varTypeDouble,
     "int",                                                          // varTypeInt
+    "int64",                                                        // varTypeInt64
     "KeyValue",                                                     // varTypeKeyValue
     "String",                                                       // varTypeString
     "VariantList",                                                  // varTypeVariantList
@@ -87,6 +89,12 @@ varDup(const Variant *this)
                 break;
             }
 
+            case varTypeInt64:
+            {
+                result = varNewInt64(varInt64(this));
+                break;
+            }
+
             case varTypeKeyValue:
             {
                 KeyValue *data = kvDup(varKv(this));
@@ -142,6 +150,12 @@ varEq(const Variant *this1, const Variant *this2)
                 case varTypeInt:
                 {
                     result = varInt(this1) == varInt(this2);
+                    break;
+                }
+
+                case varTypeInt64:
+                {
+                    result = varInt64(this1) == varInt64(this2);
                     break;
                 }
 
@@ -211,6 +225,10 @@ varBoolForce(const Variant *this)
 
         case varTypeInt:
             result = varInt(this) != 0;
+            break;
+
+        case varTypeInt64:
+            result = varInt64(this) != 0;
             break;
 
         case varTypeString:
@@ -298,6 +316,12 @@ varDblForce(const Variant *this)
             break;
         }
 
+        case varTypeInt64:
+        {
+            result = (double)varInt64(this);
+            break;
+        }
+
         case varTypeString:
         {
             sscanf(strPtr(varStr(this)), "%lf", &result);
@@ -343,6 +367,131 @@ varInt(const Variant *this)
 }
 
 /***********************************************************************************************************************************
+Return int regardless of variant type
+***********************************************************************************************************************************/
+int
+varIntForce(const Variant *this)
+{
+    int result = 0;
+
+    switch (this->type)
+    {
+        case varTypeBool:
+        {
+            result = varBool(this);
+            break;
+        }
+
+        case varTypeInt:
+        {
+            result = varInt(this);
+            break;
+        }
+
+        case varTypeInt64:
+        {
+            int64 resultTest = varInt64(this);
+
+            if (resultTest > 2147483647 || resultTest < -2147483648)
+                THROW(
+                    AssertError, "unable to convert %s %" PRId64 " to %s", variantTypeName[this->type], resultTest,
+                    variantTypeName[varTypeInt]);
+
+            result = (int)resultTest;
+            break;
+        }
+
+        case varTypeString:
+        {
+            result = atoi(strPtr(varStr(this)));
+
+            if (result == 0 && strcmp(strPtr(varStr(this)), "0") != 0)
+                THROW(FormatError, "unable to convert str '%s' to int", strPtr(varStr(this)));
+
+            break;
+        }
+
+        default:
+            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
+New int64 variant
+***********************************************************************************************************************************/
+Variant *
+varNewInt64(int64 data)
+{
+    return varNewInternal(varTypeInt64, (void *)&data, sizeof(data));
+}
+
+/***********************************************************************************************************************************
+Return int64
+***********************************************************************************************************************************/
+int64
+varInt64(const Variant *this)
+{
+    // Only valid for int
+    if (this->type != varTypeInt64)
+        THROW(AssertError, "variant type is not %s", variantTypeName[varTypeInt64]);
+
+    // Get the int
+    return *((int64 *)varData(this));
+}
+
+/***********************************************************************************************************************************
+Return int64 regardless of variant type
+***********************************************************************************************************************************/
+int64
+varInt64Force(const Variant *this)
+{
+    int64 result = 0;
+
+    switch (this->type)
+    {
+        case varTypeBool:
+        {
+            result = varBool(this);
+            break;
+        }
+
+        case varTypeInt:
+        {
+            result = (int64)varInt(this);
+            break;
+        }
+
+        case varTypeInt64:
+        {
+            result = varInt64(this);
+            break;
+        }
+
+        case varTypeString:
+        {
+            result = atoll(strPtr(varStr(this)));
+
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "%" PRId64, result);
+
+            if (strcmp(strPtr(varStr(this)), buffer) != 0)
+                THROW(
+                    FormatError, "unable to convert %s '%s' to %s", variantTypeName[varTypeString], strPtr(varStr(this)),
+                    variantTypeName[varTypeInt64]);
+
+            break;
+        }
+
+        default:
+            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt64]);
+    }
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 New key/value variant
 ***********************************************************************************************************************************/
 Variant *
@@ -369,45 +518,6 @@ varKv(const Variant *this)
 
         // Get the string
         result = *((KeyValue **)varData(this));
-    }
-
-    return result;
-}
-
-/***********************************************************************************************************************************
-Return int regardless of variant type
-***********************************************************************************************************************************/
-int
-varIntForce(const Variant *this)
-{
-    int result = 0;
-
-    switch (this->type)
-    {
-        case varTypeBool:
-        {
-            result = varBool(this);
-            break;
-        }
-
-        case varTypeInt:
-        {
-            result = varInt(this);
-            break;
-        }
-
-        case varTypeString:
-        {
-            result = atoi(strPtr(varStr(this)));
-
-            if (result == 0 && strcmp(strPtr(varStr(this)), "0") != 0)
-                THROW(FormatError, "unable to convert str '%s' to int", strPtr(varStr(this)));
-
-            break;
-        }
-
-        default:
-            THROW(FormatError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeInt]);
     }
 
     return result;
@@ -512,6 +622,12 @@ varStrForce(const Variant *this)
             break;
         }
 
+        case varTypeInt64:
+        {
+            result = strNewFmt("%" PRId64, varInt64(this));
+            break;
+        }
+
         case varTypeString:
         {
             result = strDup(varStr(this));
@@ -602,6 +718,7 @@ varFree(Variant *this)
                 case varTypeBool:
                 case varTypeDouble:
                 case varTypeInt:
+                case varTypeInt64:
                     break;
             }
 

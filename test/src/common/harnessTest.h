@@ -4,6 +4,8 @@ C Test Harness
 #ifndef TEST_COMMON_HARNESS_H
 #define TEST_COMMON_HARNESS_H
 
+#include <inttypes.h>
+
 #include "common/error.h"
 #include "common/type.h"
 
@@ -216,7 +218,7 @@ Macros to ease the use of common data types
     TEST_RESULT_DOUBLE_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 
 #define TEST_RESULT_INT_PARAM(statement, resultExpected, typeOp, ...)                                                              \
-    TEST_RESULT(statement, resultExpected, int, "%d", TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
+    TEST_RESULT(statement, resultExpected, int64, "%" PRId64, TEST_TYPE_FORMAT, typeOp, TEST_TYPE_COMPARE, __VA_ARGS__);
 #define TEST_RESULT_INT(statement, resultExpected, ...)                                                                            \
     TEST_RESULT_INT_PARAM(statement, resultExpected, ==, __VA_ARGS__);
 #define TEST_RESULT_INT_NE(statement, resultExpected, ...)                                                                         \
