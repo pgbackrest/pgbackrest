@@ -428,6 +428,9 @@ use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME_MINIMUM;
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
 
+use constant CFGDEF_DEFAULT_PROTOCOL_PORT_MIN                       => 0;
+use constant CFGDEF_DEFAULT_PROTOCOL_PORT_MAX                       => 65535;
+
 use constant CFGDEF_DEFAULT_RETENTION_MIN                           => 1;
 use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 9999999;
 
@@ -816,6 +819,7 @@ my %hConfigDefine =
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG > CFGDEF_INDEX_REPO ? CFGDEF_INDEX_PG : CFGDEF_INDEX_REPO],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_LOCAL => {},
@@ -825,6 +829,7 @@ my %hConfigDefine =
     &CFGOPT_PROCESS =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_ALLOW_RANGE => [0, 1024],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_LOCAL =>
@@ -857,6 +862,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_DEFAULT => 5,
+        &CFGDEF_ALLOW_RANGE => [.1, 60],
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_TEST,
@@ -1320,6 +1326,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1711,7 +1718,8 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_DEFAULT => 1073741824,
+        &CFGDEF_DEFAULT => 1 * 1024 * 1024 * 1024,
+        &CFGDEF_ALLOW_RANGE => [1, 1024 * 1024 * 1024 * 1024],      # 1-1TB
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
@@ -1974,6 +1982,7 @@ my %hConfigDefine =
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_NAME_ALT =>
         {
             'db-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -2037,6 +2046,7 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
         &CFGDEF_DEFAULT => 5432,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_NAME_ALT =>
         {
             'db-port' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -2176,6 +2186,14 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
     if (!defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
+    }
+
+    # All int and float options must have an allow range
+    if (($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_INTEGER ||
+         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_FLOAT) &&
+         !(defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_RANGE}) || defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST})))
+    {
+        confess &log(ASSERT, "int/float option '${strKey}' must have allow range or list");
     }
 }
 
