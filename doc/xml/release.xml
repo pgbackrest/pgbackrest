@@ -12,25 +12,6 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.00dev" title="UNDER DEVELOPMENT">
             <release-core-list>
-                <release-bug-list>
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Fixed inability to restore a single database contained in a tablespace using --db-include.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-ideator id="sumner.adam.k"/>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>.  This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
-                    </release-item>
-                </release-bug-list>
-
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -38,22 +19,6 @@
                         </release-item-contributor-list>
 
                         <p>The <cmd>archive-push</cmd> command is now partially coded in C which allows the <postgres/> <file>archive_command</file> to run significantly faster when processing status messages from the asynchronous archive process.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Add <cmd>stanza-delete</cmd> command to cleanup unused stanzas.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Allow any non-command-line option to be reset to default on the command-line.  This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
-                    </release-item>
-
-                    <release-item>
-                        <p>Add <br-option>perl-bin</br-option> option to specify the Perl binary location when <file>/usr/bin/env perl</file> won't work.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -67,19 +32,19 @@
                     </release-item>
 
                     <release-item>
+                        <p>Allow any non-command-line option to be reset to default on the command-line.  This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Add <br-option>perl-bin</br-option> option to specify the Perl binary location when <file>/usr/bin/env perl</file> won't work.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
                     </release-item>
 
                     <release-item>
                         <p>The <file>{[project-exe]}</file> executable is now a C binary instead of Perl. This allows certain time-critical commands (like async <cmd>archive-push</cmd>) to run more quickly.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Improve <cmd>stanza-create</cmd> command so that it does not error when the stanza already exists.</p>
                     </release-item>
 
                     <release-item>
@@ -114,14 +79,6 @@
 
                     <release-item>
                         <p>Remove deprecated <br-option>archive-max-mb</br-option> option.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
                     </release-item>
 
                     <release-item>
@@ -177,14 +134,6 @@
                      <release-item>
                          <p>List deprecated option names in documentation and command-line help.</p>
                      </release-item>
-
-                     <release-item>
-                         <release-item-contributor-list>
-                             <release-item-ideator id="odonnell.jason"/>
-                         </release-item-contributor-list>
-
-                         <p>Update <cmd>stanza-create --force</cmd> documentation to urge caution when using.</p>
-                     </release-item>
                  </release-improvement-list>
 
                 <release-development-list>
@@ -213,14 +162,6 @@
                     </release-item>
 
                     <release-item>
-                        <release-item-contributor-list>
-                            <release-item-contributor id="shang.cynthia"/>
-                        </release-item-contributor-list>
-
-                        <p>Add unit tests for the <code>Manifest</code> module.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>No longer run <id>master</id> branch through CI. The <id>integration</id> branch will be run through CI and then pushed to <id>master</id> with github status checks.</p>
                     </release-item>
 
@@ -230,6 +171,101 @@
 
                     <release-item>
                         <p>Update URL for Debian package repository.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
+        </release>
+
+        <release date="2018-02-01" version="1.28" title="Stanza Delete">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed inability to restore a single database contained in a tablespace using --db-include.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="sumner.adam.k"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Ensure latest <id>db-id</id> is selected on when matching <file>archive.info</file> to <file>backup.info</file>.  This provides correct matching in the event there are <id>system-id</id> and <id>db-version</id> duplicates (e.g. after reverting a <id>pg_upgrade</id>).</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                            <release-item-contributor id="steele.david"/>
+                        </release-item-contributor-list>
+
+                        <p>Fixed overly chatty error message when reporting an invalid command.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hagander.magnus"/>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <cmd>stanza-delete</cmd> command to cleanup unused stanzas.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>stanza-create</cmd> command so that it does not error when the stanza already exists.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Minor changes to <code>Manifest</code> module, mostly for test reproducibility.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix non-compliant formatting for function declarations.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="odonnell.jason"/>
+                        </release-item-contributor-list>
+
+                        <p>Update <cmd>stanza-create --force</cmd> documentation to urge caution when using.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="shang.cynthia"/>
+                        </release-item-contributor-list>
+
+                        <p>Add unit tests for the <code>Manifest</code> module.</p>
                     </release-item>
                 </release-development-list>
             </release-test-list>
@@ -4008,6 +4044,11 @@
         <contributor id="gunduz.devrim">
             <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
             <contributor-id type="github">devrimgunduz</contributor-id>
+        </contributor>
+
+        <contributor id="hagander.magnus">
+            <contributor-name-display>Magnus Hagander</contributor-name-display>
+            <contributor-id type="github">mhagander</contributor-id>
         </contributor>
 
         <contributor id="harvey.john">
