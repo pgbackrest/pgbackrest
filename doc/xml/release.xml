@@ -181,6 +181,7 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="ravilla.chiranjeevi"/>
                             <release-item-contributor id="shang.cynthia"/>
                         </release-item-contributor-list>
 
@@ -4109,6 +4110,10 @@
         <contributor id="radman.eric">
             <contributor-name-display>Eric Radman</contributor-name-display>
             <contributor-id type="github">eradman</contributor-id>
+        </contributor>
+
+        <contributor id="ravilla.chiranjeevi">
+            <contributor-name-display>Chiranjeevi Ravilla</contributor-name-display>
         </contributor>
 
         <contributor id="rogozin.aleksandr">
