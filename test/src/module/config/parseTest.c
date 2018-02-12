@@ -370,6 +370,7 @@ testRun()
         strLstAdd(argList, strNewFmt("--config=%s", strPtr(configFile)));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--reset-pg1-host"));
+        strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
         storagePut(storageLocal(), configFile, bufNewStr(strNew(
@@ -384,6 +385,7 @@ testRun()
             "archive-copy=y\n"
             "online=y\n"
             "pg1-path=/not/path/to/db\n"
+            "backup-standby=y\n"
             "\n"
             "[db:backup]\n"
             "compress=n\n"
@@ -420,6 +422,20 @@ testRun()
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "    repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "    compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
+        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--archive-queue-max=4503599627370496"));
+        strLstAdd(argList, strNew("archive-push"));
+
+        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "archive-push command");
+
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 4503599627370496, "archive-queue-max is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptArchiveQueueMax), cfgSourceParam, "    archive-queue-max is source config");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
