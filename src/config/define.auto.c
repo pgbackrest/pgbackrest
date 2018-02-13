@@ -370,6 +370,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
         )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
+        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -986,6 +991,11 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
         )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
+        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1389,6 +1399,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 1099511627776)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1073741824")
         )
     )
@@ -1805,6 +1816,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-ssh-port")
@@ -1959,6 +1971,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("5432")
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
@@ -2000,6 +2013,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-socket-path")
@@ -2026,6 +2040,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 1024)
+
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdLocal)
@@ -2495,6 +2511,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-ssh-port")
@@ -3782,6 +3799,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0.1, 60)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
                 cfgDefOptTest,

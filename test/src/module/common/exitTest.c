@@ -27,8 +27,8 @@ testRun()
         {
             exitSafe(true);
             testLogResult(
-                "P00  ERROR: [125]: test error message\n"
-                "P00   INFO: archive-push command end: aborted with exception [125]");
+                "P00  ERROR: [122]: test error message\n"
+                "P00   INFO: archive-push command end: aborted with exception [122]");
         }
         TRY_END();
     }

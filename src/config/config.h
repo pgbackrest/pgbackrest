@@ -49,6 +49,7 @@ ConfigOption cfgOptionIdFromDefId(ConfigDefineOption optionDefId, int index);
 int cfgOptionIndex(ConfigOption optionId);
 int cfgOptionIndexTotal(ConfigOption optionDefId);
 int cfgOptionInt(ConfigSource optionId);
+int64 cfgOptionInt64(ConfigSource optionId);
 const KeyValue *cfgOptionKv(ConfigSource optionId);
 const VariantList *cfgOptionLst(ConfigSource optionId);
 const char *cfgOptionName(ConfigOption optionId);

@@ -39,11 +39,31 @@ IMPORTANT: Never call return from within any of the error-handling blocks.
 
 #include <setjmp.h>
 
-#include "common/errorType.h"
 #include "common/type.h"
 
 /***********************************************************************************************************************************
-Error accessor functions
+Error type object
+***********************************************************************************************************************************/
+typedef struct ErrorType ErrorType;
+
+// Macro for declaring new error types
+#define ERROR_DECLARE(name)                                                                                                        \
+    extern const ErrorType name
+
+// Include error type declarations
+#include "common/error.auto.h"
+
+/***********************************************************************************************************************************
+Functions to get information about a generic error type
+***********************************************************************************************************************************/
+int errorTypeCode(const ErrorType *errorType);
+const ErrorType *errorTypeFromCode(int code);
+const char *errorTypeName(const ErrorType *errorType);
+const ErrorType *errorTypeParent(const ErrorType *errorType);
+bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
+
+/***********************************************************************************************************************************
+Functions to get information about the current error
 ***********************************************************************************************************************************/
 const ErrorType *errorType();
 int errorCode();

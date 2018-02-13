@@ -14,6 +14,7 @@ typedef enum
     varTypeBool,
     varTypeDouble,
     varTypeInt,
+    varTypeInt64,
     varTypeKeyValue,
     varTypeString,
     varTypeVariantList,
@@ -42,6 +43,10 @@ double varDblForce(const Variant *this);
 Variant *varNewInt(int data);
 int varInt(const Variant *this);
 int varIntForce(const Variant *this);
+
+Variant *varNewInt64(int64 data);
+int64 varInt64(const Variant *this);
+int64 varInt64Force(const Variant *this);
 
 Variant *varNewKv();
 KeyValue *varKv(const Variant *this);

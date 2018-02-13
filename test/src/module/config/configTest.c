@@ -117,13 +117,17 @@ testRun()
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), true, "online is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "online source is set");
         TEST_ERROR(cfgOptionDbl(cfgOptOnline), AssertError, "option 'online' is not type 'double'");
+        TEST_ERROR(cfgOptionInt64(cfgOptOnline), AssertError, "option 'online' is not type 'int64'");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt(1)), "set compress-level");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, varNewInt64(1)), "set compress-level");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 1, "compress-level is set");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, varNewStrZ("3")), "set compress-level");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress source is set");
         TEST_ERROR(cfgOptionBool(cfgOptCompressLevel), AssertError, "option 'compress-level' is not type 'bool'");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptArchiveQueueMax, cfgSourceParam, varNewInt64(999999999999)), "set archive-queue-max");
+        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 999999999999, "archive-queue-max is set");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(1.1)), "set protocol-timeout");
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1.1, "protocol-timeout is set");
@@ -156,7 +160,7 @@ testRun()
             "option 'stanza' must be set with String variant");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptStanza, cfgSourceConfig, varNewStrZ("db")), "set stanza");
         TEST_RESULT_STR(strPtr(cfgOptionStr(cfgOptStanza)), "db", "stanza is set");
-        TEST_ERROR(cfgOptionInt(cfgOptStanza), AssertError, "option 'stanza' is not type 'int'");
+        TEST_ERROR(cfgOptionInt(cfgOptStanza), AssertError, "option 'stanza' is not type 'int64'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cfgInit(), "config init resets value");
@@ -172,7 +176,7 @@ testRun()
         TEST_RESULT_STR(strPtr(varStr(cfgOptionDefault(cfgOptType))), "incr", "backup type default");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptCompress)), "true", "backup compress default");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");
-        TEST_RESULT_INT(varInt(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
+        TEST_RESULT_INT(varIntForce(cfgOptionDefault(cfgOptCompressLevel)), 6, "backup compress-level default");
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptDbInclude), NULL, "backup db-include default is null");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("backup")), "backup host set");

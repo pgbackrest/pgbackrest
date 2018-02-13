@@ -129,8 +129,11 @@ typedef enum
 
 #define CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(rangeMinParam, rangeMaxParam)                                                       \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeAllowRange, 2, 0, (const void *)(intptr_t)(int32)(rangeMinParam * 100),                                   \
-        (const void *)(intptr_t)(int32)(rangeMaxParam * 100)),
+        configDefDataTypeAllowRange, 4, 0,                                                                                         \
+        (const void *)(intptr_t)(int32)(((int64)((double)rangeMinParam * 100)) % 1000000000L),                                     \
+        (const void *)(intptr_t)(int32)(((int64)((double)rangeMinParam * 100)) / 1000000000L),                                     \
+        (const void *)(intptr_t)(int32)(((int64)((double)rangeMaxParam * 100)) % 1000000000L),                                     \
+        (const void *)(intptr_t)(int32)(((int64)((double)rangeMaxParam * 100)) / 1000000000L)),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_PREFIX(prefixParam)                                                                             \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypePrefix, 1, 0, prefixParam),
@@ -362,7 +365,7 @@ cfgDefOptionAllowRangeMax(ConfigDefineCommand commandDefId, ConfigDefineOption o
 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowRange);
 
-    return (double)(intptr_t)dataDefList[1] / 100;
+    return ((double)(((int64)(intptr_t)dataDefList[2]) + (((int64)(intptr_t)dataDefList[3]) * 1000000000L))) / 100;
 }
 
 double
@@ -372,7 +375,7 @@ cfgDefOptionAllowRangeMin(ConfigDefineCommand commandDefId, ConfigDefineOption o
 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowRange);
 
-    return (double)(intptr_t)dataDefList[0] / 100;
+    return ((double)(((int64)(intptr_t)dataDefList[0]) + (((int64)(intptr_t)dataDefList[1]) * 1000000000L))) / 100;
 }
 
 /***********************************************************************************************************************************

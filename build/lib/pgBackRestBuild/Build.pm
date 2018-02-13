@@ -48,6 +48,7 @@ sub buildAll
             my $rhFile = $rhBuild->{$strBuild}{&BLD_DATA}{&BLD_FILE}{$strFile};
             my $rhFileConstant = $rhFile->{&BLD_CONSTANT_GROUP};
             my $rhFileEnum = $rhFile->{&BLD_ENUM};
+            my $rhFileDeclare = $rhFile->{&BLD_DECLARE};
             my $rhFileData = $rhFile->{&BLD_DATA};
             my $rhSource;
 
@@ -57,7 +58,7 @@ sub buildAll
 
             # Build header file
             #-------------------------------------------------------------------------------------------------------------------------------
-            if (defined($rhFileEnum) || defined($rhFileConstant))
+            if (defined($rhFileEnum) || defined($rhFileConstant) || defined($rhFileDeclare))
             {
                 my $strHeaderDefine = uc("${strPath}/${strFile}") . '_AUTO_H';
                 $strHeaderDefine =~ s/\//_/g;
@@ -99,7 +100,7 @@ sub buildAll
 
                     my $iExpectedValue = 0;
 
-                    # Iterate constants
+                    # Iterate enums
                     foreach my $strEnumItem (@{$rhEnum->{&BLD_LIST}})
                     {
                         $strHeader .=
@@ -117,6 +118,14 @@ sub buildAll
 
                     $strHeader .=
                         "} " . $rhEnum->{&BLD_NAME} . ";\n";
+                }
+
+                foreach my $strDeclare (sort(keys(%{$rhFileDeclare})))
+                {
+                    my $rhDeclare = $rhFileDeclare->{$strDeclare};
+
+                    $strHeader .= "\n" . bldBanner($rhDeclare->{&BLD_SUMMARY});
+                    $strHeader .= $rhDeclare->{&BLD_SOURCE};
                 }
 
                 $strHeader .=

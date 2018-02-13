@@ -127,7 +127,7 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'common/error' => TESTDEF_COVERAGE_FULL,
-                        'common/errorType' => TESTDEF_COVERAGE_FULL,
+                        'common/error.auto' => TESTDEF_COVERAGE_NOCODE,
                     },
                 },
                 {
@@ -214,7 +214,7 @@ my $oTestDef =
                 },
                 {
                     &TESTDEF_NAME => 'type-variant',
-                    &TESTDEF_TOTAL => 6,
+                    &TESTDEF_TOTAL => 7,
                     &TESTDEF_C => true,
 
                     &TESTDEF_COVERAGE =>

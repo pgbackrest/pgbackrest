@@ -561,7 +561,7 @@ sub containerBuild
 
             $strScript .=  sectionHeader() .
                 "# Install pgBackRest package source\n" .
-                "    git clone https://anonscm.debian.org/git/pkg-postgresql/pgbackrest.git /root/package-src";
+                "    git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src";
 
             # Build only when a new version has been specified
             if ($bPkgDevelCoverBuild)

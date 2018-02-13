@@ -42,6 +42,8 @@ use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;
 use pgBackRestBuild::Config::BuildDefine;
 use pgBackRestBuild::Config::BuildParse;
+use pgBackRestBuild::Error::Build;
+use pgBackRestBuild::Error::Data;
 
 use BackRestDoc::Custom::DocCustomRelease;
 
@@ -298,6 +300,8 @@ eval
     {
         # Auto-generate C files
         #---------------------------------------------------------------------------------------------------------------------------
+        errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
+
         my $rhBuild =
         {
             'config' =>
@@ -316,6 +320,12 @@ eval
             {
                 &BLD_DATA => buildConfigParse(),
                 &BLD_PATH => 'config',
+            },
+
+            'error' =>
+            {
+                &BLD_DATA => buildError(),
+                &BLD_PATH => 'common',
             },
         };
 

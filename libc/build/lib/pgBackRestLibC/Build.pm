@@ -26,6 +26,7 @@ use pgBackRest::Version;
 
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
+use pgBackRestBuild::Error::Data;
 
 use pgBackRestLibC::Config::Build;
 use pgBackRestLibC::Config::BuildDefine;
@@ -314,6 +315,59 @@ sub buildXsAll
     {
         $oStorage->put($strLibFile, $strContent);
     }
+
+    # Build error file
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhErrorDefine = errorDefine();
+
+    # Order by id for the list that is id ordered
+    my $rhErrorId = {};
+
+    foreach my $strType (sort(keys(%{$rhErrorDefine})))
+    {
+        my $iCode = $rhErrorDefine->{$strType};
+        $rhErrorId->{$iCode} = $strType;
+    }
+
+    # Output errors
+    $strContent =
+        ('#' x 132) . "\n" .
+        "# COMMON EXCEPTION AUTO MODULE\n" .
+        "# \n" .
+        '# ' . bldAutoWarning('Build.pm') . "\n" .
+        ('#' x 132) . "\n" .
+        "package pgBackRest::Common::ExceptionAuto;\n" .
+        "\n" .
+        "use strict;\n" .
+        "use warnings FATAL => qw(all);\n" .
+        "\n" .
+        "use Exporter qw(import);\n" .
+        "    our \@EXPORT = qw();\n" .
+        "\n" .
+        ('#' x 132) . "\n" .
+        "# Error Definitions\n" .
+        ('#' x 132) . "\n" .
+        "use constant ERROR_MINIMUM                                          => " . ERRDEF_MIN . ";\n" .
+        "push \@EXPORT, qw(ERROR_MINIMUM);\n" .
+        "use constant ERROR_MAXIMUM                                          => " . ERRDEF_MAX . ";\n" .
+        "push \@EXPORT, qw(ERROR_MAXIMUM);\n" .
+        "\n";
+
+    foreach my $iCode (sort({sprintf("%03d", $a) cmp sprintf("%03d", $b)} keys(%{$rhErrorId})))
+    {
+        my $strType = "ERROR_" . uc($rhErrorId->{$iCode});
+        $strType =~ s/\-/\_/g;
+
+        $strContent .=
+            "use constant ${strType}" . (' ' x (54 - length($strType))) . " => $iCode;\n" .
+            "push \@EXPORT, qw(${strType});\n"
+    }
+
+    $strContent .=
+        "\n" .
+        "1;\n";
+
+    $oStorage->put('../lib/' . BACKREST_NAME . '/Common/ExceptionAuto.pm', $strContent);
 }
 
 push @EXPORT, qw(buildXsAll);

@@ -6,7 +6,6 @@ Block Cipher
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include "common/errorType.h"
 #include "common/memContext.h"
 #include "cipher/block.h"
 #include "cipher/random.h"
