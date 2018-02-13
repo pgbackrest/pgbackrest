@@ -2171,7 +2171,7 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
     {
         $hConfigDefine{$strKey}{&CFGDEF_RESET} = true;
     }
-    elsif (!$hConfigDefine{$strKey}{&CFGDEF_RESET})
+    elsif (!defined($hConfigDefine{$strKey}{&CFGDEF_RESET}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_RESET} = false;
     }

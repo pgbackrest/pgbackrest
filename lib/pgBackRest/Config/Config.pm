@@ -139,14 +139,15 @@ sub configLoad
                     $oOption{$strOptionName}{value} = false;
                 }
             }
-            # Else reset the option
-            elsif ($rhOption->{$strOptionName}{reset})
-            {
-                $oOption{$strOptionName}{reset} = true;
-            }
             # Else set the value
             else
             {
+                # If option is reset, then indicate --reset should be prepended when passing the option to child processes
+                if ($rhOption->{$strOptionName}{reset})
+                {
+                    $oOption{$strOptionName}{reset} = true;
+                }
+
                 if (defined($rhOption->{$strOptionName}{value}))
                 {
                     if (cfgDefOptionType($iOptionId) eq CFGDEF_TYPE_BOOLEAN)

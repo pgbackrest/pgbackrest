@@ -66,69 +66,77 @@ perlOptionJson()
             // If option was negated
             if (cfgOptionNegate(optionId))
                 strCatFmt(result, "\"negate\":%s", strPtr(varStrForce(varNewBool(true))));
-            // Else if option was reset
-            else if (cfgOptionReset(optionId))
-                strCatFmt(result, "\"reset\":%s", strPtr(varStrForce(varNewBool(true))));
-            // Else not negated and has a value
-            else if (cfgOption(optionId) != NULL)
+            else
             {
-                strCat(result, "\"value\":");
+                // If option is reset then add indicator
+                if (cfgOptionReset(optionId))
+                    strCatFmt(result, "\"reset\":%s", strPtr(varStrForce(varNewBool(true))));
 
-                switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
+                // Else not negated and has a value
+                if (cfgOption(optionId) != NULL)
                 {
-                    case cfgDefOptTypeBoolean:
-                    case cfgDefOptTypeFloat:
-                    case cfgDefOptTypeInteger:
+                    // If option is reset, then add a comma separator before setting the value
+                    if (cfgOptionReset(optionId))
+                        strCat(result, ",");
+
+                    strCat(result, "\"value\":");
+
+                    switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
                     {
-                        strCat(result, strPtr(varStrForce(cfgOption(optionId))));
-                        break;
-                    }
-
-                    case cfgDefOptTypeString:
-                    {
-                        strCatFmt(result, "\"%s\"", strPtr(cfgOptionStr(optionId)));
-                        break;
-                    }
-
-                    case cfgDefOptTypeHash:
-                    {
-                        const KeyValue *valueKv = cfgOptionKv(optionId);
-                        const VariantList *keyList = kvKeyList(valueKv);
-
-                        strCat(result, "{");
-
-                        for (unsigned int listIdx = 0; listIdx < varLstSize(keyList); listIdx++)
+                        case cfgDefOptTypeBoolean:
+                        case cfgDefOptTypeFloat:
+                        case cfgDefOptTypeInteger:
                         {
-                            if (listIdx != 0)
-                                strCat(result, ",");
-
-                            strCatFmt(
-                                result, "\"%s\":\"%s\"", strPtr(varStr(varLstGet(keyList, listIdx))),
-                                strPtr(varStr(kvGet(valueKv, varLstGet(keyList, listIdx)))));
+                            strCat(result, strPtr(varStrForce(cfgOption(optionId))));
+                            break;
                         }
 
-                        strCat(result, "}");
-
-                        break;
-                    }
-
-                    case cfgDefOptTypeList:
-                    {
-                        StringList *valueList = strLstNewVarLst(cfgOptionLst(optionId));
-
-                        strCat(result, "{");
-
-                        for (unsigned int listIdx = 0; listIdx < strLstSize(valueList); listIdx++)
+                        case cfgDefOptTypeString:
                         {
-                            if (listIdx != 0)
-                                strCat(result, ",");
-
-                            strCatFmt(result, "\"%s\":true", strPtr(strLstGet(valueList, listIdx)));
+                            strCatFmt(result, "\"%s\"", strPtr(cfgOptionStr(optionId)));
+                            break;
                         }
 
-                        strCat(result, "}");
+                        case cfgDefOptTypeHash:
+                        {
+                            const KeyValue *valueKv = cfgOptionKv(optionId);
+                            const VariantList *keyList = kvKeyList(valueKv);
 
-                        break;
+                            strCat(result, "{");
+
+                            for (unsigned int listIdx = 0; listIdx < varLstSize(keyList); listIdx++)
+                            {
+                                if (listIdx != 0)
+                                    strCat(result, ",");
+
+                                strCatFmt(
+                                    result, "\"%s\":\"%s\"", strPtr(varStr(varLstGet(keyList, listIdx))),
+                                    strPtr(varStr(kvGet(valueKv, varLstGet(keyList, listIdx)))));
+                            }
+
+                            strCat(result, "}");
+
+                            break;
+                        }
+
+                        case cfgDefOptTypeList:
+                        {
+                            StringList *valueList = strLstNewVarLst(cfgOptionLst(optionId));
+
+                            strCat(result, "{");
+
+                            for (unsigned int listIdx = 0; listIdx < strLstSize(valueList); listIdx++)
+                            {
+                                if (listIdx != 0)
+                                    strCat(result, ",");
+
+                                strCatFmt(result, "\"%s\":true", strPtr(strLstGet(valueList, listIdx)));
+                            }
+
+                            strCat(result, "}");
+
+                            break;
+                        }
                     }
                 }
             }
