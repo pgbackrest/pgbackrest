@@ -440,18 +440,6 @@ testRun()
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--archive-queue-max=4503599627370496"));
-        strLstAdd(argList, strNew("archive-push"));
-
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "archive-push command");
-
-        TEST_RESULT_INT(cfgOptionInt64(cfgOptArchiveQueueMax), 4503599627370496, "archive-queue-max is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptArchiveQueueMax), cfgSourceParam, "    archive-queue-max is source config");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--recovery-option=a"));
         strLstAdd(argList, strNew("--stanza=db"));
