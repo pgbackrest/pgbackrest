@@ -692,7 +692,7 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
-                        'Archive/Push/Async' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/Async' => TESTDEF_COVERAGE_PARTIAL,
                         'Archive/Push/File' => TESTDEF_COVERAGE_FULL,
                         'Protocol/Local/Master' => TESTDEF_COVERAGE_FULL,
                         'Protocol/Local/Minion' => TESTDEF_COVERAGE_PARTIAL,
