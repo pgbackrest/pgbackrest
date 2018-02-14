@@ -202,8 +202,8 @@ sub run
         {
             $strCommand =
                 'docker exec -i -u ' . TEST_USER . " ${strImage}" .
-                " valgrind -q --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress --leak-check=full" .
-                " --leak-resolution=high" .
+                " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
+                " --leak-check=full --leak-resolution=high" .
                 " $self->{strGCovPath}/test";
         }
         else
