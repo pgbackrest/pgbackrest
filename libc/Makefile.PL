@@ -96,7 +96,7 @@ my @stryCFile =
     'config/define.c',
     'config/load.c',
     'config/parse.c',
-    'perl/exec.c',
+    'perl/config.c',
     'postgres/pageChecksum.c',
     'storage/helper.c',
     'storage/storage.c',

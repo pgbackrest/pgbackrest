@@ -25,6 +25,7 @@ pgbackrest: \
 		config/define.o \
 		config/load.o \
 		config/parse.o \
+		perl/config.o \
 		perl/exec.o \
 		storage/helper.o \
 		storage/storage.o \
@@ -52,6 +53,7 @@ pgbackrest: \
 		config/define.o \
 		config/load.o \
 		config/parse.o \
+		perl/config.o \
 		perl/exec.o \
 		storage/helper.o \
 		storage/storage.o \

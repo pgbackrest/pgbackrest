@@ -389,6 +389,17 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'config',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'perl/config' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+
+                {
                     &TESTDEF_NAME => 'exec',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
