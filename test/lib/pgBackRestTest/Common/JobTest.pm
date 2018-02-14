@@ -179,8 +179,8 @@ sub run
                         "cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
                 }
 
-                # If testing Perl code install bin and Perl C Library
-                if (!$self->{oTest}->{&TEST_C})
+                # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
+                if (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ})
                 {
                     jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }

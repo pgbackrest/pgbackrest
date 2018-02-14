@@ -154,7 +154,7 @@
                     </release-item>
 
                     <release-item>
-                        <p>Only build C binary/library for Perl unit/integration tests.</p>
+                        <p>Only build C binary/library for Perl unit/integration tests or C unit tests that require Perl.</p>
                     </release-item>
 
                     <release-item>

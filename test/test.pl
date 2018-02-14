@@ -436,7 +436,7 @@ eval
         my $oyTestRun;
         my $bBuildRequired = false;
 
-        # Only get the test list if when they can run
+        # Only get the test list when they can run
         if (!$bBuildOnly)
         {
             # Get the test list
@@ -447,7 +447,7 @@ eval
             # all the tests are C unit tests then no builds are required.  This saves a lot ot time.
             foreach my $hTest (@{$oyTestRun})
             {
-                if (!$hTest->{&TESTDEF_C})
+                if (!$hTest->{&TEST_C} || $hTest->{&TEST_PERL_REQ})
                 {
                     $bBuildRequired = true;
                     last;
