@@ -1469,10 +1469,6 @@ static const struct option optionList[] =
         .name = "no-hardlink",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHardlink,
     },
-    {
-        .name = "reset-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptRepoHardlink,
-    },
 
     // repo-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1733,10 +1729,6 @@ static const struct option optionList[] =
     {
         .name = "no-repo-s3-verify-ssl",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifySsl,
-    },
-    {
-        .name = "reset-repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptRepoS3VerifySsl,
     },
 
     // repo-type option and deprecations

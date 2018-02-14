@@ -211,7 +211,6 @@ use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-time
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many repositories can be configured
 use constant CFGDEF_INDEX_REPO                                      => 1;
-    push @EXPORT, qw(CFGDEF_INDEX_PG);
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
@@ -1221,7 +1220,7 @@ my %hConfigDefine =
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_NAME_ALT =>
         {
-            'hardlink' => {},
+            'hardlink' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
@@ -1479,7 +1478,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => true,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1},
+            'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
