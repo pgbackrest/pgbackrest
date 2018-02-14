@@ -162,6 +162,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Report coverage errors via the console.  This helps with debugging coverage issues on remote services like Travis.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>No longer run <id>master</id> branch through CI. The <id>integration</id> branch will be run through CI and then pushed to <id>master</id> with github status checks.</p>
                     </release-item>
 
