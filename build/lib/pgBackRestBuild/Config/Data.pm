@@ -1903,6 +1903,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1940,6 +1941,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -2006,6 +2008,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
@@ -2044,6 +2047,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_DEFAULT => 5432,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_NAME_ALT =>
@@ -2141,14 +2145,8 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_INTERNAL} = false;
     }
 
-    # Set index total for pg-*
-    if (defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) &&
-        $hConfigDefine{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_PG)
-    {
-        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_PG;
-    }
-    # Else default index total is 1
-    else
+    # Set index total for any option where it has not been explicitly defined
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }
