@@ -36,10 +36,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <br-option>perl-bin</br-option> option to specify the Perl binary location when <file>/usr/bin/env perl</file> won't work.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
                     </release-item>
 

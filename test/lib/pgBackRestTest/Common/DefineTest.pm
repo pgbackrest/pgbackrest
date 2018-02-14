@@ -406,6 +406,7 @@ my $oTestDef =
                     &TESTDEF_NAME => 'exec',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
+                    &TESTDEF_PERL_REQ => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -693,15 +694,15 @@ my $oTestDef =
                     {
                         'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
                         'Archive/Push/Async' => TESTDEF_COVERAGE_PARTIAL,
-                        'Archive/Push/File' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/File' => TESTDEF_COVERAGE_PARTIAL,
                         'Protocol/Local/Master' => TESTDEF_COVERAGE_FULL,
-                        'Protocol/Local/Minion' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
                     &TESTDEF_NAME => 'push',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
+                    &TESTDEF_PERL_REQ => true,
 
                     &TESTDEF_COVERAGE =>
                     {

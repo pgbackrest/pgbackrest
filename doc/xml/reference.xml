@@ -183,15 +183,6 @@
                         <example>/backup/db/spool</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - PERL-BIN -->
-                    <config-key id="perl-bin" name="Perl Binary">
-                        <summary>Path of Perl binary.</summary>
-
-                        <text>Path of the Perl binary if <file>/usr/bin/env perl</file> won't work.</text>
-
-                        <example>/usr/bin/perl</example>
-                    </config-key>
-
                     <!-- CONFIG - GENERAL SECTION - PROCESS-MAX -->
                     <config-key id="process-max" name="Process Maximum">
                         <summary>Max processes to use for compress/transfer.</summary>

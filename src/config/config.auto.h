@@ -14,7 +14,7 @@ Command constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
-#define CFG_OPTION_TOTAL                                            140
+#define CFG_OPTION_TOTAL                                            139
 
 /***********************************************************************************************************************************
 Command enum
@@ -76,17 +76,16 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
-    cfgOptPerlBin,
     cfgOptPerlOption,
     cfgOptPgHost,
-    cfgOptPgHostCmd =                                               41,
-    cfgOptPgHostConfig =                                            49,
-    cfgOptPgHostPort =                                              57,
-    cfgOptPgHostUser =                                              65,
-    cfgOptPgPath =                                                  73,
-    cfgOptPgPort =                                                  81,
-    cfgOptPgSocketPath =                                            89,
-    cfgOptProcess =                                                 97,
+    cfgOptPgHostCmd =                                               40,
+    cfgOptPgHostConfig =                                            48,
+    cfgOptPgHostPort =                                              56,
+    cfgOptPgHostUser =                                              64,
+    cfgOptPgPath =                                                  72,
+    cfgOptPgPort =                                                  80,
+    cfgOptPgSocketPath =                                            88,
+    cfgOptProcess =                                                 96,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRecoveryOption,

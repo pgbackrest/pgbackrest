@@ -334,7 +334,7 @@ sub containerBuild
                 "    yum -y update && \\\n" .
                 "    yum -y install openssh-server openssh-clients wget sudo python-pip build-essential valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-XML-LibXML perl-IO-Socket-SSL \\\n" .
-                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel";
+                "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed";
 
             if ($strOS eq VM_CO6)
             {
@@ -353,11 +353,11 @@ sub containerBuild
                 "    wget --no-check-certificate -O /root/get-pip.py https://bootstrap.pypa.io/get-pip.py && \\\n" .
                 "    python /root/get-pip.py && \\\n" .
                 "    apt-get -y install openssh-server wget sudo python-pip build-essential valgrind git \\\n" .
-                "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev";
+                "        libdbd-pg-perl libhtml-parser-perl libio-socket-ssl-perl libxml-libxml-perl libssl-dev libperl-dev";
 
-            if ($strOS eq VM_U14)
+            if ($strOS eq VM_U12)
             {
-                $strScript .= ' libnet-daemon-perl libplrpc-perl';
+                $strScript .= ' libperl5.14';
             }
         }
 

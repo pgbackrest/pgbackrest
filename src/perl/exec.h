@@ -4,13 +4,9 @@ Execute Perl for Legacy Functionality
 #ifndef PERL_EXEC_H
 #define PERL_EXEC_H
 
-#include "common/type.h"
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-String *perlOptionJson();
-StringList *perlCommand();
-void perlExec(StringList *perlArgList);
+void perlExec();
 
 #endif

@@ -85,8 +85,6 @@ testRun()
     // *****************************************************************************************************************************
     if (testBegin("cmdArchivePush()"))
     {
-        int processId = getpid();
-
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--archive-timeout=1");
@@ -104,11 +102,10 @@ testRun()
 
         // Test that a bogus perl bin generates the correct errors
         // -------------------------------------------------------------------------------------------------------------------------
-        String *perlBin = strNewFmt("%s/perl-test.sh", testPath());
-
-        strLstAdd(argList, strNewFmt("--perl-bin=%s", strPtr(perlBin)));
         strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
         strLstAddZ(argList, "--archive-async");
+        strLstAddZ(argList, "--log-level-console=off");
+        strLstAddZ(argList, "--log-level-stderr=off");
         cfgLoad(strLstSize(argList), strLstPtr(argList));
         logInit(logLevelInfo, logLevelOff, false);
 
@@ -120,51 +117,38 @@ testRun()
         }
         CATCH_ANY()
         {
-            // Exit with error if this is the child process
-            if (getpid() != processId)
-                exit(errorCode());
-
             // Check expected error on the parent process
             TEST_RESULT_INT(errorCode(), errorTypeCode(&AssertError), "error code matches after failed Perl exec");
-            TEST_RESULT_STR(errorMessage(), "perl exited with error 25", "error message matches after failed Perl exec");
+            TEST_RESULT_STR(errorMessage(), "perl exited with error 37", "error message matches after failed Perl exec");
         }
         TRY_END();
 
-        // Write a blank script for the perl bin and make sure the process times out
+        // Make sure the process times out when there is nothing to archive
         // -------------------------------------------------------------------------------------------------------------------------
-        Storage *storage = storageNew(strNew(testPath()), 0750, 65536, NULL);
-        storagePut(storage, perlBin, bufNewStr(strNew("")));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        cfgLoad(strLstSize(argList), strLstPtr(argList));
+        logInit(logLevelInfo, logLevelOff, false);
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
             "unable to push WAL segment '000000010000000100000001' asynchronously after 1 second(s)");
 
-        // Write out a bogus .error file to make sure it is ignored on the first loop.  The perl bin will write the real one when it
-        // executes.
+        // Write out a bogus .error file to make sure it is ignored on the first loop
         // -------------------------------------------------------------------------------------------------------------------------
         String *errorFile = storagePath(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error"));
 
         mkdir(strPtr(strNewFmt("%s/archive", testPath())), 0750);
         mkdir(strPtr(strNewFmt("%s/archive/db", testPath())), 0750);
         mkdir(strPtr(strNewFmt("%s/archive/db/out", testPath())), 0750);
-        storagePut(storageSpool(), errorFile, bufNewStr(strNew("")));
+        storagePut(storageSpool(), errorFile, bufNewStr(strNew("25\n" BOGUS_STR)));
 
-        storagePut(storage, perlBin, bufNewStr(strNewFmt(
-            "set -e\n"
-            "echo '25' > %s\n"
-            "echo 'generic error message' >> %s\n",
-            strPtr(errorFile), strPtr(errorFile))));
-
-        TEST_ERROR(cmdArchivePush(), AssertError, "generic error message");
+        TEST_ERROR(cmdArchivePush(), AssertError, BOGUS_STR);
 
         unlink(strPtr(errorFile));
 
-        // Modify script to write out a valid ok file
+        // Write out a valid ok file and test for success
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePut(storage, perlBin, bufNewStr(strNewFmt(
-            "set -e\n"
-            "touch %s\n",
-            strPtr(storagePath(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"))))));
+        storagePut(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok"), bufNewStr(strNew("")));
 
         TEST_RESULT_VOID(cmdArchivePush(), "successful push");
         testLogResult("P00   INFO: pushed WAL segment 000000010000000100000001 asynchronously");

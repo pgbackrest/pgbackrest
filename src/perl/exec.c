@@ -14,73 +14,91 @@ Execute Perl for Legacy Functionality
 #include "config/config.h"
 #include "perl/config.h"
 
+#if __GNUC__ > 4 || (__GNUC__ == 4 &&  __GNUC_MINOR__ >= 8)
+    #define WARNING_PEDANTIC 1
+#endif
+
+#if WARNING_PEDANTIC
+    #pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
+#ifndef HAS_BOOL
+#  define HAS_BOOL 1
+#endif
+
+#include <EXTERN.h>
+#include <perl.h>
+
+#if WARNING_PEDANTIC
+    #pragma GCC diagnostic warning "-Wpedantic"
+#endif
+
 /***********************************************************************************************************************************
 Constants used to build perl options
 ***********************************************************************************************************************************/
-#define PERL_EXE                                                    "perl"
-#define ENV_EXE                                                     "/usr/bin/env"
-
-#define PARAM_PERL_OPTION                                           "perl-option"
-
 #define PGBACKREST_MODULE                                           PGBACKREST_NAME "::Main"
 #define PGBACKREST_MAIN                                             PGBACKREST_MODULE "::main"
 
 /***********************************************************************************************************************************
-Build list of perl options to use for exec
+Build list of parameters to use for perl main
 ***********************************************************************************************************************************/
-StringList *
-perlCommand()
+String *
+perlMain()
 {
-    // Begin arg list for perl exec
-    StringList *perlArgList = strLstNew();
-
-    // Use specific perl bin if passed
-    if (cfgOption(cfgOptPerlBin) != NULL)
-        strLstAdd(perlArgList, strDup(cfgOptionStr(cfgOptPerlBin)));
-    // Otherwise use env to find it
-    else
-    {
-        strLstAdd(perlArgList, strNew(ENV_EXE));
-        strLstAdd(perlArgList, strNew(PERL_EXE));
-    }
-
     // Add command arguments to pass to main
     String *commandParam = strNew("");
 
     for (unsigned int paramIdx = 0; paramIdx < strLstSize(cfgCommandParam()); paramIdx++)
         strCatFmt(commandParam, ",'%s'", strPtr(strLstGet(cfgCommandParam(), paramIdx)));
 
-    // Add Perl options
-    StringList *perlOptionList = strLstNewVarLst(cfgOptionLst(cfgOptPerlOption));
-
-    if (perlOptionList != NULL)
-        for (unsigned int argIdx = 0; argIdx < strLstSize(perlOptionList); argIdx++)
-            strLstAdd(perlArgList, strLstGet(perlOptionList, argIdx));
-
     // Construct Perl main call
     String *mainCall = strNewFmt(
         PGBACKREST_MAIN "('%s','%s','%s'%s)", strPtr(cfgExe()), cfgCommandName(cfgCommand()), strPtr(perlOptionJson()),
         strPtr(commandParam));
 
-    // End arg list for perl exec
-    strLstAdd(perlArgList, strNew("-M" PGBACKREST_MODULE));
-    strLstAdd(perlArgList, strNew("-e"));
-    strLstAdd(perlArgList, mainCall);
-    strLstAdd(perlArgList, NULL);
-
-    return perlArgList;
+    return mainCall;
 }
 
 /***********************************************************************************************************************************
-Exec supplied Perl options
+Init the dynaloader so other C modules can be loaded
+***********************************************************************************************************************************/
+EXTERN_C void boot_DynaLoader (pTHX_ CV* cv);
+
+static void xs_init(pTHX)
+{
+    const char *file = __FILE__;
+    dXSUB_SYS;
+    PERL_UNUSED_CONTEXT;
+
+    /* DynaLoader is a special case */
+    newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+}
+
+/***********************************************************************************************************************************
+Execute main function in Perl
 ***********************************************************************************************************************************/
 void
-perlExec(StringList *perlArgList)
+perlExec()
 {
-    // Exec perl with supplied arguments
-    execvp(strPtr(strLstGet(perlArgList, 0)), (char **)strLstPtr(perlArgList));
+    // Initialize Perl with dummy args and environment
+    int argc = 1;
+    const char *argv[1] = {strPtr(cfgExe())};
+    const char *env[1] = {NULL};
+    PERL_SYS_INIT3(&argc, (char ***)&argv, (char ***)&env);
 
-    // The previous command only returns on error so throw it
-    int errNo = errno;
-    THROW(AssertError, "unable to exec %s: %s", strPtr(strLstGet(perlArgList, 0)), strerror(errNo));
+    // Create the interpreter
+    const char *embedding[] = {"", "-M"PGBACKREST_MODULE, "-e", "0"};
+    PerlInterpreter *my_perl = perl_alloc();
+    perl_construct(my_perl);
+
+    // Don't let $0 assignment update the proctitle or embedding[0]
+    PL_origalen = 1;
+
+    // Start the interpreter
+    perl_parse(my_perl, xs_init, 3, (char **)embedding, NULL);
+    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+    perl_run(my_perl);
+
+    // Run perl main function
+    eval_pv(strPtr(perlMain()), TRUE);
 }                                                                   // {uncoverable - perlExec() does not return}

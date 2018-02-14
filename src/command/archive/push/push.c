@@ -146,7 +146,7 @@ cmdArchivePush()
                         // Only want to see warnings and errors from async process
                         cfgOptionSet(cfgOptLogLevelConsole, cfgSourceParam, varNewStrZ("warn"));
 
-                        perlExec(perlCommand());
+                        perlExec();
                     }
                     // Wait for async process to exit (this should happen quickly) and report any errors
                     else

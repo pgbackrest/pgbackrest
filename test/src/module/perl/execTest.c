@@ -13,19 +13,15 @@ testRun()
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("perlMain()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
         cfgCommandSet(cfgCmdInfo);
         cfgExeSet(strNew("/path/to/pgbackrest"));
-        cfgOptionSet(cfgOptPerlBin, cfgSourceParam, varNewStrZ("/usr/bin/perl"));
 
         TEST_RESULT_STR(
-            strPtr(strLstJoin(perlCommand(), "|")),
-            "/usr/bin/perl|-MpgBackRest::Main|-e|pgBackRest::Main::main('/path/to/pgbackrest','info','{}')|[NULL]",
-            "custom command with no options");
+            strPtr(perlMain()), "pgBackRest::Main::main('/path/to/pgbackrest','info','{}')", "command with no options");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(cfgOptPerlBin, cfgSourceParam, NULL);
-
         cfgOptionValidSet(cfgOptCompress, true);
         cfgOptionSet(cfgOptCompress, cfgSourceParam, varNewBool(true));
 
@@ -34,27 +30,39 @@ testRun()
         strLstAdd(commandParamList, strNew("B"));
         cfgCommandParamSet(commandParamList);
 
-        cfgOptionValidSet(cfgOptPerlOption, true);
-        StringList *perlList = strLstNew();
-        strLstAdd(perlList, strNew("-I."));
-        strLstAdd(perlList, strNew("-MDevel::Cover=-silent,1"));
-        cfgOptionSet(cfgOptPerlOption, cfgSourceParam, varNewVarLst(varLstNewStrLst(perlList)));
-
         TEST_RESULT_STR(
-            strPtr(strLstJoin(perlCommand(), "|")),
-            "/usr/bin/env|perl|-I.|-MDevel::Cover=-silent,1|-MpgBackRest::Main|-e|pgBackRest::Main::main("
-            "'/path/to/pgbackrest','info','{"
-            "\"compress\":{\"source\":\"param\",\"value\":true},"
-            "\"perl-option\":{\"source\":\"param\",\"value\":{\"-I.\":true,\"-MDevel::Cover=-silent,1\":true}}"
-            "}','A','B')|[NULL]",
+            strPtr(perlMain()),
+            "pgBackRest::Main::main('/path/to/pgbackrest','info','{\"compress\":{\"source\":\"param\",\"value\":true}}','A','B')",
             "command with one option and params");
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
     if (testBegin("perlExec()"))
     {
-        StringList *param = strLstAdd(strLstAdd(strLstNew(), strNew(BOGUS_STR)), NULL);
+        StringList *argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-console=off"));
+        strLstAdd(argList, strNew("--log-level-stderr=off"));
+        strLstAdd(argList, strNew("archive-push"));
 
-        TEST_ERROR(perlExec(param), AssertError, "unable to exec BOGUS: No such file or directory");
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load archive-push config");
+
+        int processId = 0;
+
+        if ((processId = fork()) == 0)
+        {
+            perlExec();
+        }
+        // Wait for async process to exit (this should happen quickly) and report any errors
+        else
+        {
+            int processStatus;
+
+            THROW_ON_SYS_ERROR(
+                waitpid(processId, &processStatus, 0) != processId, AssertError, "unable to find perl child process");
+
+            TEST_RESULT_INT(WEXITSTATUS(processStatus), errorTypeCode(&ParamRequiredError), "check error code");
+        }
     }
 }
