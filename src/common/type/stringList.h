@@ -33,7 +33,7 @@ StringList *strLstNewSplitSizeZ(const String *string, const char *delimiter, siz
 StringList *strLstNewVarLst(const VariantList *sourceList);
 StringList *strLstDup(const StringList *sourceList);
 
-StringList *strLstAdd(StringList *this, String *string);
+StringList *strLstAdd(StringList *this, const String *string);
 StringList *strLstAddZ(StringList *this, const char *string);
 String *strLstGet(const StringList *this, unsigned int listIdx);
 String *strLstJoin(const StringList *this, const char *separator);
