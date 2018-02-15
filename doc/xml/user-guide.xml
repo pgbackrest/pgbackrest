@@ -100,7 +100,7 @@
         <variable key="host-pg-standby-image">{[host-pg-primary-image]}</variable>
         <variable key="host-pg-standby-mount">{[host-mount]}</variable>
 
-        <variable key="host-backup">backup</variable>
+        <variable key="host-backup">repository</variable>
         <variable key="host-backup-user">{[host-user]}</variable>
         <variable key="host-backup-image">{[image-repo]}:{[host-os]}-base</variable>
         <variable key="host-backup-mount">{[host-mount]}</variable>
@@ -396,12 +396,12 @@
 
     <!-- SECTION => UPGRADING -->
     <section id="upgrading">
-        <title>Upgrading</title>
+        <title>Upgrading {[project]}</title>
 
         <section id="v1-v2">
-            <title>Upgrading from v1 to v2</title>
+            <title>Upgrading {[project]} from v1 to v2</title>
 
-            <p>Upgrading from v1 to v2 is fairly straight-forward.  The repository format has not changed and all non-deprecated options from v1 are accepted, so for most installations it is simply a matter of installing the new version.</p>
+            <p>Upgrading from 1.xx (v1) to 2.xx (v2) is fairly straight-forward.  The repository format has not changed and all non-deprecated options from v1 are accepted, so for most installations it is simply a matter of installing the new version.</p>
 
             <p>However, there are a few caveats:</p>
 
@@ -624,7 +624,7 @@
         </section>
 
         <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
-        <!-- Since S3 and backup host require configure-archiving, this section must come after. -->
+        <!-- Since S3 and repository host require configure-archiving, this section must come after. -->
         <section id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
@@ -1585,7 +1585,7 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => BACKUP HOST -->
+    <!-- SECTION => REPOSITORY HOST -->
     <section id="delete-stanza" depend="/quickstart/create-stanza">
         <title>Delete a Stanza</title>
 
@@ -1622,16 +1622,16 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => BACKUP HOST -->
-    <section id="backup-host" depend="/quickstart/configure-archiving">
-        <title>Dedicated Backup Host</title>
+    <!-- SECTION => REPOSITORY HOST -->
+    <section id="repo-host" depend="/quickstart/configure-archiving">
+        <title>Dedicated Repository Host</title>
 
-        <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>backup</host> host.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>backup</host> host.</p>
+        <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored.  This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact.  It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
 
         <section id="install">
             <title>Installation</title>
 
-            <p>A new host named <host>backup</host> is created to store the cluster backups.</p>
+            <p>A new host named <host>repository</host> is created to store the cluster backups.</p>
 
             <host-add name="{[host-backup]}" user="{[host-backup-user]}" image="{[host-backup-image]}" os="{[host-os]}" mount="{[host-backup-mount]}"/>
 
@@ -1688,7 +1688,7 @@
             </block>
         </section>
 
-        <!-- SECTION => BACKUP HOST - INSTALL/CONFIGURE -->
+        <!-- SECTION => REPOSITORY HOST - INSTALL/CONFIGURE -->
         <section id="config">
             <title>Configuration</title>
 
@@ -1698,7 +1698,7 @@
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>The <host>backup</host> host must be configured with the <host>pg-primary</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
+            <p>The <host>repository</host> host must be configured with the <host>pg-primary</host> host/user and database path.  The primary will be configured as <id>db1</id> to allow a standby to be added later.</p>
 
             <backrest-config host="{[host-backup]}" owner="pgbackrest:postgres" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
@@ -1714,7 +1714,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p>The database host must be configured with the backup host/user.  The default for the <br-option>backup-user</br-option> option is <id>backrest</id>.  If the <id>postgres</id> user does restores on the backup host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>backrest</id> user.</p>
+            <p>The database host must be configured with the repository host/user.  The default for the <br-option>repo1-host-user</br-option> option is <id>pgbackrest</id>.  If the <id>postgres</id> user does restores on the repository host it is best not to also allow the <id>postgres</id> user to perform backups.  However, the <id>postgres</id> user can read the repository directly if it is in the same group as the <id>pgbackrest</id> user.</p>
 
             <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}" reset="y">
                 <title>Configure <br-option>repo1-host</br-option>/<br-option>repo1-host-user</br-option></title>
@@ -1729,7 +1729,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>backup</host> host instead of the <host>database</host> host.</p>
+            <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>repository</host> host instead of the <host>database</host> host.</p>
 
             <p>Create the stanza in the new repository.</p>
 
@@ -1741,7 +1741,7 @@
                 </execute>
             </execute-list>
 
-            <p>Check that the configuration is correct on both the <host>database</host> and <host>backup</host> hosts. More information about the <cmd>check</cmd> command can be found in <link section="/quickstart/check-configuration">Check the Configuration</link>.</p>
+            <p>Check that the configuration is correct on both the <host>database</host> and <host>repository</host> hosts. More information about the <cmd>check</cmd> command can be found in <link section="/quickstart/check-configuration">Check the Configuration</link>.</p>
 
             <execute-list host="{[host-pg-primary]}">
                 <title>Check the configuration</title>
@@ -1760,11 +1760,11 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => BACKUP HOST - PERFORM BACKUP -->
+        <!-- SECTION => REPOSITORY HOST - PERFORM BACKUP -->
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
-            <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command on the <host>backup</host> host.</p>
+            <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command on the <host>repository</host> host.</p>
 
             <execute-list host="{[host-backup]}">
                 <title>Backup the {[postgres-cluster-demo]} cluster</title>
@@ -1774,10 +1774,10 @@
                 </execute>
             </execute-list>
 
-            <p>Since a new repository was created on the <host>backup</host> host the warning about the incremental backup changing to a full backup was emitted.</p>
+            <p>Since a new repository was created on the <host>repository</host> host the warning about the incremental backup changing to a full backup was emitted.</p>
         </section>
 
-        <!-- SECTION => BACKUP HOST - PERFORM RESTORE -->
+        <!-- SECTION => REPOSITORY HOST - PERFORM RESTORE -->
         <section id="perform-restore">
             <title>Restore a Backup</title>
 
@@ -1814,7 +1814,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => BACKUP HOST - ASYNCHRONOUS ARCHIVING -->
+        <!-- SECTION => REPOSITORY HOST - ASYNCHRONOUS ARCHIVING -->
         <section id="async-archiving" depend="config">
             <title>Asynchronous Archiving</title>
 
@@ -1885,7 +1885,7 @@
     </section>
 
     <!-- SECTION => PARALLEL BACKUP-RESTORE -->
-    <section id="parallel-backup-restore" depend="backup-host/config">
+    <section id="parallel-backup-restore" depend="repo-host/config">
         <title>Parallel Backup / Restore</title>
 
         <p><backrest/> offers parallel processing to improve performance of compression and transfer. The number of processes to be used for this feature is set using the <br-option>--process-max</br-option> option.</p>
@@ -1938,7 +1938,7 @@
     </section>
 
     <!-- SECTION => START/STOP -->
-    <section id="start-stop" depend="/backup-host/config">
+    <section id="start-stop" depend="/repo-host/config">
         <title>Starting and Stopping</title>
 
         <p>Sometimes it is useful to prevent <backrest/> from running on a system.  For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed.  This will also prevent <backrest/> from running on <id>cron</id>.</p>
@@ -2015,7 +2015,7 @@
     </section>
 
     <!-- SECTION => REPLICATION -->
-    <section id="replication" depend="/backup-host/perform-backup">
+    <section id="replication" depend="/repo-host/perform-backup">
         <title>Replication</title>
 
         <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary.  The standbys are useful for balancing reads and to provide redundancy in case the primary host fails.</p>
@@ -2599,7 +2599,7 @@
             </execute>
         </execute-list>
 
-        <p>Run the <cmd>check</cmd> on the backup host. The warning regarding the standby being down is expected since the standby cluster is down. Running this command demonstrates that the backup server is aware of the standby and is configured properly for the primary server.</p>
+        <p>Run the <cmd>check</cmd> on the repository host. The warning regarding the standby being down is expected since the standby cluster is down. Running this command demonstrates that the repository server is aware of the standby and is configured properly for the primary server.</p>
 
         <execute-list host="{[host-backup]}">
             <title>Check configuration</title>
