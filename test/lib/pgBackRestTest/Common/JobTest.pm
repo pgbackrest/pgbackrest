@@ -179,8 +179,8 @@ sub run
                         "cp -r $self->{strBackRestBase}/test/src/*  $self->{strGCovPath}");
                 }
 
-                # If testing Perl code install bin and Perl C Library
-                if (!$self->{oTest}->{&TEST_C})
+                # If testing Perl code (or C code that calls Perl code) install bin and Perl C Library
+                if (!$self->{oTest}->{&TEST_C} || $self->{oTest}->{&TEST_PERL_REQ})
                 {
                     jobInstallC($self->{strBackRestBase}, $self->{oTest}->{&TEST_VM}, $strImage);
                 }
@@ -202,8 +202,8 @@ sub run
         {
             $strCommand =
                 'docker exec -i -u ' . TEST_USER . " ${strImage}" .
-                " valgrind -q --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress --leak-check=full" .
-                " --leak-resolution=high" .
+                " valgrind -q --gen-suppressions=all --suppressions=$self->{strBackRestBase}/test/src/valgrind.suppress" .
+                " --leak-check=full --leak-resolution=high" .
                 " $self->{strGCovPath}/test";
         }
         else
@@ -325,8 +325,10 @@ sub run
                     "CC=gcc\n" .
                     "CFLAGS=-I. -std=c99 -fPIC -g \\\n" .
                     "       -Werror -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered" .
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') . "\n" .
-                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') . "\n" .
+                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{oTest}->{&TEST_VM} ne VM_U12 ? ' -Wpedantic' : '') . "\\\n" .
+                    "       `perl -MExtUtils::Embed -e ccopts`\n" .
+                    "LDFLAGS=-lcrypto" . (vmCoverage($self->{oTest}->{&TEST_VM}) ? " -lgcov" : '') .
+                        " `perl -MExtUtils::Embed -e ldopts`\n" .
                     'TESTFLAGS=' . ($self->{oTest}->{&TEST_CDEF} ? "$self->{oTest}->{&TEST_CDEF}" : '') .
                     "\n" .
                     "\nSRCS=" . join(' ', @stryCFile) . "\n" .

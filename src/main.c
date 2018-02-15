@@ -51,7 +51,7 @@ main(int argListSize, const char *argList[])
 
         // Execute Perl for commands not implemented in C
         // -------------------------------------------------------------------------------------------------------------------------
-        perlExec(perlCommand());
+        perlExec();
     }
     CATCH_ANY()
     {

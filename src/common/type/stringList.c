@@ -157,7 +157,7 @@ strLstDup(const StringList *sourceList)
 Wrapper for lstAdd()
 ***********************************************************************************************************************************/
 StringList *
-strLstAdd(StringList *this, String *string)
+strLstAdd(StringList *this, const String *string)
 {
     String *stringCopy = strDup(string);
     return (StringList *)lstAdd((List *)this, &stringCopy);

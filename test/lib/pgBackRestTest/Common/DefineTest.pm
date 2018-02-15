@@ -52,6 +52,9 @@ use constant TESTDEF_INDIVIDUAL                                     => 'individu
 # Total runs in the test
 use constant TESTDEF_TOTAL                                          => 'total';
     push @EXPORT, qw(TESTDEF_TOTAL);
+# Is Perl required for this C test?
+use constant TESTDEF_PERL_REQ                                       => 'perlReq';
+    push @EXPORT, qw(TESTDEF_PERL_REQ);
 # VMs that the test can run on
 use constant TESTDEF_VM                                             => 'vm';
     push @EXPORT, qw(TESTDEF_VM);
@@ -389,9 +392,21 @@ my $oTestDef =
             &TESTDEF_TEST =>
             [
                 {
+                    &TESTDEF_NAME => 'config',
+                    &TESTDEF_TOTAL => 1,
+                    &TESTDEF_C => true,
+
+                    &TESTDEF_COVERAGE =>
+                    {
+                        'perl/config' => TESTDEF_COVERAGE_FULL,
+                    },
+                },
+
+                {
                     &TESTDEF_NAME => 'exec',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
+                    &TESTDEF_PERL_REQ => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -678,16 +693,16 @@ my $oTestDef =
                     &TESTDEF_COVERAGE =>
                     {
                         'Archive/Push/Push' => TESTDEF_COVERAGE_FULL,
-                        'Archive/Push/Async' => TESTDEF_COVERAGE_FULL,
-                        'Archive/Push/File' => TESTDEF_COVERAGE_FULL,
+                        'Archive/Push/Async' => TESTDEF_COVERAGE_PARTIAL,
+                        'Archive/Push/File' => TESTDEF_COVERAGE_PARTIAL,
                         'Protocol/Local/Master' => TESTDEF_COVERAGE_FULL,
-                        'Protocol/Local/Minion' => TESTDEF_COVERAGE_PARTIAL,
                     },
                 },
                 {
                     &TESTDEF_NAME => 'push',
                     &TESTDEF_TOTAL => 2,
                     &TESTDEF_C => true,
+                    &TESTDEF_PERL_REQ => true,
 
                     &TESTDEF_COVERAGE =>
                     {
@@ -894,7 +909,8 @@ foreach my $hModule (@{$oTestDef->{&TESTDEF_MODULE}})
 
         # Resolve variables that can be set in the module or the test
         foreach my $strVar (
-            TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_VM)
+            TESTDEF_C, TESTDEF_CDEF, TESTDEF_CONTAINER, TESTDEF_EXPECT, TESTDEF_DB, TESTDEF_INDIVIDUAL, TESTDEF_PERL_REQ,
+            TESTDEF_VM)
         {
             $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                 $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

@@ -78,7 +78,6 @@ typedef enum
     cfgDefOptNeutralUmask,
     cfgDefOptOnline,
     cfgDefOptOutput,
-    cfgDefOptPerlBin,
     cfgDefOptPerlOption,
     cfgDefOptPgHost,
     cfgDefOptPgHostCmd,

@@ -122,7 +122,6 @@ testRun()
             "  --lock-path               path where lock files are stored\n"
             "                            [default=/tmp/pgbackrest]\n"
             "  --neutral-umask           use a neutral umask [default=y]\n"
-            "  --perl-bin                path of Perl binary\n"
             "  --process-max             max processes to use for compress/transfer\n"
             "                            [default=1]\n"
             "  --protocol-timeout        protocol timeout [default=1830]\n"
@@ -230,19 +229,20 @@ testRun()
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strPtr(strNewFmt(
-            "%s - 'archive-push' command - 'perl-bin' option help\n"
+            "%s - 'archive-push' command - 'repo1-s3-host' option help\n"
             "\n"
-            "Path of Perl binary.\n"
+            "S3 repository host.\n"
             "\n"
-            "Path of the Perl binary if /usr/bin/env perl won't work.\n",
+            "Connect to a host other than the end point. This is typically used for testing.\n",
             helpVersion));
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
-        strLstAddZ(argList, "perl-bin");
-        TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, perl-bin option");
+        strLstAddZ(argList, "repo1-s3-host");
+        TEST_RESULT_VOID(
+            configParse(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR(strPtr(helpRender()), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------

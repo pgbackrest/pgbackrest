@@ -1,5 +1,7 @@
 CC=gcc
-CFLAGS=-I. -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -std=c99 -O2 -funroll-loops -ftree-vectorize
+CFLAGS=-I. -Wfatal-errors -Wall -Wextra -Wwrite-strings -Wno-clobbered -std=c99 -O2 -funroll-loops -ftree-vectorize \
+	`perl -MExtUtils::Embed -e ccopts`
+LDFLAGS=`perl -MExtUtils::Embed -e ldopts`
 DESTDIR=
 
 pgbackrest: \
@@ -25,6 +27,7 @@ pgbackrest: \
 		config/define.o \
 		config/load.o \
 		config/parse.o \
+		perl/config.o \
 		perl/exec.o \
 		storage/helper.o \
 		storage/storage.o \
@@ -52,10 +55,12 @@ pgbackrest: \
 		config/define.o \
 		config/load.o \
 		config/parse.o \
+		perl/config.o \
 		perl/exec.o \
 		storage/helper.o \
 		storage/storage.o \
-		main.o
+		main.o \
+		$(LDFLAGS)
 
 install: pgbackrest
 	sudo install -d $(DESTDIR)/usr/bin

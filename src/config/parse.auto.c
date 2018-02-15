@@ -385,18 +385,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
     },
 
-    // perl-bin option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "perl-bin",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptPerlBin,
-    },
-    {
-        .name = "reset-perl-bin",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPerlBin,
-    },
-
     // perl-option option
     // -----------------------------------------------------------------------------------------------------------------------------
     {

@@ -1572,43 +1572,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("perl-bin")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("general")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Path of Perl binary.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Path of the Perl binary if /usr/bin/env perl won't work."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdLocal)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRemote)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
         CFGDEFDATA_OPTION_NAME("perl-option")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)

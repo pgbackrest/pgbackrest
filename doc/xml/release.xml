@@ -36,10 +36,6 @@
                     </release-item>
 
                     <release-item>
-                        <p>Add <br-option>perl-bin</br-option> option to specify the Perl binary location when <file>/usr/bin/env perl</file> won't work.</p>
-                    </release-item>
-
-                    <release-item>
                         <p>The C library is now required. This eliminates conditional loading and eases development of new library features.</p>
                     </release-item>
 
@@ -134,6 +130,14 @@
                      <release-item>
                          <p>List deprecated option names in documentation and command-line help.</p>
                      </release-item>
+
+                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="youatt.david"/>
+                        </release-item-contributor-list>
+
+                         <p>Clarify that S3 buckets must be created by the user.</p>
+                     </release-item>
                  </release-improvement-list>
 
                 <release-development-list>
@@ -154,11 +158,15 @@
                     </release-item>
 
                     <release-item>
-                        <p>Only build C binary/library for Perl unit/integration tests.</p>
+                        <p>Only build C binary/library for Perl unit/integration tests or C unit tests that require Perl.</p>
                     </release-item>
 
                     <release-item>
                         <p>Improve speed of C unit tests.  Preserve object files between tests and use a Makefile to avoid rebuilding object files.</p>
+                    </release-item>
+
+                    <release-item>
+                        <p>Report coverage errors via the console.  This helps with debugging coverage issues on remote services like Travis.</p>
                     </release-item>
 
                     <release-item>
@@ -4183,6 +4191,11 @@
         <contributor id="wilson.javier">
             <contributor-name-display>Javier Wilson</contributor-name-display>
             <contributor-id type="github">javierwilson</contributor-id>
+        </contributor>
+
+        <contributor id="youatt.david">
+            <contributor-name-display>David Youatt</contributor-name-display>
+            <contributor-id type="github">youattd</contributor-id>
         </contributor>
     </contributor-list>
 </doc>

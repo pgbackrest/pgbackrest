@@ -67,7 +67,6 @@ compress=n [default=3]
 [default=/etc/pgbackrest.conf]
   --lock-path               path where lock files are stored
 [default=/tmp/pgbackrest]
-  --perl-bin                path of Perl binary
   --protocol-timeout        protocol timeout [default=1830]
   --stanza                  defines the stanza [current=main]
 
@@ -164,7 +163,6 @@ compress=n [default=3]
 [default=/etc/pgbackrest.conf]
   --db-timeout              database query timeout [default=1800]
   --neutral-umask           use a neutral umask [default=y]
-  --perl-bin                path of Perl binary
   --protocol-timeout        protocol timeout [default=1830]
   --stanza                  defines the stanza
 

@@ -1,6 +1,18 @@
 {
-   ignore_libcrypto_leaks
-   Memcheck:Leak
-   ...
-   obj:*/libcrypto.so.*
+    ignore_libcrypto_leaks
+    Memcheck:Leak
+    ...
+    obj:*/libcrypto.so*
+}
+{
+    ignore_libperl_leaks
+    Memcheck:Leak
+    ...
+    obj:*/libperl.so*
+}
+{
+    ignore_libperl_uninit_cond_jump
+    Memcheck:Cond
+    ...
+    obj:*/libperl.so*
 }

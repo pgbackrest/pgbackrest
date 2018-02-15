@@ -411,8 +411,6 @@
                 <list-item>The deprecated <br-option>archive-max-mb</br-option> option is no longer valid.  This has been replaced with the <br-option>archive-queue-max</br-option> option which has different semantics.</list-item>
 
                 <list-item>The default for the <br-option>backup-user</br-option> option has changed from <id>backrest</id> to <id>pgbackrest</id>.</list-item>
-
-                <list-item>Perl is executed using <file>/usr/bin/env perl</file> instead of <file>/usr/bin/perl</file>.  The <br-option>perl-bin</br-option> option can be used to specify a perl binary if the default behavior is not working.</list-item>
             </list>
 
             <p>Many option names have changed to improve consistency although the old names from v1 are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
@@ -1527,7 +1525,7 @@
     <section id="s3-support" depend="/quickstart/configure-archiving">
         <title>S3 Support</title>
 
-        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.</p>
+        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.</p>
 
         <backrest-config host="{[host-pg-primary]}" show="n" file="{[backrest-config-demo]}">
             <title>Clear the cipher settings</title>
