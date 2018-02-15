@@ -130,6 +130,14 @@
                      <release-item>
                          <p>List deprecated option names in documentation and command-line help.</p>
                      </release-item>
+
+                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="youatt.david"/>
+                        </release-item-contributor-list>
+
+                         <p>Clarify that S3 buckets must be created by the user.</p>
+                     </release-item>
                  </release-improvement-list>
 
                 <release-development-list>
@@ -4183,6 +4191,11 @@
         <contributor id="wilson.javier">
             <contributor-name-display>Javier Wilson</contributor-name-display>
             <contributor-id type="github">javierwilson</contributor-id>
+        </contributor>
+
+        <contributor id="youatt.david">
+            <contributor-name-display>David Youatt</contributor-name-display>
+            <contributor-id type="github">youattd</contributor-id>
         </contributor>
     </contributor-list>
 </doc>

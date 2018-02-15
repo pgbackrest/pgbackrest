@@ -1525,7 +1525,7 @@
     <section id="s3-support" depend="/quickstart/configure-archiving">
         <title>S3 Support</title>
 
-        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.</p>
+        <p><backrest/> supports storing repositories in <proper>Amazon S3</proper>.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.</p>
 
         <backrest-config host="{[host-pg-primary]}" show="n" file="{[backrest-config-demo]}">
             <title>Clear the cipher settings</title>
