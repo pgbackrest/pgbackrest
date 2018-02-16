@@ -79,10 +79,13 @@ sub new
             {name => 'bCacheOnly', required => false},
         );
 
+    # Set the bin path
+    $self->{strBinPath} = abs_path(dirname($0));
+
     # Set the base path if it was not passed in
     if (!defined($self->{strDocPath}))
     {
-        $self->{strDocPath} = abs_path(dirname($0));
+        $self->{strDocPath} = $self->{strBinPath};
     }
 
     # Set cache file names

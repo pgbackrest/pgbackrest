@@ -8,10 +8,11 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 use English '-no_match_vars';
 
+use Cwd qw(abs_path);
 use Data::Dumper;
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 use File::Copy;
 use POSIX qw(strftime);
 use Storable qw(dclone);
@@ -93,8 +94,16 @@ sub process
 
     my $oRender = $self->{oManifest}->renderGet(RENDER_TYPE_PDF);
 
+    # Should the logo be pulled from the doc path or the bin path?
+    my $strLogoFile = "$self->{oManifest}{strDocPath}/resource/latex/cds-logo.eps";
+
+    if (!$self->{oManifest}->storage()->exists($strLogoFile))
+    {
+        $strLogoFile = "$self->{oManifest}{strBinPath}/resource/latex/cds-logo.eps";
+    }
+
     # Copy the logo
-    copy("$self->{oManifest}{strDocPath}/resource/latex/cds-logo.eps", "$self->{strLatexPath}/logo.eps")
+    copy($strLogoFile, "$self->{strLatexPath}/logo.eps")
         or confess &log(ERROR, "unable to copy logo");
 
     my $strLatex = $self->{oManifest}->variableReplace(
@@ -141,14 +150,35 @@ sub process
 
     $strLatex .= "\n% " . ('-' x 130) . "\n% End document\n% " . ('-' x 130) . "\n\\end{document}\n";
 
-    my $strLatexFileName = $self->{oManifest}->variableReplace("$self->{strLatexPath}/" . $$oRender{file} . '.tex');
+    # Get base name of output file to use for processing
+    (my $strLatexFileBase = basename($$oRender{file})) =~ s/\.[^.]+$//;
+    $strLatexFileBase = $self->{oManifest}->variableReplace($strLatexFileBase);
 
+    # Name of latex file to use for output and processing
+    my $strLatexFileName = $self->{oManifest}->variableReplace("$self->{strLatexPath}/" . $strLatexFileBase . '.tex');
+
+    # Output latex and build PDF
     $self->{oManifest}->storage()->put($strLatexFileName, $strLatex);
 
     executeTest("pdflatex -output-directory=$self->{strLatexPath} -shell-escape $strLatexFileName",
                 {bSuppressStdErr => true});
     executeTest("pdflatex -output-directory=$self->{strLatexPath} -shell-escape $strLatexFileName",
                 {bSuppressStdErr => true});
+
+    # Determine path of output file
+    my $strLatexOutputName = $oRender->{file};
+
+    if ($strLatexOutputName !~ /^\//)
+    {
+        $strLatexOutputName = abs_path($self->{strLatexPath} . "/" . $oRender->{file});
+    }
+
+    # Copy pdf file if is is not already in the correct place
+    if ($strLatexOutputName ne "$self->{strLatexPath}/" . $strLatexFileBase . '.pdf')
+    {
+        copy("$self->{strLatexPath}/" . $strLatexFileBase . '.pdf', $strLatexOutputName)
+            or confess &log(ERROR, "unable to copy pdf to " . $strLatexOutputName);
+    }
 
     # Return from function and log return values if any
     logDebugReturn($strOperation);
