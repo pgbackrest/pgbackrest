@@ -226,6 +226,7 @@
 <!ELEMENT code (#PCDATA)>
 <!ELEMENT code-block (#PCDATA|exe)*>
     <!ATTLIST code-block title CDATA "">
+    <!ATTLIST code-block type CDATA "">
 
 <!ELEMENT host (#PCDATA)>
 <!ELEMENT file (#PCDATA)>

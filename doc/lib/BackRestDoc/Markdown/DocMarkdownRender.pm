@@ -290,7 +290,14 @@ sub sectionProcess
                 $strMarkdown .= "\n_" . $oChild->paramGet('title') . "_:";
             }
 
-            $strMarkdown .= "\n```\n" . trim($oChild->valueGet()) . "\n```";
+            $strMarkdown .= "\n```";
+
+            if ($oChild->paramTest('type'))
+            {
+                $strMarkdown .= $oChild->paramGet('type');
+            }
+
+            $strMarkdown .= "\n" . trim($oChild->valueGet()) . "\n```";
         }
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
