@@ -146,6 +146,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve section source feature to not require a title or content.  The title will be pulled from the source document.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Deploy historical documentation to <path>prior</path> rather than the root directory.</p>
                     </release-item>
                 </release-development-list>

@@ -444,6 +444,15 @@ sub build
         {
             my $oSource = ${$self->{oManifest}->sourceGet($oNode->paramGet('source'))}{doc};
 
+            # Section should not already have title defined, it should come from the source doc
+            if ($oNode->nodeTest('title'))
+            {
+                confess &log(ERROR, "cannot specify title in section that sources another document");
+            }
+
+            # Set title from source doc's title
+            $oNode->nodeAdd('title')->textSet($oSource->paramGet('title'));
+
             foreach my $oSection ($oSource->nodeList('section'))
             {
                 push(@{${$oNode->{oDoc}}{children}}, $oSection->{oDoc});
@@ -451,6 +460,9 @@ sub build
 
             # Set path prefix to modify all section paths further down
             $strPathPrefix = $strPath;
+
+            # Remove source so it is not included again later
+            $oNode->paramSet('source', undef);
         }
     }
     # Build link
