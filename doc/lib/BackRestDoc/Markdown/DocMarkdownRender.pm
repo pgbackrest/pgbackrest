@@ -302,7 +302,7 @@ sub sectionProcess
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
         {
-            if (defined($strLastChild) && $strLastChild ne 'code-block')
+            if (defined($strLastChild) && $strLastChild ne 'code-block' && $strLastChild ne 'table')
             {
                 $strMarkdown .= "\n";
             }
@@ -357,7 +357,60 @@ sub sectionProcess
         {
             $strMarkdown = trim($strMarkdown) . "\n\n" . $self->sectionProcess($oChild, $iDepth + 1);
         }
-        # Check if the child can be processed by a parent
+        elsif ($oChild->nameGet() eq 'table')
+        {
+            my $oTableTitle;
+            if ($oChild->nodeTest('title'))
+            {
+                $oTableTitle = $oChild->nodeGet('title');
+            }
+
+            my $oHeader = $oChild->nodeGet('table-header');
+            my @oyColumn = $oHeader->nodeList('table-column');
+            if (defined($oTableTitle))
+            {
+                # Print the label (e.g. Table 1:) in front of the title if one exists
+                $strMarkdown .= "\n\n**" . ($oTableTitle->paramTest('label') ?
+                    ($oTableTitle->paramGet('label') . $self->processText($oTableTitle->textGet())) :
+                    $self->processText($oTableTitle->textGet())) . "**\n\n";
+            }
+            else
+            {
+                $strMarkdown .= "\n\n";
+            }
+
+            my ($strHeaderText, $strHeaderIndicator);
+
+            for (my $iColCellIdx = 0; $iColCellIdx < @oyColumn; $iColCellIdx++)
+            {
+                my $strAlign = $oyColumn[$iColCellIdx]->paramGet("align", false, 'left');
+
+                $strHeaderText .= $self->processText($oyColumn[$iColCellIdx]->textGet()) .
+                    (($iColCellIdx < @oyColumn - 1) ? " | " : "\n");
+                $strHeaderIndicator .= ($strAlign eq 'left' || $strAlign eq 'center') ? ":---" : "---";
+                $strHeaderIndicator .= ($strAlign eq 'right' || $strAlign eq 'center') ? "---:" : "";
+                $strHeaderIndicator .= ($iColCellIdx < @oyColumn - 1) ? " | " : "\n";
+            }
+
+            $strMarkdown .= $strHeaderText .$strHeaderIndicator;
+
+            # Build the rows
+            foreach my $oRow ($oChild->nodeGet('table-data')->nodeList('table-row'))
+            {
+                my @oRowCellList = $oRow->nodeList('table-cell');
+
+                for (my $iRowCellIdx = 0; $iRowCellIdx < @oRowCellList; $iRowCellIdx++)
+                {
+                    my $oRowCell = $oRowCellList[$iRowCellIdx];
+
+                    $strMarkdown .= $self->processText($oRowCell->textGet()) .
+                        (($iRowCellIdx < @oRowCellList -1) ? " | " : "");
+                }
+
+                $strMarkdown .= "\n";
+            }
+        }
+         # Check if the child can be processed by a parent
         else
         {
             # $self->sectionChildProcess($oSection, $oChild, $iDepth + 1);
