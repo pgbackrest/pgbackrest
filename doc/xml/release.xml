@@ -36,6 +36,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve S3 delete performance.  The constant <id>S3_BATCH_MAX</id> had been replaced with a hard-coded value of 2, probably during testing.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow any non-command-line option to be reset to default on the command-line.  This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
                     </release-item>
 
