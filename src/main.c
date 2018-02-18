@@ -17,6 +17,8 @@ Main
 int
 main(int argListSize, const char *argList[])
 {
+    bool error = false;
+
     TRY_BEGIN()
     {
         // Load the configuration
@@ -28,36 +30,36 @@ main(int argListSize, const char *argList[])
         if (cfgCommandHelp())
         {
             cmdHelp();
-            exit(0);
         }
 
         // Display version
         // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommand() == cfgCmdVersion)
+        else if (cfgCommand() == cfgCmdVersion)
         {
             printf(PGBACKREST_NAME " " PGBACKREST_VERSION "\n");
             fflush(stdout);
-            exit(0);
         }
 
         // Archive push command.  Currently only implements local operations of async archive push.
         // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommand() == cfgCmdArchivePush && cfgOptionBool(cfgOptArchiveAsync))
+        else if (cfgCommand() == cfgCmdArchivePush && cfgOptionBool(cfgOptArchiveAsync))
         {
             cmdBegin();
             cmdArchivePush();
-            exit(exitSafe(false));
         }
 
         // Execute Perl for commands not implemented in C
         // -------------------------------------------------------------------------------------------------------------------------
-        perlExec();
+        else
+        {
+            perlExec();
+        }
     }
     CATCH_ANY()
     {
-        exit(exitSafe(true));
+        error = true;
     }
     TRY_END();
 
-    exit(exitSafe(false));
+    return exitSafe(error);
 }
