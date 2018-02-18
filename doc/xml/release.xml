@@ -32,6 +32,10 @@
                     </release-item>
 
                     <release-item>
+                        <p>Improve performance of HTTPS client.  Buffering now takes the <code>pending</code> bytes on the socket into account (when present) rather than relying entirely on <code>select()</code>.  In some instances the final bytes would not be flushed until the connection was closed.</p>
+                    </release-item>
+
+                    <release-item>
                         <p>Allow any non-command-line option to be reset to default on the command-line.  This allows options in <file>pgbackrest.conf</file> to be reset to default which reduces the need to write new configuration files for specific needs.</p>
                     </release-item>
 
