@@ -4,7 +4,7 @@ Please provide the following information when submitting an issue (feature reque
 
 2. PostgreSQL version:
 
-3. Operating system/version - if you have more than one server (for example, a database server, a backup host server, one or more standbys), please specify each:
+3. Operating system/version - if you have more than one server (for example, a database server, a repository host server, one or more standbys), please specify each:
 
 4. Did you install pgBackRest from source or from a package?
 

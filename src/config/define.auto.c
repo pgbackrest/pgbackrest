@@ -51,9 +51,9 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
         (
             "The check command validates that pgBackRest and the archive_command setting are configured correctly for archiving "
                 "and backups. It detects misconfigurations, particularly in archiving, that result in incomplete backups because "
-                "required WAL segments did not reach the archive. The command can be run on the database or the backup host. The "
-                "command may also be run on the standby host, however, since pg_switch_xlog()/pg_switch_wal() cannot be performed "
-                "on the standby, the command will only test the repository configuration.\n"
+                "required WAL segments did not reach the archive. The command can be run on the database or the repository host. "
+                "The command may also be run on the standby host, however, since pg_switch_xlog()/pg_switch_wal() cannot be "
+                "performed on the standby, the command will only test the repository configuration.\n"
             "\n"
             "Note that pg_create_restore_point('pgBackRest Archive Check') and pg_switch_xlog()/pg_switch_wal() are called to "
                 "force PostgreSQL to archive a WAL segment. Restore points are only supported in PostgreSQL >= 9.1 so for older "
@@ -151,8 +151,8 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
             "To delete a stanza:\n"
             "\n"
             "* Shut down the PostgreSQL cluster associated with the stanza (or use --force to override).\n"
-            "* Run the stop command on the backup host (the host where the repository is mounted).\n"
-            "* Run the stanza-delete command on the backup host.\n"
+            "* Run the stop command on the repository host.\n"
+            "* Run the stanza-delete command on the repository host.\n"
             "\n"
             "Once the command successfully completes, it is the responsibility of the user to remove the stanza from all "
                 "pgBackRest configuration files."
@@ -167,8 +167,8 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
         CFGDEFDATA_COMMAND_HELP_DESCRIPTION
         (
             "Immediately after upgrading PostgreSQL to a newer major version, the pg-path for all pgBackRest configurations must "
-                "be set to the new database location and the stanza-upgrade run on the backup host. If the database is offline use "
-                "the --no-online option."
+                "be set to the new database location and the stanza-upgrade run on the repository host. If the database is offline "
+                "use the --no-online option."
         )
     )
 
@@ -1615,7 +1615,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host for operating remotely via SSH.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "Used for backups where the PostgreSQL host is different from the backup host."
+            "Used for backups where the PostgreSQL host is different from the repository host."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
