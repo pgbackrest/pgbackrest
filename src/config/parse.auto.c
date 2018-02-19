@@ -1560,6 +1560,74 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoPath,
     },
 
+    // repo-retention-archive option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-retention-archive",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionArchive,
+    },
+    {
+        .name = "reset-repo1-retention-archive",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionArchive,
+    },
+    {
+        .name = "retention-archive",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionArchive,
+    },
+
+    // repo-retention-archive-type option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-retention-archive-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionArchiveType,
+    },
+    {
+        .name = "reset-repo1-retention-archive-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionArchiveType,
+    },
+    {
+        .name = "retention-archive-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionArchiveType,
+    },
+
+    // repo-retention-diff option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-retention-diff",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionDiff,
+    },
+    {
+        .name = "reset-repo1-retention-diff",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionDiff,
+    },
+    {
+        .name = "retention-diff",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionDiff,
+    },
+
+    // repo-retention-full option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-retention-full",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoRetentionFull,
+    },
+    {
+        .name = "reset-repo1-retention-full",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoRetentionFull,
+    },
+    {
+        .name = "retention-full",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptRepoRetentionFull,
+    },
+
     // repo-s3-bucket option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -1749,54 +1817,6 @@ static const struct option optionList[] =
     {
         .name = "reset-resume",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptResume,
-    },
-
-    // retention-archive option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-archive",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRetentionArchive,
-    },
-    {
-        .name = "reset-retention-archive",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionArchive,
-    },
-
-    // retention-archive-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-archive-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRetentionArchiveType,
-    },
-    {
-        .name = "reset-retention-archive-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionArchiveType,
-    },
-
-    // retention-diff option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-diff",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRetentionDiff,
-    },
-    {
-        .name = "reset-retention-diff",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionDiff,
-    },
-
-    // retention-full option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-full",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRetentionFull,
-    },
-    {
-        .name = "reset-retention-full",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRetentionFull,
     },
 
     // set option

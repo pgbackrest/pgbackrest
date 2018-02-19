@@ -104,10 +104,10 @@ sub process
 
     my $oStorageRepo = storageRepo();
     my $strBackupClusterPath = $oStorageRepo->pathGet(STORAGE_REPO_BACKUP);
-    my $iFullRetention = cfgOption(CFGOPT_RETENTION_FULL, false);
-    my $iDifferentialRetention = cfgOption(CFGOPT_RETENTION_DIFF, false);
-    my $strArchiveRetentionType = cfgOption(CFGOPT_RETENTION_ARCHIVE_TYPE, false);
-    my $iArchiveRetention = cfgOption(CFGOPT_RETENTION_ARCHIVE, false);
+    my $iFullRetention = cfgOption(CFGOPT_REPO_RETENTION_FULL, false);
+    my $iDifferentialRetention = cfgOption(CFGOPT_REPO_RETENTION_DIFF, false);
+    my $strArchiveRetentionType = cfgOption(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE, false);
+    my $iArchiveRetention = cfgOption(CFGOPT_REPO_RETENTION_ARCHIVE, false);
 
     # Load the backup.info
     my $oBackupInfo = new pgBackRest::Backup::Info($oStorageRepo->pathGet(STORAGE_REPO_BACKUP));
@@ -118,7 +118,7 @@ sub process
         # Make sure iFullRetention is valid
         if (!looks_like_number($iFullRetention) || $iFullRetention < 1)
         {
-            confess &log(ERROR, 'retention-full must be a number >= 1');
+            confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . ' must be a number >= 1');
         }
 
         @stryPath = $oBackupInfo->list(backupRegExpGet(true));
@@ -154,11 +154,11 @@ sub process
         # Make sure iDifferentialRetention is valid
         if (!looks_like_number($iDifferentialRetention) || $iDifferentialRetention < 1)
         {
-            confess &log(ERROR, 'retention-diff must be a number >= 1');
+            confess &log(ERROR, cfgOptionName(CFGOPT_REPO_RETENTION_DIFF) . ' must be a number >= 1');
         }
 
         # Get a list of full and differential backups. Full are considered differential for the purpose of retention.
-        # Example: F1, D1, D2, F2 and retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
+        # Example: F1, D1, D2, F2 and repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
         @stryPath = $oBackupInfo->list(backupRegExpGet(true, true));
 
         if (@stryPath > $iDifferentialRetention)
@@ -212,7 +212,7 @@ sub process
     # If archive retention is still undefined, then ignore archiving
     if  (!defined($iArchiveRetention))
     {
-         &log(INFO, "option '" . cfgOptionName(CFGOPT_RETENTION_ARCHIVE) . "' is not set - archive logs will not be expired");
+         &log(INFO, "option '" . cfgOptionName(CFGOPT_REPO_RETENTION_ARCHIVE) . "' is not set - archive logs will not be expired");
     }
     else
     {

@@ -426,9 +426,9 @@ P00  DEBUG:     Common::Exit::exitSafe=>: iExitCode = 0
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - create first full backup  (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=2 --no-online --log-level-console=detail --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --retention-full=2 --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --repo1-retention-full=2 --stanza=db --start-fast --type=full
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum e40de8cea99dd469c3efb47f5f33a73c7390fb9c
@@ -438,7 +438,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --retention-archive=2 --retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --repo1-retention-archive=2 --repo1-retention-full=2 --stanza=db
 P00   INFO: remove archive path: [TEST_PATH]/backup/repo/archive/db/9.3-1
 P00   INFO: full backup total < 2 - using oldest full backup for 9.4-2 archive retention
 P00   INFO: expire command end: completed successfully
@@ -599,9 +599,9 @@ db-version="9.5"
 ------------------------------------------------------------------------------------------------------------------------------------
 
 diff backup - diff changed to full backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --retention-full=2 --no-online --log-level-console=detail --type=diff --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=2 --no-online --log-level-console=detail --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --retention-full=2 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --compress-level=3 --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-online --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-master/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --repo1-retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
 P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 488ba4b8b98acc510bce86b8f16e3c1ed9886a29
@@ -612,7 +612,7 @@ P01   INFO: backup file db-master:[TEST_PATH]/db-master/db/base/pg_xlog/archive_
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --retention-archive=2 --retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --config=[TEST_PATH]/backup/pgbackrest.conf --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=trace --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --pg1-host=db-master --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-master/pgbackrest.conf --pg1-host-user=[USER-1] --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/backup/repo --repo1-retention-archive=2 --repo1-retention-full=2 --stanza=db
 P00   INFO: remove archive path: [TEST_PATH]/backup/repo/archive/db/10.0-3
 P00   INFO: expire command end: completed successfully
 

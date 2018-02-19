@@ -970,6 +970,38 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME("repo1-retention-archive")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionArchive)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-retention-archive-type")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionArchiveType)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-retention-diff")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionDiff)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("repo1-retention-full")
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionFull)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME("repo1-s3-bucket")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Bucket)
@@ -1053,38 +1085,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME("resume")
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptResume)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("retention-archive")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRetentionArchive)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("retention-archive-type")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRetentionArchiveType)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("retention-diff")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRetentionDiff)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("retention-full")
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRetentionFull)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

@@ -81,7 +81,7 @@ full backup - backup from standby, failure to access at least one standby (db-ma
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - backup from standby (db-master host)
-> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --retention-full=1 --backup-standby --type=full --stanza=db backup
+> [CONTAINER-EXEC] db-master [BACKREST-BIN] --config=[TEST_PATH]/db-master/pgbackrest.conf --repo1-retention-full=1 --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

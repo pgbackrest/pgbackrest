@@ -82,6 +82,10 @@ Option constants
 #define CFGOPT_REPO_HOST_PORT                                       cfgOptRepoHostPort
 #define CFGOPT_REPO_HOST_USER                                       cfgOptRepoHostUser
 #define CFGOPT_REPO_PATH                                            cfgOptRepoPath
+#define CFGOPT_REPO_RETENTION_ARCHIVE                               cfgOptRepoRetentionArchive
+#define CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                          cfgOptRepoRetentionArchiveType
+#define CFGOPT_REPO_RETENTION_DIFF                                  cfgOptRepoRetentionDiff
+#define CFGOPT_REPO_RETENTION_FULL                                  cfgOptRepoRetentionFull
 #define CFGOPT_REPO_S3_BUCKET                                       cfgOptRepoS3Bucket
 #define CFGOPT_REPO_S3_CA_FILE                                      cfgOptRepoS3CaFile
 #define CFGOPT_REPO_S3_CA_PATH                                      cfgOptRepoS3CaPath
@@ -93,10 +97,6 @@ Option constants
 #define CFGOPT_REPO_S3_VERIFY_SSL                                   cfgOptRepoS3VerifySsl
 #define CFGOPT_REPO_TYPE                                            cfgOptRepoType
 #define CFGOPT_RESUME                                               cfgOptResume
-#define CFGOPT_RETENTION_ARCHIVE                                    cfgOptRetentionArchive
-#define CFGOPT_RETENTION_ARCHIVE_TYPE                               cfgOptRetentionArchiveType
-#define CFGOPT_RETENTION_DIFF                                       cfgOptRetentionDiff
-#define CFGOPT_RETENTION_FULL                                       cfgOptRetentionFull
 #define CFGOPT_SET                                                  cfgOptSet
 #define CFGOPT_SPOOL_PATH                                           cfgOptSpoolPath
 #define CFGOPT_STANZA                                               cfgOptStanza

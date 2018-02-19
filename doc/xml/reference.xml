@@ -207,7 +207,9 @@
             <config-section id="repository" name="Repository">
                 <text>The <setting>repository</setting> section defines options used to configure the repository.
 
-                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.</text>
+                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.
+
+                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if retention-full is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
@@ -276,6 +278,46 @@
                         It may be difficult to estimate in advance how much space you'll need.  The best thing to do is take some backups then record the size of different types of backups (full/incr/diff) and measure the amount of WAL generated per day.  This will give you a general idea of how much space you'll need, though of course requirements will likely change over time as your database evolves.</text>
 
                         <example>/backup/db/backrest</example>
+                    </config-key>
+
+                    <!-- CONFIG - RETENTION SECTION - REPO-FULL-RETENTION KEY -->
+                    <config-key id="repo-retention-full" name="Full Retention">
+                        <summary>Number of full backups to retain.</summary>
+
+                        <text>When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When the option is not defined a warning will be issued.  If indefinite retention is desired then set the option to the max value.</text>
+
+                        <example>2</example>
+                    </config-key>
+
+                    <!-- CONFIG - RETENTION SECTION - REPO-DIFFERENTIAL-RETENTION KEY -->
+                    <config-key id="repo-retention-diff" name="Differential Retention">
+                        <summary>Number of differential backups to retain.</summary>
+
+                        <text>When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept until the full backups they depend on expire.</text>
+
+                        <example>3</example>
+                    </config-key>
+
+                    <!-- CONFIG - RETENTION SECTION - REPO-ARCHIVE-RETENTION-TYPE KEY -->
+                    <config-key id="repo-retention-archive-type" name="Archive Retention Type">
+                        <summary>Backup type for WAL retention.</summary>
+
+                        <text>If set to <setting>full</setting> <backrest/> will keep archive logs for the number of full backups defined by <setting>repo-retention-archive</setting>.  If set to <setting>diff</setting> (differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>repo-retention-archive</setting>, meaning if the last backup taken was a full backup, it will be counted as a differential for the purpose of repo-retention.  If set to <setting>incr</setting> (incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>repo-retention-archive</setting>. It is recommended that this setting not be changed from the default which will only expire WAL in conjunction with expiring full backups.</text>
+
+                        <example>diff</example>
+                    </config-key>
+
+                    <!-- CONFIG - RETENTION SECTION - REPO-ARCHIVE-RETENTION KEY -->
+                    <config-key id="repo-retention-archive" name="Archive Retention">
+                        <summary>Number of backups worth of continuous WAL to retain.</summary>
+
+                        <text>Note that the WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.
+
+                        If this value is not set, then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
+
+                        This option must be set if <setting>repo-retention-archive-type</setting> is set to <setting>incr</setting>.  If disk space is at a premium, then this setting, in conjunction with <setting>repo-retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</text>
+
+                        <example>2</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-S3-KEY KEY -->
@@ -605,53 +647,6 @@
                         The path specified will be the parent path used to create all the tablespaces in the backup.</text>
 
                         <example>/data/tablespace</example>
-                    </config-key>
-                </config-key-list>
-            </config-section>
-
-            <!-- CONFIG - EXPIRE -->
-            <config-section id="expire" name="Expire">
-                <text>The <setting>expire</setting> section defines how long backups will be retained.  Expiration only occurs when the number of complete backups exceeds the allowed retention.  In other words, if retention-full is set to 2, then there must be 3 complete backups before the oldest will be expired.  Make sure you always have enough space for retention + 1 backups.</text>
-
-                <!-- CONFIG - RETENTION SECTION - FULL-RETENTION KEY -->
-                <config-key-list>
-                    <config-key id="retention-full" name="Full Retention">
-                        <summary>Number of full backups to retain.</summary>
-
-                        <text>When a full backup expires, all differential and incremental backups associated with the full backup will also expire.  When the option is not defined a warning will be issued.  If indefinite retention is desired then set the option to the max value.</text>
-
-                        <example>2</example>
-                    </config-key>
-
-                    <!-- CONFIG - RETENTION SECTION - DIFFERENTIAL-RETENTION KEY -->
-                    <config-key id="retention-diff" name="Differential Retention">
-                        <summary>Number of differential backups to retain.</summary>
-
-                        <text>When a differential backup expires, all incremental backups associated with the differential backup will also expire.  When not defined all differential backups will be kept until the full backups they depend on expire.</text>
-
-                        <example>3</example>
-                    </config-key>
-
-                    <!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION-TYPE KEY -->
-                    <config-key id="retention-archive-type" name="Archive Retention Type">
-                        <summary>Backup type for WAL retention.</summary>
-
-                        <text>If set to <setting>full</setting> <backrest/> will keep archive logs for the number of full backups defined by <setting>retention-archive</setting>.  If set to <setting>diff</setting> (differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>retention-archive</setting>, meaning if the last backup taken was a full backup, it will be counted as a differential for the purpose of retention.  If set to <setting>incr</setting> (incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>retention-archive</setting>. It is recommended that this setting not be changed from the default which will only expire WAL in conjunction with expiring full backups.</text>
-
-                        <example>diff</example>
-                    </config-key>
-
-                    <!-- CONFIG - RETENTION SECTION - ARCHIVE-RETENTION KEY -->
-                    <config-key id="retention-archive" name="Archive Retention">
-                        <summary>Number of backups worth of continuous WAL to retain.</summary>
-
-                        <text>Note that the WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.
-
-                        If this value is not set, then the archive to expire will default to the <setting>retention-full</setting> (or <setting>retention-diff</setting>) value corresponding to the <setting>retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired.
-
-                        This option must be set if <setting>retention-archive-type</setting> is set to <setting>incr</setting>.  If disk space is at a premium, then this setting, in conjunction with <setting>retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</text>
-
-                        <example>2</example>
                     </config-key>
                 </config-key-list>
             </config-section>

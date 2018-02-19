@@ -110,7 +110,7 @@ full backup - backup from standby, failure to access at least one standby (backu
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - backup from standby (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --retention-full=1 --backup-standby --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1 --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-master/pgbackrest.conf

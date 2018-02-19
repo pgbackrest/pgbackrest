@@ -553,24 +553,24 @@ sub process
 
     if (defined($iExpireFull))
     {
-        $strCommand .= ' --retention-full=' . $iExpireFull;
+        $strCommand .= ' --repo1-retention-full=' . $iExpireFull;
     }
 
     if (defined($iExpireDiff))
     {
-        $strCommand .= ' --retention-diff=' . $iExpireDiff;
+        $strCommand .= ' --repo1-retention-diff=' . $iExpireDiff;
     }
 
     if (defined($strExpireArchiveType))
     {
         if (defined($iExpireArchive))
         {
-            $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType .
-                           ' --retention-archive=' . $iExpireArchive;
+            $strCommand .= ' --repo1-retention-archive-type=' . $strExpireArchiveType .
+                           ' --repo1-retention-archive=' . $iExpireArchive;
         }
         else
         {
-            $strCommand .= ' --retention-archive-type=' . $strExpireArchiveType;
+            $strCommand .= ' --repo1-retention-archive-type=' . $strExpireArchiveType;
         }
     }
 

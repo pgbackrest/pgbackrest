@@ -486,7 +486,7 @@ sub run
                 CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby',
                 {bStandby => true,
                  iExpectedExitStatus => $oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY ? undef : ERROR_CONFIG,
-                 strOptionalParam => '--' . cfgOptionName(CFGOPT_RETENTION_FULL) . '=1'});
+                 strOptionalParam => '--' . cfgOptionName(CFGOPT_REPO_RETENTION_FULL) . '=1'});
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
             {

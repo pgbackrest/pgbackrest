@@ -175,7 +175,7 @@ helpRender()
 
                         if (section == NULL ||
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
-                             !strEqZ(section, "stanza") && !strEqZ(section, "expire")))
+                             !strEqZ(section, "stanza")))
                         {
                             section = strNew("command");
                         }

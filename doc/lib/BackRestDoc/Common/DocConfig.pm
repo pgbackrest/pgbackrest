@@ -49,7 +49,6 @@ use constant CONFIG_HELP_SOURCE_COMMAND                             => CONFIG_HE
 use constant CFGDEF_COMMAND                                 => 'command';
 use constant CFGDEF_GENERAL                                 => 'general';
 use constant CFGDEF_LOG                                     => 'log';
-use constant CFGDEF_EXPIRE                                  => 'expire';
 use constant CFGDEF_REPOSITORY                              => 'repository';
 
 ####################################################################################################################################
@@ -758,8 +757,7 @@ sub helpCommandDocGetOptionFind
         }
 
         if (($strSection ne CFGDEF_GENERAL && $strSection ne CFGDEF_LOG &&
-             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA &&
-             $strSection ne CFGDEF_EXPIRE) ||
+             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA) ||
             $strSection eq $strCommand)
         {
             $strSection = CONFIG_HELP_COMMAND;

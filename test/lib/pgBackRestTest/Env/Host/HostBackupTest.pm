@@ -695,8 +695,8 @@ sub expire
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         ' --log-level-console=detail' .
-        (defined($$oParam{iRetentionFull}) ? " --retention-full=$$oParam{iRetentionFull}" : '') .
-        (defined($$oParam{iRetentionDiff}) ? " --retention-diff=$$oParam{iRetentionDiff}" : '') .
+        (defined($$oParam{iRetentionFull}) ? " --repo1-retention-full=$$oParam{iRetentionFull}" : '') .
+        (defined($$oParam{iRetentionDiff}) ? " --repo1-retention-diff=$$oParam{iRetentionDiff}" : '') .
         '  --stanza=' . $self->stanza() . ' expire',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});

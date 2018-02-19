@@ -147,7 +147,7 @@ sub run
             $oExpireTest->process($self->stanza(), 2, 1, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
             #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Expire diff with retention-archive with warning retention-diff not set';
+            $strDescription = 'Expire diff with repo-retention-archive with warning repo-retention-diff not set';
 
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
@@ -155,20 +155,20 @@ sub run
             $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_DIFF, 1, $strDescription);
 
             #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Expire full with retention-archive with warning retention-full not set';
+            $strDescription = 'Expire full with repo-retention-archive with warning repo-retention-full not set';
 
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->process($self->stanza(), undef, undef, CFGOPTVAL_BACKUP_TYPE_FULL, 1, $strDescription);
 
             #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Expire no archive with warning since retention-archive not set for INCR';
+            $strDescription = 'Expire no archive with warning since repo-retention-archive not set for INCR';
 
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_INCR, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->process($self->stanza(), 1, 1, CFGOPTVAL_BACKUP_TYPE_INCR, undef, $strDescription);
 
             #-----------------------------------------------------------------------------------------------------------------------
-            $strDescription = 'Expire no archive with warning since neither retention-archive nor retention-diff is set';
+            $strDescription = 'Expire no archive with warning since neither repo-retention-archive nor repo-retention-diff is set';
 
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_FULL, $lBaseTime += SECONDS_PER_DAY);
             $oExpireTest->backupCreate($self->stanza(), CFGOPTVAL_BACKUP_TYPE_DIFF, $lBaseTime += SECONDS_PER_DAY);
@@ -239,10 +239,10 @@ sub run
             $self->optionTestClear(CFGOPT_PG_PATH);
             $self->optionTestClear(CFGOPT_ONLINE);
             $self->optionTestClear(CFGOPT_PROTOCOL_TIMEOUT);
-            $self->optionTestSet(CFGOPT_RETENTION_FULL, 1);
-            $self->optionTestSet(CFGOPT_RETENTION_DIFF, 1);
-            $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
-            $self->optionTestSet(CFGOPT_RETENTION_ARCHIVE, 1);
+            $self->optionTestSet(CFGOPT_REPO_RETENTION_FULL, 1);
+            $self->optionTestSet(CFGOPT_REPO_RETENTION_DIFF, 1);
+            $self->optionTestSet(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE, CFGOPTVAL_BACKUP_TYPE_FULL);
+            $self->optionTestSet(CFGOPT_REPO_RETENTION_ARCHIVE, 1);
             $self->configTestLoad(CFGCMD_EXPIRE);
 
             $strDescription = 'Expiration cannot occur due to info file db mismatch';

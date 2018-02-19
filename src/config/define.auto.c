@@ -2576,6 +2576,164 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("repo-retention-archive")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of backups worth of continuous WAL to retain.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Note that the WAL segments required to make a backup consistent are always retained until the backup is expired "
+                "regardless of how this option is configured.\n"
+            "\n"
+            "If this value is not set, then the archive to expire will default to the repo-retention-full (or repo-retention-diff) "
+                "value corresponding to the repo-retention-archive-type if set to full (or diff). This will ensure that WAL is "
+                "only expired for backups that are already expired.\n"
+            "\n"
+            "This option must be set if repo-retention-archive-type is set to incr. If disk space is at a premium, then this "
+                "setting, in conjunction with repo-retention-archive-type, can be used to aggressively expire WAL segments. "
+                "However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore not "
+                "recommended."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-retention-archive-type")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Backup type for WAL retention.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "If set to full pgBackRest will keep archive logs for the number of full backups defined by repo-retention-archive. If "
+                "set to diff (differential) pgBackRest will keep archive logs for the number of full and differential backups "
+                "defined by repo-retention-archive, meaning if the last backup taken was a full backup, it will be counted as a "
+                "differential for the purpose of repo-retention. If set to incr (incremental) pgBackRest will keep archive logs "
+                "for the number of full, differential, and incremental backups defined by repo-retention-archive. It is "
+                "recommended that this setting not be changed from the default which will only expire WAL in conjunction with "
+                "expiring full backups."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "full",
+                "diff",
+                "incr"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("full")
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive-type")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-retention-diff")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of differential backups to retain.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "When a differential backup expires, all incremental backups associated with the differential backup will also expire. "
+                "When not defined all differential backups will be kept until the full backups they depend on expire."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-diff")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-retention-full")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of full backups to retain.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "When a full backup expires, all differential and incremental backups associated with the full backup will also "
+                "expire. When the option is not defined a warning will be issued. If indefinite retention is desired then set the "
+                "option to the max value."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
+            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-full")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("repo-s3-bucket")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -3103,154 +3261,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("retention-archive")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("expire")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of backups worth of continuous WAL to retain.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Note that the WAL segments required to make a backup consistent are always retained until the backup is expired "
-                "regardless of how this option is configured.\n"
-            "\n"
-            "If this value is not set, then the archive to expire will default to the retention-full (or retention-diff) value "
-                "corresponding to the retention-archive-type if set to full (or diff). This will ensure that WAL is only expired "
-                "for backups that are already expired.\n"
-            "\n"
-            "This option must be set if retention-archive-type is set to incr. If disk space is at a premium, then this setting, "
-                "in conjunction with retention-archive-type, can be used to aggressively expire WAL segments. However, doing so "
-                "negates the ability to perform PITR from the backups with expired WAL and is therefore not recommended."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("retention-archive-type")
-        CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("expire")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Backup type for WAL retention.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "If set to full pgBackRest will keep archive logs for the number of full backups defined by retention-archive. If set "
-                "to diff (differential) pgBackRest will keep archive logs for the number of full and differential backups defined "
-                "by retention-archive, meaning if the last backup taken was a full backup, it will be counted as a differential "
-                "for the purpose of retention. If set to incr (incremental) pgBackRest will keep archive logs for the number of "
-                "full, differential, and incremental backups defined by retention-archive. It is recommended that this setting not "
-                "be changed from the default which will only expire WAL in conjunction with expiring full backups."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
-            (
-                "full",
-                "diff",
-                "incr"
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("full")
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("retention-diff")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("expire")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of differential backups to retain.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "When a differential backup expires, all incremental backups associated with the differential backup will also expire. "
-                "When not defined all differential backups will be kept until the full backups they depend on expire."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("retention-full")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("expire")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Number of full backups to retain.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "When a full backup expires, all differential and incremental backups associated with the full backup will also "
-                "expire. When the option is not defined a warning will be issued. If indefinite retention is desired then set the "
-                "option to the max value."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
         )
     )
 

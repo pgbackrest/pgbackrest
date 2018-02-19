@@ -413,7 +413,7 @@
                 <list-item>The default for the <br-option>backup-user</br-option> option has changed from <id>backrest</id> to <id>pgbackrest</id>.</list-item>
             </list>
 
-            <p>Many option names have changed to improve consistency although the old names from v1 are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
+            <p>Many option names have changed to improve consistency although the old names from v1 are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id>/<id>retention-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
 
             <p><postgres/> and repository options must be indexed when using the new names introduced in v2, e.g. <br-option>pg1-host</br-option>, <br-option>pg1-path</br-option>, <br-option>repo1-path</br-option>, <br-option>repo1-type</br-option>, etc.  Only one repository is allowed currently but more flexibility is planned for v2.</p>
         </section>
@@ -615,7 +615,7 @@
             <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
                 <title>Configure retention to 2 full backups</title>
 
-                <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
             </backrest-config>
 
             <p>More information about retention can be found in the <link section="/retention">Retention</link> section.</p>
@@ -966,15 +966,15 @@
         <section id="full">
             <title>Full Backup Retention</title>
 
-            <p>Set <br-option>retention-full</br-option> to the number of full backups required.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired.</p>
+            <p>Set <br-option>repo1-retention-full</br-option> to the number of full backups required.  New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired.</p>
 
             <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
-                <title>Configure <br-option>retention-full</br-option></title>
+                <title>Configure <br-option>repo1-retention-full</br-option></title>
 
-                <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
             </backrest-config>
 
-            <p>Backup <br-setting>retention-full=2</br-setting> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
+            <p>Backup <br-setting>repo1-retention-full=2</br-setting> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
 
             <execute-list host="{[host-pg-primary]}">
                 <title>Perform a full backup</title>
@@ -1009,15 +1009,15 @@
         <section id="diff">
             <title>Differential Backup Retention</title>
 
-            <p>Set <br-option>retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
+            <p>Set <br-option>repo1-retention-diff</br-option> to the number of differential backups required.  Differentials only rely on the prior full backup so it is possible to create a <quote>rolling</quote> set of differentials for the last day or more.  This allows quick restores to recent points-in-time but reduces overall space consumption.</p>
 
             <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
-                <title>Configure <br-option>retention-diff</br-option></title>
+                <title>Configure <br-option>repo1-retention-diff</br-option></title>
 
-                <backrest-config-option section="global" key="retention-diff">1</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-retention-diff">1</backrest-config-option>
             </backrest-config>
 
-            <p>Backup <br-setting>retention-diff=1</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
+            <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired.  An incremental backup is added to demonstrate incremental expiration.  Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
 
             <execute-list host="{[host-pg-primary]}">
                 <title>Perform differential and incremental backups</title>
@@ -1052,14 +1052,14 @@
         <section id="archive">
             <title>Archive Retention</title>
 
-            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
+            <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>repo1-retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space.  Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
 
             <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process.</p>
 
             <backrest-config host="{[host-pg-primary]}" file="{[backrest-config-demo]}">
-                <title>Configure <br-option>retention-diff</br-option></title>
+                <title>Configure <br-option>repo1-retention-diff</br-option></title>
 
-                <backrest-config-option section="global" key="retention-diff">2</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-retention-diff">2</backrest-config-option>
             </backrest-config>
 
             <execute-list host="{[host-pg-primary]}">
@@ -1092,7 +1092,7 @@
 
                 <execute output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail
-                        --retention-archive-type=diff --retention-archive=1 expire</exe-cmd>
+                        --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire</exe-cmd>
                     <exe-highlight>archive retention on backup {[backup-diff-first]}|remove archive</exe-highlight>
                 </execute>
             </execute-list>
@@ -1706,7 +1706,7 @@
                 <backrest-config-option section="demo" key="pg1-host-user">postgres</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
-                <backrest-config-option section="global" key="retention-full">2</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>

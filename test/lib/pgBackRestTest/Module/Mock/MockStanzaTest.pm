@@ -301,7 +301,8 @@ sub run
         storageTest()->pathCreate($oHostDbMaster->dbBasePath() . '/' . DB_PATH_PGTBLSPC);
         $oHostBackup->backup(
             'full', 'create first full backup ',
-            {strOptionalParam => '--retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'}, false);
+            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'},
+            false);
 
         # Stanza Create fails when not using force - no backup.info but backup exists
         #--------------------------------------------------------------------------------------------------------------------------
@@ -358,7 +359,7 @@ sub run
 
         # Test backup is changed from type=DIFF to FULL (WARN message displayed)
         my $oExecuteBackup = $oHostBackup->backupBegin('diff', 'diff changed to full backup',
-            {strOptionalParam => '--retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'});
+            {strOptionalParam => '--repo1-retention-full=2 --no-' . cfgOptionName(CFGOPT_ONLINE) . ' --log-level-console=detail'});
         $oHostBackup->backupEnd('full', $oExecuteBackup, undef, false);
 
         # Confirm info command displays the JSON correctly

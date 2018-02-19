@@ -226,6 +226,16 @@ use constant CFGOPT_REPO_PATH                                       => CFGDEF_PR
 use constant CFGOPT_REPO_TYPE                                       => CFGDEF_PREFIX_REPO . '-type';
     push @EXPORT, qw(CFGOPT_REPO_TYPE);
 
+# Repository Retention
+use constant CFGOPT_REPO_RETENTION_ARCHIVE                          => CFGDEF_PREFIX_REPO . '-retention-archive';
+    push @EXPORT, qw(CFGOPT_REPO_RETENTION_ARCHIVE);
+use constant CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                     => CFGDEF_PREFIX_REPO . '-retention-archive-type';
+    push @EXPORT, qw(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE);
+use constant CFGOPT_REPO_RETENTION_DIFF                             => CFGDEF_PREFIX_REPO . '-retention-diff';
+    push @EXPORT, qw(CFGOPT_REPO_RETENTION_DIFF);
+use constant CFGOPT_REPO_RETENTION_FULL                             => CFGDEF_PREFIX_REPO . '-retention-full';
+    push @EXPORT, qw(CFGOPT_REPO_RETENTION_FULL);
+
 # Repository Host
 use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
     push @EXPORT, qw(CFGOPT_REPO_HOST);
@@ -284,17 +294,6 @@ use constant CFGOPT_START_FAST                                      => 'start-fa
     push @EXPORT, qw(CFGOPT_START_FAST);
 use constant CFGOPT_STOP_AUTO                                       => 'stop-auto';
     push @EXPORT, qw(CFGOPT_STOP_AUTO);
-
-# Expire options
-#-----------------------------------------------------------------------------------------------------------------------------------
-use constant CFGOPT_RETENTION_ARCHIVE                               => 'retention-archive';
-    push @EXPORT, qw(CFGOPT_RETENTION_ARCHIVE);
-use constant CFGOPT_RETENTION_ARCHIVE_TYPE                          => 'retention-archive-type';
-    push @EXPORT, qw(CFGOPT_RETENTION_ARCHIVE_TYPE);
-use constant CFGOPT_RETENTION_DIFF                                  => 'retention-diff';
-    push @EXPORT, qw(CFGOPT_RETENTION_DIFF);
-use constant CFGOPT_RETENTION_FULL                                  => 'retention-full';
-    push @EXPORT, qw(CFGOPT_RETENTION_FULL);
 
 # Restore options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1347,6 +1346,87 @@ my %hConfigDefine =
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
+    &CFGOPT_REPO_RETENTION_ARCHIVE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
+        &CFGDEF_NAME_ALT =>
+        {
+            'retention-archive' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_EXPIRE => {},
+        }
+    },
+
+    &CFGOPT_REPO_RETENTION_ARCHIVE_TYPE =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_DEFAULT => CFGOPTVAL_BACKUP_TYPE_FULL,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_EXPIRE => {},
+        },
+        &CFGDEF_NAME_ALT =>
+        {
+            'retention-archive-type' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_ALLOW_LIST =>
+        [
+            &CFGOPTVAL_BACKUP_TYPE_FULL,
+            &CFGOPTVAL_BACKUP_TYPE_DIFF,
+            &CFGOPTVAL_BACKUP_TYPE_INCR,
+        ]
+    },
+
+    &CFGOPT_REPO_RETENTION_DIFF =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
+        &CFGDEF_NAME_ALT =>
+        {
+            'retention-diff' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_EXPIRE => {},
+        }
+    },
+
+    &CFGOPT_REPO_RETENTION_FULL =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
+        &CFGDEF_NAME_ALT =>
+        {
+            'retention-full' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+        },
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_EXPIRE => {},
+        }
+    },
+
     &CFGOPT_REPO_S3_BUCKET =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
@@ -1731,65 +1811,6 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
-    },
-
-    # Expire options
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_RETENTION_ARCHIVE =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_EXPIRE => {},
-        }
-    },
-
-    &CFGOPT_RETENTION_ARCHIVE_TYPE =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => CFGOPTVAL_BACKUP_TYPE_FULL,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_EXPIRE => {},
-        },
-        &CFGDEF_ALLOW_LIST =>
-        [
-            &CFGOPTVAL_BACKUP_TYPE_FULL,
-            &CFGOPTVAL_BACKUP_TYPE_DIFF,
-            &CFGOPTVAL_BACKUP_TYPE_INCR,
-        ]
-    },
-
-    &CFGOPT_RETENTION_DIFF =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_EXPIRE => {},
-        }
-    },
-
-    &CFGOPT_RETENTION_FULL =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_EXPIRE => {},
         }
     },
 
