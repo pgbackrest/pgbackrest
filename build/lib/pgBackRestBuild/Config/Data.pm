@@ -209,54 +209,54 @@ use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-time
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many repositories can be configured
 use constant CFGDEF_INDEX_REPO                                      => 1;
-    push @EXPORT, qw(CFGDEF_INDEX_PG);
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
     push @EXPORT, qw(CFGDEF_PREFIX_REPO);
 
 # Repository General
-use constant CFGOPT_REPO_CIPHER_TYPE                                => 'repo-cipher-type';
+use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
     push @EXPORT, qw(CFGOPT_REPO_CIPHER_TYPE);
-use constant CFGOPT_REPO_CIPHER_PASS                                => 'repo-cipher-pass';
+use constant CFGOPT_REPO_CIPHER_PASS                                => CFGDEF_PREFIX_REPO . '-cipher-pass';
     push @EXPORT, qw(CFGOPT_REPO_CIPHER_PASS);
-use constant CFGOPT_REPO_HARDLINK                                   => 'repo-hardlink';
+use constant CFGOPT_REPO_HARDLINK                                   => CFGDEF_PREFIX_REPO . '-hardlink';
     push @EXPORT, qw(CFGOPT_REPO_HARDLINK);
-use constant CFGOPT_REPO_PATH                                       => 'repo-path';
+use constant CFGOPT_REPO_PATH                                       => CFGDEF_PREFIX_REPO . '-path';
     push @EXPORT, qw(CFGOPT_REPO_PATH);
-use constant CFGOPT_REPO_TYPE                                       => 'repo-type';
+use constant CFGOPT_REPO_TYPE                                       => CFGDEF_PREFIX_REPO . '-type';
     push @EXPORT, qw(CFGOPT_REPO_TYPE);
 
 # Repository Host
-use constant CFGOPT_REPO_HOST                                       => 'repo-host';
+use constant CFGOPT_REPO_HOST                                       => CFGDEF_PREFIX_REPO . '-host';
     push @EXPORT, qw(CFGOPT_REPO_HOST);
-use constant CFGOPT_REPO_HOST_CMD                                   => 'repo-host-cmd';
+use constant CFGOPT_REPO_HOST_CMD                                   => CFGOPT_REPO_HOST . '-cmd';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CMD);
-use constant CFGOPT_REPO_HOST_CONFIG                                => 'repo-host-config';
+use constant CFGOPT_REPO_HOST_CONFIG                                => CFGOPT_REPO_HOST . '-config';
     push @EXPORT, qw(CFGOPT_REPO_HOST_CONFIG);
-use constant CFGOPT_REPO_HOST_PORT                                  => 'repo-host-port';
+use constant CFGOPT_REPO_HOST_PORT                                  => CFGOPT_REPO_HOST . '-port';
     push @EXPORT, qw(CFGOPT_REPO_HOST_PORT);
-use constant CFGOPT_REPO_HOST_USER                                  => 'repo-host-user';
+use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_REPO_HOST . '-user';
     push @EXPORT, qw(CFGOPT_REPO_HOST_USER);
 
 # Repository S3
-use constant CFGOPT_REPO_S3_KEY                                     => 'repo-s3-key';
+use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
+use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
     push @EXPORT, qw(CFGOPT_REPO_S3_KEY);
-use constant CFGOPT_REPO_S3_KEY_SECRET                              => 'repo-s3-key-secret';
+use constant CFGOPT_REPO_S3_KEY_SECRET                              => CFGDEF_REPO_S3 . '-key-secret';
     push @EXPORT, qw(CFGOPT_REPO_S3_KEY_SECRET);
-use constant CFGOPT_REPO_S3_BUCKET                                  => 'repo-s3-bucket';
+use constant CFGOPT_REPO_S3_BUCKET                                  => CFGDEF_REPO_S3 . '-bucket';
     push @EXPORT, qw(CFGOPT_REPO_S3_BUCKET);
-use constant CFGOPT_REPO_S3_CA_FILE                                 => 'repo-s3-ca-file';
+use constant CFGOPT_REPO_S3_CA_FILE                                 => CFGDEF_REPO_S3 . '-ca-file';
     push @EXPORT, qw(CFGOPT_REPO_S3_CA_FILE);
-use constant CFGOPT_REPO_S3_CA_PATH                                 => 'repo-s3-ca-path';
+use constant CFGOPT_REPO_S3_CA_PATH                                 => CFGDEF_REPO_S3 . '-ca-path';
     push @EXPORT, qw(CFGOPT_REPO_S3_CA_PATH);
-use constant CFGOPT_REPO_S3_ENDPOINT                                => 'repo-s3-endpoint';
+use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_REPO_S3 . '-endpoint';
     push @EXPORT, qw(CFGOPT_REPO_S3_ENDPOINT);
-use constant CFGOPT_REPO_S3_HOST                                    => 'repo-s3-host';
+use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
     push @EXPORT, qw(CFGOPT_REPO_S3_HOST);
-use constant CFGOPT_REPO_S3_REGION                                  => 'repo-s3-region';
+use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
     push @EXPORT, qw(CFGOPT_REPO_S3_REGION);
-use constant CFGOPT_REPO_S3_VERIFY_SSL                              => 'repo-s3-verify-ssl';
+use constant CFGOPT_REPO_S3_VERIFY_SSL                              => CFGDEF_REPO_S3 . '-verify-ssl';
     push @EXPORT, qw(CFGOPT_REPO_S3_VERIFY_SSL);
 
 # Archive options
@@ -1196,7 +1196,7 @@ my %hConfigDefine =
         &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_NAME_ALT =>
         {
-            'hardlink' => {},
+            'hardlink' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
@@ -1454,7 +1454,7 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => true,
         &CFGDEF_NAME_ALT =>
         {
-            'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1},
+            'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
@@ -1879,6 +1879,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1916,6 +1917,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1982,6 +1984,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
@@ -2020,6 +2023,7 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_DEFAULT => 5432,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_NAME_ALT =>
@@ -2117,14 +2121,8 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_INTERNAL} = false;
     }
 
-    # Set index total for pg-*
-    if (defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) &&
-        $hConfigDefine{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_PG)
-    {
-        $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_PG;
-    }
-    # Else default index total is 1
-    else
+    # Set index total for any option where it has not been explicitly defined
+    if (!defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }

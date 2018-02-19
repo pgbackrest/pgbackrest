@@ -192,7 +192,7 @@ sub main
             if (!isRepoLocal())
             {
                 confess &log(ERROR,
-                    cfgCommandName(cfgCommandGet()) . ' command must be run on the backup host', ERROR_HOST_INVALID);
+                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
             }
 
             # Load module dynamically
@@ -225,7 +225,7 @@ sub main
             if (!isRepoLocal())
             {
                 confess &log(ERROR,
-                    cfgCommandName(cfgCommandGet()) . ' command must be run on the backup host', ERROR_HOST_INVALID);
+                    cfgCommandName(cfgCommandGet()) . ' command must be run on the repository host', ERROR_HOST_INVALID);
             }
 
             # Load module dynamically
@@ -242,7 +242,7 @@ sub main
         {
             if (!isDbLocal())
             {
-                confess &log(ERROR, 'restore command must be run on the db host', ERROR_HOST_INVALID);
+                confess &log(ERROR, 'restore command must be run on the PostgreSQL host', ERROR_HOST_INVALID);
             }
 
             # Load module dynamically
@@ -261,7 +261,7 @@ sub main
             ########################################################################################################################
             if (!isRepoLocal())
             {
-                confess &log(ERROR, 'backup and expire commands must be run on the backup host', ERROR_HOST_INVALID);
+                confess &log(ERROR, 'backup and expire commands must be run on the repository host', ERROR_HOST_INVALID);
             }
 
             ########################################################################################################################
