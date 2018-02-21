@@ -118,6 +118,7 @@
     <!ATTLIST section keyword CDATA "">
     <!ATTLIST section depend CDATA "">
     <!ATTLIST section source CDATA "">
+    <!ATTLIST section toc CDATA "">
 <!ELEMENT title (#PCDATA|quote|b|i|bi|ul|ol|id|code|host|file|path|cmd|setting|exe|backrest|postgres|br-option|br-setting|
                  pg-option|pg-setting|link|user|proper)*>
 

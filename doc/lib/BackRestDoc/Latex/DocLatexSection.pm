@@ -115,12 +115,22 @@ sub sectionProcess
         &log(INFO, ('    ' x ($iDepth + 1)) . 'process section: ' . $oSection->paramGet('path'));
     }
 
-    # Create the section
+    # Create section type
     my $strSectionTitle = $self->processText($oSection->nodeGet('title')->textGet());
     $strSection .= (defined($strSection) ? ', ' : '') . "'${strSectionTitle}' " . ('Sub' x ($iDepth - 1)) . "Section";
 
+    # Create section comment
     my $strLatex =
-        "% ${strSection}\n% " . ('-' x 130) . "\n\\";
+        "% ${strSection}\n% " . ('-' x 130) . "\n";
+
+    # Exclude from table of contents if requested
+    if ($iDepth <= 3 && $oSection->paramTest('toc', 'n'))
+    {
+        $strLatex .= '\\addtocontents{toc}{\\protect\\setcounter{tocdepth}{' . ($iDepth - 1) . "}}\n";
+    }
+
+    # Create section name
+    $strLatex .= '\\';
 
     if ($iDepth <= 3)
     {
@@ -136,6 +146,12 @@ sub sectionProcess
     }
 
     $strLatex .= "\{${strSectionTitle}\}\\label{" . $oSection->paramGet('path', false) . "}\n";
+
+    # Reset table of contents numbering if the section was excluded
+    if ($iDepth <= 3 && $oSection->paramTest('toc', 'n'))
+    {
+        $strLatex .= '\\addtocontents{toc}{\\protect\\setcounter{tocdepth}{' . $iDepth . "}}\n";
+    }
 
     foreach my $oChild ($oSection->nodeList())
     {
